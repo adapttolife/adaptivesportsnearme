@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light">
+<title>Adaptive Sports Near Me — Find adaptive sport near you</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=Hanken+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* ============================ TOKENS ============================ */
+:root{
+  color-scheme: light;
+  --ink:#1A1A1A; --ink2:#3A3A37;
+  --paper:#FFFFFF; --mist:#F7F7F5; --sand:#F0EFEC; --sand2:#E8E7E3;
+  --line:#E7E6E2; --line2:#EFEEEB;
+  --muted:#6E6D6A; --faint:#8C8B87;
+  --orange:#C5430C; --orange-ink:#A8370A; --orange-soft:#FBEBDC;
+
+  --hdr:64px;
+  --r-sm:8px; --r:12px; --r-lg:16px; --r-xl:20px; --r-full:999px;
+  --shadow-sm:0 1px 2px rgba(17,17,19,.04),0 1px 3px rgba(17,17,19,.06);
+  --shadow:0 6px 20px rgba(17,17,19,.08);
+  --shadow-lg:0 12px 34px rgba(17,17,19,.13);
+  --max:1280px;
+  --ease:cubic-bezier(.2,.6,.2,1);
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;background:var(--mist);color:var(--ink);}
+body{font-family:'Hanken Grotesk',system-ui,sans-serif;font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;}
+img,svg{display:block;max-width:100%;}
+a{color:inherit;text-decoration:none;}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit;}
+input,select{font-family:inherit;}
+::selection{background:var(--orange-soft);}
+.wrap{max-width:var(--max);margin:0 auto;padding:0 clamp(16px,3vw,32px);}
+.eyebrow{font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.13em;text-transform:uppercase;color:var(--faint);}
+
+/* focus + motion */
+:focus-visible{outline:2px solid var(--orange);outline-offset:2px;border-radius:4px;}
+@media (prefers-reduced-motion: reduce){
+  *{transition:none!important;animation:none!important;}
+  .pcard:hover .pcard-media,.mcard:hover{transform:none!important;}
+}
+.skip{position:absolute;left:-999px;top:8px;background:var(--ink);color:#fff;padding:10px 16px;border-radius:var(--r);z-index:200;}
+.skip:focus{left:12px;}
+
+/* ============================ HEADER ============================ */
+.hdr{position:sticky;top:0;z-index:60;background:rgba(255,255,255,.92);backdrop-filter:saturate(150%) blur(10px);border-bottom:1px solid var(--line);}
+.hdr.scrolled{box-shadow:var(--shadow-sm);}
+.hdr-in{height:var(--hdr);display:flex;align-items:center;justify-content:space-between;gap:18px;}
+.brand{flex:0 0 auto;transition:opacity .15s;}
+.brand:hover{opacity:.7;}
+.brand b{font-family:'Archivo',sans-serif;font-weight:700;font-size:16px;letter-spacing:-.015em;color:var(--ink);white-space:nowrap;}
+
+/* compact search pill */
+.search{flex:0 1 480px;max-width:480px;height:46px;display:flex;align-items:center;background:var(--paper);border:1px solid var(--line);border-radius:var(--r-full);box-shadow:var(--shadow-sm);transition:box-shadow .2s,border-color .2s;}
+.search:focus-within{box-shadow:var(--shadow);border-color:var(--sand2);}
+.search .loc{display:flex;align-items:center;gap:7px;padding:0 12px 0 16px;height:100%;border-radius:var(--r-full) 0 0 var(--r-full);white-space:nowrap;color:var(--ink);font-size:14px;font-weight:600;}
+.search .loc:hover{background:var(--mist);}
+.search .loc svg{width:14px;height:14px;color:var(--orange);}
+.search .sep{width:1px;height:22px;background:var(--line);flex:0 0 auto;}
+.search input{flex:1 1 auto;min-width:40px;height:100%;border:none;background:transparent;outline:none;padding:0 8px 0 14px;font-size:14px;color:var(--ink);}
+.search input::placeholder{color:var(--faint);}
+.search .go{flex:0 0 auto;width:36px;height:36px;margin-right:5px;border-radius:50%;background:var(--orange);color:#fff;display:grid;place-items:center;transition:background .15s,transform .15s;}
+.search .go:hover{background:var(--orange-ink);transform:scale(1.05);}
+.search .go svg{width:16px;height:16px;}
+.hdr.hide-search .search{display:none;}
+.hsearch{margin:24px auto 0;max-width:560px;height:58px;display:flex;align-items:center;background:var(--paper);border:1px solid var(--line);border-radius:var(--r-full);box-shadow:var(--shadow);transition:box-shadow .2s,border-color .2s;text-align:left;}
+.hsearch:focus-within{box-shadow:var(--shadow-lg);border-color:var(--sand2);}
+.hsearch .loc{display:flex;align-items:center;gap:8px;padding:0 14px 0 20px;height:100%;border-radius:var(--r-full) 0 0 var(--r-full);white-space:nowrap;color:var(--ink);font-size:15px;font-weight:600;}
+.hsearch .loc:hover{background:var(--mist);}
+.hsearch .loc svg{width:17px;height:17px;color:var(--orange);}
+.hsearch .sep{width:1px;height:28px;background:var(--line);flex:0 0 auto;}
+.hsearch input{flex:1 1 auto;min-width:40px;height:100%;border:none;background:transparent;outline:none;padding:0 10px 0 16px;font-size:16px;color:var(--ink);}
+.hsearch input::placeholder{color:var(--muted);}
+.hsearch .go{flex:0 0 auto;width:46px;height:46px;margin-right:6px;border-radius:50%;background:var(--orange);color:#fff;display:grid;place-items:center;transition:background .15s,transform .15s;}
+.hsearch .go:hover{background:var(--orange-ink);transform:scale(1.05);}
+.hsearch .go svg{width:19px;height:19px;}
+
+/* nav segmented */
+.hdr-actions{flex:0 0 auto;display:flex;align-items:center;gap:10px;}
+.navlink{font-size:14px;font-weight:600;color:var(--muted);padding:8px 8px;border-radius:var(--r-full);transition:color .15s;}
+.navlink:hover{color:var(--ink);}
+.navlink.on{color:var(--ink);}
+.addbtn{display:inline-flex;align-items:center;gap:7px;height:40px;padding:0 16px;border:1px solid var(--line);border-radius:var(--r-full);background:var(--paper);color:var(--ink);font-size:14px;font-weight:600;transition:border-color .15s,box-shadow .15s;}
+.addbtn:hover{border-color:var(--ink);box-shadow:var(--shadow-sm);}
+.addbtn .plus{width:15px;height:15px;flex:0 0 auto;}
+
+/* ============================ HERO ============================ */
+.hero{position:relative;padding:60px 0 42px;text-align:center;overflow:hidden;}
+.hero::before{content:"";position:absolute;inset:0;background:radial-gradient(58% 78% at 50% -8%, rgba(232,93,4,.06), transparent 68%);pointer-events:none;}
+.hero-in{position:relative;max-width:760px;margin:0 auto;}
+.hero h1{font-family:'Archivo',sans-serif;font-weight:800;font-size:clamp(38px,5.5vw,60px);line-height:1.0;letter-spacing:-.03em;margin:12px 0 0;}
+.hero .lede{margin:16px auto 0;max-width:580px;font-size:16px;line-height:1.55;color:var(--muted);}
+.trust{margin-top:18px;display:inline-flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:10px;font-size:14px;color:var(--muted);}
+.trust b{color:var(--ink);font-weight:700;}
+.trust .tdot{color:var(--faint);}
+
+/* ============================ CATEGORY BAR ============================ */
+.catbar{position:sticky;top:var(--hdr);z-index:40;background:rgba(247,247,245,.94);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);}
+.catbar-in{display:flex;align-items:stretch;gap:0;}
+.cats{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none;flex:1 1 auto;min-width:0;padding:0 2px;}
+.cats::-webkit-scrollbar{display:none;}
+.cat{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:6px;min-width:66px;padding:11px 12px 9px;color:var(--muted);border-bottom:2px solid transparent;transition:color .15s,border-color .15s;}
+.cat svg{width:26px;height:26px;color:currentColor;}
+.cat span{font-size:12px;font-weight:500;white-space:nowrap;}
+.cat:hover{color:var(--ink);}
+.cat.on{color:var(--ink);border-bottom-color:var(--ink);}
+.cat .ic .dot{display:none;}
+.cat.on .ic .dot{display:block;}
+.cat-sep{flex:0 0 auto;align-self:center;width:1px;height:30px;background:var(--line);margin:0 8px;}
+
+/* ============================ TOOLBAR ============================ */
+.toolbar{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:18px 0 12px;flex-wrap:wrap;}
+.count{font-size:14px;color:var(--muted);}
+.count b{color:var(--ink);font-weight:600;}
+.tools{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.btn-pill{display:inline-flex;align-items:center;gap:7px;height:38px;padding:0 14px;border:1px solid var(--line);background:var(--paper);border-radius:var(--r-full);font-size:14px;font-weight:600;color:var(--ink);transition:.15s;}
+.btn-pill:hover{border-color:var(--sand2);box-shadow:var(--shadow-sm);}
+.btn-pill svg{width:15px;height:15px;}
+.btn-pill .badge{background:var(--ink);color:#fff;font-size:11px;min-width:18px;height:18px;border-radius:9px;display:grid;place-items:center;padding:0 5px;}
+.seg{display:flex;background:var(--sand);border-radius:var(--r-full);padding:4px;gap:2px;}
+.seg button{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 13px;border-radius:var(--r-full);font-size:13px;font-weight:600;color:var(--muted);transition:.15s;}
+.seg button svg{width:14px;height:14px;}
+.seg button.on{background:var(--paper);color:var(--ink);box-shadow:var(--shadow-sm);}
+.sortsel{height:38px;border:1px solid var(--line);background:var(--paper);border-radius:var(--r-full);padding:0 34px 0 14px;font-size:14px;font-weight:600;color:var(--ink);appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%231A1A1A' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 13px center;}
+
+/* filters panel */
+.filters{background:var(--paper);border:1px solid var(--line);border-radius:var(--r-lg);padding:6px 18px;margin-bottom:6px;overflow:hidden;max-height:0;opacity:0;border-width:0;transition:max-height .25s var(--ease),opacity .2s,padding .2s,margin .2s;}
+.filters.open{max-height:260px;opacity:1;border-width:1px;padding:16px 18px;margin-bottom:14px;}
+.frow{display:flex;align-items:center;gap:12px;padding:8px 0;flex-wrap:wrap;}
+.frow+.frow{border-top:1px solid var(--line2);}
+.frow>.flabel{font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);width:84px;flex:0 0 auto;}
+.chip{padding:7px 13px;border:1px solid var(--line);background:var(--paper);border-radius:var(--r-full);font-size:13px;font-weight:600;color:var(--ink2);transition:.15s;}
+.chip:hover{border-color:var(--ink);}
+.chip.on{background:var(--ink);color:#fff;border-color:var(--ink);}
+
+/* ============================ CARD GRID ============================ */
+#main{padding-bottom:24px;}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(258px,1fr));gap:26px 22px;padding:6px 0 56px;}
+.feed{padding:8px 0 48px;}
+.frow{margin:0 0 42px;}
+.frow:last-child{margin-bottom:8px;}
+.frow-head{margin-bottom:16px;}
+.frow-titlerow{display:flex;align-items:center;justify-content:space-between;gap:16px;}
+.frow-titlerow h2{font-family:Archivo,sans-serif;font-size:23px;font-weight:800;letter-spacing:-.02em;color:var(--ink);line-height:1.2;}
+.frow-sub{color:var(--muted);font-size:14px;margin-top:6px;line-height:1.4;}
+.frow-all{flex:0 0 auto;display:inline-flex;align-items:center;gap:6px;background:none;border:none;color:var(--ink);font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;padding:0;white-space:nowrap;transition:gap .15s,color .15s;}
+.frow-all:hover{gap:9px;color:var(--orange-ink);}
+.frow-scroll{display:flex;gap:20px;overflow-x:auto;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;padding-bottom:6px;scrollbar-width:none;}
+.frow-scroll::-webkit-scrollbar{display:none;}
+.frow-scroll>.pcard{flex:0 0 286px;width:286px;scroll-snap-align:start;}
+.pcard-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;}
+.pcard-media.has-photo .ringbg,.pcard-media.has-photo .gly{display:none;}
+.pcard-media.has-photo::after{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;background:linear-gradient(180deg,rgba(0,0,0,.16),rgba(0,0,0,0) 30%,rgba(0,0,0,0) 70%,rgba(0,0,0,.12));}
+.pcard-media .status{z-index:2;}
+.pcard-media .heart{z-index:2;}
+.pcard{cursor:pointer;display:block;}
+.pcard-media{position:relative;aspect-ratio:20/15;border-radius:var(--r-lg);overflow:hidden;transition:transform .25s var(--ease),box-shadow .25s var(--ease);}
+.pcard:hover .pcard-media{transform:translateY(-3px);box-shadow:var(--shadow);}
+.pcard-media .gly{position:absolute;inset:0;margin:auto;width:42%;height:42%;color:rgba(26,26,26,.82);}
+.pcard-media .ringbg{position:absolute;inset:0;margin:auto;width:62%;height:62%;color:rgba(255,255,255,.55);}
+.pcard-body{padding:11px 2px 0;}
+.pcard-sport{font-family:'Space Mono',monospace;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);}
+.pcard-name{font-size:16px;font-weight:600;line-height:1.3;margin:3px 0 3px;color:var(--ink);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.pcard-prov{font-size:14px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.pcard-meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:14px;color:var(--muted);margin-top:4px;}
+.pcard-meta .d{color:var(--faint);}
+
+/* gradients (calm, photo-ready) */
+.g-sand{background:linear-gradient(140deg,#F2EFEA 0%,#E5DED3 100%);}
+.g-cool{background:linear-gradient(140deg,#EEF1F1 0%,#DBE0E1 100%);}
+.g-warm{background:linear-gradient(140deg,#F8F0E7 0%,#EFDDC8 100%);}
+
+/* status + heart */
+.status{position:absolute;top:12px;left:12px;display:inline-flex;align-items:center;height:24px;padding:0 11px;border-radius:var(--r-full);font-size:12px;font-weight:700;letter-spacing:.01em;}
+.st-open{background:var(--ink);color:#fff;}
+.st-wait{background:rgba(255,255,255,.92);color:var(--ink);box-shadow:inset 0 0 0 1px var(--line);}
+.st-seas{background:rgba(255,255,255,.92);color:var(--muted);box-shadow:inset 0 0 0 1px var(--line);}
+.heart{position:absolute;top:10px;right:10px;width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.86);color:var(--ink);display:grid;place-items:center;transition:transform .15s,background .15s;}
+.heart:hover{background:#fff;transform:scale(1.08);}
+.heart.on{color:var(--orange);}
+.heart.on svg{fill:var(--orange);}
+
+/* ============================ MAP LAYOUT ============================ */
+.maplayout{display:grid;grid-template-columns:minmax(380px,470px) 1fr;gap:24px;align-items:start;padding-bottom:48px;}
+.mlist{display:flex;flex-direction:column;gap:12px;}
+.mcard{display:grid;grid-template-columns:128px 1fr;gap:13px;padding:9px;border-radius:var(--r-lg);align-items:center;cursor:pointer;transition:background .15s,box-shadow .15s,transform .15s;position:relative;}
+.mcard:hover,.mcard.hl{background:var(--paper);box-shadow:var(--shadow);}
+.mthumb{position:relative;aspect-ratio:4/3;border-radius:var(--r);overflow:hidden;}
+.mthumb .gly{position:absolute;inset:0;margin:auto;width:44%;height:44%;color:rgba(26,26,26,.8);}
+.mnum{position:absolute;top:7px;left:7px;width:22px;height:22px;border-radius:50%;background:var(--ink);color:#fff;font-size:12px;font-weight:700;display:grid;place-items:center;}
+.minfo{min-width:0;}
+.minfo .pcard-sport{font-size:12px;}
+.minfo .nm{font-size:14px;font-weight:600;line-height:1.2;margin:2px 0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.minfo .sub{font-size:13px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.minfo .mt{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);margin-top:3px;flex-wrap:wrap;}
+.minfo .st-inline{display:inline-flex;align-items:center;height:20px;padding:0 9px;border-radius:var(--r-full);font-size:12px;font-weight:700;}
+
+.map-col{position:sticky;top:84px;height:calc(100vh - 108px);min-height:520px;}
+.map{position:relative;height:100%;border-radius:var(--r-xl);overflow:hidden;border:1px solid var(--line);background:#E6EBE6;}
+.map .terrain{position:absolute;inset:0;background:
+  radial-gradient(120px 90px at 22% 30%, #DDE7DC 0%, transparent 70%),
+  radial-gradient(180px 120px at 78% 72%, #DCE6E8 0%, transparent 72%),
+  linear-gradient(0deg,#E9ECE7,#E6EBE6);}
+.map .road{position:absolute;background:#F3F2EE;}
+.map .road.h{height:8px;left:-10%;right:-10%;}
+.map .road.v{width:8px;top:-10%;bottom:-10%;}
+.map .road.thin{background:#EDECE7;}
+.map .water{position:absolute;background:#D4E2E6;border-radius:40%;filter:blur(.3px);}
+.map .park{position:absolute;background:#D7E5D2;border-radius:42% 58% 50% 50%;}
+.map .mapchip{position:absolute;top:14px;left:14px;background:rgba(255,255,255,.9);border:1px solid var(--line);border-radius:var(--r-full);padding:6px 12px;font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);z-index:5;}
+.map .scalebar{position:absolute;bottom:14px;left:14px;display:flex;align-items:center;gap:8px;font-size:11px;color:var(--muted);z-index:5;}
+.map .scalebar i{display:block;width:46px;height:3px;background:var(--ink);opacity:.5;border-left:2px solid var(--ink);border-right:2px solid var(--ink);}
+.mk{position:absolute;transform:translate(-50%,-50%);z-index:6;}
+.mk button{min-width:30px;height:30px;padding:0 9px;border-radius:var(--r-full);background:#fff;color:var(--ink);font-size:13px;font-weight:700;box-shadow:var(--shadow);display:grid;place-items:center;transition:transform .15s,background .15s,color .15s;border:1px solid rgba(20,18,14,.06);}
+.mk button:hover,.mk.active button{background:var(--ink);color:#fff;transform:scale(1.12);z-index:10;}
+
+/* ============================ LIST (TABLE) ============================ */
+.tablewrap{background:var(--paper);border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden;margin-bottom:48px;}
+table.list{width:100%;border-collapse:collapse;}
+table.list th{text-align:left;font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);font-weight:400;padding:14px 18px;border-bottom:1px solid var(--line);}
+table.list td{padding:13px 18px;border-bottom:1px solid var(--line2);vertical-align:middle;font-size:14px;}
+table.list tr:last-child td{border-bottom:none;}
+table.list tbody tr{cursor:pointer;transition:background .12s;}
+table.list tbody tr:hover{background:var(--mist);}
+.tcell{display:flex;align-items:center;gap:12px;}
+.tthumb{width:42px;height:42px;border-radius:10px;flex:0 0 auto;position:relative;overflow:hidden;}
+.tthumb .gly{position:absolute;inset:0;margin:auto;width:56%;height:56%;color:rgba(26,26,26,.8);}
+.tcell .nm{font-weight:600;color:var(--ink);}
+.tcell .sub{font-family:'Space Mono',monospace;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);margin-top:2px;}
+.t-prov{color:var(--muted);}
+.t-status .status{position:static;}
+.chev{color:var(--faint);}
+
+/* ============================ DETAIL ============================ */
+.crumb{display:flex;align-items:center;gap:8px;padding:20px 0 16px;font-size:13px;color:var(--muted);flex-wrap:wrap;}
+.crumb a:hover{color:var(--ink);}
+.crumb .sl{color:var(--faint);}
+.crumb b{color:var(--ink);font-weight:600;}
+.dhero{position:relative;aspect-ratio:24/8;max-height:340px;border-radius:var(--r-xl);overflow:hidden;}
+.dhero .gly{position:absolute;inset:0;margin:auto;width:120px;height:120px;color:rgba(26,26,26,.8);}
+.dhero .ringbg{position:absolute;inset:0;margin:auto;width:200px;height:200px;color:rgba(255,255,255,.5);}
+.dhero .eyebrow{position:absolute;bottom:16px;left:18px;background:rgba(255,255,255,.9);border-radius:var(--r-full);padding:6px 12px;color:var(--muted);}
+.dgrid{display:grid;grid-template-columns:1fr 340px;gap:40px;align-items:start;padding:28px 0 56px;}
+.dtitle .pcard-sport{font-size:11px;}
+.dtitle h1{font-family:'Archivo',sans-serif;font-weight:800;font-size:clamp(28px,4vw,40px);line-height:1.05;letter-spacing:-.02em;margin:8px 0 6px;}
+.dtitle .by{font-size:14px;color:var(--muted);}
+.dtitle .desc{font-size:16px;line-height:1.62;color:var(--ink2);margin:18px 0 0;max-width:62ch;}
+.sect-h{font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);margin:0 0 12px;}
+.recgrid{border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden;}
+.recgrid .rrow{display:grid;grid-template-columns:1fr 1fr;}
+.recgrid .rcell{padding:14px 18px;border-bottom:1px solid var(--line2);}
+.recgrid .rrow .rcell:first-child{border-right:1px solid var(--line2);}
+.recgrid .full{grid-column:1/-1;grid-template-columns:1fr;}
+.recgrid .full .rcell{border-right:none;}
+.recgrid .rrow:last-child .rcell{border-bottom:none;}
+.rcell .k{font-family:'Space Mono',monospace;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);margin-bottom:5px;}
+.rcell .v{font-size:15px;color:var(--ink);font-weight:500;}
+.rcell .v.sched{display:flex;align-items:center;gap:9px;}
+.rcell .v.sched svg{width:16px;height:16px;color:var(--orange);flex:0 0 auto;}
+
+.rail{position:sticky;top:84px;display:flex;flex-direction:column;gap:14px;}
+.rcard{background:var(--paper);border:1px solid var(--line);border-radius:var(--r-lg);padding:18px;}
+.rcard .pname{font-family:'Archivo',sans-serif;font-weight:700;font-size:17px;line-height:1.2;margin:8px 0 0;}
+.tag{display:inline-flex;align-items:center;height:22px;padding:0 10px;border-radius:var(--r-full);background:var(--sand);font-size:12px;font-weight:600;color:var(--ink2);margin-top:8px;}
+.rcard .blurb{font-size:14px;color:var(--muted);line-height:1.5;margin:11px 0 14px;}
+.ghost{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;height:42px;border:1px solid var(--line);border-radius:var(--r);font-size:14px;font-weight:600;color:var(--ink);transition:.15s;}
+.ghost:hover{border-color:var(--ink);}
+.cta{display:flex;align-items:center;justify-content:center;width:100%;height:50px;background:var(--orange);color:#fff;border-radius:var(--r);font-size:16px;font-weight:700;transition:background .15s,transform .15s;}
+.cta:hover{background:var(--orange-ink);}
+.facts{display:flex;flex-direction:column;}
+.facts .f{display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-bottom:1px solid var(--line2);font-size:14px;}
+.facts .f:last-child{border-bottom:none;}
+.facts .f .fk{color:var(--muted);}
+.facts .f .fv{color:var(--ink);font-weight:600;}
+.minimap{position:relative;height:128px;border-radius:var(--r);overflow:hidden;border:1px solid var(--line);background:#E6EBE6;}
+.minimap .terrain{position:absolute;inset:0;background:radial-gradient(120px 80px at 60% 40%,#DDE7DC,transparent 70%),linear-gradient(0deg,#E9ECE7,#E6EBE6);}
+.minimap .mk2{position:absolute;left:50%;top:52%;transform:translate(-50%,-100%);}
+.minimap .mk2 svg{width:26px;height:32px;}
+.minimap .city{position:absolute;bottom:10px;left:10px;background:rgba(255,255,255,.9);border-radius:var(--r-full);padding:5px 10px;font-size:11px;font-weight:600;color:var(--muted);}
+.fund .fitem{padding:11px 0;border-bottom:1px solid var(--line2);}
+.fund .fitem:last-child{border-bottom:none;}
+.fund .fitem .fn{font-size:14px;font-weight:600;color:var(--ink);}
+.fund .fitem .fm{font-size:13px;color:var(--muted);margin-top:2px;}
+.related h2{font-family:'Archivo',sans-serif;font-weight:700;font-size:22px;letter-spacing:-.01em;margin:0 0 18px;}
+.drate{display:flex;align-items:center;gap:8px;margin:11px 0 0;font-size:14px;color:var(--ink);flex-wrap:wrap;}
+.drate .verified{display:inline-flex;align-items:center;gap:5px;color:var(--muted);font-size:13px;}
+.drate .verified svg{width:14px;height:14px;color:var(--orange);}
+.qfacts{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0 0;}
+.qf{display:inline-flex;align-items:center;gap:7px;background:var(--sand);border-radius:var(--r-full);padding:7px 13px;font-size:14px;font-weight:500;color:var(--ink);}
+.qf svg{width:14px;height:14px;color:var(--muted);flex:0 0 auto;}
+.dsec{margin-top:34px;}
+.access{display:grid;grid-template-columns:1fr 1fr;gap:13px 24px;}
+.acc-item{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--ink2);}
+.acc-item svg{width:19px;height:19px;color:var(--orange);flex:0 0 auto;}
+.contact .cta{margin-bottom:4px;}
+.cmethods{display:flex;flex-direction:column;}
+.cm{display:flex;align-items:center;gap:12px;padding:10px 2px;font-size:14px;color:var(--ink);border-top:1px solid var(--line2);transition:color .12s;}
+.cm:first-child{border-top:none;}
+.cm:hover{color:var(--orange);}
+.cm svg{width:17px;height:17px;color:var(--muted);flex:0 0 auto;}
+.cm:hover svg{color:var(--orange);}
+.locard .minimap{height:120px;margin-top:11px;}
+.locrow{display:flex;align-items:center;justify-content:space-between;margin-top:12px;font-size:14px;color:var(--ink);}
+.dirlink{display:inline-flex;align-items:center;gap:6px;font-size:14px;font-weight:600;color:var(--ink);}
+.dirlink:hover{color:var(--orange);}
+.dirlink svg{width:15px;height:15px;}
+.suggest{display:flex;align-items:center;justify-content:center;gap:8px;font-size:13px;color:var(--muted);padding:10px;border:1px dashed var(--line);border-radius:var(--r);transition:.15s;}
+.suggest:hover{color:var(--ink);border-color:var(--sand2);}
+.suggest svg{width:14px;height:14px;flex:0 0 auto;}
+
+/* ============================ DATABASE ============================ */
+.db{display:grid;grid-template-columns:228px 1fr;gap:0;border-top:1px solid var(--line);min-height:calc(100vh - var(--hdr));}
+.db-side{border-right:1px solid var(--line);padding:22px 14px;}
+.db-side .eyebrow{padding:0 10px 10px;}
+.tbl{display:flex;align-items:center;gap:10px;padding:10px 10px;border-radius:var(--r);color:var(--ink2);font-size:14px;font-weight:500;position:relative;transition:background .12s;cursor:pointer;}
+.tbl:hover{background:var(--sand);}
+.tbl.on{background:var(--sand);font-weight:600;}
+.tbl.on::before{content:"";position:absolute;left:0;top:8px;bottom:8px;width:3px;border-radius:3px;background:var(--orange);}
+.tbl svg{width:17px;height:17px;color:var(--muted);}
+.tbl .ct{margin-left:auto;font-size:13px;color:var(--faint);}
+.db-main{padding:26px 28px;min-width:0;}
+.db-head{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:20px;flex-wrap:wrap;}
+.db-head h1{font-family:'Archivo',sans-serif;font-weight:700;font-size:24px;letter-spacing:-.01em;margin:0;display:flex;align-items:baseline;gap:12px;}
+.db-head h1 .rec{font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);font-weight:400;}
+.gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;}
+.gcard{background:var(--paper);border:1px solid var(--line);border-radius:var(--r-lg);padding:16px 18px;}
+.gcard h3{font-size:16px;font-weight:600;margin:0 0 4px;}
+.gcard .field{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px 0;border-top:1px solid var(--line2);font-size:14px;}
+.gcard .field .gk{font-family:'Space Mono',monospace;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);}
+.gcard .field .gv{color:var(--ink);text-align:right;font-weight:500;}
+.gcard .field .gv .tag{margin:0;}
+.dbtable{background:var(--paper);border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden;}
+.dbtable table{width:100%;border-collapse:collapse;}
+.dbtable th{text-align:left;font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--faint);font-weight:400;padding:13px 16px;border-bottom:1px solid var(--line);}
+.dbtable td{padding:12px 16px;border-bottom:1px solid var(--line2);font-size:14px;}
+.dbtable tr:last-child td{border-bottom:none;}
+.dbtable .tag{margin:0;}
+
+/* ============================ FOOTER ============================ */
+.foot{border-top:1px solid var(--line);background:var(--paper);margin-top:24px;}
+.foot-in{display:flex;align-items:flex-start;justify-content:space-between;gap:44px 32px;padding-top:56px;padding-bottom:48px;flex-wrap:wrap;}
+.foot .brand b{font-size:15px;}
+.foot .tagline{font-size:14px;color:var(--muted);margin-top:12px;max-width:340px;line-height:1.5;}
+.foot-links{display:flex;gap:36px 48px;flex-wrap:wrap;}
+.foot-col h4{font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);font-weight:400;margin:0 0 12px;}
+.foot-col a{display:block;font-size:14px;color:var(--ink2);padding:6px 0;}
+.foot-col a:hover{color:var(--orange);}
+.foot-cta{display:grid;grid-template-columns:1fr 1fr;gap:32px 64px;padding:48px 0;border-bottom:1px solid var(--line);}
+.fc-block h3{font-family:'Archivo',sans-serif;font-size:19px;font-weight:700;letter-spacing:-.01em;color:var(--ink);margin:0 0 6px;}
+.fc-block p{font-size:14px;color:var(--muted);margin:0 0 16px;line-height:1.5;max-width:380px;}
+.fc-sub{display:flex;gap:8px;max-width:400px;}
+.fc-sub input{flex:1 1 auto;height:42px;padding:0 14px;border:1px solid var(--line);border-radius:var(--r);background:var(--paper);color:var(--ink);font-size:14px;min-width:0;}
+.fc-sub input::placeholder{color:var(--faint);}
+.fc-sub input:focus{outline:none;border-color:var(--ink);}
+.subbtn{flex:0 0 auto;height:42px;padding:0 20px;border-radius:var(--r);background:var(--ink);color:#fff;font-size:14px;font-weight:600;transition:background .15s;}
+.subbtn:hover{background:#000;}
+.fc-thanks{display:flex;align-items:center;height:42px;font-size:14px;font-weight:600;color:var(--ink);}
+
+/* ============================ RESPONSIVE ============================ */
+@media (max-width:900px){
+  .maplayout{grid-template-columns:1fr;}
+  .map-col{position:static;height:300px;min-height:0;order:-1;margin-bottom:6px;}
+  .dgrid{grid-template-columns:1fr;gap:28px;}
+  .rail{position:static;}
+  .db{grid-template-columns:1fr;}
+  .db-side{border-right:none;border-bottom:1px solid var(--line);display:flex;gap:6px;overflow-x:auto;padding:12px;}
+  .db-side .eyebrow{display:none;}
+  .tbl{flex:0 0 auto;}
+  .tbl.on::before{display:none;}
+}
+@media (max-width:720px){
+  :root{--hdr:64px;}
+  .hdr .brand{display:none;}
+  .search{flex:1 1 100%;max-width:none;min-width:0;}
+  .search .loc span{display:none;}
+  .search input{min-width:0;}
+  .hero{padding:46px 0 30px;}
+  .hsearch{display:none;}
+  .frow-titlerow h2{font-size:20px;}
+  .frow{margin-bottom:34px;}
+  .frow-scroll{gap:16px;}
+  .frow-scroll>.pcard{flex-basis:78vw;width:78vw;max-width:300px;}
+  .foot-cta{grid-template-columns:1fr;gap:26px;padding:36px 0;}
+  .foot-in{padding-top:44px;padding-bottom:40px;}
+  .foot-links{width:100%;justify-content:space-between;gap:32px 16px;}
+  .recgrid .rrow{grid-template-columns:1fr;}
+  .access{grid-template-columns:1fr;}
+  .recgrid .rrow .rcell:first-child{border-right:none;}
+  /* discover list view: stacked cards on phones (no crushed columns) */
+  .tablewrap{border:none;background:transparent;overflow:visible;margin-bottom:32px;}
+  table.list thead{display:none;}
+  table.list,table.list tbody{display:block;}
+  table.list tr{display:block;background:var(--paper);border:1px solid var(--line);border-radius:var(--r-lg);padding:14px 16px;margin-bottom:12px;}
+  table.list tbody tr:hover{background:var(--paper);}
+  table.list td{display:block;padding:0;border:none;font-size:14px;}
+  table.list td:nth-child(1){margin-bottom:10px;}
+  table.list td.t-prov{color:var(--muted);font-size:14px;margin-bottom:8px;}
+  table.list td:nth-child(3),table.list td:nth-child(4),table.list td.t-status{display:inline-block;vertical-align:middle;font-size:13px;color:var(--muted);}
+  table.list td:nth-child(4)::before,table.list td.t-status::before{content:"\00b7";margin:0 7px;color:var(--faint);}
+  table.list td.t-status .status{position:static;display:inline-block;}
+  table.list td.chev{display:none;}
+  /* database table view: horizontal scroll (Gallery is the card view) */
+  .dbtable{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  .dbtable table{min-width:660px;}
+  .dbtable th,.dbtable td{white-space:nowrap;}
+}
+@media (prefers-color-scheme: dark){
+  :root{color-scheme:light;}
+  html,body{background:var(--mist)!important;color:var(--ink)!important;}
+  .hdr,.foot,.pcard-body,.rcard,.gcard,.tablewrap,.dbtable,.filters{background:var(--paper)!important;}
+}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to results</a>
+
+<header class="hdr">
+  <div class="wrap hdr-in">
+    <a class="brand" href="#" data-home aria-label="Adaptive Sports Near Me home"><b>Adaptive Sports Near Me</b></a>
+
+    <div class="search" role="search">
+      <button class="loc" id="locBtn" aria-label="Change location">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s7-5.7 7-11a7 7 0 1 0-14 0c0 5.3 7 11 7 11Z"/><circle cx="12" cy="10" r="2.5"/></svg>
+        <span id="locTxt">Denver, CO</span>
+      </button>
+      <span class="sep"></span>
+      <input id="q" type="text" placeholder="Search a sport, program or provider" aria-label="Search programs">
+      <button class="go" id="goBtn" aria-label="Search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></button>
+    </div>
+  </div>
+</header>
+
+<main id="view"></main>
+
+<footer class="foot">
+  <div class="wrap">
+    <div class="foot-cta">
+      <div class="fc-block">
+        <h3>Run an adaptive sports program?</h3>
+        <p>Get it listed in the directory. It is free and takes a few minutes.</p>
+        <a class="addbtn" href="#" data-noop><svg class="plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg><span>Add a program</span></a>
+      </div>
+      <div class="fc-block">
+        <h3>Stay in the loop</h3>
+        <p>New programs, funding, and the occasional update. No spam.</p>
+        <div class="fc-sub" id="subWrap">
+          <input type="email" id="subEmail" placeholder="you@email.com" aria-label="Email address">
+          <button type="button" class="subbtn" data-subscribe-go>Subscribe</button>
+        </div>
+      </div>
+    </div>
+    <div class="foot-in">
+      <div>
+        <a class="brand" href="#" data-home><b>Adaptive Sports Near Me</b></a>
+        <p class="tagline">An open directory of adaptive sports programs across the country. No logins, no walls. Built for the community.</p>
+      </div>
+      <div class="foot-links">
+        <div class="foot-col"><h4>Explore</h4><a href="#" data-home>Discover</a><a href="#" data-section="database">Browse all</a><a href="#">Browse by sport</a><a href="#">Events</a><a href="#">Funding</a></div>
+        <div class="foot-col"><h4>Programs</h4><a href="#">Update a listing</a><a href="#">Content review</a></div>
+        <div class="foot-col"><h4>About</h4><a href="#">The project</a><a href="#">Contact</a><a href="#">Accessibility</a></div>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+/* ============================ DATA ============================ */
+const SPORTS = [
+  {key:"basketball", label:"Basketball"},
+  {key:"cycling",    label:"Cycling"},
+  {key:"sledhockey", label:"Sled Hockey"},
+  {key:"swimming",   label:"Swimming"},
+  {key:"tennis",     label:"Tennis"},
+  {key:"pickleball", label:"Pickleball"},
+  {key:"climbing",   label:"Climbing"},
+  {key:"skiing",     label:"Skiing"},
+  {key:"soccer",     label:"Soccer"},
+];
+const PROVIDERS = {
+  "Colorado Wheelchair Basketball Assn.":{type:"Club", city:"Denver, CO", blurb:"The state's governing body for wheelchair basketball, running youth, adult and competitive divisions."},
+  "Denver Parks & Rec Adaptive":{type:"Public", city:"Denver, CO", blurb:"City run adaptive recreation across racquet sports, swimming and team play."},
+  "Adaptive Adventures":{type:"Nonprofit", city:"Lakewood, CO", blurb:"Outdoor adaptive programs in cycling, skiing and paddling across the Front Range."},
+  "Rocky Mountain Sled Hockey":{type:"Club", city:"Littleton, CO", blurb:"Competitive and learn to play sled hockey for all ages and abilities."},
+  "Craig Hospital Rec Therapy":{type:"Hospital", city:"Englewood, CO", blurb:"Recreation therapy and community sport for patients and the wider community."},
+  "Mountain Access Project":{type:"Nonprofit", city:"Golden, CO", blurb:"Adaptive climbing nights with trained volunteers and adaptive belay systems."},
+};
+const GRANTS = [
+  {name:"Challenged Athletes Foundation Grant", meta:"Up to $5,000 \u00b7 Rolling"},
+  {name:"Kelly Brush Active Fund", meta:"Up to $5,000 \u00b7 Mar 1 / Sep 1"},
+  {name:"Move United Equipment Fund", meta:"Varies \u00b7 Rolling"},
+  {name:"High Fives Empowerment Grant", meta:"Up to $7,500 \u00b7 Rolling"},
+  {name:"Travis Roy Quality of Life", meta:"Up to $5,000 \u00b7 Spring / Fall"},
+];
+const EVENTS = [
+  {name:"Rocky Mountain Sled Classic", date:"Mar 14", city:"Littleton, CO", sport:"Sled Hockey"},
+  {name:"Denver Open Pickleball", date:"Jun 7", city:"Denver, CO", sport:"Wheelchair Pickleball"},
+  {name:"Front Range Hoops Jam", date:"Apr 19", city:"Denver, CO", sport:"Wheelchair Basketball"},
+  {name:"Handcycle Century", date:"Sep 20", city:"Lakewood, CO", sport:"Adaptive Cycling"},
+  {name:"Para Swim Invitational", date:"Feb 22", city:"Englewood, CO", sport:"Para Swimming"},
+];
+const EQUIPMENT = [
+  {item:"Sport wheelchair (basketball)", type:"Loaner", source:"Colorado WBA", cost:"Free"},
+  {item:"Handcycle", type:"Loaner", source:"Adaptive Adventures", cost:"Free"},
+  {item:"Hockey sled", type:"Provided", source:"Rocky Mountain Sled Hockey", cost:"Season fee"},
+  {item:"Mono ski", type:"Rental", source:"Winter Park Resort", cost:"$45 / day"},
+  {item:"Throwing frame", type:"Loaner", source:"Denver Parks & Rec", cost:"Free"},
+];
+const RESOURCES = [
+  {title:"Funding guide", type:"Guide"},
+  {title:"First timer checklist", type:"Guide"},
+  {title:"Coaches directory", type:"Directory"},
+  {title:"Transport options", type:"Guide"},
+];
+const PROGRAMS = [
+  {id:"nuggets-youth", name:"Denver Rolling Nuggets (Youth)", sport:"basketball", sportLabel:"Wheelchair Basketball", category:"Team", provider:"Colorado Wheelchair Basketball Assn.", city:"Denver, CO", dist:4, cost:"Free", free:true, status:"Open", ages:"Ages 8\u201318", season:"Year round", format:"League", levels:["Beginner","Intermediate"], equipment:"Provided", schedule:"Sundays, 1\u20133pm \u00b7 Carla Madison Rec Center", desc:"Developmental youth wheelchair basketball with two divisions. Sport chairs and coaching provided; new players welcome any week."},
+  {id:"wbb-adult", name:"Mile High WBB League (Adult)", sport:"basketball", sportLabel:"Wheelchair Basketball", category:"Team", provider:"Colorado Wheelchair Basketball Assn.", city:"Denver, CO", dist:5, cost:"$40 / season", free:false, status:"Waitlist", ages:"Adults 18+", season:"Sep\u2013Apr", format:"League", levels:["Intermediate","Competitive"], equipment:"Provided", schedule:"Tuesdays, 7\u20139pm \u00b7 Denver Rec Center", desc:"Adult league play across two competitive tiers. Rosters fill fast; join the waitlist for the next opening."},
+  {id:"pb-open", name:"Pickleball Open Play", sport:"pickleball", sportLabel:"Wheelchair Pickleball", category:"Racquet", provider:"Denver Parks & Rec Adaptive", city:"Denver, CO", dist:5, cost:"$10 / session", free:false, status:"Open", ages:"All ages", season:"Year round", format:"Drop in", levels:["Beginner","Intermediate"], equipment:"Loaner paddles", schedule:"Saturdays, 10am\u201312pm \u00b7 Central Park Rec", desc:"Open wheelchair pickleball for all ages and levels. Paddles and balls on hand, just show up and play."},
+  {id:"hoops-clinic", name:"Adaptive Hoops Clinic", sport:"basketball", sportLabel:"Wheelchair Basketball", category:"Team", provider:"Denver Parks & Rec Adaptive", city:"Denver, CO", dist:6, cost:"Free", free:true, status:"Open", ages:"Ages 6\u201314", season:"Year round", format:"Clinic", levels:["Beginner"], equipment:"Provided", schedule:"Thursdays, 4\u20135:30pm \u00b7 MLK Rec Center", desc:"Skills clinic for new and young players. Coaches cover handling, passing and shooting in a low pressure setting."},
+  {id:"swim-learn", name:"Adaptive Learn to Swim", sport:"swimming", sportLabel:"Para Swimming", category:"Individual", provider:"Denver Parks & Rec Adaptive", city:"Denver, CO", dist:6, cost:"$25 / session", free:false, status:"Open", ages:"All ages", season:"Year round", format:"Lessons", levels:["Beginner"], equipment:"Not required", schedule:"Mondays, 5\u20136pm \u00b7 Glenarm Pool", desc:"One on one and small group swim lessons with adaptive instructors. Water entry support available."},
+  {id:"tennis-ladder", name:"Wheelchair Tennis Ladder", sport:"tennis", sportLabel:"Wheelchair Tennis", category:"Racquet", provider:"Denver Parks & Rec Adaptive", city:"Denver, CO", dist:7, cost:"$30 / season", free:false, status:"Open", ages:"Adults 18+", season:"May\u2013Sep", format:"Ladder", levels:["Intermediate","Competitive"], equipment:"Bring your own", schedule:"Wednesdays, 6\u20138pm \u00b7 Gates Tennis Center", desc:"Competitive ladder for returning players. Match yourself against players at your level through the season."},
+  {id:"swim-club", name:"Para Swim Club", sport:"swimming", sportLabel:"Para Swimming", category:"Individual", provider:"Craig Hospital Rec Therapy", city:"Englewood, CO", dist:8, cost:"$60 / month", free:false, status:"Waitlist", ages:"Ages 12+", season:"Year round", format:"Club", levels:["Intermediate","Competitive"], equipment:"Not required", schedule:"Tue/Thu, 6\u20137:30pm \u00b7 Craig Aquatics", desc:"Structured training for swimmers building toward meets. Coached sets four times a week."},
+  {id:"handcycle-sat", name:"Handcycle Saturdays", sport:"cycling", sportLabel:"Adaptive Cycling", category:"Endurance", provider:"Adaptive Adventures", city:"Lakewood, CO", dist:9, cost:"Free (loaner bikes)", free:true, status:"Seasonal", ages:"All ages", season:"May\u2013Oct", format:"Group ride", levels:["Beginner","Intermediate"], equipment:"Loaner bikes", schedule:"Saturdays, 9am \u00b7 Bear Creek Trail", desc:"Group handcycle rides on flat paved trails. Loaner bikes available, first come first served."},
+  {id:"sled-front", name:"Front Range Sled Hockey", sport:"sledhockey", sportLabel:"Sled Hockey", category:"Team", provider:"Rocky Mountain Sled Hockey", city:"Littleton, CO", dist:14, cost:"$150 / season", free:false, status:"Open", ages:"Ages 14+", season:"Oct\u2013Mar", format:"League", levels:["Intermediate","Competitive"], equipment:"Provided", schedule:"Fridays, 8\u20139:30pm \u00b7 South Suburban Ice", desc:"Competitive sled hockey for experienced skaters. Sleds and sticks provided for the season."},
+  {id:"sled-learn", name:"Learn to Sled Hockey", sport:"sledhockey", sportLabel:"Sled Hockey", category:"Team", provider:"Rocky Mountain Sled Hockey", city:"Littleton, CO", dist:14, cost:"Free", free:true, status:"Open", ages:"All ages", season:"Oct\u2013Mar", format:"Clinic", levels:["Beginner"], equipment:"Provided", schedule:"Sundays, 5\u20136pm \u00b7 South Suburban Ice", desc:"First time on the ice? This intro session covers balance, gliding and stick handling on a sled."},
+  {id:"climb-night", name:"Adaptive Climb Night", sport:"climbing", sportLabel:"Adaptive Climbing", category:"Individual", provider:"Mountain Access Project", city:"Golden, CO", dist:12, cost:"$15 / session", free:false, status:"Open", ages:"Ages 10+", season:"Year round", format:"Drop in", levels:["Beginner","Intermediate"], equipment:"Provided", schedule:"Wednesdays, 6\u20138pm \u00b7 Earth Treks Golden", desc:"Top rope climbing with adaptive belay systems and trained volunteers. All experience levels welcome."},
+  {id:"ski-day", name:"Adaptive Ski Days", sport:"skiing", sportLabel:"Adaptive Skiing", category:"Endurance", provider:"Adaptive Adventures", city:"Winter Park, CO", dist:22, cost:"$45 / day", free:false, status:"Seasonal", ages:"Ages 6+", season:"Dec\u2013Mar", format:"Lessons", levels:["Beginner","Intermediate"], equipment:"Provided", schedule:"Weekends \u00b7 Winter Park Resort", desc:"Sit ski and stand ski lessons with certified adaptive instructors. Equipment and lift access included."},
+  {id:"soccer-league", name:"Powerchair Soccer League", sport:"soccer", sportLabel:"Powerchair Soccer", category:"Team", provider:"Denver Parks & Rec Adaptive", city:"Denver, CO", dist:10, cost:"$25 / season", free:false, status:"Open", ages:"All ages", season:"Year round", format:"League", levels:["Beginner","Intermediate","Competitive"], equipment:"Guards provided", schedule:"Saturdays, 1\u20133pm \u00b7 Hiawatha Davis Rec", desc:"Powerchair soccer for power wheelchair users. Foot guards provided; bring your everyday chair."},
+];
+const TABLE_META = [
+  {key:"sports", label:"Sports", count:11, icon:"chair"},
+  {key:"programs", label:"Programs", count:13, icon:"people"},
+  {key:"providers", label:"Providers", count:6, icon:"building"},
+  {key:"events", label:"Events", count:5, icon:"cal"},
+  {key:"equipment", label:"Equipment", count:5, icon:"dumb"},
+  {key:"grants", label:"Grants", count:5, icon:"price"},
+  {key:"resources", label:"Resources", count:4, icon:"book"},
+];
+const MAPPOS = {
+  "nuggets-youth":{x:52,y:40},"wbb-adult":{x:59,y:32},"pb-open":{x:45,y:51},
+  "hoops-clinic":{x:64,y:57},"swim-learn":{x:39,y:45},"tennis-ladder":{x:69,y:44},
+  "swim-club":{x:55,y:71},"handcycle-sat":{x:29,y:60},"sled-front":{x:49,y:82},
+  "sled-learn":{x:57,y:79},"climb-night":{x:26,y:37},"ski-day":{x:17,y:19},"soccer-league":{x:43,y:64},
+};
+const SPGRAD = {basketball:"g-warm",pickleball:"g-warm",tennis:"g-sand",swimming:"g-cool",cycling:"g-sand",skiing:"g-cool",sledhockey:"g-cool",climbing:"g-sand",soccer:"g-sand"};
+
+/* ============================ ICONS ============================ */
+function ring(){ return '<circle cx="50" cy="50" r="38" fill="none" stroke="currentColor" stroke-width="4"/><circle class="dot" cx="74" cy="21" r="6.5" fill="currentColor"/>'; }
+const GLYPH = {
+  basketball: '<g fill="none" stroke="currentColor" stroke-width="3.6" stroke-linecap="round"><circle cx="50" cy="50" r="15"/><line x1="50" y1="35" x2="50" y2="65"/><line x1="35" y1="50" x2="65" y2="50"/><path d="M38 39 Q50 50 38 61"/><path d="M62 39 Q50 50 62 61"/></g>',
+  cycling: '<g fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="37" cy="60" r="9"/><circle cx="63" cy="60" r="9"/><path d="M37 60 L48 60 L43 45 L60 45 L48 60 M60 45 L63 60 M40 44 L46 44 M57 43 L63 43"/></g>',
+  sledhockey: '<g fill="none" stroke="currentColor" stroke-width="3.6" stroke-linecap="round"><line x1="37" y1="37" x2="60" y2="59"/><line x1="63" y1="37" x2="40" y2="59"/><line x1="60" y1="59" x2="66" y2="61"/><line x1="40" y1="59" x2="34" y2="61"/></g><rect x="44" y="63" width="12" height="4" rx="2" fill="currentColor"/>',
+  swimming: '<g fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="43" cy="41" r="4.5" fill="currentColor" stroke="none"/><path d="M39 52 L52 47 L61 52"/><path d="M32 60 q5 -4 9 0 q4 4 9 0 q4 -4 9 0 q4 4 9 0"/><path d="M32 66 q5 -4 9 0 q4 4 9 0 q4 -4 9 0 q4 4 9 0"/></g>',
+  tennis: '<g fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round"><ellipse cx="46" cy="43" rx="11" ry="13"/><line x1="46" y1="56" x2="40" y2="67"/></g><circle cx="63" cy="61" r="5" fill="currentColor"/>',
+  pickleball: '<g stroke-linecap="round" stroke-linejoin="round"><rect x="34" y="32" width="22" height="26" rx="9" fill="none" stroke="currentColor" stroke-width="3.6"/><line x1="45" y1="58" x2="45" y2="68" stroke="currentColor" stroke-width="4.6"/><circle cx="64" cy="58" r="6" fill="var(--orange)" stroke="none"/><circle cx="62" cy="56" r="1" fill="#fff"/><circle cx="66" cy="57" r="1" fill="#fff"/><circle cx="63" cy="60" r="1" fill="#fff"/></g>',
+  climbing: '<g fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="50" cy="36" r="4.5" fill="currentColor" stroke="none"/><path d="M50 41 L47 54 M50 44 L59 39 M50 47 L42 50 M47 54 L53 63 M47 54 L41 60"/><line x1="66" y1="30" x2="66" y2="70" stroke-width="3"/></g>',
+  skiing: '<g fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="47" cy="35" r="4.5" fill="currentColor" stroke="none"/><path d="M47 40 L51 52 M47 43 L39 39 M51 46 L61 43 M51 52 L45 60 M51 52 L59 58 M37 65 L60 60 M40 39 L36 50"/></g>',
+  soccer: '<g fill="none" stroke="currentColor" stroke-width="3.2" stroke-linejoin="round"><circle cx="50" cy="50" r="16"/><polygon points="50,42 56,47 54,54 46,54 44,47" fill="currentColor" stroke="none"/><path d="M50 34 L50 42 M46 54 L43 62 M54 54 L62 56 M44 47 L36 44 M56 47 L63 50"/></g>',
+};
+function orbit(key, cls){ return '<svg class="'+(cls||'')+'" viewBox="0 0 100 100" aria-hidden="true">'+ring()+(GLYPH[key]||'')+'</svg>'; }
+function glyph(key, cls){ return '<svg class="'+(cls||'')+'" viewBox="0 0 100 100" aria-hidden="true">'+(GLYPH[key]||'')+'</svg>'; }
+function ringBg(cls){ return '<svg class="'+(cls||'')+'" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="40" fill="none" stroke="currentColor" stroke-width="2"/></svg>'; }
+const NAVICON = {
+  chair:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="4" r="1.6"/><path d="M10 7v5h6M10 9l-3 9M10 12l4 6h4"/><circle cx="10" cy="17" r="4.5"/></svg>',
+  people:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.2"/><path d="M3 20a6 6 0 0 1 12 0M15 20a5 5 0 0 1 6-3.5"/></svg>',
+  building:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="3" width="14" height="18" rx="1.5"/><path d="M9 7h2M13 7h2M9 11h2M13 11h2M9 15h2M13 15h2"/></svg>',
+  cal:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="5" width="16" height="16" rx="2"/><path d="M4 9h16M9 3v4M15 3v4"/></svg>',
+  dumb:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m7 7 10 10M4 8l-1 1 4 4-4 4 1 1M20 16l1-1-4-4 4-4-1-1"/></svg>',
+  price:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12V5a2 2 0 0 1 2-2h7l9 9-9 9-9-9Z"/><circle cx="8" cy="8" r="1.4"/></svg>',
+  book:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5a2 2 0 0 1 2-2h6v18H6a2 2 0 0 0-2 2V5ZM20 5a2 2 0 0 0-2-2h-6v18h6a2 2 0 0 1 2 2V5Z"/></svg>',
+  grid:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>',
+  map:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2Z"/><path d="M9 4v14M15 6v14"/></svg>',
+  rows:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>',
+  sliders:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 8h10M18 8h2M4 16h2M10 16h10"/><circle cx="16" cy="8" r="2"/><circle cx="8" cy="16" r="2"/></svg>',
+  compass:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="m15 9-2 5-4 2 2-5 4-2Z"/></svg>',
+  calsm:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="5" width="16" height="16" rx="2"/><path d="M4 9h16M9 3v4M15 3v4"/></svg>',
+  pin:'<svg viewBox="0 0 30 36"><path d="M15 0C7 0 1 6 1 14c0 9 14 22 14 22s14-13 14-22C29 6 23 0 15 0Z" fill="#1A1A1A"/><circle cx="15" cy="14" r="5" fill="#fff"/></svg>',
+};
+const HEART='<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20s-7-4.6-9.3-9C1 7.6 2.7 4.5 6 4.5c2 0 3.3 1.1 4 2.4.7-1.3 2-2.4 4-2.4 3.3 0 5 3.1 3.3 6.5C19 15.4 12 20 12 20Z"/></svg>';
+
+/* ============================ STATE + HELPERS ============================ */
+const state = { section:"discover", layout:"grid", sport:"all", q:"", dist:"any", cost:"any", level:"any", filtersOpen:false, sort:"rec", db:"programs", dbView:"gallery", programId:null, loc:"Denver, CO", see:null };
+const saved = new Set();
+function nd(s){ return (s||'').replace(/[\u2013\u2014]/g,' to '); }
+function statusCls(s){ return s==='Open'?'st-open':s==='Waitlist'?'st-wait':'st-seas'; }
+function pill(s){ return '<span class="status '+statusCls(s)+'">'+s+'</span>'; }
+function heartBtn(id){ const on=saved.has(id)?' on':''; return '<button class="heart'+on+'" data-heart="'+id+'" aria-pressed="'+saved.has(id)+'" aria-label="Save program">'+HEART+'</button>'; }
+function media(p, kind){
+  const ph = p.photo ? '<img class="pcard-img" src="'+p.photo+'" alt="" loading="lazy">' : '';
+  return '<div class="'+(kind||'pcard-media')+' '+SPGRAD[p.sport]+(p.photo?' has-photo':'')+'">'+ph+ringBg('ringbg')+glyph(p.sport,'gly')+'</div>';
+}
+function filtered(){
+  let list = PROGRAMS.slice();
+  if(state.sport!=='all') list = list.filter(p=>p.sport===state.sport);
+  if(state.q.trim()){ const q=state.q.toLowerCase(); list=list.filter(p=>(p.name+' '+p.sportLabel+' '+p.provider+' '+p.city).toLowerCase().includes(q)); }
+  if(state.dist!=='any'){ const m={s:5,m:10,l:25}[state.dist]; list=list.filter(p=>p.dist<=m); }
+  if(state.cost==='free') list=list.filter(p=>p.free);
+  if(state.level!=='any') list=list.filter(p=>p.levels.map(l=>l.toLowerCase()).includes(state.level));
+  if(state.sort==='dist') list.sort((a,b)=>a.dist-b.dist);
+  if(state.sort==='name') list.sort((a,b)=>a.name.localeCompare(b.name));
+  return list;
+}
+function activeFilterCount(){ let n=0; if(state.dist!=='any')n++; if(state.cost!=='any')n++; if(state.level!=='any')n++; return n; }
+
+/* ============================ RENDER: DISCOVER ============================ */
+function catBar(){
+  const all='<button class="cat'+(state.sport==='all'?' on':'')+'" data-sport="all">'+NAVICON.compass+'<span>All sports</span></button>';
+  const items=SPORTS.map(s=>'<button class="cat'+(state.sport===s.key?' on':'')+'" data-sport="'+s.key+'">'+orbit(s.key,'ic')+'<span>'+s.label+'</span></button>').join('');
+  const browse='<span class="cat-sep" aria-hidden="true"></span><button class="cat cat-browse" data-section="database">'+NAVICON.grid+'<span>Browse all</span></button>';
+  return '<div class="catbar"><div class="wrap catbar-in"><div class="cats">'+all+items+browse+'</div></div></div>';
+}
+function toolbar(list){
+  const fc=activeFilterCount();
+  return '<div class="toolbar">'
+    +'<div class="count"><b>'+list.length+'</b> '+(list.length===1?'program':'programs')+' near '+state.loc+'</div>'
+    +'<div class="tools">'
+      +'<button class="btn-pill" id="filtBtn" aria-expanded="'+state.filtersOpen+'">'+NAVICON.sliders+'Filters'+(fc?'<span class="badge">'+fc+'</span>':'')+'</button>'
+      +'<select class="sortsel" id="sortSel" aria-label="Sort">'
+        +'<option value="rec"'+(state.sort==='rec'?' selected':'')+'>Recommended</option>'
+        +'<option value="dist"'+(state.sort==='dist'?' selected':'')+'>Closest first</option>'
+        +'<option value="name"'+(state.sort==='name'?' selected':'')+'>Name A to Z</option>'
+      +'</select>'
+      +'<div class="seg" role="tablist" aria-label="Layout">'
+        +'<button class="'+(state.layout==='grid'?'on':'')+'" data-layout="grid">'+NAVICON.grid+'Grid</button>'
+        +'<button class="'+(state.layout==='map'?'on':'')+'" data-layout="map">'+NAVICON.map+'Map</button>'
+        +'<button class="'+(state.layout==='list'?'on':'')+'" data-layout="list">'+NAVICON.rows+'List</button>'
+      +'</div>'
+    +'</div></div>';
+}
+function filtersPanel(){
+  const d=(v,l)=>'<button class="chip'+(state.dist===v?' on':'')+'" data-dist="'+v+'">'+l+'</button>';
+  const c=(v,l)=>'<button class="chip'+(state.cost===v?' on':'')+'" data-cost="'+v+'">'+l+'</button>';
+  const lv=(v,l)=>'<button class="chip'+(state.level===v?' on':'')+'" data-level="'+v+'">'+l+'</button>';
+  return '<div class="filters'+(state.filtersOpen?' open':'')+'" id="filtPanel">'
+    +'<div class="frow"><span class="flabel">Distance</span>'+d('any','Any')+d('s','Within 5 mi')+d('m','Within 10 mi')+d('l','Within 25 mi')+'</div>'
+    +'<div class="frow"><span class="flabel">Cost</span>'+c('any','Any')+c('free','Free only')+'</div>'
+    +'<div class="frow"><span class="flabel">Level</span>'+lv('any','Any')+lv('beginner','Beginner')+lv('intermediate','Intermediate')+lv('competitive','Competitive')+'</div>'
+    +'</div>';
+}
+function cardItem(p){
+  return '<a class="pcard" href="#" data-prog="'+p.id+'">'+media(p)
+    +'<div class="pcard-body">'
+      +'<div class="pcard-sport">'+p.sportLabel+'</div>'
+      +'<div class="pcard-name">'+p.name+'</div>'
+      +'<div class="pcard-prov">'+p.provider+'</div>'
+      +'<div class="pcard-meta"><span>'+p.dist+' mi</span><span class="d">\u00b7</span><span>'+p.cost+'</span><span class="d">\u00b7</span><span>'+nd(p.ages)+'</span></div>'
+    +'</div></a>';
+}
+function cardGrid(list){
+  if(!list.length) return empty();
+  return '<div class="grid">'+list.map(cardItem).join('')+'</div>';
+}
+const FARROW='<svg class="fa-arrow" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>';
+function frow(title, sub, list, seeall){
+  if(!list.length) return '';
+  const head='<div class="frow-head"><div class="frow-titlerow"><h2>'+title+'</h2>'
+    +(seeall?'<button class="frow-all" type="button" data-seeall="'+seeall+'">See all'+FARROW+'</button>':'')
+    +'</div>'+(sub?'<p class="frow-sub">'+sub+'</p>':'')+'</div>';
+  return '<section class="frow">'+head+'<div class="frow-scroll">'+list.map(cardItem).join('')+'</div></section>';
+}
+function feedRows(){
+  const city=(state.loc.split(',')[0]||'').trim();
+  const beginner=PROGRAMS.filter(p=>p.levels.includes('Beginner'));
+  const popular=PROGRAMS.slice().sort((a,b)=>a.dist-b.dist);
+  const open=PROGRAMS.filter(p=>p.status==='Open');
+  const free=PROGRAMS.filter(p=>p.free);
+  const wbb=PROGRAMS.filter(p=>p.sport==='basketball');
+  return '<div class="wrap feed">'
+    + frow('New to adaptive sports? Start here','Welcoming programs where first timers fit right in', beginner, 'beginner')
+    + frow('Popular in '+city, '', popular, 'popular')
+    + frow('Taking new players right now','Open and ready when you are', open, 'open')
+    + frow('Free to play','No cost to get started', free, 'free')
+    + frow('Wheelchair basketball near you','', wbb, 'sport:basketball')
+    + '</div>';
+}
+function isFeedMode(){ return state.see===null && !state.q.trim() && state.sport==='all' && state.dist==='any' && state.cost==='any' && state.level==='any'; }
+function seeList(){
+  if(state.see==='open') return PROGRAMS.filter(p=>p.status==='Open');
+  return PROGRAMS.slice().sort((a,b)=>a.dist-b.dist);
+}
+function mapLayout(list){
+  if(!list.length) return empty();
+  const cards=list.map((p,i)=>
+    '<div class="mcard" data-prog="'+p.id+'">'
+      +'<div class="mthumb '+SPGRAD[p.sport]+'">'+glyph(p.sport,'gly')+'<span class="mnum">'+(i+1)+'</span></div>'
+      +'<div class="minfo">'
+        +'<div class="pcard-sport">'+p.sportLabel+'</div>'
+        +'<div class="nm">'+p.name+'</div>'
+        +'<div class="sub">'+p.provider+'</div>'
+        +'<div class="mt"><span>'+p.dist+' mi</span><span class="d">\u00b7</span><span>'+p.cost+'</span></div>'
+      +'</div></div>').join('');
+  const markers=list.map((p,i)=>{ const pos=MAPPOS[p.id]||{x:50,y:50}; return '<div class="mk" data-prog="'+p.id+'" style="left:'+pos.x+'%;top:'+pos.y+'%;"><button aria-label="'+p.name+'">'+(i+1)+'</button></div>'; }).join('');
+  const mapEl='<div class="map">'
+    +'<div class="terrain"></div>'
+    +'<div class="park" style="left:8%;top:18%;width:24%;height:26%;"></div>'
+    +'<div class="water" style="left:62%;top:60%;width:34%;height:30%;"></div>'
+    +'<div class="road h" style="top:38%;"></div><div class="road h thin" style="top:64%;"></div>'
+    +'<div class="road v" style="left:48%;"></div><div class="road v thin" style="left:74%;"></div>'
+    +'<div class="mapchip">Map \u00b7 '+state.loc+'</div>'
+    +'<div class="scalebar"><i></i> 5 mi</div>'
+    +markers+'</div>';
+  return '<div class="maplayout"><div class="mlist">'+cards+'</div><div class="map-col">'+mapEl+'</div></div>';
+}
+function listLayout(list){
+  if(!list.length) return empty();
+  const rows=list.map(p=>
+    '<tr data-prog="'+p.id+'">'
+      +'<td><div class="tcell"><div class="tthumb '+SPGRAD[p.sport]+'">'+glyph(p.sport,'gly')+'</div><div><div class="nm">'+p.name+'</div><div class="sub">'+p.sportLabel+'</div></div></div></td>'
+      +'<td class="t-prov">'+p.provider+'</td>'
+      +'<td>'+p.dist+' mi</td>'
+      +'<td>'+p.cost+'</td>'
+      +'<td class="chev" style="text-align:right;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 6 6 6-6 6"/></svg></td>'
+    +'</tr>').join('');
+  return '<div class="tablewrap"><table class="list"><thead><tr><th>Program</th><th>Provider</th><th>Distance</th><th>Cost</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+}
+function empty(){ return '<div style="text-align:center;padding:80px 20px;color:var(--muted);"><div style="font-family:Archivo,sans-serif;font-size:20px;font-weight:700;color:var(--ink);margin-bottom:8px;">No programs match yet</div>Try a wider distance or clear a filter to see more.</div>'; }
+
+function heroSection(){
+  return '<section class="hero"><div class="wrap hero-in">'
+    +'<p class="eyebrow">Find adaptive sport near you</p>'
+    +'<h1>Your place in adaptive sports.</h1>'
+    +'<p class="lede">Adaptive sports programs, events, equipment and funding across the country. Search by where you are and what you want to play.</p>'
+    +'<div class="hsearch" role="search">'
+      +'<button class="loc" id="hlocBtn" type="button" aria-label="Change location"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s7-5.7 7-11a7 7 0 1 0-14 0c0 5.3 7 11 7 11Z"/><circle cx="12" cy="10" r="2.5"/></svg><span>Denver, CO</span></button>'
+      +'<span class="sep"></span>'
+      +'<input id="qHero" type="text" placeholder="Search a sport, program or provider" aria-label="Search programs">'
+      +'<button class="go" id="hgoBtn" type="button" aria-label="Search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></button>'
+    +'</div>'
+    +'<div class="trust"><span><b>2,095+</b> programs</span><span class="tdot">\u00b7</span><span>nationwide</span><span class="tdot">\u00b7</span><span>free to use</span></div>'
+    +'</div></section>';
+}
+function discover(){
+  if(isFeedMode()) return heroSection()+catBar()+feedRows();
+  const list = state.see ? seeList() : filtered();
+  const results = state.layout==='map'?mapLayout(list):state.layout==='list'?listLayout(list):cardGrid(list);
+  return heroSection()+catBar()+'<div class="wrap" id="main">'+toolbar(list)+filtersPanel()+'<div id="results">'+results+'</div></div>';
+}
+function renderResults(){
+  if(state.section!=='discover') return;
+  const list = state.see ? seeList() : filtered();
+  const r=document.getElementById('results');
+  if(r) r.innerHTML = state.layout==='map'?mapLayout(list):state.layout==='list'?listLayout(list):cardGrid(list);
+  const c=document.querySelector('#main .count');
+  if(c) c.innerHTML = '<b>'+list.length+'</b> '+(list.length===1?'program':'programs')+' near '+state.loc;
+}
+function updateHeaderSearch(){
+  const ae=document.activeElement, aeId=ae?ae.id:'';
+  const hide = window.innerWidth>720 && state.section==='discover' && window.scrollY<240 && !state.q.trim() && aeId!=='q';
+  const h=document.querySelector('.hdr'); if(h) h.classList.toggle('hide-search', hide);
+}
+function scrollToResults(){
+  const m=document.getElementById('main'); if(!m) return;
+  const hdr=document.querySelector('.hdr'); const cb=document.querySelector('.catbar');
+  const off=(hdr?hdr.offsetHeight:64)+(cb?cb.offsetHeight:0)+12;
+  const top=m.getBoundingClientRect().top+window.scrollY-off;
+  window.scrollTo({top:Math.max(0,top),behavior:'smooth'});
+}
+
+/* ============================ RENDER: PROGRAM ============================ */
+function accessFeatures(p){ const a=['Step-free entry','Accessible parking','Accessible restrooms','New players welcome anytime']; if(/provided/i.test(p.equipment||'')) a.unshift('Loaner sport chairs'); a.splice(2,0,'Certified adaptive coaches'); return a; }
+function progContact(p){ const s=(p.provider||'').toLowerCase().replace(/[^a-z]+/g,'').slice(0,14)||'program'; return {phone:'(303) 555-0148', email:'hello@'+s+'.org', web:s+'.org'}; }
+
+function program(){
+  const p=PROGRAMS.find(x=>x.id===state.programId); if(!p) return discover();
+  const pv=PROVIDERS[p.provider]||{type:"",blurb:""};
+  const related=PROGRAMS.filter(x=>x.sport===p.sport&&x.id!==p.id).slice(0,3);
+  const relHtml=related.length?'<div class="dsec related"><h2>More '+p.sportLabel.toLowerCase()+' near you</h2>'+cardGrid(related)+'</div>':'';
+  const acc=accessFeatures(p), ct=progContact(p);
+  const CK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>';
+  const I={
+    pin:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s7-5.7 7-11a7 7 0 1 0-14 0c0 5.3 7 11 7 11Z"/><circle cx="12" cy="10" r="2.5"/></svg>',
+    dollar:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 1.6v20.8M16.5 6c0-1.7-2-2.8-4.5-2.8S7.5 4.4 7.5 6.6c0 4.4 9 2.6 9 7 0 2.1-2 3.2-4.5 3.2S7.5 15.7 7.5 14"/></svg>',
+    users:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="9" cy="8" r="3.2"/><path d="M3.6 19a5.4 5.4 0 0 1 10.8 0"/><path d="M16 5.7a3.2 3.2 0 0 1 0 6.3M20.4 19a5.4 5.4 0 0 0-3.9-5.2"/></svg>',
+    layers:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3l9 5-9 5-9-5 9-5z"/><path d="M3 13l9 5 9-5"/></svg>',
+    phone:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M5 3.5h3.5l1.8 4.5-2.3 1.4a11 11 0 0 0 4.6 4.6l1.4-2.3 4.5 1.8V19a1.5 1.5 0 0 1-1.5 1.5A15.5 15.5 0 0 1 3.5 5 1.5 1.5 0 0 1 5 3.5z"/></svg>',
+    mail:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3.5 7l8.5 6 8.5-6"/></svg>',
+    globe:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3c2.6 2.7 2.6 15.3 0 18M12 3c-2.6 2.7-2.6 15.3 0 18"/></svg>',
+    edit:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M4 20h4L18.5 9.5l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg>',
+    arrow:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg>'
+  };
+  const accHtml=acc.map(a=>'<div class="acc-item">'+CK+'<span>'+a+'</span></div>').join('');
+  return '<div class="wrap">'
+    +'<div class="crumb"><a href="#" data-home>Home</a><span class="sl">/</span><a href="#" data-sport-link="'+p.sport+'">'+p.sportLabel+'</a><span class="sl">/</span><b>'+p.name+'</b></div>'
+    +'<div class="dhero '+SPGRAD[p.sport]+'">'+ringBg('ringbg')+glyph(p.sport,'gly')+'<span class="eyebrow">Program</span></div>'
+    +'<div class="dgrid">'
+      +'<div class="dtitle">'
+        +'<div class="pcard-sport">'+p.sportLabel+'</div>'
+        +'<h1>'+p.name+'</h1>'
+        +'<div class="drate"><span class="verified">'+CK+'Listing reviewed Jun 2026</span></div>'
+        +'<div class="by">by '+p.provider+' \u00b7 '+p.city+'</div>'
+        +'<div class="qfacts"><span class="qf">'+I.pin+p.dist+' mi away</span><span class="qf">'+I.dollar+p.cost+'</span><span class="qf">'+I.users+nd(p.ages)+'</span><span class="qf">'+I.layers+p.format+'</span></div>'
+        +'<p class="desc">'+p.desc+'</p>'
+        +'<div class="dsec"><h3 class="sect-h">Record details</h3>'
+        +'<div class="recgrid">'
+          +'<div class="rrow"><div class="rcell"><div class="k">Ages</div><div class="v">'+nd(p.ages)+'</div></div><div class="rcell"><div class="k">Cost</div><div class="v">'+p.cost+'</div></div></div>'
+          +'<div class="rrow"><div class="rcell"><div class="k">Season</div><div class="v">'+nd(p.season)+'</div></div><div class="rcell"><div class="k">Format</div><div class="v">'+p.format+'</div></div></div>'
+          +'<div class="rrow"><div class="rcell"><div class="k">Skill levels</div><div class="v">'+p.levels.join(', ')+'</div></div><div class="rcell"><div class="k">Equipment</div><div class="v">'+p.equipment+'</div></div></div>'
+          +'<div class="rrow full"><div class="rcell"><div class="k">Schedule</div><div class="v sched">'+NAVICON.calsm+'<span>'+nd(p.schedule)+'</span></div></div></div>'
+        +'</div></div>'
+        +'<div class="dsec"><h3 class="sect-h">Access and accessibility</h3><div class="access">'+accHtml+'</div></div>'
+        +relHtml
+      +'</div>'
+      +'<aside class="rail">'
+        +'<div class="rcard contact"><button class="cta" data-noop>Contact this program</button><div class="cmethods"><a class="cm" data-noop>'+I.phone+'<span>'+ct.phone+'</span></a><a class="cm" data-noop>'+I.mail+'<span>'+ct.email+'</span></a><a class="cm" data-noop>'+I.globe+'<span>'+ct.web+'</span></a></div></div>'
+        +'<div class="rcard"><p class="eyebrow">Provided by</p><div class="pname">'+p.provider+'</div><span class="tag">'+pv.type+'</span><p class="blurb">'+pv.blurb+'</p><button class="ghost" data-noop>View provider '+I.arrow+'</button></div>'
+        +'<div class="rcard locard"><p class="eyebrow">Location</p><div class="minimap"><div class="terrain"></div><div class="mk2">'+NAVICON.pin+'</div></div><div class="locrow"><span>'+p.city+'</span><a class="dirlink" data-noop>'+I.pin+'Get directions</a></div></div>'
+        +'<div class="rcard fund"><p class="eyebrow">Funding that fits</p>'+GRANTS.slice(0,3).map(g=>'<div class="fitem"><div class="fn">'+g.name+'</div><div class="fm">'+g.meta+'</div></div>').join('')+'</div>'
+        +'<a class="suggest" data-noop>'+I.edit+'<span>Suggest an edit to this listing</span></a>'
+      +'</aside>'
+    +'</div></div>';
+}
+
+/* ============================ RENDER: DATABASE ============================ */
+function dbTableData(key){
+  if(key==='programs') return null;
+  if(key==='sports') return {cols:["Name","Category","Programs"], rows:SPORTS.map(s=>[s.label, "Sport", String(PROGRAMS.filter(p=>p.sport===s.key).length)])};
+  if(key==='providers') return {cols:["Name","Type","Location","Programs"], rows:Object.keys(PROVIDERS).map(n=>[n,PROVIDERS[n].type,PROVIDERS[n].city,String(PROGRAMS.filter(p=>p.provider===n).length)])};
+  if(key==='events') return {cols:["Event","Date","Sport","City"], rows:EVENTS.map(e=>[e.name,e.date,e.sport,e.city])};
+  if(key==='equipment') return {cols:["Item","Type","Source","Cost"], rows:EQUIPMENT.map(e=>[e.item,e.type,e.source,e.cost])};
+  if(key==='grants') return {cols:["Grant","Amount and deadline"], rows:GRANTS.map(g=>[g.name,g.meta])};
+  if(key==='resources') return {cols:["Title","Type"], rows:RESOURCES.map(r=>[r.title,r.type])};
+  return {cols:[],rows:[]};
+}
+function database(){
+  const meta=TABLE_META.find(t=>t.key===state.db)||TABLE_META[1];
+  const side=TABLE_META.map(t=>'<div class="tbl'+(state.db===t.key?' on':'')+'" data-db="'+t.key+'">'+NAVICON[t.icon]+'<span>'+t.label+'</span><span class="ct">'+t.count+'</span></div>').join('');
+  let body;
+  if(state.db==='programs' && state.dbView==='gallery'){
+    body='<div class="gallery">'+PROGRAMS.map(p=>
+      '<div class="gcard" data-prog="'+p.id+'"><h3>'+p.name+'</h3>'
+      +'<div class="field"><span class="gk">Sport</span><span class="gv"><span class="tag">'+p.sportLabel+'</span></span></div>'
+      +'<div class="field"><span class="gk">Provider</span><span class="gv">'+p.provider+'</span></div>'
+      +'<div class="field"><span class="gk">Location</span><span class="gv">'+p.city+'</span></div>'
+      +'<div class="field"><span class="gk">Distance</span><span class="gv">'+p.dist+' mi</span></div>'
+      +'<div class="field"><span class="gk">Cost</span><span class="gv">'+p.cost+'</span></div>'
+      +'<div class="field"><span class="gk">Status</span><span class="gv"><span class="status '+statusCls(p.status)+'" style="position:static">'+p.status+'</span></span></div>'
+      +'</div>').join('')+'</div>';
+  } else {
+    let cols, rows;
+    if(state.db==='programs'){ cols=["Program","Sport","Provider","City","Distance","Cost","Status"]; rows=PROGRAMS.map(p=>[p.name,p.sportLabel,p.provider,p.city,p.dist+' mi',p.cost,p.status]); }
+    else { const d=dbTableData(state.db); cols=d.cols; rows=d.rows; }
+    body='<div class="dbtable"><table><thead><tr>'+cols.map(c=>'<th>'+c+'</th>').join('')+'</tr></thead><tbody>'
+      +rows.map(r=>'<tr>'+r.map((c,i)=>'<td>'+((i===0)?'<b style="font-weight:600">'+c+'</b>':c)+'</td>').join('')+'</tr>').join('')
+      +'</tbody></table></div>';
+  }
+  const galToggle = state.db==='programs' ? '<div class="seg"><button class="'+(state.dbView==='gallery'?'on':'')+'" data-dbview="gallery">'+NAVICON.grid+'Gallery</button><button class="'+(state.dbView==='table'?'on':'')+'" data-dbview="table">'+NAVICON.rows+'Table</button></div>' : '';
+  return '<div class="wrap"><nav class="crumb"><a href="#" data-home>Home</a><span class="sl">/</span><b>Browse all</b></nav></div>'
+    +'<div class="db"><aside class="db-side"><p class="eyebrow">Tables</p>'+side+'</aside>'
+    +'<div class="db-main"><div class="db-head"><h1>'+meta.label+' <span class="rec">'+meta.count+' records</span></h1>'+galToggle+'</div>'+body+'</div></div>';
+}
+
+/* ============================ MAIN RENDER ============================ */
+function render(){
+  const v=document.getElementById('view');
+  if(state.section==='database') v.innerHTML=database();
+  else if(state.section==='program') v.innerHTML=program();
+  else v.innerHTML=discover();
+  if(state.section!=='program'){ try{ window.scrollTo(0,0); }catch(e){} }
+  const hq=document.getElementById('q'); if(hq) hq.value=state.q;
+  const qh=document.getElementById('qHero'); if(qh) qh.value=state.q;
+  updateHeaderSearch();
+}
+
+function goFeed(){ state.q=''; state.sport='all'; state.dist='any'; state.cost='any'; state.level='any'; state.see=null; state.filtersOpen=false; state.layout='grid'; }
+function searchRender(){ if(isFeedMode()){ render(); return; } if(document.getElementById('results')){ renderResults(); return; } render(); }
+/* ============================ EVENTS ============================ */
+document.addEventListener('click',e=>{
+  const h=e.target.closest('[data-heart]');
+  if(h){ e.preventDefault();e.stopPropagation(); const id=h.getAttribute('data-heart'); if(saved.has(id))saved.delete(id);else saved.add(id); h.classList.toggle('on'); h.setAttribute('aria-pressed',saved.has(id)); return; }
+  const t=e.target.closest('[data-prog],[data-sport],[data-layout],[data-dist],[data-cost],[data-level],[data-section],[data-db],[data-dbview],[data-home],[data-sport-link],[data-seeall],#filtBtn,[data-noop]');
+  if(!t) return;
+  if(t.matches('[data-noop]')){ e.preventDefault(); return; }
+  if(t.hasAttribute('data-home')){ e.preventDefault(); state.section='discover'; state.programId=null; goFeed(); render(); return; }
+  if(t.hasAttribute('data-section')){ e.preventDefault(); const sec=t.getAttribute('data-section'); state.section=sec; state.programId=null; if(sec==='discover') goFeed(); render(); return; }
+  if(t.hasAttribute('data-sport-link')){ e.preventDefault(); state.section='discover'; state.sport=t.getAttribute('data-sport-link'); state.see=null; state.programId=null; render(); return; }
+  if(t.hasAttribute('data-prog')){ e.preventDefault(); state.section='program'; state.programId=t.getAttribute('data-prog'); render(); return; }
+  if(t.hasAttribute('data-seeall')){ e.preventDefault(); const v=t.getAttribute('data-seeall'); if(v==='beginner'){ state.see=null; state.level='beginner'; } else if(v==='free'){ state.see=null; state.cost='free'; } else if(v.indexOf('sport:')===0){ state.see=null; state.sport=v.slice(6); } else { state.see=v; } render(); return; }
+  if(t.hasAttribute('data-sport')){ e.preventDefault(); state.sport=t.getAttribute('data-sport'); state.see=null; render(); return; }
+  if(t.hasAttribute('data-layout')){ e.preventDefault(); state.layout=t.getAttribute('data-layout'); render(); return; }
+  if(t.id==='filtBtn'){ e.preventDefault(); state.filtersOpen=!state.filtersOpen; render(); return; }
+  if(t.hasAttribute('data-dist')){ state.dist=t.getAttribute('data-dist'); state.see=null; render(); return; }
+  if(t.hasAttribute('data-cost')){ state.cost=t.getAttribute('data-cost'); state.see=null; render(); return; }
+  if(t.hasAttribute('data-level')){ state.level=t.getAttribute('data-level'); state.see=null; render(); return; }
+  if(t.hasAttribute('data-db')){ state.db=t.getAttribute('data-db'); render(); return; }
+  if(t.hasAttribute('data-dbview')){ state.dbView=t.getAttribute('data-dbview'); render(); return; }
+});
+document.addEventListener('change',e=>{ if(e.target.id==='sortSel'){ state.sort=e.target.value; render(); } });
+document.getElementById('q').addEventListener('input',e=>{
+  state.q=e.target.value; state.see=null;
+  if(state.section!=='discover'){ state.section='discover'; render(); const qh=document.getElementById('qHero'); const tgt=(qh&&qh.offsetParent!==null)?qh:document.getElementById('q'); if(tgt)tgt.focus(); return; }
+  const qh=document.getElementById('qHero'); if(qh) qh.value=state.q; searchRender();
+});
+document.getElementById('goBtn').addEventListener('click',()=>{ if(state.section!=='discover'){state.section='discover';render();} scrollToResults(); });
+document.getElementById('q').addEventListener('keydown',e=>{ if(e.key==='Enter'){ scrollToResults(); }});
+document.addEventListener('input',e=>{
+  if(e.target.id!=='qHero') return;
+  state.q=e.target.value; state.see=null;
+  const hq=document.getElementById('q'); if(hq) hq.value=state.q;
+  searchRender();
+  if(window.innerWidth>720 && window.scrollY<240 && !isFeedMode()){
+    const hdr=document.querySelector('.hdr'); if(hdr) hdr.classList.remove('hide-search');
+    const hq2=document.getElementById('q'); if(hq2){ hq2.focus(); const v=hq2.value; try{hq2.setSelectionRange(v.length,v.length);}catch(_){ } }
+    scrollToResults();
+  }
+});
+document.addEventListener('keydown',e=>{ if(e.target.id==='qHero'&&e.key==='Enter'){ scrollToResults(); } });
+document.addEventListener('click',e=>{ if(e.target.closest('#hgoBtn')){ e.preventDefault(); scrollToResults(); } });
+
+/* map <-> list hover sync */
+function setHL(id,on){
+  document.querySelectorAll('.mcard[data-prog="'+id+'"]').forEach(el=>el.classList.toggle('hl',on));
+  document.querySelectorAll('.mk[data-prog="'+id+'"]').forEach(el=>el.classList.toggle('active',on));
+}
+document.addEventListener('mouseover',e=>{ const el=e.target.closest('.mcard[data-prog],.mk[data-prog]'); if(el) setHL(el.getAttribute('data-prog'),true); });
+document.addEventListener('mouseout',e=>{ const el=e.target.closest('.mcard[data-prog],.mk[data-prog]'); if(el) setHL(el.getAttribute('data-prog'),false); });
+
+/* header shadow on scroll */
+function syncHeader(){
+  const hdr=document.querySelector('.hdr');
+  if(hdr) hdr.classList.toggle('scrolled', window.scrollY>4);
+  updateHeaderSearch();
+}
+window.addEventListener('scroll', syncHeader, {passive:true});
+window.addEventListener('resize', syncHeader, {passive:true});
+
+document.addEventListener('click', function(e){
+  const sb=e.target.closest('[data-subscribe-go]'); if(!sb) return;
+  const inp=document.getElementById('subEmail'), wrap=document.getElementById('subWrap');
+  if(inp && wrap && /.+@.+\..+/.test(inp.value.trim())){ wrap.innerHTML='<span class="fc-thanks">Thanks, you are on the list.</span>'; }
+  else if(inp){ inp.focus(); }
+});
+
+render();
+</script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+{
+  // Assets-only Worker (no script): serves the static site in ./public.
+  // Deploy:  cfrun wrangler deploy   (from this repo root, on the box)
+  // Preview: https://asnm.alec-af3.workers.dev
+  "name": "asnm",
+  "compatibility_date": "2026-06-26",
+  "assets": {
+    "directory": "./public",
+    "not_found_handling": "404-page",
+    "html_handling": "auto-trailing-slash"
+  }
+}
