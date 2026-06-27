@@ -166,7 +166,7 @@ input,select{font-family:inherit;}
 .frow:last-child{margin-bottom:8px;}
 .frow-head{margin-bottom:13px;}
 .frow-titlerow{display:flex;align-items:center;justify-content:space-between;gap:16px;}
-.frow-titlerow h2{font-family:'DM Sans',sans-serif;font-size:22px;font-weight:700;letter-spacing:-.015em;color:var(--ink);line-height:1.2;}
+.frow-titlerow h2{font-family:'DM Sans',sans-serif;font-size:22px;font-weight:700;letter-spacing:-.015em;color:var(--ink);line-height:1.2;min-width:0;text-wrap:balance;}
 .frow-sub{color:var(--muted);font-size:14px;margin-top:3px;line-height:1.4;}
 .frow-all{flex:0 0 auto;display:inline-flex;align-items:center;gap:6px;background:none;border:none;color:var(--ink);font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;padding:0;white-space:nowrap;transition:gap .15s,color .15s;}
 .frow-all:hover{gap:9px;color:var(--orange-ink);}
@@ -848,9 +848,9 @@ function feedRows(){
   // Distinct lead per row → showcases the full range (water skiing, cycling, etc.),
   // and no sport is the first image twice.
   return '<div class="wrap feed">'
-    + frow('New to adaptive sports? Start here','Welcoming programs where first timers fit right in', diversify(beginner,'basketball'), 'beginner')
+    + frow('New to adaptive sports?','Welcoming programs where first timers fit right in', diversify(beginner,'basketball'), 'beginner')
     + frow('Popular in '+city, '', diversify(popular,'tennis'), 'popular')
-    + frow('Taking new players right now','Open and taking sign-ups', diversify(taking,'waterskiing'), 'open')
+    + frow('Taking new players','Open and taking sign-ups', diversify(taking,'waterskiing'), 'open')
     + frow('Outdoor sports','Trails, slopes and open water', diversify(outdoor,'cycling'), 'sport:cycling')
     + frow('Free to play','No cost to get started', diversify(free,'goalball'), 'free')
     + frow('Team sports to try','Find a squad in '+city, diversify(team,'rugby'), 'popular')
