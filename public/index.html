@@ -42,6 +42,7 @@
   --shadow:0 6px 20px rgba(17,17,19,.08);
   --shadow-lg:0 12px 34px rgba(17,17,19,.13);
   --max:1280px;
+  --gut:clamp(24px,4vw,48px); /* page gutter — Airbnb-style: 24px floor on mobile, scales up */
   --ease:cubic-bezier(.2,.6,.2,1);
 }
 *{box-sizing:border-box;}
@@ -52,7 +53,7 @@ a{color:inherit;text-decoration:none;}
 button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit;}
 input,select{font-family:inherit;}
 ::selection{background:var(--orange-soft);}
-.wrap{max-width:var(--max);margin:0 auto;padding:0 clamp(16px,3vw,32px);}
+.wrap{max-width:var(--max);margin:0 auto;padding:0 var(--gut);}
 .eyebrow{font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.13em;text-transform:uppercase;color:var(--faint);}
 
 /* focus + motion */
@@ -158,7 +159,7 @@ input,select{font-family:inherit;}
 /* ============================ CARD GRID ============================ */
 #main{padding-bottom:24px;}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(258px,1fr));gap:26px 22px;padding:6px 0 56px;}
-.feed{padding:8px 0 48px;}
+.feed{padding:8px var(--gut) 48px;}
 .frow{margin:0 0 42px;}
 .frow:last-child{margin-bottom:8px;}
 .frow-head{margin-bottom:16px;}
@@ -167,7 +168,9 @@ input,select{font-family:inherit;}
 .frow-sub{color:var(--muted);font-size:14px;margin-top:6px;line-height:1.4;}
 .frow-all{flex:0 0 auto;display:inline-flex;align-items:center;gap:6px;background:none;border:none;color:var(--ink);font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;padding:0;white-space:nowrap;transition:gap .15s,color .15s;}
 .frow-all:hover{gap:9px;color:var(--orange-ink);}
-.frow-scroll{display:flex;gap:20px;overflow-x:auto;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;padding-bottom:6px;scrollbar-width:none;}
+/* Rail bleeds to the right screen edge (cards peek off — Airbnb's scroll affordance)
+   while the header + first card stay aligned to the page gutter. */
+.frow-scroll{display:flex;gap:20px;overflow-x:auto;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;padding-bottom:6px;padding-right:var(--gut);margin-right:calc(-1 * var(--gut));scrollbar-width:none;}
 .frow-scroll::-webkit-scrollbar{display:none;}
 .frow-scroll>.pcard{flex:0 0 286px;width:286px;scroll-snap-align:start;}
 .pcard-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;}
