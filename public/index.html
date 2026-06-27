@@ -61,7 +61,7 @@ input,select{font-family:inherit;}
 .search .loc:hover{background:var(--mist);}
 .search .loc svg{width:14px;height:14px;color:var(--orange);}
 .search .sep{width:1px;height:22px;background:var(--line);flex:0 0 auto;}
-.search input{flex:1 1 auto;min-width:40px;height:100%;border:none;background:transparent;outline:none;padding:0 8px 0 14px;font-size:14px;color:var(--ink);}
+.search input{flex:1 1 auto;min-width:40px;height:100%;border:none;background:transparent;outline:none;padding:0 20px 0 14px;font-size:14px;color:var(--ink);}
 .search input::placeholder{color:var(--faint);}
 .search .go{flex:0 0 auto;width:36px;height:36px;margin-right:5px;border-radius:50%;background:var(--orange);color:#fff;display:grid;place-items:center;transition:background .15s,transform .15s;}
 .search .go:hover{background:var(--orange-ink);transform:scale(1.05);}
@@ -73,7 +73,7 @@ input,select{font-family:inherit;}
 .hsearch .loc:hover{background:var(--mist);}
 .hsearch .loc svg{width:17px;height:17px;color:var(--orange);}
 .hsearch .sep{width:1px;height:28px;background:var(--line);flex:0 0 auto;}
-.hsearch input{flex:1 1 auto;min-width:40px;height:100%;border:none;background:transparent;outline:none;padding:0 10px 0 16px;font-size:16px;color:var(--ink);}
+.hsearch input{flex:1 1 auto;min-width:40px;height:100%;border:none;background:transparent;outline:none;padding:0 24px 0 16px;font-size:16px;color:var(--ink);}
 .hsearch input::placeholder{color:var(--muted);}
 .hsearch .go{flex:0 0 auto;width:46px;height:46px;margin-right:6px;border-radius:50%;background:var(--orange);color:#fff;display:grid;place-items:center;transition:background .15s,transform .15s;}
 .hsearch .go:hover{background:var(--orange-ink);transform:scale(1.05);}
@@ -450,18 +450,11 @@ table.list tbody tr:hover{background:var(--mist);}
       </button>
       <span class="sep"></span>
       <input id="q" type="text" placeholder="Search a sport, program or provider" aria-label="Search programs">
-      <button class="go" id="goBtn" aria-label="Search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></button>
     </div>
   </div>
 </header>
 
 <main id="view"></main>
-
-<div class="trustpill" id="trustPill" role="status">
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.4-3 7.6-7 9-4-1.4-7-4.6-7-9V6l7-3Z"/><path d="m9 12 2 2 4-4"/></svg>
-  <span><b>Free</b><span class="tp-dot"> · </span>No login<span class="tp-dot"> · </span>Every listing checked by a human</span>
-  <button class="tp-x" type="button" data-trust-dismiss aria-label="Dismiss this notice"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
-</div>
 
 <footer class="foot">
   <div class="wrap">
@@ -577,11 +570,9 @@ const MAPPOS = {
   "waterski-clinic":{x:22,y:30},"goalball-club":{x:55,y:71},
 };
 const SPGRAD = {basketball:"g-warm",tennis:"g-sand",pickleball:"g-warm",rugby:"g-sand",football:"g-warm",baseball:"g-sand",cycling:"g-cool",sledhockey:"g-cool",skiing:"g-cool",waterskiing:"g-cool",goalball:"g-sand"};
-const ICON_KIND = {goalball:"jpg", waterskiing:"jpg"}; // dark studio renders shown full-bleed until transparent re-export
-function iconSrc(key){ return "assets/sport-icons/"+key+"."+(ICON_KIND[key]||"png"); }
-function isFullIcon(key){ return ICON_KIND[key]==="jpg"; }
+function iconSrc(key){ return "assets/sport-icons/"+key+".png"; }   // 3D transparent icons — category chips
+function photoSrc(key){ return "assets/sport-photos/"+key+".jpg"; } // square action photos — cards, hero, thumbs
 function sportIcon(key, cls){ return '<img class="'+(cls||'')+'" src="'+iconSrc(key)+'" alt="" loading="lazy">'; }
-function sportThumb(key){ return isFullIcon(key) ? '<img class="thumb-full" src="'+iconSrc(key)+'" alt="" loading="lazy">' : '<img class="sport-icon" src="'+iconSrc(key)+'" alt="" loading="lazy">'; }
 
 /* ============================ ICONS ============================ */
 function ring(){ return '<circle cx="50" cy="50" r="38" fill="none" stroke="currentColor" stroke-width="4"/><circle class="dot" cx="74" cy="21" r="6.5" fill="currentColor"/>'; }
@@ -625,12 +616,9 @@ function statusCls(s){ return s==='Open'?'st-open':s==='Waitlist'?'st-wait':'st-
 function pill(s){ return '<span class="status '+statusCls(s)+'">'+s+'</span>'; }
 function heartBtn(id){ const on=saved.has(id)?' on':''; return '<button class="heart'+on+'" data-heart="'+id+'" aria-pressed="'+saved.has(id)+'" aria-label="Save program">'+HEART+'</button>'; }
 function media(p, kind){
-  // Airbnb-style overlays on the card image: availability badge (top-left) + save heart (top-right).
+  // Airbnb-style: real action photo + availability badge (top-left) and save heart (top-right).
   const overlay = (kind && kind!=='pcard-media') ? '' : pill(p.status)+heartBtn(p.id);
-  if(isFullIcon(p.sport)){
-    return '<div class="'+(kind||'pcard-media')+' has-photo"><img class="pcard-img" src="'+iconSrc(p.sport)+'" alt="" loading="lazy">'+overlay+'</div>';
-  }
-  return '<div class="'+(kind||'pcard-media')+' '+SPGRAD[p.sport]+'"><img class="sport-icon" src="'+iconSrc(p.sport)+'" alt="" loading="lazy">'+overlay+'</div>';
+  return '<div class="'+(kind||'pcard-media')+' has-photo"><img class="pcard-img" src="'+photoSrc(p.sport)+'" alt="" loading="lazy">'+overlay+'</div>';
 }
 function filtered(){
   let list = PROGRAMS.slice();
@@ -725,7 +713,7 @@ function mapLayout(list){
   if(!list.length) return empty();
   const cards=list.map((p,i)=>
     '<div class="mcard" data-prog="'+p.id+'">'
-      +'<div class="mthumb '+SPGRAD[p.sport]+'">'+sportThumb(p.sport)+'<span class="mnum">'+(i+1)+'</span></div>'
+      +'<div class="mthumb"><img class="thumb-full" src="'+photoSrc(p.sport)+'" alt="" loading="lazy"><span class="mnum">'+(i+1)+'</span></div>'
       +'<div class="minfo">'
         +'<div class="pcard-sport">'+p.sportLabel+'</div>'
         +'<div class="nm">'+p.name+'</div>'
@@ -748,7 +736,7 @@ function listLayout(list){
   if(!list.length) return empty();
   const rows=list.map(p=>
     '<tr data-prog="'+p.id+'">'
-      +'<td><div class="tcell"><div class="tthumb '+SPGRAD[p.sport]+'">'+sportThumb(p.sport)+'</div><div><div class="nm">'+p.name+'</div><div class="sub">'+p.sportLabel+'</div></div></div></td>'
+      +'<td><div class="tcell"><div class="tthumb"><img class="thumb-full" src="'+photoSrc(p.sport)+'" alt="" loading="lazy"></div><div><div class="nm">'+p.name+'</div><div class="sub">'+p.sportLabel+'</div></div></div></td>'
       +'<td class="t-prov">'+p.provider+'</td>'
       +'<td>'+p.dist+' mi</td>'
       +'<td>'+p.cost+'</td>'
@@ -767,7 +755,6 @@ function heroSection(){
       +'<button class="loc" id="hlocBtn" type="button" aria-label="Change location"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s7-5.7 7-11a7 7 0 1 0-14 0c0 5.3 7 11 7 11Z"/><circle cx="12" cy="10" r="2.5"/></svg><span>Denver, CO</span></button>'
       +'<span class="sep"></span>'
       +'<input id="qHero" type="text" placeholder="Search a sport, program or provider" aria-label="Search programs">'
-      +'<button class="go" id="hgoBtn" type="button" aria-label="Search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></button>'
     +'</div>'
     +'<div class="trust"><span><b>2,095+</b> programs</span><span class="tdot">\u00b7</span><span>nationwide</span><span class="tdot">\u00b7</span><span>free to use</span></div>'
     +'</div></section>';
@@ -824,7 +811,7 @@ function program(){
   const accHtml=acc.map(a=>'<div class="acc-item">'+CK+'<span>'+a+'</span></div>').join('');
   return '<div class="wrap">'
     +'<div class="crumb"><a href="#" data-home>Home</a><span class="sl">/</span><a href="#" data-sport-link="'+p.sport+'">'+p.sportLabel+'</a><span class="sl">/</span><b>'+p.name+'</b></div>'
-    +'<div class="dhero '+(isFullIcon(p.sport)?'has-dphoto':SPGRAD[p.sport])+'">'+(isFullIcon(p.sport)?'<img class="dhero-img" src="'+iconSrc(p.sport)+'" alt="">':'<img class="dhero-icon" src="'+iconSrc(p.sport)+'" alt="">')+'<span class="eyebrow">Program</span></div>'
+    +'<div class="dhero has-dphoto"><img class="dhero-img" src="'+photoSrc(p.sport)+'" alt=""><span class="eyebrow">'+p.sportLabel+'</span></div>'
     +'<div class="dgrid">'
       +'<div class="dtitle">'
         +'<div class="pcard-sport">'+p.sportLabel+'</div>'
@@ -902,7 +889,6 @@ function render(){
   const hq=document.getElementById('q'); if(hq) hq.value=state.q;
   const qh=document.getElementById('qHero'); if(qh) qh.value=state.q;
   updateHeaderSearch();
-  syncTrust();
 }
 
 function goFeed(){ state.q=''; state.sport='all'; state.dist='any'; state.cost='any'; state.level='any'; state.see=null; state.filtersOpen=false; state.layout='grid'; }
@@ -934,7 +920,6 @@ document.getElementById('q').addEventListener('input',e=>{
   if(state.section!=='discover'){ state.section='discover'; render(); const qh=document.getElementById('qHero'); const tgt=(qh&&qh.offsetParent!==null)?qh:document.getElementById('q'); if(tgt)tgt.focus(); return; }
   const qh=document.getElementById('qHero'); if(qh) qh.value=state.q; searchRender();
 });
-document.getElementById('goBtn').addEventListener('click',()=>{ if(state.section!=='discover'){state.section='discover';render();} scrollToResults(); });
 document.getElementById('q').addEventListener('keydown',e=>{ if(e.key==='Enter'){ scrollToResults(); }});
 document.addEventListener('input',e=>{
   if(e.target.id!=='qHero') return;
@@ -948,7 +933,6 @@ document.addEventListener('input',e=>{
   }
 });
 document.addEventListener('keydown',e=>{ if(e.target.id==='qHero'&&e.key==='Enter'){ scrollToResults(); } });
-document.addEventListener('click',e=>{ if(e.target.closest('#hgoBtn')){ e.preventDefault(); scrollToResults(); } });
 
 /* map <-> list hover sync */
 function setHL(id,on){
@@ -973,11 +957,6 @@ document.addEventListener('click', function(e){
   if(inp && wrap && /.+@.+\..+/.test(inp.value.trim())){ wrap.innerHTML='<span class="fc-thanks">Thanks, you are on the list.</span>'; }
   else if(inp){ inp.focus(); }
 });
-
-/* floating trust pill — show on browse, hide on a program page or once dismissed */
-let trustDismissed=false;
-function syncTrust(){ const tp=document.getElementById('trustPill'); if(tp) tp.style.display=(trustDismissed||state.section==='program')?'none':''; }
-document.addEventListener('click',function(e){ if(e.target.closest('[data-trust-dismiss]')){ trustDismissed=true; syncTrust(); } });
 
 render();
 </script>
