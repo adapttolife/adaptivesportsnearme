@@ -726,11 +726,13 @@ function statusCls(s){ return s==='Open'?'st-open':s==='Waitlist'?'st-wait':'st-
 function pill(s){ return '<span class="status '+statusCls(s)+'">'+s+'</span>'; }
 function heartBtn(id){ const on=saved.has(id)?' on':''; return '<button class="heart'+on+'" data-heart="'+id+'" aria-pressed="'+saved.has(id)+'" aria-label="Save program">'+HEART+'</button>'; }
 function cardTags(p){
-  const tags=[];
-  // RSVP required = anything that is not a just-show-up drop-in / open group ride.
-  if(!/drop in|group ride/i.test(p.format||'')) tags.push({t:'RSVP required',c:'rsvp'});
-  if(/provided|loaner|guards/i.test(p.equipment||'')) tags.push({t:'Equipment provided',c:'eq'});
-  return tags.slice(0,2);
+  // One badge max, and only when it's a real signal — most cards stay clean (Airbnb-style),
+  // so the feed reads like a real product instead of a wall of tags.
+  if(p.status==='Waitlist') return [{t:'RSVP required',c:'rsvp'}];
+  // Beginner on-ramps you can roll up to with nothing: free + gear provided.
+  if(p.free && /provided/i.test(p.equipment||'') && /Clinic|Club/i.test(p.format||''))
+    return [{t:'Equipment provided',c:'eq'}];
+  return [];
 }
 function cardTagsHtml(p){
   const ts=cardTags(p); if(!ts.length) return '';
