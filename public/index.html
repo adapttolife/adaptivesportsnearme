@@ -740,7 +740,6 @@ function cardTags(p){
   // never two stacked, never on every card.
   if(p.status==='Waitlist') return [{t:'RSVP required',c:'rsvp'}];
   if(p.free && /provided/i.test(p.equipment||'')) return [{t:'Equipment provided',c:'eq'}];
-  if(p.free && /loaner/i.test(p.equipment||'')) return [{t:'Loaner gear',c:'eq'}];
   return [];
 }
 function cardTagsHtml(p){
