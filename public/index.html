@@ -191,6 +191,10 @@ input,select{font-family:inherit;}
 .st-wait{background:rgba(255,255,255,.92);color:var(--ink);box-shadow:inset 0 0 0 1px var(--line);}
 .st-seas{background:rgba(255,255,255,.92);color:var(--muted);box-shadow:inset 0 0 0 1px var(--line);}
 .st-eq{background:rgba(255,255,255,.94);color:var(--ink);box-shadow:inset 0 0 0 1px rgba(17,17,19,.05);}
+.cardtags{position:absolute;top:12px;left:12px;z-index:2;display:flex;flex-direction:column;align-items:flex-start;gap:6px;}
+.cbadge{display:inline-flex;align-items:center;height:24px;padding:0 11px;border-radius:var(--r-full);font-size:12px;font-weight:700;letter-spacing:.01em;}
+.cbadge.eq{background:rgba(255,255,255,.94);color:var(--ink);box-shadow:inset 0 0 0 1px rgba(17,17,19,.05);}
+.cbadge.rsvp{background:var(--ink);color:#fff;}
 .heart{position:absolute;top:10px;right:10px;width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.86);color:var(--ink);display:grid;place-items:center;transition:transform .15s,background .15s;}
 .heart:hover{background:#fff;transform:scale(1.08);}
 .heart.on{color:var(--orange);}
@@ -700,9 +704,20 @@ function nd(s){ return (s||'').replace(/[\u2013\u2014]/g,' to '); }
 function statusCls(s){ return s==='Open'?'st-open':s==='Waitlist'?'st-wait':'st-seas'; }
 function pill(s){ return '<span class="status '+statusCls(s)+'">'+s+'</span>'; }
 function heartBtn(id){ const on=saved.has(id)?' on':''; return '<button class="heart'+on+'" data-heart="'+id+'" aria-pressed="'+saved.has(id)+'" aria-label="Save program">'+HEART+'</button>'; }
+function cardTags(p){
+  const tags=[];
+  // RSVP required = anything that is not a just-show-up drop-in / open group ride.
+  if(!/drop in|group ride/i.test(p.format||'')) tags.push({t:'RSVP required',c:'rsvp'});
+  if(/provided|loaner|guards/i.test(p.equipment||'')) tags.push({t:'Equipment provided',c:'eq'});
+  return tags.slice(0,2);
+}
+function cardTagsHtml(p){
+  const ts=cardTags(p); if(!ts.length) return '';
+  return '<div class="cardtags">'+ts.map(x=>'<span class="cbadge '+x.c+'">'+x.t+'</span>').join('')+'</div>';
+}
 function media(p, kind){
-  // Airbnb-style: real action photo + availability badge (top-left) and save heart (top-right).
-  const overlay = (kind && kind!=='pcard-media') ? '' : '<span class="status st-eq">Equipment provided</span>';
+  // Airbnb-style: real action photo + tag badges (top-left).
+  const overlay = (kind && kind!=='pcard-media') ? '' : cardTagsHtml(p);
   return '<div class="'+(kind||'pcard-media')+' has-photo"><img class="pcard-img" src="'+photoSrc(p.sport)+'" alt="" loading="lazy">'+overlay+'</div>';
 }
 function filtered(){
