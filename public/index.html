@@ -181,7 +181,7 @@ input,select{font-family:inherit;}
 .pcard-media .status{z-index:2;}
 .pcard-media .heart{z-index:2;}
 .pcard{cursor:pointer;display:block;}
-.pcard-media{position:relative;aspect-ratio:20/15;border-radius:var(--r-lg);overflow:hidden;transition:transform .25s var(--ease),box-shadow .25s var(--ease);}
+.pcard-media{position:relative;aspect-ratio:20/15;border-radius:var(--r-lg);overflow:hidden;background:var(--sand);transition:transform .25s var(--ease),box-shadow .25s var(--ease);}
 .pcard:hover .pcard-media{transform:translateY(-3px);box-shadow:var(--shadow);}
 .pcard-media .gly{position:absolute;inset:0;margin:auto;width:42%;height:42%;color:rgba(26,26,26,.82);}
 .pcard-media .ringbg{position:absolute;inset:0;margin:auto;width:62%;height:62%;color:rgba(255,255,255,.55);}
@@ -749,7 +749,7 @@ function cardTagsHtml(p){
 function media(p, kind){
   // Airbnb-style: real action photo + tag badges (top-left).
   const overlay = (kind && kind!=='pcard-media') ? '' : cardTagsHtml(p);
-  return '<div class="'+(kind||'pcard-media')+' has-photo"><img class="pcard-img" src="'+photoSrc(p.sport)+'" alt="" loading="lazy">'+overlay+'</div>';
+  return '<div class="'+(kind||'pcard-media')+' has-photo"><img class="pcard-img" src="'+photoSrc(p.sport)+'" alt="" loading="lazy" decoding="async">'+overlay+'</div>';
 }
 function filtered(){
   let list = PROGRAMS.slice();
@@ -1045,13 +1045,28 @@ function render(keepScroll){
   updateHeaderSearch();
 }
 
-// Sport / filter change: refresh in place. If already in the directory, keep the
-// scroll exactly where it is (pinned category bar, results swap below — no jump).
-// Coming from the feed, snap the results up under the sticky bars once.
+// Reflect state on the existing controls (active chip etc.) without rebuilding them,
+// so the sticky category bar and its 3D icons never reload — no flash.
+function syncControls(){
+  document.querySelectorAll('.catbar .cat').forEach(c=>c.classList.toggle('on', c.getAttribute('data-sport')===state.sport));
+  document.querySelectorAll('[data-dist]').forEach(c=>c.classList.toggle('on', c.getAttribute('data-dist')===state.dist));
+  document.querySelectorAll('[data-cost]').forEach(c=>c.classList.toggle('on', c.getAttribute('data-cost')===state.cost));
+  document.querySelectorAll('[data-level]').forEach(c=>c.classList.toggle('on', c.getAttribute('data-level')===state.level));
+  document.querySelectorAll('[data-layout]').forEach(c=>c.classList.toggle('on', c.getAttribute('data-layout')===state.layout));
+}
+// Sport / filter change: refresh in place. Already in the directory → swap only the
+// results body and re-sync the controls (no view rebuild, no icon reload, no flash),
+// keeping the scroll exactly where it is. Coming from the feed → build the directory
+// once and snap the results up under the sticky bars.
 function filterChanged(){
-  const inDirectory = !!document.getElementById('results');
-  render(true);
-  if(!inDirectory) scrollToResults();
+  if(document.getElementById('results')){
+    syncControls();
+    renderResults();
+    updateHeaderSearch();
+  } else {
+    render(true);
+    scrollToResults();
+  }
 }
 
 function goFeed(){ state.q=''; state.sport='all'; state.dist='any'; state.cost='any'; state.level='any'; state.see=null; state.filtersOpen=false; state.layout='grid'; }
@@ -1070,7 +1085,7 @@ document.addEventListener('click',e=>{
   if(t.hasAttribute('data-seeall')){ e.preventDefault(); const v=t.getAttribute('data-seeall'); if(v==='beginner'){ state.see=null; state.level='beginner'; } else if(v==='free'){ state.see=null; state.cost='free'; } else if(v.indexOf('sport:')===0){ state.see=null; state.sport=v.slice(6); } else { state.see=v; } filterChanged(); return; }
   if(t.hasAttribute('data-sport')){ e.preventDefault(); state.sport=t.getAttribute('data-sport'); state.see=null; filterChanged(); return; }
   if(t.hasAttribute('data-layout')){ e.preventDefault(); state.layout=t.getAttribute('data-layout'); filterChanged(); return; }
-  if(t.id==='filtBtn'){ e.preventDefault(); state.filtersOpen=!state.filtersOpen; render(true); return; }
+  if(t.id==='filtBtn'){ e.preventDefault(); state.filtersOpen=!state.filtersOpen; const fp=document.querySelector('.filters'); if(fp){ fp.classList.toggle('open', state.filtersOpen); } else { render(true); } return; }
   if(t.hasAttribute('data-dist')){ state.dist=t.getAttribute('data-dist'); state.see=null; filterChanged(); return; }
   if(t.hasAttribute('data-cost')){ state.cost=t.getAttribute('data-cost'); state.see=null; filterChanged(); return; }
   if(t.hasAttribute('data-level')){ state.level=t.getAttribute('data-level'); state.see=null; filterChanged(); return; }
