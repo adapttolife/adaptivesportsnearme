@@ -381,6 +381,47 @@ table.list tbody tr:hover{background:var(--mist);}
 .trustpill .tp-x:hover{opacity:1;background:rgba(255,255,255,.16);}
 @media (max-width:520px){.trustpill{bottom:14px;font-size:12px;gap:8px;padding:9px 10px 9px 13px;}.trustpill>svg:first-child{width:15px;height:15px;}}
 
+/* ============================ PRELAUNCH GATE ============================ */
+.preview-chip{display:inline-flex;align-items:center;gap:7px;height:26px;padding:0 11px;border-radius:var(--r-full);background:var(--orange-soft);color:var(--orange-ink);font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.05em;text-transform:uppercase;font-weight:700;flex:0 0 auto;cursor:pointer;white-space:nowrap;}
+.preview-chip .dot{width:6px;height:6px;border-radius:50%;background:var(--orange);flex:0 0 auto;}
+.preview-chip:hover{background:#f7ddc8;}
+@media (max-width:560px){.preview-chip span{display:none;}.preview-chip{padding:0 8px;}}
+.gate-ov{position:fixed;inset:0;z-index:120;background:rgba(20,18,14,.55);backdrop-filter:blur(3px);display:none;align-items:center;justify-content:center;padding:20px;opacity:0;transition:opacity .2s;}
+.gate-ov.open{display:flex;opacity:1;}
+.gate{width:100%;max-width:460px;background:var(--paper);border-radius:var(--r-xl);box-shadow:var(--shadow-lg);transform:translateY(10px);transition:transform .22s var(--ease);max-height:calc(100vh - 40px);overflow-y:auto;}
+.gate-ov.open .gate{transform:none;}
+.gate-head{position:relative;padding:28px 28px 0;}
+.gate-x{position:absolute;top:16px;right:16px;width:32px;height:32px;border-radius:50%;background:var(--mist);color:var(--ink);display:grid;place-items:center;transition:background .15s;}
+.gate-x:hover{background:var(--sand);}
+.gate-x svg{width:16px;height:16px;}
+.gate-eyebrow{font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.13em;text-transform:uppercase;color:var(--orange-ink);}
+.gate h2{font-family:Archivo,sans-serif;font-weight:800;font-size:25px;letter-spacing:-.02em;margin:9px 0 9px;line-height:1.08;}
+.gate p.lede{font-size:15px;color:var(--muted);line-height:1.5;margin:0;}
+.gate-tabs{display:flex;gap:3px;background:var(--sand);border-radius:var(--r-full);padding:4px;margin:22px 28px 0;}
+.gate-tab{flex:1;height:36px;border-radius:var(--r-full);font-size:14px;font-weight:600;color:var(--muted);transition:.15s;}
+.gate-tab.on{background:var(--paper);color:var(--ink);box-shadow:var(--shadow-sm);}
+.gate-body{padding:18px 28px 28px;}
+.gate-pane{display:none;}
+.gate-pane.on{display:block;}
+.gfield{margin-bottom:12px;}
+.gfield label{display:block;font-size:13px;font-weight:600;color:var(--ink2);margin-bottom:6px;}
+.gate input,.gate select,.gate textarea{width:100%;height:46px;padding:0 14px;border:1px solid var(--line);border-radius:var(--r);background:var(--paper);color:var(--ink);font-size:15px;font-family:inherit;}
+.gate textarea{height:auto;min-height:62px;padding:11px 14px;resize:vertical;line-height:1.4;}
+.gate input:focus,.gate select:focus,.gate textarea:focus{outline:none;border-color:var(--ink);}
+.grow2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.hp{position:absolute!important;left:-9999px;width:1px;height:1px;opacity:0;}
+.gate-cta{width:100%;height:50px;background:var(--orange);color:#fff;border-radius:var(--r);font-size:16px;font-weight:700;margin-top:6px;transition:background .15s;}
+.gate-cta:hover{background:var(--orange-ink);}
+.gate-cta:disabled{opacity:.6;cursor:default;}
+.gate-msg{font-size:13px;margin-top:10px;line-height:1.4;min-height:1px;}
+.gate-msg.err{color:var(--orange-ink);}
+.gate-done{text-align:center;padding:16px 0 6px;}
+.gate-done .okmark{width:54px;height:54px;border-radius:50%;background:var(--orange-soft);color:var(--orange);display:grid;place-items:center;margin:0 auto 14px;}
+.gate-done .okmark svg{width:27px;height:27px;}
+.gate-done h3{font-family:Archivo,sans-serif;font-weight:700;font-size:20px;margin:0 0 7px;}
+.gate-done p{font-size:14px;color:var(--muted);line-height:1.5;margin:0;}
+.gate-fine{font-size:12px;color:var(--faint);margin:13px 0 0;line-height:1.4;}
+
 /* ============================ RESPONSIVE ============================ */
 @media (max-width:900px){
   .maplayout{grid-template-columns:1fr;}
@@ -442,6 +483,7 @@ table.list tbody tr:hover{background:var(--mist);}
 <header class="hdr">
   <div class="wrap hdr-in">
     <a class="brand" href="#" data-home aria-label="Adaptive Sports Near Me home"><b>Adaptive Sports Near Me</b></a>
+    <button class="preview-chip" type="button" data-gate-open="notify" aria-label="Preview — we are not live yet. Get notified at launch."><span class="dot"></span><span>Preview · not live yet</span></button>
 
     <div class="search" role="search">
       <button class="loc" id="locBtn" aria-label="Change location">
@@ -462,7 +504,7 @@ table.list tbody tr:hover{background:var(--mist);}
       <div class="fc-block">
         <h3>Run an adaptive sports program?</h3>
         <p>Get it listed in the directory. It is free and takes a few minutes.</p>
-        <a class="addbtn" href="#" data-noop><svg class="plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg><span>Add a program</span></a>
+        <a class="addbtn" href="#" data-addprogram><svg class="plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg><span>Add a program</span></a>
       </div>
       <div class="fc-block">
         <h3>Stay in the loop</h3>
@@ -486,6 +528,49 @@ table.list tbody tr:hover{background:var(--mist);}
     </div>
   </div>
 </footer>
+
+<div class="gate-ov" id="gate" role="dialog" aria-modal="true" aria-labelledby="gateTitle">
+  <div class="gate">
+    <div class="gate-head">
+      <button class="gate-x" type="button" data-gate-close aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+      <p class="gate-eyebrow">Launching soon</p>
+      <h2 id="gateTitle">We are not live yet</h2>
+      <p class="lede">Adaptive Sports Near Me is a free, national directory of adaptive sports programs. Leave your email and we will tell you the day it opens.</p>
+    </div>
+    <div class="gate-tabs" role="tablist">
+      <button class="gate-tab on" type="button" data-gate-tab="notify" role="tab">Get notified</button>
+      <button class="gate-tab" type="button" data-gate-tab="program" role="tab">Add a program</button>
+    </div>
+    <div class="gate-body">
+      <div class="gate-pane on" data-pane="notify">
+        <form id="notifyForm" novalidate>
+          <input class="hp" type="text" name="company" tabindex="-1" autocomplete="off" aria-hidden="true">
+          <div class="gfield"><label for="ntfEmail">Email</label><input id="ntfEmail" type="email" name="em" placeholder="you@email.com" autocomplete="email" required></div>
+          <button class="gate-cta" type="submit">Notify me at launch</button>
+          <div class="gate-msg" id="notifyMsg" aria-live="polite"></div>
+        </form>
+      </div>
+      <div class="gate-pane" data-pane="program">
+        <p class="lede" style="margin-bottom:15px;">Run an adaptive sports program? Add it and we will feature it at launch.</p>
+        <form id="programForm" novalidate>
+          <input class="hp" type="text" name="company" tabindex="-1" autocomplete="off" aria-hidden="true">
+          <div class="gfield"><label for="pgName">Program name</label><input id="pgName" type="text" name="pn" required></div>
+          <div class="gfield"><label for="pgOrg">Organization</label><input id="pgOrg" type="text" name="org"></div>
+          <div class="gfield"><label for="pgSport">Sport</label><select id="pgSport" name="sport"><option value="">Choose a sport</option></select></div>
+          <div class="grow2">
+            <div class="gfield"><label for="pgCity">City</label><input id="pgCity" type="text" name="city"></div>
+            <div class="gfield"><label for="pgState">State</label><input id="pgState" type="text" name="state"></div>
+          </div>
+          <div class="gfield"><label for="pgEmail">Your email</label><input id="pgEmail" type="email" name="em" placeholder="you@email.com" autocomplete="email"></div>
+          <div class="gfield"><label for="pgNotes">Anything else</label><textarea id="pgNotes" name="notes" rows="2"></textarea></div>
+          <button class="gate-cta" type="submit">Submit program</button>
+          <div class="gate-msg" id="programMsg" aria-live="polite"></div>
+        </form>
+        <p class="gate-fine">We review every submission before it goes in the directory.</p>
+      </div>
+    </div>
+  </div>
+</div>
 
 <script>
 /* ============================ DATA ============================ */
@@ -951,11 +1036,91 @@ function syncHeader(){
 window.addEventListener('scroll', syncHeader, {passive:true});
 window.addEventListener('resize', syncHeader, {passive:true});
 
+/* ============================ PRELAUNCH GATE ============================ */
+const PRELAUNCH = true;
+const gateEl = document.getElementById('gate');
+(function(){ const sel=document.getElementById('pgSport'); if(sel){ SPORTS.forEach(s=>{ const o=document.createElement('option'); o.value=s.label; o.textContent=s.label; sel.appendChild(o); }); const ot=document.createElement('option'); ot.value='Other'; ot.textContent='Other'; sel.appendChild(ot); } })();
+let gateLastFocus=null;
+function setGateTab(name){
+  gateEl.querySelectorAll('.gate-tab').forEach(b=>b.classList.toggle('on',b.getAttribute('data-gate-tab')===name));
+  gateEl.querySelectorAll('.gate-pane').forEach(p=>p.classList.toggle('on',p.getAttribute('data-pane')===name));
+}
+function openGate(tab){
+  gateLastFocus=document.activeElement;
+  setGateTab(tab||'notify');
+  gateEl.classList.add('open');
+  document.body.style.overflow='hidden';
+  const f=gateEl.querySelector('.gate-pane.on input:not(.hp)'); if(f) setTimeout(()=>{try{f.focus();}catch(_){}},60);
+}
+function closeGate(){ gateEl.classList.remove('open'); document.body.style.overflow=''; if(gateLastFocus&&gateLastFocus.focus){try{gateLastFocus.focus();}catch(_){}} }
+
+/* Gate "go deeper" clicks (capture phase). Scroll, search, and category filters stay free. */
+document.addEventListener('click',function(e){
+  if(!PRELAUNCH) return;
+  const t=e.target;
+  if(t.closest('#gate')) return;                 // never gate clicks inside the modal
+  if(t.closest('[data-gate-open]')) return;      // explicit openers handled below
+  if(t.closest('[data-sport],[data-home],#locBtn,#hlocBtn,#q,#qHero,[data-subscribe-go]')) return; // allowed
+  const deep=t.closest('[data-prog],[data-seeall],.frow-all,[data-section],[data-sport-link],[data-addprogram],[data-noop]');
+  if(deep){ e.preventDefault(); e.stopImmediatePropagation(); openGate(t.closest('[data-addprogram]')?'program':'notify'); }
+},true);
+
+document.addEventListener('click',function(e){
+  const op=e.target.closest('[data-gate-open]'); if(op){ e.preventDefault(); openGate(op.getAttribute('data-gate-open')||'notify'); return; }
+  if(e.target.closest('[data-gate-close]')){ closeGate(); return; }
+  const tb=e.target.closest('[data-gate-tab]'); if(tb){ setGateTab(tb.getAttribute('data-gate-tab')); }
+});
+gateEl.addEventListener('click',function(e){ if(e.target===gateEl) closeGate(); });
+document.addEventListener('keydown',function(e){ if(e.key==='Escape'&&gateEl.classList.contains('open')) closeGate(); });
+
+async function postForm(url, form){
+  const fd=new FormData(form); const body=new URLSearchParams();
+  fd.forEach((v,k)=>body.append(k,v));
+  if(!body.has('source')) body.append('source','asnm-prelaunch');
+  try{
+    const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body});
+    let j={}; try{ j=await r.json(); }catch(_){}
+    return {ok:r.ok&&j.ok, error:j&&j.error};
+  }catch(_){ return {ok:false, error:'Network error. Please try again.'}; }
+}
+function paneDone(pane, title, msg){
+  const el=gateEl.querySelector('.gate-pane[data-pane="'+pane+'"]');
+  if(el) el.innerHTML='<div class="gate-done"><div class="okmark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></div><h3>'+title+'</h3><p>'+msg+'</p></div>';
+}
+document.getElementById('notifyForm').addEventListener('submit',async function(e){
+  e.preventDefault(); const btn=this.querySelector('.gate-cta'); const msg=document.getElementById('notifyMsg');
+  msg.textContent=''; msg.className='gate-msg';
+  const em=(this.em.value||'').trim();
+  if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)){ msg.textContent='Please enter a valid email.'; msg.className='gate-msg err'; return; }
+  btn.disabled=true; const lbl=btn.textContent; btn.textContent='Signing you up...';
+  const res=await postForm('/api/subscribe',this);
+  if(res.ok){ paneDone('notify','You are on the list','We will email you the day Adaptive Sports Near Me opens.'); }
+  else{ btn.disabled=false; btn.textContent=lbl; msg.textContent=res.error||'Something went wrong. Please try again.'; msg.className='gate-msg err'; }
+});
+document.getElementById('programForm').addEventListener('submit',async function(e){
+  e.preventDefault(); const btn=this.querySelector('.gate-cta'); const msg=document.getElementById('programMsg');
+  msg.textContent=''; msg.className='gate-msg';
+  if(!(this.pn.value||'').trim()){ msg.textContent='Please add the program name.'; msg.className='gate-msg err'; return; }
+  btn.disabled=true; const lbl=btn.textContent; btn.textContent='Submitting...';
+  const res=await postForm('/api/submit-program',this);
+  if(res.ok){ paneDone('program','Thank you','We received your program and will be in touch before launch.'); }
+  else{ btn.disabled=false; btn.textContent=lbl; msg.textContent=res.error||'Something went wrong. Please try again.'; msg.className='gate-msg err'; }
+});
+
+/* footer subscribe -> real beehiiv */
 document.addEventListener('click', function(e){
   const sb=e.target.closest('[data-subscribe-go]'); if(!sb) return;
   const inp=document.getElementById('subEmail'), wrap=document.getElementById('subWrap');
-  if(inp && wrap && /.+@.+\..+/.test(inp.value.trim())){ wrap.innerHTML='<span class="fc-thanks">Thanks, you are on the list.</span>'; }
-  else if(inp){ inp.focus(); }
+  if(!inp) return;
+  const em=(inp.value||'').trim();
+  if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)){ inp.focus(); return; }
+  sb.disabled=true; sb.textContent='...';
+  const body=new URLSearchParams(); body.append('em',em); body.append('source','asnm-footer');
+  fetch('/api/subscribe',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body})
+    .then(r=>r.json().catch(()=>({}))).then(j=>{
+      if(j&&j.ok){ if(wrap) wrap.innerHTML='<span class="fc-thanks">Thanks, you are on the list.</span>'; }
+      else{ sb.disabled=false; sb.textContent='Subscribe'; }
+    }).catch(()=>{ sb.disabled=false; sb.textContent='Subscribe'; });
 });
 
 render();

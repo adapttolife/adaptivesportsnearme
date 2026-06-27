@@ -1,0 +1,195 @@
+// Adaptive Sports Near Me — Worker entry.
+// Serves the static site (env.ASSETS) and handles two pre-launch endpoints:
+//   POST /api/subscribe        -> beehiiv (email capture, tagged asnm-prelaunch)
+//   POST /api/submit-program   -> Airtable Agent Inbox (a "New program" submission)
+// All secrets stay server-side (Worker secrets). Bot defence: honeypot + optional Turnstile.
+
+export default {
+  async fetch(request, env) {
+    const url = new URL(request.url);
+
+    if (url.pathname === "/api/subscribe") {
+      if (request.method !== "POST") return json({ ok: false, error: "Method not allowed" }, 405);
+      return handleSubscribe(request, env);
+    }
+    if (url.pathname === "/api/submit-program") {
+      if (request.method !== "POST") return json({ ok: false, error: "Method not allowed" }, 405);
+      return handleSubmitProgram(request, env);
+    }
+
+    // Everything else: the static site.
+    return env.ASSETS.fetch(request);
+  },
+};
+
+// ---- Email capture -> beehiiv ------------------------------------------------
+async function handleSubscribe(request, env) {
+  const data = await readBody(request);
+  if (data === null) return json({ ok: false, error: "Could not read your submission." }, 400);
+
+  // Honeypot — bots fill the hidden "company" field. Accept silently, do nothing.
+  if (str(data.company)) return json({ ok: true });
+
+  if (!(await verifyTurnstile(env, str(data.cf_token), request.headers.get("CF-Connecting-IP")))) {
+    return json({ ok: false, error: "Verification failed. Please reload the page and try again." }, 403);
+  }
+
+  const email = str(data.em);
+  if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+    return json({ ok: false, error: "Please enter a valid email." }, 422);
+  }
+
+  if (!env.BEEHIIV_API_KEY || !env.BEEHIIV_PUBLICATION_ID) {
+    console.error("beehiiv not configured (missing API key or publication id)");
+    return json({ ok: false, error: "Sign-up is temporarily unavailable. Please try again soon." }, 503);
+  }
+
+  const source = str(data.source).slice(0, 80) || "asnm-prelaunch";
+  let res;
+  try {
+    res = await fetch(
+      `https://api.beehiiv.com/v2/publications/${env.BEEHIIV_PUBLICATION_ID}/subscriptions`,
+      {
+        method: "POST",
+        headers: { Authorization: `Bearer ${env.BEEHIIV_API_KEY}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email,
+          reactivate_existing: true,
+          send_welcome_email: true,
+          utm_source: "asnm-prelaunch",
+          utm_medium: "website",
+          utm_campaign: source,
+          referring_site: "adaptivesportsnearme.com",
+        }),
+      }
+    );
+  } catch (err) {
+    console.error("beehiiv request failed:", err);
+    return json({ ok: false, error: "Could not sign you up right now. Please try again soon." }, 502);
+  }
+
+  if (!res.ok) {
+    console.error("beehiiv error", res.status, await safeText(res));
+    return json({ ok: false, error: "Could not sign you up right now. Please try again soon." }, 502);
+  }
+
+  return json({ ok: true });
+}
+
+// ---- Program submission -> Airtable Agent Inbox ------------------------------
+async function handleSubmitProgram(request, env) {
+  const data = await readBody(request);
+  if (data === null) return json({ ok: false, error: "Could not read your submission." }, 400);
+
+  if (str(data.company)) return json({ ok: true }); // honeypot
+
+  if (!(await verifyTurnstile(env, str(data.cf_token), request.headers.get("CF-Connecting-IP")))) {
+    return json({ ok: false, error: "Verification failed. Please reload the page and try again." }, 403);
+  }
+
+  const program = str(data.pn);
+  const org = str(data.org);
+  const sport = str(data.sport);
+  const city = str(data.city);
+  const stateRegion = str(data.state);
+  const email = str(data.em);
+  const notes = str(data.notes);
+
+  if (!program) return json({ ok: false, error: "Please add the program name." }, 422);
+  if (email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+    return json({ ok: false, error: "That email does not look right." }, 422);
+  }
+
+  if (!env.AIRTABLE_TOKEN || !env.AIRTABLE_BASE_ID || !env.AIRTABLE_INBOX_TABLE_ID) {
+    console.error("Airtable not configured");
+    return json({ ok: false, error: "Submissions are temporarily unavailable. Please try again soon." }, 503);
+  }
+
+  const location = [city, stateRegion].filter(Boolean).join(", ");
+  const description = [
+    `Program: ${program}`,
+    org && `Organization: ${org}`,
+    sport && `Sport: ${sport}`,
+    location && `Location: ${location}`,
+    email && `Contact: ${email}`,
+    notes && `Notes: ${notes}`,
+    ``,
+    `Submitted via the adaptivesportsnearme.com pre-launch page.`,
+  ].filter((l) => l !== false && l !== undefined).join("\n");
+
+  const fields = {
+    Title: program,
+    Type: "New program",
+    From: "Volunteer / Guest",
+    Status: "New",
+    Priority: "Medium",
+    Description: description,
+    Submitted: new Date().toISOString(),
+  };
+
+  let res;
+  try {
+    res = await fetch(
+      `https://api.airtable.com/v0/${env.AIRTABLE_BASE_ID}/${env.AIRTABLE_INBOX_TABLE_ID}`,
+      {
+        method: "POST",
+        headers: { Authorization: `Bearer ${env.AIRTABLE_TOKEN}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ records: [{ fields }], typecast: true }),
+      }
+    );
+  } catch (err) {
+    console.error("Airtable request failed:", err);
+    return json({ ok: false, error: "Could not save right now. Please try again soon." }, 502);
+  }
+
+  if (!res.ok) {
+    console.error("Airtable error", res.status, await safeText(res));
+    return json({ ok: false, error: "Could not save right now. Please try again soon." }, 502);
+  }
+
+  return json({ ok: true });
+}
+
+// ---- helpers ----------------------------------------------------------------
+async function readBody(request) {
+  try {
+    const ct = request.headers.get("content-type") || "";
+    return ct.includes("application/json")
+      ? await request.json()
+      : Object.fromEntries(await request.formData());
+  } catch {
+    return null;
+  }
+}
+
+async function verifyTurnstile(env, token, ip) {
+  if (!env.TURNSTILE_SECRET_KEY) return true; // not configured yet -> honeypot only
+  if (!token) return false;
+  try {
+    const res = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ secret: env.TURNSTILE_SECRET_KEY, response: token, remoteip: ip || undefined }),
+    });
+    const out = await res.json();
+    return !!out.success;
+  } catch (err) {
+    console.error("turnstile verify failed:", err);
+    return false;
+  }
+}
+
+function str(v) {
+  return (typeof v === "string" ? v : "").trim().slice(0, 5000);
+}
+
+function json(obj, status = 200) {
+  return new Response(JSON.stringify(obj), {
+    status,
+    headers: { "Content-Type": "application/json", "Cache-Control": "no-store" },
+  });
+}
+
+async function safeText(res) {
+  try { return await res.text(); } catch { return "(no body)"; }
+}
