@@ -789,19 +789,34 @@ function frow(title, sub, list, seeall){
     +'</div>'+(sub?'<p class="frow-sub">'+sub+'</p>':'')+'</div>';
   return '<section class="frow">'+head+'<div class="frow-scroll">'+list.map(cardItem).join('')+'</div></section>';
 }
+// Reorder a list round-robin by sport so adjacent cards differ and each row can
+// lead with a different sport (offset rotates which sport comes first).
+function diversify(list, offset){
+  const buckets=new Map();
+  list.forEach(p=>{ if(!buckets.has(p.sport)) buckets.set(p.sport, []); buckets.get(p.sport).push(p); });
+  let order=[...buckets.keys()];
+  if(order.length>1 && offset){ const o=offset%order.length; order=order.slice(o).concat(order.slice(0,o)); }
+  const out=[];
+  while(out.length<list.length){
+    let any=false;
+    for(const k of order){ const b=buckets.get(k); if(b.length){ out.push(b.shift()); any=true; } }
+    if(!any) break;
+  }
+  return out;
+}
 function feedRows(){
   const city=(state.loc.split(',')[0]||'').trim();
   const beginner=PROGRAMS.filter(p=>p.levels.includes('Beginner'));
   const popular=PROGRAMS.slice().sort((a,b)=>a.dist-b.dist);
   const open=PROGRAMS.filter(p=>p.status==='Open');
   const free=PROGRAMS.filter(p=>p.free);
-  const wbb=PROGRAMS.filter(p=>p.sport==='basketball');
+  const team=PROGRAMS.filter(p=>p.category==='Team');
   return '<div class="wrap feed">'
-    + frow('New to adaptive sports? Start here','Welcoming programs where first timers fit right in', beginner, 'beginner')
-    + frow('Popular in '+city, '', popular, 'popular')
-    + frow('Taking new players right now','Open and ready when you are', open, 'open')
-    + frow('Free to play','No cost to get started', free, 'free')
-    + frow('Wheelchair basketball near you','', wbb, 'sport:basketball')
+    + frow('New to adaptive sports? Start here','Welcoming programs where first timers fit right in', diversify(beginner,1), 'beginner')
+    + frow('Popular in '+city, '', diversify(popular,2), 'popular')
+    + frow('Taking new players right now','Open and ready when you are', diversify(open,3), 'open')
+    + frow('Free to play','No cost to get started', diversify(free,4), 'free')
+    + frow('Team sports to try','Find a squad in '+city, diversify(team,2), 'popular')
     + '</div>';
 }
 function isFeedMode(){ return state.see===null && !state.q.trim() && state.sport==='all' && state.dist==='any' && state.cost==='any' && state.level==='any'; }
