@@ -360,6 +360,16 @@ table.list tbody tr:hover{background:var(--mist);}
 .subbtn:hover{background:#000;}
 .fc-thanks{display:flex;align-items:center;height:42px;font-size:14px;font-weight:600;color:var(--ink);}
 
+/* ============================ TRUST PILL (floating) ============================ */
+.trustpill{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:55;display:inline-flex;align-items:center;gap:10px;max-width:calc(100vw - 28px);background:var(--ink);color:#fff;border-radius:var(--r-full);padding:10px 12px 10px 15px;font-size:13.5px;font-weight:600;line-height:1;box-shadow:var(--shadow-lg);}
+.trustpill svg{flex:0 0 auto;}
+.trustpill>svg:first-child{width:17px;height:17px;color:#fff;}
+.trustpill b{font-weight:800;}
+.trustpill .tp-dot{opacity:.45;}
+.trustpill .tp-x{flex:0 0 auto;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;color:#fff;opacity:.65;transition:opacity .15s,background .15s;}
+.trustpill .tp-x:hover{opacity:1;background:rgba(255,255,255,.16);}
+@media (max-width:520px){.trustpill{bottom:14px;font-size:12px;gap:8px;padding:9px 10px 9px 13px;}.trustpill>svg:first-child{width:15px;height:15px;}}
+
 /* ============================ RESPONSIVE ============================ */
 @media (max-width:900px){
   .maplayout{grid-template-columns:1fr;}
@@ -435,6 +445,12 @@ table.list tbody tr:hover{background:var(--mist);}
 </header>
 
 <main id="view"></main>
+
+<div class="trustpill" id="trustPill" role="status">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.4-3 7.6-7 9-4-1.4-7-4.6-7-9V6l7-3Z"/><path d="m9 12 2 2 4-4"/></svg>
+  <span><b>Free</b><span class="tp-dot"> · </span>No login<span class="tp-dot"> · </span>Every listing checked by a human</span>
+  <button class="tp-x" type="button" data-trust-dismiss aria-label="Dismiss this notice"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+</div>
 
 <footer class="foot">
   <div class="wrap">
@@ -590,7 +606,9 @@ function pill(s){ return '<span class="status '+statusCls(s)+'">'+s+'</span>'; }
 function heartBtn(id){ const on=saved.has(id)?' on':''; return '<button class="heart'+on+'" data-heart="'+id+'" aria-pressed="'+saved.has(id)+'" aria-label="Save program">'+HEART+'</button>'; }
 function media(p, kind){
   const ph = p.photo ? '<img class="pcard-img" src="'+p.photo+'" alt="" loading="lazy">' : '';
-  return '<div class="'+(kind||'pcard-media')+' '+SPGRAD[p.sport]+(p.photo?' has-photo':'')+'">'+ph+ringBg('ringbg')+glyph(p.sport,'gly')+'</div>';
+  // Airbnb-style overlays on the card image: availability badge (top-left) + save heart (top-right).
+  const overlay = (kind && kind!=='pcard-media') ? '' : pill(p.status)+heartBtn(p.id);
+  return '<div class="'+(kind||'pcard-media')+' '+SPGRAD[p.sport]+(p.photo?' has-photo':'')+'">'+ph+ringBg('ringbg')+glyph(p.sport,'gly')+overlay+'</div>';
 }
 function filtered(){
   let list = PROGRAMS.slice();
@@ -862,6 +880,7 @@ function render(){
   const hq=document.getElementById('q'); if(hq) hq.value=state.q;
   const qh=document.getElementById('qHero'); if(qh) qh.value=state.q;
   updateHeaderSearch();
+  syncTrust();
 }
 
 function goFeed(){ state.q=''; state.sport='all'; state.dist='any'; state.cost='any'; state.level='any'; state.see=null; state.filtersOpen=false; state.layout='grid'; }
@@ -932,6 +951,11 @@ document.addEventListener('click', function(e){
   if(inp && wrap && /.+@.+\..+/.test(inp.value.trim())){ wrap.innerHTML='<span class="fc-thanks">Thanks, you are on the list.</span>'; }
   else if(inp){ inp.focus(); }
 });
+
+/* floating trust pill — show on browse, hide on a program page or once dismissed */
+let trustDismissed=false;
+function syncTrust(){ const tp=document.getElementById('trustPill'); if(tp) tp.style.display=(trustDismissed||state.section==='program')?'none':''; }
+document.addEventListener('click',function(e){ if(e.target.closest('[data-trust-dismiss]')){ trustDismissed=true; syncTrust(); } });
 
 render();
 </script>
