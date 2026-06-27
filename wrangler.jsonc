@@ -8,5 +8,18 @@
     "directory": "./public",
     "not_found_handling": "404-page",
     "html_handling": "auto-trailing-slash"
+  },
+  // Two doors. Production is the default (`cfrun wrangler deploy`) and becomes the
+  // apex domain. Staging is a separate worker we preview on before promoting:
+  //   cfrun wrangler deploy --env staging   →  https://asnm-staging.alec-af3.workers.dev
+  "env": {
+    "staging": {
+      "name": "asnm-staging",
+      "assets": {
+        "directory": "./public",
+        "not_found_handling": "404-page",
+        "html_handling": "auto-trailing-slash"
+      }
+    }
   }
 }
