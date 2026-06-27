@@ -190,6 +190,7 @@ input,select{font-family:inherit;}
 .st-open{background:var(--ink);color:#fff;}
 .st-wait{background:rgba(255,255,255,.92);color:var(--ink);box-shadow:inset 0 0 0 1px var(--line);}
 .st-seas{background:rgba(255,255,255,.92);color:var(--muted);box-shadow:inset 0 0 0 1px var(--line);}
+.st-eq{background:rgba(255,255,255,.94);color:var(--ink);box-shadow:inset 0 0 0 1px rgba(17,17,19,.05);}
 .heart{position:absolute;top:10px;right:10px;width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.86);color:var(--ink);display:grid;place-items:center;transition:transform .15s,background .15s;}
 .heart:hover{background:#fff;transform:scale(1.08);}
 .heart.on{color:var(--orange);}
@@ -483,7 +484,6 @@ table.list tbody tr:hover{background:var(--mist);}
 <header class="hdr">
   <div class="wrap hdr-in">
     <a class="brand" href="#" data-home aria-label="Adaptive Sports Near Me home"><b>Adaptive Sports Near Me</b></a>
-    <button class="preview-chip" type="button" data-gate-open="notify" aria-label="Preview — we are not live yet. Get notified at launch."><span class="dot"></span><span>Preview · not live yet</span></button>
 
     <div class="search" role="search">
       <button class="loc" id="locBtn" aria-label="Change location">
@@ -702,7 +702,7 @@ function pill(s){ return '<span class="status '+statusCls(s)+'">'+s+'</span>'; }
 function heartBtn(id){ const on=saved.has(id)?' on':''; return '<button class="heart'+on+'" data-heart="'+id+'" aria-pressed="'+saved.has(id)+'" aria-label="Save program">'+HEART+'</button>'; }
 function media(p, kind){
   // Airbnb-style: real action photo + availability badge (top-left) and save heart (top-right).
-  const overlay = (kind && kind!=='pcard-media') ? '' : pill(p.status)+heartBtn(p.id);
+  const overlay = (kind && kind!=='pcard-media') ? '' : '<span class="status st-eq">Equipment provided</span>';
   return '<div class="'+(kind||'pcard-media')+' has-photo"><img class="pcard-img" src="'+photoSrc(p.sport)+'" alt="" loading="lazy">'+overlay+'</div>';
 }
 function filtered(){
