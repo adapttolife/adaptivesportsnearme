@@ -169,6 +169,17 @@ input,select{font-family:inherit;}
 .pcard-meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:14px;color:var(--muted);margin-top:4px;}
 .pcard-meta .d{color:var(--faint);}
 
+/* sport icon imagery (rendered icons replace the vector glyphs) */
+.pcard-media .sport-icon{position:absolute;inset:0;margin:auto;width:80%;height:80%;object-fit:contain;z-index:1;filter:drop-shadow(0 9px 14px rgba(20,18,14,.17));transition:transform .25s var(--ease);}
+.pcard:hover .pcard-media .sport-icon{transform:scale(1.04);}
+.mthumb .sport-icon{position:absolute;inset:0;margin:auto;width:88%;height:88%;object-fit:contain;}
+.tthumb .sport-icon{position:absolute;inset:0;margin:auto;width:92%;height:92%;object-fit:contain;}
+.thumb-full{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
+.cat-img{width:30px;height:30px;object-fit:contain;border-radius:7px;}
+.dhero-icon{position:absolute;inset:0;margin:auto;width:42%;height:74%;object-fit:contain;filter:drop-shadow(0 16px 26px rgba(20,18,14,.2));}
+.dhero-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
+.dhero.has-dphoto{background:#23211f;}
+
 /* gradients (calm, photo-ready) */
 .g-sand{background:linear-gradient(140deg,#F2EFEA 0%,#E5DED3 100%);}
 .g-cool{background:linear-gradient(140deg,#EEF1F1 0%,#DBE0E1 100%);}
@@ -486,15 +497,17 @@ table.list tbody tr:hover{background:var(--mist);}
 <script>
 /* ============================ DATA ============================ */
 const SPORTS = [
-  {key:"basketball", label:"Basketball"},
-  {key:"cycling",    label:"Cycling"},
-  {key:"sledhockey", label:"Sled Hockey"},
-  {key:"swimming",   label:"Swimming"},
-  {key:"tennis",     label:"Tennis"},
-  {key:"pickleball", label:"Pickleball"},
-  {key:"climbing",   label:"Climbing"},
-  {key:"skiing",     label:"Skiing"},
-  {key:"soccer",     label:"Soccer"},
+  {key:"basketball",  label:"Basketball"},
+  {key:"tennis",      label:"Tennis"},
+  {key:"pickleball",  label:"Pickleball"},
+  {key:"rugby",       label:"Rugby"},
+  {key:"football",    label:"Football"},
+  {key:"baseball",    label:"Baseball"},
+  {key:"cycling",     label:"Cycling"},
+  {key:"sledhockey",  label:"Sled Hockey"},
+  {key:"skiing",      label:"Skiing"},
+  {key:"waterskiing", label:"Water Ski"},
+  {key:"goalball",    label:"Goalball"},
 ];
 const PROVIDERS = {
   "Colorado Wheelchair Basketball Assn.":{type:"Club", city:"Denver, CO", blurb:"The state's governing body for wheelchair basketball, running youth, adult and competitive divisions."},
@@ -516,7 +529,7 @@ const EVENTS = [
   {name:"Denver Open Pickleball", date:"Jun 7", city:"Denver, CO", sport:"Wheelchair Pickleball"},
   {name:"Front Range Hoops Jam", date:"Apr 19", city:"Denver, CO", sport:"Wheelchair Basketball"},
   {name:"Handcycle Century", date:"Sep 20", city:"Lakewood, CO", sport:"Adaptive Cycling"},
-  {name:"Para Swim Invitational", date:"Feb 22", city:"Englewood, CO", sport:"Para Swimming"},
+  {name:"Mountain Quad Rugby Cup", date:"Feb 22", city:"Lakewood, CO", sport:"Wheelchair Rugby"},
 ];
 const EQUIPMENT = [
   {item:"Sport wheelchair (basketball)", type:"Loaner", source:"Colorado WBA", cost:"Free"},
@@ -536,19 +549,20 @@ const PROGRAMS = [
   {id:"wbb-adult", name:"Mile High WBB League (Adult)", sport:"basketball", sportLabel:"Wheelchair Basketball", category:"Team", provider:"Colorado Wheelchair Basketball Assn.", city:"Denver, CO", dist:5, cost:"$40 / season", free:false, status:"Waitlist", ages:"Adults 18+", season:"Sep\u2013Apr", format:"League", levels:["Intermediate","Competitive"], equipment:"Provided", schedule:"Tuesdays, 7\u20139pm \u00b7 Denver Rec Center", desc:"Adult league play across two competitive tiers. Rosters fill fast; join the waitlist for the next opening."},
   {id:"pb-open", name:"Pickleball Open Play", sport:"pickleball", sportLabel:"Wheelchair Pickleball", category:"Racquet", provider:"Denver Parks & Rec Adaptive", city:"Denver, CO", dist:5, cost:"$10 / session", free:false, status:"Open", ages:"All ages", season:"Year round", format:"Drop in", levels:["Beginner","Intermediate"], equipment:"Loaner paddles", schedule:"Saturdays, 10am\u201312pm \u00b7 Central Park Rec", desc:"Open wheelchair pickleball for all ages and levels. Paddles and balls on hand, just show up and play."},
   {id:"hoops-clinic", name:"Adaptive Hoops Clinic", sport:"basketball", sportLabel:"Wheelchair Basketball", category:"Team", provider:"Denver Parks & Rec Adaptive", city:"Denver, CO", dist:6, cost:"Free", free:true, status:"Open", ages:"Ages 6\u201314", season:"Year round", format:"Clinic", levels:["Beginner"], equipment:"Provided", schedule:"Thursdays, 4\u20135:30pm \u00b7 MLK Rec Center", desc:"Skills clinic for new and young players. Coaches cover handling, passing and shooting in a low pressure setting."},
-  {id:"swim-learn", name:"Adaptive Learn to Swim", sport:"swimming", sportLabel:"Para Swimming", category:"Individual", provider:"Denver Parks & Rec Adaptive", city:"Denver, CO", dist:6, cost:"$25 / session", free:false, status:"Open", ages:"All ages", season:"Year round", format:"Lessons", levels:["Beginner"], equipment:"Not required", schedule:"Mondays, 5\u20136pm \u00b7 Glenarm Pool", desc:"One on one and small group swim lessons with adaptive instructors. Water entry support available."},
   {id:"tennis-ladder", name:"Wheelchair Tennis Ladder", sport:"tennis", sportLabel:"Wheelchair Tennis", category:"Racquet", provider:"Denver Parks & Rec Adaptive", city:"Denver, CO", dist:7, cost:"$30 / season", free:false, status:"Open", ages:"Adults 18+", season:"May\u2013Sep", format:"Ladder", levels:["Intermediate","Competitive"], equipment:"Bring your own", schedule:"Wednesdays, 6\u20138pm \u00b7 Gates Tennis Center", desc:"Competitive ladder for returning players. Match yourself against players at your level through the season."},
-  {id:"swim-club", name:"Para Swim Club", sport:"swimming", sportLabel:"Para Swimming", category:"Individual", provider:"Craig Hospital Rec Therapy", city:"Englewood, CO", dist:8, cost:"$60 / month", free:false, status:"Waitlist", ages:"Ages 12+", season:"Year round", format:"Club", levels:["Intermediate","Competitive"], equipment:"Not required", schedule:"Tue/Thu, 6\u20137:30pm \u00b7 Craig Aquatics", desc:"Structured training for swimmers building toward meets. Coached sets four times a week."},
+  {id:"rugby-league", name:"Rocky Mountain Quad Rugby", sport:"rugby", sportLabel:"Wheelchair Rugby", category:"Team", provider:"Adaptive Adventures", city:"Lakewood, CO", dist:9, cost:"$50 / season", free:false, status:"Waitlist", ages:"Adults 18+", season:"Oct\u2013Mar", format:"League", levels:["Intermediate","Competitive"], equipment:"Provided", schedule:"Saturdays, 12\u20132pm \u00b7 Lakewood Link Rec", desc:"Full contact quad rugby for experienced players. Sport chairs provided; rosters fill fast, join the waitlist."},
+  {id:"football-club", name:"Mile High Wheelchair Football", sport:"football", sportLabel:"Wheelchair Football", category:"Team", provider:"Denver Parks & Rec Adaptive", city:"Denver, CO", dist:8, cost:"$30 / season", free:false, status:"Open", ages:"Adults 18+", season:"Sep\u2013Nov", format:"League", levels:["Beginner","Intermediate"], equipment:"Provided", schedule:"Sundays, 1\u20133pm \u00b7 Hiawatha Davis Rec", desc:"Seven on seven wheelchair football across a fall season. New players welcome; chairs and pads provided."},
+  {id:"baseball-league", name:"Front Range Adaptive Baseball", sport:"baseball", sportLabel:"Wheelchair Baseball", category:"Team", provider:"Denver Parks & Rec Adaptive", city:"Denver, CO", dist:6, cost:"Free", free:true, status:"Open", ages:"All ages", season:"Apr\u2013Sep", format:"League", levels:["Beginner","Intermediate"], equipment:"Provided", schedule:"Saturdays, 10am\u201312pm \u00b7 City Park Fields", desc:"Adaptive baseball on a hard court field for chair users and ambulatory players alike. Bats, gloves and chairs on hand."},
   {id:"handcycle-sat", name:"Handcycle Saturdays", sport:"cycling", sportLabel:"Adaptive Cycling", category:"Endurance", provider:"Adaptive Adventures", city:"Lakewood, CO", dist:9, cost:"Free (loaner bikes)", free:true, status:"Seasonal", ages:"All ages", season:"May\u2013Oct", format:"Group ride", levels:["Beginner","Intermediate"], equipment:"Loaner bikes", schedule:"Saturdays, 9am \u00b7 Bear Creek Trail", desc:"Group handcycle rides on flat paved trails. Loaner bikes available, first come first served."},
   {id:"sled-front", name:"Front Range Sled Hockey", sport:"sledhockey", sportLabel:"Sled Hockey", category:"Team", provider:"Rocky Mountain Sled Hockey", city:"Littleton, CO", dist:14, cost:"$150 / season", free:false, status:"Open", ages:"Ages 14+", season:"Oct\u2013Mar", format:"League", levels:["Intermediate","Competitive"], equipment:"Provided", schedule:"Fridays, 8\u20139:30pm \u00b7 South Suburban Ice", desc:"Competitive sled hockey for experienced skaters. Sleds and sticks provided for the season."},
   {id:"sled-learn", name:"Learn to Sled Hockey", sport:"sledhockey", sportLabel:"Sled Hockey", category:"Team", provider:"Rocky Mountain Sled Hockey", city:"Littleton, CO", dist:14, cost:"Free", free:true, status:"Open", ages:"All ages", season:"Oct\u2013Mar", format:"Clinic", levels:["Beginner"], equipment:"Provided", schedule:"Sundays, 5\u20136pm \u00b7 South Suburban Ice", desc:"First time on the ice? This intro session covers balance, gliding and stick handling on a sled."},
-  {id:"climb-night", name:"Adaptive Climb Night", sport:"climbing", sportLabel:"Adaptive Climbing", category:"Individual", provider:"Mountain Access Project", city:"Golden, CO", dist:12, cost:"$15 / session", free:false, status:"Open", ages:"Ages 10+", season:"Year round", format:"Drop in", levels:["Beginner","Intermediate"], equipment:"Provided", schedule:"Wednesdays, 6\u20138pm \u00b7 Earth Treks Golden", desc:"Top rope climbing with adaptive belay systems and trained volunteers. All experience levels welcome."},
   {id:"ski-day", name:"Adaptive Ski Days", sport:"skiing", sportLabel:"Adaptive Skiing", category:"Endurance", provider:"Adaptive Adventures", city:"Winter Park, CO", dist:22, cost:"$45 / day", free:false, status:"Seasonal", ages:"Ages 6+", season:"Dec\u2013Mar", format:"Lessons", levels:["Beginner","Intermediate"], equipment:"Provided", schedule:"Weekends \u00b7 Winter Park Resort", desc:"Sit ski and stand ski lessons with certified adaptive instructors. Equipment and lift access included."},
-  {id:"soccer-league", name:"Powerchair Soccer League", sport:"soccer", sportLabel:"Powerchair Soccer", category:"Team", provider:"Denver Parks & Rec Adaptive", city:"Denver, CO", dist:10, cost:"$25 / season", free:false, status:"Open", ages:"All ages", season:"Year round", format:"League", levels:["Beginner","Intermediate","Competitive"], equipment:"Guards provided", schedule:"Saturdays, 1\u20133pm \u00b7 Hiawatha Davis Rec", desc:"Powerchair soccer for power wheelchair users. Foot guards provided; bring your everyday chair."},
+  {id:"waterski-clinic", name:"Adaptive Water Ski Clinic", sport:"waterskiing", sportLabel:"Adaptive Water Skiing", category:"Endurance", provider:"Adaptive Adventures", city:"Aurora, CO", dist:16, cost:"$45 / day", free:false, status:"Seasonal", ages:"Ages 8+", season:"Jun\u2013Aug", format:"Clinic", levels:["Beginner"], equipment:"Provided", schedule:"Weekends \u00b7 Cherry Creek Reservoir", desc:"Sit ski and adaptive water ski sessions with certified instructors and on water support. No experience needed."},
+  {id:"goalball-club", name:"Denver Goalball Club", sport:"goalball", sportLabel:"Goalball", category:"Team", provider:"Craig Hospital Rec Therapy", city:"Englewood, CO", dist:8, cost:"Free", free:true, status:"Open", ages:"Ages 10+", season:"Year round", format:"Club", levels:["Beginner","Intermediate"], equipment:"Provided", schedule:"Thursdays, 6\u20138pm \u00b7 Craig Gymnasium", desc:"Goalball for athletes who are blind or low vision. Eyeshades and balls provided; sighted players welcome too."},
 ];
 const TABLE_META = [
   {key:"sports", label:"Sports", count:11, icon:"chair"},
-  {key:"programs", label:"Programs", count:13, icon:"people"},
+  {key:"programs", label:"Programs", count:14, icon:"people"},
   {key:"providers", label:"Providers", count:6, icon:"building"},
   {key:"events", label:"Events", count:5, icon:"cal"},
   {key:"equipment", label:"Equipment", count:5, icon:"dumb"},
@@ -557,11 +571,17 @@ const TABLE_META = [
 ];
 const MAPPOS = {
   "nuggets-youth":{x:52,y:40},"wbb-adult":{x:59,y:32},"pb-open":{x:45,y:51},
-  "hoops-clinic":{x:64,y:57},"swim-learn":{x:39,y:45},"tennis-ladder":{x:69,y:44},
-  "swim-club":{x:55,y:71},"handcycle-sat":{x:29,y:60},"sled-front":{x:49,y:82},
-  "sled-learn":{x:57,y:79},"climb-night":{x:26,y:37},"ski-day":{x:17,y:19},"soccer-league":{x:43,y:64},
+  "hoops-clinic":{x:64,y:57},"tennis-ladder":{x:69,y:44},"rugby-league":{x:30,y:62},
+  "football-club":{x:42,y:58},"baseball-league":{x:60,y:36},"handcycle-sat":{x:29,y:70},
+  "sled-front":{x:49,y:82},"sled-learn":{x:57,y:79},"ski-day":{x:17,y:19},
+  "waterski-clinic":{x:22,y:30},"goalball-club":{x:55,y:71},
 };
-const SPGRAD = {basketball:"g-warm",pickleball:"g-warm",tennis:"g-sand",swimming:"g-cool",cycling:"g-sand",skiing:"g-cool",sledhockey:"g-cool",climbing:"g-sand",soccer:"g-sand"};
+const SPGRAD = {basketball:"g-warm",tennis:"g-sand",pickleball:"g-warm",rugby:"g-sand",football:"g-warm",baseball:"g-sand",cycling:"g-cool",sledhockey:"g-cool",skiing:"g-cool",waterskiing:"g-cool",goalball:"g-sand"};
+const ICON_KIND = {goalball:"jpg", waterskiing:"jpg"}; // dark studio renders shown full-bleed until transparent re-export
+function iconSrc(key){ return "assets/sport-icons/"+key+"."+(ICON_KIND[key]||"png"); }
+function isFullIcon(key){ return ICON_KIND[key]==="jpg"; }
+function sportIcon(key, cls){ return '<img class="'+(cls||'')+'" src="'+iconSrc(key)+'" alt="" loading="lazy">'; }
+function sportThumb(key){ return isFullIcon(key) ? '<img class="thumb-full" src="'+iconSrc(key)+'" alt="" loading="lazy">' : '<img class="sport-icon" src="'+iconSrc(key)+'" alt="" loading="lazy">'; }
 
 /* ============================ ICONS ============================ */
 function ring(){ return '<circle cx="50" cy="50" r="38" fill="none" stroke="currentColor" stroke-width="4"/><circle class="dot" cx="74" cy="21" r="6.5" fill="currentColor"/>'; }
@@ -605,10 +625,12 @@ function statusCls(s){ return s==='Open'?'st-open':s==='Waitlist'?'st-wait':'st-
 function pill(s){ return '<span class="status '+statusCls(s)+'">'+s+'</span>'; }
 function heartBtn(id){ const on=saved.has(id)?' on':''; return '<button class="heart'+on+'" data-heart="'+id+'" aria-pressed="'+saved.has(id)+'" aria-label="Save program">'+HEART+'</button>'; }
 function media(p, kind){
-  const ph = p.photo ? '<img class="pcard-img" src="'+p.photo+'" alt="" loading="lazy">' : '';
   // Airbnb-style overlays on the card image: availability badge (top-left) + save heart (top-right).
   const overlay = (kind && kind!=='pcard-media') ? '' : pill(p.status)+heartBtn(p.id);
-  return '<div class="'+(kind||'pcard-media')+' '+SPGRAD[p.sport]+(p.photo?' has-photo':'')+'">'+ph+ringBg('ringbg')+glyph(p.sport,'gly')+overlay+'</div>';
+  if(isFullIcon(p.sport)){
+    return '<div class="'+(kind||'pcard-media')+' has-photo"><img class="pcard-img" src="'+iconSrc(p.sport)+'" alt="" loading="lazy">'+overlay+'</div>';
+  }
+  return '<div class="'+(kind||'pcard-media')+' '+SPGRAD[p.sport]+'"><img class="sport-icon" src="'+iconSrc(p.sport)+'" alt="" loading="lazy">'+overlay+'</div>';
 }
 function filtered(){
   let list = PROGRAMS.slice();
@@ -626,7 +648,7 @@ function activeFilterCount(){ let n=0; if(state.dist!=='any')n++; if(state.cost!
 /* ============================ RENDER: DISCOVER ============================ */
 function catBar(){
   const all='<button class="cat'+(state.sport==='all'?' on':'')+'" data-sport="all">'+NAVICON.compass+'<span>All sports</span></button>';
-  const items=SPORTS.map(s=>'<button class="cat'+(state.sport===s.key?' on':'')+'" data-sport="'+s.key+'">'+orbit(s.key,'ic')+'<span>'+s.label+'</span></button>').join('');
+  const items=SPORTS.map(s=>'<button class="cat'+(state.sport===s.key?' on':'')+'" data-sport="'+s.key+'">'+sportIcon(s.key,'cat-img')+'<span>'+s.label+'</span></button>').join('');
   const browse='<span class="cat-sep" aria-hidden="true"></span><button class="cat cat-browse" data-section="database">'+NAVICON.grid+'<span>Browse all</span></button>';
   return '<div class="catbar"><div class="wrap catbar-in"><div class="cats">'+all+items+browse+'</div></div></div>';
 }
@@ -703,7 +725,7 @@ function mapLayout(list){
   if(!list.length) return empty();
   const cards=list.map((p,i)=>
     '<div class="mcard" data-prog="'+p.id+'">'
-      +'<div class="mthumb '+SPGRAD[p.sport]+'">'+glyph(p.sport,'gly')+'<span class="mnum">'+(i+1)+'</span></div>'
+      +'<div class="mthumb '+SPGRAD[p.sport]+'">'+sportThumb(p.sport)+'<span class="mnum">'+(i+1)+'</span></div>'
       +'<div class="minfo">'
         +'<div class="pcard-sport">'+p.sportLabel+'</div>'
         +'<div class="nm">'+p.name+'</div>'
@@ -726,7 +748,7 @@ function listLayout(list){
   if(!list.length) return empty();
   const rows=list.map(p=>
     '<tr data-prog="'+p.id+'">'
-      +'<td><div class="tcell"><div class="tthumb '+SPGRAD[p.sport]+'">'+glyph(p.sport,'gly')+'</div><div><div class="nm">'+p.name+'</div><div class="sub">'+p.sportLabel+'</div></div></div></td>'
+      +'<td><div class="tcell"><div class="tthumb '+SPGRAD[p.sport]+'">'+sportThumb(p.sport)+'</div><div><div class="nm">'+p.name+'</div><div class="sub">'+p.sportLabel+'</div></div></div></td>'
       +'<td class="t-prov">'+p.provider+'</td>'
       +'<td>'+p.dist+' mi</td>'
       +'<td>'+p.cost+'</td>'
@@ -802,7 +824,7 @@ function program(){
   const accHtml=acc.map(a=>'<div class="acc-item">'+CK+'<span>'+a+'</span></div>').join('');
   return '<div class="wrap">'
     +'<div class="crumb"><a href="#" data-home>Home</a><span class="sl">/</span><a href="#" data-sport-link="'+p.sport+'">'+p.sportLabel+'</a><span class="sl">/</span><b>'+p.name+'</b></div>'
-    +'<div class="dhero '+SPGRAD[p.sport]+'">'+ringBg('ringbg')+glyph(p.sport,'gly')+'<span class="eyebrow">Program</span></div>'
+    +'<div class="dhero '+(isFullIcon(p.sport)?'has-dphoto':SPGRAD[p.sport])+'">'+(isFullIcon(p.sport)?'<img class="dhero-img" src="'+iconSrc(p.sport)+'" alt="">':'<img class="dhero-icon" src="'+iconSrc(p.sport)+'" alt="">')+'<span class="eyebrow">Program</span></div>'
     +'<div class="dgrid">'
       +'<div class="dtitle">'
         +'<div class="pcard-sport">'+p.sportLabel+'</div>'
