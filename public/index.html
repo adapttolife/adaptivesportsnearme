@@ -253,7 +253,7 @@ input,select{font-family:inherit;}
 .map .road.thin{background:#EDECE7;}
 .map .water{position:absolute;background:#D4E2E6;border-radius:40%;filter:blur(.3px);}
 .map .park{position:absolute;background:#D7E5D2;border-radius:42% 58% 50% 50%;}
-.map .mapchip{position:absolute;top:14px;left:14px;background:rgba(255,255,255,.9);border:1px solid var(--line);border-radius:var(--r-full);padding:6px 12px;font-family:'DM Sans',sans-serif;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);z-index:5;}
+.map .mapchip,.mapx .mapchip{position:absolute;top:14px;left:14px;background:rgba(255,255,255,.9);border:1px solid var(--line);border-radius:var(--r-full);padding:6px 12px;font-family:'DM Sans',sans-serif;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);z-index:5;}
 /* live map (MapLibre GL + OpenFreeMap) — Airbnb-style white count pills */
 #livemap{position:absolute;inset:0;}
 .mpill{display:flex;align-items:center;gap:6px;background:#fff;border:1px solid var(--line);border-radius:999px;padding:7px 12px;font-family:'DM Sans',sans-serif;font-weight:700;font-size:13px;color:var(--ink);box-shadow:0 2px 10px rgba(20,18,14,.18);cursor:pointer;transition:transform .12s var(--ease),background .12s,color .12s;white-space:nowrap;}
@@ -263,6 +263,31 @@ input,select{font-family:inherit;}
 .mpin{width:30px;height:30px;display:flex;align-items:center;justify-content:center;background:#fff;border:1px solid var(--line);border-radius:999px;font-family:'DM Sans',sans-serif;font-weight:700;font-size:13px;color:var(--ink);box-shadow:0 2px 10px rgba(20,18,14,.18);cursor:pointer;transition:transform .12s var(--ease),background .12s,color .12s;}
 .mpin:hover,.mpin.active{background:var(--ink);color:#fff;transform:scale(1.12);}
 .mdot{width:14px;height:14px;border-radius:50%;background:var(--orange);border:2.5px solid #fff;box-shadow:0 1px 6px rgba(20,18,14,.35);}
+/* full-screen map explorer */
+.mapx{position:relative;height:calc(100vh - 132px);min-height:480px;}
+.mapx-close{position:absolute;top:14px;right:14px;z-index:6;display:flex;align-items:center;gap:7px;background:#fff;border:1px solid var(--line);border-radius:var(--r-full);padding:9px 15px;font-family:'DM Sans',sans-serif;font-weight:600;font-size:13.5px;color:var(--ink);box-shadow:0 2px 10px rgba(20,18,14,.14);cursor:pointer;}
+.mapx-close:hover{background:var(--mist);}
+.mapx .maplibregl-ctrl-top-right{top:56px;}
+.mapx-open{position:absolute;bottom:18px;left:50%;transform:translateX(-50%);z-index:6;display:flex;align-items:center;gap:8px;background:var(--ink);color:#fff;border-radius:var(--r-full);padding:11px 18px;font-family:'DM Sans',sans-serif;font-weight:600;font-size:14px;box-shadow:0 4px 14px rgba(20,18,14,.3);cursor:pointer;transition:transform .15s var(--ease);}
+.mapx-open:hover{transform:translateX(-50%) scale(1.04);}
+.mapx-open svg{width:15px;height:15px;}
+.mapx-drawer{position:absolute;top:16px;right:16px;bottom:16px;width:min(400px,calc(100% - 32px));z-index:7;background:#fff;border-radius:var(--r-xl);box-shadow:0 8px 30px rgba(20,18,14,.22);display:flex;flex-direction:column;overflow:hidden;}
+.mapx-drawer[hidden]{display:none;}
+.mapxd-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:16px 18px 12px;border-bottom:1px solid var(--line);}
+.mapxd-head h3{font-family:'DM Sans',sans-serif;font-size:16.5px;margin:0;}
+.mapxd-head .sub{font-size:13px;color:var(--muted);margin-top:2px;}
+.mapxd-x{width:32px;height:32px;flex:0 0 auto;display:flex;align-items:center;justify-content:center;border-radius:50%;color:var(--muted);cursor:pointer;}
+.mapxd-x:hover{background:var(--mist);color:var(--ink);}
+.mapxd-x svg{width:15px;height:15px;}
+.mapxd-list{flex:1;overflow-y:auto;padding:10px 12px;}
+.mapxd-list .mcard{margin-bottom:4px;}
+.mapxd-foot{padding:12px 18px;border-top:1px solid var(--line);}
+.mapxd-foot a{display:flex;align-items:center;justify-content:center;gap:7px;height:42px;border:1px solid var(--ink);border-radius:var(--r);font-weight:600;font-size:14px;color:var(--ink);text-decoration:none;}
+.mapxd-foot a:hover{background:var(--ink);color:#fff;}
+@media(max-width:720px){
+  .mapx{height:calc(100vh - 118px);min-height:420px;}
+  .mapx-drawer{top:auto;left:10px;right:10px;bottom:10px;width:auto;max-height:52%;}
+}
 .map-live .maplibregl-ctrl-attrib{font-size:10px;}
 .minimap .maplibregl-ctrl-attrib{font-size:9px;}
 .map .scalebar{position:absolute;bottom:14px;left:14px;display:flex;align-items:center;gap:8px;font-size:11px;color:var(--muted);z-index:5;}
@@ -571,7 +596,7 @@ a.cta{text-decoration:none;text-align:center;} /* link-CTAs center exactly like 
         <p class="tagline">An open directory of adaptive sports programs across the country. No logins, no walls. Built for the community.</p>
       </div>
       <div class="foot-links">
-        <div class="foot-col"><h4>Explore</h4><a href="#" data-home>Discover</a><a href="#" data-section="database">Browse all</a><a href="#" data-browse-sport>Browse by sport</a><a href="#" data-db-link="grants">Funding</a></div>
+        <div class="foot-col"><h4>Explore</h4><a href="#" data-home>Discover</a><a href="#" data-mapx>Map view</a><a href="#" data-section="database">Browse all</a><a href="#" data-browse-sport>Browse by sport</a><a href="#" data-db-link="grants">Funding</a></div>
         <div class="foot-col"><h4>Programs</h4><a href="#" data-gate-open="program">Add a program</a><a href="#" data-gate-open="program">Update a listing</a></div>
         <div class="foot-col"><h4>About</h4><a href="#" data-about="project">The project</a><a href="#" data-about="verify">How we verify</a><a href="#" data-about="a11y">Accessibility</a><a href="https://sign.adapttolife.org/waiver?source=asnm">Sign waiver</a></div>
       </div>
@@ -836,7 +861,9 @@ function activeFilterCount(){ let n=0; if(!DATA_LIVE&&state.dist!=='any')n++; if
 function catBar(){
   const all='<button class="cat'+(state.sport==='all'?' on':'')+'" data-sport="all">'+NAVICON.compass+'<span>All sports</span></button>';
   const items=SPORTS.map(s=>'<button class="cat'+(state.sport===s.key?' on':'')+'" data-sport="'+s.key+'">'+sportIcon(s.key,'cat-img')+'<span>'+s.label+'</span></button>').join('');
-  const browse='<span class="cat-sep" aria-hidden="true"></span><button class="cat cat-browse" data-section="database">'+NAVICON.grid+'<span>Browse all</span></button>';
+  const browse='<span class="cat-sep" aria-hidden="true"></span>'
+    +(DATA_LIVE?'<button class="cat cat-browse'+(state.section==='mapx'?' on':'')+'" data-mapx>'+NAVICON.map+'<span>Map view</span></button>':'')
+    +'<button class="cat cat-browse" data-section="database">'+NAVICON.grid+'<span>Browse all</span></button>';
   return '<div class="catbar"><div class="wrap catbar-in"><div class="cats">'+all+items+browse+'</div></div></div>';
 }
 function locPhrase(){ return DATA_LIVE ? 'across the U.S.' : 'near '+state.loc; }
@@ -949,7 +976,7 @@ function geoPos(p){
 }
 
 /* ---- real map: MapLibre GL + OpenFreeMap (free/open vector tiles, no keys, no limits) ---- */
-const OFM_STYLE='https://tiles.openfreemap.org/styles/liberty';
+const OFM_STYLE='https://tiles.openfreemap.org/styles/bright'; // flat Apple-Maps-like, warm cream that matches the site palette
 let MAPLIB=null, liveMap=null, miniMap=null, mapToken=0;
 function loadMapLibre(){
   // vendored same-origin (assets/vendor/) so the service worker caches it and
@@ -966,19 +993,24 @@ function destroyMaps(){
   if(liveMap){ try{ liveMap.remove(); }catch(_){} liveMap=null; }
   if(miniMap){ try{ miniMap.remove(); }catch(_){} miniMap=null; }
 }
-async function initLiveMap(list){
+async function initLiveMap(list,opts){
+  const explorer=!!(opts&&opts.explorer);
   const token=++mapToken;
   let ml; try{ ml=await loadMapLibre(); }catch(_){ return; } // stylised canvas stays as the fallback
   const el=document.getElementById('livemap');
   if(!el||token!==mapToken) return;
   const geo=list.filter(p=>p.lat!=null&&p.lng!=null);
+  // Convergence path: orgs with better-than-state geo become individual pins
+  // automatically as the enrich pipeline fills addresses in — no rework.
+  const precise=[], stateLevel=[];
+  geo.forEach(p=>((p.geoPrecision&&p.geoPrecision!=='state')?precise:stateLevel).push(p));
   const byState=new Map();
-  geo.forEach(p=>{ const k=p.state||'US'; if(!byState.has(k)) byState.set(k,[]); byState.get(k).push(p); });
+  stateLevel.forEach(p=>{ const k=p.state||'US'; if(!byState.has(k)) byState.set(k,[]); byState.get(k).push(p); });
   liveMap=new ml.Map({container:el, style:OFM_STYLE, center:[-96.9,38.5], zoom:3.4, attributionControl:{compact:true}});
   liveMap.addControl(new ml.NavigationControl({showCompass:false}),'top-right');
   const pts=[];
   const oneState=byState.size===1;
-  const ring=oneState&&[...byState.values()][0].length<=12; // numbered ring only when it stays readable
+  const ring=oneState&&!explorer&&[...byState.values()][0].length<=12; // numbered ring only when it stays readable
   if(ring){
     const arr=[...byState.values()][0], R=arr.length>1?0.55:0;
     arr.forEach((p,i)=>{
@@ -995,10 +1027,17 @@ async function initLiveMap(list){
       const d=document.createElement('button'); d.className='mpill'; d.setAttribute('data-state',k);
       d.innerHTML='<span>'+k+'</span><span class="mc">'+arr.length+'</span>';
       d.setAttribute('aria-label',(p.stateName||k)+': '+arr.length+' programs');
-      if(!oneState) d.addEventListener('click',()=>{ state.q=p.stateName||k; state.see=null; render(true); });
+      if(explorer) d.addEventListener('click',()=>mapxShowState(k));
+      else if(!oneState) d.addEventListener('click',()=>{ state.q=p.stateName||k; state.see=null; render(true); });
       pts.push([p.lng,p.lat]); new ml.Marker({element:d}).setLngLat([p.lng,p.lat]).addTo(liveMap);
     });
   }
+  precise.forEach(p=>{
+    const d=document.createElement('button'); d.className='mdot'; d.style.cursor='pointer';
+    d.setAttribute('data-prog',p.id); d.setAttribute('aria-label',p.name);
+    d.addEventListener('click',()=>{ state.section='program'; state.programId=p.id; render(); });
+    pts.push([p.lng,p.lat]); new ml.Marker({element:d}).setLngLat([p.lng,p.lat]).addTo(liveMap);
+  });
   liveMap.setMaxBounds([[-179,10],[-45,74]]); // keep panning on the map, not the mid-Atlantic
   if(byState.size>1){
     // frame the pills that are actually on the mainland — AK/HI/PR markers still
@@ -1031,10 +1070,44 @@ function afterRender(){
   if(state.section==='discover'&&state.layout==='map'){
     const list=state.see?seeList():filtered();
     if(list.length) initLiveMap(list);
+  } else if(state.section==='mapx'){
+    const list=state.see?seeList():filtered();
+    initLiveMap(list,{explorer:true});
   } else if(state.section==='program'){
     const p=PROGRAMS.find(x=>x.id===state.programId);
     if(p&&p.real) initMiniMap(p);
   }
+}
+
+/* ---- full-screen map explorer: the whole database, browsed by place ---- */
+function mapExplorer(){
+  const list=state.see?seeList():filtered();
+  const X='<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>';
+  return catBar()
+    +'<div class="mapx"><div id="livemap" role="region" aria-label="Map of all programs"></div>'
+    +'<div class="mapchip">'+list.length.toLocaleString()+' programs · United States</div>'
+    +'<button class="mapx-close" type="button" data-mapx-close>'+X+'Close map</button>'
+    +'<div class="mapx-drawer" id="mapxDrawer" hidden>'
+      +'<div class="mapxd-head"><div><h3></h3><div class="sub"></div></div><button class="mapxd-x" type="button" aria-label="Close list">'+X+'</button></div>'
+      +'<div class="mapxd-list"></div>'
+      +'<div class="mapxd-foot"><a href="#" data-mapx-dir="">Open in directory</a></div>'
+    +'</div></div>';
+}
+function mapxShowState(k){
+  const list=(state.see?seeList():filtered()).filter(p=>p.state===k);
+  const d=document.getElementById('mapxDrawer');
+  if(!d||!list.length) return;
+  const name=list[0].stateName||k;
+  d.querySelector('.mapxd-head h3').textContent=name;
+  d.querySelector('.mapxd-head .sub').textContent=list.length+(list.length===1?' program':' programs');
+  d.querySelector('.mapxd-list').innerHTML=list.map(p=>
+    '<div class="mcard" data-prog="'+p.id+'">'
+    +'<div class="mthumb'+(p.sport?'':' g-sand')+'">'+thumbHtml(p)+'</div>'
+    +'<div class="minfo"><div class="pcard-sport">'+p.sportLabel+'</div><div class="nm">'+p.name+'</div><div class="sub">'+(p.provider||'')+'</div></div></div>').join('');
+  d.querySelector('.mapxd-foot a').setAttribute('data-mapx-dir',name);
+  d.hidden=false;
+  const p0=list.find(p=>p.lat!=null);
+  if(liveMap&&p0) liveMap.easeTo({center:[p0.lng,p0.lat],zoom:5.2,duration:650});
 }
 
 function mapLayout(list){
@@ -1052,7 +1125,8 @@ function mapLayout(list){
   if(DATA_LIVE){
     // real map \u2014 MapLibre mounts into #livemap via afterRender()
     mapEl='<div class="map map-live"><div id="livemap" role="region" aria-label="Map of programs"></div>'
-      +'<div class="mapchip">Map \u00b7 United States</div></div>';
+      +'<div class="mapchip">Map \u00b7 United States</div>'
+      +'<button class="mapx-open" type="button" data-mapx>'+NAVICON.map+'<span>Expand map</span></button></div>';
   } else {
     const markers=list.map((p,i)=>{ const pos=MAPPOS[p.id]||geoPos(p)||{x:50,y:50}; return '<div class="mk" data-prog="'+p.id+'" style="left:'+pos.x+'%;top:'+pos.y+'%;"><button aria-label="'+p.name+'">'+(i+1)+'</button></div>'; }).join('');
     mapEl='<div class="map">'
@@ -1293,6 +1367,7 @@ function render(keepScroll){
   const v=document.getElementById('view');
   if(state.section==='database') v.innerHTML=database();
   else if(state.section==='program') v.innerHTML=program();
+  else if(state.section==='mapx') v.innerHTML=mapExplorer();
   else v.innerHTML=discover();
   if(!keepScroll && state.section!=='program'){ try{ window.scrollTo(0,0); }catch(e){} }
   const hq=document.getElementById('q'); if(hq) hq.value=state.q;
@@ -1315,6 +1390,16 @@ function syncControls(){
 // keeping the scroll exactly where it is. Coming from the feed → build the directory
 // once and snap the results up under the sticky bars.
 function filterChanged(){
+  if(state.section==='mapx'){
+    // stay in the explorer: swap markers in place, no view rebuild
+    syncControls();
+    const list=state.see?seeList():filtered();
+    const chip=document.querySelector('.mapx .mapchip'); if(chip) chip.textContent=list.length.toLocaleString()+' programs · United States';
+    const d=document.getElementById('mapxDrawer'); if(d) d.hidden=true;
+    destroyMaps(); initLiveMap(list,{explorer:true});
+    updateHeaderSearch();
+    return;
+  }
   if(document.getElementById('results')){
     syncControls();
     renderResults();
@@ -1347,6 +1432,15 @@ document.addEventListener('click',e=>{
   if(t.hasAttribute('data-level')){ state.level=t.getAttribute('data-level'); state.see=null; filterChanged(); return; }
   if(t.hasAttribute('data-db')){ state.db=t.getAttribute('data-db'); render(); return; }
   if(t.hasAttribute('data-dbview')){ state.dbView=t.getAttribute('data-dbview'); render(); return; }
+});
+/* map explorer open/close + state drawer */
+document.addEventListener('click',e=>{
+  if(e.target.closest('[data-mapx-close]')){ e.preventDefault(); state.section='discover'; render(); return; }
+  if(e.target.closest('.mapxd-x')){ const d=document.getElementById('mapxDrawer'); if(d) d.hidden=true; return; }
+  const dir=e.target.closest('[data-mapx-dir]');
+  if(dir){ e.preventDefault(); state.q=dir.getAttribute('data-mapx-dir')||''; state.section='discover'; state.layout='grid'; state.see=null; render(); return; }
+  const mx=e.target.closest('[data-mapx]');
+  if(mx){ e.preventDefault(); state.section='mapx'; state.programId=null; render(); return; }
 });
 /* footer: browse-by-sport lands on the category bar; funding jumps straight to grants */
 document.addEventListener('click',e=>{
@@ -1445,7 +1539,7 @@ document.addEventListener('click',function(e){
   if(t.closest('#gate')) return;                 // never gate clicks inside the modal
   if(t.closest('[data-gate-open]')) return;      // explicit openers handled below
   if(t.closest('[data-sport],[data-home],#locBtn,#hlocBtn,#q,#qHero,[data-subscribe-go]')) return; // allowed
-  const deep=t.closest('[data-prog],[data-seeall],.frow-all,[data-section],[data-sport-link],[data-addprogram],[data-noop],[data-db-link],[data-browse-sport]');
+  const deep=t.closest('[data-prog],[data-seeall],.frow-all,[data-section],[data-sport-link],[data-addprogram],[data-noop],[data-db-link],[data-browse-sport],[data-mapx],[data-mapx-dir]');
   if(deep){ e.preventDefault(); e.stopImmediatePropagation(); openGate(t.closest('[data-addprogram]')?'program':'notify'); }
 },true);
 
