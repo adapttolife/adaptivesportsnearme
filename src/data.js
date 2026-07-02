@@ -53,8 +53,8 @@ export async function listPrograms(db, params) {
   }
   const q = (params.get("q") || "").trim().slice(0, 120);
   if (q) {
-    where.push("(name LIKE ? OR sport LIKE ? OR state_name LIKE ? OR city LIKE ?)");
-    const like = `%${q}%`;
+    where.push("(name LIKE ? ESCAPE '\\' OR sport LIKE ? ESCAPE '\\' OR state_name LIKE ? ESCAPE '\\' OR city LIKE ? ESCAPE '\\')");
+    const like = `%${q.replace(/[\\%_]/g, "\\$&")}%`;
     binds.push(like, like, like, like);
   }
   const limit = Math.min(Math.max(parseInt(params.get("limit") || "60", 10) || 60, 1), 200);

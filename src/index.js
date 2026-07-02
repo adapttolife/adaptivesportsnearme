@@ -13,8 +13,16 @@
 import { listPrograms, getOrg, stats } from "./data.js";
 import { handleAdmin } from "./admin.js";
 import { runLane } from "./pipeline.js";
+import { json } from "./http.js";
 
 const API_CACHE = "public, max-age=300, stale-while-revalidate=600";
+
+// Single source for cron -> lane routing; must list every schedule in
+// wrangler.jsonc triggers. Unknown crons error loudly instead of misrouting.
+const CRON_LANES = {
+  "0 */2 * * *": "validate",
+  "*/20 * * * *": "enrich",
+};
 
 export default {
   async fetch(request, env) {
@@ -64,12 +72,13 @@ export default {
     return env.ASSETS.fetch(request);
   },
 
-  // Cron maintenance. Two schedules (wrangler.jsonc triggers):
-  //   */20 * * * *  -> enrich (scrape missing contact/location into review_queue)
-  //   0 */2 * * *   -> validate (link liveness -> link_checks + review_queue)
   async scheduled(controller, env, ctx) {
     if (!env.DB) return;
-    const lane = controller.cron === "0 */2 * * *" ? "validate" : "enrich";
+    const lane = CRON_LANES[controller.cron];
+    if (!lane) {
+      console.error(`no lane mapped for cron "${controller.cron}" — update CRON_LANES + wrangler.jsonc together`);
+      return;
+    }
     ctx.waitUntil(
       runLane(env, lane).then(
         (r) => console.log(`lane ${lane}: processed=${r.processed} flagged=${r.flagged}`),
@@ -254,13 +263,6 @@ async function verifyTurnstile(env, token, ip) {
 
 function str(v) {
   return (typeof v === "string" ? v : "").trim().slice(0, 5000);
-}
-
-function json(obj, status = 200, cache = "no-store") {
-  return new Response(JSON.stringify(obj), {
-    status,
-    headers: { "Content-Type": "application/json", "Cache-Control": cache },
-  });
 }
 
 async function safeText(res) {

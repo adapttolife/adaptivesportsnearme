@@ -2,6 +2,7 @@
 // Auth: Authorization: Bearer <ADMIN_KEY> (Worker secret). No key set -> admin disabled.
 
 import { runLane } from "./pipeline.js";
+import { json } from "./http.js";
 
 // Only these organization fields may be changed by an approved review item.
 const APPLY_WHITELIST = new Set([
@@ -90,11 +91,4 @@ export async function handleAdmin(request, env, url) {
 
 function parse(s) {
   try { return JSON.parse(s); } catch { return null; }
-}
-
-function json(obj, status = 200) {
-  return new Response(JSON.stringify(obj), {
-    status,
-    headers: { "Content-Type": "application/json", "Cache-Control": "no-store" },
-  });
 }

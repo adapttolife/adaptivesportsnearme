@@ -162,6 +162,7 @@ def main():
     checks = pg_csv("""select lc.organization_id, o.website_url as url, lc.ok,
         lc.http_status, lc.detail, lc.lane, lc.checked_at
         from link_checks lc join organizations o using (organization_id)
+        where o.website_url is not null
         order by lc.checked_at""")
     queue = pg_csv("""select organization_id, agent_lane as lane, proposed_change,
         evidence, confidence, status, created_at from review_queue""")
@@ -198,11 +199,19 @@ def main():
     def iso(ts):
         return (ts or now).replace(" ", "T")[:19] + "Z" if ts else now
 
+    ORG_COLS = ("id,name,org_type,sport,sport_key,sports_json,website_url,email,phone,"
+                "city,state,state_name,zip,country,lat,lng,geo_precision,description,"
+                "cost_note,equipment_provided,ages,data_quality_rating,primary_data_source,"
+                "verification_status,verification_method,status,is_public,last_ok_at,"
+                "created_at,updated_at")
+    SRC_COLS = ("source_id,source_name,source_organization,source_url,source_type,"
+                "coverage_scope,data_quality_rating,record_count,status")
+    ODS_COLS = "organization_id,source_id,source_record_url,data_quality_rating,retrieved_at,verified"
     lines = ["PRAGMA defer_foreign_keys = on;"]
     for s in sources:
-        lines.append("INSERT OR REPLACE INTO data_sources VALUES (%s);" % ",".join(q(s[c]) for c in
+        lines.append("INSERT OR REPLACE INTO data_sources (%s) VALUES (%s);" % (SRC_COLS, ",".join(q(s[c]) for c in
             ("source_id","source_name","source_organization","source_url","source_type",
-             "coverage_scope","data_quality_rating","record_count","status")))
+             "coverage_scope","data_quality_rating","record_count","status"))))
     for o in kept:
         vals = [q(o["organization_id"]), q(o["organization_name"].strip()),
             q(o["organization_type"]), q(o["_sport"]), q(o["_key"]),
@@ -216,17 +225,17 @@ def main():
             q(o["status"] or "active"), q(1 if o["is_public"] != "f" else 0),
             q(iso(o["last_ok_at"]) if o["last_ok_at"] else None),
             q(iso(o["created_at"])), q(iso(o["updated_at"]))]
-        lines.append("INSERT OR REPLACE INTO organizations VALUES (%s);" % ",".join(vals))
+        lines.append("INSERT OR REPLACE INTO organizations (%s) VALUES (%s);" % (ORG_COLS, ",".join(vals)))
     linkset = set()
     for l in links:
         t = target(l["organization_id"])
         if not t or (t, l["source_id"]) in linkset:
             continue
         linkset.add((t, l["source_id"]))
-        lines.append("INSERT OR REPLACE INTO organization_data_sources VALUES (%s);" % ",".join(
+        lines.append("INSERT OR REPLACE INTO organization_data_sources (%s) VALUES (%s);" % (ODS_COLS, ",".join(
             [q(t), q(l["source_id"]), q(None), q(l["data_quality_rating"]),
              q(iso(l["date_added"]) if l["date_added"] else None),
-             q(1 if l["verification_status"] == "verified" else 0)]))
+             q(1 if l["verification_status"] == "verified" else 0)])))
     n_checks = 0
     for c in checks:
         t = target(c["organization_id"])
