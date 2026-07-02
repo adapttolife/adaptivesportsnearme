@@ -68,6 +68,11 @@ export default {
       return handleAdmin(request, env, url);
     }
 
+    // /maps is the map explorer's real URL — same app, booted into the map.
+    if (url.pathname === "/maps" || url.pathname === "/maps/") {
+      return env.ASSETS.fetch(new Request(new URL("/", url), request));
+    }
+
     // Everything else: the static site.
     return env.ASSETS.fetch(request);
   },

@@ -17,7 +17,7 @@ self.addEventListener("activate", (e) => {
   );
 });
 
-function networkFirst(req) {
+function networkFirst(req, fallbackUrl) {
   return fetch(req)
     .then((res) => {
       if (res.ok) {
@@ -26,7 +26,9 @@ function networkFirst(req) {
       }
       return res;
     })
-    .catch(() => caches.match(req).then((hit) => hit || Response.error()));
+    .catch(() =>
+      caches.match(req).then((hit) => hit || (fallbackUrl ? caches.match(fallbackUrl) : null) || Response.error())
+    );
 }
 
 self.addEventListener("fetch", (e) => {
@@ -38,7 +40,8 @@ self.addEventListener("fetch", (e) => {
 
   const isHTML = req.mode === "navigate" || (req.headers.get("accept") || "").includes("text/html");
   if (isHTML || url.pathname.startsWith("/api/")) {
-    e.respondWith(networkFirst(req));
+    // offline navigations to /maps (or any route) fall back to the cached shell
+    e.respondWith(networkFirst(req, isHTML ? "/" : null));
     return;
   }
 

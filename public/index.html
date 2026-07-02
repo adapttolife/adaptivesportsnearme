@@ -596,7 +596,7 @@ a.cta{text-decoration:none;text-align:center;} /* link-CTAs center exactly like 
         <p class="tagline">An open directory of adaptive sports programs across the country. No logins, no walls. Built for the community.</p>
       </div>
       <div class="foot-links">
-        <div class="foot-col"><h4>Explore</h4><a href="#" data-home>Discover</a><a href="#" data-mapx>Map view</a><a href="#" data-section="database">Browse all</a><a href="#" data-browse-sport>Browse by sport</a><a href="#" data-db-link="grants">Funding</a></div>
+        <div class="foot-col"><h4>Explore</h4><a href="#" data-home>Discover</a><a href="/maps" data-mapx>Map view</a><a href="#" data-section="database">Browse all</a><a href="#" data-browse-sport>Browse by sport</a><a href="#" data-db-link="grants">Funding</a></div>
         <div class="foot-col"><h4>Programs</h4><a href="#" data-gate-open="program">Add a program</a><a href="#" data-gate-open="program">Update a listing</a></div>
         <div class="foot-col"><h4>About</h4><a href="#" data-about="project">The project</a><a href="#" data-about="verify">How we verify</a><a href="#" data-about="a11y">Accessibility</a><a href="https://sign.adapttolife.org/waiver?source=asnm">Sign waiver</a></div>
       </div>
@@ -811,6 +811,7 @@ function esc(s){ return s==null?s:String(s).replace(/&/g,'&amp;').replace(/</g,'
 
 /* ============================ STATE + HELPERS ============================ */
 let DATA_LIVE=false; // flips true once /api/programs hydrates the real directory
+const BOOT_MAPX=location.pathname==='/maps'; // captured before any render can rewrite the URL
 const state = { section:"discover", layout:"grid", sport:"all", q:"", dist:"any", cost:"any", level:"any", filtersOpen:false, sort:"rec", db:"programs", dbView:"gallery", programId:null, loc:"Denver, CO", see:null };
 const saved = new Set();
 function nd(s){ return (s||'').replace(/[\u2013\u2014]/g,' to '); }
@@ -1372,6 +1373,11 @@ function render(keepScroll){
   if(!keepScroll && state.section!=='program'){ try{ window.scrollTo(0,0); }catch(e){} }
   const hq=document.getElementById('q'); if(hq) hq.value=state.q;
   const qh=document.getElementById('qHero'); if(qh) qh.value=state.q;
+  // keep the URL honest if a nav path (logo, footer) leaves the map view
+  try{
+    if(state.section==='mapx'&&location.pathname!=='/maps') history.replaceState({},'','/maps');
+    else if(state.section!=='mapx'&&location.pathname==='/maps') history.replaceState({},'','/');
+  }catch(_){ }
   updateHeaderSearch();
   afterRender();
 }
@@ -1433,14 +1439,27 @@ document.addEventListener('click',e=>{
   if(t.hasAttribute('data-db')){ state.db=t.getAttribute('data-db'); render(); return; }
   if(t.hasAttribute('data-dbview')){ state.dbView=t.getAttribute('data-dbview'); render(); return; }
 });
-/* map explorer open/close + state drawer */
+/* map explorer open/close + state drawer. /maps is its real URL. */
+function setMapxUrl(on){
+  try{
+    const here=location.pathname==='/maps';
+    if(on&&!here) history.pushState({mapx:true},'','/maps');
+    else if(!on&&here) history.pushState({},'','/');
+  }catch(_){ }
+}
+window.addEventListener('popstate',()=>{
+  const want=location.pathname==='/maps';
+  const inMapx=state.section==='mapx';
+  if(want&&!inMapx&&DATA_LIVE&&!PRELAUNCH){ state.section='mapx'; state.programId=null; render(); }
+  else if(!want&&inMapx){ state.section='discover'; render(); }
+});
 document.addEventListener('click',e=>{
-  if(e.target.closest('[data-mapx-close]')){ e.preventDefault(); state.section='discover'; render(); return; }
+  if(e.target.closest('[data-mapx-close]')){ e.preventDefault(); state.section='discover'; setMapxUrl(false); render(); return; }
   if(e.target.closest('.mapxd-x')){ const d=document.getElementById('mapxDrawer'); if(d) d.hidden=true; return; }
   const dir=e.target.closest('[data-mapx-dir]');
-  if(dir){ e.preventDefault(); state.q=dir.getAttribute('data-mapx-dir')||''; state.section='discover'; state.layout='grid'; state.see=null; render(); return; }
+  if(dir){ e.preventDefault(); state.q=dir.getAttribute('data-mapx-dir')||''; state.section='discover'; state.layout='grid'; state.see=null; setMapxUrl(false); render(); return; }
   const mx=e.target.closest('[data-mapx]');
-  if(mx){ e.preventDefault(); state.section='mapx'; state.programId=null; render(); return; }
+  if(mx){ e.preventDefault(); state.section='mapx'; state.programId=null; setMapxUrl(true); render(); return; }
 });
 /* footer: browse-by-sport lands on the category bar; funding jumps straight to grants */
 document.addEventListener('click',e=>{
@@ -1640,6 +1659,8 @@ function mapOrg(o){
     if(!cfg||!cfg.dataApi||!first||!first.ok||!first.items.length) return;
     PROGRAMS.length=0; Array.prototype.push.apply(PROGRAMS, first.items.map(mapOrg));
     DATA_LIVE=true;
+    // landing on /maps boots straight into the explorer (live, ungated only)
+    if(BOOT_MAPX&&!PRELAUNCH){ state.section='mapx'; }
     render(true);
     const offs=[]; for(let o=200;o<Math.min(first.total,5000);o+=200) offs.push(o);
     const pages=await Promise.all(offs.map(o=>fetch('/api/programs?limit=200&offset='+o).then(r=>r.json()).catch(()=>null)));
