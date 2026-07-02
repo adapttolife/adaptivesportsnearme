@@ -254,6 +254,17 @@ input,select{font-family:inherit;}
 .map .water{position:absolute;background:#D4E2E6;border-radius:40%;filter:blur(.3px);}
 .map .park{position:absolute;background:#D7E5D2;border-radius:42% 58% 50% 50%;}
 .map .mapchip{position:absolute;top:14px;left:14px;background:rgba(255,255,255,.9);border:1px solid var(--line);border-radius:var(--r-full);padding:6px 12px;font-family:'DM Sans',sans-serif;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);z-index:5;}
+/* live map (MapLibre GL + OpenFreeMap) — Airbnb-style white count pills */
+#livemap{position:absolute;inset:0;}
+.mpill{display:flex;align-items:center;gap:6px;background:#fff;border:1px solid var(--line);border-radius:999px;padding:7px 12px;font-family:'DM Sans',sans-serif;font-weight:700;font-size:13px;color:var(--ink);box-shadow:0 2px 10px rgba(20,18,14,.18);cursor:pointer;transition:transform .12s var(--ease),background .12s,color .12s;white-space:nowrap;}
+.mpill .mc{font-weight:600;color:var(--muted);}
+.mpill:hover,.mpill.active{background:var(--ink);color:#fff;transform:scale(1.08);}
+.mpill:hover .mc,.mpill.active .mc{color:rgba(255,255,255,.75);}
+.mpin{width:30px;height:30px;display:flex;align-items:center;justify-content:center;background:#fff;border:1px solid var(--line);border-radius:999px;font-family:'DM Sans',sans-serif;font-weight:700;font-size:13px;color:var(--ink);box-shadow:0 2px 10px rgba(20,18,14,.18);cursor:pointer;transition:transform .12s var(--ease),background .12s,color .12s;}
+.mpin:hover,.mpin.active{background:var(--ink);color:#fff;transform:scale(1.12);}
+.mdot{width:14px;height:14px;border-radius:50%;background:var(--orange);border:2.5px solid #fff;box-shadow:0 1px 6px rgba(20,18,14,.35);}
+.map-live .maplibregl-ctrl-attrib{font-size:10px;}
+.minimap .maplibregl-ctrl-attrib{font-size:9px;}
 .map .scalebar{position:absolute;bottom:14px;left:14px;display:flex;align-items:center;gap:8px;font-size:11px;color:var(--muted);z-index:5;}
 .map .scalebar i{display:block;width:46px;height:3px;background:var(--ink);opacity:.5;border-left:2px solid var(--ink);border-right:2px solid var(--ink);}
 .mk{position:absolute;transform:translate(-50%,-50%);z-index:6;}
@@ -936,6 +947,96 @@ function geoPos(p){
   const x=(p.lng+126)/(126-66)*100, y=(50-p.lat)/(50-24)*100;
   return {x:Math.min(96,Math.max(4,x)), y:Math.min(92,Math.max(8,y))};
 }
+
+/* ---- real map: MapLibre GL + OpenFreeMap (free/open vector tiles, no keys, no limits) ---- */
+const OFM_STYLE='https://tiles.openfreemap.org/styles/liberty';
+let MAPLIB=null, liveMap=null, miniMap=null, mapToken=0;
+function loadMapLibre(){
+  // vendored same-origin (assets/vendor/) so the service worker caches it and
+  // the only third party involved is the tile server itself
+  if(!MAPLIB) MAPLIB=new Promise((res,rej)=>{
+    const l=document.createElement('link'); l.rel='stylesheet'; l.href='assets/vendor/maplibre-gl.css'; document.head.appendChild(l);
+    const s=document.createElement('script'); s.src='assets/vendor/maplibre-gl.js';
+    s.onload=()=>res(window.maplibregl); s.onerror=()=>rej(new Error('maplibre failed'));
+    document.head.appendChild(s);
+  });
+  return MAPLIB;
+}
+function destroyMaps(){
+  if(liveMap){ try{ liveMap.remove(); }catch(_){} liveMap=null; }
+  if(miniMap){ try{ miniMap.remove(); }catch(_){} miniMap=null; }
+}
+async function initLiveMap(list){
+  const token=++mapToken;
+  let ml; try{ ml=await loadMapLibre(); }catch(_){ return; } // stylised canvas stays as the fallback
+  const el=document.getElementById('livemap');
+  if(!el||token!==mapToken) return;
+  const geo=list.filter(p=>p.lat!=null&&p.lng!=null);
+  const byState=new Map();
+  geo.forEach(p=>{ const k=p.state||'US'; if(!byState.has(k)) byState.set(k,[]); byState.get(k).push(p); });
+  liveMap=new ml.Map({container:el, style:OFM_STYLE, center:[-96.9,38.5], zoom:3.4, attributionControl:{compact:true}});
+  liveMap.addControl(new ml.NavigationControl({showCompass:false}),'top-right');
+  const pts=[];
+  const oneState=byState.size===1;
+  const ring=oneState&&[...byState.values()][0].length<=12; // numbered ring only when it stays readable
+  if(ring){
+    const arr=[...byState.values()][0], R=arr.length>1?0.55:0;
+    arr.forEach((p,i)=>{
+      const a=2*Math.PI*i/arr.length, lng=p.lng+R*Math.cos(a), lat=p.lat+R*Math.sin(a)*0.7;
+      const d=document.createElement('button'); d.className='mpin'; d.textContent=String(i+1);
+      d.setAttribute('data-prog',p.id); d.setAttribute('aria-label',p.name);
+      d.addEventListener('click',()=>{ state.section='program'; state.programId=p.id; render(); });
+      pts.push([lng,lat]); new ml.Marker({element:d}).setLngLat([lng,lat]).addTo(liveMap);
+    });
+  } else {
+    // Airbnb-style count pills per state; click focuses that state
+    byState.forEach((arr,k)=>{
+      const p=arr[0];
+      const d=document.createElement('button'); d.className='mpill'; d.setAttribute('data-state',k);
+      d.innerHTML='<span>'+k+'</span><span class="mc">'+arr.length+'</span>';
+      d.setAttribute('aria-label',(p.stateName||k)+': '+arr.length+' programs');
+      if(!oneState) d.addEventListener('click',()=>{ state.q=p.stateName||k; state.see=null; render(true); });
+      pts.push([p.lng,p.lat]); new ml.Marker({element:d}).setLngLat([p.lng,p.lat]).addTo(liveMap);
+    });
+  }
+  liveMap.setMaxBounds([[-179,10],[-45,74]]); // keep panning on the map, not the mid-Atlantic
+  if(byState.size>1){
+    // frame the pills that are actually on the mainland — AK/HI/PR markers still
+    // render, they just don't stretch the opening frame to the whole hemisphere
+    const conus=pts.filter(m=>m[0]>-130&&m[1]>23&&m[1]<50);
+    const fit=conus.length>1?conus:pts;
+    const lngs=fit.map(m=>m[0]), lats=fit.map(m=>m[1]);
+    liveMap.fitBounds([[Math.min(...lngs),Math.min(...lats)],[Math.max(...lngs),Math.max(...lats)]],
+      {padding:window.innerWidth>720?56:30,maxZoom:6,duration:0});
+  } else if(pts.length>1){
+    const lngs=pts.map(m=>m[0]), lats=pts.map(m=>m[1]);
+    liveMap.fitBounds([[Math.min(...lngs),Math.min(...lats)],[Math.max(...lngs),Math.max(...lats)]],{padding:90,maxZoom:7,duration:0});
+  } else if(pts.length===1){ liveMap.jumpTo({center:pts[0],zoom:5.8}); }
+}
+async function initMiniMap(p){
+  const token=++mapToken;
+  if(p.lat==null) return;
+  let ml; try{ ml=await loadMapLibre(); }catch(_){ return; }
+  const el=document.getElementById('minimap');
+  if(!el||token!==mapToken) return;
+  el.innerHTML='';
+  miniMap=new ml.Map({container:el, style:OFM_STYLE, center:[p.lng,p.lat], zoom:4.2, interactive:false, attributionControl:{compact:true}});
+  const d=document.createElement('div'); d.className='mdot';
+  new ml.Marker({element:d}).setLngLat([p.lng,p.lat]).addTo(miniMap);
+}
+// Called after every view paint: stand up or tear down map instances to match.
+function afterRender(){
+  destroyMaps(); mapToken++;
+  if(!DATA_LIVE) return;
+  if(state.section==='discover'&&state.layout==='map'){
+    const list=state.see?seeList():filtered();
+    if(list.length) initLiveMap(list);
+  } else if(state.section==='program'){
+    const p=PROGRAMS.find(x=>x.id===state.programId);
+    if(p&&p.real) initMiniMap(p);
+  }
+}
+
 function mapLayout(list){
   if(!list.length) return empty();
   const cards=list.map((p,i)=>
@@ -947,16 +1048,23 @@ function mapLayout(list){
         +'<div class="sub">'+(p.provider||'')+'</div>'
         +'<div class="mt">'+metaParts(p).slice(0,2).map(x=>'<span>'+x+'</span>').join('<span class="d">\u00b7</span>')+'</div>'
       +'</div></div>').join('');
-  const markers=list.map((p,i)=>{ const pos=MAPPOS[p.id]||geoPos(p)||{x:50,y:50}; return '<div class="mk" data-prog="'+p.id+'" style="left:'+pos.x+'%;top:'+pos.y+'%;"><button aria-label="'+p.name+'">'+(i+1)+'</button></div>'; }).join('');
-  const mapEl='<div class="map">'
-    +'<div class="terrain"></div>'
-    +'<div class="park" style="left:8%;top:18%;width:24%;height:26%;"></div>'
-    +'<div class="water" style="left:62%;top:60%;width:34%;height:30%;"></div>'
-    +'<div class="road h" style="top:38%;"></div><div class="road h thin" style="top:64%;"></div>'
-    +'<div class="road v" style="left:48%;"></div><div class="road v thin" style="left:74%;"></div>'
-    +'<div class="mapchip">Map \u00b7 '+(DATA_LIVE?'United States':state.loc)+'</div>'
-    +'<div class="scalebar"><i></i> 5 mi</div>'
-    +markers+'</div>';
+  let mapEl;
+  if(DATA_LIVE){
+    // real map \u2014 MapLibre mounts into #livemap via afterRender()
+    mapEl='<div class="map map-live"><div id="livemap" role="region" aria-label="Map of programs"></div>'
+      +'<div class="mapchip">Map \u00b7 United States</div></div>';
+  } else {
+    const markers=list.map((p,i)=>{ const pos=MAPPOS[p.id]||geoPos(p)||{x:50,y:50}; return '<div class="mk" data-prog="'+p.id+'" style="left:'+pos.x+'%;top:'+pos.y+'%;"><button aria-label="'+p.name+'">'+(i+1)+'</button></div>'; }).join('');
+    mapEl='<div class="map">'
+      +'<div class="terrain"></div>'
+      +'<div class="park" style="left:8%;top:18%;width:24%;height:26%;"></div>'
+      +'<div class="water" style="left:62%;top:60%;width:34%;height:30%;"></div>'
+      +'<div class="road h" style="top:38%;"></div><div class="road h thin" style="top:64%;"></div>'
+      +'<div class="road v" style="left:48%;"></div><div class="road v thin" style="left:74%;"></div>'
+      +'<div class="mapchip">Map \u00b7 '+state.loc+'</div>'
+      +'<div class="scalebar"><i></i> 5 mi</div>'
+      +markers+'</div>';
+  }
   return '<div class="maplayout"><div class="mlist">'+cards+'</div><div class="map-col">'+mapEl+'</div></div>';
 }
 function listLayout(list){
@@ -1001,6 +1109,7 @@ function renderResults(){
   if(r) r.innerHTML = state.layout==='map'?mapLayout(list):state.layout==='list'?listLayout(list):cardGrid(list);
   const c=document.querySelector('#main .count');
   if(c) c.innerHTML = '<b>'+list.length+'</b> '+(list.length===1?'program':'programs')+' '+locPhrase();
+  afterRender();
 }
 function updateHeaderSearch(){
   const ae=document.activeElement, aeId=ae?ae.id:'';
@@ -1069,7 +1178,8 @@ function programReal(p){
     +(srcs.length?srcs.map(s=>'<div class="fitem"><div class="fn">'+s.name+'</div>'+(s.organization?'<div class="fm">'+s.organization+'</div>':'')+'</div>').join(''):'<div class="pname">Community submission</div>')
     +'<p class="blurb">This listing comes from a public directory source. Details are re-checked automatically and reviewed by a human before changes go live.</p></div>';
   const pos=geoPos(p);
-  const locard='<div class="rcard locard"><p class="eyebrow">Location</p><div class="minimap"><div class="terrain"></div><div class="mk2"'+(pos?' style="left:'+pos.x+'%;top:'+pos.y+'%;"':'')+'>'+NAVICON.pin+'</div></div><div class="locrow"><span>'+loc+'</span>'+(p.geoPrecision==='state'?'<span class="fm" style="color:var(--muted);font-size:12px;">state-level</span>':'')+'</div></div>';
+  // stylised terrain is the placeholder; afterRender() swaps in a real MapLibre minimap when geo exists
+  const locard='<div class="rcard locard"><p class="eyebrow">Location</p><div class="minimap" id="minimap"><div class="terrain"></div><div class="mk2"'+(pos?' style="left:'+pos.x+'%;top:'+pos.y+'%;"':'')+'>'+NAVICON.pin+'</div></div><div class="locrow"><span>'+loc+'</span>'+(p.geoPrecision==='state'?'<span class="fm" style="color:var(--muted);font-size:12px;">state-level</span>':'')+'</div></div>';
   return '<div class="wrap">'
     +'<div class="crumb"><a href="#" data-home>Home</a><span class="sl">/</span>'+(p.sport?'<a href="#" data-sport-link="'+p.sport+'">'+p.sportLabel+'</a>':'<span>'+p.sportLabel+'</span>')+'<span class="sl">/</span><b>'+p.name+'</b></div>'
     +hero
@@ -1188,6 +1298,7 @@ function render(keepScroll){
   const hq=document.getElementById('q'); if(hq) hq.value=state.q;
   const qh=document.getElementById('qHero'); if(qh) qh.value=state.q;
   updateHeaderSearch();
+  afterRender();
 }
 
 // Reflect state on the existing controls (active chip etc.) without rebuilding them,
@@ -1282,6 +1393,15 @@ function setHL(id,on){
 }
 document.addEventListener('mouseover',e=>{ const el=e.target.closest('.mcard[data-prog],.mk[data-prog]'); if(el) setHL(el.getAttribute('data-prog'),true); });
 document.addEventListener('mouseout',e=>{ const el=e.target.closest('.mcard[data-prog],.mk[data-prog]'); if(el) setHL(el.getAttribute('data-prog'),false); });
+/* live map: hovering a card lights up its numbered pin or its state's count pill */
+function setLiveHL(card,on){
+  const id=card.getAttribute('data-prog');
+  document.querySelectorAll('.mpin[data-prog="'+id+'"]').forEach(el=>el.classList.toggle('active',on));
+  const p=PROGRAMS.find(x=>x.id===id);
+  if(p&&p.state) document.querySelectorAll('.mpill[data-state="'+p.state+'"]').forEach(el=>el.classList.toggle('active',on));
+}
+document.addEventListener('mouseover',e=>{ const el=e.target.closest('.mcard[data-prog]'); if(el&&liveMap) setLiveHL(el,true); });
+document.addEventListener('mouseout',e=>{ const el=e.target.closest('.mcard[data-prog]'); if(el&&liveMap) setLiveHL(el,false); });
 
 /* header shadow on scroll */
 function syncHeader(){
