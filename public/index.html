@@ -80,6 +80,8 @@ input,select{font-family:inherit;}
 .search:focus-within{box-shadow:0 8px 22px rgba(17,17,19,.15),0 1px 3px rgba(17,17,19,.06);border-color:var(--sand2);}
 .search .loc{display:flex;align-items:center;gap:8px;padding:0 14px 0 20px;height:100%;border-radius:var(--r-full) 0 0 var(--r-full);white-space:nowrap;color:var(--ink);font-size:15px;font-weight:600;}
 .search .loc:hover{background:var(--mist);}
+.search .loc,.hsearch .loc{cursor:default;} /* location is a label until location-picking ships — no click affordance for a dead control */
+.search .loc:hover,.hsearch .loc:hover{background:transparent;}
 .search .loc svg{width:16px;height:16px;color:var(--orange);}
 .search .sep{width:1px;height:26px;background:var(--line);flex:0 0 auto;}
 .search input{flex:1 1 auto;min-width:40px;height:100%;border:none;background:transparent;outline:none;padding:0 22px 0 16px;font-size:15px;font-weight:500;color:var(--ink);}
@@ -114,7 +116,7 @@ input,select{font-family:inherit;}
 .hero{position:relative;padding:60px 0 42px;text-align:center;overflow:hidden;}
 .hero::before{content:"";position:absolute;inset:0;background:radial-gradient(58% 78% at 50% -8%, rgba(232,93,4,.06), transparent 68%);pointer-events:none;}
 .hero-in{position:relative;max-width:760px;margin:0 auto;}
-.hero h1{font-family:'DM Sans',sans-serif;font-weight:700;font-size:clamp(38px,5.5vw,60px);line-height:1.0;letter-spacing:-.03em;margin:12px 0 0;}
+.hero h1{font-family:'DM Sans',sans-serif;font-weight:700;font-size:clamp(38px,5.5vw,60px);line-height:1.0;letter-spacing:-.03em;margin:12px 0 0;text-wrap:balance;}
 .hero .lede{margin:16px auto 0;max-width:580px;font-size:16px;line-height:1.55;color:var(--muted);}
 .trust{margin-top:18px;display:inline-flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:10px;font-size:14px;color:var(--muted);}
 .trust b{color:var(--ink);font-weight:700;}
@@ -201,7 +203,7 @@ input,select{font-family:inherit;}
 .thumb-full{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
 .cat-img{width:38px;height:38px;object-fit:contain;border-radius:9px;}
 .dhero-icon{position:absolute;inset:0;margin:auto;width:42%;height:74%;object-fit:contain;filter:drop-shadow(0 16px 26px rgba(20,18,14,.2));}
-.dhero-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
+.dhero-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 30%;} /* faces live in the upper third of the square action shots */
 .dhero.has-dphoto{background:#23211f;}
 
 /* gradients (calm, photo-ready) */
@@ -280,7 +282,9 @@ table.list tbody tr:hover{background:var(--mist);}
 .crumb a:hover{color:var(--ink);}
 .crumb .sl{color:var(--faint);}
 .crumb b{color:var(--ink);font-weight:600;}
-.dhero{position:relative;aspect-ratio:24/8;max-height:340px;border-radius:var(--r-xl);overflow:hidden;}
+/* Full content width always — aspect-ratio + max-height together made the browser
+   shrink the banner's WIDTH to hold the ratio, leaving it narrower than the page grid. */
+.dhero{position:relative;width:100%;height:clamp(220px,26vw,380px);border-radius:var(--r-xl);overflow:hidden;}
 .dhero .gly{position:absolute;inset:0;margin:auto;width:120px;height:120px;color:rgba(26,26,26,.8);}
 .dhero .ringbg{position:absolute;inset:0;margin:auto;width:200px;height:200px;color:rgba(255,255,255,.5);}
 .dhero .eyebrow{position:absolute;bottom:16px;left:18px;background:rgba(255,255,255,.9);border-radius:var(--r-full);padding:6px 12px;color:var(--muted);}
@@ -310,6 +314,7 @@ table.list tbody tr:hover{background:var(--mist);}
 .ghost{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;height:42px;border:1px solid var(--line);border-radius:var(--r);font-size:14px;font-weight:600;color:var(--ink);transition:.15s;}
 .ghost:hover{border-color:var(--ink);}
 .cta{display:flex;align-items:center;justify-content:center;width:100%;height:50px;background:var(--orange);color:#fff;border-radius:var(--r);font-size:16px;font-weight:700;transition:background .15s,transform .15s;}
+a.cta{text-decoration:none;text-align:center;} /* link-CTAs center exactly like button-CTAs */
 .cta:hover{background:var(--orange-ink);}
 .facts{display:flex;flex-direction:column;}
 .facts .f{display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-bottom:1px solid var(--line2);font-size:14px;}
@@ -555,13 +560,37 @@ table.list tbody tr:hover{background:var(--mist);}
         <p class="tagline">An open directory of adaptive sports programs across the country. No logins, no walls. Built for the community.</p>
       </div>
       <div class="foot-links">
-        <div class="foot-col"><h4>Explore</h4><a href="#" data-home>Discover</a><a href="#" data-section="database">Browse all</a><a href="#">Browse by sport</a><a href="#">Events</a><a href="#">Funding</a></div>
-        <div class="foot-col"><h4>Programs</h4><a href="#">Update a listing</a><a href="#">Content review</a></div>
-        <div class="foot-col"><h4>About</h4><a href="#">The project</a><a href="#">Contact</a><a href="#">Accessibility</a><a href="https://sign.adapttolife.org/waiver?source=asnm">Sign waiver</a></div>
+        <div class="foot-col"><h4>Explore</h4><a href="#" data-home>Discover</a><a href="#" data-section="database">Browse all</a><a href="#" data-browse-sport>Browse by sport</a><a href="#" data-db-link="grants">Funding</a></div>
+        <div class="foot-col"><h4>Programs</h4><a href="#" data-gate-open="program">Add a program</a><a href="#" data-gate-open="program">Update a listing</a></div>
+        <div class="foot-col"><h4>About</h4><a href="#" data-about="project">The project</a><a href="#" data-about="verify">How we verify</a><a href="#" data-about="a11y">Accessibility</a><a href="https://sign.adapttolife.org/waiver?source=asnm">Sign waiver</a></div>
       </div>
     </div>
   </div>
 </footer>
+
+<div class="gate-ov" id="about" role="dialog" aria-modal="true" aria-labelledby="aboutTitle">
+  <div class="gate">
+    <div class="gate-head">
+      <button class="gate-x" type="button" data-about-close aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+      <p class="gate-eyebrow">About</p>
+      <h2 id="aboutTitle">Adaptive Sports Near Me</h2>
+    </div>
+    <div class="gate-body" style="padding-top:6px;">
+      <div id="ab-project" style="padding:14px 0 4px;">
+        <h3 style="font-size:16px;margin:0 0 6px;">The project</h3>
+        <p class="lede" style="font-size:14.5px;">A free, open, national directory of adaptive sports programs. No logins, no walls. Built and run by <a href="https://adapttolife.org" target="_blank" rel="noopener" style="text-decoration:underline;">Adapt To Life</a>, a recognized 501(c)(3) nonprofit, so every athlete can find their place to play.</p>
+      </div>
+      <div id="ab-verify" style="padding:14px 0 4px;border-top:1px solid var(--line);margin-top:12px;">
+        <h3 style="font-size:16px;margin:0 0 6px;">How we verify listings</h3>
+        <p class="lede" style="font-size:14.5px;">Listings come from public directories and community submissions. Automated checks re-visit each program's website on a schedule, and every proposed change is reviewed by a person before it goes live. Badges on a listing tell you exactly what has and hasn't been confirmed.</p>
+      </div>
+      <div id="ab-a11y" style="padding:14px 0 10px;border-top:1px solid var(--line);margin-top:12px;">
+        <h3 style="font-size:16px;margin:0 0 6px;">Accessibility</h3>
+        <p class="lede" style="font-size:14.5px;">This site is built for keyboard, screen-reader, and low-vision use, and we hold ourselves to WCAG 2.1 AA as we grow. If anything here is hard to use, tell us through "Add a program → Anything else" and we will fix it.</p>
+      </div>
+    </div>
+  </div>
+</div>
 
 <div class="gate-ov" id="gate" role="dialog" aria-modal="true" aria-labelledby="gateTitle">
   <div class="gate">
@@ -925,7 +954,7 @@ function mapLayout(list){
     +'<div class="water" style="left:62%;top:60%;width:34%;height:30%;"></div>'
     +'<div class="road h" style="top:38%;"></div><div class="road h thin" style="top:64%;"></div>'
     +'<div class="road v" style="left:48%;"></div><div class="road v thin" style="left:74%;"></div>'
-    +'<div class="mapchip">Map \u00b7 '+state.loc+'</div>'
+    +'<div class="mapchip">Map \u00b7 '+(DATA_LIVE?'United States':state.loc)+'</div>'
     +'<div class="scalebar"><i></i> 5 mi</div>'
     +markers+'</div>';
   return '<div class="maplayout"><div class="mlist">'+cards+'</div><div class="map-col">'+mapEl+'</div></div>';
@@ -1005,7 +1034,8 @@ async function loadOrgDetail(p){
 
 function programReal(p){
   loadOrgDetail(p);
-  const loc=[p.city,p.stateName].filter(Boolean).join(', ')||'United States';
+  const loc=p.city?(p.city+(p.state?', '+p.state:'')):(p.stateName||'United States');
+  const nationwide=!p.city&&!p.stateName;
   const hero=p.sport
     ? '<div class="dhero has-dphoto"><img class="dhero-img" src="'+photoSrc(p.sport)+'" alt=""><span class="eyebrow">'+p.sportLabel+'</span></div>'
     : '<div class="dhero '+(SPGRAD[p.sport]||'g-sand')+'">'+ringBg('ringbg')+CHAIR_GLY+'<span class="eyebrow">'+p.sportLabel+'</span></div>';
@@ -1014,7 +1044,9 @@ function programReal(p){
     : (p.freshness?'<span class="verified">'+CK+'Website active · freshness '+p.freshness+'%</span>':'<span class="verified" style="color:var(--muted)">Listing not yet verified</span>');
   const qf=[[I.pin,loc],[I.dollar,p.cost],[I.users,p.ages&&nd(p.ages)],[I.globe,p.website&&hostFromUrl(p.website)]]
     .filter(x=>x[1]).map(x=>'<span class="qf">'+x[0]+x[1]+'</span>').join('');
-  const desc=p.desc||('An adaptive sports listing in '+loc+'. We are still gathering details for this program — the website is the best place to learn more.');
+  const desc=p.desc||(nationwide
+    ?'A nationwide adaptive sports listing. We are still gathering details for this program — the website is the best place to learn more.'
+    :'An adaptive sports listing in '+loc+'. We are still gathering details for this program — the website is the best place to learn more.');
   const cells=[['Sport',p.sportLabel],['Location',loc],['Cost',p.cost],['Ages',p.ages&&nd(p.ages)],['Equipment',p.equipment],['Data quality',p.quality]]
     .filter(x=>x[1]);
   let recrows='';
@@ -1030,7 +1062,7 @@ function programReal(p){
     p.website&&'<a class="cm" href="'+p.website+'" target="_blank" rel="noopener">'+I.globe+'<span>'+hostFromUrl(p.website)+'</span></a>',
   ].filter(Boolean).join('');
   const contact=p.website
-    ? '<div class="rcard contact"><a class="cta" href="'+p.website+'" target="_blank" rel="noopener" style="display:block;text-align:center;text-decoration:none;">Visit their website</a><div class="cmethods">'+(cmethods||'')+'</div></div>'
+    ? '<div class="rcard contact"><a class="cta" href="'+p.website+'" target="_blank" rel="noopener">Visit their website</a><div class="cmethods">'+(cmethods||'')+'</div></div>'
     : '<div class="rcard contact"><button class="cta" data-gate-open="program">Know this program? Help us verify it</button>'+(cmethods?'<div class="cmethods">'+cmethods+'</div>':'<p class="blurb" style="margin-top:10px;">No contact details on file yet.</p>')+'</div>';
   const srcs=(p.sources&&p.sources.length?p.sources:(p.primarySource?[{name:p.primarySource}]:[]));
   const provided='<div class="rcard"><p class="eyebrow">Listed from</p>'
@@ -1114,8 +1146,13 @@ function dbTableData(key){
   return {cols:[],rows:[]};
 }
 function database(){
-  const meta=TABLE_META.find(t=>t.key===state.db)||TABLE_META[1];
-  const side=TABLE_META.map(t=>'<div class="tbl'+(state.db===t.key?' on':'')+'" data-db="'+t.key+'">'+NAVICON[t.icon]+'<span>'+t.label+'</span><span class="ct">'+t.count+'</span></div>').join('');
+  // Live directory: only tables backed by real data (providers/events/equipment/
+  // resources are illustrative sample sets — showing them next to 1,544 real
+  // programs would present fiction as data).
+  const tables=DATA_LIVE?TABLE_META.filter(t=>['programs','sports','grants'].includes(t.key)):TABLE_META;
+  if(!tables.some(t=>t.key===state.db)) state.db='programs';
+  const meta=tables.find(t=>t.key===state.db)||tables[0];
+  const side=tables.map(t=>'<div class="tbl'+(state.db===t.key?' on':'')+'" data-db="'+t.key+'">'+NAVICON[t.icon]+'<span>'+t.label+'</span><span class="ct">'+t.count+'</span></div>').join('');
   let body;
   if(state.db==='programs' && state.dbView==='gallery'){
     body='<div class="gallery">'+PROGRAMS.map(p=>
@@ -1200,6 +1237,24 @@ document.addEventListener('click',e=>{
   if(t.hasAttribute('data-db')){ state.db=t.getAttribute('data-db'); render(); return; }
   if(t.hasAttribute('data-dbview')){ state.dbView=t.getAttribute('data-dbview'); render(); return; }
 });
+/* footer: browse-by-sport lands on the category bar; funding jumps straight to grants */
+document.addEventListener('click',e=>{
+  const bs=e.target.closest('[data-browse-sport]');
+  if(bs){ e.preventDefault(); state.section='discover'; state.programId=null; goFeed(); render();
+    const cb=document.querySelector('.catbar'); if(cb){ const top=cb.getBoundingClientRect().top+window.scrollY-70; window.scrollTo({top:Math.max(0,top),behavior:'smooth'}); } return; }
+  const dbl=e.target.closest('[data-db-link]');
+  if(dbl){ e.preventDefault(); state.section='database'; state.programId=null; state.db=dbl.getAttribute('data-db-link'); render(); return; }
+});
+/* about dialog (project / verification / accessibility) */
+const aboutEl=document.getElementById('about');
+document.addEventListener('click',e=>{
+  const op=e.target.closest('[data-about]');
+  if(op){ e.preventDefault(); aboutEl.classList.add('open'); document.body.style.overflow='hidden';
+    const sec=document.getElementById('ab-'+op.getAttribute('data-about')); if(sec) setTimeout(()=>{ try{ sec.scrollIntoView({block:'nearest'}); }catch(_){} },50); return; }
+  if(e.target.closest('[data-about-close]')){ aboutEl.classList.remove('open'); document.body.style.overflow=''; }
+});
+aboutEl.addEventListener('click',e=>{ if(e.target===aboutEl){ aboutEl.classList.remove('open'); document.body.style.overflow=''; } });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&aboutEl.classList.contains('open')){ aboutEl.classList.remove('open'); document.body.style.overflow=''; } });
 document.addEventListener('change',e=>{ if(e.target.id==='sortSel'){ state.sort=e.target.value; filterChanged(); } });
 document.getElementById('q').addEventListener('input',e=>{
   state.q=e.target.value; state.see=null;
@@ -1248,6 +1303,14 @@ function setGateTab(name){
 }
 function openGate(tab){
   gateLastFocus=document.activeElement;
+  // Post-launch the same dialog serves as the add/update-a-program form —
+  // swap the pre-launch copy so it never says "not live yet" on a live site.
+  if(!PRELAUNCH){
+    const ey=gateEl.querySelector('.gate-eyebrow'), ti=document.getElementById('gateTitle'), le=gateEl.querySelector('.gate-head .lede');
+    if(ey) ey.textContent='Free and open';
+    if(ti) ti.textContent='Help the directory grow';
+    if(le) le.textContent='Know a program we should list, or want updates as new programs land? That all starts here.';
+  }
   setGateTab(tab||'notify');
   gateEl.classList.add('open');
   document.body.style.overflow='hidden';
@@ -1262,7 +1325,7 @@ document.addEventListener('click',function(e){
   if(t.closest('#gate')) return;                 // never gate clicks inside the modal
   if(t.closest('[data-gate-open]')) return;      // explicit openers handled below
   if(t.closest('[data-sport],[data-home],#locBtn,#hlocBtn,#q,#qHero,[data-subscribe-go]')) return; // allowed
-  const deep=t.closest('[data-prog],[data-seeall],.frow-all,[data-section],[data-sport-link],[data-addprogram],[data-noop]');
+  const deep=t.closest('[data-prog],[data-seeall],.frow-all,[data-section],[data-sport-link],[data-addprogram],[data-noop],[data-db-link],[data-browse-sport]');
   if(deep){ e.preventDefault(); e.stopImmediatePropagation(); openGate(t.closest('[data-addprogram]')?'program':'notify'); }
 },true);
 
@@ -1341,7 +1404,7 @@ function mapOrg(o){
     sport:o.sport||null, sportLabel:esc(o.sportLabel)||'Multi-Sport',
     category:CAT_BY_KEY[o.sport]||'Community',
     provider:TYPE_LABEL[o.type]||'Adaptive sports program',
-    city:esc([o.city,o.state].filter(Boolean).join(', ')||(o.stateName||'')),
+    city:esc(o.city)||null, // real city name only — never the state code standing in for one
     state:esc(o.state), stateName:esc(o.stateName),
     dist:null, cost:esc(o.cost)||null, free:/free/i.test(o.cost||''),
     // no invented availability — status reflects what we actually know
@@ -1349,7 +1412,8 @@ function mapOrg(o){
     ages:esc(o.ages)||null, season:null, format:null,
     levels:[], equipment:esc(o.equipment)||null, schedule:null, desc:esc(o.desc)||null,
     website:esc(o.website)||null, verification:o.verification, freshness:o.freshness,
-    quality:esc(o.quality), lat:o.lat, lng:o.lng, geoPrecision:o.geoPrecision,
+    quality:o.quality?esc(o.quality.charAt(0).toUpperCase()+o.quality.slice(1)):null,
+    lat:o.lat, lng:o.lng, geoPrecision:o.geoPrecision,
   };
 }
 (async function hydrate(){
@@ -1367,6 +1431,7 @@ function mapOrg(o){
     const pages=await Promise.all(offs.map(o=>fetch('/api/programs?limit=200&offset='+o).then(r=>r.json()).catch(()=>null)));
     for(const page of pages){ if(page&&page.ok&&page.items.length) Array.prototype.push.apply(PROGRAMS, page.items.map(mapOrg)); }
     const tm=TABLE_META.find(t=>t.key==='programs'); if(tm) tm.count=PROGRAMS.length;
+    const lt=document.getElementById('locTxt'); if(lt) lt.textContent='United States';
     render(true);
   }catch(_){ /* keep the sample — never a broken page */ }
 })();

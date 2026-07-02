@@ -26,6 +26,9 @@ ASNM_ENV = "/srv/asnm/.env"
 JUNK_NAMES = {"leadership", "governance", "athlete excellence",
               "sport advancement", "community growth"}
 JUNK_RE = re.compile(r"^[A-Z]\s+to\s+[A-Z]$")
+# Scraped-navigation strings that landed in the source's city column.
+JUNK_CITIES = {"for supporters", "national", "for caf athletes", "resources",
+               "about", "regions", "events"}
 
 STATES = {
  "AL":"Alabama","AK":"Alaska","AZ":"Arizona","AR":"Arkansas","CA":"California",
@@ -131,8 +134,11 @@ def norm_state(city, state):
             code = code or r.upper()
         elif r.lower() in NAME_TO_CODE:
             code = code or NAME_TO_CODE[r.lower()]
-        elif raw is city and r:
-            real_city = r
+        elif raw is city and r and r.lower() not in JUNK_CITIES:
+            if r.lower() == "washington dc":
+                real_city, code = "Washington", code or "DC"
+            else:
+                real_city = r
     if code:
         sname = STATES[code]
     return real_city, code, sname
