@@ -61,6 +61,35 @@
         "crons": ["0 */2 * * *", "*/20 * * * *"]
       },
       "observability": { "enabled": true }
+    },
+    // Sandbox: the v2-milestone workshop (fill the DB + design-to-data), deployed
+    // from the long-running v2 branch. Own D1, no crons (run pipeline lanes by
+    // hand while the data model is in flux), and routes stay explicitly empty.
+    "sandbox": {
+      "name": "asnm-sandbox",
+      "main": "src/index.js",
+      "workers_dev": true,
+      "preview_urls": true,
+      "routes": [],
+      "assets": {
+        "directory": "./public",
+        "binding": "ASSETS",
+        "not_found_handling": "404-page",
+        "html_handling": "auto-trailing-slash"
+      },
+      "vars": {
+        "AIRTABLE_BASE_ID": "apphZsPGanzJ5xyl7",
+        "AIRTABLE_INBOX_TABLE_ID": "tblBcgV7oQ9Q3q34L",
+        "ENV_NAME": "sandbox",
+        "PRELAUNCH": "false"
+      },
+      "d1_databases": [
+        { "binding": "DB", "database_name": "asnm-db-sandbox", "database_id": "28995f6c-077b-4a61-ad5d-29e33a54a59c" }
+      ],
+      "triggers": {
+        "crons": []
+      },
+      "observability": { "enabled": true }
     }
   }
 }

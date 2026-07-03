@@ -1,14 +1,17 @@
 #!/usr/bin/env bash
-# One deploy path for ASNM. Usage: scripts/deploy.sh staging|prod
+# One deploy path for ASNM. Usage: scripts/deploy.sh sandbox|staging|prod
 # Wraps `cfrun wrangler deploy` and smoke-tests the deployed worker.
+# Lanes: sandbox = v2-milestone workshop (deploy from the v2 branch);
+#        staging = what's next (deploy from main); prod = the live site (gated).
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
 target="${1:-}"
 case "$target" in
+  sandbox) args=(--env sandbox); url="https://asnm-sandbox.alec-af3.workers.dev" ;;
   staging) args=(--env staging); url="https://asnm-staging.alec-af3.workers.dev" ;;
   prod)    args=();              url="https://adaptivesportsnearme.com" ;;
-  *) echo "usage: scripts/deploy.sh staging|prod" >&2; exit 1 ;;
+  *) echo "usage: scripts/deploy.sh sandbox|staging|prod" >&2; exit 1 ;;
 esac
 
 cfrun wrangler deploy "${args[@]}"

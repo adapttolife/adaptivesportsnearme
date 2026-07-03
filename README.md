@@ -17,7 +17,7 @@ src/pipeline.js        cron lanes: validate (link liveness) + enrich (contact sc
 src/admin.js           /api/admin/* review queue (ADMIN_KEY bearer)
 db/schema.sql          D1 schema (ported from the asnm repo's Postgres design)
 scripts/pg-to-d1.py    one-time migration: local Postgres → cleaned SQL → D1
-scripts/deploy.sh      the deploy path (staging | prod) with post-deploy smoke test
+scripts/deploy.sh      the deploy path (sandbox | staging | prod) with post-deploy smoke test
 ```
 
 **Data plane:** two D1 databases — `asnm-db` (prod) and `asnm-db-staging`. Same schema,
@@ -32,12 +32,22 @@ the freshness score — half-life 45 days, computed in the Worker).
 
 **Environments:**
 
-| | prod (`asnm`) | staging (`asnm-staging`) |
-|---|---|---|
-| URL | adaptivesportsnearme.com | asnm-staging.alec-af3.workers.dev |
-| Gate | `PRELAUNCH=true` (teaser + modal) | `PRELAUNCH=false` (full directory) |
-| D1 | asnm-db | asnm-db-staging |
-| Crons | validate 2h / enrich 20min | same |
+| | prod (`asnm`) | staging (`asnm-staging`) | sandbox (`asnm-sandbox`) |
+|---|---|---|---|
+| URL | adaptivesportsnearme.com | asnm-staging.alec-af3.workers.dev | asnm-sandbox.alec-af3.workers.dev |
+| Gate | `PRELAUNCH=true` (teaser + modal) | `PRELAUNCH=false` (full directory) | `PRELAUNCH=false` |
+| D1 | asnm-db | asnm-db-staging | asnm-db-sandbox (starts empty) |
+| Crons | validate 2h / enrich 20min | same | none (run lanes by hand) |
+| Deploys from | `main`, explicit | `main` | `v2` |
+
+**Branch model (one repo, three lanes):**
+
+- `main` is the trunk — what collaborators branch from and PR into; deploys to **staging**.
+- `v2` is the long-running milestone branch — the data-infrastructure fill + design-to-data
+  work happens here; collaborator PRs target `v2`; deploys to **sandbox**. When the
+  milestone is done: one PR `v2 → main`, verify on staging, then the prod cutover.
+- **prod only changes via an explicit `scripts/deploy.sh prod`** — merging is never
+  deploying. That separation, not a second repo, is what protects the live site.
 
 The front-end hydrates from `/api/config` + `/api/programs`; if the API is absent or errors,
 the inline sample stays and the page never breaks. Real listings render honestly: no
@@ -48,6 +58,7 @@ outside the 11-photo launch set, state-centroid map pins marked `state-level`.
 
 ```
 cd /srv/alec-version-2
+scripts/deploy.sh sandbox   # deploy + smoke test sandbox (from the v2 branch)
 scripts/deploy.sh staging   # deploy + smoke test staging
 scripts/deploy.sh prod      # deploy + smoke test production (keeps the prelaunch gate)
 ```
