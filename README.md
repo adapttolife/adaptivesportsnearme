@@ -1,4 +1,4 @@
-# adaptivesportsnearme/site — AdaptiveSportsNearMe.com
+# adaptivesportsnearme — AdaptiveSportsNearMe.com
 
 The canonical site for **adaptivesportsnearme.com**: the Airbnb-style directory design, a
 Cloudflare Worker with a **D1 data plane** (1,544 real organizations), a cron maintenance
@@ -15,7 +15,7 @@ src/index.js           Worker: routing, forms (beehiiv/Airtable), config, cron e
 src/data.js            /api/programs /api/orgs/:id /api/stats (D1 reads + freshness decay)
 src/pipeline.js        cron lanes: validate (link liveness) + enrich (contact scrape)
 src/admin.js           /api/admin/* review queue (ADMIN_KEY bearer)
-db/schema.sql          D1 schema (ported from the asnm repo's Postgres design)
+db/schema.sql          D1 schema (ported from adaptivesportsnearme-data's Postgres design)
 scripts/pg-to-d1.py    one-time migration: local Postgres → cleaned SQL → D1
 scripts/deploy.sh      the deploy path (sandbox | staging | prod) with post-deploy smoke test
 ```
