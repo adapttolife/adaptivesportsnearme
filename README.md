@@ -1,4 +1,4 @@
-# Alec Version 2 — AdaptiveSportsNearMe.com
+# adaptivesportsnearme/site — AdaptiveSportsNearMe.com
 
 The canonical site for **adaptivesportsnearme.com**: the Airbnb-style directory design, a
 Cloudflare Worker with a **D1 data plane** (1,544 real organizations), a cron maintenance
