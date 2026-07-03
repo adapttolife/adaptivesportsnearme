@@ -1,8 +1,28 @@
 // Adaptive Sports Near Me — Worker entry.
-// Serves the static site (env.ASSETS) and handles two pre-launch endpoints:
+// Serves the static site (env.ASSETS), the D1-backed directory API, the admin
+// review surface, and the cron maintenance pipeline (validate + enrich lanes).
 //   POST /api/subscribe        -> beehiiv (email capture, tagged asnm-prelaunch)
-//   POST /api/submit-program   -> Airtable Agent Inbox (a "New program" submission)
+//   POST /api/submit-program   -> Airtable Agent Inbox + D1 submissions
+//   GET  /api/config           -> env name + prelaunch flag (front-end gate)
+//   GET  /api/programs         -> directory list (sport/state/q filters, paged)
+//   GET  /api/orgs/:id         -> one org with source provenance
+//   GET  /api/stats            -> counts by sport/state
+//   *    /api/admin/*          -> review queue + lane triggers (ADMIN_KEY bearer)
 // All secrets stay server-side (Worker secrets). Bot defence: honeypot + optional Turnstile.
+
+import { listPrograms, getOrg, stats } from "./data.js";
+import { handleAdmin } from "./admin.js";
+import { runLane } from "./pipeline.js";
+import { json } from "./http.js";
+
+const API_CACHE = "public, max-age=300, stale-while-revalidate=600";
+
+// Single source for cron -> lane routing; must list every schedule in
+// wrangler.jsonc triggers. Unknown crons error loudly instead of misrouting.
+const CRON_LANES = {
+  "0 */2 * * *": "validate",
+  "*/20 * * * *": "enrich",
+};
 
 export default {
   async fetch(request, env) {
@@ -17,8 +37,59 @@ export default {
       return handleSubmitProgram(request, env);
     }
 
+    if (url.pathname === "/api/config") {
+      return json({
+        ok: true,
+        env: env.ENV_NAME || "production",
+        prelaunch: env.PRELAUNCH !== "false",
+        dataApi: !!env.DB,
+      });
+    }
+    if (env.DB && request.method === "GET") {
+      try {
+        if (url.pathname === "/api/programs") {
+          return json({ ok: true, ...(await listPrograms(env.DB, url.searchParams)) }, 200, API_CACHE);
+        }
+        const org = url.pathname.match(/^\/api\/orgs\/([0-9a-f-]{36})$/);
+        if (org) {
+          const record = await getOrg(env.DB, org[1]);
+          return record ? json({ ok: true, org: record }, 200, API_CACHE)
+                        : json({ ok: false, error: "Not found" }, 404);
+        }
+        if (url.pathname === "/api/stats") {
+          return json({ ok: true, ...(await stats(env.DB)) }, 200, API_CACHE);
+        }
+      } catch (err) {
+        console.error("data api error:", err);
+        return json({ ok: false, error: "Data temporarily unavailable" }, 500);
+      }
+    }
+    if (url.pathname.startsWith("/api/admin/") && env.DB) {
+      return handleAdmin(request, env, url);
+    }
+
+    // /maps is the map explorer's real URL — same app, booted into the map.
+    if (url.pathname === "/maps" || url.pathname === "/maps/") {
+      return env.ASSETS.fetch(new Request(new URL("/", url), request));
+    }
+
     // Everything else: the static site.
     return env.ASSETS.fetch(request);
+  },
+
+  async scheduled(controller, env, ctx) {
+    if (!env.DB) return;
+    const lane = CRON_LANES[controller.cron];
+    if (!lane) {
+      console.error(`no lane mapped for cron "${controller.cron}" — update CRON_LANES + wrangler.jsonc together`);
+      return;
+    }
+    ctx.waitUntil(
+      runLane(env, lane).then(
+        (r) => console.log(`lane ${lane}: processed=${r.processed} flagged=${r.flagged}`),
+        (err) => console.error(`lane ${lane} failed:`, err)
+      )
+    );
   },
 };
 
@@ -147,6 +218,22 @@ async function handleSubmitProgram(request, env) {
     return json({ ok: false, error: "Could not save right now. Please try again soon." }, 502);
   }
 
+  // Also record in D1 (the directory's own data plane) — Airtable stays the team surface.
+  if (env.DB) {
+    try {
+      await env.DB.prepare(
+        `INSERT INTO submissions (kind, payload, contact_email, status, created_at)
+         VALUES ('new_program', ?, ?, 'new', ?)`
+      ).bind(
+        JSON.stringify({ program, org, sport, city, state: stateRegion, notes }),
+        email || null,
+        new Date().toISOString()
+      ).run();
+    } catch (err) {
+      console.error("D1 submission mirror failed:", err); // Airtable write already succeeded
+    }
+  }
+
   return json({ ok: true });
 }
 
@@ -181,13 +268,6 @@ async function verifyTurnstile(env, token, ip) {
 
 function str(v) {
   return (typeof v === "string" ? v : "").trim().slice(0, 5000);
-}
-
-function json(obj, status = 200) {
-  return new Response(JSON.stringify(obj), {
-    status,
-    headers: { "Content-Type": "application/json", "Cache-Control": "no-store" },
-  });
 }
 
 async function safeText(res) {

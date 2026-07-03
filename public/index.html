@@ -9,6 +9,7 @@
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.json">
 <meta name="theme-color" content="#C5430C">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Adaptive Sports Near Me">
@@ -79,6 +80,8 @@ input,select{font-family:inherit;}
 .search:focus-within{box-shadow:0 8px 22px rgba(17,17,19,.15),0 1px 3px rgba(17,17,19,.06);border-color:var(--sand2);}
 .search .loc{display:flex;align-items:center;gap:8px;padding:0 14px 0 20px;height:100%;border-radius:var(--r-full) 0 0 var(--r-full);white-space:nowrap;color:var(--ink);font-size:15px;font-weight:600;}
 .search .loc:hover{background:var(--mist);}
+.search .loc,.hsearch .loc{cursor:default;} /* location is a label until location-picking ships — no click affordance for a dead control */
+.search .loc:hover,.hsearch .loc:hover{background:transparent;}
 .search .loc svg{width:16px;height:16px;color:var(--orange);}
 .search .sep{width:1px;height:26px;background:var(--line);flex:0 0 auto;}
 .search input{flex:1 1 auto;min-width:40px;height:100%;border:none;background:transparent;outline:none;padding:0 22px 0 16px;font-size:15px;font-weight:500;color:var(--ink);}
@@ -113,7 +116,7 @@ input,select{font-family:inherit;}
 .hero{position:relative;padding:60px 0 42px;text-align:center;overflow:hidden;}
 .hero::before{content:"";position:absolute;inset:0;background:radial-gradient(58% 78% at 50% -8%, rgba(232,93,4,.06), transparent 68%);pointer-events:none;}
 .hero-in{position:relative;max-width:760px;margin:0 auto;}
-.hero h1{font-family:'DM Sans',sans-serif;font-weight:700;font-size:clamp(38px,5.5vw,60px);line-height:1.0;letter-spacing:-.03em;margin:12px 0 0;}
+.hero h1{font-family:'DM Sans',sans-serif;font-weight:700;font-size:clamp(38px,5.5vw,60px);line-height:1.0;letter-spacing:-.03em;margin:12px 0 0;text-wrap:balance;}
 .hero .lede{margin:16px auto 0;max-width:580px;font-size:16px;line-height:1.55;color:var(--muted);}
 .trust{margin-top:18px;display:inline-flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:10px;font-size:14px;color:var(--muted);}
 .trust b{color:var(--ink);font-weight:700;}
@@ -200,7 +203,7 @@ input,select{font-family:inherit;}
 .thumb-full{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
 .cat-img{width:38px;height:38px;object-fit:contain;border-radius:9px;}
 .dhero-icon{position:absolute;inset:0;margin:auto;width:42%;height:74%;object-fit:contain;filter:drop-shadow(0 16px 26px rgba(20,18,14,.2));}
-.dhero-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
+.dhero-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 30%;} /* faces live in the upper third of the square action shots */
 .dhero.has-dphoto{background:#23211f;}
 
 /* gradients (calm, photo-ready) */
@@ -250,7 +253,43 @@ input,select{font-family:inherit;}
 .map .road.thin{background:#EDECE7;}
 .map .water{position:absolute;background:#D4E2E6;border-radius:40%;filter:blur(.3px);}
 .map .park{position:absolute;background:#D7E5D2;border-radius:42% 58% 50% 50%;}
-.map .mapchip{position:absolute;top:14px;left:14px;background:rgba(255,255,255,.9);border:1px solid var(--line);border-radius:var(--r-full);padding:6px 12px;font-family:'DM Sans',sans-serif;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);z-index:5;}
+.map .mapchip,.mapx .mapchip{position:absolute;top:14px;left:14px;background:rgba(255,255,255,.9);border:1px solid var(--line);border-radius:var(--r-full);padding:6px 12px;font-family:'DM Sans',sans-serif;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);z-index:5;}
+/* live map (MapLibre GL + OpenFreeMap) — Airbnb-style white count pills */
+#livemap{position:absolute;inset:0;}
+.mpill{display:flex;align-items:center;gap:6px;background:#fff;border:1px solid var(--line);border-radius:999px;padding:7px 12px;font-family:'DM Sans',sans-serif;font-weight:700;font-size:13px;color:var(--ink);box-shadow:0 2px 10px rgba(20,18,14,.18);cursor:pointer;transition:transform .12s var(--ease),background .12s,color .12s;white-space:nowrap;}
+.mpill .mc{font-weight:600;color:var(--muted);}
+.mpill:hover,.mpill.active{background:var(--ink);color:#fff;transform:scale(1.08);}
+.mpill:hover .mc,.mpill.active .mc{color:rgba(255,255,255,.75);}
+.mpin{width:30px;height:30px;display:flex;align-items:center;justify-content:center;background:#fff;border:1px solid var(--line);border-radius:999px;font-family:'DM Sans',sans-serif;font-weight:700;font-size:13px;color:var(--ink);box-shadow:0 2px 10px rgba(20,18,14,.18);cursor:pointer;transition:transform .12s var(--ease),background .12s,color .12s;}
+.mpin:hover,.mpin.active{background:var(--ink);color:#fff;transform:scale(1.12);}
+.mdot{width:14px;height:14px;border-radius:50%;background:var(--orange);border:2.5px solid #fff;box-shadow:0 1px 6px rgba(20,18,14,.35);}
+/* full-screen map explorer */
+.mapx{position:relative;height:calc(100vh - 132px);min-height:480px;}
+.mapx-close{position:absolute;top:14px;right:14px;z-index:6;display:flex;align-items:center;gap:7px;background:#fff;border:1px solid var(--line);border-radius:var(--r-full);padding:9px 15px;font-family:'DM Sans',sans-serif;font-weight:600;font-size:13.5px;color:var(--ink);box-shadow:0 2px 10px rgba(20,18,14,.14);cursor:pointer;}
+.mapx-close:hover{background:var(--mist);}
+.mapx .maplibregl-ctrl-top-right{top:56px;}
+.mapx-open{position:absolute;bottom:18px;left:50%;transform:translateX(-50%);z-index:6;display:flex;align-items:center;gap:8px;background:var(--ink);color:#fff;border-radius:var(--r-full);padding:11px 18px;font-family:'DM Sans',sans-serif;font-weight:600;font-size:14px;box-shadow:0 4px 14px rgba(20,18,14,.3);cursor:pointer;transition:transform .15s var(--ease);}
+.mapx-open:hover{transform:translateX(-50%) scale(1.04);}
+.mapx-open svg{width:15px;height:15px;}
+.mapx-drawer{position:absolute;top:16px;right:16px;bottom:16px;width:min(400px,calc(100% - 32px));z-index:7;background:#fff;border-radius:var(--r-xl);box-shadow:0 8px 30px rgba(20,18,14,.22);display:flex;flex-direction:column;overflow:hidden;}
+.mapx-drawer[hidden]{display:none;}
+.mapxd-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:16px 18px 12px;border-bottom:1px solid var(--line);}
+.mapxd-head h3{font-family:'DM Sans',sans-serif;font-size:16.5px;margin:0;}
+.mapxd-head .sub{font-size:13px;color:var(--muted);margin-top:2px;}
+.mapxd-x{width:32px;height:32px;flex:0 0 auto;display:flex;align-items:center;justify-content:center;border-radius:50%;color:var(--muted);cursor:pointer;}
+.mapxd-x:hover{background:var(--mist);color:var(--ink);}
+.mapxd-x svg{width:15px;height:15px;}
+.mapxd-list{flex:1;overflow-y:auto;padding:10px 12px;}
+.mapxd-list .mcard{margin-bottom:4px;}
+.mapxd-foot{padding:12px 18px;border-top:1px solid var(--line);}
+.mapxd-foot a{display:flex;align-items:center;justify-content:center;gap:7px;height:42px;border:1px solid var(--ink);border-radius:var(--r);font-weight:600;font-size:14px;color:var(--ink);text-decoration:none;}
+.mapxd-foot a:hover{background:var(--ink);color:#fff;}
+@media(max-width:720px){
+  .mapx{height:calc(100vh - 118px);min-height:420px;}
+  .mapx-drawer{top:auto;left:10px;right:10px;bottom:10px;width:auto;max-height:52%;}
+}
+.map-live .maplibregl-ctrl-attrib{font-size:10px;}
+.minimap .maplibregl-ctrl-attrib{font-size:9px;}
 .map .scalebar{position:absolute;bottom:14px;left:14px;display:flex;align-items:center;gap:8px;font-size:11px;color:var(--muted);z-index:5;}
 .map .scalebar i{display:block;width:46px;height:3px;background:var(--ink);opacity:.5;border-left:2px solid var(--ink);border-right:2px solid var(--ink);}
 .mk{position:absolute;transform:translate(-50%,-50%);z-index:6;}
@@ -279,7 +318,9 @@ table.list tbody tr:hover{background:var(--mist);}
 .crumb a:hover{color:var(--ink);}
 .crumb .sl{color:var(--faint);}
 .crumb b{color:var(--ink);font-weight:600;}
-.dhero{position:relative;aspect-ratio:24/8;max-height:340px;border-radius:var(--r-xl);overflow:hidden;}
+/* Full content width always — aspect-ratio + max-height together made the browser
+   shrink the banner's WIDTH to hold the ratio, leaving it narrower than the page grid. */
+.dhero{position:relative;width:100%;height:clamp(220px,26vw,380px);border-radius:var(--r-xl);overflow:hidden;}
 .dhero .gly{position:absolute;inset:0;margin:auto;width:120px;height:120px;color:rgba(26,26,26,.8);}
 .dhero .ringbg{position:absolute;inset:0;margin:auto;width:200px;height:200px;color:rgba(255,255,255,.5);}
 .dhero .eyebrow{position:absolute;bottom:16px;left:18px;background:rgba(255,255,255,.9);border-radius:var(--r-full);padding:6px 12px;color:var(--muted);}
@@ -309,6 +350,7 @@ table.list tbody tr:hover{background:var(--mist);}
 .ghost{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;height:42px;border:1px solid var(--line);border-radius:var(--r);font-size:14px;font-weight:600;color:var(--ink);transition:.15s;}
 .ghost:hover{border-color:var(--ink);}
 .cta{display:flex;align-items:center;justify-content:center;width:100%;height:50px;background:var(--orange);color:#fff;border-radius:var(--r);font-size:16px;font-weight:700;transition:background .15s,transform .15s;}
+a.cta{text-decoration:none;text-align:center;} /* link-CTAs center exactly like button-CTAs */
 .cta:hover{background:var(--orange-ink);}
 .facts{display:flex;flex-direction:column;}
 .facts .f{display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-bottom:1px solid var(--line2);font-size:14px;}
@@ -554,13 +596,37 @@ table.list tbody tr:hover{background:var(--mist);}
         <p class="tagline">An open directory of adaptive sports programs across the country. No logins, no walls. Built for the community.</p>
       </div>
       <div class="foot-links">
-        <div class="foot-col"><h4>Explore</h4><a href="#" data-home>Discover</a><a href="#" data-section="database">Browse all</a><a href="#">Browse by sport</a><a href="#">Events</a><a href="#">Funding</a></div>
-        <div class="foot-col"><h4>Programs</h4><a href="#">Update a listing</a><a href="#">Content review</a></div>
-        <div class="foot-col"><h4>About</h4><a href="#">The project</a><a href="#">Contact</a><a href="#">Accessibility</a><a href="https://sign.adapttolife.org/waiver?source=asnm">Sign waiver</a></div>
+        <div class="foot-col"><h4>Explore</h4><a href="#" data-home>Discover</a><a href="/maps" data-mapx>Map view</a><a href="#" data-section="database">Browse all</a><a href="#" data-browse-sport>Browse by sport</a><a href="#" data-db-link="grants">Funding</a></div>
+        <div class="foot-col"><h4>Programs</h4><a href="#" data-gate-open="program">Add a program</a><a href="#" data-gate-open="program">Update a listing</a></div>
+        <div class="foot-col"><h4>About</h4><a href="#" data-about="project">The project</a><a href="#" data-about="verify">How we verify</a><a href="#" data-about="a11y">Accessibility</a><a href="https://sign.adapttolife.org/waiver?source=asnm">Sign waiver</a></div>
       </div>
     </div>
   </div>
 </footer>
+
+<div class="gate-ov" id="about" role="dialog" aria-modal="true" aria-labelledby="aboutTitle">
+  <div class="gate">
+    <div class="gate-head">
+      <button class="gate-x" type="button" data-about-close aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+      <p class="gate-eyebrow">About</p>
+      <h2 id="aboutTitle">Adaptive Sports Near Me</h2>
+    </div>
+    <div class="gate-body" style="padding-top:6px;">
+      <div id="ab-project" style="padding:14px 0 4px;">
+        <h3 style="font-size:16px;margin:0 0 6px;">The project</h3>
+        <p class="lede" style="font-size:14.5px;">A free, open, national directory of adaptive sports programs. No logins, no walls. Built and run by <a href="https://adapttolife.org" target="_blank" rel="noopener" style="text-decoration:underline;">Adapt To Life</a>, a recognized 501(c)(3) nonprofit, so every athlete can find their place to play.</p>
+      </div>
+      <div id="ab-verify" style="padding:14px 0 4px;border-top:1px solid var(--line);margin-top:12px;">
+        <h3 style="font-size:16px;margin:0 0 6px;">How we verify listings</h3>
+        <p class="lede" style="font-size:14.5px;">Listings come from public directories and community submissions. Automated checks re-visit each program's website on a schedule, and every proposed change is reviewed by a person before it goes live. Badges on a listing tell you exactly what has and hasn't been confirmed.</p>
+      </div>
+      <div id="ab-a11y" style="padding:14px 0 10px;border-top:1px solid var(--line);margin-top:12px;">
+        <h3 style="font-size:16px;margin:0 0 6px;">Accessibility</h3>
+        <p class="lede" style="font-size:14.5px;">This site is built for keyboard, screen-reader, and low-vision use, and we hold ourselves to WCAG 2.1 AA as we grow. If anything here is hard to use, tell us through "Add a program → Anything else" and we will fix it.</p>
+      </div>
+    </div>
+  </div>
+</div>
 
 <div class="gate-ov" id="gate" role="dialog" aria-modal="true" aria-labelledby="gateTitle">
   <div class="gate">
@@ -727,8 +793,25 @@ const NAVICON = {
   pin:'<svg viewBox="0 0 30 36"><path d="M15 0C7 0 1 6 1 14c0 9 14 22 14 22s14-13 14-22C29 6 23 0 15 0Z" fill="#1A1A1A"/><circle cx="15" cy="14" r="5" fill="#fff"/></svg>',
 };
 const HEART='<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20s-7-4.6-9.3-9C1 7.6 2.7 4.5 6 4.5c2 0 3.3 1.1 4 2.4.7-1.3 2-2.4 4-2.4 3.3 0 5 3.1 3.3 6.5C19 15.4 12 20 12 20Z"/></svg>';
+/* detail-page icons — shared by the sample and live renderers */
+const CK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>';
+const I={
+  pin:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s7-5.7 7-11a7 7 0 1 0-14 0c0 5.3 7 11 7 11Z"/><circle cx="12" cy="10" r="2.5"/></svg>',
+  dollar:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 1.6v20.8M16.5 6c0-1.7-2-2.8-4.5-2.8S7.5 4.4 7.5 6.6c0 4.4 9 2.6 9 7 0 2.1-2 3.2-4.5 3.2S7.5 15.7 7.5 14"/></svg>',
+  users:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="9" cy="8" r="3.2"/><path d="M3.6 19a5.4 5.4 0 0 1 10.8 0"/><path d="M16 5.7a3.2 3.2 0 0 1 0 6.3M20.4 19a5.4 5.4 0 0 0-3.9-5.2"/></svg>',
+  layers:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3l9 5-9 5-9-5 9-5z"/><path d="M3 13l9 5 9-5"/></svg>',
+  phone:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M5 3.5h3.5l1.8 4.5-2.3 1.4a11 11 0 0 0 4.6 4.6l1.4-2.3 4.5 1.8V19a1.5 1.5 0 0 1-1.5 1.5A15.5 15.5 0 0 1 3.5 5 1.5 1.5 0 0 1 5 3.5z"/></svg>',
+  mail:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3.5 7l8.5 6 8.5-6"/></svg>',
+  globe:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3c2.6 2.7 2.6 15.3 0 18M12 3c-2.6 2.7-2.6 15.3 0 18"/></svg>',
+  edit:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M4 20h4L18.5 9.5l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg>',
+  arrow:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg>'
+};
+/* escape untrusted (DB/scraped) strings before they hit innerHTML */
+function esc(s){ return s==null?s:String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
 
 /* ============================ STATE + HELPERS ============================ */
+let DATA_LIVE=false; // flips true once /api/programs hydrates the real directory
+const BOOT_MAPX=location.pathname==='/maps'; // captured before any render can rewrite the URL
 const state = { section:"discover", layout:"grid", sport:"all", q:"", dist:"any", cost:"any", level:"any", filtersOpen:false, sort:"rec", db:"programs", dbView:"gallery", programId:null, loc:"Denver, CO", see:null };
 const saved = new Set();
 function nd(s){ return (s||'').replace(/[\u2013\u2014]/g,' to '); }
@@ -746,40 +829,54 @@ function cardTagsHtml(p){
   const ts=cardTags(p); if(!ts.length) return '';
   return '<div class="cardtags">'+ts.map(x=>'<span class="cbadge '+x.c+'">'+x.t+'</span>').join('')+'</div>';
 }
+const CHAIR_GLY=NAVICON.chair.replace('<svg','<svg class="gly"'); // the brand wheelchair mark, one source
+function thumbHtml(p){
+  // small thumbs (map cards, list rows): photo when the sport has one, glyph tile otherwise
+  return p.sport?'<img class="thumb-full" src="'+photoSrc(p.sport)+'" alt="" loading="lazy">':ringBg('ringbg')+CHAIR_GLY;
+}
 function media(p, kind){
   // Airbnb-style: real action photo + tag badges (top-left).
+  // Sports outside the launch photo set fall back to the gradient + glyph tile.
   const overlay = (kind && kind!=='pcard-media') ? '' : cardTagsHtml(p);
+  if(!p.sport) return '<div class="'+(kind||'pcard-media')+' g-sand">'+ringBg('ringbg')+CHAIR_GLY+overlay+'</div>';
   return '<div class="'+(kind||'pcard-media')+' has-photo"><img class="pcard-img" src="'+photoSrc(p.sport)+'" alt="" loading="lazy" decoding="async">'+overlay+'</div>';
+}
+function metaParts(p){
+  return [p.dist!=null?p.dist+' mi':(p.city||p.stateName||null), p.cost, p.ages?nd(p.ages):null]
+    .filter(Boolean).slice(0,3);
 }
 function filtered(){
   let list = PROGRAMS.slice();
   if(state.sport!=='all') list = list.filter(p=>p.sport===state.sport);
-  if(state.q.trim()){ const q=state.q.toLowerCase(); list=list.filter(p=>(p.name+' '+p.sportLabel+' '+p.provider+' '+p.city).toLowerCase().includes(q)); }
-  if(state.dist!=='any'){ const m={s:5,m:10,l:25}[state.dist]; list=list.filter(p=>p.dist<=m); }
+  if(state.q.trim()){ const q=state.q.toLowerCase(); list=list.filter(p=>(p.name+' '+p.sportLabel+' '+(p.provider||'')+' '+(p.city||'')+' '+(p.stateName||'')).toLowerCase().includes(q)); }
+  if(state.dist!=='any'){ const m={s:5,m:10,l:25}[state.dist]; list=list.filter(p=>p.dist==null||p.dist<=m); }
   if(state.cost==='free') list=list.filter(p=>p.free);
-  if(state.level!=='any') list=list.filter(p=>p.levels.map(l=>l.toLowerCase()).includes(state.level));
-  if(state.sort==='dist') list.sort((a,b)=>a.dist-b.dist);
+  if(state.level!=='any') list=list.filter(p=>!p.levels.length||p.levels.map(l=>l.toLowerCase()).includes(state.level));
+  if(state.sort==='dist') list.sort((a,b)=>(a.dist??1e9)-(b.dist??1e9)||(b.freshness??0)-(a.freshness??0));
   if(state.sort==='name') list.sort((a,b)=>a.name.localeCompare(b.name));
   return list;
 }
-function activeFilterCount(){ let n=0; if(state.dist!=='any')n++; if(state.cost!=='any')n++; if(state.level!=='any')n++; return n; }
+function activeFilterCount(){ let n=0; if(!DATA_LIVE&&state.dist!=='any')n++; if(state.cost!=='any')n++; if(!DATA_LIVE&&state.level!=='any')n++; return n; }
 
 /* ============================ RENDER: DISCOVER ============================ */
 function catBar(){
   const all='<button class="cat'+(state.sport==='all'?' on':'')+'" data-sport="all">'+NAVICON.compass+'<span>All sports</span></button>';
   const items=SPORTS.map(s=>'<button class="cat'+(state.sport===s.key?' on':'')+'" data-sport="'+s.key+'">'+sportIcon(s.key,'cat-img')+'<span>'+s.label+'</span></button>').join('');
-  const browse='<span class="cat-sep" aria-hidden="true"></span><button class="cat cat-browse" data-section="database">'+NAVICON.grid+'<span>Browse all</span></button>';
+  const browse='<span class="cat-sep" aria-hidden="true"></span>'
+    +(DATA_LIVE?'<button class="cat cat-browse'+(state.section==='mapx'?' on':'')+'" data-mapx>'+NAVICON.map+'<span>Map view</span></button>':'')
+    +'<button class="cat cat-browse" data-section="database">'+NAVICON.grid+'<span>Browse all</span></button>';
   return '<div class="catbar"><div class="wrap catbar-in"><div class="cats">'+all+items+browse+'</div></div></div>';
 }
+function locPhrase(){ return DATA_LIVE ? 'across the U.S.' : 'near '+state.loc; }
 function toolbar(list){
   const fc=activeFilterCount();
   return '<div class="toolbar">'
-    +'<div class="count"><b>'+list.length+'</b> '+(list.length===1?'program':'programs')+' near '+state.loc+'</div>'
+    +'<div class="count"><b>'+list.length+'</b> '+(list.length===1?'program':'programs')+' '+locPhrase()+'</div>'
     +'<div class="tools">'
       +'<button class="btn-pill" id="filtBtn" aria-expanded="'+state.filtersOpen+'">'+NAVICON.sliders+'Filters'+(fc?'<span class="badge">'+fc+'</span>':'')+'</button>'
       +'<select class="sortsel" id="sortSel" aria-label="Sort">'
         +'<option value="rec"'+(state.sort==='rec'?' selected':'')+'>Recommended</option>'
-        +'<option value="dist"'+(state.sort==='dist'?' selected':'')+'>Closest first</option>'
+        +'<option value="dist"'+(state.sort==='dist'?' selected':'')+'>'+(DATA_LIVE?'Recently verified':'Closest first')+'</option>'
         +'<option value="name"'+(state.sort==='name'?' selected':'')+'>Name A to Z</option>'
       +'</select>'
       +'<div class="seg" role="tablist" aria-label="Layout">'
@@ -793,10 +890,14 @@ function filtersPanel(){
   const d=(v,l)=>'<button class="chip'+(state.dist===v?' on':'')+'" data-dist="'+v+'">'+l+'</button>';
   const c=(v,l)=>'<button class="chip'+(state.cost===v?' on':'')+'" data-cost="'+v+'">'+l+'</button>';
   const lv=(v,l)=>'<button class="chip'+(state.level===v?' on':'')+'" data-level="'+v+'">'+l+'</button>';
+  // Live data has no distance or skill-level fields yet — showing those filters
+  // would be showing controls that do nothing. They return when the data does.
+  const dist=DATA_LIVE?'':'<div class="frow"><span class="flabel">Distance</span>'+d('any','Any')+d('s','Within 5 mi')+d('m','Within 10 mi')+d('l','Within 25 mi')+'</div>';
+  const level=DATA_LIVE?'':'<div class="frow"><span class="flabel">Level</span>'+lv('any','Any')+lv('beginner','Beginner')+lv('intermediate','Intermediate')+lv('competitive','Competitive')+'</div>';
   return '<div class="filters'+(state.filtersOpen?' open':'')+'" id="filtPanel">'
-    +'<div class="frow"><span class="flabel">Distance</span>'+d('any','Any')+d('s','Within 5 mi')+d('m','Within 10 mi')+d('l','Within 25 mi')+'</div>'
+    +dist
     +'<div class="frow"><span class="flabel">Cost</span>'+c('any','Any')+c('free','Free only')+'</div>'
-    +'<div class="frow"><span class="flabel">Level</span>'+lv('any','Any')+lv('beginner','Beginner')+lv('intermediate','Intermediate')+lv('competitive','Competitive')+'</div>'
+    +level
     +'</div>';
 }
 function cardItem(p){
@@ -805,7 +906,7 @@ function cardItem(p){
       +'<div class="pcard-sport">'+p.sportLabel+'</div>'
       +'<div class="pcard-name">'+p.name+'</div>'
       +'<div class="pcard-prov">'+p.provider+'</div>'
-      +'<div class="pcard-meta"><span>'+p.dist+' mi</span><span class="d">\u00b7</span><span>'+p.cost+'</span><span class="d">\u00b7</span><span>'+nd(p.ages)+'</span></div>'
+      +'<div class="pcard-meta">'+metaParts(p).map(x=>'<span>'+x+'</span>').join('<span class="d">\u00b7</span>')+'</div>'
     +'</div></a>';
 }
 function cardGrid(list){
@@ -838,19 +939,25 @@ function diversify(list, lead){
   return out;
 }
 function feedRows(){
-  const city=(state.loc.split(',')[0]||'').trim();
-  const beginner=PROGRAMS.filter(p=>p.levels.includes('Beginner'));
-  const popular=PROGRAMS.slice().sort((a,b)=>a.dist-b.dist);
-  const taking=PROGRAMS.filter(p=>p.status==='Open'||p.status==='Seasonal');
-  const free=PROGRAMS.filter(p=>p.free);
-  const outdoor=PROGRAMS.filter(p=>p.category==='Endurance');
-  const team=PROGRAMS.filter(p=>p.category==='Team');
+  const city=DATA_LIVE?'the U.S.':(state.loc.split(',')[0]||'').trim();
+  // Feed rows lead with imagery — with live data, favour orgs in the photo set,
+  // and cap each row so the rail stays a rail (See all opens the full directory).
+  const pool=DATA_LIVE?PROGRAMS.filter(p=>p.sport):PROGRAMS;
+  const cap=l=>DATA_LIVE?l.slice(0,12):l;
+  const beginner=cap(pool.filter(p=>p.levels.includes('Beginner')||(DATA_LIVE&&(p.free||/provided/i.test(p.equipment||'')))));
+  const popular=cap(pool.slice().sort((a,b)=>(a.dist??1e9)-(b.dist??1e9)||(b.freshness??0)-(a.freshness??0)));
+  const taking=cap(DATA_LIVE?pool.filter(p=>(p.freshness??0)>=50):pool.filter(p=>p.status==='Open'||p.status==='Seasonal'));
+  const free=cap(pool.filter(p=>p.free));
+  const outdoor=cap(pool.filter(p=>p.category==='Endurance'));
+  const team=cap(pool.filter(p=>p.category==='Team'));
   // Distinct lead per row → showcases the full range (water skiing, cycling, etc.),
   // and no sport is the first image twice.
   return '<div class="wrap feed">'
     + frow('New to adaptive sports?','Welcoming programs where first timers fit right in', diversify(beginner,'pickleball'), 'beginner')
     + frow('Popular in '+city, '', diversify(popular,'tennis'), 'popular')
-    + frow('Taking new players','Open and taking sign-ups', diversify(taking,'waterskiing'), 'open')
+    + (DATA_LIVE
+      ? frow('Recently verified','Websites confirmed active in recent checks', diversify(taking,'waterskiing'), 'fresh')
+      : frow('Taking new players','Open and taking sign-ups', diversify(taking,'waterskiing'), 'open'))
     + frow('Outdoor sports','Trails, slopes and open water', diversify(outdoor,'cycling'), 'sport:cycling')
     + frow('Free to play','No cost to get started', diversify(free,'goalball'), 'free')
     + frow('Team sports to try','Find a squad in '+city, diversify(team,'rugby'), 'popular')
@@ -859,39 +966,190 @@ function feedRows(){
 function isFeedMode(){ return state.see===null && !state.q.trim() && state.sport==='all' && state.dist==='any' && state.cost==='any' && state.level==='any'; }
 function seeList(){
   if(state.see==='open') return PROGRAMS.filter(p=>p.status==='Open'||p.status==='Seasonal');
-  return PROGRAMS.slice().sort((a,b)=>a.dist-b.dist);
+  if(state.see==='fresh') return PROGRAMS.filter(p=>(p.freshness??0)>=50);
+  return PROGRAMS.slice().sort((a,b)=>(a.dist??1e9)-(b.dist??1e9)||(b.freshness??0)-(a.freshness??0));
 }
+// Project real lat/lng onto the stylised map canvas (continental-US bounds).
+function geoPos(p){
+  if(p.lat==null||p.lng==null) return null;
+  const x=(p.lng+126)/(126-66)*100, y=(50-p.lat)/(50-24)*100;
+  return {x:Math.min(96,Math.max(4,x)), y:Math.min(92,Math.max(8,y))};
+}
+
+/* ---- real map: MapLibre GL + OpenFreeMap (free/open vector tiles, no keys, no limits) ---- */
+const OFM_STYLE='https://tiles.openfreemap.org/styles/bright'; // flat Apple-Maps-like, warm cream that matches the site palette
+let MAPLIB=null, liveMap=null, miniMap=null, mapToken=0;
+function loadMapLibre(){
+  // vendored same-origin (assets/vendor/) so the service worker caches it and
+  // the only third party involved is the tile server itself
+  if(!MAPLIB) MAPLIB=new Promise((res,rej)=>{
+    const l=document.createElement('link'); l.rel='stylesheet'; l.href='assets/vendor/maplibre-gl.css'; document.head.appendChild(l);
+    const s=document.createElement('script'); s.src='assets/vendor/maplibre-gl.js';
+    s.onload=()=>res(window.maplibregl); s.onerror=()=>rej(new Error('maplibre failed'));
+    document.head.appendChild(s);
+  });
+  return MAPLIB;
+}
+function destroyMaps(){
+  if(liveMap){ try{ liveMap.remove(); }catch(_){} liveMap=null; }
+  if(miniMap){ try{ miniMap.remove(); }catch(_){} miniMap=null; }
+}
+async function initLiveMap(list,opts){
+  const explorer=!!(opts&&opts.explorer);
+  const token=++mapToken;
+  let ml; try{ ml=await loadMapLibre(); }catch(_){ return; } // stylised canvas stays as the fallback
+  const el=document.getElementById('livemap');
+  if(!el||token!==mapToken) return;
+  const geo=list.filter(p=>p.lat!=null&&p.lng!=null);
+  // Convergence path: orgs with better-than-state geo become individual pins
+  // automatically as the enrich pipeline fills addresses in — no rework.
+  const precise=[], stateLevel=[];
+  geo.forEach(p=>((p.geoPrecision&&p.geoPrecision!=='state')?precise:stateLevel).push(p));
+  const byState=new Map();
+  stateLevel.forEach(p=>{ const k=p.state||'US'; if(!byState.has(k)) byState.set(k,[]); byState.get(k).push(p); });
+  liveMap=new ml.Map({container:el, style:OFM_STYLE, center:[-96.9,38.5], zoom:3.4, attributionControl:{compact:true}});
+  liveMap.addControl(new ml.NavigationControl({showCompass:false}),'top-right');
+  const pts=[];
+  const oneState=byState.size===1;
+  const ring=oneState&&!explorer&&[...byState.values()][0].length<=12; // numbered ring only when it stays readable
+  if(ring){
+    const arr=[...byState.values()][0], R=arr.length>1?0.55:0;
+    arr.forEach((p,i)=>{
+      const a=2*Math.PI*i/arr.length, lng=p.lng+R*Math.cos(a), lat=p.lat+R*Math.sin(a)*0.7;
+      const d=document.createElement('button'); d.className='mpin'; d.textContent=String(i+1);
+      d.setAttribute('data-prog',p.id); d.setAttribute('aria-label',p.name);
+      d.addEventListener('click',()=>{ state.section='program'; state.programId=p.id; render(); });
+      pts.push([lng,lat]); new ml.Marker({element:d}).setLngLat([lng,lat]).addTo(liveMap);
+    });
+  } else {
+    // Airbnb-style count pills per state; click focuses that state
+    byState.forEach((arr,k)=>{
+      const p=arr[0];
+      const d=document.createElement('button'); d.className='mpill'; d.setAttribute('data-state',k);
+      d.innerHTML='<span>'+k+'</span><span class="mc">'+arr.length+'</span>';
+      d.setAttribute('aria-label',(p.stateName||k)+': '+arr.length+' programs');
+      if(explorer) d.addEventListener('click',()=>mapxShowState(k));
+      else if(!oneState) d.addEventListener('click',()=>{ state.q=p.stateName||k; state.see=null; render(true); });
+      pts.push([p.lng,p.lat]); new ml.Marker({element:d}).setLngLat([p.lng,p.lat]).addTo(liveMap);
+    });
+  }
+  precise.forEach(p=>{
+    const d=document.createElement('button'); d.className='mdot'; d.style.cursor='pointer';
+    d.setAttribute('data-prog',p.id); d.setAttribute('aria-label',p.name);
+    d.addEventListener('click',()=>{ state.section='program'; state.programId=p.id; render(); });
+    pts.push([p.lng,p.lat]); new ml.Marker({element:d}).setLngLat([p.lng,p.lat]).addTo(liveMap);
+  });
+  liveMap.setMaxBounds([[-179,10],[-45,74]]); // keep panning on the map, not the mid-Atlantic
+  if(byState.size>1){
+    // frame the pills that are actually on the mainland — AK/HI/PR markers still
+    // render, they just don't stretch the opening frame to the whole hemisphere
+    const conus=pts.filter(m=>m[0]>-130&&m[1]>23&&m[1]<50);
+    const fit=conus.length>1?conus:pts;
+    const lngs=fit.map(m=>m[0]), lats=fit.map(m=>m[1]);
+    liveMap.fitBounds([[Math.min(...lngs),Math.min(...lats)],[Math.max(...lngs),Math.max(...lats)]],
+      {padding:window.innerWidth>720?56:30,maxZoom:6,duration:0});
+  } else if(pts.length>1){
+    const lngs=pts.map(m=>m[0]), lats=pts.map(m=>m[1]);
+    liveMap.fitBounds([[Math.min(...lngs),Math.min(...lats)],[Math.max(...lngs),Math.max(...lats)]],{padding:90,maxZoom:7,duration:0});
+  } else if(pts.length===1){ liveMap.jumpTo({center:pts[0],zoom:5.8}); }
+}
+async function initMiniMap(p){
+  const token=++mapToken;
+  if(p.lat==null) return;
+  let ml; try{ ml=await loadMapLibre(); }catch(_){ return; }
+  const el=document.getElementById('minimap');
+  if(!el||token!==mapToken) return;
+  el.innerHTML='';
+  miniMap=new ml.Map({container:el, style:OFM_STYLE, center:[p.lng,p.lat], zoom:4.2, interactive:false, attributionControl:{compact:true}});
+  const d=document.createElement('div'); d.className='mdot';
+  new ml.Marker({element:d}).setLngLat([p.lng,p.lat]).addTo(miniMap);
+}
+// Called after every view paint: stand up or tear down map instances to match.
+function afterRender(){
+  destroyMaps(); mapToken++;
+  if(!DATA_LIVE) return;
+  if(state.section==='discover'&&state.layout==='map'){
+    const list=state.see?seeList():filtered();
+    if(list.length) initLiveMap(list);
+  } else if(state.section==='mapx'){
+    const list=state.see?seeList():filtered();
+    initLiveMap(list,{explorer:true});
+  } else if(state.section==='program'){
+    const p=PROGRAMS.find(x=>x.id===state.programId);
+    if(p&&p.real) initMiniMap(p);
+  }
+}
+
+/* ---- full-screen map explorer: the whole database, browsed by place ---- */
+function mapExplorer(){
+  const list=state.see?seeList():filtered();
+  const X='<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>';
+  return catBar()
+    +'<div class="mapx"><div id="livemap" role="region" aria-label="Map of all programs"></div>'
+    +'<div class="mapchip">'+list.length.toLocaleString()+' programs · United States</div>'
+    +'<button class="mapx-close" type="button" data-mapx-close>'+X+'Close map</button>'
+    +'<div class="mapx-drawer" id="mapxDrawer" hidden>'
+      +'<div class="mapxd-head"><div><h3></h3><div class="sub"></div></div><button class="mapxd-x" type="button" aria-label="Close list">'+X+'</button></div>'
+      +'<div class="mapxd-list"></div>'
+      +'<div class="mapxd-foot"><a href="#" data-mapx-dir="">Open in directory</a></div>'
+    +'</div></div>';
+}
+function mapxShowState(k){
+  const list=(state.see?seeList():filtered()).filter(p=>p.state===k);
+  const d=document.getElementById('mapxDrawer');
+  if(!d||!list.length) return;
+  const name=list[0].stateName||k;
+  d.querySelector('.mapxd-head h3').textContent=name;
+  d.querySelector('.mapxd-head .sub').textContent=list.length+(list.length===1?' program':' programs');
+  d.querySelector('.mapxd-list').innerHTML=list.map(p=>
+    '<div class="mcard" data-prog="'+p.id+'">'
+    +'<div class="mthumb'+(p.sport?'':' g-sand')+'">'+thumbHtml(p)+'</div>'
+    +'<div class="minfo"><div class="pcard-sport">'+p.sportLabel+'</div><div class="nm">'+p.name+'</div><div class="sub">'+(p.provider||'')+'</div></div></div>').join('');
+  d.querySelector('.mapxd-foot a').setAttribute('data-mapx-dir',name);
+  d.hidden=false;
+  const p0=list.find(p=>p.lat!=null);
+  if(liveMap&&p0) liveMap.easeTo({center:[p0.lng,p0.lat],zoom:5.2,duration:650});
+}
+
 function mapLayout(list){
   if(!list.length) return empty();
   const cards=list.map((p,i)=>
     '<div class="mcard" data-prog="'+p.id+'">'
-      +'<div class="mthumb"><img class="thumb-full" src="'+photoSrc(p.sport)+'" alt="" loading="lazy"><span class="mnum">'+(i+1)+'</span></div>'
+      +'<div class="mthumb'+(p.sport?'':' g-sand')+'">'+thumbHtml(p)+'<span class="mnum">'+(i+1)+'</span></div>'
       +'<div class="minfo">'
         +'<div class="pcard-sport">'+p.sportLabel+'</div>'
         +'<div class="nm">'+p.name+'</div>'
-        +'<div class="sub">'+p.provider+'</div>'
-        +'<div class="mt"><span>'+p.dist+' mi</span><span class="d">\u00b7</span><span>'+p.cost+'</span></div>'
+        +'<div class="sub">'+(p.provider||'')+'</div>'
+        +'<div class="mt">'+metaParts(p).slice(0,2).map(x=>'<span>'+x+'</span>').join('<span class="d">\u00b7</span>')+'</div>'
       +'</div></div>').join('');
-  const markers=list.map((p,i)=>{ const pos=MAPPOS[p.id]||{x:50,y:50}; return '<div class="mk" data-prog="'+p.id+'" style="left:'+pos.x+'%;top:'+pos.y+'%;"><button aria-label="'+p.name+'">'+(i+1)+'</button></div>'; }).join('');
-  const mapEl='<div class="map">'
-    +'<div class="terrain"></div>'
-    +'<div class="park" style="left:8%;top:18%;width:24%;height:26%;"></div>'
-    +'<div class="water" style="left:62%;top:60%;width:34%;height:30%;"></div>'
-    +'<div class="road h" style="top:38%;"></div><div class="road h thin" style="top:64%;"></div>'
-    +'<div class="road v" style="left:48%;"></div><div class="road v thin" style="left:74%;"></div>'
-    +'<div class="mapchip">Map \u00b7 '+state.loc+'</div>'
-    +'<div class="scalebar"><i></i> 5 mi</div>'
-    +markers+'</div>';
+  let mapEl;
+  if(DATA_LIVE){
+    // real map \u2014 MapLibre mounts into #livemap via afterRender()
+    mapEl='<div class="map map-live"><div id="livemap" role="region" aria-label="Map of programs"></div>'
+      +'<div class="mapchip">Map \u00b7 United States</div>'
+      +'<button class="mapx-open" type="button" data-mapx>'+NAVICON.map+'<span>Expand map</span></button></div>';
+  } else {
+    const markers=list.map((p,i)=>{ const pos=MAPPOS[p.id]||geoPos(p)||{x:50,y:50}; return '<div class="mk" data-prog="'+p.id+'" style="left:'+pos.x+'%;top:'+pos.y+'%;"><button aria-label="'+p.name+'">'+(i+1)+'</button></div>'; }).join('');
+    mapEl='<div class="map">'
+      +'<div class="terrain"></div>'
+      +'<div class="park" style="left:8%;top:18%;width:24%;height:26%;"></div>'
+      +'<div class="water" style="left:62%;top:60%;width:34%;height:30%;"></div>'
+      +'<div class="road h" style="top:38%;"></div><div class="road h thin" style="top:64%;"></div>'
+      +'<div class="road v" style="left:48%;"></div><div class="road v thin" style="left:74%;"></div>'
+      +'<div class="mapchip">Map \u00b7 '+state.loc+'</div>'
+      +'<div class="scalebar"><i></i> 5 mi</div>'
+      +markers+'</div>';
+  }
   return '<div class="maplayout"><div class="mlist">'+cards+'</div><div class="map-col">'+mapEl+'</div></div>';
 }
 function listLayout(list){
   if(!list.length) return empty();
   const rows=list.map(p=>
     '<tr data-prog="'+p.id+'">'
-      +'<td><div class="tcell"><div class="tthumb"><img class="thumb-full" src="'+photoSrc(p.sport)+'" alt="" loading="lazy"></div><div><div class="nm">'+p.name+'</div><div class="sub">'+p.sportLabel+'</div></div></div></td>'
-      +'<td class="t-prov">'+p.provider+'</td>'
-      +'<td>'+p.dist+' mi</td>'
-      +'<td>'+p.cost+'</td>'
+      +'<td><div class="tcell"><div class="tthumb'+(p.sport?'':' g-sand')+'">'+thumbHtml(p)+'</div><div><div class="nm">'+p.name+'</div><div class="sub">'+p.sportLabel+'</div></div></div></td>'
+      +'<td class="t-prov">'+(p.provider||'')+'</td>'
+      +'<td>'+(p.dist!=null?p.dist+' mi':(p.stateName||'—'))+'</td>'
+      +'<td>'+(p.cost||'See website')+'</td>'
       +'<td class="chev" style="text-align:right;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 6 6 6-6 6"/></svg></td>'
     +'</tr>').join('');
   return '<div class="tablewrap"><table class="list"><thead><tr><th>Program</th><th>Provider</th><th>Distance</th><th>Cost</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div>';
@@ -904,11 +1162,11 @@ function heroSection(){
     +'<h1>Your place in adaptive sports.</h1>'
     +'<p class="lede">Adaptive sports programs, events, equipment and funding across the country. Search by where you are and what you want to play.</p>'
     +'<div class="hsearch" role="search">'
-      +'<button class="loc" id="hlocBtn" type="button" aria-label="Change location"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s7-5.7 7-11a7 7 0 1 0-14 0c0 5.3 7 11 7 11Z"/><circle cx="12" cy="10" r="2.5"/></svg><span>Denver, CO</span></button>'
+      +'<button class="loc" id="hlocBtn" type="button" aria-label="Change location"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s7-5.7 7-11a7 7 0 1 0-14 0c0 5.3 7 11 7 11Z"/><circle cx="12" cy="10" r="2.5"/></svg><span>'+(DATA_LIVE?'United States':'Denver, CO')+'</span></button>'
       +'<span class="sep"></span>'
       +'<input id="qHero" type="text" placeholder="Search a sport, program or provider" aria-label="Search programs">'
     +'</div>'
-    +'<div class="trust"><span><b>2,095+</b> programs</span><span class="tdot">\u00b7</span><span>nationwide</span><span class="tdot">\u00b7</span><span>free to use</span></div>'
+    +'<div class="trust"><span><b>'+(DATA_LIVE?PROGRAMS.length.toLocaleString():'2,095+')+'</b> programs</span><span class="tdot">\u00b7</span><span>nationwide</span><span class="tdot">\u00b7</span><span>free to use</span></div>'
     +'</div></section>';
 }
 function discover(){
@@ -925,7 +1183,8 @@ function renderResults(){
   const r=document.getElementById('results');
   if(r) r.innerHTML = state.layout==='map'?mapLayout(list):state.layout==='list'?listLayout(list):cardGrid(list);
   const c=document.querySelector('#main .count');
-  if(c) c.innerHTML = '<b>'+list.length+'</b> '+(list.length===1?'program':'programs')+' near '+state.loc;
+  if(c) c.innerHTML = '<b>'+list.length+'</b> '+(list.length===1?'program':'programs')+' '+locPhrase();
+  afterRender();
 }
 function updateHeaderSearch(){
   const ae=document.activeElement, aeId=ae?ae.id:'';
@@ -943,25 +1202,91 @@ function scrollToResults(){
 /* ============================ RENDER: PROGRAM ============================ */
 function accessFeatures(p){ const a=['Step-free entry','Accessible parking','Accessible restrooms','New players welcome anytime']; if(/provided/i.test(p.equipment||'')) a.unshift('Loaner sport chairs'); a.splice(2,0,'Certified adaptive coaches'); return a; }
 function progContact(p){ const s=(p.provider||'').toLowerCase().replace(/[^a-z]+/g,'').slice(0,14)||'program'; return {phone:'(303) 555-0148', email:'hello@'+s+'.org', web:s+'.org'}; }
+function hostFromUrl(u){ try{ return new URL(u).hostname.replace(/^www\./,''); }catch(_){ return u; } }
+// Fill in email/phone/provenance from the record API, then repaint if still open.
+async function loadOrgDetail(p){
+  if(p._detail) return;
+  p._detail=true;
+  try{
+    const r=await fetch('/api/orgs/'+p.id); const j=await r.json();
+    if(j&&j.ok&&j.org){ Object.assign(p, {email:esc(j.org.email), phone:esc(j.org.phone),
+      sources:(j.org.sources||[]).map(s=>({name:esc(s.name),organization:esc(s.organization)})),
+      primarySource:esc(j.org.primarySource)}); }
+  }catch(_){ }
+  if(state.section==='program'&&state.programId===p.id) render(true);
+}
+
+function programReal(p){
+  loadOrgDetail(p);
+  const loc=p.city?(p.city+(p.state?', '+p.state:'')):(p.stateName||'United States');
+  const nationwide=!p.city&&!p.stateName;
+  const hero=p.sport
+    ? '<div class="dhero has-dphoto"><img class="dhero-img" src="'+photoSrc(p.sport)+'" alt=""><span class="eyebrow">'+p.sportLabel+'</span></div>'
+    : '<div class="dhero '+(SPGRAD[p.sport]||'g-sand')+'">'+ringBg('ringbg')+CHAIR_GLY+'<span class="eyebrow">'+p.sportLabel+'</span></div>';
+  const verline=p.verification==='verified'
+    ? '<span class="verified">'+CK+'Verified listing</span>'
+    : (p.freshness?'<span class="verified">'+CK+'Website active · freshness '+p.freshness+'%</span>':'<span class="verified" style="color:var(--muted)">Listing not yet verified</span>');
+  const qf=[[I.pin,loc],[I.dollar,p.cost],[I.users,p.ages&&nd(p.ages)],[I.globe,p.website&&hostFromUrl(p.website)]]
+    .filter(x=>x[1]).map(x=>'<span class="qf">'+x[0]+x[1]+'</span>').join('');
+  const desc=p.desc||(nationwide
+    ?'A nationwide adaptive sports listing. We are still gathering details for this program — the website is the best place to learn more.'
+    :'An adaptive sports listing in '+loc+'. We are still gathering details for this program — the website is the best place to learn more.');
+  const cells=[['Sport',p.sportLabel],['Location',loc],['Cost',p.cost],['Ages',p.ages&&nd(p.ages)],['Equipment',p.equipment],['Data quality',p.quality]]
+    .filter(x=>x[1]);
+  let recrows='';
+  for(let i=0;i<cells.length;i+=2){
+    const a=cells[i], b=cells[i+1];
+    recrows+='<div class="rrow'+(b?'':' full')+'"><div class="rcell"><div class="k">'+a[0]+'</div><div class="v">'+a[1]+'</div></div>'+(b?'<div class="rcell"><div class="k">'+b[0]+'</div><div class="v">'+b[1]+'</div></div>':'')+'</div>';
+  }
+  const related=PROGRAMS.filter(x=>x.sportLabel===p.sportLabel&&x.id!==p.id).slice(0,3);
+  const relHtml=related.length?'<div class="dsec related"><h2>More '+p.sportLabel.toLowerCase()+' programs</h2>'+cardGrid(related)+'</div>':'';
+  const cmethods=[
+    p.phone&&'<a class="cm" href="tel:'+p.phone.replace(/[^\d+]/g,'')+'">'+I.phone+'<span>'+p.phone+'</span></a>',
+    p.email&&'<a class="cm" href="mailto:'+p.email+'">'+I.mail+'<span>'+p.email+'</span></a>',
+    p.website&&'<a class="cm" href="'+p.website+'" target="_blank" rel="noopener">'+I.globe+'<span>'+hostFromUrl(p.website)+'</span></a>',
+  ].filter(Boolean).join('');
+  const contact=p.website
+    ? '<div class="rcard contact"><a class="cta" href="'+p.website+'" target="_blank" rel="noopener">Visit their website</a><div class="cmethods">'+(cmethods||'')+'</div></div>'
+    : '<div class="rcard contact"><button class="cta" data-gate-open="program">Know this program? Help us verify it</button>'+(cmethods?'<div class="cmethods">'+cmethods+'</div>':'<p class="blurb" style="margin-top:10px;">No contact details on file yet.</p>')+'</div>';
+  const srcs=(p.sources&&p.sources.length?p.sources:(p.primarySource?[{name:p.primarySource}]:[]));
+  const provided='<div class="rcard"><p class="eyebrow">Listed from</p>'
+    +(srcs.length?srcs.map(s=>'<div class="fitem"><div class="fn">'+s.name+'</div>'+(s.organization?'<div class="fm">'+s.organization+'</div>':'')+'</div>').join(''):'<div class="pname">Community submission</div>')
+    +'<p class="blurb">This listing comes from a public directory source. Details are re-checked automatically and reviewed by a human before changes go live.</p></div>';
+  const pos=geoPos(p);
+  // stylised terrain is the placeholder; afterRender() swaps in a real MapLibre minimap when geo exists
+  const locard='<div class="rcard locard"><p class="eyebrow">Location</p><div class="minimap" id="minimap"><div class="terrain"></div><div class="mk2"'+(pos?' style="left:'+pos.x+'%;top:'+pos.y+'%;"':'')+'>'+NAVICON.pin+'</div></div><div class="locrow"><span>'+loc+'</span>'+(p.geoPrecision==='state'?'<span class="fm" style="color:var(--muted);font-size:12px;">state-level</span>':'')+'</div></div>';
+  return '<div class="wrap">'
+    +'<div class="crumb"><a href="#" data-home>Home</a><span class="sl">/</span>'+(p.sport?'<a href="#" data-sport-link="'+p.sport+'">'+p.sportLabel+'</a>':'<span>'+p.sportLabel+'</span>')+'<span class="sl">/</span><b>'+p.name+'</b></div>'
+    +hero
+    +'<div class="dgrid">'
+      +'<div class="dtitle">'
+        +'<div class="pcard-sport">'+p.sportLabel+'</div>'
+        +'<h1>'+p.name+'</h1>'
+        +'<div class="drate">'+verline+'</div>'
+        +'<div class="by">'+(p.provider||'Adaptive sports program')+' · '+loc+'</div>'
+        +(qf?'<div class="qfacts">'+qf+'</div>':'')
+        +'<p class="desc">'+desc+'</p>'
+        +(recrows?'<div class="dsec"><h3 class="sect-h">Record details</h3><div class="recgrid">'+recrows+'</div></div>':'')
+        +'<div class="dsec"><h3 class="sect-h">Before you go</h3><p class="desc" style="margin-top:8px;">Accessibility details for this listing have not been independently confirmed yet. Contact the program directly about equipment, access and coaching — most adaptive programs welcome first-timers.</p></div>'
+        +relHtml
+      +'</div>'
+      +'<aside class="rail">'
+        +contact
+        +provided
+        +locard
+        +'<div class="rcard fund"><p class="eyebrow">Funding that fits</p>'+GRANTS.slice(0,3).map(g=>'<div class="fitem"><div class="fn">'+g.name+'</div><div class="fm">'+g.meta+'</div></div>').join('')+'</div>'
+        +'<a class="suggest" data-gate-open="program">'+I.edit+'<span>Suggest an edit to this listing</span></a>'
+      +'</aside>'
+    +'</div></div>';
+}
 
 function program(){
   const p=PROGRAMS.find(x=>x.id===state.programId); if(!p) return discover();
+  if(p.real) return programReal(p);
   const pv=PROVIDERS[p.provider]||{type:"",blurb:""};
   const related=PROGRAMS.filter(x=>x.sport===p.sport&&x.id!==p.id).slice(0,3);
   const relHtml=related.length?'<div class="dsec related"><h2>More '+p.sportLabel.toLowerCase()+' near you</h2>'+cardGrid(related)+'</div>':'';
   const acc=accessFeatures(p), ct=progContact(p);
-  const CK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>';
-  const I={
-    pin:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s7-5.7 7-11a7 7 0 1 0-14 0c0 5.3 7 11 7 11Z"/><circle cx="12" cy="10" r="2.5"/></svg>',
-    dollar:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 1.6v20.8M16.5 6c0-1.7-2-2.8-4.5-2.8S7.5 4.4 7.5 6.6c0 4.4 9 2.6 9 7 0 2.1-2 3.2-4.5 3.2S7.5 15.7 7.5 14"/></svg>',
-    users:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="9" cy="8" r="3.2"/><path d="M3.6 19a5.4 5.4 0 0 1 10.8 0"/><path d="M16 5.7a3.2 3.2 0 0 1 0 6.3M20.4 19a5.4 5.4 0 0 0-3.9-5.2"/></svg>',
-    layers:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3l9 5-9 5-9-5 9-5z"/><path d="M3 13l9 5 9-5"/></svg>',
-    phone:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M5 3.5h3.5l1.8 4.5-2.3 1.4a11 11 0 0 0 4.6 4.6l1.4-2.3 4.5 1.8V19a1.5 1.5 0 0 1-1.5 1.5A15.5 15.5 0 0 1 3.5 5 1.5 1.5 0 0 1 5 3.5z"/></svg>',
-    mail:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3.5 7l8.5 6 8.5-6"/></svg>',
-    globe:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3c2.6 2.7 2.6 15.3 0 18M12 3c-2.6 2.7-2.6 15.3 0 18"/></svg>',
-    edit:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M4 20h4L18.5 9.5l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg>',
-    arrow:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg>'
-  };
   const accHtml=acc.map(a=>'<div class="acc-item">'+CK+'<span>'+a+'</span></div>').join('');
   return '<div class="wrap">'
     +'<div class="crumb"><a href="#" data-home>Home</a><span class="sl">/</span><a href="#" data-sport-link="'+p.sport+'">'+p.sportLabel+'</a><span class="sl">/</span><b>'+p.name+'</b></div>'
@@ -1006,22 +1331,27 @@ function dbTableData(key){
   return {cols:[],rows:[]};
 }
 function database(){
-  const meta=TABLE_META.find(t=>t.key===state.db)||TABLE_META[1];
-  const side=TABLE_META.map(t=>'<div class="tbl'+(state.db===t.key?' on':'')+'" data-db="'+t.key+'">'+NAVICON[t.icon]+'<span>'+t.label+'</span><span class="ct">'+t.count+'</span></div>').join('');
+  // Live directory: only tables backed by real data (providers/events/equipment/
+  // resources are illustrative sample sets — showing them next to 1,544 real
+  // programs would present fiction as data).
+  const tables=DATA_LIVE?TABLE_META.filter(t=>['programs','sports','grants'].includes(t.key)):TABLE_META;
+  if(!tables.some(t=>t.key===state.db)) state.db='programs';
+  const meta=tables.find(t=>t.key===state.db)||tables[0];
+  const side=tables.map(t=>'<div class="tbl'+(state.db===t.key?' on':'')+'" data-db="'+t.key+'">'+NAVICON[t.icon]+'<span>'+t.label+'</span><span class="ct">'+t.count+'</span></div>').join('');
   let body;
   if(state.db==='programs' && state.dbView==='gallery'){
     body='<div class="gallery">'+PROGRAMS.map(p=>
       '<div class="gcard" data-prog="'+p.id+'"><h3>'+p.name+'</h3>'
       +'<div class="field"><span class="gk">Sport</span><span class="gv"><span class="tag">'+p.sportLabel+'</span></span></div>'
-      +'<div class="field"><span class="gk">Provider</span><span class="gv">'+p.provider+'</span></div>'
-      +'<div class="field"><span class="gk">Location</span><span class="gv">'+p.city+'</span></div>'
-      +'<div class="field"><span class="gk">Distance</span><span class="gv">'+p.dist+' mi</span></div>'
-      +'<div class="field"><span class="gk">Cost</span><span class="gv">'+p.cost+'</span></div>'
+      +'<div class="field"><span class="gk">Provider</span><span class="gv">'+(p.provider||'—')+'</span></div>'
+      +'<div class="field"><span class="gk">Location</span><span class="gv">'+(p.city||p.stateName||'—')+'</span></div>'
+      +(p.dist!=null?'<div class="field"><span class="gk">Distance</span><span class="gv">'+p.dist+' mi</span></div>':'')
+      +'<div class="field"><span class="gk">Cost</span><span class="gv">'+(p.cost||'See website')+'</span></div>'
       +'<div class="field"><span class="gk">Status</span><span class="gv"><span class="status '+statusCls(p.status)+'" style="position:static">'+p.status+'</span></span></div>'
       +'</div>').join('')+'</div>';
   } else {
     let cols, rows;
-    if(state.db==='programs'){ cols=["Program","Sport","Provider","City","Distance","Cost","Status"]; rows=PROGRAMS.map(p=>[p.name,p.sportLabel,p.provider,p.city,p.dist+' mi',p.cost,p.status]); }
+    if(state.db==='programs'){ cols=["Program","Sport","Provider","City","Distance","Cost","Status"]; rows=PROGRAMS.map(p=>[p.name,p.sportLabel,p.provider||'—',p.city||p.stateName||'—',p.dist!=null?p.dist+' mi':'—',p.cost||'—',p.status]); }
     else { const d=dbTableData(state.db); cols=d.cols; rows=d.rows; }
     body='<div class="dbtable"><table><thead><tr>'+cols.map(c=>'<th>'+c+'</th>').join('')+'</tr></thead><tbody>'
       +rows.map(r=>'<tr>'+r.map((c,i)=>'<td>'+((i===0)?'<b style="font-weight:600">'+c+'</b>':c)+'</td>').join('')+'</tr>').join('')
@@ -1038,11 +1368,18 @@ function render(keepScroll){
   const v=document.getElementById('view');
   if(state.section==='database') v.innerHTML=database();
   else if(state.section==='program') v.innerHTML=program();
+  else if(state.section==='mapx') v.innerHTML=mapExplorer();
   else v.innerHTML=discover();
   if(!keepScroll && state.section!=='program'){ try{ window.scrollTo(0,0); }catch(e){} }
   const hq=document.getElementById('q'); if(hq) hq.value=state.q;
   const qh=document.getElementById('qHero'); if(qh) qh.value=state.q;
+  // keep the URL honest if a nav path (logo, footer) leaves the map view
+  try{
+    if(state.section==='mapx'&&location.pathname!=='/maps') history.replaceState({},'','/maps');
+    else if(state.section!=='mapx'&&location.pathname==='/maps') history.replaceState({},'','/');
+  }catch(_){ }
   updateHeaderSearch();
+  afterRender();
 }
 
 // Reflect state on the existing controls (active chip etc.) without rebuilding them,
@@ -1059,6 +1396,16 @@ function syncControls(){
 // keeping the scroll exactly where it is. Coming from the feed → build the directory
 // once and snap the results up under the sticky bars.
 function filterChanged(){
+  if(state.section==='mapx'){
+    // stay in the explorer: swap markers in place, no view rebuild
+    syncControls();
+    const list=state.see?seeList():filtered();
+    const chip=document.querySelector('.mapx .mapchip'); if(chip) chip.textContent=list.length.toLocaleString()+' programs · United States';
+    const d=document.getElementById('mapxDrawer'); if(d) d.hidden=true;
+    destroyMaps(); initLiveMap(list,{explorer:true});
+    updateHeaderSearch();
+    return;
+  }
   if(document.getElementById('results')){
     syncControls();
     renderResults();
@@ -1082,7 +1429,7 @@ document.addEventListener('click',e=>{
   if(t.hasAttribute('data-section')){ e.preventDefault(); const sec=t.getAttribute('data-section'); state.section=sec; state.programId=null; if(sec==='discover') goFeed(); render(); return; }
   if(t.hasAttribute('data-sport-link')){ e.preventDefault(); state.section='discover'; state.sport=t.getAttribute('data-sport-link'); state.see=null; state.programId=null; render(true); scrollToResults(); return; }
   if(t.hasAttribute('data-prog')){ e.preventDefault(); state.section='program'; state.programId=t.getAttribute('data-prog'); render(); return; }
-  if(t.hasAttribute('data-seeall')){ e.preventDefault(); const v=t.getAttribute('data-seeall'); if(v==='beginner'){ state.see=null; state.level='beginner'; } else if(v==='free'){ state.see=null; state.cost='free'; } else if(v.indexOf('sport:')===0){ state.see=null; state.sport=v.slice(6); } else { state.see=v; } filterChanged(); return; }
+  if(t.hasAttribute('data-seeall')){ e.preventDefault(); const v=t.getAttribute('data-seeall'); if(v==='beginner'){ state.see=null; if(DATA_LIVE){ state.cost='free'; } else { state.level='beginner'; } } else if(v==='free'){ state.see=null; state.cost='free'; } else if(v.indexOf('sport:')===0){ state.see=null; state.sport=v.slice(6); } else { state.see=v; } filterChanged(); return; }
   if(t.hasAttribute('data-sport')){ e.preventDefault(); state.sport=t.getAttribute('data-sport'); state.see=null; filterChanged(); return; }
   if(t.hasAttribute('data-layout')){ e.preventDefault(); state.layout=t.getAttribute('data-layout'); filterChanged(); return; }
   if(t.id==='filtBtn'){ e.preventDefault(); state.filtersOpen=!state.filtersOpen; const fp=document.querySelector('.filters'); if(fp){ fp.classList.toggle('open', state.filtersOpen); } else { render(true); } return; }
@@ -1092,6 +1439,46 @@ document.addEventListener('click',e=>{
   if(t.hasAttribute('data-db')){ state.db=t.getAttribute('data-db'); render(); return; }
   if(t.hasAttribute('data-dbview')){ state.dbView=t.getAttribute('data-dbview'); render(); return; }
 });
+/* map explorer open/close + state drawer. /maps is its real URL. */
+function setMapxUrl(on){
+  try{
+    const here=location.pathname==='/maps';
+    if(on&&!here) history.pushState({mapx:true},'','/maps');
+    else if(!on&&here) history.pushState({},'','/');
+  }catch(_){ }
+}
+window.addEventListener('popstate',()=>{
+  const want=location.pathname==='/maps';
+  const inMapx=state.section==='mapx';
+  if(want&&!inMapx&&DATA_LIVE&&!PRELAUNCH){ state.section='mapx'; state.programId=null; render(); }
+  else if(!want&&inMapx){ state.section='discover'; render(); }
+});
+document.addEventListener('click',e=>{
+  if(e.target.closest('[data-mapx-close]')){ e.preventDefault(); state.section='discover'; setMapxUrl(false); render(); return; }
+  if(e.target.closest('.mapxd-x')){ const d=document.getElementById('mapxDrawer'); if(d) d.hidden=true; return; }
+  const dir=e.target.closest('[data-mapx-dir]');
+  if(dir){ e.preventDefault(); state.q=dir.getAttribute('data-mapx-dir')||''; state.section='discover'; state.layout='grid'; state.see=null; setMapxUrl(false); render(); return; }
+  const mx=e.target.closest('[data-mapx]');
+  if(mx){ e.preventDefault(); state.section='mapx'; state.programId=null; setMapxUrl(true); render(); return; }
+});
+/* footer: browse-by-sport lands on the category bar; funding jumps straight to grants */
+document.addEventListener('click',e=>{
+  const bs=e.target.closest('[data-browse-sport]');
+  if(bs){ e.preventDefault(); state.section='discover'; state.programId=null; goFeed(); render();
+    const cb=document.querySelector('.catbar'); if(cb){ const top=cb.getBoundingClientRect().top+window.scrollY-70; window.scrollTo({top:Math.max(0,top),behavior:'smooth'}); } return; }
+  const dbl=e.target.closest('[data-db-link]');
+  if(dbl){ e.preventDefault(); state.section='database'; state.programId=null; state.db=dbl.getAttribute('data-db-link'); render(); return; }
+});
+/* about dialog (project / verification / accessibility) */
+const aboutEl=document.getElementById('about');
+document.addEventListener('click',e=>{
+  const op=e.target.closest('[data-about]');
+  if(op){ e.preventDefault(); aboutEl.classList.add('open'); document.body.style.overflow='hidden';
+    const sec=document.getElementById('ab-'+op.getAttribute('data-about')); if(sec) setTimeout(()=>{ try{ sec.scrollIntoView({block:'nearest'}); }catch(_){} },50); return; }
+  if(e.target.closest('[data-about-close]')){ aboutEl.classList.remove('open'); document.body.style.overflow=''; }
+});
+aboutEl.addEventListener('click',e=>{ if(e.target===aboutEl){ aboutEl.classList.remove('open'); document.body.style.overflow=''; } });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&aboutEl.classList.contains('open')){ aboutEl.classList.remove('open'); document.body.style.overflow=''; } });
 document.addEventListener('change',e=>{ if(e.target.id==='sortSel'){ state.sort=e.target.value; filterChanged(); } });
 document.getElementById('q').addEventListener('input',e=>{
   state.q=e.target.value; state.see=null;
@@ -1119,6 +1506,15 @@ function setHL(id,on){
 }
 document.addEventListener('mouseover',e=>{ const el=e.target.closest('.mcard[data-prog],.mk[data-prog]'); if(el) setHL(el.getAttribute('data-prog'),true); });
 document.addEventListener('mouseout',e=>{ const el=e.target.closest('.mcard[data-prog],.mk[data-prog]'); if(el) setHL(el.getAttribute('data-prog'),false); });
+/* live map: hovering a card lights up its numbered pin or its state's count pill */
+function setLiveHL(card,on){
+  const id=card.getAttribute('data-prog');
+  document.querySelectorAll('.mpin[data-prog="'+id+'"]').forEach(el=>el.classList.toggle('active',on));
+  const p=PROGRAMS.find(x=>x.id===id);
+  if(p&&p.state) document.querySelectorAll('.mpill[data-state="'+p.state+'"]').forEach(el=>el.classList.toggle('active',on));
+}
+document.addEventListener('mouseover',e=>{ const el=e.target.closest('.mcard[data-prog]'); if(el&&liveMap) setLiveHL(el,true); });
+document.addEventListener('mouseout',e=>{ const el=e.target.closest('.mcard[data-prog]'); if(el&&liveMap) setLiveHL(el,false); });
 
 /* header shadow on scroll */
 function syncHeader(){
@@ -1130,7 +1526,7 @@ window.addEventListener('scroll', syncHeader, {passive:true});
 window.addEventListener('resize', syncHeader, {passive:true});
 
 /* ============================ PRELAUNCH GATE ============================ */
-const PRELAUNCH = true;
+let PRELAUNCH = true; // server-driven: /api/config flips this per environment
 const gateEl = document.getElementById('gate');
 (function(){ const sel=document.getElementById('pgSport'); if(sel){ SPORTS.forEach(s=>{ const o=document.createElement('option'); o.value=s.label; o.textContent=s.label; sel.appendChild(o); }); const ot=document.createElement('option'); ot.value='Other'; ot.textContent='Other'; sel.appendChild(ot); } })();
 let gateLastFocus=null;
@@ -1140,6 +1536,14 @@ function setGateTab(name){
 }
 function openGate(tab){
   gateLastFocus=document.activeElement;
+  // Post-launch the same dialog serves as the add/update-a-program form —
+  // swap the pre-launch copy so it never says "not live yet" on a live site.
+  if(!PRELAUNCH){
+    const ey=gateEl.querySelector('.gate-eyebrow'), ti=document.getElementById('gateTitle'), le=gateEl.querySelector('.gate-head .lede');
+    if(ey) ey.textContent='Free and open';
+    if(ti) ti.textContent='Help the directory grow';
+    if(le) le.textContent='Know a program we should list, or want updates as new programs land? That all starts here.';
+  }
   setGateTab(tab||'notify');
   gateEl.classList.add('open');
   document.body.style.overflow='hidden';
@@ -1154,7 +1558,7 @@ document.addEventListener('click',function(e){
   if(t.closest('#gate')) return;                 // never gate clicks inside the modal
   if(t.closest('[data-gate-open]')) return;      // explicit openers handled below
   if(t.closest('[data-sport],[data-home],#locBtn,#hlocBtn,#q,#qHero,[data-subscribe-go]')) return; // allowed
-  const deep=t.closest('[data-prog],[data-seeall],.frow-all,[data-section],[data-sport-link],[data-addprogram],[data-noop]');
+  const deep=t.closest('[data-prog],[data-seeall],.frow-all,[data-section],[data-sport-link],[data-addprogram],[data-noop],[data-db-link],[data-browse-sport],[data-mapx],[data-mapx-dir]');
   if(deep){ e.preventDefault(); e.stopImmediatePropagation(); openGate(t.closest('[data-addprogram]')?'program':'notify'); }
 },true);
 
@@ -1219,6 +1623,58 @@ document.addEventListener('click', function(e){
 });
 
 render();
+
+/* ============================ LIVE DATA HYDRATION ============================ */
+// Swap the inline sample for the real directory (D1 via /api/programs).
+// If the API is missing or errors, the sample stays — the page never breaks.
+const TYPE_LABEL={member:'Community program',team:'Competitive team',chapter:'Chapter',adaptive_club:'Adaptive club',inclusive_club:'Inclusive club',affiliate:'Affiliate',event_partner:'Event partner'};
+const CAT_BY_KEY={cycling:'Endurance',skiing:'Endurance',waterskiing:'Endurance',basketball:'Team',rugby:'Team',football:'Team',baseball:'Team',sledhockey:'Team',goalball:'Team',tennis:'Racquet',pickleball:'Racquet'};
+function mapOrg(o){
+  // esc(): D1 fields originate in third-party directories and scraped pages —
+  // everything rendered via innerHTML must be escaped at this boundary.
+  return {
+    id:o.id, real:true, name:esc(o.name),
+    sport:o.sport||null, sportLabel:esc(o.sportLabel)||'Multi-Sport',
+    category:CAT_BY_KEY[o.sport]||'Community',
+    provider:TYPE_LABEL[o.type]||'Adaptive sports program',
+    city:esc(o.city)||null, // real city name only — never the state code standing in for one
+    state:esc(o.state), stateName:esc(o.stateName),
+    dist:null, cost:esc(o.cost)||null, free:/free/i.test(o.cost||''),
+    // no invented availability — status reflects what we actually know
+    status:o.verification==='verified'?'Verified':'Listed',
+    ages:esc(o.ages)||null, season:null, format:null,
+    levels:[], equipment:esc(o.equipment)||null, schedule:null, desc:esc(o.desc)||null,
+    website:esc(o.website)||null, verification:o.verification, freshness:o.freshness,
+    quality:o.quality?esc(o.quality.charAt(0).toUpperCase()+o.quality.slice(1)):null,
+    lat:o.lat, lng:o.lng, geoPrecision:o.geoPrecision,
+  };
+}
+(async function hydrate(){
+  try{
+    const [cfg, first]=await Promise.all([
+      fetch('/api/config').then(r=>r.json()).catch(()=>null),
+      fetch('/api/programs?limit=200').then(r=>r.json()).catch(()=>null),
+    ]);
+    if(cfg&&cfg.ok) PRELAUNCH=!!cfg.prelaunch;
+    if(!cfg||!cfg.dataApi||!first||!first.ok||!first.items.length) return;
+    PROGRAMS.length=0; Array.prototype.push.apply(PROGRAMS, first.items.map(mapOrg));
+    DATA_LIVE=true;
+    // landing on /maps boots straight into the explorer (live, ungated only)
+    if(BOOT_MAPX&&!PRELAUNCH){ state.section='mapx'; }
+    render(true);
+    const offs=[]; for(let o=200;o<Math.min(first.total,5000);o+=200) offs.push(o);
+    const pages=await Promise.all(offs.map(o=>fetch('/api/programs?limit=200&offset='+o).then(r=>r.json()).catch(()=>null)));
+    for(const page of pages){ if(page&&page.ok&&page.items.length) Array.prototype.push.apply(PROGRAMS, page.items.map(mapOrg)); }
+    const tm=TABLE_META.find(t=>t.key==='programs'); if(tm) tm.count=PROGRAMS.length;
+    const lt=document.getElementById('locTxt'); if(lt) lt.textContent='United States';
+    render(true);
+  }catch(_){ /* keep the sample — never a broken page */ }
+})();
+
+/* installable app (mobile + desktop) */
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{ navigator.serviceWorker.register('/sw.js').catch(()=>{}); });
+}
 </script>
 </body>
 </html>
