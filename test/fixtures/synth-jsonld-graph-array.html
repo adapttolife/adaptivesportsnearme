@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Synthetic: @graph array with nested address</title>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "@id": "https://synth-graph.example.org/#website",
+      "url": "https://synth-graph.example.org/",
+      "name": "Synth Graph Sports"
+    },
+    {
+      "@type": "SportsOrganization",
+      "@id": "https://synth-graph.example.org/#organization",
+      "name": "Synth Graph Sports",
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": "Denver",
+        "addressRegion": "CO",
+        "postalCode": "80202"
+      }
+    }
+  ]
+}
+</script>
+</head>
+<body>
+<p>Synth Graph Sports serves the Denver metro area.</p>
+</body>
+</html>

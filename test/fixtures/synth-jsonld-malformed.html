@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Synthetic: malformed JSON-LD (truncated) must not throw</title>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "name": "Broken Blocks Adaptive Sports",
+  "address": {
+    "@type": "PostalAddress",
+    "addressLocality": "Truncated City"
+</script>
+<script type='application/ld+json'>
+  { this is not even close to json ]]]
+</script>
+<script type="application/ld+json">
+{"@type":"Organization","name":"Valid Sibling Block","email":"ok@brokenblocks.test"}
+</script>
+</head>
+<body>
+<p>Two of the three JSON-LD blocks above are malformed and must be skipped silently.</p>
+</body>
+</html>

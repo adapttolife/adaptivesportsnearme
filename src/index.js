@@ -21,7 +21,7 @@ const API_CACHE = "public, max-age=300, stale-while-revalidate=600";
 // wrangler.jsonc triggers. Unknown crons error loudly instead of misrouting.
 const CRON_LANES = {
   "0 */2 * * *": "validate",
-  "*/20 * * * *": "enrich",
+  "*/20 * * * *": "dispatch", // rotates enrich -> classify -> geocode -> resolve (pipeline.js)
 };
 
 export default {

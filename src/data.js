@@ -43,8 +43,11 @@ export async function listPrograms(db, params) {
   const binds = [];
   const sport = (params.get("sport") || "").trim();
   if (sport) {
-    where.push("(sport_key = ? OR sport = ?)");
-    binds.push(sport, sport);
+    // Match the primary key/label OR membership in the multi-sport array (Spec 72:
+    // classification fills sports_json with taxonomy sport_keys).
+    where.push(`(sport_key = ? OR sport = ?
+      OR EXISTS (SELECT 1 FROM json_each(COALESCE(sports_json, '[]')) je WHERE je.value = ?))`);
+    binds.push(sport, sport, sport);
   }
   const state = (params.get("state") || "").trim().toUpperCase();
   if (/^[A-Z]{2}$/.test(state)) {

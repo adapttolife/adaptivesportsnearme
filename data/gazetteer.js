@@ -1,0 +1,255 @@
+// Spec 72 T02: sport gazetteer. One entry per row in data/sports-seed.sql, in the
+// same order and with the same sport_key/name/icon_key. `terms` are lowercase match
+// phrases used by src/lanes/classify.js with word-boundary RegExp matching (whole
+// words/phrases only — no bare "para"/"adaptive"/"sports"/"track", which would
+// false-positive on ordinary words like "Paradise", "Adaptive Programs Fund", or
+// "growing"/"tracked").
+
+export const GAZETTEER = [
+  {
+    sport_key: "basketball",
+    name: "Wheelchair Basketball",
+    icon_key: "basketball",
+    terms: ["wheelchair basketball", "beep basketball", "basketball"],
+  },
+  {
+    sport_key: "sledhockey",
+    name: "Sled Hockey",
+    icon_key: "sledhockey",
+    terms: ["sled hockey", "sledge hockey", "para ice hockey"],
+  },
+  {
+    sport_key: "skiing",
+    name: "Adaptive Skiing",
+    icon_key: "skiing",
+    terms: ["adaptive skiing", "sit ski", "sit-ski", "monoski", "mono-ski", "adaptive ski"],
+  },
+  {
+    sport_key: "rowing",
+    name: "Adaptive Rowing",
+    icon_key: null,
+    terms: ["adaptive rowing", "para rowing", "rowing"],
+  },
+  {
+    sport_key: "trackfield",
+    name: "Track & Field",
+    icon_key: null,
+    terms: ["track and field", "track & field", "para athletics"],
+  },
+  {
+    sport_key: "sailing",
+    name: "Adaptive Sailing",
+    icon_key: null,
+    terms: ["adaptive sailing", "para sailing", "sailing"],
+  },
+  {
+    sport_key: "tennis",
+    name: "Wheelchair Tennis",
+    icon_key: "tennis",
+    terms: ["wheelchair tennis", "tennis"],
+  },
+  {
+    sport_key: "running",
+    name: "Running",
+    icon_key: null,
+    terms: ["running club", "running program", "running"],
+  },
+  {
+    sport_key: "archery",
+    name: "Archery",
+    icon_key: null,
+    terms: ["archery"],
+  },
+  {
+    sport_key: "swimming",
+    name: "Adaptive Swimming",
+    icon_key: null,
+    terms: ["adaptive swimming", "para swimming", "swimming"],
+  },
+  {
+    sport_key: "cycling",
+    name: "Adaptive Cycling",
+    icon_key: "cycling",
+    terms: ["adaptive cycling", "para cycling", "paracycling", "cycling"],
+  },
+  {
+    sport_key: "equestrian",
+    name: "Equestrian",
+    icon_key: null,
+    terms: ["equestrian", "therapeutic riding", "adaptive riding"],
+  },
+  {
+    sport_key: "curling",
+    name: "Wheelchair Curling",
+    icon_key: null,
+    terms: ["wheelchair curling", "curling"],
+  },
+  {
+    sport_key: "golf",
+    name: "Adaptive Golf",
+    icon_key: null,
+    terms: ["adaptive golf", "para golf", "golf"],
+  },
+  {
+    sport_key: "surfing",
+    name: "Adaptive Surfing",
+    icon_key: null,
+    terms: ["adaptive surfing", "surfing"],
+  },
+  {
+    sport_key: "rugby",
+    name: "Wheelchair Rugby",
+    icon_key: "rugby",
+    terms: ["wheelchair rugby", "quad rugby", "murderball", "rugby"],
+  },
+  {
+    sport_key: "shooting",
+    name: "Shooting Sports",
+    icon_key: null,
+    terms: ["shooting sports", "para shooting", "target shooting"],
+  },
+  {
+    sport_key: "volleyball",
+    name: "Sitting Volleyball",
+    icon_key: null,
+    terms: ["sitting volleyball", "sit volleyball", "volleyball"],
+  },
+  {
+    sport_key: "martialarts",
+    name: "Martial Arts",
+    icon_key: null,
+    terms: ["martial arts", "adaptive judo", "para judo", "judo", "taekwondo"],
+  },
+  {
+    sport_key: "boccia",
+    name: "Boccia",
+    icon_key: null,
+    terms: ["boccia"],
+  },
+  {
+    sport_key: "blindsports",
+    name: "Blind Sports",
+    icon_key: null,
+    terms: ["blind sports", "sports for the blind", "visually impaired sports"],
+  },
+  {
+    sport_key: "fencing",
+    name: "Wheelchair Fencing",
+    icon_key: null,
+    terms: ["wheelchair fencing", "fencing"],
+  },
+  {
+    sport_key: "baseball",
+    name: "Adaptive Baseball",
+    icon_key: "baseball",
+    terms: ["adaptive baseball", "baseball"],
+  },
+  {
+    sport_key: "lacrosse",
+    name: "Wheelchair Lacrosse",
+    icon_key: null,
+    terms: ["wheelchair lacrosse", "lacrosse"],
+  },
+  {
+    sport_key: "waterskiing",
+    name: "Adaptive Water Skiing",
+    icon_key: "waterskiing",
+    terms: ["adaptive water skiing", "water skiing", "waterskiing"],
+  },
+  {
+    sport_key: "climbing",
+    name: "Adaptive Climbing",
+    icon_key: null,
+    terms: ["adaptive climbing", "rock climbing", "climbing"],
+  },
+  {
+    sport_key: "pickleball",
+    name: "Adaptive Pickleball",
+    icon_key: "pickleball",
+    terms: ["adaptive pickleball", "pickleball"],
+  },
+  {
+    sport_key: "football",
+    name: "Adaptive Football",
+    icon_key: "football",
+    terms: ["adaptive football", "wheelchair football", "powerchair football", "beep football"],
+  },
+  {
+    sport_key: "goalball",
+    name: "Goalball",
+    icon_key: "goalball",
+    terms: ["goalball"],
+  },
+  {
+    sport_key: "softball",
+    name: "Wheelchair Softball",
+    icon_key: null,
+    terms: ["wheelchair softball", "softball"],
+  },
+  {
+    sport_key: "soccer",
+    name: "Power Soccer",
+    icon_key: null,
+    terms: ["power soccer", "power wheelchair soccer", "powerchair soccer"],
+  },
+  {
+    sport_key: "dance",
+    name: "Wheelchair Dance",
+    icon_key: null,
+    terms: ["wheelchair dance", "adaptive dance", "dance sport"],
+  },
+  {
+    sport_key: "powerlifting",
+    name: "Para Powerlifting",
+    icon_key: null,
+    terms: ["para powerlifting", "powerlifting"],
+  },
+  {
+    sport_key: "triathlon",
+    name: "Para Triathlon",
+    icon_key: null,
+    terms: ["para triathlon", "triathlon"],
+  },
+  {
+    sport_key: "wheelchairracing",
+    name: "Wheelchair Racing",
+    icon_key: null,
+    terms: ["wheelchair racing", "racing wheelchair"],
+  },
+  {
+    sport_key: "handcycling",
+    name: "Handcycling",
+    icon_key: null,
+    terms: ["handcycling", "handcycle"],
+  },
+  {
+    sport_key: "nordicskiing",
+    name: "Para Nordic Skiing",
+    icon_key: null,
+    terms: ["para nordic", "nordic skiing", "cross-country skiing", "cross country skiing"],
+  },
+  {
+    sport_key: "equestrianvaulting",
+    name: "Para Equestrian Vaulting",
+    icon_key: null,
+    terms: ["equestrian vaulting", "para equestrian vaulting"],
+  },
+  {
+    sport_key: "beepbaseball",
+    name: "Beep Baseball",
+    icon_key: null,
+    terms: ["beep baseball"],
+  },
+  {
+    sport_key: "amputeesports",
+    name: "Amputee Sports",
+    icon_key: null,
+    terms: ["amputee sports", "amputee soccer", "amputee softball", "standing amputee", "sitting amputee"],
+  },
+  {
+    sport_key: "handball",
+    name: "Wheelchair Handball",
+    icon_key: null,
+    terms: ["wheelchair handball", "handball"],
+  },
+];
