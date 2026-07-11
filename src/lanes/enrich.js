@@ -1,16 +1,110 @@
 // enrich: propose missing contact/location fields from the org's own website.
-// T01 stub carries the previous homepage-regex behavior unchanged so the branch never
-// regresses; Spec 72 T03 replaces the innards with src/extract.js structured extraction
-// (JSON-LD, mailto:/tel:, contact-page follow) and confidence tiers.
+// Spec 72 T03 v2: structured extraction (src/extract.js — JSON-LD, mailto:/tel: hrefs,
+// text regex) with a contact-page follow-up when the homepage has no email at all.
+// Confidence is tiered by extraction method (JSON-LD > mailto:/tel: link > text regex)
+// and, when a proposal spans multiple fields pulled from different tiers, reflects the
+// WEAKEST tier used so the reviewer never sees a stronger confidence than the shakiest
+// fact backing it.
 
 import { pendingOrgIds, proposeStmt, fetchText } from "../lane-utils.js";
+import { extractJsonLd, extractEmails, extractPhones, extractAddress, extractContactLinks } from "../extract.js";
 
-const ENRICH_BATCH = 20;
+// Subrequest budget: 15 orgs x up to 2 fetches (homepage + optional contact page) + 3 D1
+// calls (select, pendingOrgIds, batch) = 33 < 50 (Workers' per-invocation subrequest cap).
+const BATCH = 15;
 
-const EMAIL_RE = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
-const PHONE_RE = /(?:\+?1[\s.-]?)?\(?\d{3}\)?[\s.-]\d{3}[\s.-]\d{4}/g;
-const STATE_ABBR = "AL|AK|AZ|AR|CA|CO|CT|DE|FL|GA|HI|ID|IL|IN|IA|KS|KY|LA|ME|MD|MA|MI|MN|MS|MO|MT|NE|NV|NH|NJ|NM|NY|NC|ND|OH|OK|OR|PA|RI|SC|SD|TN|TX|UT|VT|VA|WA|WV|WI|WY|DC|PR|GU|VI|AS|MP";
-const ADDR_RE = new RegExp(`([A-Z][A-Za-z .'-]{2,30}),\\s*(${STATE_ABBR})[\\s,]+(\\d{5})(?:-\\d{4})?`);
+const CONFIDENCE = { jsonld: 0.8, links: 0.7, regex: 0.6 };
+const TIER_RANK = { jsonld: 3, links: 2, regex: 1 };
+
+function decodeEntities(raw) {
+  return raw
+    .replace(/&#x([0-9a-f]+);/gi, (_, hex) => String.fromCharCode(parseInt(hex, 16)))
+    .replace(/&#(\d+);/g, (_, dec) => String.fromCharCode(Number(dec)))
+    .replace(/&amp;/gi, "&");
+}
+
+function decodeHref(raw) {
+  let s = decodeEntities(raw.split("?")[0]);
+  try {
+    s = decodeURIComponent(s);
+  } catch {
+    // malformed % sequence — keep the entity-decoded form
+  }
+  return s.trim();
+}
+
+// Which mailto:/tel: hrefs are literally present on the page — used only to tell a
+// "links" hit apart from a "regex" (visible-text) hit for the SAME winning value.
+function hrefEmailSet(html) {
+  const out = new Set();
+  const re = /href\s*=\s*(["'])mailto:([^"']*)\1/gi;
+  let m;
+  while ((m = re.exec(html)) !== null) {
+    const email = decodeHref(m[2]).toLowerCase();
+    if (email) out.add(email);
+  }
+  return out;
+}
+
+function hrefPhoneSet(html) {
+  const out = new Set();
+  const re = /href\s*=\s*(["'])tel:([^"']*)\1/gi;
+  let m;
+  while ((m = re.exec(html)) !== null) {
+    const phone = decodeHref(m[2]).replace(/[^\d+xX]/g, "");
+    if (phone) out.add(phone);
+  }
+  return out;
+}
+
+function jsonldEmail(nodes) {
+  for (const n of nodes) {
+    if (n && typeof n.email === "string" && n.email.includes("@")) return n.email.trim().toLowerCase();
+  }
+  return null;
+}
+
+function jsonldPhone(nodes) {
+  for (const n of nodes) {
+    if (n && typeof n.telephone === "string" && n.telephone.trim()) return n.telephone.trim();
+  }
+  return null;
+}
+
+function hasJsonLdAddress(nodes) {
+  for (const obj of nodes) {
+    const candidates = [obj, obj && obj.address].filter((c) => c && typeof c === "object");
+    if (candidates.some((c) => c.addressLocality || c.addressRegion || c.postalCode)) return true;
+  }
+  return false;
+}
+
+// One page's contact fields, each tagged with the tier that produced it so the caller
+// can price confidence and pick a winner across (up to) two pages.
+function extractTiered(html, baseUrl) {
+  const jsonld = extractJsonLd(html);
+  const emails = extractEmails(html);
+  const phones = extractPhones(html);
+  const address = extractAddress(html);
+
+  const jEmail = jsonldEmail(jsonld);
+  const email = jEmail
+    ? { value: jEmail, source: "jsonld" }
+    : emails.length
+      ? { value: emails[0], source: hrefEmailSet(html).has(emails[0]) ? "links" : "regex" }
+      : null;
+
+  const jPhone = jsonldPhone(jsonld);
+  const phone = jPhone
+    ? { value: jPhone, source: "jsonld" }
+    : phones.length
+      ? { value: phones[0], source: hrefPhoneSet(html).has(phones[0]) ? "links" : "regex" }
+      : null;
+
+  const address_ = address ? { value: address, source: hasJsonLdAddress(jsonld) ? "jsonld" : "regex" } : null;
+
+  return { email, phone, address: address_, contactLinks: extractContactLinks(html, baseUrl) };
+}
 
 export async function enrichLane({ db, cursor }) {
   const { results: orgs } = await db.prepare(
@@ -19,7 +113,7 @@ export async function enrichLane({ db, cursor }) {
        AND (email IS NULL OR phone IS NULL OR state IS NULL OR city IS NULL)
        AND id > ?
      ORDER BY id LIMIT ?`
-  ).bind(cursor, ENRICH_BATCH).all();
+  ).bind(cursor, BATCH).all();
   if (!orgs.length) return { cursor: "", processed: 0, flagged: 0, detail: "cycle complete, cursor reset" };
 
   const pending = await pendingOrgIds(db, "enrich", orgs.map((o) => o.id));
@@ -29,36 +123,55 @@ export async function enrichLane({ db, cursor }) {
   for (const org of orgs) {
     if (pending.has(org.id)) continue; // don't re-scrape while a proposal awaits review
 
-    const page = await fetchText(org.website_url);
-    if (page?.fatal) break; // subrequest budget: stop, record nothing false
-    if (!page) continue;
-    const html = page.text;
+    const home = await fetchText(org.website_url);
+    if (home?.fatal) break; // subrequest budget: stop, record nothing false
+    if (!home) continue;
+
+    let picked = extractTiered(home.text, org.website_url);
+    let contactPageUrl = null;
+
+    if (!org.email && !picked.email && picked.contactLinks.length) {
+      const contactUrl = picked.contactLinks[0];
+      const contact = await fetchText(contactUrl);
+      if (contact?.fatal) break; // subrequest budget: stop, record nothing false
+      if (contact) {
+        contactPageUrl = contactUrl;
+        const fromContact = extractTiered(contact.text, contactUrl);
+        // Homepage values win ties — only fall back to the contact page per field.
+        picked = {
+          email: picked.email ?? fromContact.email,
+          phone: picked.phone ?? fromContact.phone,
+          address: picked.address ?? fromContact.address,
+          contactLinks: picked.contactLinks,
+        };
+      }
+    }
 
     const change = {};
-    if (!org.email) {
-      const emails = [...new Set((html.match(EMAIL_RE) || [])
-        .map((e) => e.toLowerCase())
-        .filter((e) => !/\.(png|jpg|jpeg|gif|svg|webp|css|js)$/.test(e))
-        .filter((e) => !/(example\.|sentry|wixpress|@2x)/.test(e)))];
-      if (emails.length) change.email = { from: null, to: emails[0] };
+    const sources = [];
+
+    if (!org.email && picked.email) {
+      change.email = { from: null, to: picked.email.value };
+      sources.push(picked.email.source);
     }
-    if (!org.phone) {
-      const phones = html.match(PHONE_RE) || [];
-      if (phones.length) change.phone = { from: null, to: phones[0].trim() };
+    if (!org.phone && picked.phone) {
+      change.phone = { from: null, to: picked.phone.value };
+      sources.push(picked.phone.source);
     }
-    if (!org.state || !org.city) {
-      const m = html.replace(/<[^>]+>/g, " ").match(ADDR_RE);
-      if (m) {
-        if (!org.city) change.city = { from: null, to: m[1].trim() };
-        if (!org.state) change.state = { from: null, to: m[2] };
-        if (!org.zip) change.zip = { from: null, to: m[3] };
-      }
+    if ((!org.city || !org.state || !org.zip) && picked.address) {
+      const { city, state, zip } = picked.address.value;
+      if (!org.city && city) { change.city = { from: null, to: city }; sources.push(picked.address.source); }
+      if (!org.state && state) { change.state = { from: null, to: state }; sources.push(picked.address.source); }
+      if (!org.zip && zip) { change.zip = { from: null, to: zip }; sources.push(picked.address.source); }
     }
     if (!Object.keys(change).length) continue;
 
+    const weakest = sources.reduce((a, b) => (TIER_RANK[b] < TIER_RANK[a] ? b : a));
+
     flagged++;
     stmts.push(proposeStmt(db, org.id, "enrich", change,
-      { url: org.website_url, scanned_at: now, method: "homepage regex scan" }, 0.6, now));
+      { url: org.website_url, scanned_at: now, method: weakest, contact_page: contactPageUrl },
+      CONFIDENCE[weakest], now));
   }
   if (stmts.length) await db.batch(stmts);
   return { cursor: orgs[orgs.length - 1].id, processed: orgs.length, flagged };

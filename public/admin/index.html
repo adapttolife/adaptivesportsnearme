@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="color-scheme" content="light">
+<meta name="robots" content="noindex, nofollow">
+<title>ASNM Admin — Review Queue</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  color-scheme: light;
+  --ink:#1A1A1A; --ink2:#3A3A37;
+  --paper:#FFFFFF; --mist:#F7F7F5; --sand:#F0EFEC; --sand2:#E8E7E3;
+  --line:#E7E6E2; --line2:#EFEEEB;
+  --muted:#6E6D6A; --faint:#8C8B87;
+  --orange:#C5430C; --orange-ink:#A8370A; --orange-soft:#FBEBDC;
+  --green:#1E7A3D; --green-soft:#E7F5EC;
+  --red:#B3261E; --red-soft:#FBEAEA;
+  --r-sm:8px; --r:12px; --r-lg:16px; --r-full:999px;
+  --shadow-sm:0 1px 2px rgba(17,17,19,.04),0 1px 3px rgba(17,17,19,.06);
+  --shadow:0 6px 20px rgba(17,17,19,.08);
+  --max:720px;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;background:var(--mist);color:var(--ink);}
+body{font-family:'DM Sans',system-ui,sans-serif;font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;
+     padding-bottom:env(safe-area-inset-bottom);}
+a{color:var(--orange-ink);text-decoration:underline;word-break:break-all;}
+button{font-family:inherit;cursor:pointer;}
+.hidden{display:none !important;}
+
+/* ---- key gate ---- */
+#keyGate{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;}
+.keyCard{background:var(--paper);border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--shadow);
+         padding:28px 24px;max-width:360px;width:100%;text-align:center;}
+.keyCard h1{font-size:18px;margin:0 0 6px;}
+.keyCard p{font-size:13px;color:var(--muted);margin:0 0 18px;}
+.keyCard input{width:100%;height:48px;border:1px solid var(--line);border-radius:var(--r);padding:0 14px;
+                font-size:15px;margin-bottom:12px;background:var(--mist);color:var(--ink);}
+.keyCard input:focus{outline:2px solid var(--orange);outline-offset:1px;border-color:var(--orange);}
+.keyCard .err{color:var(--red);font-size:13px;margin:-4px 0 12px;min-height:16px;}
+.btn-primary{width:100%;min-height:48px;background:var(--orange);color:#fff;border:none;border-radius:var(--r);
+             font-size:15px;font-weight:600;}
+.btn-primary:hover{background:var(--orange-ink);}
+
+/* ---- app shell ---- */
+#app{max-width:var(--max);margin:0 auto;padding:0 0 40px;}
+.hdr{position:sticky;top:0;z-index:20;background:rgba(255,255,255,.95);backdrop-filter:saturate(150%) blur(10px);
+     border-bottom:1px solid var(--line);padding:14px 16px;}
+.hdr-top{display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.hdr-title{font-weight:700;font-size:16px;letter-spacing:-.01em;}
+.hdr-count{font-size:13px;color:var(--muted);}
+.hdr-count b{color:var(--ink);font-weight:700;}
+.iconbtn{min-width:44px;min-height:44px;display:flex;align-items:center;justify-content:center;
+         background:var(--sand);border:1px solid var(--line);border-radius:var(--r-full);font-size:16px;}
+.iconbtn:active{transform:scale(.94);}
+.iconbtn.spinning{animation:spin .7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;}
+.chip{font-size:12px;font-weight:600;padding:5px 10px;border-radius:var(--r-full);background:var(--sand);
+      color:var(--ink2);border:1px solid var(--line);white-space:nowrap;}
+.chip b{color:var(--orange-ink);}
+
+/* ---- banner / toast ---- */
+#banner{position:sticky;top:0;z-index:30;background:var(--red-soft);color:var(--red);border-bottom:1px solid var(--red);
+        padding:10px 16px;font-size:13px;display:flex;align-items:center;justify-content:space-between;gap:10px;}
+#banner button{background:none;border:none;color:var(--red);font-weight:700;font-size:16px;min-width:32px;min-height:32px;}
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:#fff;
+       padding:10px 18px;border-radius:var(--r-full);font-size:13px;box-shadow:var(--shadow);z-index:40;
+       opacity:0;pointer-events:none;transition:opacity .2s ease;}
+#toast.show{opacity:1;}
+
+/* ---- cards ---- */
+#cards{padding:16px;display:flex;flex-direction:column;gap:14px;}
+.empty{text-align:center;color:var(--muted);padding:60px 20px;font-size:14px;}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--shadow-sm);
+      padding:16px;transition:opacity .2s ease, transform .2s ease;}
+.card.removing{opacity:0;transform:scale(.97);}
+.card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:10px;}
+.card-name{font-weight:700;font-size:15px;line-height:1.3;}
+.card-meta{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:6px;}
+.tag{font-size:11px;font-weight:600;padding:3px 8px;border-radius:var(--r-full);white-space:nowrap;}
+.tag-lane{background:var(--sand);color:var(--ink2);border:1px solid var(--line);}
+.tag-conf{background:var(--orange-soft);color:var(--orange-ink);}
+.tag-conf.low{background:var(--red-soft);color:var(--red);}
+.tag-time{color:var(--faint);font-size:12px;}
+
+table.diff{width:100%;border-collapse:collapse;margin:10px 0 4px;font-size:13px;}
+table.diff th{text-align:left;color:var(--faint);font-weight:600;font-size:11px;text-transform:uppercase;
+               letter-spacing:.04em;padding:4px 6px;border-bottom:1px solid var(--line);}
+table.diff td{padding:6px;border-bottom:1px solid var(--line2);vertical-align:top;word-break:break-word;}
+table.diff td.field{font-weight:600;white-space:nowrap;}
+table.diff td.from{color:var(--faint);text-decoration:line-through;}
+table.diff td.to{color:var(--green);font-weight:600;}
+
+details.evidence{margin:8px 0 4px;}
+details.evidence summary{cursor:pointer;font-size:12px;color:var(--muted);font-weight:600;padding:6px 0;
+                          min-height:32px;display:flex;align-items:center;}
+details.evidence pre{background:var(--mist);border:1px solid var(--line);border-radius:var(--r-sm);
+                      padding:10px;font-size:11.5px;line-height:1.5;overflow-x:auto;white-space:pre-wrap;
+                      word-break:break-word;color:var(--ink2);}
+
+.card-actions{display:flex;gap:10px;margin-top:12px;}
+.card-actions button{flex:1;min-height:46px;border-radius:var(--r);font-size:14px;font-weight:700;border:1px solid transparent;}
+.btn-approve{background:var(--green-soft);color:var(--green);border-color:var(--green);}
+.btn-approve:active{background:var(--green);color:#fff;}
+.btn-reject{background:var(--sand);color:var(--ink2);border-color:var(--line);}
+.btn-reject:active{background:var(--sand2);}
+.card-actions button:disabled{opacity:.5;pointer-events:none;}
+
+/* ---- footer ---- */
+.footer-strip{margin:8px 16px 24px;padding:12px 14px;background:var(--sand);border:1px solid var(--line);
+              border-radius:var(--r);font-size:12.5px;color:var(--ink2);text-align:center;}
+</style>
+</head>
+<body>
+
+<div id="keyGate">
+  <div class="keyCard">
+    <h1>ASNM Admin</h1>
+    <p>Enter the admin key to open the review queue.</p>
+    <div class="err" id="keyErr"></div>
+    <input id="keyInput" type="password" placeholder="Admin key" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
+    <button class="btn-primary" id="keySubmit">Unlock</button>
+  </div>
+</div>
+
+<div id="app" class="hidden">
+  <div class="hdr">
+    <div class="hdr-top">
+      <div>
+        <div class="hdr-title">Review Queue</div>
+        <div class="hdr-count"><b id="pendingCount">–</b> pending</div>
+      </div>
+      <button class="iconbtn" id="refreshBtn" title="Refresh" aria-label="Refresh">&#8635;</button>
+    </div>
+    <div class="chips" id="laneChips"></div>
+  </div>
+
+  <div id="banner" class="hidden">
+    <span id="bannerMsg"></span>
+    <button id="bannerClose" aria-label="Dismiss">&times;</button>
+  </div>
+
+  <div id="cards"></div>
+
+  <div class="footer-strip" id="judgmentStrip">Loading judgment summary…</div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+(function () {
+  "use strict";
+
+  var KEY_STORAGE = "asnm_admin_key";
+  var keyGate = document.getElementById("keyGate");
+  var app = document.getElementById("app");
+  var keyInput = document.getElementById("keyInput");
+  var keyErr = document.getElementById("keyErr");
+  var banner = document.getElementById("banner");
+  var bannerMsg = document.getElementById("bannerMsg");
+  var toast = document.getElementById("toast");
+  var toastTimer = null;
+  var bannerTimer = null;
+
+  function getKey() { return localStorage.getItem(KEY_STORAGE) || ""; }
+  function setKey(k) { localStorage.setItem(KEY_STORAGE, k); }
+  function clearKey() { localStorage.removeItem(KEY_STORAGE); }
+
+  function showGate(err) {
+    app.classList.add("hidden");
+    keyGate.classList.remove("hidden");
+    keyErr.textContent = err || "";
+    keyInput.focus();
+  }
+  function showApp() {
+    keyGate.classList.add("hidden");
+    app.classList.remove("hidden");
+  }
+
+  function showBanner(msg) {
+    bannerMsg.textContent = msg;
+    banner.classList.remove("hidden");
+    if (bannerTimer) clearTimeout(bannerTimer);
+    bannerTimer = setTimeout(function () { banner.classList.add("hidden"); }, 8000);
+  }
+  document.getElementById("bannerClose").addEventListener("click", function () {
+    banner.classList.add("hidden");
+    if (bannerTimer) clearTimeout(bannerTimer);
+  });
+
+  function showToast(msg) {
+    toast.textContent = msg;
+    toast.classList.add("show");
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { toast.classList.remove("show"); }, 2200);
+  }
+
+  // Core fetch wrapper. Returns parsed JSON on success, or null after handling
+  // the failure (401 -> re-gate; anything else -> visible banner, never console-only).
+  function api(path, opts) {
+    opts = opts || {};
+    var headers = Object.assign({}, opts.headers || {}, { Authorization: "Bearer " + getKey() });
+    if (opts.body && !headers["Content-Type"]) headers["Content-Type"] = "application/json";
+    return fetch("/api/admin" + path, Object.assign({}, opts, { headers: headers }))
+      .then(function (res) {
+        if (res.status === 401) {
+          clearKey();
+          showGate("That key was rejected. Try again.");
+          throw new Error("unauthorized");
+        }
+        return res.json().catch(function () {
+          throw new Error("Bad response from server (" + res.status + ")");
+        }).then(function (data) {
+          if (!res.ok || data.ok === false) {
+            throw new Error((data && data.error) || ("Request failed (" + res.status + ")"));
+          }
+          return data;
+        });
+      })
+      .catch(function (err) {
+        if (err.message !== "unauthorized") showBanner(err.message || "Network error — request failed.");
+        return null;
+      });
+  }
+
+  // ---- key gate wiring ----
+  document.getElementById("keySubmit").addEventListener("click", tryKey);
+  keyInput.addEventListener("keydown", function (e) { if (e.key === "Enter") tryKey(); });
+
+  function tryKey() {
+    var k = keyInput.value.trim();
+    if (!k) { keyErr.textContent = "Enter a key."; return; }
+    setKey(k);
+    keyErr.textContent = "Checking…";
+    api("/digest-stats").then(function (data) {
+      if (!data) { keyErr.textContent = getKey() ? "" : "That key was rejected. Try again."; return; }
+      showApp();
+      loadAll();
+    });
+  }
+
+  // ---- header / digest ----
+  function renderDigest(data) {
+    if (!data) return;
+    var totalPending = (data.pending_by_lane || []).reduce(function (s, r) { return s + r.n; }, 0);
+    document.getElementById("pendingCount").textContent = totalPending;
+    var chips = document.getElementById("laneChips");
+    chips.innerHTML = "";
+    (data.pending_by_lane || []).forEach(function (r) {
+      var c = document.createElement("span");
+      c.className = "chip";
+      c.innerHTML = escapeHtml(r.lane) + " <b>" + r.n + "</b>";
+      chips.appendChild(c);
+    });
+    if (!(data.pending_by_lane || []).length) {
+      var c2 = document.createElement("span");
+      c2.className = "chip";
+      c2.textContent = "queue clear";
+      chips.appendChild(c2);
+    }
+  }
+
+  // ---- queue cards ----
+  function renderQueue(data) {
+    var container = document.getElementById("cards");
+    container.innerHTML = "";
+    var items = (data && data.items) || [];
+    if (!items.length) {
+      var empty = document.createElement("div");
+      empty.className = "empty";
+      empty.textContent = "Nothing pending. Queue is clear.";
+      container.appendChild(empty);
+      return;
+    }
+    items.forEach(function (item) {
+      container.appendChild(renderCard(item));
+    });
+  }
+
+  function renderCard(item) {
+    var card = document.createElement("div");
+    card.className = "card";
+    card.dataset.itemId = item.item_id;
+
+    var name = item.organization_id ? (item.org_name || "(unnamed org)") : "➕ new org";
+    var confidence = (item.confidence === null || item.confidence === undefined) ? null : Number(item.confidence);
+    var confPct = confidence === null ? null : Math.round(confidence * 100);
+    var confClass = confidence !== null && confidence < 0.7 ? "tag-conf low" : "tag-conf";
+
+    var top = document.createElement("div");
+    top.className = "card-top";
+    top.innerHTML =
+      '<div><div class="card-name">' + escapeHtml(name) + '</div>' +
+      '<div class="card-meta">' +
+      '<span class="tag tag-lane">' + escapeHtml(item.lane || "?") + '</span>' +
+      (confPct !== null ? '<span class="tag ' + confClass + '">' + confPct + '% conf</span>' : '') +
+      '<span class="tag-time">' + relTime(item.created_at) + '</span>' +
+      '</div></div>';
+    card.appendChild(top);
+
+    card.appendChild(diffTable(item.proposed_change));
+
+    if (item.evidence) card.appendChild(evidenceBlock(item.evidence));
+
+    var actions = document.createElement("div");
+    actions.className = "card-actions";
+    var approveBtn = document.createElement("button");
+    approveBtn.className = "btn-approve";
+    approveBtn.textContent = "Approve";
+    var rejectBtn = document.createElement("button");
+    rejectBtn.className = "btn-reject";
+    rejectBtn.textContent = "Reject";
+    approveBtn.addEventListener("click", function () { decide(item.item_id, "approve", card, [approveBtn, rejectBtn]); });
+    rejectBtn.addEventListener("click", function () { decide(item.item_id, "reject", card, [approveBtn, rejectBtn]); });
+    actions.appendChild(approveBtn);
+    actions.appendChild(rejectBtn);
+    card.appendChild(actions);
+
+    return card;
+  }
+
+  function diffTable(change) {
+    var wrap = document.createElement("table");
+    wrap.className = "diff";
+    if (!change || typeof change !== "object" || !Object.keys(change).length) {
+      wrap.innerHTML = '<tr><td colspan="3" style="color:var(--faint)">No field changes in this proposal.</td></tr>';
+      return wrap;
+    }
+    var rows = ['<tr><th>Field</th><th>From</th><th>To</th></tr>'];
+    Object.keys(change).forEach(function (field) {
+      var d = change[field];
+      var from = d && typeof d === "object" && "from" in d ? d.from : "";
+      var to = d && typeof d === "object" && "to" in d ? d.to : d;
+      rows.push(
+        '<tr><td class="field">' + escapeHtml(field) + '</td>' +
+        '<td class="from">' + escapeHtml(fmtVal(from)) + '</td>' +
+        '<td class="to">' + escapeHtml(fmtVal(to)) + '</td></tr>'
+      );
+    });
+    wrap.innerHTML = rows.join("");
+    return wrap;
+  }
+
+  function evidenceBlock(evidence) {
+    var det = document.createElement("details");
+    det.className = "evidence";
+    var pretty = "";
+    try { pretty = JSON.stringify(evidence, null, 2); } catch (e) { pretty = String(evidence); }
+    var summary = document.createElement("summary");
+    summary.textContent = "Evidence";
+    var pre = document.createElement("pre");
+    pre.innerHTML = linkify(escapeHtml(pretty));
+    det.appendChild(summary);
+    det.appendChild(pre);
+    return det;
+  }
+
+  function decide(itemId, action, card, buttons) {
+    buttons.forEach(function (b) { b.disabled = true; });
+    api("/queue/" + itemId, { method: "POST", body: JSON.stringify({ action: action, by: "alec@phone" }) })
+      .then(function (data) {
+        if (!data) { buttons.forEach(function (b) { b.disabled = false; }); return; }
+        card.classList.add("removing");
+        showToast(action === "approve" ? "Approved." : "Rejected.");
+        setTimeout(function () {
+          card.remove();
+          var remaining = document.getElementById("cards").children.length;
+          if (!remaining) renderQueue({ items: [] });
+        }, 200);
+        loadDigest();
+        loadJudgment();
+      });
+  }
+
+  // ---- judgment footer ----
+  function renderJudgment(data) {
+    var strip = document.getElementById("judgmentStrip");
+    if (!data) { strip.textContent = "Judgment summary unavailable."; return; }
+    var lowN = (data.low_confidence || []).length;
+    var unclassified = data.unclassified_total || 0;
+    strip.textContent = lowN + " low-confidence item" + (lowN === 1 ? "" : "s") +
+      " · " + unclassified + " org" + (unclassified === 1 ? "" : "s") + " unclassified";
+  }
+
+  // ---- loaders ----
+  function loadDigest() { return api("/digest-stats").then(renderDigest); }
+  function loadQueue() { return api("/queue?status=pending").then(renderQueue); }
+  function loadJudgment() { return api("/judgment").then(renderJudgment); }
+
+  function loadAll() {
+    var btn = document.getElementById("refreshBtn");
+    btn.classList.add("spinning");
+    Promise.all([loadDigest(), loadQueue(), loadJudgment()]).then(function () {
+      btn.classList.remove("spinning");
+    });
+  }
+
+  document.getElementById("refreshBtn").addEventListener("click", loadAll);
+
+  // ---- helpers ----
+  function escapeHtml(s) {
+    return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+  function fmtVal(v) {
+    if (v === null || v === undefined || v === "") return "—";
+    if (typeof v === "object") { try { return JSON.stringify(v); } catch (e) { return String(v); } }
+    return String(v);
+  }
+  function linkify(escapedText) {
+    return escapedText.replace(/(https?:\/\/[^\s"&]+)/g, function (url) {
+      return '<a href="' + url + '" target="_blank" rel="noopener noreferrer">' + url + '</a>';
+    });
+  }
+  function relTime(iso) {
+    if (!iso) return "";
+    var then = Date.parse(iso);
+    if (isNaN(then)) return "";
+    var diffMs = Date.now() - then;
+    var mins = Math.floor(diffMs / 60000);
+    if (mins < 1) return "just now";
+    if (mins < 60) return mins + "m ago";
+    var hrs = Math.floor(mins / 60);
+    if (hrs < 24) return hrs + "h ago";
+    var days = Math.floor(hrs / 24);
+    return days + "d ago";
+  }
+
+  // ---- boot ----
+  if (getKey()) {
+    showApp();
+    loadAll();
+  } else {
+    showGate();
+  }
+})();
+</script>
+</body>
+</html>
