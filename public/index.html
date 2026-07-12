@@ -446,6 +446,38 @@ a.evrow:hover{border-color:var(--ink);box-shadow:var(--shadow-sm);}
 .ev-empty p{max-width:44ch;margin:0 auto;line-height:1.5;}
 .ev-empty .ev-sub{justify-content:center;margin-top:20px;}
 
+/* ============================ HEADER PROFILE BUTTON ============================ */
+.hdr-profile{flex:0 0 auto;width:40px;height:40px;border-radius:50%;display:grid;place-items:center;color:var(--ink);border:1px solid var(--line);background:var(--paper);transition:border-color .15s,background .15s,color .15s;}
+.hdr-profile:hover{border-color:var(--ink);background:var(--mist);}
+.hdr-profile svg{width:18px;height:18px;}
+.hdr-profile.has-profile{color:var(--orange-ink);border-color:var(--orange-soft);background:var(--orange-soft);}
+@media (max-width:720px){.hdr-profile{width:36px;height:36px;}.hdr-profile svg{width:16px;height:16px;}}
+
+/* ============================ PROFILE ============================ */
+.profile-view{max-width:640px;margin:0 auto;padding:28px 0 64px;}
+.pform{background:var(--paper);border:1px solid var(--line);border-radius:var(--r-lg);padding:24px;}
+.pform h1{font-family:'DM Sans',sans-serif;font-weight:700;font-size:26px;letter-spacing:-.02em;margin:0 0 8px;}
+.pform .lede{font-size:14.5px;color:var(--muted);margin:0 0 20px;line-height:1.5;}
+.pform .gfield{margin-bottom:14px;}
+.pform label{display:block;font-size:13px;font-weight:600;color:var(--ink2);margin-bottom:6px;}
+.pform input[type=text],.pform input[type=email],.pform select{width:100%;height:46px;padding:0 14px;border:1px solid var(--line);border-radius:var(--r);background:var(--paper);color:var(--ink);font-size:15px;font-family:inherit;}
+.pform input:focus,.pform select:focus{outline:none;border-color:var(--ink);}
+.psports{display:flex;flex-wrap:wrap;gap:8px;}
+.pcheck{display:flex;align-items:center;gap:9px;font-size:14px;color:var(--ink2);margin:16px 0 0;}
+.pcheck label{margin:0;font-size:14px;font-weight:500;color:var(--ink2);}
+.pnudge{font-size:13.5px;color:var(--orange-ink);background:var(--orange-soft);border-radius:var(--r);padding:10px 14px;margin:0 0 18px;line-height:1.4;}
+.profile-summary{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:0 0 18px;border-bottom:1px solid var(--line2);margin-bottom:18px;}
+.profile-summary h1{margin:0;font-size:24px;font-family:'DM Sans',sans-serif;font-weight:700;letter-spacing:-.01em;}
+.profile-summary .muted{color:var(--muted);font-size:14px;margin-top:2px;}
+.psaved{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:18px 16px;margin-top:8px;}
+.save-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;width:100%;height:46px;padding:0 18px;border:1px solid var(--line);border-radius:var(--r-full);background:var(--paper);color:var(--ink);font-size:14px;font-weight:600;transition:.15s;}
+.save-btn:hover{border-color:var(--ink);}
+.save-btn.on{background:var(--orange-soft);border-color:var(--orange-soft);color:var(--orange-ink);}
+.save-btn svg{width:16px;height:16px;flex:0 0 auto;}
+.save-btn.on svg{fill:var(--orange-ink);}
+.save-btn:disabled{opacity:.6;cursor:default;}
+@media(max-width:720px){.profile-view{padding:20px 0 48px;}.pform{padding:18px;}}
+
 /* ============================ FOOTER ============================ */
 .foot{border-top:1px solid var(--line);background:var(--paper);margin-top:24px;}
 .foot-in{display:flex;align-items:flex-start;justify-content:space-between;gap:44px 32px;padding-top:56px;padding-bottom:48px;flex-wrap:wrap;}
@@ -594,6 +626,9 @@ a.evrow:hover{border-color:var(--ink);box-shadow:var(--shadow-sm);}
       <span class="sep"></span>
       <input id="q" type="text" placeholder="Search a sport, program or provider" aria-label="Search programs">
     </div>
+    <button class="hdr-profile" id="profileBtn" data-section="profile" aria-label="Your profile">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21a8 8 0 0 0-16 0"/><circle cx="12" cy="7" r="4"/></svg>
+    </button>
   </div>
 </header>
 
@@ -625,7 +660,7 @@ a.evrow:hover{border-color:var(--ink);box-shadow:var(--shadow-sm);}
       <div class="foot-links">
         <div class="foot-col"><h4>Explore</h4><a href="#" data-home>Discover</a><a href="/maps" data-mapx>Map view</a><a href="#" data-section="database">Browse all</a><a href="#" data-section="events">Events</a><a href="#" data-browse-sport>Browse by sport</a><a href="#" data-db-link="grants">Funding</a></div>
         <div class="foot-col"><h4>Programs</h4><a href="#" data-gate-open="program">Add a program</a><a href="#" data-gate-open="program">Update a listing</a></div>
-        <div class="foot-col"><h4>About</h4><a href="#" data-about="project">The project</a><a href="#" data-about="verify">How we verify</a><a href="#" data-about="a11y">Accessibility</a><a href="https://sign.adapttolife.org/waiver?source=asnm">Sign waiver</a></div>
+        <div class="foot-col"><h4>About</h4><a href="#" data-about="project">The project</a><a href="#" data-about="verify">How we verify</a><a href="#" data-about="a11y">Accessibility</a><a href="#" data-section="profile">Your profile</a><a href="https://sign.adapttolife.org/waiver?source=asnm">Sign waiver</a></div>
       </div>
     </div>
   </div>
@@ -839,8 +874,11 @@ function esc(s){ return s==null?s:String(s).replace(/&/g,'&amp;').replace(/</g,'
 /* ============================ STATE + HELPERS ============================ */
 let DATA_LIVE=false; // flips true once /api/programs hydrates the real directory
 let SITE_EVENTS=[]; // upcoming public events, filled from /api/events (empty until hydrated)
+let PROFILE=null; // { id, email, name, state, sports, newsletter, favorites } once signed in, filled from /api/profile
 const BOOT_MAPX=location.pathname==='/maps'; // captured before any render can rewrite the URL
-const state = { section:"discover", layout:"grid", sport:"all", q:"", dist:"any", cost:"any", level:"any", filtersOpen:false, sort:"rec", db:"programs", dbView:"gallery", programId:null, loc:"Denver, CO", see:null };
+const BOOT_PROFILE=location.pathname==='/profile'; // /profile is the profile section's real URL, same mechanism
+const US_STATES=["AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID","IL","IN","IA","KS","KY","LA","ME","MD","MA","MI","MN","MS","MO","MT","NE","NV","NH","NJ","NM","NY","NC","ND","OH","OK","OR","PA","RI","SC","SD","TN","TX","UT","VT","VA","WA","WV","WI","WY","DC"];
+const state = { section:"discover", layout:"grid", sport:"all", q:"", dist:"any", cost:"any", level:"any", filtersOpen:false, sort:"rec", db:"programs", dbView:"gallery", programId:null, loc:"Denver, CO", see:null, profileNudge:false };
 const saved = new Set();
 function nd(s){ return (s||'').replace(/[\u2013\u2014]/g,' to '); }
 function statusCls(s){ return s==='Open'?'st-open':s==='Waitlist'?'st-wait':'st-seas'; }
@@ -1283,6 +1321,9 @@ function programReal(p){
   const pos=geoPos(p);
   // stylised terrain is the placeholder; afterRender() swaps in a real MapLibre minimap when geo exists
   const locard='<div class="rcard locard"><p class="eyebrow">Location</p><div class="minimap" id="minimap"><div class="terrain"></div><div class="mk2"'+(pos?' style="left:'+pos.x+'%;top:'+pos.y+'%;"':'')+'>'+NAVICON.pin+'</div></div><div class="locrow"><span>'+loc+'</span>'+(p.geoPrecision==='state'?'<span class="fm" style="color:var(--muted);font-size:12px;">state-level</span>':'')+'</div></div>';
+  // "Save this program" — the program detail view only, never on directory/list cards.
+  const isSaved=!!(PROFILE&&PROFILE.favorites&&PROFILE.favorites.some(f=>f.id===p.id));
+  const saveBtn='<button type="button" class="save-btn'+(isSaved?' on':'')+'" data-savebtn="'+p.id+'" aria-pressed="'+isSaved+'">'+HEART+'<span>'+(isSaved?'Saved':'Save this program')+'</span></button>';
   return '<div class="wrap">'
     +'<div class="crumb"><a href="#" data-home>Home</a><span class="sl">/</span>'+(p.sport?'<a href="#" data-sport-link="'+p.sport+'">'+p.sportLabel+'</a>':'<span>'+p.sportLabel+'</span>')+'<span class="sl">/</span><b>'+p.name+'</b></div>'
     +hero
@@ -1300,6 +1341,7 @@ function programReal(p){
       +'</div>'
       +'<aside class="rail">'
         +contact
+        +saveBtn
         +provided
         +locard
         +'<div class="rcard fund"><p class="eyebrow">Funding that fits</p>'+GRANTS.slice(0,3).map(g=>'<div class="fitem"><div class="fn">'+g.name+'</div><div class="fm">'+g.meta+'</div></div>').join('')+'</div>'
@@ -1425,6 +1467,73 @@ function eventsView(){
     +body+'</div>';
 }
 
+/* ============================ RENDER: PROFILE ============================ */
+// No passwords, no walls — a profile is claimed by a signed cookie set at
+// /api/profile. PROFILE is null until GET /api/profile hydrates it (or after
+// sign-out); esc() guards every field even though it is the person's own data,
+// same boundary rule as everything else rendered via innerHTML.
+function profileStateOptions(selected){
+  return '<option value="">Choose a state</option>'
+    +US_STATES.map(s=>'<option value="'+s+'"'+(selected===s?' selected':'')+'>'+s+'</option>').join('');
+}
+function profileSportChips(selectedKeys){
+  return SPORTS.map(s=>'<button type="button" class="chip'+((selectedKeys||[]).includes(s.key)?' on':'')+'" data-psport="'+s.key+'">'+esc(s.label)+'</button>').join('');
+}
+function profileCreateForm(){
+  const nudge=state.profileNudge?'<p class="pnudge">Create a free profile to save this program to your list.</p>':'';
+  return '<div class="wrap"><nav class="crumb"><a href="#" data-home>Home</a><span class="sl">/</span><b>Profile</b></nav>'
+    +'<div class="profile-view"><div class="pform">'
+    +'<h1>Create your profile</h1><p class="lede">Save programs, set your sports and state, and hear about new ones. No password, ever.</p>'
+    +nudge
+    +'<form id="profileForm" novalidate>'
+      +'<input class="hp" type="text" name="company" tabindex="-1" autocomplete="off" aria-hidden="true">'
+      +'<div class="gfield"><label for="pfName">Name</label><input id="pfName" type="text" name="name" autocomplete="name"></div>'
+      +'<div class="gfield"><label for="pfEmail">Email</label><input id="pfEmail" type="email" name="em" placeholder="you@email.com" autocomplete="email" required></div>'
+      +'<div class="gfield"><label for="pfState">State</label><select id="pfState" name="state">'+profileStateOptions('')+'</select></div>'
+      +'<div class="gfield"><label>Sports you care about</label><div class="psports" id="pfSports">'+profileSportChips([])+'</div><input type="hidden" name="sports" value=""></div>'
+      +'<div class="pcheck"><input id="pfNews" type="checkbox" name="newsletter"><label for="pfNews">Email me new programs and funding near me</label></div>'
+      +'<div class="cf-turnstile" data-sitekey="0x4AAAAAADr2WPepRgjp8g-R" data-appearance="interaction-only" style="margin-top:16px;"></div>'
+      +'<button class="gate-cta" type="submit" style="margin-top:14px;">Create profile</button>'
+      +'<div class="gate-msg" id="profileMsg" aria-live="polite"></div>'
+    +'</form></div></div></div>';
+}
+function profileEditView(){
+  const favCards=(PROFILE.favorites&&PROFILE.favorites.length)
+    ? PROFILE.favorites.map(f=>{
+        const label=(SPORTS.find(s=>s.key===f.sport)||{}).label||'Multi-Sport';
+        const loc=[f.city,f.state].filter(Boolean).join(', ');
+        return '<div class="pcard" data-prog="'+esc(f.id)+'"><div class="pcard-media '+(f.sport?'has-photo':(SPGRAD[f.sport]||'g-sand'))+'">'
+          +(f.sport?'<img class="pcard-img" src="'+photoSrc(f.sport)+'" alt="">':(ringBg('ringbg')+CHAIR_GLY))
+          +'</div><div class="pcard-body"><div class="pcard-sport">'+esc(label)+'</div><div class="pcard-name">'+esc(f.name)+'</div>'
+          +(loc?'<div class="pcard-prov">'+esc(loc)+'</div>':'')+'</div></div>';
+      }).join('')
+    : '<p class="lede">No saved programs yet. Open any program and tap "Save this program."</p>';
+  return '<div class="wrap"><nav class="crumb"><a href="#" data-home>Home</a><span class="sl">/</span><b>Profile</b></nav>'
+    +'<div class="profile-view">'
+    +'<div class="profile-summary"><div><h1>'+(esc(PROFILE.name)||'Your profile')+'</h1><div class="muted">'+esc(PROFILE.email)+'</div></div>'
+    +'<button class="ghost" id="pfSignout" type="button" style="width:auto;padding:0 18px;">Sign out</button></div>'
+    +'<div class="pform">'
+    +'<form id="profileEditForm" novalidate>'
+      +'<input class="hp" type="text" name="company" tabindex="-1" autocomplete="off" aria-hidden="true">'
+      +'<div class="gfield"><label for="peName">Name</label><input id="peName" type="text" name="name" value="'+esc(PROFILE.name)+'" autocomplete="name"></div>'
+      +'<div class="gfield"><label for="peEmail">Email</label><input id="peEmail" type="email" name="em" value="'+esc(PROFILE.email)+'" autocomplete="email" required></div>'
+      +'<div class="gfield"><label for="peState">State</label><select id="peState" name="state">'+profileStateOptions(PROFILE.state)+'</select></div>'
+      +'<div class="gfield"><label>Sports you care about</label><div class="psports" id="peSports">'+profileSportChips(PROFILE.sports)+'</div><input type="hidden" name="sports" value="'+esc((PROFILE.sports||[]).join(','))+'"></div>'
+      +'<div class="pcheck"><input id="peNews" type="checkbox" name="newsletter"'+(PROFILE.newsletter?' checked':'')+'><label for="peNews">Email me new programs and funding near me</label></div>'
+      +'<div class="cf-turnstile" data-sitekey="0x4AAAAAADr2WPepRgjp8g-R" data-appearance="interaction-only" style="margin-top:16px;"></div>'
+      +'<button class="gate-cta" type="submit" style="margin-top:14px;">Save changes</button>'
+      +'<div class="gate-msg" id="profileEditMsg" aria-live="polite"></div>'
+    +'</form></div>'
+    +'<h2 class="sect-h" style="margin-top:28px;">Saved programs</h2>'
+    +'<div class="psaved">'+favCards+'</div>'
+    +'</div></div>';
+}
+function profile(){
+  const html = PROFILE ? profileEditView() : profileCreateForm();
+  state.profileNudge=false; // one-shot — shown once, then cleared
+  return html;
+}
+
 /* ============================ MAIN RENDER ============================ */
 function render(keepScroll){
   const v=document.getElementById('view');
@@ -1432,6 +1541,7 @@ function render(keepScroll){
   else if(state.section==='program') v.innerHTML=program();
   else if(state.section==='mapx') v.innerHTML=mapExplorer();
   else if(state.section==='events') v.innerHTML=eventsView();
+  else if(state.section==='profile') v.innerHTML=profile();
   else v.innerHTML=discover();
   if(!keepScroll && state.section!=='program'){ try{ window.scrollTo(0,0); }catch(e){} }
   const hq=document.getElementById('q'); if(hq) hq.value=state.q;
@@ -1442,6 +1552,7 @@ function render(keepScroll){
     else if(state.section!=='mapx'&&location.pathname==='/maps') history.replaceState({},'','/');
   }catch(_){ }
   updateHeaderSearch();
+  syncProfileBtn();
   afterRender();
 }
 
@@ -1668,6 +1779,70 @@ document.getElementById('programForm').addEventListener('submit',async function(
   else{ btn.disabled=false; btn.textContent=lbl; msg.textContent=res.error||'Something went wrong. Please try again.'; msg.className='gate-msg err'; }
 });
 
+/* ============================ PROFILE FORMS ============================ */
+// The profile view is rebuilt on every render(), so its forms/buttons are bound
+// through delegation on document rather than a one-time getElementById listener
+// (which would go stale the moment #view is replaced).
+document.addEventListener('click', function(e){
+  const c=e.target.closest('[data-psport]');
+  if(!c) return;
+  const wrap=c.closest('.psports'); if(!wrap) return;
+  e.preventDefault();
+  c.classList.toggle('on');
+  const form=c.closest('form');
+  const hidden=form&&form.querySelector('input[name="sports"]');
+  if(hidden) hidden.value=Array.from(wrap.querySelectorAll('[data-psport].on')).map(b=>b.getAttribute('data-psport')).join(',');
+});
+document.addEventListener('submit', async function(e){
+  const form=e.target;
+  if(form.id!=='profileForm'&&form.id!=='profileEditForm') return;
+  e.preventDefault();
+  const isCreate=form.id==='profileForm';
+  const msg=document.getElementById(isCreate?'profileMsg':'profileEditMsg');
+  msg.textContent=''; msg.className='gate-msg';
+  const em=(form.em.value||'').trim();
+  if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)){ msg.textContent='Please enter a valid email.'; msg.className='gate-msg err'; return; }
+  const btn=form.querySelector('.gate-cta'); btn.disabled=true; const lbl=btn.textContent; btn.textContent=isCreate?'Creating...':'Saving...';
+  const res=await postForm('/api/profile',form);
+  btn.disabled=false; btn.textContent=lbl;
+  if(res.ok){ await hydrateProfile(); state.profileNudge=false; render(); }
+  else{ msg.textContent=res.error||'Something went wrong. Please try again.'; msg.className='gate-msg err'; }
+});
+document.addEventListener('click', function(e){
+  if(e.target.id!=='pfSignout') return;
+  e.preventDefault();
+  fetch('/api/profile/signout',{method:'POST',credentials:'same-origin'}).catch(()=>{}).then(()=>{ PROFILE=null; render(); });
+});
+/* "Save this program" — program detail view only, never on directory/list cards. */
+document.addEventListener('click', async function(e){
+  const sb=e.target.closest('[data-savebtn]');
+  if(!sb) return;
+  e.preventDefault();
+  if(!PROFILE){ state.section='profile'; state.programId=null; state.profileNudge=true; render(); return; }
+  const orgId=sb.getAttribute('data-savebtn');
+  const on=!sb.classList.contains('on');
+  sb.disabled=true;
+  let r=null;
+  try{
+    const resp=await fetch('/api/profile/favorites',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify({org_id:orgId,on})});
+    r=await resp.json().catch(()=>null);
+  }catch(_){ r=null; }
+  sb.disabled=false;
+  if(r&&r.ok){
+    if(on){
+      if(!PROFILE.favorites.some(f=>f.id===orgId)){
+        const p=PROGRAMS.find(x=>x.id===orgId);
+        PROFILE.favorites.push({id:orgId,name:p?p.name:orgId,sport:p?p.sport:null,city:p?p.city:null,state:p?p.state:null});
+      }
+    } else {
+      PROFILE.favorites=PROFILE.favorites.filter(f=>f.id!==orgId);
+    }
+    sb.classList.toggle('on',on);
+    sb.setAttribute('aria-pressed',String(on));
+    const lbl=sb.querySelector('span'); if(lbl) lbl.textContent=on?'Saved':'Save this program';
+  }
+});
+
 /* footer subscribe -> real beehiiv */
 document.addEventListener('click', function(e){
   const sb=e.target.closest('[data-subscribe-go]'); if(!sb) return;
@@ -1685,6 +1860,9 @@ document.addEventListener('click', function(e){
     }).catch(()=>{ sb.disabled=false; sb.textContent='Subscribe'; });
 });
 
+// /profile is a real feature (not gated behind live directory data like /maps), so
+// it boots directly into the profile section rather than waiting on hydrate().
+if(BOOT_PROFILE) state.section='profile';
 render();
 
 /* ============================ LIVE DATA HYDRATION ============================ */
@@ -1747,6 +1925,25 @@ function mapEvent(e){
     SITE_EVENTS.length=0; Array.prototype.push.apply(SITE_EVENTS, j.items.map(mapEvent));
     if(state.section==='events') render(true);
   }catch(_){ /* keep the empty state — the subscribe links still work */ }
+})();
+
+/* ============================ PROFILE ============================ */
+// GET /api/profile once at boot (mirrors hydrateEvents' pattern). 401 (signed
+// out) and 503 (secret/binding not configured) both degrade to "no profile" —
+// silently, never a broken page.
+function syncProfileBtn(){ const b=document.getElementById('profileBtn'); if(b) b.classList.toggle('has-profile', !!PROFILE); }
+async function hydrateProfile(){
+  try{
+    const r=await fetch('/api/profile',{credentials:'same-origin'});
+    if(r.status===401||r.status===503){ PROFILE=null; return; }
+    const j=await r.json().catch(()=>null);
+    PROFILE=(j&&j.ok&&j.profile)?j.profile:null;
+  }catch(_){ PROFILE=null; }
+}
+(async function bootProfile(){
+  await hydrateProfile();
+  syncProfileBtn();
+  if(state.section==='profile') render(true);
 })();
 
 /* installable app (mobile + desktop) */
