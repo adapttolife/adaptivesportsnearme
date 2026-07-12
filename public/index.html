@@ -1570,6 +1570,16 @@ function renderTurnstiles(){
 }
 window.tsReady=renderTurnstiles;
 
+// Background hydrations re-render the active section via innerHTML — which would
+// wipe anything a person has typed into an in-view form (profile create, most
+// visibly on slow connections or with autofill). Busy = a form field in #view
+// holds user input or focus; hydration renders skip while that's true.
+function viewFormBusy(){
+  const v=document.getElementById('view'); if(!v) return false;
+  if(document.activeElement&&v.contains(document.activeElement)&&/^(INPUT|SELECT|TEXTAREA)$/.test(document.activeElement.tagName)) return true;
+  return Array.from(v.querySelectorAll('input,textarea')).some(el=>el.type!=='hidden'&&el.type!=='checkbox'&&el.value!=='');
+}
+
 // Reflect state on the existing controls (active chip etc.) without rebuilding them,
 // so the sticky category bar and its 3D icons never reload — no flash.
 function syncControls(){
@@ -1917,13 +1927,13 @@ function mapOrg(o){
     DATA_LIVE=true;
     // landing on /maps boots straight into the explorer (live, ungated only)
     if(BOOT_MAPX&&!PRELAUNCH){ state.section='mapx'; }
-    render(true);
+    if(!viewFormBusy()) render(true);
     const offs=[]; for(let o=200;o<Math.min(first.total,5000);o+=200) offs.push(o);
     const pages=await Promise.all(offs.map(o=>fetch('/api/programs?limit=200&offset='+o).then(r=>r.json()).catch(()=>null)));
     for(const page of pages){ if(page&&page.ok&&page.items.length) Array.prototype.push.apply(PROGRAMS, page.items.map(mapOrg)); }
     const tm=TABLE_META.find(t=>t.key==='programs'); if(tm) tm.count=PROGRAMS.length;
     const lt=document.getElementById('locTxt'); if(lt) lt.textContent='United States';
-    render(true);
+    if(!viewFormBusy()) render(true);
   }catch(_){ /* keep the sample — never a broken page */ }
 })();
 
@@ -1958,7 +1968,7 @@ async function hydrateProfile(){
 (async function bootProfile(){
   await hydrateProfile();
   syncProfileBtn();
-  if(state.section==='profile') render(true);
+  if(state.section==='profile'&&!viewFormBusy()) render(true);
 })();
 
 /* installable app (mobile + desktop) */
