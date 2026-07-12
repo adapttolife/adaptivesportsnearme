@@ -33,4 +33,7 @@ echo "$events" | grep -q '"ok":true' || { echo "FAIL: /api/events not ok" >&2; e
 ics=$(curl -s "$url/events.ics")
 echo "  /events.ics -> $(echo "$ics" | head -c 40)..."
 echo "$ics" | grep -q 'BEGIN:VCALENDAR' || { echo "FAIL: /events.ics missing BEGIN:VCALENDAR" >&2; exit 1; }
+blog_code=$(curl -s -o /dev/null -w '%{http_code}' "$url/blog")
+echo "  /blog -> $blog_code"
+[ "$blog_code" = "200" ] || { echo "FAIL: /blog not 200" >&2; exit 1; }
 echo "OK: $target deployed and healthy"

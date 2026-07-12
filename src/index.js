@@ -14,6 +14,8 @@
 //   GET  /api/profile          -> the signed-in profile + saved programs
 //   POST /api/profile/favorites-> save/unsave a program
 //   POST /api/profile/signout  -> clear the profile cookie
+//   GET  /blog                 -> beehiiv-backed blog index (server-rendered HTML, SEO)
+//   GET  /blog/:slug           -> beehiiv-backed blog post (server-rendered HTML, SEO)
 //   *    /api/admin/*          -> review queue + lane triggers (ADMIN_KEY bearer)
 // All secrets stay server-side (Worker secrets). Bot defence: honeypot + optional Turnstile.
 
@@ -27,9 +29,14 @@ import {
   getValidSportKeys, getProfileById, getProfileByEmail, createProfile, updateProfile,
   getProfileWithFavorites, orgExists, setFavorite, validState, parseSports,
 } from "./profile.js";
+import {
+  listPosts, getPostBySlug, blogIndexTemplate, blogPostTemplate, blogFallbackTemplate, blogNotFoundTemplate,
+} from "./blog.js";
 
 const API_CACHE = "public, max-age=300, stale-while-revalidate=600";
 const FEED_CACHE = "public, max-age=300";
+const BLOG_PAGE_CACHE = "public, max-age=300";
+const BLOG_FALLBACK_CACHE = "public, max-age=60"; // short — self-heals fast once beehiiv/secrets are back
 
 // Single source for cron -> lane routing; must list every schedule in
 // wrangler.jsonc triggers. Unknown crons error loudly instead of misrouting.
@@ -104,6 +111,15 @@ export default {
     }
     if (url.pathname.startsWith("/api/admin/") && env.DB) {
       return handleAdmin(request, env, url);
+    }
+
+    // Blog — server-rendered (SEO), not a SPA branch. Beehiiv is the CMS.
+    if (url.pathname === "/blog" || url.pathname === "/blog/") {
+      return handleBlogIndex(url, env);
+    }
+    const blogSlug = url.pathname.match(/^\/blog\/([^/]+)$/);
+    if (blogSlug) {
+      return handleBlogPost(url, env, decodeURIComponent(blogSlug[1]));
     }
 
     // /maps is the map explorer's real URL — same app, booted into the map.
@@ -415,6 +431,32 @@ function handleProfileSignout() {
     status: 200,
     headers: { "Content-Type": "application/json", "Cache-Control": "no-store", "Set-Cookie": clearProfileCookie() },
   });
+}
+
+// ---- Blog (Beehiiv is the CMS) -----------------------------------------------
+async function handleBlogIndex(url, env) {
+  const site = url.origin;
+  try {
+    const result = await listPosts(env);
+    if (!result.ok) return text(blogFallbackTemplate({ site }), 200, "text/html; charset=utf-8", BLOG_FALLBACK_CACHE);
+    return text(blogIndexTemplate(result.posts, { site }), 200, "text/html; charset=utf-8", BLOG_PAGE_CACHE);
+  } catch (err) {
+    console.error("blog index failed:", err);
+    return text(blogFallbackTemplate({ site }), 200, "text/html; charset=utf-8", BLOG_FALLBACK_CACHE);
+  }
+}
+
+async function handleBlogPost(url, env, slug) {
+  const site = url.origin;
+  try {
+    const result = await getPostBySlug(env, slug);
+    if (result.notFound) return text(blogNotFoundTemplate({ site }), 404, "text/html; charset=utf-8", BLOG_FALLBACK_CACHE);
+    if (!result.ok) return text(blogFallbackTemplate({ site }), 200, "text/html; charset=utf-8", BLOG_FALLBACK_CACHE);
+    return text(blogPostTemplate(result.post, { site }), 200, "text/html; charset=utf-8", BLOG_PAGE_CACHE);
+  } catch (err) {
+    console.error("blog post failed:", err);
+    return text(blogFallbackTemplate({ site }), 200, "text/html; charset=utf-8", BLOG_FALLBACK_CACHE);
+  }
 }
 
 // ---- helpers ----------------------------------------------------------------

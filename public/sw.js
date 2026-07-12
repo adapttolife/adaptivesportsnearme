@@ -3,7 +3,7 @@
 // returning visitors immediately and the last-seen page/directory still renders
 // offline. Immutable static assets (photos, icons, fonts): cache-first.
 // POST endpoints and /api/admin are never cached.
-const VERSION = "asnm-v4";
+const VERSION = "asnm-v5";
 
 self.addEventListener("install", (e) => {
   e.waitUntil(caches.open(VERSION).then((c) => c.addAll(["/", "/manifest.json", "/favicon.svg", "/icon-192.png"])).then(() => self.skipWaiting()));
