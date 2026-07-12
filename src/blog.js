@@ -315,7 +315,7 @@ ${posts.length
     ? `<div class="blog-grid">${posts.map((p) => postCardHtml(p, site)).join("")}</div>`
     : `<p class="blog-empty">Stories are on the way. Check back soon.</p>`}`;
   return pageShell({
-    title: "Blog — Adaptive Sports Near Me",
+    title: "Blog · Adaptive Sports Near Me",
     description: "Stories, updates and guides from the adaptive sports community.",
     canonical: `${site}/blog`,
     ogImage: `${site}/og-image.jpg`,
@@ -347,7 +347,7 @@ export function blogPostTemplate(post, { site = SITE } = {}) {
   <div class="blog-body">${post.bodyHtml || ""}</div>
 </article>`;
   return pageShell({
-    title: `${post.title} — Adaptive Sports Near Me`,
+    title: `${post.title} · Adaptive Sports Near Me`,
     description,
     canonical,
     ogImage,
@@ -361,7 +361,7 @@ export function blogFallbackTemplate({ site = SITE } = {}) {
 <h1 class="blog-h1">Stories are on the way</h1>
 <p class="blog-empty">We're getting the blog set up. Check back soon, or head back to <a href="/">the directory</a>.</p>`;
   return pageShell({
-    title: "Blog — Adaptive Sports Near Me",
+    title: "Blog · Adaptive Sports Near Me",
     description: "Stories, updates and guides from the adaptive sports community.",
     canonical: `${site}/blog`,
     ogImage: `${site}/og-image.jpg`,
@@ -374,7 +374,7 @@ export function blogNotFoundTemplate({ site = SITE } = {}) {
 <h1 class="blog-h1">Story not found</h1>
 <p class="blog-empty">That story may have moved or been unpublished. <a href="/blog">See all stories</a>.</p>`;
   return pageShell({
-    title: "Story not found — Adaptive Sports Near Me",
+    title: "Story not found · Adaptive Sports Near Me",
     description: "That story may have moved or been unpublished.",
     canonical: `${site}/blog`,
     ogImage: `${site}/og-image.jpg`,
