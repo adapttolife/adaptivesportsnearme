@@ -126,8 +126,9 @@ export default {
     if (url.pathname === "/maps" || url.pathname === "/maps/") {
       return env.ASSETS.fetch(new Request(new URL("/", url), request));
     }
-    // /profile is the profile section's real URL — same mechanism as /maps.
-    if (url.pathname === "/profile" || url.pathname === "/profile/") {
+    // /profile and /events are real URLs for their sections — same mechanism as
+    // /maps. /events is also where the RSS feed's item links land.
+    if (/^\/(profile|events)\/?$/.test(url.pathname)) {
       return env.ASSETS.fetch(new Request(new URL("/", url), request));
     }
 

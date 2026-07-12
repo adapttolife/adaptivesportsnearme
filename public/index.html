@@ -877,6 +877,7 @@ let SITE_EVENTS=[]; // upcoming public events, filled from /api/events (empty un
 let PROFILE=null; // { id, email, name, state, sports, newsletter, favorites } once signed in, filled from /api/profile
 const BOOT_MAPX=location.pathname==='/maps'; // captured before any render can rewrite the URL
 const BOOT_PROFILE=location.pathname==='/profile'; // /profile is the profile section's real URL, same mechanism
+const BOOT_EVENTS=location.pathname==='/events'; // /events too — it's where the RSS feed's item links land
 const US_STATES=["AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID","IL","IN","IA","KS","KY","LA","ME","MD","MA","MI","MN","MS","MO","MT","NE","NV","NH","NJ","NM","NY","NC","ND","OH","OK","OR","PA","RI","SC","SD","TN","TX","UT","VT","VA","WA","WV","WI","WY","DC"];
 const state = { section:"discover", layout:"grid", sport:"all", q:"", dist:"any", cost:"any", level:"any", filtersOpen:false, sort:"rec", db:"programs", dbView:"gallery", programId:null, loc:"Denver, CO", see:null, profileNudge:false };
 const saved = new Set();
@@ -1863,6 +1864,7 @@ document.addEventListener('click', function(e){
 // /profile is a real feature (not gated behind live directory data like /maps), so
 // it boots directly into the profile section rather than waiting on hydrate().
 if(BOOT_PROFILE) state.section='profile';
+if(BOOT_EVENTS) state.section='events';
 render();
 
 /* ============================ LIVE DATA HYDRATION ============================ */
