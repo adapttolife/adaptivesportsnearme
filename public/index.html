@@ -23,7 +23,7 @@
 <meta name="twitter:title" content="Adaptive Sports Near Me">
 <meta name="twitter:description" content="A free, national directory of adaptive sports programs, events, and funding. No login, no walls.">
 <meta name="twitter:image" content="https://adaptivesportsnearme.com/og-image.jpg">
-<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js?onload=tsReady" async defer></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1554,8 +1554,21 @@ function render(keepScroll){
   }catch(_){ }
   updateHeaderSearch();
   syncProfileBtn();
+  renderTurnstiles();
   afterRender();
 }
+
+// Turnstile auto-renders only widgets present at script load; sections injected
+// by render() (profile forms) need an explicit pass. Idempotent: skips widgets
+// that already hold their iframe. tsReady covers the script finishing after the
+// first render (it's async defer).
+function renderTurnstiles(){
+  if(!window.turnstile) return;
+  document.querySelectorAll('#view .cf-turnstile').forEach(el=>{
+    if(el.childElementCount===0){ try{ turnstile.render(el); }catch(_){ } }
+  });
+}
+window.tsReady=renderTurnstiles;
 
 // Reflect state on the existing controls (active chip etc.) without rebuilding them,
 // so the sticky category bar and its 3D icons never reload — no flash.

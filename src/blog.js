@@ -74,7 +74,10 @@ async function tryStale(cache, staleKey) {
 // upstream/cache failures come back as { ok: false }, the caller renders the
 // fallback page.
 export async function listPosts(env) {
-  if (!env.BEEHIIV_PUBLICATION_ID) return { ok: false, posts: [], stale: false };
+  if (!env.BEEHIIV_PUBLICATION_ID) {
+    console.error("beehiiv not configured (missing or empty publication id)"); // never fail silent
+    return { ok: false, posts: [], stale: false };
+  }
   const url = `https://api.beehiiv.com/v2/publications/${env.BEEHIIV_PUBLICATION_ID}/posts` +
     `?status=confirmed&order_by=publish_date&direction=desc&limit=20`;
   const result = await cachedFetch(env, url, "list:1");
