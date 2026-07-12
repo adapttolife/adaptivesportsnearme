@@ -27,4 +27,10 @@ echo "$cfg" | grep -q '"ok":true' || { echo "FAIL: /api/config not ok" >&2; exit
 progs=$(curl -s "$url/api/programs?limit=1")
 echo "  /api/programs?limit=1 -> $(echo "$progs" | head -c 120)..."
 echo "$progs" | grep -q '"ok":true' || { echo "FAIL: /api/programs not ok" >&2; exit 1; }
+events=$(curl -s "$url/api/events")
+echo "  /api/events -> $(echo "$events" | head -c 120)..."
+echo "$events" | grep -q '"ok":true' || { echo "FAIL: /api/events not ok" >&2; exit 1; }
+ics=$(curl -s "$url/events.ics")
+echo "  /events.ics -> $(echo "$ics" | head -c 40)..."
+echo "$ics" | grep -q 'BEGIN:VCALENDAR' || { echo "FAIL: /events.ics missing BEGIN:VCALENDAR" >&2; exit 1; }
 echo "OK: $target deployed and healthy"

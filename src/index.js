@@ -7,15 +7,20 @@
 //   GET  /api/programs         -> directory list (sport/state/q filters, paged)
 //   GET  /api/orgs/:id         -> one org with source provenance
 //   GET  /api/stats            -> counts by sport/state
+//   GET  /api/events           -> upcoming public events (json)
+//   GET  /events.xml           -> the same feed as RSS 2.0
+//   GET  /events.ics           -> the same feed as an iCalendar subscription
 //   *    /api/admin/*          -> review queue + lane triggers (ADMIN_KEY bearer)
 // All secrets stay server-side (Worker secrets). Bot defence: honeypot + optional Turnstile.
 
 import { listPrograms, getOrg, stats } from "./data.js";
+import { listEvents, eventsToRss, eventsToIcs } from "./events.js";
 import { handleAdmin } from "./admin.js";
 import { runLane } from "./pipeline.js";
-import { json } from "./http.js";
+import { json, text } from "./http.js";
 
 const API_CACHE = "public, max-age=300, stale-while-revalidate=600";
+const FEED_CACHE = "public, max-age=300";
 
 // Single source for cron -> lane routing; must list every schedule in
 // wrangler.jsonc triggers. Unknown crons error loudly instead of misrouting.
@@ -58,6 +63,17 @@ export default {
         }
         if (url.pathname === "/api/stats") {
           return json({ ok: true, ...(await stats(env.DB)) }, 200, API_CACHE);
+        }
+        if (url.pathname === "/api/events") {
+          return json({ ok: true, ...(await listEvents(env.DB, url.searchParams)) }, 200, API_CACHE);
+        }
+        if (url.pathname === "/events.xml") {
+          const { items } = await listEvents(env.DB, url.searchParams);
+          return text(eventsToRss(items, url.origin), 200, "application/rss+xml; charset=utf-8", FEED_CACHE);
+        }
+        if (url.pathname === "/events.ics") {
+          const { items } = await listEvents(env.DB, url.searchParams);
+          return text(eventsToIcs(items), 200, "text/calendar; charset=utf-8", FEED_CACHE);
         }
       } catch (err) {
         console.error("data api error:", err);

@@ -19,9 +19,20 @@ const NEW_ORG_WHITELIST = new Set([
   "cost_note", "ages", "lat", "lng", "geo_precision",
 ]);
 
+// Fields an event may be created/updated with — mirrors db/migrations/0003_next_level.sql
+// minus id/source/created_at/updated_at, which are set by this file, not the caller.
+const EVENT_WHITELIST = new Set([
+  "title", "description", "org_id", "sport_key", "venue", "city", "state",
+  "url", "starts_at", "ends_at", "all_day", "status", "is_public",
+]);
+
 // D1 binds scalars only — stringify anything array/object shaped.
 function bindValue(v) {
   return v && typeof v === "object" ? JSON.stringify(v) : v;
+}
+
+function str(v, max = 2000) {
+  return (typeof v === "string" ? v : "").trim().slice(0, max);
 }
 
 const QUEUE_ITEM_SELECT =
@@ -200,6 +211,66 @@ export async function handleAdmin(request, env, url) {
       unclassified_sample: unclassifiedSample.results,
       unclassified_total: unclassifiedTotal?.n ?? 0,
     });
+  }
+
+  // ---- events (admin CRUD — full list incl. past/cancelled, unlike /api/events) ----
+  if (path === "/events" && request.method === "GET") {
+    const { results } = await db.prepare(`SELECT * FROM events ORDER BY starts_at DESC LIMIT 500`).all();
+    return json({ ok: true, events: results });
+  }
+
+  if (path === "/events" && request.method === "POST") {
+    const body = await request.json().catch(() => ({}));
+    const title = str(body.title, 200);
+    if (!title) return json({ ok: false, error: "title is required" }, 422);
+    const startsAt = str(body.starts_at);
+    if (!startsAt || isNaN(Date.parse(startsAt))) {
+      return json({ ok: false, error: "starts_at must be a valid ISO date" }, 422);
+    }
+    if (body.ends_at && isNaN(Date.parse(str(body.ends_at)))) {
+      return json({ ok: false, error: "ends_at must be a valid ISO date" }, 422);
+    }
+
+    const now = new Date().toISOString();
+    const id = crypto.randomUUID();
+    const cols = ["id", "title", "starts_at", "created_at", "updated_at"];
+    const vals = [id, title, startsAt, now, now];
+    for (const [field, value] of Object.entries(body)) {
+      if (!EVENT_WHITELIST.has(field) || field === "title" || field === "starts_at") continue;
+      cols.push(field);
+      vals.push(bindValue(value));
+    }
+    await db.prepare(`INSERT INTO events (${cols.join(", ")}) VALUES (${cols.map(() => "?").join(", ")})`).bind(...vals).run();
+    return json({ ok: true, id });
+  }
+
+  const eventMatch = path.match(/^\/events\/([0-9a-f-]{36})$/);
+  if (eventMatch && request.method === "POST") {
+    const body = await request.json().catch(() => ({}));
+    if ("starts_at" in body && isNaN(Date.parse(str(body.starts_at)))) {
+      return json({ ok: false, error: "starts_at must be a valid ISO date" }, 422);
+    }
+    if ("ends_at" in body && body.ends_at && isNaN(Date.parse(str(body.ends_at)))) {
+      return json({ ok: false, error: "ends_at must be a valid ISO date" }, 422);
+    }
+    const sets = [], binds = [];
+    for (const [field, value] of Object.entries(body)) {
+      if (!EVENT_WHITELIST.has(field)) continue;
+      sets.push(`${field} = ?`);
+      binds.push(bindValue(value));
+    }
+    if (!sets.length) return json({ ok: false, error: "No valid fields to update" }, 422);
+    sets.push("updated_at = ?");
+    binds.push(new Date().toISOString(), eventMatch[1]);
+    const result = await db.prepare(`UPDATE events SET ${sets.join(", ")} WHERE id = ?`).bind(...binds).run();
+    if (!result.meta || result.meta.changes === 0) return json({ ok: false, error: "No such event" }, 404);
+    return json({ ok: true, id: eventMatch[1] });
+  }
+
+  if (eventMatch && request.method === "DELETE") {
+    const result = await db.prepare(`DELETE FROM events WHERE id = ?`).bind(eventMatch[1]).run();
+    if (!result.meta || result.meta.changes === 0) return json({ ok: false, error: "No such event" }, 404);
+    return json({ ok: true });
   }
 
   return json({ ok: false, error: "Not found" }, 404);

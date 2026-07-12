@@ -421,6 +421,31 @@ a.cta{text-decoration:none;text-align:center;} /* link-CTAs center exactly like 
 .dbtable tr:last-child td{border-bottom:none;}
 .dbtable .tag{margin:0;}
 
+/* ============================ EVENTS ============================ */
+.ev-head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:14px;padding:20px 0 26px;}
+.ev-head h1{font-family:'DM Sans',sans-serif;font-weight:700;font-size:28px;letter-spacing:-.02em;margin:0;}
+.ev-sub{display:flex;gap:10px;flex-wrap:wrap;}
+.ev-sub-link{display:inline-flex;align-items:center;gap:7px;height:38px;padding:0 14px;border:1px solid var(--line);border-radius:var(--r-full);background:var(--paper);font-size:13px;font-weight:600;color:var(--ink2);transition:.15s;text-decoration:none;}
+.ev-sub-link:hover{border-color:var(--ink);color:var(--ink);}
+.ev-sub-link svg{width:15px;height:15px;color:var(--muted);flex:0 0 auto;}
+.evgroup{margin-bottom:34px;}
+.evmonth{font-family:'DM Sans',sans-serif;font-weight:700;font-size:16px;letter-spacing:-.01em;margin:0 0 12px;color:var(--ink);}
+.evlist{display:flex;flex-direction:column;gap:10px;}
+.evrow{display:flex;align-items:center;gap:16px;padding:14px 16px;background:var(--paper);border:1px solid var(--line);border-radius:var(--r-lg);text-decoration:none;color:inherit;transition:border-color .15s,box-shadow .15s;}
+a.evrow:hover{border-color:var(--ink);box-shadow:var(--shadow-sm);}
+.evdate{display:flex;flex-direction:column;align-items:center;justify-content:center;width:52px;flex:0 0 auto;padding:7px 0;border-radius:var(--r);background:var(--sand);}
+.evmon{font-family:'DM Sans',sans-serif;font-size:11px;letter-spacing:.06em;color:var(--orange-ink);font-weight:700;}
+.evday{font-size:18px;font-weight:700;color:var(--ink);line-height:1.15;}
+.evicon{flex:0 0 auto;width:28px;height:28px;display:flex;align-items:center;justify-content:center;color:var(--muted);}
+.evicon svg{width:22px;height:22px;}
+.evbody{min-width:0;}
+.evtitle{font-weight:600;font-size:15px;color:var(--ink);}
+.evmeta{font-size:13px;color:var(--muted);margin-top:2px;}
+.ev-empty{text-align:center;padding:70px 20px 90px;color:var(--muted);}
+.ev-empty-title{font-size:19px;font-weight:700;color:var(--ink);margin-bottom:8px;}
+.ev-empty p{max-width:44ch;margin:0 auto;line-height:1.5;}
+.ev-empty .ev-sub{justify-content:center;margin-top:20px;}
+
 /* ============================ FOOTER ============================ */
 .foot{border-top:1px solid var(--line);background:var(--paper);margin-top:24px;}
 .foot-in{display:flex;align-items:flex-start;justify-content:space-between;gap:44px 32px;padding-top:56px;padding-bottom:48px;flex-wrap:wrap;}
@@ -544,6 +569,8 @@ a.cta{text-decoration:none;text-align:center;} /* link-CTAs center exactly like 
   .dbtable{overflow-x:auto;-webkit-overflow-scrolling:touch;}
   .dbtable table{min-width:660px;}
   .dbtable th,.dbtable td{white-space:nowrap;}
+  .ev-head{flex-direction:column;align-items:flex-start;gap:12px;}
+  .evrow{gap:12px;padding:12px 14px;}
 }
 @media (prefers-color-scheme: dark){
   :root{color-scheme:light;}
@@ -596,7 +623,7 @@ a.cta{text-decoration:none;text-align:center;} /* link-CTAs center exactly like 
         <p class="tagline">An open directory of adaptive sports programs across the country. No logins, no walls. Built for the community.</p>
       </div>
       <div class="foot-links">
-        <div class="foot-col"><h4>Explore</h4><a href="#" data-home>Discover</a><a href="/maps" data-mapx>Map view</a><a href="#" data-section="database">Browse all</a><a href="#" data-browse-sport>Browse by sport</a><a href="#" data-db-link="grants">Funding</a></div>
+        <div class="foot-col"><h4>Explore</h4><a href="#" data-home>Discover</a><a href="/maps" data-mapx>Map view</a><a href="#" data-section="database">Browse all</a><a href="#" data-section="events">Events</a><a href="#" data-browse-sport>Browse by sport</a><a href="#" data-db-link="grants">Funding</a></div>
         <div class="foot-col"><h4>Programs</h4><a href="#" data-gate-open="program">Add a program</a><a href="#" data-gate-open="program">Update a listing</a></div>
         <div class="foot-col"><h4>About</h4><a href="#" data-about="project">The project</a><a href="#" data-about="verify">How we verify</a><a href="#" data-about="a11y">Accessibility</a><a href="https://sign.adapttolife.org/waiver?source=asnm">Sign waiver</a></div>
       </div>
@@ -811,6 +838,7 @@ function esc(s){ return s==null?s:String(s).replace(/&/g,'&amp;').replace(/</g,'
 
 /* ============================ STATE + HELPERS ============================ */
 let DATA_LIVE=false; // flips true once /api/programs hydrates the real directory
+let SITE_EVENTS=[]; // upcoming public events, filled from /api/events (empty until hydrated)
 const BOOT_MAPX=location.pathname==='/maps'; // captured before any render can rewrite the URL
 const state = { section:"discover", layout:"grid", sport:"all", q:"", dist:"any", cost:"any", level:"any", filtersOpen:false, sort:"rec", db:"programs", dbView:"gallery", programId:null, loc:"Denver, CO", see:null };
 const saved = new Set();
@@ -1363,12 +1391,47 @@ function database(){
     +'<div class="db-main"><div class="db-head"><h1>'+meta.label+' <span class="rec">'+meta.count+' records</span></h1>'+galToggle+'</div>'+body+'</div></div>';
 }
 
+/* ============================ RENDER: EVENTS ============================ */
+function monthLabel(iso){ const d=new Date(iso); return isNaN(d)?'':d.toLocaleDateString('en-US',{month:'long',year:'numeric',timeZone:'UTC'}); }
+function dayChip(iso){ const d=new Date(iso); return isNaN(d)?{mon:'',day:''}:{mon:d.toLocaleDateString('en-US',{month:'short',timeZone:'UTC'}).toUpperCase(),day:String(d.getUTCDate())}; }
+function eventCardHtml(e){
+  const chip=dayChip(e.startsAt);
+  const loc=[e.city,e.state].filter(Boolean).join(', ');
+  const icon=e.sport&&GLYPH[e.sport]?glyph(e.sport,'ev-gly'):NAVICON.cal;
+  const link=e.url?' href="'+e.url+'" target="_blank" rel="noopener"':'';
+  return '<'+(e.url?'a':'div')+' class="evrow"'+link+'>'
+    +'<div class="evdate"><span class="evmon">'+chip.mon+'</span><span class="evday">'+chip.day+'</span></div>'
+    +'<div class="evicon">'+icon+'</div>'
+    +'<div class="evbody"><div class="evtitle">'+e.title+'</div>'+(loc?'<div class="evmeta">'+loc+'</div>':'')+'</div>'
+  +'</'+(e.url?'a':'div')+'>';
+}
+function eventsSubLinks(){
+  return '<div class="ev-sub"><a class="ev-sub-link" href="/events.ics">'+NAVICON.calsm+'<span>Subscribe: Calendar</span></a>'
+    +'<a class="ev-sub-link" href="/events.xml">'+NAVICON.rows+'<span>RSS</span></a></div>';
+}
+function eventsEmpty(){
+  return '<div class="ev-empty"><div class="ev-empty-title">No events scheduled yet</div>'
+    +'<p>Check back soon, or subscribe now so new events land on your calendar the moment they are posted.</p>'
+    +eventsSubLinks()+'</div>';
+}
+function eventsView(){
+  const groups=[]; let cur=null;
+  SITE_EVENTS.forEach(e=>{ const label=monthLabel(e.startsAt); if(!cur||cur.label!==label){ cur={label,items:[]}; groups.push(cur); } cur.items.push(e); });
+  const body=SITE_EVENTS.length
+    ? groups.map(g=>'<div class="evgroup"><h2 class="evmonth">'+g.label+'</h2><div class="evlist">'+g.items.map(eventCardHtml).join('')+'</div></div>').join('')
+    : eventsEmpty();
+  return '<div class="wrap"><nav class="crumb"><a href="#" data-home>Home</a><span class="sl">/</span><b>Events</b></nav>'
+    +'<div class="ev-head"><h1>Upcoming events</h1>'+(SITE_EVENTS.length?eventsSubLinks():'')+'</div>'
+    +body+'</div>';
+}
+
 /* ============================ MAIN RENDER ============================ */
 function render(keepScroll){
   const v=document.getElementById('view');
   if(state.section==='database') v.innerHTML=database();
   else if(state.section==='program') v.innerHTML=program();
   else if(state.section==='mapx') v.innerHTML=mapExplorer();
+  else if(state.section==='events') v.innerHTML=eventsView();
   else v.innerHTML=discover();
   if(!keepScroll && state.section!=='program'){ try{ window.scrollTo(0,0); }catch(e){} }
   const hq=document.getElementById('q'); if(hq) hq.value=state.q;
@@ -1669,6 +1732,21 @@ function mapOrg(o){
     const lt=document.getElementById('locTxt'); if(lt) lt.textContent='United States';
     render(true);
   }catch(_){ /* keep the sample — never a broken page */ }
+})();
+
+// esc(): events are admin-curated, but the same boundary rule applies — never
+// trust a string into innerHTML without escaping it first.
+function mapEvent(e){
+  return { id:e.id, title:esc(e.title), sport:e.sport_key||null,
+    city:esc(e.city)||null, state:esc(e.state)||null, url:esc(e.url)||null, startsAt:e.starts_at };
+}
+(async function hydrateEvents(){
+  try{
+    const j=await fetch('/api/events').then(r=>r.json());
+    if(!j||!j.ok||!Array.isArray(j.items)) return;
+    SITE_EVENTS.length=0; Array.prototype.push.apply(SITE_EVENTS, j.items.map(mapEvent));
+    if(state.section==='events') render(true);
+  }catch(_){ /* keep the empty state — the subscribe links still work */ }
 })();
 
 /* installable app (mobile + desktop) */

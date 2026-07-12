@@ -115,6 +115,30 @@ details.evidence pre{background:var(--mist);border:1px solid var(--line);border-
 /* ---- footer ---- */
 .footer-strip{margin:8px 16px 24px;padding:12px 14px;background:var(--sand);border:1px solid var(--line);
               border-radius:var(--r);font-size:12.5px;color:var(--ink2);text-align:center;}
+
+/* ---- events panel ---- */
+.evpanel{margin:8px 16px 24px;background:var(--paper);border:1px solid var(--line);border-radius:var(--r-lg);
+         box-shadow:var(--shadow-sm);padding:16px;}
+.evpanel-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.evform{display:flex;flex-direction:column;gap:8px;margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid var(--line);}
+.evform input{min-height:42px;border:1px solid var(--line);border-radius:var(--r);padding:0 12px;
+              font-size:14px;background:var(--mist);color:var(--ink);}
+.evform input:focus{outline:2px solid var(--orange);outline-offset:1px;border-color:var(--orange);}
+.evcheck{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink2);}
+.evform-actions{display:flex;gap:10px;}
+.evform-actions button{flex:1;min-height:42px;border-radius:var(--r);font-size:13px;font-weight:700;border:1px solid transparent;}
+.btn-cancel{background:var(--sand);color:var(--ink2);border-color:var(--line);}
+.evlist{display:flex;flex-direction:column;gap:8px;}
+.evitem{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px;
+        border:1px solid var(--line);border-radius:var(--r);}
+.evitem.cancelled{opacity:.55;}
+.evitem-main{min-width:0;}
+.evitem-title{font-weight:600;font-size:14px;}
+.evitem-meta{font-size:12px;color:var(--muted);margin-top:2px;}
+.evitem-meta .status-cancelled{color:var(--red);font-weight:600;}
+.evitem-actions{display:flex;gap:6px;flex:0 0 auto;}
+.evitem-actions button{min-height:36px;padding:0 10px;border-radius:var(--r-sm);font-size:12px;font-weight:600;
+                        border:1px solid var(--line);background:var(--sand);color:var(--ink2);}
 </style>
 </head>
 <body>
@@ -149,6 +173,28 @@ details.evidence pre{background:var(--mist);border:1px solid var(--line);border-
   <div id="cards"></div>
 
   <div class="footer-strip" id="judgmentStrip">Loading judgment summary…</div>
+
+  <div class="evpanel">
+    <div class="evpanel-head">
+      <div class="hdr-title">Events</div>
+      <button class="iconbtn" id="evAddBtn" title="Add event" aria-label="Add event">+</button>
+    </div>
+    <form id="evForm" class="evform hidden">
+      <input id="evTitle" type="text" placeholder="Title" required>
+      <input id="evStarts" type="datetime-local" required>
+      <input id="evEnds" type="datetime-local" placeholder="Ends (optional)">
+      <label class="evcheck"><input id="evAllDay" type="checkbox"> All day</label>
+      <input id="evSport" type="text" placeholder="Sport key (optional)">
+      <input id="evCity" type="text" placeholder="City (optional)">
+      <input id="evState" type="text" placeholder="State, 2-letter (optional)" maxlength="2">
+      <input id="evUrl" type="url" placeholder="Event URL (optional)">
+      <div class="evform-actions">
+        <button type="submit" class="btn-primary">Save event</button>
+        <button type="button" class="btn-cancel" id="evCancelForm">Cancel</button>
+      </div>
+    </form>
+    <div id="evList" class="evlist"></div>
+  </div>
 </div>
 
 <div id="toast"></div>
@@ -388,6 +434,109 @@ details.evidence pre{background:var(--mist);border:1px solid var(--line);border-
       " · " + unclassified + " org" + (unclassified === 1 ? "" : "s") + " unclassified";
   }
 
+  // ---- events panel ----
+  function loadEvents() { return api("/events").then(renderEvents); }
+
+  function renderEvents(data) {
+    var list = document.getElementById("evList");
+    list.innerHTML = "";
+    var events = (data && data.events) || [];
+    if (!events.length) {
+      var empty = document.createElement("div");
+      empty.className = "empty";
+      empty.textContent = "No events yet.";
+      list.appendChild(empty);
+      return;
+    }
+    events.forEach(function (ev) { list.appendChild(renderEventItem(ev)); });
+  }
+
+  function renderEventItem(ev) {
+    var item = document.createElement("div");
+    item.className = "evitem" + (ev.status === "cancelled" ? " cancelled" : "");
+
+    var main = document.createElement("div");
+    main.className = "evitem-main";
+    var loc = [ev.city, ev.state].filter(Boolean).join(", ");
+    main.innerHTML =
+      '<div class="evitem-title">' + escapeHtml(ev.title) + "</div>" +
+      '<div class="evitem-meta">' + escapeHtml(fmtEventWhen(ev)) + (loc ? " · " + escapeHtml(loc) : "") +
+      (ev.status === "cancelled" ? ' · <span class="status-cancelled">cancelled</span>' : "") + "</div>";
+    item.appendChild(main);
+
+    var actions = document.createElement("div");
+    actions.className = "evitem-actions";
+    if (ev.status !== "cancelled") {
+      var cancelBtn = document.createElement("button");
+      cancelBtn.textContent = "Cancel";
+      cancelBtn.addEventListener("click", function () { updateEventStatus(ev.id, "cancelled"); });
+      actions.appendChild(cancelBtn);
+    }
+    var delBtn = document.createElement("button");
+    delBtn.textContent = "Delete";
+    delBtn.addEventListener("click", function () {
+      if (!confirm('Delete "' + ev.title + '"? This cannot be undone.')) return;
+      deleteEvent(ev.id);
+    });
+    actions.appendChild(delBtn);
+    item.appendChild(actions);
+    return item;
+  }
+
+  function fmtEventWhen(ev) {
+    var d = new Date(ev.starts_at);
+    if (isNaN(d.getTime())) return ev.starts_at || "";
+    var opts = ev.all_day
+      ? { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }
+      : { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit", timeZone: "UTC" };
+    return d.toLocaleString("en-US", opts);
+  }
+
+  function updateEventStatus(id, status) {
+    api("/events/" + id, { method: "POST", body: JSON.stringify({ status: status }) }).then(function (data) {
+      if (data) { showToast("Event cancelled."); loadEvents(); }
+    });
+  }
+
+  function deleteEvent(id) {
+    api("/events/" + id, { method: "DELETE" }).then(function (data) {
+      if (data) { showToast("Event deleted."); loadEvents(); }
+    });
+  }
+
+  document.getElementById("evAddBtn").addEventListener("click", function () {
+    document.getElementById("evForm").classList.toggle("hidden");
+  });
+  document.getElementById("evCancelForm").addEventListener("click", function () {
+    document.getElementById("evForm").reset();
+    document.getElementById("evForm").classList.add("hidden");
+  });
+  document.getElementById("evForm").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var title = document.getElementById("evTitle").value.trim();
+    var startsLocal = document.getElementById("evStarts").value;
+    if (!title || !startsLocal) return;
+    var body = {
+      title: title,
+      starts_at: new Date(startsLocal).toISOString(),
+      all_day: document.getElementById("evAllDay").checked,
+    };
+    var endsLocal = document.getElementById("evEnds").value;
+    if (endsLocal) body.ends_at = new Date(endsLocal).toISOString();
+    var sport = document.getElementById("evSport").value.trim(); if (sport) body.sport_key = sport;
+    var city = document.getElementById("evCity").value.trim(); if (city) body.city = city;
+    var st = document.getElementById("evState").value.trim(); if (st) body.state = st.toUpperCase();
+    var url = document.getElementById("evUrl").value.trim(); if (url) body.url = url;
+
+    api("/events", { method: "POST", body: JSON.stringify(body) }).then(function (data) {
+      if (!data) return;
+      showToast("Event added.");
+      document.getElementById("evForm").reset();
+      document.getElementById("evForm").classList.add("hidden");
+      loadEvents();
+    });
+  });
+
   // ---- loaders ----
   function loadDigest() { return api("/digest-stats").then(renderDigest); }
   function loadQueue() { return api("/queue?status=pending").then(renderQueue); }
@@ -396,7 +545,7 @@ details.evidence pre{background:var(--mist);border:1px solid var(--line);border-
   function loadAll() {
     var btn = document.getElementById("refreshBtn");
     btn.classList.add("spinning");
-    Promise.all([loadDigest(), loadQueue(), loadJudgment()]).then(function () {
+    Promise.all([loadDigest(), loadQueue(), loadJudgment(), loadEvents()]).then(function () {
       btn.classList.remove("spinning");
     });
   }
