@@ -34,7 +34,7 @@
   --ink:#1A1A1A; --ink2:#3A3A37;
   --paper:#FFFFFF; --mist:#F7F7F5; --sand:#F0EFEC; --sand2:#E8E7E3;
   --line:#E7E6E2; --line2:#EFEEEB;
-  --muted:#6E6D6A; --faint:#8C8B87;
+  --muted:#6E6D6A; --faint:#736F6A; /* faint darkened to meet WCAG AA 4.5:1 (was #8C8B87, failed) */
   --orange:#C5430C; --orange-ink:#A8370A; --orange-soft:#FBEBDC;
 
   --hdr:64px;
@@ -532,7 +532,7 @@ a.evrow:hover{border-color:var(--ink);box-shadow:var(--shadow-sm);}
 .gate h2{font-family:'DM Sans',sans-serif;font-weight:700;font-size:25px;letter-spacing:-.02em;margin:9px 0 9px;line-height:1.08;}
 .gate p.lede{font-size:15px;color:var(--muted);line-height:1.5;margin:0;}
 .gate-tabs{display:flex;gap:3px;background:var(--sand);border-radius:var(--r-full);padding:4px;margin:22px 28px 0;}
-.gate-tab{flex:1;height:36px;border-radius:var(--r-full);font-size:14px;font-weight:600;color:var(--muted);transition:.15s;}
+.gate-tab{flex:1;height:36px;border-radius:var(--r-full);font-size:14px;font-weight:600;color:var(--ink2);transition:.15s;}
 .gate-tab.on{background:var(--paper);color:var(--ink);box-shadow:var(--shadow-sm);}
 .gate-body{padding:18px 28px 28px;}
 .gate-pane{display:none;}
@@ -694,8 +694,8 @@ body.drawer-open{overflow:hidden;}
 .drawer-chip{padding:8px 14px;border:1px solid var(--line);background:var(--paper);border-radius:var(--r-full);font-size:13.5px;font-weight:600;color:var(--ink2);transition:.15s;}
 .drawer-chip:hover{border-color:var(--ink);color:var(--ink);background:var(--mist);}
 .drawer-about{display:flex;flex-direction:column;gap:2px;padding-bottom:18px;}
-.drawer-about span{padding:8px;font-size:13.5px;color:var(--muted);cursor:pointer;border-radius:var(--r);transition:.15s;}
-.drawer-about span:hover{color:var(--ink);background:var(--mist);}
+.drawer-about button{display:block;width:100%;text-align:left;padding:8px;font-size:13.5px;color:var(--muted);cursor:pointer;border-radius:var(--r);transition:.15s;}
+.drawer-about button:hover{color:var(--ink);background:var(--mist);}
 @media (prefers-color-scheme: dark){
   :root{color-scheme:light;}
   html,body{background:var(--mist)!important;color:var(--ink)!important;}
@@ -704,7 +704,7 @@ body.drawer-open{overflow:hidden;}
 </style>
 </head>
 <body>
-<a class="skip" href="#main">Skip to results</a>
+<a class="skip" href="#view">Skip to results</a>
 
 <header class="hdr">
   <div class="wrap hdr-in">
@@ -726,9 +726,9 @@ body.drawer-open{overflow:hidden;}
 </header>
 
 <div id="scrim"></div>
-<aside id="drawer" class="drawer" aria-hidden="true"></aside>
+<div id="drawer" class="drawer" role="dialog" aria-modal="true" aria-label="Menu" aria-hidden="true" inert></div>
 
-<main id="view"></main>
+<main id="view" tabindex="-1"></main>
 
 <footer class="foot">
   <div class="wrap">
@@ -1806,14 +1806,14 @@ function renderDrawer(){
     : '<button class="drawer-profile" data-section="profile"><span class="dp-av">'+DRAWER_USER+'</span><span class="dp-meta"><span class="dp-name">Set up your profile</span><span class="dp-sub">Save favorites and get updates near you</span></span></button>';
   // Primary destinations — the map of the site (the panel's real job).
   const dest='<div class="drawer-sec drawer-util">'
-    +'<span class="drawer-row-main" data-home>'+NAVICON.compass+'<span class="drawer-row-label">Discover</span></span>'
-    +'<span class="drawer-row-main" data-mapx>'+NAVICON.map+'<span class="drawer-row-label">Map view</span></span>'
-    +'<span class="drawer-row-main" data-section="events">'+NAVICON.calsm+'<span class="drawer-row-label">Events</span></span>'
-    +'<span class="drawer-row-main" data-db-link="grants">'+NAVICON.price+'<span class="drawer-row-label">Funding &amp; grants</span></span>'
+    +'<button type="button" class="drawer-row-main" data-home>'+NAVICON.compass+'<span class="drawer-row-label">Discover</span></button>'
+    +'<button type="button" class="drawer-row-main" data-mapx>'+NAVICON.map+'<span class="drawer-row-label">Map view</span></button>'
+    +'<button type="button" class="drawer-row-main" data-section="events">'+NAVICON.calsm+'<span class="drawer-row-label">Events</span></button>'
+    +'<button type="button" class="drawer-row-main" data-db-link="grants">'+NAVICON.price+'<span class="drawer-row-label">Funding &amp; grants</span></button>'
     +'<a class="drawer-row-main" href="/blog">'+NAVICON.book+'<span class="drawer-row-label">Blog</span></a>'
     +'</div>';
   const contribute='<div class="drawer-div"></div><div class="drawer-sec drawer-util">'
-    +'<span class="drawer-row-main" data-addprogram>'+DRAWER_PLUS+'<span class="drawer-row-label">Add a program</span></span>'
+    +'<button type="button" class="drawer-row-main" data-addprogram>'+DRAWER_PLUS+'<span class="drawer-row-label">Add a program</span></button>'
     +'</div>';
   // Browse by sport — compact chips (the sport bar handles the primary browse).
   const chips='<div class="drawer-div"></div><div class="drawer-sec"><p class="eyebrow">Browse by sport</p><div class="drawer-chips">'
@@ -1821,22 +1821,27 @@ function renderDrawer(){
     +SPORTS.map(s=>'<button class="drawer-chip" data-sport="'+s.key+'">'+s.label+'</button>').join('')
     +'</div></div>';
   const about='<div class="drawer-div"></div><div class="drawer-sec drawer-about">'
-    +'<span data-about="project">The project</span><span data-about="verify">How we verify</span>'
+    +'<button type="button" data-about="project">The project</button><button type="button" data-about="verify">How we verify</button>'
     +'</div>';
   d.innerHTML=head+prof+dest+contribute+chips+about;
 }
+let drawerOpener=null;
 function openDrawer(){
   renderDrawer();
-  document.getElementById('drawer').classList.add('open');
-  document.getElementById('drawer').setAttribute('aria-hidden','false');
+  drawerOpener=document.activeElement;
+  const d=document.getElementById('drawer');
+  d.classList.add('open'); d.removeAttribute('inert'); d.setAttribute('aria-hidden','false');
   document.getElementById('scrim').classList.add('open');
   document.body.classList.add('drawer-open');
+  const x=d.querySelector('.drawer-x'); if(x) setTimeout(()=>{try{x.focus();}catch(_){}},40);
 }
 function closeDrawer(){
   const d=document.getElementById('drawer'); if(!d.classList.contains('open')) return;
-  d.classList.remove('open'); d.setAttribute('aria-hidden','true');
+  // aria-hidden + inert so a closed overlay is neither announced nor tabbable.
+  d.classList.remove('open'); d.setAttribute('aria-hidden','true'); d.setAttribute('inert','');
   document.getElementById('scrim').classList.remove('open');
   document.body.classList.remove('drawer-open');
+  if(drawerOpener&&drawerOpener.focus){ try{drawerOpener.focus();}catch(_){} } drawerOpener=null;
 }
 document.addEventListener('click',e=>{
   if(e.target.closest('.menu-btn')){ e.preventDefault(); openDrawer(); return; }
