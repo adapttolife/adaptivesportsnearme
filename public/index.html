@@ -568,43 +568,27 @@ a.evrow:hover{border-color:var(--ink);box-shadow:var(--shadow-sm);}
 .cta-msg.err{color:var(--orange-ink);}
 .cta-done{display:flex;align-items:center;justify-content:center;gap:10px;font-size:15px;font-weight:600;color:var(--ink);padding:6px 2px;}
 .cta-done svg{flex:0 0 auto;width:22px;height:22px;color:var(--orange);}
-/* A — hero capture */
-.herocta{margin:22px auto 0;max-width:460px;text-align:center;}
-.herocta-h{font-family:'DM Sans',sans-serif;font-size:20px;font-weight:700;letter-spacing:-.01em;color:var(--ink);margin:0 0 12px;}
-.herocta .cta-msg{text-align:center;}
-.herocta-sub{margin:10px auto 0;max-width:440px;font-size:13px;line-height:1.5;color:var(--muted);}
-/* B — sticky bar (friendly light, distinct from the dark .trustpill) */
-.ctabar{position:fixed;left:50%;bottom:20px;transform:translate(-50%,140%);z-index:60;display:flex;align-items:center;gap:14px;width:calc(100vw - 28px);max-width:640px;padding:12px 12px 12px 20px;background:var(--paper);border:1px solid var(--line);border-radius:var(--r-full);box-shadow:var(--shadow-lg);opacity:0;pointer-events:none;transition:transform .3s var(--ease),opacity .3s var(--ease);}
-.ctabar.on{transform:translate(-50%,0);opacity:1;pointer-events:auto;}
-.ctabar-ic{flex:0 0 auto;width:22px;height:22px;color:var(--orange);}
-.ctabar-ic svg{width:22px;height:22px;}
-.ctabar-lbl{flex:0 1 auto;font-size:14px;font-weight:700;color:var(--ink);line-height:1.25;white-space:nowrap;}
-.ctabar .cta-sub{flex:1 1 auto;min-width:0;flex-wrap:nowrap;}
-.ctabar .cta-sub input{height:42px;box-shadow:none;}
-.ctabar .cta-go{height:42px;padding:0 18px;font-size:14px;}
-.ctabar .cta-msg{position:absolute;left:20px;right:20px;bottom:calc(100% + 8px);margin:0;text-align:center;flex-basis:auto;}
-.ctabar .cta-msg:empty{display:none;}
-.ctabar-x{flex:0 0 auto;width:34px;height:34px;border-radius:50%;background:var(--mist);color:var(--muted);display:grid;place-items:center;transition:background .15s,color .15s;}
-.ctabar-x:hover{background:var(--sand);color:var(--ink);}
-.ctabar-x svg{width:16px;height:16px;}
-@media (max-width:720px){.ctabar{bottom:16px;}}
-@media (max-width:620px){.ctabar{flex-wrap:wrap;gap:10px;padding:14px;padding-right:44px;border-radius:var(--r-lg);}.ctabar-lbl{flex:1 1 auto;white-space:normal;}.ctabar .cta-sub{flex:1 1 100%;flex-wrap:wrap;}.ctabar-x{position:absolute;top:8px;right:10px;}}
-/* C — inbox band (dark, publication feel) */
-.ctaband{margin:8px 0 40px;padding:48px var(--gut);background:var(--ink);border-radius:var(--r-xl);text-align:center;}
-.ctaband-in{max-width:720px;margin:0 auto;}
-.ctaband-h{font-family:'DM Sans',sans-serif;font-size:clamp(22px,3vw,26px);font-weight:700;letter-spacing:-.02em;line-height:1.12;color:#fff;margin:0 0 22px;}
-.ctaband-benefits{display:flex;flex-wrap:wrap;justify-content:center;gap:14px 28px;margin:0 0 26px;}
-.ctaband-b{display:inline-flex;align-items:center;gap:9px;font-size:14px;font-weight:600;color:rgba(255,255,255,.86);}
-.ctaband-b svg{flex:0 0 auto;width:20px;height:20px;color:var(--orange);}
-.ctaband .cta-sub{max-width:460px;margin:0 auto;}
-.ctaband .cta-sub input{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.22);color:#fff;box-shadow:none;}
-.ctaband .cta-sub input::placeholder{color:rgba(255,255,255,.5);}
-.ctaband .cta-sub input:focus{border-color:#fff;background:rgba(255,255,255,.12);}
+/* Inbox band — the one on-page email CTA. Airbnb-style soft surface; two skins
+   (warm | soft) share one centered layout. Light, warm, low-contrast — belongs
+   in the feed, never a dark ad-slab. */
+.ctaband{margin:16px 0 44px;border-radius:var(--r-xl);text-align:center;overflow:hidden;}
+.ctaband-in{max-width:600px;margin:0 auto;padding:46px var(--gut);}
+.ctaband-eyebrow{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--orange-ink);font-weight:700;margin:0 0 12px;}
+.ctaband-h{font-family:'DM Sans',sans-serif;font-size:clamp(23px,3.1vw,29px);font-weight:700;letter-spacing:-.02em;line-height:1.1;color:var(--ink);margin:0 0 22px;}
+.ctaband-benefits{display:flex;flex-wrap:wrap;justify-content:center;gap:12px 24px;margin:0 0 26px;}
+.ctaband-b{display:inline-flex;align-items:center;gap:9px;font-size:14px;font-weight:600;color:var(--ink2);}
+.ctaband-bic{flex:0 0 auto;width:30px;height:30px;border-radius:50%;background:var(--paper);display:grid;place-items:center;box-shadow:var(--shadow-sm);}
+.ctaband-bic svg{width:16px;height:16px;color:var(--orange);}
+.ctaband .cta-sub{max-width:430px;margin:0 auto;}
 .ctaband .cta-msg{text-align:center;}
-.ctaband .cta-msg.err{color:#F5B78F;}
-.ctaband .cta-done{color:#fff;}
-.ctaband-proof{margin:16px 0 0;font-size:13px;color:rgba(255,255,255,.55);}
-@media (max-width:620px){.ctaband{padding:36px 22px;}.ctaband-benefits{flex-direction:column;align-items:center;gap:12px;}}
+.ctaband-fine{margin:14px 0 0;font-size:12.5px;color:var(--muted);}
+/* warm skin — soft sand→peach gradient, cozy and inviting */
+.ctaband--warm{background:linear-gradient(162deg,var(--orange-soft) 0%,#F7EEE6 52%,var(--sand) 100%);border:1px solid #EFE0D1;}
+/* soft skin — clean paper card with a hairline + gentle lift, most minimal */
+.ctaband--soft{background:var(--paper);border:1px solid var(--line);box-shadow:var(--shadow);}
+.ctaband--soft .ctaband-bic{background:var(--mist);box-shadow:none;}
+.ctaband--soft .cta-sub input{background:var(--mist);}
+@media (max-width:620px){.ctaband-in{padding:34px 22px;}.ctaband-benefits{flex-direction:column;align-items:center;gap:12px;}}
 
 /* ============================ RESPONSIVE ============================ */
 @media (max-width:900px){
@@ -977,7 +961,7 @@ const BOOT_MAPX=location.pathname==='/maps'; // captured before any render can r
 const BOOT_PROFILE=location.pathname==='/profile'; // /profile is the profile section's real URL, same mechanism
 const BOOT_EVENTS=location.pathname==='/events'; // /events too — it's where the RSS feed's item links land
 const US_STATES=["AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID","IL","IN","IA","KS","KY","LA","ME","MD","MA","MI","MN","MS","MO","MT","NE","NV","NH","NJ","NM","NY","NC","ND","OH","OK","OR","PA","RI","SC","SD","TN","TX","UT","VT","VA","WA","WV","WI","WY","DC"];
-const CTA_VARIANT = (new URLSearchParams(location.search).get('cta')||'hero'); // hero (default) | bar | band — email CTA treatment
+const BAND_STYLE = (new URLSearchParams(location.search).get('band')||'warm'); // warm (default) | soft — inbox-band skin
 const state = { section:"discover", layout:"grid", sport:"all", q:"", dist:"any", cost:"any", level:"any", filtersOpen:false, sort:"rec", db:"programs", dbView:"gallery", programId:null, loc:"Denver, CO", see:null, profileNudge:false };
 const saved = new Set();
 function nd(s){ return (s||'').replace(/[\u2013\u2014]/g,' to '); }
@@ -1120,7 +1104,7 @@ function feedRows(){
   // and no sport is the first image twice.
   return '<div class="wrap feed">'
     + frow('New to adaptive sports?','Welcoming programs where first timers fit right in', diversify(beginner,'pickleball'), 'beginner')
-    + (CTA_VARIANT==='band'?ctaBand():'')
+    + ctaBand()
     + frow('Popular in '+city, '', diversify(popular,'tennis'), 'popular')
     + (DATA_LIVE
       ? frow('Recently verified','Websites confirmed active in recent checks', diversify(taking,'waterskiing'), 'fresh')
@@ -1336,15 +1320,12 @@ function ctaForm(){
     +'<div class="cta-msg" aria-live="polite"></div>'
   +'</form>';
 }
-/* A — hero capture block, injected inside heroSection() for CTA_VARIANT==='hero'. */
-function ctaHero(){
-  return '<div class="herocta"><p class="herocta-h">'+CTA_HEAD+'</p>'+ctaForm()
-    +'<p class="herocta-sub">'+CTA_SUBCOPY+'</p></div>';
-}
-/* C — inbox band, inserted mid-feed for CTA_VARIANT==='band'. */
+/* The inbox band — the one on-page email CTA, inserted after the first feed row.
+   Airbnb-style soft surface (skin via BAND_STYLE: warm | soft); same layout either way. */
 function ctaBand(){
-  const b=(ic,t)=>'<span class="ctaband-b">'+ic+'<span>'+t+'</span></span>';
-  return '<section class="ctaband"><div class="ctaband-in">'
+  const b=(ic,t)=>'<span class="ctaband-b"><span class="ctaband-bic">'+ic+'</span><span>'+t+'</span></span>';
+  return '<section class="ctaband ctaband--'+BAND_STYLE+'"><div class="ctaband-in">'
+    +'<p class="ctaband-eyebrow">The newsletter</p>'
     +'<h2 class="ctaband-h">'+CTA_HEAD+'</h2>'
     +'<div class="ctaband-benefits">'
       +b(NAVICON.building,'Programs near you')
@@ -1352,7 +1333,7 @@ function ctaBand(){
       +b(NAVICON.cal,'Events on your calendar')
     +'</div>'
     +ctaForm()
-    +'<p class="ctaband-proof">The good stuff, straight to your inbox.</p>'
+    +'<p class="ctaband-fine">Free. No spam. Unsubscribe anytime.</p>'
   +'</div></section>';
 }
 
@@ -1366,7 +1347,6 @@ function heroSection(){
       +'<span class="sep"></span>'
       +'<input id="qHero" type="text" placeholder="Search a sport, program or provider" aria-label="Search programs">'
     +'</div>'
-    +(CTA_VARIANT==='hero'?ctaHero():'')
     +'<div class="trust"><span><b>'+(DATA_LIVE?PROGRAMS.length.toLocaleString():'2,095+')+'</b> programs</span><span class="tdot">\u00b7</span><span>nationwide</span><span class="tdot">\u00b7</span><span>free to use</span></div>'
     +'</div></section>';
 }
@@ -1942,27 +1922,6 @@ document.addEventListener('submit', async function(e){
   if(res.ok){ form.innerHTML='<div class="cta-done">'+CK+'<span>You’re in — look for a welcome email.</span></div>'; }
   else{ btn.disabled=false; btn.textContent=lbl; if(msg){ msg.textContent=res.error||'Something went wrong. Please try again.'; msg.className='cta-msg err'; } }
 });
-/* B (and B-in-band) — inject the dismissible sticky bar once, reveal it past ~500px. */
-(function(){
-  if(CTA_VARIANT!=='bar'&&CTA_VARIANT!=='band') return;
-  try{ if(sessionStorage.getItem('ctabar_dismissed')==='1') return; }catch(_){}
-  const bar=document.createElement('div');
-  bar.id='ctabar'; bar.className='ctabar';
-  bar.innerHTML='<span class="ctabar-ic">'+NAVICON.cal+'</span>'
-    +'<span class="ctabar-lbl">Programs, events &amp; funding near you.</span>'
-    +ctaForm()
-    +'<button class="ctabar-x" type="button" aria-label="Dismiss">'+NAVICON.x+'</button>';
-  document.body.appendChild(bar);
-  bar.querySelector('.ctabar-x').addEventListener('click',function(){
-    bar.classList.remove('on');
-    try{ sessionStorage.setItem('ctabar_dismissed','1'); }catch(_){}
-    setTimeout(function(){ if(bar.parentNode) bar.parentNode.removeChild(bar); },340);
-  });
-  let shown=false;
-  function onScroll(){ if(shown||!bar.isConnected) return; if(window.scrollY>500){ shown=true; bar.classList.add('on'); } }
-  window.addEventListener('scroll',onScroll,{passive:true});
-  onScroll();
-})();
 
 /* ============================ PRELAUNCH GATE ============================ */
 let PRELAUNCH = true; // server-driven: /api/config flips this per environment
