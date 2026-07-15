@@ -604,6 +604,44 @@ a.evrow:hover{border-color:var(--ink);box-shadow:var(--shadow-sm);}
   .ev-head{flex-direction:column;align-items:flex-start;gap:12px;}
   .evrow{gap:12px;padding:12px 14px;}
 }
+/* ============================ DRAWER + BOTTOM NAV ============================ */
+.menu-btn{flex:0 0 auto;width:40px;height:40px;display:grid;place-items:center;border-radius:var(--r-full);color:var(--ink);transition:background .15s;}
+.menu-btn:hover{background:var(--mist);}
+.menu-btn svg{width:22px;height:22px;}
+#scrim{position:fixed;inset:0;background:rgba(17,17,19,.4);z-index:110;opacity:0;pointer-events:none;transition:opacity .28s var(--ease);}
+#scrim.open{opacity:1;pointer-events:auto;}
+body.drawer-open{overflow:hidden;}
+.drawer{position:fixed;top:0;left:0;bottom:0;width:min(320px,86vw);background:var(--paper);z-index:120;transform:translateX(-100%);transition:transform .28s var(--ease);display:flex;flex-direction:column;overflow-y:auto;box-shadow:var(--shadow-lg);}
+.drawer.open{transform:none;}
+.drawer-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 16px 14px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--paper);z-index:1;}
+.drawer-head b{font-family:'DM Sans',sans-serif;font-weight:700;font-size:15px;letter-spacing:-.015em;color:var(--ink);}
+.drawer-x{flex:0 0 auto;width:34px;height:34px;display:grid;place-items:center;border-radius:var(--r-full);color:var(--ink);transition:background .15s;}
+.drawer-x:hover{background:var(--mist);}
+.drawer-x svg{width:20px;height:20px;}
+.drawer-sec{padding:10px 10px 4px;}
+.drawer-sec .eyebrow{display:block;padding:6px 8px 4px;}
+.drawer-row{display:flex;align-items:center;gap:6px;}
+.drawer-row-main{flex:1 1 auto;min-width:0;display:flex;align-items:center;gap:12px;height:44px;padding:0 8px;border-radius:var(--r);color:var(--ink);font-size:15px;font-weight:600;transition:background .15s;cursor:pointer;}
+.drawer-row-main:hover{background:var(--mist);}
+.drawer-row-main img,.drawer-row-main svg{width:24px;height:24px;flex:0 0 auto;object-fit:contain;}
+.drawer-row-main svg{color:var(--ink);}
+.drawer-row-label{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.follow-pill{flex:0 0 auto;margin-right:6px;padding:6px 12px;border:1px solid var(--line);background:var(--paper);border-radius:var(--r-full);font-size:12px;font-weight:600;color:var(--ink2);transition:.15s;}
+.follow-pill:hover{border-color:var(--ink);}
+.follow-pill.on{background:var(--orange-soft);color:var(--orange-ink);border-color:var(--orange-soft);}
+.drawer-div{height:1px;background:var(--line);margin:8px 16px;}
+.drawer-util .drawer-row-main{width:100%;}
+.botnav{display:none;position:fixed;left:0;right:0;bottom:0;z-index:100;height:64px;align-items:center;justify-content:space-around;padding:0 4px;background:var(--paper);border-top:1px solid var(--line);box-shadow:0 -2px 12px rgba(17,17,19,.06);}
+.botnav-item{flex:1 1 0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;height:100%;color:var(--muted);font-size:10px;font-weight:600;}
+.botnav-item svg{width:22px;height:22px;}
+.botnav-item.on,.botnav-item:hover{color:var(--ink);}
+.botnav-add{position:relative;}
+.botnav-plus{width:54px;height:54px;border-radius:50%;background:var(--orange);color:#fff;display:grid;place-items:center;transform:translateY(-14px);box-shadow:var(--shadow);}
+.botnav-plus svg{width:26px;height:26px;}
+@media (max-width:720px){
+  .botnav{display:flex;}
+  body{padding-bottom:72px;}
+}
 @media (prefers-color-scheme: dark){
   :root{color-scheme:light;}
   html,body{background:var(--mist)!important;color:var(--ink)!important;}
@@ -616,6 +654,7 @@ a.evrow:hover{border-color:var(--ink);box-shadow:var(--shadow-sm);}
 
 <header class="hdr">
   <div class="wrap hdr-in">
+    <button class="menu-btn" id="menuBtn" aria-label="Menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
     <a class="brand" href="#" data-home aria-label="Adaptive Sports Near Me home"><b>Adaptive Sports Near Me</b></a>
 
     <div class="search" role="search">
@@ -631,6 +670,16 @@ a.evrow:hover{border-color:var(--ink);box-shadow:var(--shadow-sm);}
     </button>
   </div>
 </header>
+
+<div id="scrim"></div>
+<aside id="drawer" class="drawer" aria-hidden="true"></aside>
+<nav class="botnav" aria-label="Primary">
+  <button class="botnav-item" data-home aria-label="Home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="m15 9-2 5-4 2 2-5 4-2Z"/></svg><span>Home</span></button>
+  <button class="botnav-item" id="botnavSearch" aria-label="Search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.2-3.2"/></svg><span>Search</span></button>
+  <button class="botnav-item botnav-add" data-addprogram aria-label="Add a program"><span class="botnav-plus"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span></button>
+  <button class="botnav-item" data-section="profile" aria-label="Saved"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 20s-7-4.6-9.3-9C1 7.6 2.7 4.5 6 4.5c2 0 3.3 1.1 4 2.4.7-1.3 2-2.4 4-2.4 3.3 0 5 3.1 3.3 6.5C19 15.4 12 20 12 20Z"/></svg><span>Saved</span></button>
+  <button class="botnav-item" data-section="profile" aria-label="Profile"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21a8 8 0 0 0-16 0"/><circle cx="12" cy="7" r="4"/></svg><span>Profile</span></button>
+</nav>
 
 <main id="view"></main>
 
@@ -853,6 +902,8 @@ const NAVICON = {
   compass:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="m15 9-2 5-4 2 2-5 4-2Z"/></svg>',
   calsm:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="5" width="16" height="16" rx="2"/><path d="M4 9h16M9 3v4M15 3v4"/></svg>',
   pin:'<svg viewBox="0 0 30 36"><path d="M15 0C7 0 1 6 1 14c0 9 14 22 14 22s14-13 14-22C29 6 23 0 15 0Z" fill="#1A1A1A"/><circle cx="15" cy="14" r="5" fill="#fff"/></svg>',
+  menu:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>',
+  x:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6 6 18"/></svg>',
 };
 const HEART='<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20s-7-4.6-9.3-9C1 7.6 2.7 4.5 6 4.5c2 0 3.3 1.1 4 2.4.7-1.3 2-2.4 4-2.4 3.3 0 5 3.1 3.3 6.5C19 15.4 12 20 12 20Z"/></svg>';
 /* detail-page icons — shared by the sample and live renderers */
@@ -1637,6 +1688,75 @@ document.addEventListener('click',e=>{
   if(t.hasAttribute('data-db')){ state.db=t.getAttribute('data-db'); render(); return; }
   if(t.hasAttribute('data-dbview')){ state.dbView=t.getAttribute('data-dbview'); render(); return; }
 });
+/* ============================ LEFT DRAWER (menu) ============================ */
+// Follows work signed-out: localStorage is the source, unioned with a signed-in
+// profile's sports. Navigation itself reuses the existing data-* delegated handlers.
+function getFollows(){
+  let ls=[]; try{ ls=JSON.parse(localStorage.getItem('asnm_follows')||'[]'); }catch(_){ ls=[]; }
+  if(!Array.isArray(ls)) ls=[];
+  return [...new Set([...ls, ...((PROFILE&&PROFILE.sports)||[])])];
+}
+function toggleFollow(key){
+  let ls=[]; try{ ls=JSON.parse(localStorage.getItem('asnm_follows')||'[]'); }catch(_){ ls=[]; }
+  if(!Array.isArray(ls)) ls=[];
+  const i=ls.indexOf(key); if(i>=0) ls.splice(i,1); else ls.push(key);
+  try{ localStorage.setItem('asnm_follows', JSON.stringify(ls)); }catch(_){ }
+  // TODO: on signup, merge localStorage follows into PROFILE.sports via /api/profile
+  renderDrawer();
+}
+const DRAWER_PLUS='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>';
+const DRAWER_USER='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21a8 8 0 0 0-16 0"/><circle cx="12" cy="7" r="4"/></svg>';
+function renderDrawer(){
+  const d=document.getElementById('drawer'); if(!d) return;
+  const follows=getFollows();
+  const head='<div class="drawer-head"><b>Adaptive Sports Near Me</b><button class="drawer-x" aria-label="Close menu">'+NAVICON.x+'</button></div>';
+  let following='';
+  if(follows.length){
+    const rows=SPORTS.filter(s=>follows.includes(s.key)).map(s=>
+      '<div class="drawer-row"><span class="drawer-row-main">'+sportIcon(s.key)+'<span class="drawer-row-label">'+s.label+'</span></span><button class="follow-pill on" data-follow="'+s.key+'">Following ✓</button></div>'
+    ).join('');
+    following='<div class="drawer-sec"><p class="eyebrow">Following</p>'+rows+'</div>';
+  }
+  const allRow='<div class="drawer-row"><span class="drawer-row-main" data-sport="all">'+NAVICON.compass+'<span class="drawer-row-label">All sports</span></span></div>';
+  const browseRows=SPORTS.map(s=>{
+    const on=follows.includes(s.key);
+    const pill='<button class="follow-pill'+(on?' on':'')+'" data-follow="'+s.key+'">'+(on?'Following ✓':'+ Follow')+'</button>';
+    return '<div class="drawer-row"><span class="drawer-row-main" data-sport="'+s.key+'">'+sportIcon(s.key)+'<span class="drawer-row-label">'+s.label+'</span></span>'+pill+'</div>';
+  }).join('');
+  const browse='<div class="drawer-sec"><p class="eyebrow">Browse</p>'+allRow+browseRows+'</div>';
+  const util='<div class="drawer-div"></div><div class="drawer-sec drawer-util">'
+    +'<span class="drawer-row-main" data-section="events">'+NAVICON.calsm+'<span class="drawer-row-label">Events</span></span>'
+    +'<a class="drawer-row-main" href="/blog">'+NAVICON.book+'<span class="drawer-row-label">Blog</span></a>'
+    +'<span class="drawer-row-main" data-addprogram>'+DRAWER_PLUS+'<span class="drawer-row-label">Add a program</span></span>'
+    +'<span class="drawer-row-main" data-section="profile">'+DRAWER_USER+'<span class="drawer-row-label">Your profile</span></span>'
+    +'</div>';
+  d.innerHTML=head+following+browse+util;
+}
+function openDrawer(){
+  renderDrawer();
+  document.getElementById('drawer').classList.add('open');
+  document.getElementById('drawer').setAttribute('aria-hidden','false');
+  document.getElementById('scrim').classList.add('open');
+  document.body.classList.add('drawer-open');
+}
+function closeDrawer(){
+  const d=document.getElementById('drawer'); if(!d.classList.contains('open')) return;
+  d.classList.remove('open'); d.setAttribute('aria-hidden','true');
+  document.getElementById('scrim').classList.remove('open');
+  document.body.classList.remove('drawer-open');
+}
+document.addEventListener('click',e=>{
+  if(e.target.closest('.menu-btn')){ e.preventDefault(); openDrawer(); return; }
+  if(e.target.closest('.drawer-x')||e.target.closest('#scrim')){ e.preventDefault(); closeDrawer(); return; }
+  const fp=e.target.closest('.follow-pill');
+  if(fp){ e.preventDefault(); e.stopPropagation(); toggleFollow(fp.getAttribute('data-follow')); return; }
+  if(e.target.closest('#botnavSearch')){ e.preventDefault(); const q=document.getElementById('q'); if(q){ window.scrollTo({top:0,behavior:'smooth'}); q.focus(); } return; }
+  // A real navigation inside the drawer (sport filter or a utility link) also closes it —
+  // the existing data-* handlers perform the nav; this only dismisses the overlay.
+  if(e.target.closest('#drawer [data-sport],#drawer [data-section],#drawer [data-addprogram],#drawer a[href]')){ closeDrawer(); }
+});
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeDrawer(); });
+renderDrawer();
 /* map explorer open/close + state drawer. /maps is its real URL. */
 function setMapxUrl(on){
   try{
