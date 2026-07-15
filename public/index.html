@@ -589,6 +589,17 @@ a.evrow:hover{border-color:var(--ink);box-shadow:var(--shadow-sm);}
 .ctaband--soft .ctaband-bic{background:var(--mist);box-shadow:none;}
 .ctaband--soft .cta-sub input{background:var(--mist);}
 @media (max-width:620px){.ctaband-in{padding:34px 22px;}.ctaband-benefits{flex-direction:column;align-items:center;gap:12px;}}
+/* Contextual capture shown in place of empty search results (reuses the warm skin) */
+.nocap{max-width:560px;margin:24px auto 44px;border-radius:var(--r-xl);text-align:center;}
+.nocap-in{padding:44px 30px;}
+.nocap-ic{width:46px;height:46px;border-radius:50%;background:var(--paper);display:grid;place-items:center;margin:0 auto 16px;box-shadow:var(--shadow-sm);}
+.nocap-ic svg{width:22px;height:22px;color:var(--orange);}
+.nocap-h{font-family:'DM Sans',sans-serif;font-size:21px;font-weight:700;letter-spacing:-.01em;color:var(--ink);margin:0 0 8px;}
+.nocap-lede{max-width:42ch;margin:0 auto 20px;font-size:14.5px;line-height:1.5;color:var(--ink2);}
+.nocap-lede b{font-weight:700;color:var(--ink);}
+.nocap .cta-sub{max-width:400px;margin:0 auto;}
+.nocap-clear{margin-top:16px;font-size:13.5px;font-weight:600;color:var(--muted);text-decoration:underline;text-underline-offset:3px;}
+.nocap-clear:hover{color:var(--ink);}
 
 /* ============================ RESPONSIVE ============================ */
 @media (max-width:900px){
@@ -1305,16 +1316,41 @@ function listLayout(list){
     +'</tr>').join('');
   return '<div class="tablewrap"><table class="list"><thead><tr><th>Program</th><th>Provider</th><th>Distance</th><th>Cost</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div>';
 }
-function empty(){ return '<div style="text-align:center;padding:80px 20px;color:var(--muted);"><div style="font-size:20px;font-weight:700;color:var(--ink);margin-bottom:8px;">No programs match yet</div>Try a wider distance or clear a filter to see more.</div>'; }
+/* Empty search/filter result = highest-intent signup moment. Instead of a dead end,
+   offer to notify them when we add what they looked for (and record the demand). */
+function empty(){
+  const sp = state.sport!=='all' ? ((SPORTS.find(s=>s.key===state.sport)||{}).label||'') : '';
+  const q = state.q.trim();
+  const subject = sp || (q?('“'+esc(q)+'”'):'');
+  const head = sp ? ('No '+esc(sp)+' programs listed yet')
+             : q  ? ('Nothing for '+subject+' yet')
+                  : 'No programs match yet';
+  const lede = sp
+    ? ('We’re adding programs every week. Be the first to know when we list <b>'+esc(sp)+'</b> — grants and events included.')
+    : q
+    ? 'We’re adding programs every week. Be the first to know when we add it — grants and events included.'
+    : 'We’re adding programs every week. Get an email when new ones land near you — grants and events included.';
+  return '<div class="nocap ctaband--warm"><div class="nocap-in">'
+    +'<div class="nocap-ic">'+NAVICON.compass+'</div>'
+    +'<h3 class="nocap-h">'+head+'</h3>'
+    +'<p class="nocap-lede">'+lede+'</p>'
+    +ctaForm(sp||q||'')
+    +'<p class="ctaband-fine">Free. No spam. Unsubscribe anytime.</p>'
+    +'<button class="nocap-clear" type="button" data-clear-filters>Or browse all programs</button>'
+  +'</div></div>';
+}
 
 /* ---- Email CTA: shared value-promise copy (edit here, layout untouched) ---- */
 const CTA_HEAD='Programs, events, and funding near you.';
 const CTA_SUBCOPY='The adaptive sports directory, in your inbox. New programs, grants, and events near you — no spam, unsubscribe anytime.';
 const CTA_BTN='Get updates';
 const CTA_PH='you@email.com';
-/* The one capture form every treatment reuses; wired by the delegated form.cta-sub handler. */
-function ctaForm(){
+/* The one capture form every surface reuses; wired by the delegated form.cta-sub handler.
+   Optional `interest` rides along as a hidden field so a contextual signup (e.g. an
+   empty search for a sport/place) also records WHAT the person wanted — the demand signal. */
+function ctaForm(interest){
   return '<form class="cta-sub" novalidate>'
+    +(interest?'<input type="hidden" name="interest" value="'+esc(interest)+'">':'')
     +'<input name="em" type="email" autocomplete="email" placeholder="'+CTA_PH+'" aria-label="Email address">'
     +'<button class="cta-go" type="submit">'+CTA_BTN+'</button>'
     +'<div class="cta-msg" aria-live="polite"></div>'
@@ -1734,10 +1770,11 @@ function searchRender(){ if(isFeedMode()){ render(); return; } if(document.getEl
 document.addEventListener('click',e=>{
   const h=e.target.closest('[data-heart]');
   if(h){ e.preventDefault();e.stopPropagation(); const id=h.getAttribute('data-heart'); if(saved.has(id))saved.delete(id);else saved.add(id); h.classList.toggle('on'); h.setAttribute('aria-pressed',saved.has(id)); return; }
-  const t=e.target.closest('[data-prog],[data-sport],[data-layout],[data-dist],[data-cost],[data-level],[data-section],[data-db],[data-dbview],[data-home],[data-sport-link],[data-seeall],#filtBtn,[data-noop]');
+  const t=e.target.closest('[data-prog],[data-sport],[data-layout],[data-dist],[data-cost],[data-level],[data-section],[data-db],[data-dbview],[data-home],[data-sport-link],[data-seeall],[data-clear-filters],#filtBtn,[data-noop]');
   if(!t) return;
   if(t.matches('[data-noop]')){ e.preventDefault(); return; }
   if(t.hasAttribute('data-home')){ e.preventDefault(); state.section='discover'; state.programId=null; goFeed(); render(); return; }
+  if(t.hasAttribute('data-clear-filters')){ e.preventDefault(); state.section='discover'; state.programId=null; goFeed(); render(); return; }
   if(t.hasAttribute('data-section')){ e.preventDefault(); const sec=t.getAttribute('data-section'); state.section=sec; state.programId=null; if(sec==='discover') goFeed(); render(); return; }
   if(t.hasAttribute('data-sport-link')){ e.preventDefault(); state.section='discover'; state.sport=t.getAttribute('data-sport-link'); state.see=null; state.programId=null; render(true); scrollToResults(); return; }
   if(t.hasAttribute('data-prog')){ e.preventDefault(); state.section='program'; state.programId=t.getAttribute('data-prog'); render(); return; }
