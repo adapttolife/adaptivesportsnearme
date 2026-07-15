@@ -587,7 +587,7 @@ a.evrow:hover{border-color:var(--ink);box-shadow:var(--shadow-sm);}
 .ctabar-x{flex:0 0 auto;width:34px;height:34px;border-radius:50%;background:var(--mist);color:var(--muted);display:grid;place-items:center;transition:background .15s,color .15s;}
 .ctabar-x:hover{background:var(--sand);color:var(--ink);}
 .ctabar-x svg{width:16px;height:16px;}
-@media (max-width:720px){.ctabar{bottom:84px;}}
+@media (max-width:720px){.ctabar{bottom:16px;}}
 @media (max-width:620px){.ctabar{flex-wrap:wrap;gap:10px;padding:14px;padding-right:44px;border-radius:var(--r-lg);}.ctabar-lbl{flex:1 1 auto;white-space:normal;}.ctabar .cta-sub{flex:1 1 100%;flex-wrap:wrap;}.ctabar-x{position:absolute;top:8px;right:10px;}}
 /* C — inbox band (dark, publication feel) */
 .ctaband{margin:8px 0 40px;padding:48px var(--gut);background:var(--ink);border-radius:var(--r-xl);text-align:center;}
@@ -696,17 +696,6 @@ body.drawer-open{overflow:hidden;}
 .follow-pill.on{background:var(--orange-soft);color:var(--orange-ink);border-color:var(--orange-soft);}
 .drawer-div{height:1px;background:var(--line);margin:8px 16px;}
 .drawer-util .drawer-row-main{width:100%;}
-.botnav{display:none;position:fixed;left:0;right:0;bottom:0;z-index:100;height:64px;align-items:center;justify-content:space-around;padding:0 4px;background:var(--paper);border-top:1px solid var(--line);box-shadow:0 -2px 12px rgba(17,17,19,.06);}
-.botnav-item{flex:1 1 0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;height:100%;color:var(--muted);font-size:10px;font-weight:600;}
-.botnav-item svg{width:22px;height:22px;}
-.botnav-item.on,.botnav-item:hover{color:var(--ink);}
-.botnav-add{position:relative;}
-.botnav-plus{width:54px;height:54px;border-radius:50%;background:var(--orange);color:#fff;display:grid;place-items:center;transform:translateY(-14px);box-shadow:var(--shadow);}
-.botnav-plus svg{width:26px;height:26px;}
-@media (max-width:720px){
-  .botnav{display:flex;}
-  body{padding-bottom:72px;}
-}
 @media (prefers-color-scheme: dark){
   :root{color-scheme:light;}
   html,body{background:var(--mist)!important;color:var(--ink)!important;}
@@ -738,13 +727,6 @@ body.drawer-open{overflow:hidden;}
 
 <div id="scrim"></div>
 <aside id="drawer" class="drawer" aria-hidden="true"></aside>
-<nav class="botnav" aria-label="Primary">
-  <button class="botnav-item" data-home aria-label="Home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="m15 9-2 5-4 2 2-5 4-2Z"/></svg><span>Home</span></button>
-  <button class="botnav-item" id="botnavSearch" aria-label="Search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.2-3.2"/></svg><span>Search</span></button>
-  <button class="botnav-item botnav-add" data-addprogram aria-label="Add a program"><span class="botnav-plus"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span></button>
-  <button class="botnav-item" data-section="profile" aria-label="Saved"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 20s-7-4.6-9.3-9C1 7.6 2.7 4.5 6 4.5c2 0 3.3 1.1 4 2.4.7-1.3 2-2.4 4-2.4 3.3 0 5 3.1 3.3 6.5C19 15.4 12 20 12 20Z"/></svg><span>Saved</span></button>
-  <button class="botnav-item" data-section="profile" aria-label="Profile"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21a8 8 0 0 0-16 0"/><circle cx="12" cy="7" r="4"/></svg><span>Profile</span></button>
-</nav>
 
 <main id="view"></main>
 
@@ -1853,7 +1835,6 @@ document.addEventListener('click',e=>{
   if(e.target.closest('.drawer-x')||e.target.closest('#scrim')){ e.preventDefault(); closeDrawer(); return; }
   const fp=e.target.closest('.follow-pill');
   if(fp){ e.preventDefault(); e.stopPropagation(); toggleFollow(fp.getAttribute('data-follow')); return; }
-  if(e.target.closest('#botnavSearch')){ e.preventDefault(); const q=document.getElementById('q'); if(q){ window.scrollTo({top:0,behavior:'smooth'}); q.focus(); } return; }
   // A real navigation inside the drawer (sport filter or a utility link) also closes it —
   // the existing data-* handlers perform the nav; this only dismisses the overlay.
   if(e.target.closest('#drawer [data-sport],#drawer [data-section],#drawer [data-addprogram],#drawer a[href]')){ closeDrawer(); }
