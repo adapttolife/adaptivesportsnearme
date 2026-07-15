@@ -1113,17 +1113,20 @@ function feedRows(){
   const team=cap(pool.filter(p=>p.category==='Team'));
   // Distinct lead per row → showcases the full range (water skiing, cycling, etc.),
   // and no sport is the first image twice.
-  return '<div class="wrap feed">'
-    + frow('New to adaptive sports?','Welcoming programs where first timers fit right in', diversify(beginner,'pickleball'), 'beginner')
-    + ctaBand()
-    + frow('Popular in '+city, '', diversify(popular,'tennis'), 'popular')
-    + (DATA_LIVE
+  // Build rows, drop empties, then place the band where it's EARNED — after two real
+  // content rows, never before the first (an empty row must not float it to the top).
+  const rows = [
+    frow('New to adaptive sports?','Welcoming programs where first timers fit right in', diversify(beginner,'pickleball'), 'beginner'),
+    frow('Popular in '+city, '', diversify(popular,'tennis'), 'popular'),
+    (DATA_LIVE
       ? frow('Recently verified','Websites confirmed active in recent checks', diversify(taking,'waterskiing'), 'fresh')
-      : frow('Taking new players','Open and taking sign-ups', diversify(taking,'waterskiing'), 'open'))
-    + frow('Outdoor sports','Trails, slopes and open water', diversify(outdoor,'cycling'), 'sport:cycling')
-    + frow('Free to play','No cost to get started', diversify(free,'goalball'), 'free')
-    + frow('Team sports to try','Find a squad in '+city, diversify(team,'rugby'), 'popular')
-    + '</div>';
+      : frow('Taking new players','Open and taking sign-ups', diversify(taking,'waterskiing'), 'open')),
+    frow('Outdoor sports','Trails, slopes and open water', diversify(outdoor,'cycling'), 'sport:cycling'),
+    frow('Free to play','No cost to get started', diversify(free,'goalball'), 'free'),
+    frow('Team sports to try','Find a squad in '+city, diversify(team,'rugby'), 'popular'),
+  ].filter(Boolean);
+  if(rows.length>=2) rows.splice(2,0,ctaBand()); else rows.push(ctaBand());
+  return '<div class="wrap feed">'+rows.join('')+'</div>';
 }
 function isFeedMode(){ return state.see===null && !state.q.trim() && state.sport==='all' && state.dist==='any' && state.cost==='any' && state.level==='any'; }
 function seeList(){
