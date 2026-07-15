@@ -492,15 +492,17 @@ a.evrow:hover{border-color:var(--ink);box-shadow:var(--shadow-sm);}
 .foot-col h4{font-family:'DM Sans',sans-serif;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);font-weight:400;margin:0 0 12px;}
 .foot-col a{display:block;font-size:14px;color:var(--ink2);padding:6px 0;}
 .foot-col a:hover{color:var(--orange);}
-.foot-cta{display:grid;grid-template-columns:1fr 1fr;gap:32px 64px;padding:48px 0;border-bottom:1px solid var(--line);}
-.fc-block h3{font-family:'DM Sans',sans-serif;font-size:19px;font-weight:700;letter-spacing:-.01em;color:var(--ink);margin:0 0 6px;}
-.fc-block p{font-size:14px;color:var(--muted);margin:0 0 16px;line-height:1.5;max-width:380px;}
+/* Slim footer newsletter line — quiet last-chance capture, not a second billboard */
+.foot-sub{display:flex;align-items:center;justify-content:space-between;gap:18px 40px;flex-wrap:wrap;padding:34px 0;border-bottom:1px solid var(--line);}
+.foot-sub-txt h3{font-family:'DM Sans',sans-serif;font-size:17px;font-weight:700;letter-spacing:-.01em;color:var(--ink);margin:0 0 4px;}
+.foot-sub-txt p{font-size:13px;color:var(--muted);margin:0;}
+.foot-sub-form{flex:0 0 auto;}
 .fc-sub{display:flex;gap:8px;max-width:400px;}
 .fc-sub input{flex:1 1 auto;height:42px;padding:0 14px;border:1px solid var(--line);border-radius:var(--r);background:var(--paper);color:var(--ink);font-size:14px;min-width:0;}
 .fc-sub input::placeholder{color:var(--faint);}
 .fc-sub input:focus{outline:none;border-color:var(--ink);}
-.subbtn{flex:0 0 auto;height:42px;padding:0 20px;border-radius:var(--r);background:var(--ink);color:#fff;font-size:14px;font-weight:600;transition:background .15s;}
-.subbtn:hover{background:#000;}
+.subbtn{flex:0 0 auto;height:42px;padding:0 20px;border-radius:var(--r);background:var(--orange);color:#fff;font-size:14px;font-weight:600;transition:background .15s;}
+.subbtn:hover{background:var(--orange-ink);}
 .fc-thanks{display:flex;align-items:center;height:42px;font-size:14px;font-weight:600;color:var(--ink);}
 
 /* ============================ TRUST PILL (floating) ============================ */
@@ -730,15 +732,12 @@ body.drawer-open{overflow:hidden;}
 
 <footer class="foot">
   <div class="wrap">
-    <div class="foot-cta">
-      <div class="fc-block">
-        <h3>Run an adaptive sports program?</h3>
-        <p>Get it listed in the directory. It is free and takes a few minutes.</p>
-        <a class="addbtn" href="#" data-addprogram><svg class="plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg><span>Add a program</span></a>
+    <div class="foot-sub">
+      <div class="foot-sub-txt">
+        <h3>Programs, events &amp; funding near you.</h3>
+        <p>Free directory updates in your inbox. No spam, unsubscribe anytime.</p>
       </div>
-      <div class="fc-block">
-        <h3>Programs, events, and funding near you.</h3>
-        <p>The adaptive sports directory, in your inbox. New programs, grants, and events near you. No spam, unsubscribe anytime.</p>
+      <div class="foot-sub-form">
         <div class="fc-sub" id="subWrap">
           <input type="email" id="subEmail" placeholder="you@email.com" aria-label="Email address">
           <button type="button" class="subbtn" data-subscribe-go>Get updates</button>
