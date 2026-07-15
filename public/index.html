@@ -452,6 +452,11 @@ a.evrow:hover{border-color:var(--ink);box-shadow:var(--shadow-sm);}
 .hdr-profile svg{width:18px;height:18px;}
 .hdr-profile.has-profile{color:var(--orange-ink);border-color:var(--orange-soft);background:var(--orange-soft);}
 @media (max-width:720px){.hdr-profile{width:36px;height:36px;}.hdr-profile svg{width:16px;height:16px;}}
+/* Header "+" — submit a program (account-free), Reddit-style top-right create affordance */
+.hdr-add{flex:0 0 auto;width:40px;height:40px;border-radius:50%;display:grid;place-items:center;color:var(--orange-ink);border:1px solid var(--orange-soft);background:var(--orange-soft);transition:border-color .15s,background .15s,color .15s;}
+.hdr-add:hover{background:var(--orange);color:#fff;border-color:var(--orange);}
+.hdr-add svg{width:19px;height:19px;}
+@media (max-width:720px){.hdr-add{width:36px;height:36px;}.hdr-add svg{width:17px;height:17px;}}
 
 /* ============================ PROFILE ============================ */
 .profile-view{max-width:640px;margin:0 auto;padding:28px 0 64px;}
@@ -717,9 +722,12 @@ body.drawer-open{overflow:hidden;}
       <span class="sep"></span>
       <input id="q" type="text" placeholder="Search a sport, program or provider" aria-label="Search programs">
     </div>
-    <button class="hdr-profile" id="profileBtn" data-section="profile" aria-label="Your profile">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21a8 8 0 0 0-16 0"/><circle cx="12" cy="7" r="4"/></svg>
-    </button>
+    <div class="hdr-actions">
+      <button class="hdr-add" data-addprogram aria-label="Submit a program" title="Submit a program"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+      <button class="hdr-profile" id="profileBtn" data-section="profile" aria-label="Your profile">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21a8 8 0 0 0-16 0"/><circle cx="12" cy="7" r="4"/></svg>
+      </button>
+    </div>
   </div>
 </header>
 
@@ -2007,6 +2015,9 @@ document.addEventListener('click',function(e){
 
 document.addEventListener('click',function(e){
   const op=e.target.closest('[data-gate-open]'); if(op){ e.preventDefault(); openGate(op.getAttribute('data-gate-open')||'notify'); return; }
+  // Submit-a-program is an always-open form (no account, no prelaunch gate): header "+",
+  // bottom-nav "+", drawer, footer CTA all open it in live mode too, not only prelaunch.
+  const ap=e.target.closest('[data-addprogram]'); if(ap){ e.preventDefault(); openGate('program'); return; }
   if(e.target.closest('[data-gate-close]')){ closeGate(); return; }
   const tb=e.target.closest('[data-gate-tab]'); if(tb){ setGateTab(tb.getAttribute('data-gate-tab')); }
 });
