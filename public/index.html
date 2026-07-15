@@ -686,11 +686,14 @@ body.drawer-open{overflow:hidden;}
 .drawer-row-main img,.drawer-row-main svg{width:24px;height:24px;flex:0 0 auto;object-fit:contain;}
 .drawer-row-main svg{color:var(--ink);}
 .drawer-row-label{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.follow-pill{flex:0 0 auto;margin-right:6px;padding:6px 12px;border:1px solid var(--line);background:var(--paper);border-radius:var(--r-full);font-size:12px;font-weight:600;color:var(--ink2);transition:.15s;}
-.follow-pill:hover{border-color:var(--ink);}
-.follow-pill.on{background:var(--orange-soft);color:var(--orange-ink);border-color:var(--orange-soft);}
 .drawer-div{height:1px;background:var(--line);margin:8px 16px;}
 .drawer-util .drawer-row-main{width:100%;}
+.drawer-chips{display:flex;flex-wrap:wrap;gap:8px;padding:4px 8px 8px;}
+.drawer-chip{padding:8px 14px;border:1px solid var(--line);background:var(--paper);border-radius:var(--r-full);font-size:13.5px;font-weight:600;color:var(--ink2);transition:.15s;}
+.drawer-chip:hover{border-color:var(--ink);color:var(--ink);background:var(--mist);}
+.drawer-about{display:flex;flex-direction:column;gap:2px;padding-bottom:18px;}
+.drawer-about span{padding:8px;font-size:13.5px;color:var(--muted);cursor:pointer;border-radius:var(--r);transition:.15s;}
+.drawer-about span:hover{color:var(--ink);background:var(--mist);}
 @media (prefers-color-scheme: dark){
   :root{color-scheme:light;}
   html,body{background:var(--mist)!important;color:var(--ink)!important;}
@@ -1792,50 +1795,36 @@ document.addEventListener('click',e=>{
   if(t.hasAttribute('data-dbview')){ state.dbView=t.getAttribute('data-dbview'); render(); return; }
 });
 /* ============================ LEFT DRAWER (menu) ============================ */
-// Follows work signed-out: localStorage is the source, unioned with a signed-in
-// profile's sports. Navigation itself reuses the existing data-* delegated handlers.
-function getFollows(){
-  let ls=[]; try{ ls=JSON.parse(localStorage.getItem('asnm_follows')||'[]'); }catch(_){ ls=[]; }
-  if(!Array.isArray(ls)) ls=[];
-  return [...new Set([...ls, ...((PROFILE&&PROFILE.sports)||[])])];
-}
-function toggleFollow(key){
-  let ls=[]; try{ ls=JSON.parse(localStorage.getItem('asnm_follows')||'[]'); }catch(_){ ls=[]; }
-  if(!Array.isArray(ls)) ls=[];
-  const i=ls.indexOf(key); if(i>=0) ls.splice(i,1); else ls.push(key);
-  try{ localStorage.setItem('asnm_follows', JSON.stringify(ls)); }catch(_){ }
-  // TODO: on signup, merge localStorage follows into PROFILE.sports via /api/profile
-  renderDrawer();
-}
+// Follow / personalization is Phase 2 (a "For you" feed + newsletter-by-sport).
+// Until that payoff exists the drawer is a navigation hub — no Follow buttons.
 const DRAWER_PLUS='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>';
 const DRAWER_USER='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21a8 8 0 0 0-16 0"/><circle cx="12" cy="7" r="4"/></svg>';
 function renderDrawer(){
   const d=document.getElementById('drawer'); if(!d) return;
-  const follows=getFollows();
   const head='<div class="drawer-head"><b>Adaptive Sports Near Me</b><button class="drawer-x" aria-label="Close menu">'+NAVICON.x+'</button></div>';
   const prof = PROFILE
     ? '<button class="drawer-profile" data-section="profile"><span class="dp-av">'+(PROFILE.name?esc(PROFILE.name.trim().charAt(0).toUpperCase()):DRAWER_USER)+'</span><span class="dp-meta"><span class="dp-name">'+(esc(PROFILE.name)||'Your profile')+'</span><span class="dp-sub">'+esc(PROFILE.email)+'</span></span></button>'
-    : '<button class="drawer-profile" data-section="profile"><span class="dp-av">'+DRAWER_USER+'</span><span class="dp-meta"><span class="dp-name">Set up your profile</span><span class="dp-sub">Save favorites, follow your sports</span></span></button>';
-  let following='';
-  if(follows.length){
-    const rows=SPORTS.filter(s=>follows.includes(s.key)).map(s=>
-      '<div class="drawer-row"><span class="drawer-row-main">'+sportIcon(s.key)+'<span class="drawer-row-label">'+s.label+'</span></span><button class="follow-pill on" data-follow="'+s.key+'">Following ✓</button></div>'
-    ).join('');
-    following='<div class="drawer-sec"><p class="eyebrow">Following</p>'+rows+'</div>';
-  }
-  const allRow='<div class="drawer-row"><span class="drawer-row-main" data-sport="all">'+NAVICON.compass+'<span class="drawer-row-label">All sports</span></span></div>';
-  const browseRows=SPORTS.map(s=>{
-    const on=follows.includes(s.key);
-    const pill='<button class="follow-pill'+(on?' on':'')+'" data-follow="'+s.key+'">'+(on?'Following ✓':'+ Follow')+'</button>';
-    return '<div class="drawer-row"><span class="drawer-row-main" data-sport="'+s.key+'">'+sportIcon(s.key)+'<span class="drawer-row-label">'+s.label+'</span></span>'+pill+'</div>';
-  }).join('');
-  const browse='<div class="drawer-sec"><p class="eyebrow">Browse</p>'+allRow+browseRows+'</div>';
-  const util='<div class="drawer-div"></div><div class="drawer-sec drawer-util">'
+    : '<button class="drawer-profile" data-section="profile"><span class="dp-av">'+DRAWER_USER+'</span><span class="dp-meta"><span class="dp-name">Set up your profile</span><span class="dp-sub">Save favorites and get updates near you</span></span></button>';
+  // Primary destinations — the map of the site (the panel's real job).
+  const dest='<div class="drawer-sec drawer-util">'
+    +'<span class="drawer-row-main" data-home>'+NAVICON.compass+'<span class="drawer-row-label">Discover</span></span>'
+    +'<span class="drawer-row-main" data-mapx>'+NAVICON.map+'<span class="drawer-row-label">Map view</span></span>'
     +'<span class="drawer-row-main" data-section="events">'+NAVICON.calsm+'<span class="drawer-row-label">Events</span></span>'
+    +'<span class="drawer-row-main" data-db-link="grants">'+NAVICON.price+'<span class="drawer-row-label">Funding &amp; grants</span></span>'
     +'<a class="drawer-row-main" href="/blog">'+NAVICON.book+'<span class="drawer-row-label">Blog</span></a>'
+    +'</div>';
+  const contribute='<div class="drawer-div"></div><div class="drawer-sec drawer-util">'
     +'<span class="drawer-row-main" data-addprogram>'+DRAWER_PLUS+'<span class="drawer-row-label">Add a program</span></span>'
     +'</div>';
-  d.innerHTML=head+prof+following+browse+util;
+  // Browse by sport — compact chips (the sport bar handles the primary browse).
+  const chips='<div class="drawer-div"></div><div class="drawer-sec"><p class="eyebrow">Browse by sport</p><div class="drawer-chips">'
+    +'<button class="drawer-chip" data-sport="all">All sports</button>'
+    +SPORTS.map(s=>'<button class="drawer-chip" data-sport="'+s.key+'">'+s.label+'</button>').join('')
+    +'</div></div>';
+  const about='<div class="drawer-div"></div><div class="drawer-sec drawer-about">'
+    +'<span data-about="project">The project</span><span data-about="verify">How we verify</span>'
+    +'</div>';
+  d.innerHTML=head+prof+dest+contribute+chips+about;
 }
 function openDrawer(){
   renderDrawer();
@@ -1853,11 +1842,9 @@ function closeDrawer(){
 document.addEventListener('click',e=>{
   if(e.target.closest('.menu-btn')){ e.preventDefault(); openDrawer(); return; }
   if(e.target.closest('.drawer-x')||e.target.closest('#scrim')){ e.preventDefault(); closeDrawer(); return; }
-  const fp=e.target.closest('.follow-pill');
-  if(fp){ e.preventDefault(); e.stopPropagation(); toggleFollow(fp.getAttribute('data-follow')); return; }
-  // A real navigation inside the drawer (sport filter or a utility link) also closes it —
-  // the existing data-* handlers perform the nav; this only dismisses the overlay.
-  if(e.target.closest('#drawer [data-sport],#drawer [data-section],#drawer [data-addprogram],#drawer a[href]')){ closeDrawer(); }
+  // A real navigation inside the drawer also closes it — the existing data-* handlers
+  // perform the nav; this only dismisses the overlay.
+  if(e.target.closest('#drawer [data-sport],#drawer [data-section],#drawer [data-home],#drawer [data-mapx],#drawer [data-db-link],#drawer [data-about],#drawer [data-addprogram],#drawer a[href]')){ closeDrawer(); }
 });
 document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeDrawer(); });
 renderDrawer();
