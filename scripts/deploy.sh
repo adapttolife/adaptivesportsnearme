@@ -9,6 +9,7 @@ cd "$(dirname "$0")/.."
 target="${1:-}"
 case "$target" in
   sandbox) args=(--env sandbox); url="https://asnm-sandbox.alec-af3.workers.dev" ;;
+  next)    args=(--env next);    url="https://asnm-next.alec-af3.workers.dev" ;;
   staging) args=(--env staging); url="https://asnm-staging.alec-af3.workers.dev" ;;
   prod)    args=();              url="https://adaptivesportsnearme.com" ;;
   *) echo "usage: scripts/deploy.sh sandbox|staging|prod" >&2; exit 1 ;;

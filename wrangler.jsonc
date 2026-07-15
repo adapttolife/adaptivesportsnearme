@@ -90,6 +90,37 @@
         "crons": []
       },
       "observability": { "enabled": true }
+    },
+    // Next: the "next level" decision surface — deploy design/UX iterations here
+    // to SEE them (blog, events, profiles, Reddit nav, unified email CTA). Seeded
+    // from a copy of staging data. No crons (design preview, not a live pipeline);
+    // routes stay empty. Iterate with `wrangler versions upload --env next` for
+    // parallel preview URLs.
+    "next": {
+      "name": "asnm-next",
+      "main": "src/index.js",
+      "workers_dev": true,
+      "preview_urls": true,
+      "routes": [],
+      "assets": {
+        "directory": "./public",
+        "binding": "ASSETS",
+        "not_found_handling": "404-page",
+        "html_handling": "auto-trailing-slash"
+      },
+      "vars": {
+        "AIRTABLE_BASE_ID": "apphZsPGanzJ5xyl7",
+        "AIRTABLE_INBOX_TABLE_ID": "tblBcgV7oQ9Q3q34L",
+        "ENV_NAME": "next",
+        "PRELAUNCH": "false"
+      },
+      "d1_databases": [
+        { "binding": "DB", "database_name": "asnm-db-next", "database_id": "f92c5a5d-87d8-4c3e-9b26-3f7fabd63f13" }
+      ],
+      "triggers": {
+        "crons": []
+      },
+      "observability": { "enabled": true }
     }
   }
 }
