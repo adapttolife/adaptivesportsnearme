@@ -671,6 +671,14 @@ body.drawer-open{overflow:hidden;}
 .drawer{position:fixed;top:0;left:0;bottom:0;width:min(320px,86vw);background:var(--paper);z-index:120;transform:translateX(-100%);transition:transform .28s var(--ease);display:flex;flex-direction:column;overflow-y:auto;box-shadow:var(--shadow-lg);}
 .drawer.open{transform:none;}
 .drawer-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 16px 14px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--paper);z-index:1;}
+/* Profile lives at the top of the drawer (Reddit pattern) — not competing in the header */
+.drawer-profile{display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:14px 16px;border-bottom:1px solid var(--line);background:none;transition:background .15s;}
+.drawer-profile:hover{background:var(--mist);}
+.dp-av{flex:0 0 auto;width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:var(--orange-soft);color:var(--orange-ink);font-weight:700;font-size:16px;}
+.dp-av svg{width:20px;height:20px;}
+.dp-meta{display:flex;flex-direction:column;min-width:0;}
+.dp-name{font-weight:700;font-size:15px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.dp-sub{font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .drawer-head b{font-family:'DM Sans',sans-serif;font-weight:700;font-size:15px;letter-spacing:-.015em;color:var(--ink);}
 .drawer-x{flex:0 0 auto;width:34px;height:34px;display:grid;place-items:center;border-radius:var(--r-full);color:var(--ink);transition:background .15s;}
 .drawer-x:hover{background:var(--mist);}
@@ -724,9 +732,6 @@ body.drawer-open{overflow:hidden;}
     </div>
     <div class="hdr-actions">
       <button class="hdr-add" data-addprogram aria-label="Submit a program" title="Submit a program"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
-      <button class="hdr-profile" id="profileBtn" data-section="profile" aria-label="Your profile">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21a8 8 0 0 0-16 0"/><circle cx="12" cy="7" r="4"/></svg>
-      </button>
     </div>
   </div>
 </header>
@@ -1806,6 +1811,9 @@ function renderDrawer(){
   const d=document.getElementById('drawer'); if(!d) return;
   const follows=getFollows();
   const head='<div class="drawer-head"><b>Adaptive Sports Near Me</b><button class="drawer-x" aria-label="Close menu">'+NAVICON.x+'</button></div>';
+  const prof = PROFILE
+    ? '<button class="drawer-profile" data-section="profile"><span class="dp-av">'+(PROFILE.name?esc(PROFILE.name.trim().charAt(0).toUpperCase()):DRAWER_USER)+'</span><span class="dp-meta"><span class="dp-name">'+(esc(PROFILE.name)||'Your profile')+'</span><span class="dp-sub">'+esc(PROFILE.email)+'</span></span></button>'
+    : '<button class="drawer-profile" data-section="profile"><span class="dp-av">'+DRAWER_USER+'</span><span class="dp-meta"><span class="dp-name">Set up your profile</span><span class="dp-sub">Save favorites, follow your sports</span></span></button>';
   let following='';
   if(follows.length){
     const rows=SPORTS.filter(s=>follows.includes(s.key)).map(s=>
@@ -1824,9 +1832,8 @@ function renderDrawer(){
     +'<span class="drawer-row-main" data-section="events">'+NAVICON.calsm+'<span class="drawer-row-label">Events</span></span>'
     +'<a class="drawer-row-main" href="/blog">'+NAVICON.book+'<span class="drawer-row-label">Blog</span></a>'
     +'<span class="drawer-row-main" data-addprogram>'+DRAWER_PLUS+'<span class="drawer-row-label">Add a program</span></span>'
-    +'<span class="drawer-row-main" data-section="profile">'+DRAWER_USER+'<span class="drawer-row-label">Your profile</span></span>'
     +'</div>';
-  d.innerHTML=head+following+browse+util;
+  d.innerHTML=head+prof+following+browse+util;
 }
 function openDrawer(){
   renderDrawer();
