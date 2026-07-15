@@ -734,11 +734,11 @@ body.drawer-open{overflow:hidden;}
         <a class="addbtn" href="#" data-addprogram><svg class="plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg><span>Add a program</span></a>
       </div>
       <div class="fc-block">
-        <h3>Stay in the loop</h3>
-        <p>New programs, funding, and the occasional update. No spam.</p>
+        <h3>Programs, events, and funding near you.</h3>
+        <p>The adaptive sports directory, in your inbox. New programs, grants, and events near you. No spam, unsubscribe anytime.</p>
         <div class="fc-sub" id="subWrap">
           <input type="email" id="subEmail" placeholder="you@email.com" aria-label="Email address">
-          <button type="button" class="subbtn" data-subscribe-go>Subscribe</button>
+          <button type="button" class="subbtn" data-subscribe-go>Get updates</button>
         </div>
         <div class="cf-turnstile" id="footCf" data-sitekey="0x4AAAAAADr2WPepRgjp8g-R" data-appearance="interaction-only" style="margin-top:10px;"></div>
       </div>
@@ -787,7 +787,7 @@ body.drawer-open{overflow:hidden;}
       <button class="gate-x" type="button" data-gate-close aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
       <p class="gate-eyebrow">Launching soon</p>
       <h2 id="gateTitle">We are not live yet</h2>
-      <p class="lede">Adaptive Sports Near Me is a free, national directory of adaptive sports programs. Leave your email and we will tell you the day it opens.</p>
+      <p class="lede">Adaptive Sports Near Me is a free, national directory of adaptive sports programs, events, and funding. Leave your email and we will tell you the day it opens — then get new programs, grants, and events near you.</p>
     </div>
     <div class="gate-tabs" role="tablist">
       <button class="gate-tab on" type="button" data-gate-tab="notify" role="tab">Get notified</button>
@@ -1980,7 +1980,8 @@ function openGate(tab){
     const ey=gateEl.querySelector('.gate-eyebrow'), ti=document.getElementById('gateTitle'), le=gateEl.querySelector('.gate-head .lede');
     if(ey) ey.textContent='Free and open';
     if(ti) ti.textContent='Help the directory grow';
-    if(le) le.textContent='Know a program we should list, or want updates as new programs land? That all starts here.';
+    if(le) le.textContent='Know a program we should list, or want programs, events, and funding near you in your inbox? That all starts here.';
+    const nb=document.querySelector('#notifyForm .gate-cta'); if(nb) nb.textContent='Get updates'; // not "Notify me at launch" on a live site
   }
   setGateTab(tab||'notify');
   gateEl.classList.add('open');
