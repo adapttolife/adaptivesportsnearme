@@ -1355,6 +1355,7 @@ const CTA_PH='you@email.com';
    empty search for a sport/place) also records WHAT the person wanted — the demand signal. */
 function ctaForm(interest){
   return '<form class="cta-sub" novalidate>'
+    +'<input class="hp" type="text" name="company" tabindex="-1" autocomplete="off" aria-hidden="true">'
     +(interest?'<input type="hidden" name="interest" value="'+esc(interest)+'">':'')
     +'<input name="em" type="email" autocomplete="email" placeholder="'+CTA_PH+'" aria-label="Email address">'
     +'<button class="cta-go" type="submit">'+CTA_BTN+'</button>'

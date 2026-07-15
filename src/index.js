@@ -160,7 +160,13 @@ async function handleSubscribe(request, env) {
   // Honeypot — bots fill the hidden "company" field. Accept silently, do nothing.
   if (str(data.company)) return json({ ok: true });
 
-  if (!(await verifyTurnstile(env, str(data.cf_token), request.headers.get("CF-Connecting-IP")))) {
+  // Newsletter subscribe is honeypot-only by design: it's a low-value target (Beehiiv
+  // dedupes/validates, nothing writes to our systems), so we don't tax the highest-
+  // conversion forms with a Turnstile widget. If a token IS sent (footer/gate forms
+  // include one) we still verify it; a missing token is fine here. Turnstile stays
+  // REQUIRED on handleSubmitProgram, which writes to the Airtable inbox.
+  const cfTok = str(data.cf_token);
+  if (cfTok && !(await verifyTurnstile(env, cfTok, request.headers.get("CF-Connecting-IP")))) {
     return json({ ok: false, error: "Verification failed. Please reload the page and try again." }, 403);
   }
 
