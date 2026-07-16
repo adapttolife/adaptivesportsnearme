@@ -187,7 +187,7 @@
       "</div>";
     // Profile block moves to the bottom (just above About), fronted by a divider.
     var profileBlock = '<div class="drawer-div"></div>' + prof;
-    return head + news + dest + contribute + chips + profileBlock + about;
+    return head + news + dest + chips + contribute + profileBlock + about;
   }
 
   function injectDrawer() {
