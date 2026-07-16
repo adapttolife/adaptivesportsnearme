@@ -2126,7 +2126,14 @@ document.addEventListener('click', function(e){
 // it boots directly into the profile section rather than waiting on hydrate().
 if(BOOT_PROFILE) state.section='profile';
 if(BOOT_EVENTS) state.section='events';
+// Deep-link params — the blog navbar (and any shared link) lands here: ?q=, ?add=program, ?sport=, ?profile=.
+// Additive only; render() reflects state.q into the search inputs and filters on it.
+const BOOT_QP=new URLSearchParams(location.search);
+if(BOOT_QP.get('q')) state.q=BOOT_QP.get('q');
+if(BOOT_QP.get('sport')&&SPORTS.some(s=>s.key===BOOT_QP.get('sport'))) state.sport=BOOT_QP.get('sport');
+if(BOOT_QP.get('profile')) state.section='profile';
 render();
+if(BOOT_QP.get('add')==='program') openGate('program');
 
 /* ============================ LIVE DATA HYDRATION ============================ */
 // Swap the inline sample for the real directory (D1 via /api/programs).

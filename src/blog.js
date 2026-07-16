@@ -203,8 +203,10 @@ const BLOG_CSS = `
   --ink:#1A1A1A; --ink2:#3A3A37;
   --paper:#FFFFFF; --mist:#F7F7F5; --sand:#F0EFEC;
   --line:#E7E6E2; --muted:#6E6D6A; --faint:#736F6A;
-  --orange:#C5430C; --orange-ink:#A8370A;
+  --orange:#C5430C; --orange-ink:#A8370A; --orange-soft:#FBEBDC; --sand2:#E8E7E3;
   /* --faint darkened to meet WCAG AA (matches index.html) */
+  --hdr:64px;
+  --shadow-sm:0 1px 2px rgba(17,17,19,.04),0 1px 3px rgba(17,17,19,.06);
   --r:12px; --r-lg:16px; --r-full:999px; --max:920px; --gut:clamp(20px,4vw,48px);
 }
 *{box-sizing:border-box;}
@@ -215,14 +217,31 @@ a{color:inherit;text-decoration:none;}
 .wrap{max-width:var(--max);margin:0 auto;padding:0 var(--gut);}
 .skip{position:absolute;left:-999px;top:8px;background:var(--ink);color:#fff;padding:10px 16px;border-radius:var(--r);}
 .skip:focus{left:12px;}
-.hdr{position:sticky;top:0;z-index:10;background:rgba(255,255,255,.92);backdrop-filter:saturate(150%) blur(10px);border-bottom:1px solid var(--line);}
-.hdr-in{height:64px;display:flex;align-items:center;justify-content:space-between;gap:18px;}
-.brand b{font-family:'DM Sans',sans-serif;font-weight:700;font-size:16px;letter-spacing:-.015em;color:var(--ink);}
-.hdr-nav{display:flex;align-items:center;gap:22px;}
-.hdr-nav a{font-size:14px;font-weight:600;color:var(--ink2);transition:color .15s;}
-.hdr-nav a:hover{color:var(--orange);}
-.hdr-nav a[aria-current="page"]{color:var(--ink);}
-@media(max-width:520px){.hdr-nav{gap:16px;}.hdr-nav a{font-size:13px;}}
+/* App-matching header (☰ · brand · search pill · orange "+"). Rendered server-side
+   for zero-flash + no-JS styling; site-nav.js mirrors this CSS and owns the drawer. */
+.hdr{position:sticky;top:0;z-index:60;background:rgba(255,255,255,.92);backdrop-filter:saturate(150%) blur(10px);border-bottom:1px solid var(--line);}
+.hdr.scrolled{box-shadow:var(--shadow-sm);}
+.hdr-in{height:var(--hdr);display:flex;align-items:center;justify-content:space-between;gap:18px;}
+.brand{flex:0 0 auto;transition:opacity .15s;}
+.brand:hover{opacity:.7;}
+.brand b{font-family:'DM Sans',sans-serif;font-weight:700;font-size:16px;letter-spacing:-.015em;color:var(--ink);white-space:nowrap;}
+.menu-btn{flex:0 0 auto;width:40px;height:40px;display:grid;place-items:center;border-radius:var(--r-full);color:var(--ink);transition:background .15s;}
+.menu-btn:hover{background:var(--mist);}
+.menu-btn svg{width:22px;height:22px;}
+.search{flex:0 1 520px;max-width:520px;height:54px;display:flex;align-items:center;background:var(--paper);border:1px solid var(--line);border-radius:var(--r-full);box-shadow:0 3px 12px rgba(17,17,19,.10),0 1px 2px rgba(17,17,19,.05);transition:box-shadow .2s,border-color .2s;}
+.search:hover{box-shadow:0 6px 16px rgba(17,17,19,.13),0 1px 3px rgba(17,17,19,.06);}
+.search:focus-within{box-shadow:0 8px 22px rgba(17,17,19,.15),0 1px 3px rgba(17,17,19,.06);border-color:var(--sand2);}
+.search .loc{display:flex;align-items:center;gap:8px;padding:0 14px 0 20px;height:100%;border-radius:var(--r-full) 0 0 var(--r-full);white-space:nowrap;color:var(--ink);font-size:15px;font-weight:600;cursor:default;}
+.search .loc:hover{background:transparent;}
+.search .loc svg{width:16px;height:16px;color:var(--orange);}
+.search .sep{width:1px;height:26px;background:var(--line);flex:0 0 auto;}
+.search input{flex:1 1 auto;min-width:40px;height:100%;border:none;background:transparent;outline:none;padding:0 22px 0 16px;font-size:15px;font-weight:500;color:var(--ink);}
+.search input::placeholder{color:var(--muted);font-weight:500;}
+.hdr-actions{flex:0 0 auto;display:flex;align-items:center;gap:10px;}
+.hdr-add{flex:0 0 auto;width:40px;height:40px;border-radius:50%;display:grid;place-items:center;color:var(--orange-ink);border:1px solid var(--orange-soft);background:var(--orange-soft);transition:border-color .15s,background .15s,color .15s;}
+.hdr-add:hover{background:var(--orange);color:#fff;border-color:var(--orange);}
+.hdr-add svg{width:19px;height:19px;}
+@media (max-width:720px){.hdr-add{width:36px;height:36px;}.hdr-add svg{width:17px;height:17px;}}
 .blog-main{padding:48px var(--gut) 64px;}
 .eyebrow{font-size:11px;letter-spacing:.13em;text-transform:uppercase;color:var(--faint);margin:0 0 8px;}
 .blog-h1{font-family:'DM Sans',sans-serif;font-size:34px;font-weight:700;letter-spacing:-.02em;line-height:1.15;margin:0 0 20px;}
@@ -288,12 +307,16 @@ function pageShell({ title, description, canonical, ogImage, bodyHtml, jsonLd })
 <a class="skip" href="#main">Skip to content</a>
 <header class="hdr">
   <div class="wrap hdr-in">
+    <button class="menu-btn" id="menuBtn" aria-label="Menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
     <a class="brand" href="/" aria-label="Adaptive Sports Near Me home"><b>Adaptive Sports Near Me</b></a>
-    <nav class="hdr-nav" aria-label="Primary">
-      <a href="/">Directory</a>
-      <a href="/events">Events</a>
-      <a href="/blog" aria-current="page">Blog</a>
-    </nav>
+    <form class="search" role="search" action="/" method="get">
+      <span class="loc" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s7-5.7 7-11a7 7 0 1 0-14 0c0 5.3 7 11 7 11Z"/><circle cx="12" cy="10" r="2.5"/></svg><span>United States</span></span>
+      <span class="sep"></span>
+      <input id="q" name="q" type="text" placeholder="Search a sport, program or provider" aria-label="Search programs">
+    </form>
+    <div class="hdr-actions">
+      <a class="hdr-add" href="/?add=program" aria-label="Submit a program" title="Submit a program"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></a>
+    </div>
   </div>
 </header>
 <main id="main" class="wrap blog-main">
@@ -311,6 +334,7 @@ ${bodyHtml}
     </div>
   </div>
 </footer>
+<script src="/site-nav.js" defer></script>
 </body>
 </html>
 `;
