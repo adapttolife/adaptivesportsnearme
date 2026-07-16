@@ -72,7 +72,7 @@
     ".hdr-add{flex:0 0 auto;width:40px;height:40px;border-radius:50%;display:grid;place-items:center;color:var(--orange-ink);border:1px solid var(--orange-soft);background:var(--orange-soft);transition:border-color .15s,background .15s,color .15s;}" +
     ".hdr-add:hover{background:var(--orange);color:#fff;border-color:var(--orange);}" +
     ".hdr-add svg{width:19px;height:19px;}" +
-    "@media (max-width:720px){.hdr-add{width:36px;height:36px;}.hdr-add svg{width:17px;height:17px;}}" +
+    "@media (max-width:720px){.hdr-add{width:36px;height:36px;}.hdr-add svg{width:17px;height:17px;}.hdr .brand{display:none;}.search{flex:1 1 100%;max-width:none;min-width:0;}.search .loc span{display:none;}.search input{min-width:0;}}" +
     /* ---- hamburger + drawer ---- */
     ".menu-btn{flex:0 0 auto;width:40px;height:40px;display:grid;place-items:center;border-radius:var(--r-full);color:var(--ink);transition:background .15s;}" +
     ".menu-btn:hover{background:var(--mist);}" +
