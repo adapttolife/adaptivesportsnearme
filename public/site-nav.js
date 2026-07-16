@@ -108,7 +108,28 @@
     ".drawer-chip:hover{border-color:var(--ink);color:var(--ink);background:var(--mist);}" +
     ".drawer-about{display:flex;flex-direction:column;gap:2px;padding-bottom:18px;}" +
     ".drawer-about a{display:block;width:100%;text-align:left;padding:8px;font-size:13.5px;color:var(--muted);cursor:pointer;border-radius:var(--r);transition:.15s;}" +
-    ".drawer-about a:hover{color:var(--ink);background:var(--mist);}";
+    ".drawer-about a:hover{color:var(--ink);background:var(--mist);}" +
+    /* ---- newsletter CTA (email-first drawer top) + capture form, copied verbatim from index.html ---- */
+    ".hp{position:absolute!important;left:-9999px;width:1px;height:1px;opacity:0;}" +
+    ".drawer-news{margin:10px 12px;padding:18px;border-radius:var(--r-lg);background:linear-gradient(162deg,var(--orange-soft) 0%,#F7EEE6 52%,var(--sand) 100%);border:1px solid #EFE0D1;}" +
+    ".dn-eyebrow{font-size:11px;letter-spacing:.13em;text-transform:uppercase;color:var(--orange-ink);font-weight:700;margin:0 0 7px;}" +
+    ".dn-head{font-family:'DM Sans',sans-serif;font-size:16.5px;font-weight:700;line-height:1.2;letter-spacing:-.01em;color:var(--ink);margin:0 0 13px;}" +
+    ".dn-fine{font-size:12px;color:var(--muted);margin:10px 0 0;}" +
+    ".cta-sub{display:flex;flex-wrap:wrap;gap:8px;align-items:center;}" +
+    ".cta-sub input{flex:1 1 auto;min-width:0;height:48px;padding:0 16px;border:1px solid var(--line);border-radius:var(--r-full);background:var(--paper);color:var(--ink);font-size:15px;box-shadow:var(--shadow-sm);}" +
+    ".cta-sub input::placeholder{color:var(--faint);}" +
+    ".cta-sub input:focus{outline:none;border-color:var(--ink);}" +
+    ".cta-go{flex:0 0 auto;height:48px;padding:0 22px;border-radius:var(--r-full);background:var(--orange);color:#fff;font-size:15px;font-weight:700;white-space:nowrap;transition:background .15s;cursor:pointer;border:none;}" +
+    ".cta-go:hover{background:var(--orange-ink);}" +
+    ".cta-go:disabled{opacity:.6;cursor:default;}" +
+    ".cta-msg{flex-basis:100%;font-size:13px;line-height:1.4;margin-top:2px;min-height:1px;}" +
+    ".cta-msg:empty{margin-top:0;}" +
+    ".cta-msg.err{color:var(--orange-ink);}" +
+    ".cta-done{display:flex;align-items:center;justify-content:center;gap:10px;font-size:15px;font-weight:600;color:var(--ink);padding:6px 2px;}" +
+    ".cta-done svg{flex:0 0 auto;width:22px;height:22px;color:var(--orange);}" +
+    ".drawer-news .cta-sub{flex-direction:column;flex-wrap:nowrap;align-items:stretch;gap:8px;}" +
+    ".drawer-news .cta-sub input{width:100%;height:44px;}" +
+    ".drawer-news .cta-go{width:100%;height:44px;padding:0;}";
 
   function injectStyle() {
     if (document.getElementById("site-nav-css")) return;
@@ -127,6 +148,19 @@
       '<span class="dp-av">' + IC.user + "</span>" +
       '<span class="dp-meta"><span class="dp-name">Set up your profile</span>' +
       '<span class="dp-sub">Save favorites and get updates near you</span></span></a>';
+    // Newsletter CTA — the drawer's top slot (email-first). Standalone form + handler (see wire()).
+    var news =
+      '<div class="drawer-news">' +
+      '<p class="dn-eyebrow">The newsletter</p>' +
+      '<p class="dn-head">Programs, events &amp; funding near you.</p>' +
+      '<form class="cta-sub" novalidate>' +
+      '<input class="hp" name="company" tabindex="-1" autocomplete="off" aria-hidden="true">' +
+      '<input name="em" type="email" placeholder="you@email.com" aria-label="Email address">' +
+      '<button class="cta-go" type="submit">Get updates</button>' +
+      '<div class="cta-msg" aria-live="polite"></div>' +
+      "</form>" +
+      '<p class="dn-fine">Free. No spam.</p>' +
+      "</div>";
     var dest =
       '<div class="drawer-sec drawer-util">' +
       '<a class="drawer-row-main" href="/">' + IC.compass + '<span class="drawer-row-label">Discover</span></a>' +
@@ -151,7 +185,9 @@
       '<a href="/">The project</a>' +
       '<a href="https://sign.adapttolife.org/waiver?source=asnm">Sign waiver</a>' +
       "</div>";
-    return head + prof + dest + contribute + chips + about;
+    // Profile block moves to the bottom (just above About), fronted by a divider.
+    var profileBlock = '<div class="drawer-div"></div>' + prof;
+    return head + news + dest + contribute + chips + profileBlock + about;
   }
 
   function injectDrawer() {
@@ -211,6 +247,42 @@
     });
     document.addEventListener("keydown", function (e) {
       if (e.key === "Escape") closeDrawer();
+    });
+    // Newsletter subscribe — standalone (no shared ctaForm handler on the blog).
+    // Validate → POST /api/subscribe (honeypot-only endpoint) → success/inline-error.
+    document.addEventListener("submit", function (e) {
+      var form = e.target.closest && e.target.closest("form.cta-sub");
+      if (!form) return;
+      e.preventDefault();
+      var btn = form.querySelector(".cta-go");
+      var msg = form.querySelector(".cta-msg");
+      if (msg) { msg.textContent = ""; msg.className = "cta-msg"; }
+      var em = (form.em && form.em.value || "").trim();
+      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)) {
+        if (msg) { msg.textContent = "Please enter a valid email."; msg.className = "cta-msg err"; }
+        return;
+      }
+      if (btn) { btn.disabled = true; btn.textContent = "Signing up..."; }
+      fetch("/api/subscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams(new FormData(form)),
+      })
+        .then(function (r) { return r.json().catch(function () { return {}; }); })
+        .then(function (res) {
+          if (res && res.ok) {
+            form.innerHTML =
+              '<div class="cta-done"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>' +
+              "<span>You’re in — look for a welcome email.</span></div>";
+          } else {
+            if (btn) { btn.disabled = false; btn.textContent = "Get updates"; }
+            if (msg) { msg.textContent = (res && res.error) || "Something went wrong. Please try again."; msg.className = "cta-msg err"; }
+          }
+        })
+        .catch(function () {
+          if (btn) { btn.disabled = false; btn.textContent = "Get updates"; }
+          if (msg) { msg.textContent = "Something went wrong. Please try again."; msg.className = "cta-msg err"; }
+        });
     });
   }
 

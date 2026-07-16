@@ -669,7 +669,7 @@ body.drawer-open{overflow:hidden;}
 .drawer{position:fixed;top:0;left:0;bottom:0;width:min(320px,86vw);background:var(--paper);z-index:120;transform:translateX(-100%);transition:transform .28s var(--ease);display:flex;flex-direction:column;overflow-y:auto;box-shadow:var(--shadow-lg);}
 .drawer.open{transform:none;}
 .drawer-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 16px 14px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--paper);z-index:1;}
-/* Profile lives at the top of the drawer (Reddit pattern) — not competing in the header */
+/* Profile lives near the bottom of the drawer — the newsletter CTA now owns the top slot (email-first) */
 .drawer-profile{display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:14px 16px;border-bottom:1px solid var(--line);background:none;transition:background .15s;}
 .drawer-profile:hover{background:var(--mist);}
 .dp-av{flex:0 0 auto;width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:var(--orange-soft);color:var(--orange-ink);font-weight:700;font-size:16px;}
@@ -697,6 +697,15 @@ body.drawer-open{overflow:hidden;}
 .drawer-about{display:flex;flex-direction:column;gap:2px;padding-bottom:18px;}
 .drawer-about button{display:block;width:100%;text-align:left;padding:8px;font-size:13.5px;color:var(--muted);cursor:pointer;border-radius:var(--r);transition:.15s;}
 .drawer-about button:hover{color:var(--ink);background:var(--mist);}
+/* Newsletter CTA — warm anchor card at the top of the drawer (email-first). Stacked
+   full-width form so it never overflows the ~290px inner width. */
+.drawer-news{margin:10px 12px;padding:18px;border-radius:var(--r-lg);background:linear-gradient(162deg,var(--orange-soft) 0%,#F7EEE6 52%,var(--sand) 100%);border:1px solid #EFE0D1;}
+.dn-eyebrow{font-size:11px;letter-spacing:.13em;text-transform:uppercase;color:var(--orange-ink);font-weight:700;margin:0 0 7px;}
+.dn-head{font-family:'DM Sans',sans-serif;font-size:16.5px;font-weight:700;line-height:1.2;letter-spacing:-.01em;color:var(--ink);margin:0 0 13px;}
+.drawer-news .cta-sub{flex-direction:column;flex-wrap:nowrap;align-items:stretch;gap:8px;}
+.drawer-news .cta-sub input{width:100%;height:44px;}
+.drawer-news .cta-go{width:100%;height:44px;padding:0;}
+.dn-fine{font-size:12px;color:var(--muted);margin:10px 0 0;}
 @media (prefers-color-scheme: dark){
   :root{color-scheme:light;}
   html,body{background:var(--mist)!important;color:var(--ink)!important;}
@@ -1807,6 +1816,14 @@ function renderDrawer(){
   const prof = PROFILE
     ? '<button class="drawer-profile" data-section="profile"><span class="dp-av">'+(PROFILE.name?esc(PROFILE.name.trim().charAt(0).toUpperCase()):DRAWER_USER)+'</span><span class="dp-meta"><span class="dp-name">'+(esc(PROFILE.name)||'Your profile')+'</span><span class="dp-sub">'+esc(PROFILE.email)+'</span></span></button>'
     : '<button class="drawer-profile" data-section="profile"><span class="dp-av">'+DRAWER_USER+'</span><span class="dp-meta"><span class="dp-name">Set up your profile</span><span class="dp-sub">Save favorites and get updates near you</span></span></button>';
+  // Newsletter CTA — the drawer's top slot (email-first). Reuses ctaForm() so the
+  // delegated form.cta-sub submit handler wires it automatically.
+  const news='<div class="drawer-news">'
+    +'<p class="dn-eyebrow">The newsletter</p>'
+    +'<p class="dn-head">Programs, events &amp; funding near you.</p>'
+    +ctaForm()
+    +'<p class="dn-fine">Free. No spam.</p>'
+    +'</div>';
   // Primary destinations — the map of the site (the panel's real job).
   const dest='<div class="drawer-sec drawer-util">'
     +'<button type="button" class="drawer-row-main" data-home>'+NAVICON.compass+'<span class="drawer-row-label">Discover</span></button>'
@@ -1826,7 +1843,9 @@ function renderDrawer(){
   const about='<div class="drawer-div"></div><div class="drawer-sec drawer-about">'
     +'<button type="button" data-about="project">The project</button><button type="button" data-about="verify">How we verify</button>'
     +'</div>';
-  d.innerHTML=head+prof+dest+contribute+chips+about;
+  // Profile block moves to the bottom (just above About), fronted by a divider.
+  const profileBlock='<div class="drawer-div"></div>'+prof;
+  d.innerHTML=head+news+dest+contribute+chips+profileBlock+about;
 }
 let drawerOpener=null;
 function openDrawer(){
