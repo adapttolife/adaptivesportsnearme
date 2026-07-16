@@ -84,13 +84,13 @@
     ".drawer.open{transform:none;}" +
     ".drawer-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 16px 14px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--paper);z-index:1;}" +
     ".drawer-head b{font-family:'DM Sans',sans-serif;font-weight:700;font-size:15px;letter-spacing:-.015em;color:var(--ink);}" +
-    ".drawer-profile{display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:14px 16px;border-bottom:1px solid var(--line);background:none;transition:background .15s;}" +
+    ".drawer-profile{display:flex;align-items:center;gap:11px;width:100%;text-align:left;padding:11px 16px;background:none;transition:background .15s;}" +
     ".drawer-profile:hover{background:var(--mist);}" +
-    ".dp-av{flex:0 0 auto;width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:var(--orange-soft);color:var(--orange-ink);font-weight:700;font-size:16px;}" +
-    ".dp-av svg{width:20px;height:20px;}" +
+    ".dp-av{flex:0 0 auto;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:var(--orange-soft);color:var(--orange-ink);font-weight:700;font-size:13px;}" +
+    ".dp-av svg{width:16px;height:16px;}" +
     ".dp-meta{display:flex;flex-direction:column;min-width:0;}" +
-    ".dp-name{font-weight:700;font-size:15px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}" +
-    ".dp-sub{font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}" +
+    ".dp-name{font-weight:600;font-size:14px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}" +
+    ".dp-sub{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}" +
     ".drawer-x{flex:0 0 auto;width:34px;height:34px;display:grid;place-items:center;border-radius:var(--r-full);color:var(--ink);transition:background .15s;}" +
     ".drawer-x:hover{background:var(--mist);}" +
     ".drawer-x svg{width:20px;height:20px;}" +
@@ -147,7 +147,7 @@
       '<a class="drawer-profile" href="/?profile=1">' +
       '<span class="dp-av">' + IC.user + "</span>" +
       '<span class="dp-meta"><span class="dp-name">Set up your profile</span>' +
-      '<span class="dp-sub">Save favorites and get updates near you</span></span></a>';
+      '<span class="dp-sub">Save favorites, follow sports</span></span></a>';
     // Newsletter CTA — the drawer's top slot (email-first). Standalone form + handler (see wire()).
     var news =
       '<div class="drawer-news">' +
