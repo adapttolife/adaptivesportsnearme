@@ -334,7 +334,8 @@ ${bodyHtml}
     </div>
   </div>
 </footer>
-<script src="/site-nav.js" defer></script>
+<!-- bump ?v= on any site-nav.js change so browsers fetch the new file (cache-bust) -->
+<script src="/site-nav.js?v=20260716b" defer></script>
 </body>
 </html>
 `;
