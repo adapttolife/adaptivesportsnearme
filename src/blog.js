@@ -202,8 +202,9 @@ const BLOG_CSS = `
   color-scheme: light;
   --ink:#1A1A1A; --ink2:#3A3A37;
   --paper:#FFFFFF; --mist:#F7F7F5; --sand:#F0EFEC;
-  --line:#E7E6E2; --muted:#6E6D6A; --faint:#8C8B87;
+  --line:#E7E6E2; --muted:#6E6D6A; --faint:#736F6A;
   --orange:#C5430C; --orange-ink:#A8370A;
+  /* --faint darkened to meet WCAG AA (matches index.html) */
   --r:12px; --r-lg:16px; --r-full:999px; --max:920px; --gut:clamp(20px,4vw,48px);
 }
 *{box-sizing:border-box;}
@@ -214,9 +215,14 @@ a{color:inherit;text-decoration:none;}
 .wrap{max-width:var(--max);margin:0 auto;padding:0 var(--gut);}
 .skip{position:absolute;left:-999px;top:8px;background:var(--ink);color:#fff;padding:10px 16px;border-radius:var(--r);}
 .skip:focus{left:12px;}
-.hdr{background:rgba(255,255,255,.92);backdrop-filter:saturate(150%) blur(10px);border-bottom:1px solid var(--line);}
-.hdr-in{height:64px;display:flex;align-items:center;}
+.hdr{position:sticky;top:0;z-index:10;background:rgba(255,255,255,.92);backdrop-filter:saturate(150%) blur(10px);border-bottom:1px solid var(--line);}
+.hdr-in{height:64px;display:flex;align-items:center;justify-content:space-between;gap:18px;}
 .brand b{font-family:'DM Sans',sans-serif;font-weight:700;font-size:16px;letter-spacing:-.015em;color:var(--ink);}
+.hdr-nav{display:flex;align-items:center;gap:22px;}
+.hdr-nav a{font-size:14px;font-weight:600;color:var(--ink2);transition:color .15s;}
+.hdr-nav a:hover{color:var(--orange);}
+.hdr-nav a[aria-current="page"]{color:var(--ink);}
+@media(max-width:520px){.hdr-nav{gap:16px;}.hdr-nav a{font-size:13px;}}
 .blog-main{padding:48px var(--gut) 64px;}
 .eyebrow{font-size:11px;letter-spacing:.13em;text-transform:uppercase;color:var(--faint);margin:0 0 8px;}
 .blog-h1{font-family:'DM Sans',sans-serif;font-size:34px;font-weight:700;letter-spacing:-.02em;line-height:1.15;margin:0 0 20px;}
@@ -239,11 +245,14 @@ a{color:inherit;text-decoration:none;}
 .blog-body img{border-radius:var(--r);margin:16px 0;}
 .blog-body a{color:var(--orange-ink);text-decoration:underline;}
 .blog-body h2,.blog-body h3{font-family:'DM Sans',sans-serif;color:var(--ink);letter-spacing:-.01em;}
-.foot{border-top:1px solid var(--line);margin-top:24px;padding:40px var(--gut) 48px;}
+.foot{border-top:1px solid var(--line);margin-top:24px;padding:48px var(--gut) 56px;background:var(--paper);}
+.foot-in{display:flex;justify-content:space-between;gap:36px 48px;flex-wrap:wrap;}
 .foot .brand b{font-size:15px;}
-.foot .tagline{font-size:14px;color:var(--muted);margin:10px 0 0;max-width:420px;line-height:1.5;}
-.foot-links a{display:inline-block;font-size:14px;color:var(--ink2);margin:12px 16px 0 0;}
-.foot-links a:hover{color:var(--orange);}
+.foot .tagline{font-size:14px;color:var(--muted);margin:10px 0 0;max-width:380px;line-height:1.5;}
+.foot-cols{display:flex;gap:36px 48px;flex-wrap:wrap;}
+.foot-col h4{font-family:'DM Sans',sans-serif;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);font-weight:400;margin:0 0 12px;}
+.foot-col a{display:block;font-size:14px;color:var(--ink2);padding:6px 0;transition:color .15s;}
+.foot-col a:hover{color:var(--orange);}
 @media(max-width:720px){.blog-h1{font-size:26px;}.blog-grid{grid-template-columns:1fr;}}
 `;
 
@@ -280,18 +289,25 @@ function pageShell({ title, description, canonical, ogImage, bodyHtml, jsonLd })
 <header class="hdr">
   <div class="wrap hdr-in">
     <a class="brand" href="/" aria-label="Adaptive Sports Near Me home"><b>Adaptive Sports Near Me</b></a>
+    <nav class="hdr-nav" aria-label="Primary">
+      <a href="/">Directory</a>
+      <a href="/events">Events</a>
+      <a href="/blog" aria-current="page">Blog</a>
+    </nav>
   </div>
 </header>
 <main id="main" class="wrap blog-main">
 ${bodyHtml}
 </main>
 <footer class="foot">
-  <div class="wrap">
-    <a class="brand" href="/"><b>Adaptive Sports Near Me</b></a>
-    <p class="tagline">An open directory of adaptive sports programs across the country. No logins, no walls. Built for the community.</p>
-    <div class="foot-links">
-      <a href="/">Back to the directory</a>
-      <a href="/blog">All stories</a>
+  <div class="wrap foot-in">
+    <div class="foot-brand">
+      <a class="brand" href="/"><b>Adaptive Sports Near Me</b></a>
+      <p class="tagline">An open directory of adaptive sports programs across the country. No logins, no walls. Built for the community.</p>
+    </div>
+    <div class="foot-cols">
+      <div class="foot-col"><h4>Explore</h4><a href="/">Discover</a><a href="/maps">Map view</a><a href="/events">Events</a><a href="/blog">All stories</a></div>
+      <div class="foot-col"><h4>About</h4><a href="/">The project</a><a href="https://sign.adapttolife.org/waiver?source=asnm">Sign waiver</a></div>
     </div>
   </div>
 </footer>
