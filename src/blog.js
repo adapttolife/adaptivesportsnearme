@@ -250,7 +250,7 @@ a{color:inherit;text-decoration:none;}
 .foot .brand b{font-size:15px;}
 .foot .tagline{font-size:14px;color:var(--muted);margin:10px 0 0;max-width:380px;line-height:1.5;}
 .foot-cols{display:flex;gap:36px 48px;flex-wrap:wrap;}
-.foot-col h4{font-family:'DM Sans',sans-serif;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);font-weight:400;margin:0 0 12px;}
+.foot-col h2{font-family:'DM Sans',sans-serif;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);font-weight:400;margin:0 0 12px;}
 .foot-col a{display:block;font-size:14px;color:var(--ink2);padding:6px 0;transition:color .15s;}
 .foot-col a:hover{color:var(--orange);}
 @media(max-width:720px){.blog-h1{font-size:26px;}.blog-grid{grid-template-columns:1fr;}}
@@ -306,8 +306,8 @@ ${bodyHtml}
       <p class="tagline">An open directory of adaptive sports programs across the country. No logins, no walls. Built for the community.</p>
     </div>
     <div class="foot-cols">
-      <div class="foot-col"><h4>Explore</h4><a href="/">Discover</a><a href="/maps">Map view</a><a href="/events">Events</a><a href="/blog">All stories</a></div>
-      <div class="foot-col"><h4>About</h4><a href="/">The project</a><a href="https://sign.adapttolife.org/waiver?source=asnm">Sign waiver</a></div>
+      <div class="foot-col"><h2>Explore</h2><a href="/">Discover</a><a href="/maps">Map view</a><a href="/events">Events</a><a href="/blog">All stories</a></div>
+      <div class="foot-col"><h2>About</h2><a href="/">The project</a><a href="https://sign.adapttolife.org/waiver?source=asnm">Sign waiver</a></div>
     </div>
   </div>
 </footer>

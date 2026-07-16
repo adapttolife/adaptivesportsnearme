@@ -64,6 +64,7 @@ input,select{font-family:inherit;}
   .pcard:hover .pcard-media,.mcard:hover{transform:none!important;}
 }
 .skip{position:absolute;left:-999px;top:8px;background:var(--ink);color:#fff;padding:10px 16px;border-radius:var(--r);z-index:200;}
+.vh{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0;}
 .skip:focus{left:12px;}
 
 /* ============================ HEADER ============================ */
@@ -274,7 +275,7 @@ input,select{font-family:inherit;}
 .mapx-drawer{position:absolute;top:16px;right:16px;bottom:16px;width:min(400px,calc(100% - 32px));z-index:7;background:#fff;border-radius:var(--r-xl);box-shadow:0 8px 30px rgba(20,18,14,.22);display:flex;flex-direction:column;overflow:hidden;}
 .mapx-drawer[hidden]{display:none;}
 .mapxd-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:16px 18px 12px;border-bottom:1px solid var(--line);}
-.mapxd-head h3{font-family:'DM Sans',sans-serif;font-size:16.5px;margin:0;}
+.mapxd-head h2{font-family:'DM Sans',sans-serif;font-size:16.5px;margin:0;}
 .mapxd-head .sub{font-size:13px;color:var(--muted);margin-top:2px;}
 .mapxd-x{width:32px;height:32px;flex:0 0 auto;display:flex;align-items:center;justify-content:center;border-radius:50%;color:var(--muted);cursor:pointer;}
 .mapxd-x:hover{background:var(--mist);color:var(--ink);}
@@ -489,12 +490,12 @@ a.evrow:hover{border-color:var(--ink);box-shadow:var(--shadow-sm);}
 .foot .brand b{font-size:15px;}
 .foot .tagline{font-size:14px;color:var(--muted);margin-top:12px;max-width:340px;line-height:1.5;}
 .foot-links{display:flex;gap:36px 48px;flex-wrap:wrap;}
-.foot-col h4{font-family:'DM Sans',sans-serif;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);font-weight:400;margin:0 0 12px;}
+.foot-col h2{font-family:'DM Sans',sans-serif;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);font-weight:400;margin:0 0 12px;}
 .foot-col a{display:block;font-size:14px;color:var(--ink2);padding:6px 0;}
 .foot-col a:hover{color:var(--orange);}
 /* Slim footer newsletter line — quiet last-chance capture, not a second billboard */
 .foot-sub{display:flex;align-items:center;justify-content:space-between;gap:18px 40px;flex-wrap:wrap;padding:34px 0;border-bottom:1px solid var(--line);}
-.foot-sub-txt h3{font-family:'DM Sans',sans-serif;font-size:17px;font-weight:700;letter-spacing:-.01em;color:var(--ink);margin:0 0 4px;}
+.foot-sub-txt h2{font-family:'DM Sans',sans-serif;font-size:17px;font-weight:700;letter-spacing:-.01em;color:var(--ink);margin:0 0 4px;}
 .foot-sub-txt p{font-size:13px;color:var(--muted);margin:0;}
 .foot-sub-form{flex:0 0 auto;}
 .fc-sub{display:flex;gap:8px;max-width:400px;}
@@ -734,7 +735,7 @@ body.drawer-open{overflow:hidden;}
   <div class="wrap">
     <div class="foot-sub">
       <div class="foot-sub-txt">
-        <h3>Programs, events &amp; funding near you.</h3>
+        <h2>Programs, events &amp; funding near you.</h2>
         <p>Free directory updates in your inbox. No spam, unsubscribe anytime.</p>
       </div>
       <div class="foot-sub-form">
@@ -751,9 +752,9 @@ body.drawer-open{overflow:hidden;}
         <p class="tagline">An open directory of adaptive sports programs across the country. No logins, no walls. Built for the community.</p>
       </div>
       <div class="foot-links">
-        <div class="foot-col"><h4>Explore</h4><a href="#" data-home>Discover</a><a href="/maps" data-mapx>Map view</a><a href="#" data-section="database">Browse all</a><a href="#" data-section="events">Events</a><a href="#" data-browse-sport>Browse by sport</a><a href="#" data-db-link="grants">Funding</a><a href="/blog">Blog</a></div>
-        <div class="foot-col"><h4>Programs</h4><a href="#" data-gate-open="program">Add a program</a><a href="#" data-gate-open="program">Update a listing</a></div>
-        <div class="foot-col"><h4>About</h4><a href="#" data-about="project">The project</a><a href="#" data-about="verify">How we verify</a><a href="#" data-about="a11y">Accessibility</a><a href="#" data-section="profile">Your profile</a><a href="https://sign.adapttolife.org/waiver?source=asnm">Sign waiver</a></div>
+        <div class="foot-col"><h2>Explore</h2><a href="#" data-home>Discover</a><a href="/maps" data-mapx>Map view</a><a href="#" data-section="database">Browse all</a><a href="#" data-section="events">Events</a><a href="#" data-browse-sport>Browse by sport</a><a href="#" data-db-link="grants">Funding</a><a href="/blog">Blog</a></div>
+        <div class="foot-col"><h2>Programs</h2><a href="#" data-gate-open="program">Add a program</a><a href="#" data-gate-open="program">Update a listing</a></div>
+        <div class="foot-col"><h2>About</h2><a href="#" data-about="project">The project</a><a href="#" data-about="verify">How we verify</a><a href="#" data-about="a11y">Accessibility</a><a href="#" data-section="profile">Your profile</a><a href="https://sign.adapttolife.org/waiver?source=asnm">Sign waiver</a></div>
       </div>
     </div>
   </div>
@@ -1252,11 +1253,12 @@ function mapExplorer(){
   const list=state.see?seeList():filtered();
   const X='<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>';
   return catBar()
+    +'<h1 class="vh">Map of adaptive sports programs</h1>'
     +'<div class="mapx"><div id="livemap" role="region" aria-label="Map of all programs"></div>'
     +'<div class="mapchip">'+list.length.toLocaleString()+' programs · United States</div>'
     +'<button class="mapx-close" type="button" data-mapx-close>'+X+'Close map</button>'
     +'<div class="mapx-drawer" id="mapxDrawer" hidden>'
-      +'<div class="mapxd-head"><div><h3></h3><div class="sub"></div></div><button class="mapxd-x" type="button" aria-label="Close list">'+X+'</button></div>'
+      +'<div class="mapxd-head"><div><h2></h2><div class="sub"></div></div><button class="mapxd-x" type="button" aria-label="Close list">'+X+'</button></div>'
       +'<div class="mapxd-list"></div>'
       +'<div class="mapxd-foot"><a href="#" data-mapx-dir="">Open in directory</a></div>'
     +'</div></div>';
@@ -1266,7 +1268,7 @@ function mapxShowState(k){
   const d=document.getElementById('mapxDrawer');
   if(!d||!list.length) return;
   const name=list[0].stateName||k;
-  d.querySelector('.mapxd-head h3').textContent=name;
+  d.querySelector('.mapxd-head h2').textContent=name;
   d.querySelector('.mapxd-head .sub').textContent=list.length+(list.length===1?' program':' programs');
   d.querySelector('.mapxd-list').innerHTML=list.map(p=>
     '<div class="mcard" data-prog="'+p.id+'">'
@@ -1492,8 +1494,8 @@ function programReal(p){
         +'<div class="by">'+(p.provider||'Adaptive sports program')+' · '+loc+'</div>'
         +(qf?'<div class="qfacts">'+qf+'</div>':'')
         +'<p class="desc">'+desc+'</p>'
-        +(recrows?'<div class="dsec"><h3 class="sect-h">Record details</h3><div class="recgrid">'+recrows+'</div></div>':'')
-        +'<div class="dsec"><h3 class="sect-h">Before you go</h3><p class="desc" style="margin-top:8px;">Accessibility details for this listing have not been independently confirmed yet. Contact the program directly about equipment, access and coaching — most adaptive programs welcome first-timers.</p></div>'
+        +(recrows?'<div class="dsec"><h2 class="sect-h">Record details</h2><div class="recgrid">'+recrows+'</div></div>':'')
+        +'<div class="dsec"><h2 class="sect-h">Before you go</h2><p class="desc" style="margin-top:8px;">Accessibility details for this listing have not been independently confirmed yet. Contact the program directly about equipment, access and coaching — most adaptive programs welcome first-timers.</p></div>'
         +relHtml
       +'</div>'
       +'<aside class="rail">'
@@ -1526,14 +1528,14 @@ function program(){
         +'<div class="by">by '+p.provider+' \u00b7 '+p.city+'</div>'
         +'<div class="qfacts"><span class="qf">'+I.pin+p.dist+' mi away</span><span class="qf">'+I.dollar+p.cost+'</span><span class="qf">'+I.users+nd(p.ages)+'</span><span class="qf">'+I.layers+p.format+'</span></div>'
         +'<p class="desc">'+p.desc+'</p>'
-        +'<div class="dsec"><h3 class="sect-h">Record details</h3>'
+        +'<div class="dsec"><h2 class="sect-h">Record details</h2>'
         +'<div class="recgrid">'
           +'<div class="rrow"><div class="rcell"><div class="k">Ages</div><div class="v">'+nd(p.ages)+'</div></div><div class="rcell"><div class="k">Cost</div><div class="v">'+p.cost+'</div></div></div>'
           +'<div class="rrow"><div class="rcell"><div class="k">Season</div><div class="v">'+nd(p.season)+'</div></div><div class="rcell"><div class="k">Format</div><div class="v">'+p.format+'</div></div></div>'
           +'<div class="rrow"><div class="rcell"><div class="k">Skill levels</div><div class="v">'+p.levels.join(', ')+'</div></div><div class="rcell"><div class="k">Equipment</div><div class="v">'+p.equipment+'</div></div></div>'
           +'<div class="rrow full"><div class="rcell"><div class="k">Schedule</div><div class="v sched">'+NAVICON.calsm+'<span>'+nd(p.schedule)+'</span></div></div></div>'
         +'</div></div>'
-        +'<div class="dsec"><h3 class="sect-h">Access and accessibility</h3><div class="access">'+accHtml+'</div></div>'
+        +'<div class="dsec"><h2 class="sect-h">Access and accessibility</h2><div class="access">'+accHtml+'</div></div>'
         +relHtml
       +'</div>'
       +'<aside class="rail">'
