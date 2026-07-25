@@ -758,12 +758,12 @@ body.drawer-open{overflow:hidden;}
     <div class="foot-in">
       <div>
         <a class="brand" href="#" data-home><b>Adaptive Sports Near Me</b></a>
-        <p class="tagline">An open directory of adaptive sports programs across the country. No logins, no walls. Built for the community.</p>
+        <p class="tagline">An open directory of adaptive sports programs across the country. No logins, no walls, because it is a free service of <a href="https://adapttolife.org" target="_blank" rel="noopener">Adapt To Life</a>, a recognized 501(c)(3) nonprofit.</p>
       </div>
       <div class="foot-links">
         <div class="foot-col"><h2>Explore</h2><a href="#" data-home>Discover</a><a href="/maps" data-mapx>Map view</a><a href="#" data-section="database">Browse all</a><a href="#" data-section="events">Events</a><a href="#" data-browse-sport>Browse by sport</a><a href="#" data-db-link="grants">Funding</a><a href="/blog">Blog</a></div>
         <div class="foot-col"><h2>Programs</h2><a href="#" data-gate-open="program">Add a program</a><a href="#" data-gate-open="program">Update a listing</a></div>
-        <div class="foot-col"><h2>About</h2><a href="#" data-about="project">The project</a><a href="#" data-about="verify">How we verify</a><a href="#" data-about="a11y">Accessibility</a><a href="#" data-section="profile">Your profile</a><a href="https://sign.adapttolife.org/waiver?source=asnm">Sign waiver</a></div>
+        <div class="foot-col"><h2>About</h2><a href="#" data-about="project">The project</a><a href="#" data-about="verify">How we verify</a><a href="#" data-about="a11y">Accessibility</a><a href="#" data-section="profile">Your profile</a><a href="https://adapttolife.org" target="_blank" rel="noopener">Adapt To Life</a><a href="https://sign.adapttolife.org/waiver?source=asnm">Sign waiver</a></div>
       </div>
     </div>
   </div>
@@ -862,6 +862,11 @@ const PROVIDERS = {
   "Mountain Access Project":{type:"Nonprofit", city:"Golden, CO", blurb:"Adaptive climbing nights with trained volunteers and adaptive belay systems."},
 };
 const GRANTS = [
+  // Adapt To Life runs this directory and also runs a fund, so the fund is
+  // listed here on the merits, as a peer of the others and with no special
+  // placement. Amount is deliberately "Varies": there is no published cap and
+  // inventing one would be a promise we cannot keep.
+  {name:"Hustle & Heart Fund (Adapt To Life)", meta:"Varies \u00b7 Rolling"},
   {name:"Challenged Athletes Foundation Grant", meta:"Up to $5,000 \u00b7 Rolling"},
   {name:"Kelly Brush Active Fund", meta:"Up to $5,000 \u00b7 Mar 1 / Sep 1"},
   {name:"Move United Equipment Fund", meta:"Varies \u00b7 Rolling"},
@@ -910,7 +915,7 @@ const TABLE_META = [
   {key:"providers", label:"Providers", count:6, icon:"building"},
   {key:"events", label:"Events", count:5, icon:"cal"},
   {key:"equipment", label:"Equipment", count:5, icon:"dumb"},
-  {key:"grants", label:"Grants", count:5, icon:"price"},
+  {key:"grants", label:"Grants", count:6, icon:"price"},
   {key:"resources", label:"Resources", count:4, icon:"book"},
 ];
 const MAPPOS = {
