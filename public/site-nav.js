@@ -219,6 +219,8 @@
     d.classList.add("open");
     d.removeAttribute("inert");
     d.setAttribute("aria-hidden", "false");
+    var mb = document.getElementById("menuBtn");
+    if (mb) mb.setAttribute("aria-expanded", "true");
     scrim.classList.add("open");
     document.body.classList.add("drawer-open");
     var x = d.querySelector(".drawer-x");
@@ -235,6 +237,7 @@
     if (scrim) scrim.classList.remove("open");
     document.body.classList.remove("drawer-open");
     var menuBtn = document.getElementById("menuBtn") || (opener && opener.closest ? opener.closest(".menu-btn") : null);
+    if (menuBtn) menuBtn.setAttribute("aria-expanded", "false");
     var back = menuBtn || opener;
     if (back && back.focus) { try { back.focus(); } catch (_) {} }
     opener = null;
