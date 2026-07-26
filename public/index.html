@@ -1853,6 +1853,7 @@ function openDrawer(){
   drawerOpener=document.activeElement;
   const d=document.getElementById('drawer');
   d.classList.add('open'); d.removeAttribute('inert'); d.setAttribute('aria-hidden','false');
+  const mb=document.getElementById('menuBtn'); if(mb) mb.setAttribute('aria-expanded','true');
   document.getElementById('scrim').classList.add('open');
   document.body.classList.add('drawer-open');
   const x=d.querySelector('.drawer-x'); if(x) setTimeout(()=>{try{x.focus();}catch(_){}},40);
@@ -1861,6 +1862,7 @@ function closeDrawer(){
   const d=document.getElementById('drawer'); if(!d.classList.contains('open')) return;
   // aria-hidden + inert so a closed overlay is neither announced nor tabbable.
   d.classList.remove('open'); d.setAttribute('aria-hidden','true'); d.setAttribute('inert','');
+  const mbc=document.getElementById('menuBtn'); if(mbc) mbc.setAttribute('aria-expanded','false');
   document.getElementById('scrim').classList.remove('open');
   document.body.classList.remove('drawer-open');
   if(drawerOpener&&drawerOpener.focus){ try{drawerOpener.focus();}catch(_){} } drawerOpener=null;
