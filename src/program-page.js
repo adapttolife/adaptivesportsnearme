@@ -1,6 +1,7 @@
 // Server-rendered program detail page — the shareable URL for one listing.
-// Same visual language as the in-app sheet: sport photo hero, name, city+state,
-// website button, source, back to directory. No extra chrome, no repeated fields.
+// Same sheet as the in-app detail (public/index.html): photo hero, name,
+// city+state (or statewide), primary action, dense rows only when present.
+// A listing, not a marketing page — no invented copy, no rail, no filler.
 
 const SITE = "https://adaptivesportsnearme.com";
 
@@ -11,6 +12,14 @@ export const SPORT_PHOTOS = new Set([
   "pickleball", "rugby", "skiing", "sledhockey", "tennis", "waterskiing",
 ]);
 
+// org_type -> the human label. Mirrors TYPE_LABEL in public/index.html so the
+// shared link and the in-app sheet name the same thing the same way.
+const TYPE_LABEL = {
+  member: "Community program", team: "Competitive team", chapter: "Chapter",
+  adaptive_club: "Adaptive club", inclusive_club: "Inclusive club",
+  affiliate: "Affiliate", event_partner: "Event partner",
+};
+
 function esc(s) {
   return s == null ? "" : String(s)
     .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
@@ -18,6 +27,11 @@ function esc(s) {
 }
 
 export function locLine(org) {
+  const statewide = org.geoPrecision === "state" || org.geoPrecision === "state-level";
+  if (statewide) {
+    const st = org.stateName || org.state;
+    return st ? `${st} · statewide` : "United States · statewide";
+  }
   if (org.city && org.state) return `${org.city}, ${org.state}`;
   if (org.city && org.stateName) return `${org.city}, ${org.stateName}`;
   if (org.city) return org.city;
@@ -26,54 +40,151 @@ export function locLine(org) {
   return "United States";
 }
 
+export function typeLabel(org) {
+  if (!org || !org.type) return null;
+  return TYPE_LABEL[org.type] || null;
+}
+
 export function photoPath(sport) {
   return sport && SPORT_PHOTOS.has(sport) ? `/assets/sport-photos/${sport}.jpg` : null;
+}
+
+export function formatChecked(iso) {
+  if (!iso) return null;
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return null;
+  return d.toLocaleDateString("en-US", {
+    month: "short", day: "numeric", year: "numeric",
+    timeZone: "America/Chicago",
+  });
 }
 
 function hostFromUrl(u) {
   try { return new URL(u).hostname.replace(/^www\./, ""); } catch { return u; }
 }
 
-function sourceLines(org) {
-  const srcs = (org.sources && org.sources.length)
+function firstSource(org) {
+  if (org.sources && org.sources.length) return org.sources[0];
+  if (org.primarySource) return { name: org.primarySource, url: org.primarySourceUrl || null };
+  return null;
+}
+
+function sourceWithUrl(org) {
+  const list = (org.sources && org.sources.length)
     ? org.sources
-    : (org.primarySource ? [{ name: org.primarySource }] : []);
-  if (!srcs.length) return "<p class=\"src\">Community submission</p>";
-  return srcs.map((s) => {
-    const name = esc(s.name || "Source");
-    const orgName = s.organization ? ` <span class="muted">${esc(s.organization)}</span>` : "";
-    const link = s.url
-      ? `<a href="${esc(s.url)}" rel="noopener">${name}</a>${orgName}`
-      : `${name}${orgName}`;
-    return `<p class="src">${link}</p>`;
-  }).join("");
+    : (org.primarySource ? [{ name: org.primarySource, url: org.primarySourceUrl || null }] : []);
+  return list.find((s) => s && s.url) || null;
+}
+
+// website → tel → mailto → primary source link. Never an empty-page stub.
+export function primaryCta(org) {
+  if (org.website) return { href: org.website, label: "Visit website" };
+  const phone = org.phone && String(org.phone).trim();
+  if (phone) return { href: `tel:${phone.replace(/[^\d+]/g, "")}`, label: "Call" };
+  if (org.email) return { href: `mailto:${org.email}`, label: "Email" };
+  const src = sourceWithUrl(org);
+  if (src) return { href: src.url, label: "View source" };
+  return null;
+}
+
+function denseRows(org) {
+  const type = typeLabel(org);
+  const pairs = [
+    ["Cost", org.cost],
+    ["Ages", org.ages],
+    ["Equipment", org.equipment],
+    ["Phone", org.phone],
+    ["Email", org.email],
+    ["Type", type],
+  ].filter(([, v]) => v);
+  if (!pairs.length) return "";
+  return `<div class="rows">${pairs.map(([k, v]) => {
+    let val = esc(v);
+    if (k === "Phone") {
+      const tel = String(v).replace(/[^\d+]/g, "");
+      val = `<a href="tel:${esc(tel)}">${esc(v)}</a>`;
+    } else if (k === "Email") {
+      val = `<a href="mailto:${esc(v)}">${esc(v)}</a>`;
+    }
+    return `<div class="row"><span class="k">${k}</span><span class="v">${val}</span></div>`;
+  }).join("")}</div>`;
+}
+
+function listedLine(org) {
+  const bits = [];
+  bits.push(org.verification === "verified" ? "Verified" : "Unverified");
+  const checked = formatChecked(org.lastChecked);
+  if (checked) bits.push(`Last checked ${esc(checked)}`);
+  const src = firstSource(org);
+  if (src && src.name) {
+    bits.push(src.url
+      ? `<a href="${esc(src.url)}" rel="noopener">${esc(src.name)}</a>`
+      : esc(src.name));
+  }
+  return `<p class="listed">${bits.join(' <span class="sep">·</span> ')}</p>`;
+}
+
+function nearbyCard(p) {
+  const loc = locLine(p);
+  const line = p.dist != null ? `${p.dist} mi away` : (typeLabel(p) || "");
+  const photo = photoPath(p.sport);
+  const media = photo
+    ? `<div class="pcard-media has-photo"><img class="pcard-img" src="${esc(photo)}" alt=""></div>`
+    : `<div class="pcard-media g-sand"></div>`;
+  return `<a class="pcard" href="/programs/${esc(p.id)}">${media}<div class="pcard-body"><div class="pcard-sport">${esc(p.sportLabel || "Multi-Sport")}</div><div class="pcard-name">${esc(p.name)}</div><div class="pcard-loc">${esc(loc)}</div>${line ? `<div class="pcard-line">${esc(line)}</div>` : ""}</div></a>`;
+}
+
+function nearbyStrip(items, sportLabel) {
+  if (!items || !items.length) return "";
+  const list = items.slice(0, 6);
+  return `<div class="nearby"><h2>Nearby ${esc((sportLabel || "adaptive sport").toLowerCase())}</h2><div class="grid">${list.map(nearbyCard).join("")}</div></div>`;
 }
 
 const CSS = `
-:root{color-scheme:light;--ink:#1A1A1A;--ink2:#3A3A37;--paper:#FFFFFF;--mist:#F7F7F5;--sand:#F0EFEC;--line:#E7E6E2;--muted:#6E6D6A;--faint:#736F6A;--orange:#C5430C;--orange-ink:#A8370A;--r:12px;--r-lg:16px;--r-xl:20px;--r-full:999px;--gut:clamp(20px,4vw,48px);}
+:root{color-scheme:light;--ink:#1A1A1A;--ink2:#3A3A37;--paper:#FFFFFF;--mist:#F7F7F5;--sand:#F0EFEC;--line:#E7E6E2;--muted:#6E6D6A;--faint:#736F6A;--orange:#C5430C;--orange-ink:#A8370A;--r:12px;--r-lg:16px;--r-full:999px;--gut:clamp(20px,4vw,40px);}
 *{box-sizing:border-box;}
 html,body{margin:0;padding:0;background:var(--mist);color:var(--ink);}
-body{font-family:'DM Sans',system-ui,sans-serif;font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased;}
+body{font-family:'DM Sans',system-ui,sans-serif;font-size:15px;line-height:1.45;-webkit-font-smoothing:antialiased;}
 img,svg{display:block;max-width:100%;}
 a{color:var(--orange-ink);}
-.wrap{max-width:760px;margin:0 auto;padding:22px var(--gut) 64px;}
-.back{display:inline-block;font-size:14px;font-weight:600;color:var(--muted);text-decoration:none;margin-bottom:18px;}
+.wrap{max-width:880px;margin:0 auto;padding:14px var(--gut) 48px;}
+.back{display:inline-block;font-size:13.5px;font-weight:600;color:var(--muted);text-decoration:none;margin-bottom:12px;}
 .back:hover{color:var(--ink);}
-.dhero{position:relative;width:100%;height:clamp(220px,32vw,360px);border-radius:var(--r-xl);overflow:hidden;margin:0 0 22px;}
+.dhero{position:relative;width:100%;height:clamp(180px,24vw,260px);border-radius:var(--r-lg);overflow:hidden;margin:0 0 12px;}
 .dhero.has-dphoto{background:#23211f;}
 .dhero.g-sand{background:linear-gradient(140deg,#F2EFEA 0%,#E5DED3 100%);}
 .dhero-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 30%;}
-.dhero .eyebrow{position:absolute;bottom:16px;left:18px;background:rgba(255,255,255,.9);border-radius:var(--r-full);padding:6px 12px;font-size:11px;letter-spacing:.13em;text-transform:uppercase;color:var(--muted);}
-h1{font-size:clamp(28px,4vw,40px);font-weight:700;letter-spacing:-.02em;line-height:1.1;margin:0 0 8px;}
-.loc{font-size:16px;color:var(--ink2);margin:0 0 22px;}
-.cta{display:flex;align-items:center;justify-content:center;width:100%;height:50px;background:var(--orange);color:#fff;border-radius:var(--r);font-size:16px;font-weight:700;text-decoration:none;}
+.dhero::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 45%,rgba(0,0,0,.55));pointer-events:none;}
+.dov{position:absolute;left:14px;bottom:12px;z-index:1;color:#fff;}
+.dov-sport{display:block;font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;}
+.dov-loc{display:block;font-size:13.5px;font-weight:500;margin-top:2px;}
+h1{font-size:clamp(22px,2.8vw,30px);font-weight:700;letter-spacing:-.02em;line-height:1.15;margin:0 0 4px;}
+.loc{font-size:15px;color:var(--ink2);margin:0 0 12px;}
+.desc{font-size:15px;line-height:1.55;color:var(--ink2);margin:-4px 0 12px;max-width:68ch;}
+.cta{display:inline-flex;align-items:center;justify-content:center;min-width:220px;height:44px;padding:0 22px;background:var(--orange);color:#fff;border-radius:var(--r);font-size:15px;font-weight:700;text-decoration:none;}
 .cta:hover{background:var(--orange-ink);}
-.empty{color:var(--muted);margin:0 0 8px;}
-.listed{margin-top:28px;}
-.listed .k{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);margin:0 0 8px;}
-.src{margin:0 0 6px;}
-.src:last-child{margin-bottom:0;}
-.muted{color:var(--muted);font-weight:400;}
+.host{font-size:13.5px;color:var(--muted);margin-left:10px;}
+.act{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 12px;}
+.rows{margin:0 0 12px;border-top:1px solid var(--line);}
+.row{display:flex;gap:14px;padding:8px 0;border-bottom:1px solid var(--line);font-size:14px;}
+.row .k{color:var(--muted);width:92px;flex:0 0 auto;}
+.row .v{color:var(--ink);font-weight:500;min-width:0;}
+.listed{font-size:13px;color:var(--muted);margin:0 0 18px;}
+.listed .sep{color:var(--faint);}
+.empty{color:var(--muted);margin:0;}
+.nearby{margin-top:8px;}
+.nearby h2{font-size:16px;font-weight:700;letter-spacing:-.01em;margin:0 0 10px;}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:12px 10px;}
+.pcard{display:block;color:inherit;text-decoration:none;}
+.pcard-media{position:relative;aspect-ratio:4/3;border-radius:10px;overflow:hidden;background:var(--sand);}
+.pcard-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
+.pcard-body{padding:6px 1px 0;}
+.pcard-sport{font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--faint);}
+.pcard-name{font-size:14px;font-weight:600;line-height:1.25;margin:1px 0 0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.pcard-loc,.pcard-line{font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+@media(max-width:600px){
+  .cta{width:100%;min-width:0;}
+}
 `;
 
 function page({ title, description, canonical, image, body }) {
@@ -106,24 +217,30 @@ ${body}
 </html>`;
 }
 
-export function programPageTemplate(org, { site = SITE } = {}) {
+export function programPageTemplate(org, { site = SITE, nearby = [] } = {}) {
   const name = org.name || "Adaptive sports program";
   const sport = org.sportLabel || "Multi-Sport";
   const loc = locLine(org);
   const canonical = `${site}/programs/${org.id}`;
   const photo = photoPath(org.sport);
+  const overlay = `<div class="dov"><span class="dov-sport">${esc(sport)}</span><span class="dov-loc">${esc(loc)}</span></div>`;
   const hero = photo
-    ? `<div class="dhero has-dphoto"><img class="dhero-img" src="${esc(photo)}" alt=""><span class="eyebrow">${esc(sport)}</span></div>`
-    : `<div class="dhero g-sand"><span class="eyebrow">${esc(sport)}</span></div>`;
-  const website = org.website
-    ? `<a class="cta" href="${esc(org.website)}" rel="noopener">Visit website</a>`
-    : `<p class="empty">No website on file.</p>`;
+    ? `<div class="dhero has-dphoto"><img class="dhero-img" src="${esc(photo)}" alt="">${overlay}</div>`
+    : `<div class="dhero g-sand">${overlay}</div>`;
+  const cta = primaryCta(org);
+  const action = cta
+    ? `<div class="act"><a class="cta" href="${esc(cta.href)}" rel="noopener">${esc(cta.label)}</a>${org.website ? `<span class="host">${esc(hostFromUrl(org.website))}</span>` : ""}</div>`
+    : "";
+  const desc = org.desc ? `<p class="desc">${esc(org.desc)}</p>` : "";
   const body = `<a class="back" href="/">← Directory</a>
 ${hero}
 <h1>${esc(name)}</h1>
 <p class="loc">${esc(loc)}</p>
-${website}
-<div class="listed"><p class="k">Listed from</p>${sourceLines(org)}</div>`;
+${desc}
+${action}
+${denseRows(org)}
+${listedLine(org)}
+${nearbyStrip(nearby, sport)}`;
   return page({
     title: `${name} · Adaptive Sports Near Me`,
     description: `${sport} in ${loc}.`,
@@ -135,7 +252,6 @@ ${website}
 
 export function programNotFoundTemplate({ site = SITE } = {}) {
   const body = `<a class="back" href="/">← Directory</a>
-<p class="empty">Program</p>
 <h1>Program not found</h1>
 <p class="empty">That listing is not in the directory.</p>`;
   return page({
