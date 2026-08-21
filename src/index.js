@@ -5,7 +5,7 @@
 //   POST /api/submit-program   -> Airtable Agent Inbox + D1 submissions
 //   GET  /api/config           -> env name + prelaunch flag (front-end gate)
 //   GET  /api/programs         -> directory list (sport/state/q + zip/city/lat-lng nearby, paged)
-//   GET  /programs/:id         -> shareable program page (name, sport, city/state, website, source)
+//   GET  /programs/:id         -> shareable program page (photo hero, name, city/state, website, source)
 //   GET  /api/orgs/:id         -> one org with source provenance
 //   GET  /api/stats            -> counts by sport/state
 //   GET  /api/events           -> upcoming public events (json)
@@ -125,7 +125,7 @@ export default {
     }
 
     // Shareable program page — server-rendered so a curl / a pasted link shows
-    // name, sport, city/state, website, source without waiting on the SPA.
+    // the same photo-hero sheet as the in-app detail (name, city/state, website, source).
     const programPath = url.pathname.match(PROGRAM_ID_RE);
     if (programPath && env.DB) {
       try {

@@ -1229,7 +1229,7 @@ async function initLiveMap(list,opts){
       const a=2*Math.PI*i/arr.length, lng=p.lng+R*Math.cos(a), lat=p.lat+R*Math.sin(a)*0.7;
       const d=document.createElement('button'); d.className='mpin'; d.textContent=String(i+1);
       d.setAttribute('data-prog',p.id); d.setAttribute('aria-label',p.name);
-      d.addEventListener('click',()=>{ location.assign('/programs/'+p.id); });
+      d.addEventListener('click',()=>{ state.section='program'; state.programId=p.id; render(); });
       pts.push([lng,lat]); new ml.Marker({element:d}).setLngLat([lng,lat]).addTo(liveMap);
     });
   } else {
@@ -1247,7 +1247,7 @@ async function initLiveMap(list,opts){
   precise.forEach(p=>{
     const d=document.createElement('button'); d.className='mdot'; d.style.cursor='pointer';
     d.setAttribute('data-prog',p.id); d.setAttribute('aria-label',p.name);
-    d.addEventListener('click',()=>{ location.assign('/programs/'+p.id); });
+    d.addEventListener('click',()=>{ state.section='program'; state.programId=p.id; render(); });
     pts.push([p.lng,p.lat]); new ml.Marker({element:d}).setLngLat([p.lng,p.lat]).addTo(liveMap);
   });
   liveMap.setMaxBounds([[-179,10],[-45,74]]); // keep panning on the map, not the mid-Atlantic
@@ -1471,6 +1471,14 @@ function scrollToResults(){
 function accessFeatures(p){ const a=['Step-free entry','Accessible parking','Accessible restrooms','New players welcome anytime']; if(/provided/i.test(p.equipment||'')) a.unshift('Loaner sport chairs'); a.splice(2,0,'Certified adaptive coaches'); return a; }
 function progContact(p){ const s=(p.provider||'').toLowerCase().replace(/[^a-z]+/g,'').slice(0,14)||'program'; return {phone:'(303) 555-0148', email:'hello@'+s+'.org', web:s+'.org'}; }
 function hostFromUrl(u){ try{ return new URL(u).hostname.replace(/^www\./,''); }catch(_){ return u; } }
+function locLine(p){
+  if(p.city&&p.state) return p.city+', '+p.state;
+  if(p.city&&p.stateName) return p.city+', '+p.stateName;
+  if(p.city) return p.city;
+  if(p.stateName) return p.stateName;
+  if(p.state) return p.state;
+  return 'United States';
+}
 // Fill in email/phone/provenance from the record API, then repaint if still open.
 async function loadOrgDetail(p){
   if(p._detail) return;
@@ -1486,8 +1494,8 @@ async function loadOrgDetail(p){
 
 function programReal(p){
   loadOrgDetail(p);
-  const loc=p.city?(p.city+(p.state?', '+p.state:'')):(p.stateName||'United States');
-  const nationwide=!p.city&&!p.stateName;
+  const loc=locLine(p);
+  const nationwide=!p.city&&!p.stateName&&!p.state;
   const hero=p.sport
     ? '<div class="dhero has-dphoto"><img class="dhero-img" src="'+photoSrc(p.sport)+'" alt=""><span class="eyebrow">'+p.sportLabel+'</span></div>'
     : '<div class="dhero '+(SPGRAD[p.sport]||'g-sand')+'">'+ringBg('ringbg')+CHAIR_GLY+'<span class="eyebrow">'+p.sportLabel+'</span></div>';
@@ -1745,7 +1753,7 @@ function render(keepScroll){
   else if(state.section==='events') v.innerHTML=eventsView();
   else if(state.section==='profile') v.innerHTML=profile();
   else v.innerHTML=discover();
-  if(!keepScroll && state.section!=='program'){ try{ window.scrollTo(0,0); }catch(e){} }
+  if(!keepScroll){ try{ window.scrollTo(0,0); }catch(e){} }
   const hq=document.getElementById('q'); if(hq) hq.value=state.q;
   const qh=document.getElementById('qHero'); if(qh) qh.value=state.q;
   // keep the URL honest if a nav path (logo, footer) leaves the map view
@@ -1850,9 +1858,10 @@ document.addEventListener('click',e=>{
   if(t.hasAttribute('data-section')){ e.preventDefault(); const sec=t.getAttribute('data-section'); state.section=sec; state.programId=null; if(sec==='discover') goFeed(); render(); return; }
   if(t.hasAttribute('data-sport-link')){ e.preventDefault(); state.section='discover'; state.sport=t.getAttribute('data-sport-link'); state.see=null; state.programId=null; render(true); scrollToResults(); return; }
   if(t.hasAttribute('data-prog')){
-    const href=t.getAttribute('href')||'';
-    if(t.tagName==='A' && href.indexOf('/programs/')===0) return; // shareable program page
-    e.preventDefault(); location.assign('/programs/'+t.getAttribute('data-prog')); return;
+    // Modifier-click keeps the shareable /programs/:id URL. A plain click opens
+    // the designed in-app sheet (photo hero), not a thin four-card page.
+    if(e.metaKey||e.ctrlKey||e.shiftKey||e.altKey) return;
+    e.preventDefault(); state.section='program'; state.programId=t.getAttribute('data-prog'); render(); return;
   }
   if(t.hasAttribute('data-seeall')){ e.preventDefault(); const v=t.getAttribute('data-seeall'); if(v==='beginner'){ state.see=null; if(DATA_LIVE){ state.cost='free'; } else { state.level='beginner'; } } else if(v==='free'){ state.see=null; state.cost='free'; } else if(v.indexOf('sport:')===0){ state.see=null; state.sport=v.slice(6); } else { state.see=v; } filterChanged(); return; }
   if(t.hasAttribute('data-sport')){ e.preventDefault(); state.sport=t.getAttribute('data-sport'); state.see=null; filterChanged(); return; }
