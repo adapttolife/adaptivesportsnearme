@@ -263,15 +263,17 @@ input,select{font-family:inherit;}
 .map .water{position:absolute;background:#D4E2E6;border-radius:40%;filter:blur(.3px);}
 .map .park{position:absolute;background:#D7E5D2;border-radius:42% 58% 50% 50%;}
 .map .mapchip,.mapx .mapchip{position:absolute;top:14px;left:14px;background:rgba(255,255,255,.9);border:1px solid var(--line);border-radius:var(--r-full);padding:6px 12px;font-family:'DM Sans',sans-serif;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);z-index:5;}
-/* live map (MapLibre GL + OpenFreeMap) — Airbnb-style white count pills */
+/* live map (MapLibre GL + OpenFreeMap) — fat 44px hit targets, small visible marks */
 #livemap{position:absolute;inset:0;}
-.mpill{display:flex;align-items:center;gap:6px;background:#fff;border:1px solid var(--line);border-radius:999px;padding:7px 12px;font-family:'DM Sans',sans-serif;font-weight:700;font-size:13px;color:var(--ink);box-shadow:0 2px 10px rgba(20,18,14,.18);cursor:pointer;transition:transform .12s var(--ease),background .12s,color .12s;white-space:nowrap;}
+.mpill{display:flex;align-items:center;gap:6px;min-height:var(--tap);background:#fff;border:1px solid var(--line);border-radius:999px;padding:7px 12px;font-family:'DM Sans',sans-serif;font-weight:700;font-size:13px;color:var(--ink);box-shadow:0 2px 10px rgba(20,18,14,.18);cursor:pointer;transition:background .12s,color .12s;white-space:nowrap;touch-action:manipulation;}
 .mpill .mc{font-weight:600;color:var(--muted);}
-.mpill:hover,.mpill.active{background:var(--ink);color:#fff;transform:scale(1.08);}
+.mpill:hover,.mpill.active{background:var(--ink);color:#fff;}
 .mpill:hover .mc,.mpill.active .mc{color:rgba(255,255,255,.75);}
-.mpin{width:30px;height:30px;display:flex;align-items:center;justify-content:center;background:#fff;border:1px solid var(--line);border-radius:999px;font-family:'DM Sans',sans-serif;font-weight:700;font-size:13px;color:var(--ink);box-shadow:0 2px 10px rgba(20,18,14,.18);cursor:pointer;transition:transform .12s var(--ease),background .12s,color .12s;}
-.mpin:hover,.mpin.active{background:var(--ink);color:#fff;transform:scale(1.12);}
-.mdot{width:14px;height:14px;border-radius:50%;background:var(--orange);border:2.5px solid #fff;box-shadow:0 1px 6px rgba(20,18,14,.35);}
+.mpin{width:var(--tap);height:var(--tap);min-width:var(--tap);display:flex;align-items:center;justify-content:center;background:#fff;border:1px solid var(--line);border-radius:999px;font-family:'DM Sans',sans-serif;font-weight:700;font-size:13px;color:var(--ink);box-shadow:0 2px 10px rgba(20,18,14,.18);cursor:pointer;transition:background .12s,color .12s;touch-action:manipulation;-webkit-tap-highlight-color:transparent;}
+.mpin:hover,.mpin.active{background:var(--ink);color:#fff;}
+.mdot{width:var(--tap);height:var(--tap);display:flex;align-items:center;justify-content:center;background:transparent;border:0;box-shadow:none;padding:0;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;}
+.mdot-mark{width:16px;height:16px;border-radius:50%;background:var(--orange);border:2.5px solid #fff;box-shadow:0 1px 6px rgba(20,18,14,.35);pointer-events:none;transition:transform .12s var(--ease);}
+.mdot:hover .mdot-mark,.mdot.active .mdot-mark{transform:scale(1.2);}
 /* full-screen map explorer */
 .mapx{position:relative;height:calc(100vh - 132px);min-height:480px;}
 .mapx-close{position:absolute;top:14px;right:14px;z-index:6;display:flex;align-items:center;gap:7px;background:#fff;border:1px solid var(--line);border-radius:var(--r-full);padding:9px 15px;font-family:'DM Sans',sans-serif;font-weight:600;font-size:13.5px;color:var(--ink);box-shadow:0 2px 10px rgba(20,18,14,.14);cursor:pointer;}
@@ -293,10 +295,24 @@ input,select{font-family:inherit;}
 .mapxd-foot{padding:12px 18px;border-top:1px solid var(--line);}
 .mapxd-foot a{display:flex;align-items:center;justify-content:center;gap:7px;height:42px;border:1px solid var(--ink);border-radius:var(--r);font-weight:600;font-size:14px;color:var(--ink);text-decoration:none;}
 .mapxd-foot a:hover{background:var(--ink);color:#fff;}
+/* Apple Maps peek tray — slides up from the bottom; map above stays live */
+.map-tray{position:absolute;left:12px;right:12px;bottom:12px;z-index:8;background:#fff;border-radius:var(--r-xl);box-shadow:0 8px 30px rgba(20,18,14,.22);transform:translateY(calc(100% + 28px));transition:transform 280ms ease;pointer-events:none;max-width:480px;margin:0 auto;}
+.map-tray.open{transform:translateY(0);pointer-events:auto;}
+.map-tray .tray-handle{width:36px;height:4px;border-radius:99px;background:var(--sand2);margin:10px auto 0;}
+.map-tray .tray-in{display:flex;gap:var(--space-row);align-items:center;padding:12px var(--space-page) var(--space-row);}
+.map-tray .tray-photo{width:64px;height:64px;border-radius:var(--r);object-fit:cover;flex:0 0 64px;background:var(--sand);}
+.map-tray .tray-photo-fallback{background:var(--sand);}
+.map-tray .tray-copy{min-width:0;flex:1;}
+.map-tray .tray-name{font-family:'DM Sans',sans-serif;font-weight:700;font-size:16px;letter-spacing:-.02em;line-height:1.25;margin:0;}
+.map-tray .tray-city,.map-tray .tray-sport{font-size:14px;color:var(--ink2);margin-top:2px;}
+.map-tray .tray-cta{display:inline-flex;align-items:center;justify-content:center;min-height:var(--tap);padding:0 18px;margin-top:8px;border-radius:var(--r);background:var(--ink);color:#fff;font-weight:600;font-size:14px;}
+.map-tray .tray-cta:hover{background:#000;}
 @media(max-width:720px){
   .mapx{height:calc(100vh - 118px);min-height:420px;}
   .mapx-drawer{top:auto;left:10px;right:10px;bottom:10px;width:auto;max-height:52%;}
+  .map-tray{left:10px;right:10px;bottom:10px;}
 }
+.map-live:has(.map-tray.open) .mapx-open{display:none;}
 .map-live .maplibregl-ctrl-attrib{font-size:10px;}
 .minimap .maplibregl-ctrl-attrib{font-size:9px;}
 .map .scalebar{position:absolute;bottom:14px;left:14px;display:flex;align-items:center;gap:8px;font-size:11px;color:var(--muted);z-index:5;}
@@ -1200,7 +1216,7 @@ async function initLiveMap(list,opts){
       const a=2*Math.PI*i/arr.length, lng=p.lng+R*Math.cos(a), lat=p.lat+R*Math.sin(a)*0.7;
       const d=document.createElement('button'); d.className='mpin'; d.textContent=String(i+1);
       d.setAttribute('data-prog',p.id); d.setAttribute('aria-label',p.name);
-      d.addEventListener('click',()=>{ state.section='program'; state.programId=p.id; render(); });
+      d.addEventListener('click',e=>selectMapPin(p,e));
       pts.push([lng,lat]); new ml.Marker({element:d}).setLngLat([lng,lat]).addTo(liveMap);
     });
   } else {
@@ -1216,10 +1232,16 @@ async function initLiveMap(list,opts){
     });
   }
   precise.forEach(p=>{
-    const d=document.createElement('button'); d.className='mdot'; d.style.cursor='pointer';
+    const d=document.createElement('button'); d.className='mdot';
+    d.innerHTML='<span class="mdot-mark" aria-hidden="true"></span>';
     d.setAttribute('data-prog',p.id); d.setAttribute('aria-label',p.name);
-    d.addEventListener('click',()=>{ state.section='program'; state.programId=p.id; render(); });
+    d.addEventListener('click',e=>selectMapPin(p,e));
     pts.push([p.lng,p.lat]); new ml.Marker({element:d}).setLngLat([p.lng,p.lat]).addTo(liveMap);
+  });
+  liveMap.on('click',e=>{
+    const t=e.originalEvent&&e.originalEvent.target;
+    if(t&&t.closest&&t.closest('.mdot,.mpin,.mpill,.map-tray,.maplibregl-ctrl,.mapx-close,.mapx-open,.mapx-drawer,.mapchip')) return;
+    closeMapTray();
   });
   liveMap.setMaxBounds([[-179,10],[-45,74]]); // keep panning on the map, not the mid-Atlantic
   if(byState.size>1){
@@ -1261,7 +1283,8 @@ function mapExplorer(){
       +'<div class="mapxd-head"><div><h2></h2><div class="sub"></div></div><button class="mapxd-x" type="button" aria-label="Close list">'+X+'</button></div>'
       +'<div class="mapxd-list"></div>'
       +'<div class="mapxd-foot"><a href="#" data-mapx-dir="">Open in directory</a></div>'
-    +'</div></div>';
+    +'</div>'
+    +'<div class="map-tray" id="mapTray" aria-hidden="true"></div></div>';
 }
 function mapxShowState(k){
   const list=(state.see?seeList():filtered()).filter(p=>p.state===k);
@@ -1279,6 +1302,84 @@ function mapxShowState(k){
   d.hidden=false;
   const p0=list.find(p=>p.lat!=null);
   if(liveMap&&p0) liveMap.easeTo({center:[p0.lng,p0.lat],zoom:5.2,duration:650});
+  closeMapTray();
+}
+
+/* ---- Apple Maps peek tray: pin tap slides a sheet up; map stays usable ---- */
+function mapTrayHtml(p){
+  const loc=locLine(p);
+  const photo=p.sport
+    ? '<img class="tray-photo" src="'+photoSrc(p.sport)+'" alt="">'
+    : '<div class="tray-photo tray-photo-fallback" aria-hidden="true"></div>';
+  const action=p.website
+    ? '<a class="tray-cta" href="'+p.website+'" target="_blank" rel="noopener">Visit</a>'
+    : '<a class="tray-cta" href="/programs/'+p.id+'" data-prog="'+p.id+'">Open listing</a>';
+  return '<div class="tray-handle" aria-hidden="true"></div>'
+    +'<div class="tray-in">'+photo+'<div class="tray-copy">'
+    +'<div class="tray-name">'+p.name+'</div>'
+    +'<div class="tray-city">'+loc+'</div>'
+    +(p.sportLabel?'<div class="tray-sport">'+p.sportLabel+'</div>':'')
+    +action+'</div></div>';
+}
+function openMapTray(p){
+  const el=document.getElementById('mapTray'); if(!el||!p) return;
+  const drawer=document.getElementById('mapxDrawer'); if(drawer) drawer.hidden=true;
+  const wasOpen=el.classList.contains('open');
+  el.style.transform='';
+  el.style.transition='';
+  el.innerHTML=mapTrayHtml(p);
+  el.setAttribute('data-tray-prog',p.id);
+  el.setAttribute('aria-hidden','false');
+  bindMapTrayGestures(el);
+  if(wasOpen){
+    el.classList.add('open');
+  } else {
+    el.classList.remove('open');
+    void el.offsetWidth;
+    el.classList.add('open');
+  }
+  document.querySelectorAll('.mdot.active,.mpin.active').forEach(n=>n.classList.remove('active'));
+  document.querySelectorAll('.mdot[data-prog="'+p.id+'"],.mpin[data-prog="'+p.id+'"]').forEach(n=>n.classList.add('active'));
+}
+function closeMapTray(){
+  const el=document.getElementById('mapTray');
+  if(!el||!el.classList.contains('open')) return;
+  el.classList.remove('open');
+  el.setAttribute('aria-hidden','true');
+  el.removeAttribute('data-tray-prog');
+  document.querySelectorAll('.mdot.active,.mpin.active').forEach(n=>n.classList.remove('active'));
+}
+function selectMapPin(p,e){
+  if(e){ e.preventDefault(); e.stopPropagation(); }
+  if(!p) return;
+  openMapTray(p);
+}
+let trayDrag=null;
+function bindMapTrayGestures(el){
+  if(!el||el._trayBound) return;
+  el._trayBound=true;
+  el.addEventListener('pointerdown',e=>{
+    if(e.target.closest('a,button')) return;
+    trayDrag={id:e.pointerId,y0:e.clientY,y:e.clientY};
+    try{ el.setPointerCapture(e.pointerId); }catch(_){}
+  });
+  el.addEventListener('pointermove',e=>{
+    if(!trayDrag||e.pointerId!==trayDrag.id) return;
+    trayDrag.y=e.clientY;
+    const dy=Math.max(0, trayDrag.y-trayDrag.y0);
+    el.style.transition='none';
+    el.style.transform='translateY('+dy+'px)';
+  });
+  function endDrag(e){
+    if(!trayDrag||(e&&e.pointerId!==trayDrag.id)) return;
+    const dy=Math.max(0, trayDrag.y-trayDrag.y0);
+    trayDrag=null;
+    el.style.transition='';
+    el.style.transform='';
+    if(dy>=56) closeMapTray();
+  }
+  el.addEventListener('pointerup',endDrag);
+  el.addEventListener('pointercancel',endDrag);
 }
 
 function mapLayout(list){
@@ -1297,7 +1398,8 @@ function mapLayout(list){
     // real map \u2014 MapLibre mounts into #livemap via afterRender()
     mapEl='<div class="map map-live"><div id="livemap" role="region" aria-label="Map of programs"></div>'
       +'<div class="mapchip">Map \u00b7 United States</div>'
-      +'<button class="mapx-open" type="button" data-mapx>'+NAVICON.map+'<span>Expand map</span></button></div>';
+      +'<button class="mapx-open" type="button" data-mapx>'+NAVICON.map+'<span>Expand map</span></button>'
+      +'<div class="map-tray" id="mapTray" aria-hidden="true"></div></div>';
   } else {
     const markers=list.map((p,i)=>{ const pos=MAPPOS[p.id]||geoPos(p)||{x:50,y:50}; return '<div class="mk" data-prog="'+p.id+'" style="left:'+pos.x+'%;top:'+pos.y+'%;"><button aria-label="'+p.name+'">'+(i+1)+'</button></div>'; }).join('');
     mapEl='<div class="map">'
@@ -1750,6 +1852,7 @@ function filterChanged(){
     const list=state.see?seeList():filtered();
     const chip=document.querySelector('.mapx .mapchip'); if(chip) chip.textContent=list.length.toLocaleString()+' programs · United States';
     const d=document.getElementById('mapxDrawer'); if(d) d.hidden=true;
+    closeMapTray();
     destroyMaps(); initLiveMap(list,{explorer:true});
     updateHeaderSearch();
     return;
@@ -1798,8 +1901,9 @@ document.addEventListener('click',e=>{
   if(t.hasAttribute('data-section')){ e.preventDefault(); const sec=t.getAttribute('data-section'); state.section=sec; state.programId=null; if(sec==='discover') goFeed(); render(); return; }
   if(t.hasAttribute('data-sport-link')){ e.preventDefault(); state.section='discover'; state.sport=t.getAttribute('data-sport-link'); state.see=null; state.programId=null; render(true); scrollToResults(); return; }
   if(t.hasAttribute('data-prog')){
-    // Modifier-click keeps the shareable /programs/:id URL. A plain click opens
-    // the designed in-app sheet (photo hero), not a thin four-card page.
+    // Pins open the bottom tray and stay on /maps. Directory cards still
+    // open the listing sheet. Modifier-click keeps the shareable URL.
+    if(t.closest('.mdot,.mpin')){ e.preventDefault(); return; }
     if(e.metaKey||e.ctrlKey||e.shiftKey||e.altKey) return;
     e.preventDefault(); state.section='program'; state.programId=t.getAttribute('data-prog'); render(); return;
   }
@@ -1882,7 +1986,12 @@ document.addEventListener('click',e=>{
   // perform the nav; this only dismisses the overlay.
   if(e.target.closest('#drawer [data-sport],#drawer [data-section],#drawer [data-home],#drawer [data-mapx],#drawer [data-db-link],#drawer [data-about],#drawer [data-addprogram],#drawer a[href]')){ closeDrawer(); }
 });
-document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeDrawer(); });
+document.addEventListener('keydown',e=>{
+  if(e.key!=='Escape') return;
+  const tray=document.getElementById('mapTray');
+  if(tray&&tray.classList.contains('open')){ closeMapTray(); return; }
+  closeDrawer();
+});
 renderDrawer();
 /* map explorer open/close + state drawer. /maps is its real URL. */
 function setMapxUrl(on){
