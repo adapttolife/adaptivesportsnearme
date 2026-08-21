@@ -316,32 +316,73 @@ input,select{font-family:inherit;}
   .mapx{height:calc(100vh - 118px);min-height:420px;}
   .mapx-drawer{top:auto;left:10px;right:10px;bottom:10px;width:auto;max-height:52%;}
 }
-/* Desktop: Google Maps WEB left panel. Same tray HTML. Not a full-width bottom bar. */
+/* Desktop: Google Maps WEB left column. Full height, 420px, map on the right. Not a floating peek card. */
 .map-tray .tray-x{display:none;width:32px;height:32px;flex:0 0 auto;align-items:center;justify-content:center;border-radius:50%;color:var(--muted);cursor:pointer;background:#fff;border:1px solid var(--line);box-shadow:0 1px 4px rgba(20,18,14,.12);}
 .map-tray .tray-x:hover{background:var(--mist);color:var(--ink);}
 .map-tray .tray-x svg{width:15px;height:15px;}
+.tray-pills-full{display:none;}
 @media(min-width:721px){
   .map-tray{
-    left:var(--space-page);
+    left:0;
     right:auto;
-    top:var(--space-page);
-    bottom:auto;
+    top:0;
+    bottom:0;
     width:420px;
-    height:auto;
-    max-height:calc(100% - 48px);
-    border-radius:var(--r-xl);
-    box-shadow:0 8px 30px rgba(20,18,14,.18);
-    transform:translateX(calc(-100% - 28px));
+    height:100%;
+    max-height:none;
+    border-radius:0;
+    box-shadow:8px 0 24px rgba(20,18,14,.12);
+    transform:translateX(-100%);
+    border-right:1px solid var(--line);
   }
   .map-tray.open{transform:none;}
-  .map-tray.expanded{height:auto;bottom:var(--space-page);max-height:none;}
+  .map-tray.expanded{height:100%;}
   .map-tray .tray-handle{display:none;}
   .map-tray .tray-handle-hit{position:absolute;top:8px;right:8px;padding:0;z-index:3;cursor:default;}
   .map-tray .tray-x{display:flex;}
-  .map-tray:not(.expanded) .tray-peek{padding:var(--space-page);padding-right:56px;}
-  .map-tray .sheet .nearby .frow-scroll>.pcard{flex:0 0 240px;width:240px;max-width:none;}
+  .map-tray.open .tray-peek{display:none;}
+  .map-tray.open .tray-full,
+  .map-tray.open:not(.expanded) .tray-full{
+    display:block;
+    flex:1;
+    min-height:0;
+    overflow-y:auto;
+    -webkit-overflow-scrolling:touch;
+    padding:0 var(--space-page) var(--space-nearby);
+  }
+  .map-tray .tray-full .dhero{
+    margin-left:calc(-1 * var(--space-page));
+    margin-right:calc(-1 * var(--space-page));
+    width:calc(100% + 2 * var(--space-page));
+    max-width:none;
+    border-radius:0;
+  }
+  .map-tray .tray-pills-full{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 var(--space-section);}
+  .map-tray .sheet .act{display:none;}
+  .map-tray .sheet .nearby .frow-scroll{
+    display:flex;
+    flex-direction:column;
+    overflow-x:hidden;
+    margin-right:0;
+    padding-right:0;
+    gap:var(--space-row);
+  }
+  .map-tray .sheet .nearby .frow-scroll>.pcard{
+    flex:0 0 auto;
+    width:100%;
+    max-width:none;
+    display:grid;
+    grid-template-columns:72px 1fr;
+    gap:12px;
+    align-items:center;
+  }
+  .map-tray .sheet .nearby .frow-scroll>.pcard .pcard-media{aspect-ratio:1;border-radius:8px;}
+  .map-tray .sheet .nearby .frow-scroll>.pcard .pcard-body{padding:0;}
   .mapx.tray-expanded::after,.map-live.tray-expanded::after{display:none;}
-  .mapx:has(.map-tray.open) .mapchip,.map-live:has(.map-tray.open) .mapchip{left:calc(420px + var(--space-page) + 12px);}
+  .mapx:has(.map-tray.open) #livemap,
+  .map-live:has(.map-tray.open) #livemap{left:420px;}
+  .mapx:has(.map-tray.open) .mapchip,
+  .map-live:has(.map-tray.open) .mapchip{left:calc(420px + 14px);}
 }
 .map-live:has(.map-tray.open) .mapx-open{display:none;}
 .map-live .maplibregl-ctrl-attrib{font-size:10px;}
@@ -1336,7 +1377,7 @@ function mapxShowState(k){
   closeMapTray();
 }
 
-/* ---- Phone: two-height bottom tray (peek 35% / expanded 90%). Desktop: left panel. ---- */
+/* ---- Phone: two-height bottom tray (peek 35% / expanded 90%). Desktop: full-height left column. ---- */
 const PEEK_VH=35;
 const EXPANDED_VH=90;
 function snapMapTray(current,dy,viewportH){
@@ -1376,6 +1417,7 @@ function mapTrayHtml(p){
     +'<div class="tray-full sheet">'
     +sheetHero(p)
     +'<div class="titleb"><h1>'+p.name+'</h1><p class="loc">'+loc+'</p>'+(p.desc?'<p class="desc">'+p.desc+'</p>':'')+'</div>'
+    +'<div class="tray-pills tray-pills-full">'+mapTrayPills(p)+'</div>'
     +'<div class="act">'+action+'</div>'
     +denseRows(p)
     +relatedRow(p)
@@ -1402,11 +1444,17 @@ function expandMapTray(){
   if(!el||!el.classList.contains('open')) return;
   setMapTrayHeight(el,'expanded');
 }
+function resizeLiveMap(){
+  if(liveMap && typeof liveMap.resize==='function'){
+    requestAnimationFrame(function(){ try{ liveMap.resize(); }catch(_){ } });
+  }
+}
 function openMapTray(p){
   const el=document.getElementById('mapTray'); if(!el||!p) return;
   const drawer=document.getElementById('mapxDrawer'); if(drawer) drawer.hidden=true;
   const wasOpen=el.classList.contains('open');
-  const keepHeight=wasOpen && el.classList.contains('expanded') ? 'expanded' : 'peek';
+  const desktop=isDesktopTray();
+  const keepHeight=wasOpen && el.classList.contains('expanded') ? 'expanded' : (desktop ? 'expanded' : 'peek');
   el.style.transform='';
   el.style.transition='';
   el.style.height='';
@@ -1419,15 +1467,16 @@ function openMapTray(p){
     setMapTrayHeight(el, keepHeight);
   } else {
     el.classList.remove('open');
-    setMapTrayHeight(el, 'peek');
+    setMapTrayHeight(el, desktop ? 'expanded' : 'peek');
     void el.offsetWidth;
     el.classList.add('open');
   }
   document.querySelectorAll('.mdot.active,.mpin.active').forEach(n=>n.classList.remove('active'));
   document.querySelectorAll('.mdot[data-prog="'+p.id+'"],.mpin[data-prog="'+p.id+'"]').forEach(n=>n.classList.add('active'));
+  resizeLiveMap();
   loadOrgDetail(p).then(function(){
     if(el.getAttribute('data-tray-prog')!==p.id) return;
-    const h=trayHeightOf(el);
+    const h=desktop ? 'expanded' : trayHeightOf(el);
     el.innerHTML=mapTrayHtml(p);
     setMapTrayHeight(el, h);
   });
@@ -1443,6 +1492,7 @@ function closeMapTray(){
   const host=el.closest('.mapx,.map-live');
   if(host) host.classList.remove('tray-expanded');
   document.querySelectorAll('.mdot.active,.mpin.active').forEach(n=>n.classList.remove('active'));
+  resizeLiveMap();
 }
 function selectMapPin(p,e){
   if(e){ e.preventDefault(); e.stopPropagation(); }

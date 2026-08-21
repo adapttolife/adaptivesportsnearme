@@ -1,6 +1,7 @@
 // Phone: Google-Maps two-height bottom tray — peek (~35%) and expanded (~90%).
-// Desktop (≥721px): Google Maps WEB left panel — same HTML, not a scaled-up tray.
-// The homepage (public/index.html) mirrors this state machine on /maps.
+// Desktop (≥721px): Google Maps WEB left column — full height, 420px, same listing
+// HTML. Not a floating peek card. The homepage (public/index.html) mirrors this
+// state machine on /maps.
 
 import { locLine, listingInnerHtml } from "./program-page.js";
 

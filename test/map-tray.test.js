@@ -226,7 +226,7 @@ test("pins are 44px hit targets; tray slides 280ms; two heights are wired on /ma
   assert.ok(!index.includes("class=\"overview\""));
 });
 
-test("desktop is a left panel (class + 420px), phone stays a bottom tray", () => {
+test("desktop is a full-height left column (420px), phone stays a bottom tray", () => {
   assert.equal(DESKTOP_MIN_PX, 721);
   assert.equal(DESKTOP_PANEL_WIDTH_PX, 420);
   assert.equal(DESKTOP_PANEL_INSET_PX, 24);
@@ -238,9 +238,12 @@ test("desktop is a left panel (class + 420px), phone stays a bottom tray", () =>
   assert.ok(index.includes('class="map-tray panel"'));
   assert.ok(index.includes("width:420px"));
   assert.ok(index.includes("function isDesktopTray("));
+  assert.ok(index.includes("function resizeLiveMap("));
   assert.ok(index.includes("class=\"tray-x\"") || index.includes("class='tray-x'") || index.includes('class="tray-x"'));
+  assert.ok(index.includes("tray-pills-full"));
+  assert.ok(index.includes("desktop ? 'expanded' : 'peek'"));
 
-  // Default (phone) rules stay a full-width bottom sheet.
+  // Default (phone) rules stay a full-width bottom sheet. Do not change.
   const mobile = index.match(/\.map-tray\{([^}]+)\}/);
   assert.ok(mobile, "base .map-tray rule");
   assert.match(mobile[1], /left:0/);
@@ -248,19 +251,30 @@ test("desktop is a left panel (class + 420px), phone stays a bottom tray", () =>
   assert.match(mobile[1], /bottom:0/);
   assert.match(mobile[1], /height:35%/);
   assert.ok(index.includes(".map-tray.expanded{height:90%;}"));
+  assert.ok(index.includes(".map-tray.expanded .tray-peek{display:none;}"));
+  assert.ok(index.includes(".map-tray:not(.expanded) .tray-full{display:none;}"));
 
-  // Desktop media query restyles the same node into a left panel.
-  const deskStart = index.indexOf("/* Desktop: Google Maps WEB left panel.");
-  assert.ok(deskStart >= 0, "desktop panel comment");
-  const desk = index.slice(deskStart, deskStart + 1600);
+  // Desktop media query is a FULL-HEIGHT left sidebar, not a 160px floating card.
+  const deskStart = index.indexOf("/* Desktop: Google Maps WEB left column.");
+  assert.ok(deskStart >= 0, "desktop column comment");
+  const desk = index.slice(deskStart, deskStart + 4000);
   assert.ok(desk.includes("@media(min-width:721px)"));
   assert.ok(desk.includes("width:420px"));
-  assert.ok(desk.includes("left:var(--space-page)"));
+  assert.ok(desk.includes("height:100%"));
+  assert.ok(desk.includes("left:0"));
   assert.ok(desk.includes("right:auto"));
-  assert.ok(desk.includes("top:var(--space-page)"));
-  assert.ok(desk.includes("border-radius:var(--r-xl)"));
+  assert.ok(desk.includes("top:0"));
+  assert.ok(desk.includes("bottom:0"));
+  assert.ok(desk.includes("border-radius:0"));
+  assert.ok(!desk.includes("height:auto"));
+  assert.ok(!desk.includes("max-height:calc(100% - 48px)"));
   assert.ok(desk.includes(".map-tray .tray-x{display:flex;}"));
   assert.ok(desk.includes(".map-tray .tray-handle{display:none;}"));
+  assert.ok(desk.includes(".map-tray.open .tray-peek{display:none;}"));
+  assert.ok(desk.includes(".map-tray.open .tray-full"));
+  assert.ok(desk.includes("padding:0 var(--space-page)"));
+  assert.ok(desk.includes("flex-direction:column"));
+  assert.ok(desk.includes("#livemap{left:420px;}"));
   assert.ok(desk.includes("tray-expanded::after{display:none;}"));
   assert.ok(!desk.includes("left:0;right:0;bottom:0"));
 });
