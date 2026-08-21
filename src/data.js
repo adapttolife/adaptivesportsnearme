@@ -1,5 +1,8 @@
 // Read-side data API over D1. Freshness decay (half-life 45 days, floor 5,
 // null if never checked) is computed here rather than in SQL — D1 lacks pow().
+// listPrograms filters: sport, state, q (text), plus nearby via zip / city / lat-lng.
+
+import { loadZcta, resolveOrigin, applyNearby } from "./geo.js";
 
 export function freshness(lastOkAt, now = Date.now()) {
   if (!lastOkAt) return null;
@@ -12,7 +15,7 @@ const LIST_COLS = `id, name, org_type, sport, sport_key, website_url, city,
   state, state_name, zip, lat, lng, geo_precision, description, cost_note,
   equipment_provided, ages, data_quality_rating, verification_status, last_ok_at`;
 
-function rowToProgram(r) {
+function rowToProgram(r, dist) {
   return {
     id: r.id,
     name: r.name,
@@ -35,10 +38,23 @@ function rowToProgram(r) {
     verification: r.verification_status,
     freshness: freshness(r.last_ok_at),
     lastChecked: r.last_ok_at,
+    dist: dist == null ? null : Math.round(dist * 10) / 10,
   };
 }
 
-export async function listPrograms(db, params) {
+function nearPayload(origin) {
+  if (!origin || origin.missing) return null;
+  return {
+    lat: origin.lat,
+    lng: origin.lng,
+    radius: origin.radius,
+    zip: origin.zip || null,
+    city: origin.city || null,
+    source: origin.source,
+  };
+}
+
+export async function listPrograms(db, params, opts = {}) {
   const where = ["is_public = 1", "status = 'active'"];
   const binds = [];
   const sport = (params.get("sport") || "").trim();
@@ -60,10 +76,38 @@ export async function listPrograms(db, params) {
     const like = `%${q.replace(/[\\%_]/g, "\\$&")}%`;
     binds.push(like, like, like, like);
   }
+
+  const zcta = opts.zcta !== undefined ? opts.zcta : await loadZcta(opts.assets);
+  const origin = resolveOrigin(params, zcta);
+
+  // Unknown zip (or unreadable ZCTA table): a nearby query must not fall through
+  // to the unfiltered directory — that was the original bug (zip ignored → 1544).
+  if (origin && origin.missing === "zip") {
+    const limit = Math.min(Math.max(parseInt(params.get("limit") || "60", 10) || 60, 1), 200);
+    const offset = Math.max(parseInt(params.get("offset") || "0", 10) || 0, 0);
+    return { total: 0, limit, offset, items: [], near: null };
+  }
+
+  // Known city without a centroid: text-match the city column (a subset).
+  if (origin && origin.missing === "city") {
+    where.push("LOWER(city) = LOWER(?)");
+    binds.push(origin.city);
+  }
+
   const limit = Math.min(Math.max(parseInt(params.get("limit") || "60", 10) || 60, 1), 200);
   const offset = Math.max(parseInt(params.get("offset") || "0", 10) || 0, 0);
-
   const cond = where.join(" AND ");
+
+  if (origin && !origin.missing) {
+    const rows = await db.prepare(
+      `SELECT ${LIST_COLS} FROM organizations WHERE ${cond} AND lat IS NOT NULL AND lng IS NOT NULL`
+    ).bind(...binds).all();
+    const ranked = applyNearby(rows.results, origin);
+    const total = ranked.length;
+    const items = ranked.slice(offset, offset + limit).map(({ row, dist }) => rowToProgram(row, dist));
+    return { total, limit, offset, items, near: nearPayload(origin) };
+  }
+
   const [count, rows] = await Promise.all([
     db.prepare(`SELECT COUNT(*) AS n FROM organizations WHERE ${cond}`).bind(...binds).first(),
     db.prepare(
@@ -71,7 +115,7 @@ export async function listPrograms(db, params) {
        ORDER BY (sport_key IS NULL), (state IS NULL), name LIMIT ? OFFSET ?`
     ).bind(...binds, limit, offset).all(),
   ]);
-  return { total: count?.n ?? 0, limit, offset, items: rows.results.map(rowToProgram) };
+  return { total: count?.n ?? 0, limit, offset, items: rows.results.map((r) => rowToProgram(r)), near: null };
 }
 
 export async function getOrg(db, id) {

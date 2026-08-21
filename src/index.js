@@ -4,7 +4,8 @@
 //   POST /api/subscribe        -> beehiiv (email capture, tagged asnm-prelaunch)
 //   POST /api/submit-program   -> Airtable Agent Inbox + D1 submissions
 //   GET  /api/config           -> env name + prelaunch flag (front-end gate)
-//   GET  /api/programs         -> directory list (sport/state/q filters, paged)
+//   GET  /api/programs         -> directory list (sport/state/q + zip/city/lat-lng nearby, paged)
+//   GET  /programs/:id         -> shareable program page (name, sport, city/state, website, source)
 //   GET  /api/orgs/:id         -> one org with source provenance
 //   GET  /api/stats            -> counts by sport/state
 //   GET  /api/events           -> upcoming public events (json)
@@ -20,6 +21,7 @@
 // All secrets stay server-side (Worker secrets). Bot defence: honeypot + optional Turnstile.
 
 import { listPrograms, getOrg, stats } from "./data.js";
+import { programPageTemplate, programNotFoundTemplate, PROGRAM_ID_RE } from "./program-page.js";
 import { listEvents, eventsToRss, eventsToIcs } from "./events.js";
 import { handleAdmin } from "./admin.js";
 import { runLane } from "./pipeline.js";
@@ -82,7 +84,7 @@ export default {
     if (env.DB && request.method === "GET") {
       try {
         if (url.pathname === "/api/programs") {
-          return json({ ok: true, ...(await listPrograms(env.DB, url.searchParams)) }, 200, API_CACHE);
+          return json({ ok: true, ...(await listPrograms(env.DB, url.searchParams, { assets: env.ASSETS })) }, 200, API_CACHE);
         }
         const org = url.pathname.match(/^\/api\/orgs\/([0-9a-f-]{36})$/);
         if (org) {
@@ -120,6 +122,20 @@ export default {
     const blogSlug = url.pathname.match(/^\/blog\/([^/]+)$/);
     if (blogSlug) {
       return handleBlogPost(url, env, decodeURIComponent(blogSlug[1]));
+    }
+
+    // Shareable program page — server-rendered so a curl / a pasted link shows
+    // name, sport, city/state, website, source without waiting on the SPA.
+    const programPath = url.pathname.match(PROGRAM_ID_RE);
+    if (programPath && env.DB) {
+      try {
+        const record = await getOrg(env.DB, programPath[1]);
+        if (!record) return text(programNotFoundTemplate({ site: url.origin }), 404, "text/html; charset=utf-8");
+        return text(programPageTemplate(record, { site: url.origin }), 200, "text/html; charset=utf-8", API_CACHE);
+      } catch (err) {
+        console.error("program page error:", err);
+        return text(programNotFoundTemplate({ site: url.origin }), 500, "text/html; charset=utf-8");
+      }
     }
 
     // /maps is the map explorer's real URL — same app, booted into the map.
