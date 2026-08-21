@@ -1,12 +1,14 @@
-// Apple-Maps-style pin tray: fat targets, a peek sheet that slides up
-// from the bottom, and in-place swaps when the next pin is tapped.
+// Google-Maps two-height pin tray: peek (~35%) and expanded (~90%).
+// Tap a pin → peek from below. Drag the handle up → full listing.
 // The homepage (public/index.html) mirrors this state machine on /maps.
 
-import { locLine, photoPath } from "./program-page.js";
+import { locLine, listingInnerHtml } from "./program-page.js";
 
 export const PIN_HIT_PX = 44;
 export const TRAY_MS = 280;
 export const SWIPE_DISMISS_PX = 56;
+export const PEEK_VH = 35;
+export const EXPANDED_VH = 90;
 
 function esc(s) {
   return s == null ? "" : String(s)
@@ -15,20 +17,28 @@ function esc(s) {
 }
 
 export function createTrayState() {
-  return { open: false, programId: null };
+  return { open: false, programId: null, height: "peek" };
 }
 
-// Tap a pin. First tap opens; a different pin updates in place (no close).
+// Tap a pin. First tap opens at peek. A different pin updates in place
+// and keeps the current height (stay expanded if already expanded).
 export function selectPin(tray, programId) {
-  if (!programId) return { open: false, programId: null, swapped: false };
+  if (!programId) return { open: false, programId: null, height: "peek", swapped: false };
   const swapped = !!(tray && tray.open && tray.programId && tray.programId !== programId);
-  return { open: true, programId, swapped };
+  const height = tray && tray.open && tray.height === "expanded" ? "expanded" : "peek";
+  return { open: true, programId, height, swapped };
 }
 
-// Empty-map tap (or swipe / Escape) dismisses. Pin / cluster / tray / chrome do not.
+export function setTrayHeight(tray, height) {
+  if (!tray || !tray.open) return { open: false, programId: null, height: "peek" };
+  const next = height === "expanded" ? "expanded" : "peek";
+  return { open: true, programId: tray.programId, height: next };
+}
+
+// Empty-map tap (or swipe-from-peek / Escape) dismisses.
 export function dismissTray(tray, reason) {
-  if (!tray || !tray.open) return { open: false, programId: null, dismissed: false, reason };
-  return { open: false, programId: null, dismissed: true, reason };
+  if (!tray || !tray.open) return { open: false, programId: null, height: "peek", dismissed: false, reason };
+  return { open: false, programId: null, height: "peek", dismissed: true, reason };
 }
 
 export function mapClickAction(hitKind) {
@@ -60,8 +70,31 @@ export function swipeDismisses(dy) {
   return Number(dy) >= SWIPE_DISMISS_PX;
 }
 
+// Snap between peek / expanded / closed from a drag.
+// dy > 0 is finger moving down. Midpoint is halfway between the two heights.
+export function snapHeight(current, dy, viewportH) {
+  const h = Number(viewportH) || 0;
+  const peek = h * (PEEK_VH / 100);
+  const exp = h * (EXPANDED_VH / 100);
+  const mid = (exp - peek) / 2;
+  const delta = Number(dy) || 0;
+  if (current === "peek") {
+    if (delta >= SWIPE_DISMISS_PX) return "closed";
+    if (-delta >= mid) return "expanded";
+    return "peek";
+  }
+  if (delta >= mid) return "peek";
+  return "expanded";
+}
+
+export function trayMetaLine(org) {
+  const loc = locLine(org || {});
+  const sport = org && org.sportLabel ? String(org.sportLabel) : "";
+  if (loc && sport) return `${loc} · ${sport}`;
+  return loc || sport || "";
+}
+
 // Peek CTA: Visit when there is a website, otherwise Open listing.
-// Not the full listing-sheet primaryCta (Call / Email / View source).
 export function trayAction(org) {
   if (org && org.website) {
     return { href: org.website, label: "Visit", external: true };
@@ -70,25 +103,44 @@ export function trayAction(org) {
   return { href: id ? `/programs/${id}` : "#", label: "Open listing", external: false };
 }
 
-export function trayPeekHtml(org) {
-  const loc = locLine(org || {});
-  const photo = photoPath(org && org.sport);
-  const action = trayAction(org);
-  const img = photo
-    ? `<img class="tray-photo" src="${photo}" alt="">`
-    : `<div class="tray-photo tray-photo-fallback" aria-hidden="true"></div>`;
+// 1–3 action pills: Visit (or Open listing) + Call + Email when we have them.
+export function trayPills(org) {
+  const pills = [trayAction(org)];
+  const phone = org && org.phone && String(org.phone).trim();
+  if (phone) {
+    pills.push({ href: `tel:${phone.replace(/[^\d+]/g, "")}`, label: "Call", external: false });
+  }
+  if (org && org.email) {
+    pills.push({ href: `mailto:${org.email}`, label: "Email", external: false });
+  }
+  return pills;
+}
+
+function pillHtml(action, org, primary) {
   const target = action.external ? ' target="_blank" rel="noopener"' : "";
-  const dataProg = action.external || !org || !org.id ? "" : ` data-prog="${esc(org.id)}"`;
-  const sport = org && org.sportLabel
-    ? `<div class="tray-sport">${esc(org.sportLabel)}</div>`
-    : "";
-  return `<div class="tray-handle" aria-hidden="true"></div>`
-    + `<div class="tray-in">`
-    + img
-    + `<div class="tray-copy">`
+  const dataProg = action.external || !org || !org.id || action.label === "Call" || action.label === "Email"
+    ? ""
+    : ` data-prog="${esc(org.id)}"`;
+  const cls = primary ? "tray-pill primary" : "tray-pill";
+  return `<a class="${cls}" href="${esc(action.href)}"${target}${dataProg}>${action.label}</a>`;
+}
+
+export function trayPeekHtml(org) {
+  const pills = trayPills(org);
+  const pillRow = pills.map((a, i) => pillHtml(a, org, i === 0)).join("");
+  return `<div class="tray-handle-hit"><div class="tray-handle" aria-hidden="true"></div></div>`
+    + `<div class="tray-peek">`
     + `<div class="tray-name">${esc(org && org.name ? org.name : "")}</div>`
-    + `<div class="tray-city">${esc(loc)}</div>`
-    + sport
-    + `<a class="tray-cta" href="${esc(action.href)}"${target}${dataProg}>${action.label}</a>`
-    + `</div></div>`;
+    + `<div class="tray-meta">${esc(trayMetaLine(org))}</div>`
+    + `<div class="tray-pills">${pillRow}</div>`
+    + `</div>`;
+}
+
+export function trayExpandedHtml(org, nearby = []) {
+  return listingInnerHtml(org || {}, { nearby });
+}
+
+export function trayHtml(org, nearby = []) {
+  return trayPeekHtml(org)
+    + `<div class="tray-full sheet">${trayExpandedHtml(org, nearby)}</div>`;
 }

@@ -1,15 +1,14 @@
-// Apple-Maps tray: pin select opens, a second pin updates in place,
-// empty-map tap dismisses. Also locks the homepage wiring (fat targets,
-// bottom sheet, no full-page jump from a pin).
+// Google Maps two-height tray: peek opens, expand, dismiss, second pin updates.
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import {
-  PIN_HIT_PX, TRAY_MS, SWIPE_DISMISS_PX,
-  createTrayState, selectPin, dismissTray, mapClickAction, classifyHit,
-  swipeDismisses, trayAction, trayPeekHtml,
+  PIN_HIT_PX, TRAY_MS, SWIPE_DISMISS_PX, PEEK_VH, EXPANDED_VH,
+  createTrayState, selectPin, dismissTray, setTrayHeight, mapClickAction, classifyHit,
+  swipeDismisses, snapHeight, trayAction, trayPills, trayMetaLine,
+  trayPeekHtml, trayExpandedHtml, trayHtml,
 } from "../src/map-tray.js";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -20,9 +19,15 @@ const RENO = {
   name: "3rd Shot Pickleball Reno Adaptive",
   sport: "pickleball",
   sportLabel: "Adaptive Pickleball",
+  type: "inclusive_club",
   city: "Reno",
   state: "NV",
   website: "https://3rdshotpickleball.com/home-reno",
+  desc: "Indoor pickleball club at 6895 Sierra Center Pkwy, Reno. Listed by USA Pickleball for Sunday adaptive/wheelchair pickleball (11am–1pm, $5).",
+  cost: "$5 adaptive session (USA Pickleball listing)",
+  ages: "Adult",
+  phone: "775-467-2025",
+  email: "reno@3rdshotpickleball.com",
   verification: "unverified",
   lastChecked: "2026-08-21T19:55:06Z",
 };
@@ -39,34 +44,42 @@ const KANSAS = {
   website: null,
 };
 
-test("tray opens on pin select", () => {
+const NEARBY = [
+  { id: "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb", name: "Sunflower Adaptive Cycling", sport: "cycling", sportLabel: "Adaptive Cycling", city: "Wichita", state: "KS", dist: 42 },
+];
+
+test("peek open", () => {
   const next = selectPin(createTrayState(), RENO.id);
   assert.equal(next.open, true);
   assert.equal(next.programId, RENO.id);
+  assert.equal(next.height, "peek");
   assert.equal(next.swapped, false);
   assert.equal(mapClickAction("pin"), "select");
+  assert.equal(PEEK_VH, 35);
 });
 
-test("second pin updates the tray in place (no close/reopen)", () => {
+test("expand", () => {
   const open = selectPin(createTrayState(), RENO.id);
-  const next = selectPin(open, KANSAS.id);
-  assert.equal(next.open, true);
-  assert.equal(next.programId, KANSAS.id);
-  assert.equal(next.swapped, true);
-  // Same pin again is still open, not a swap-flash.
-  const again = selectPin(next, KANSAS.id);
-  assert.equal(again.open, true);
-  assert.equal(again.programId, KANSAS.id);
-  assert.equal(again.swapped, false);
+  const exp = setTrayHeight(open, "expanded");
+  assert.equal(exp.open, true);
+  assert.equal(exp.height, "expanded");
+  assert.equal(exp.programId, RENO.id);
+  assert.equal(EXPANDED_VH, 90);
+  // Midpoint snap: 800px viewport → peek 280, expanded 720, mid 220.
+  assert.equal(snapHeight("peek", -220, 800), "expanded");
+  assert.equal(snapHeight("peek", -100, 800), "peek");
+  assert.equal(snapHeight("expanded", 220, 800), "peek");
+  assert.equal(snapHeight("expanded", 50, 800), "expanded");
 });
 
-test("empty-map dismiss closes the tray; pin/cluster/tray do not", () => {
+test("dismiss", () => {
   const open = selectPin(createTrayState(), RENO.id);
   const gone = dismissTray(open, "empty-map");
   assert.equal(gone.open, false);
   assert.equal(gone.programId, null);
   assert.equal(gone.dismissed, true);
   assert.equal(gone.reason, "empty-map");
+  assert.equal(gone.height, "peek");
 
   assert.equal(mapClickAction("empty"), "dismiss");
   assert.equal(mapClickAction("pin"), "select");
@@ -78,62 +91,134 @@ test("empty-map dismiss closes the tray; pin/cluster/tray do not", () => {
   assert.equal(classifyHit("mpin"), "pin");
   assert.equal(classifyHit("mpill"), "cluster");
   assert.equal(classifyHit("map-tray"), "tray");
+  assert.equal(classifyHit("tray-handle"), "tray");
   assert.equal(classifyHit("maplibregl-canvas"), "empty");
 
-  const still = dismissTray(open, "empty-map");
-  assert.equal(still.dismissed, true);
   const already = dismissTray(createTrayState(), "empty-map");
   assert.equal(already.dismissed, false);
 });
 
-test("swipe-down past the threshold dismisses", () => {
+test("second pin updates the tray in place and keeps expanded height", () => {
+  const open = selectPin(createTrayState(), RENO.id);
+  const exp = setTrayHeight(open, "expanded");
+  const next = selectPin(exp, KANSAS.id);
+  assert.equal(next.open, true);
+  assert.equal(next.programId, KANSAS.id);
+  assert.equal(next.swapped, true);
+  assert.equal(next.height, "expanded");
+  const again = selectPin(next, KANSAS.id);
+  assert.equal(again.open, true);
+  assert.equal(again.programId, KANSAS.id);
+  assert.equal(again.swapped, false);
+  assert.equal(again.height, "expanded");
+  // A closed tray always opens at peek.
+  const fresh = selectPin(createTrayState(), KANSAS.id);
+  assert.equal(fresh.height, "peek");
+});
+
+test("swipe down from peek dismisses; swipe down from expanded returns to peek", () => {
   assert.equal(swipeDismisses(SWIPE_DISMISS_PX), true);
   assert.equal(swipeDismisses(SWIPE_DISMISS_PX - 1), false);
+  assert.equal(snapHeight("peek", SWIPE_DISMISS_PX, 800), "closed");
+  assert.equal(snapHeight("peek", SWIPE_DISMISS_PX - 1, 800), "peek");
   const gone = dismissTray(selectPin(createTrayState(), RENO.id), "swipe");
   assert.equal(gone.dismissed, true);
   assert.equal(gone.reason, "swipe");
 });
 
-test("peek HTML reuses name, sport, city, Visit/Open listing — no trust copy", () => {
+test("peek HTML: title, city · sport, Visit/Call/Email pills, handle — no photo, no trust copy", () => {
   const reno = trayPeekHtml(RENO);
   assert.ok(reno.includes("3rd Shot Pickleball Reno Adaptive"));
-  assert.ok(reno.includes("Reno, NV"));
-  assert.ok(reno.includes("Adaptive Pickleball"));
+  assert.ok(reno.includes("Reno, NV · Adaptive Pickleball"));
   assert.ok(reno.includes(">Visit<"));
+  assert.ok(reno.includes(">Call<"));
+  assert.ok(reno.includes(">Email<"));
   assert.ok(reno.includes("3rdshotpickleball.com"));
-  assert.ok(reno.includes("tray-photo"));
+  assert.ok(reno.includes("tel:7754672025"));
+  assert.ok(reno.includes("mailto:reno@3rdshotpickleball.com"));
+  assert.ok(reno.includes("tray-handle"));
+  assert.ok(reno.includes("tray-pills"));
+  assert.ok(!reno.includes("tray-photo"));
   assert.ok(!reno.includes("Unverified"));
   assert.ok(!reno.includes("Last checked"));
   assert.ok(!reno.includes("Visit website"));
+  assert.ok(!reno.includes("Overview"));
+  assert.ok(!reno.includes("Photos"));
 
   const ks = trayPeekHtml(KANSAS);
   assert.ok(ks.includes("Adaptive Cycling Omnium"));
-  assert.ok(ks.includes("statewide"));
+  assert.ok(ks.includes("Kansas · statewide · Adaptive Cycling"));
   assert.ok(ks.includes(">Open listing<"));
   assert.ok(ks.includes(`/programs/${KANSAS.id}`));
+  assert.ok(!ks.includes(">Call<"));
+  assert.ok(!ks.includes(">Email<"));
   assert.ok(!ks.includes("Unverified"));
   assert.ok(!ks.includes("Last checked"));
 
+  assert.equal(trayMetaLine(RENO), "Reno, NV · Adaptive Pickleball");
   assert.equal(trayAction(RENO).label, "Visit");
   assert.equal(trayAction(KANSAS).label, "Open listing");
+  assert.deepEqual(trayPills(RENO).map((p) => p.label), ["Visit", "Call", "Email"]);
+  assert.deepEqual(trayPills(KANSAS).map((p) => p.label), ["Open listing"]);
 });
 
-test("pins are 44px hit targets; tray slides up 280ms; pin tap stays on /maps", () => {
+test("expanded HTML reuses the listing sheet: photo, title, city, desc, facts, Visit, nearby rail", () => {
+  const html = trayExpandedHtml(RENO, NEARBY);
+  assert.ok(html.includes("/assets/sport-photos/pickleball.jpg"));
+  assert.ok(html.includes("<h1>3rd Shot Pickleball Reno Adaptive</h1>"));
+  assert.ok(html.includes("Reno, NV"));
+  assert.ok(html.includes("Sunday adaptive"));
+  assert.ok(html.includes(">Cost</span>"));
+  assert.ok(html.includes(">Ages</span>"));
+  assert.ok(html.includes("775-467-2025"));
+  assert.ok(html.includes("reno@3rdshotpickleball.com"));
+  assert.ok(html.includes("Visit website"));
+  assert.ok(html.includes("class=\"nearby\""));
+  assert.ok(html.includes("class=\"frow-scroll\""));
+  assert.ok(html.includes("Sunflower Adaptive Cycling"));
+  assert.ok(!html.includes("Unverified"));
+  assert.ok(!html.includes("Last checked"));
+  assert.ok(!html.includes("Overview"));
+  assert.ok(!html.includes(">Photos<"));
+  assert.ok(!html.includes("← Directory"));
+
+  const full = trayHtml(RENO, NEARBY);
+  assert.ok(full.includes("tray-peek"));
+  assert.ok(full.includes("tray-full"));
+  assert.ok(full.includes("Reno, NV · Adaptive Pickleball"));
+  assert.ok(full.includes("<h1>3rd Shot Pickleball Reno Adaptive</h1>"));
+});
+
+test("pins are 44px hit targets; tray slides 280ms; two heights are wired on /maps", () => {
   assert.equal(PIN_HIT_PX, 44);
   assert.equal(TRAY_MS, 280);
+  assert.equal(PEEK_VH, 35);
+  assert.equal(EXPANDED_VH, 90);
   assert.ok(index.includes("width:var(--tap)") && index.includes("height:var(--tap)"));
   assert.ok(index.includes(".mdot-mark") || index.includes("mdot-mark"));
   assert.ok(index.includes("id=\"mapTray\"") || index.includes("id='mapTray'"));
   assert.ok(index.includes("function openMapTray("));
   assert.ok(index.includes("function closeMapTray("));
   assert.ok(index.includes("function selectMapPin("));
+  assert.ok(index.includes("function expandMapTray("));
+  assert.ok(index.includes("function setMapTrayHeight("));
+  assert.ok(index.includes("function snapMapTray("));
+  assert.ok(index.includes("PEEK_VH=35"));
+  assert.ok(index.includes("EXPANDED_VH=90"));
+  assert.ok(index.includes("height:35%"));
+  assert.ok(index.includes("height:90%"));
   assert.ok(index.includes("transform") && index.includes("280ms"));
-  // Pins no longer jump the whole view to the listing sheet.
+  assert.ok(index.includes("tray-pills"));
+  assert.ok(index.includes("tray-full sheet"));
+  assert.ok(index.includes("sheetHero(p)"));
+  assert.ok(index.includes("denseRows(p)"));
+  assert.ok(index.includes("relatedRow(p)"));
   assert.ok(!index.includes("d.addEventListener('click',()=>{ state.section='program'; state.programId=p.id; render(); });"));
   assert.ok(index.includes("selectMapPin(p"));
-  // Directory cards still open the listing.
   assert.ok(index.includes("state.section='program'; state.programId=t.getAttribute('data-prog')"));
-  // Zip/city search and nearby stay wired.
   assert.ok(index.includes("function resolveNear("));
   assert.ok(index.includes("state.nearZip") && index.includes("state.nearCity"));
+  assert.ok(!index.includes("Unverified"));
+  assert.ok(!index.includes("Last checked"));
+  assert.ok(!index.includes("class=\"overview\""));
 });

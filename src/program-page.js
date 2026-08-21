@@ -210,11 +210,12 @@ ${body}
 </html>`;
 }
 
-export function programPageTemplate(org, { site = SITE, nearby = [] } = {}) {
+// The listing body shared by /programs/:id and the map tray expanded height.
+// Photo, title, city, desc, fact rows, Visit CTA, nearby rail. No Directory chrome.
+export function listingInnerHtml(org, { nearby = [] } = {}) {
   const name = org.name || "Adaptive sports program";
   const sport = org.sportLabel || "Multi-Sport";
   const loc = locLine(org);
-  const canonical = `${site}/programs/${org.id}`;
   const photo = photoPath(org.sport);
   const overlay = `<div class="dov"><span class="dov-sport">${esc(sport)}</span><span class="dov-loc">${esc(loc)}</span></div>`;
   const hero = photo
@@ -225,8 +226,7 @@ export function programPageTemplate(org, { site = SITE, nearby = [] } = {}) {
     ? `<div class="act"><a class="cta" href="${esc(cta.href)}" rel="noopener">${esc(cta.label)}</a>${org.website ? `<span class="host">${esc(hostFromUrl(org.website))}</span>` : ""}</div>`
     : "";
   const desc = org.desc ? `<p class="desc">${esc(org.desc)}</p>` : "";
-  const body = `<header class="bar"><a class="back" href="/">← Directory</a></header>
-${hero}
+  return `${hero}
 <div class="titleb">
 <h1>${esc(name)}</h1>
 <p class="loc">${esc(loc)}</p>
@@ -235,6 +235,16 @@ ${desc}
 ${action}
 ${denseRows(org)}
 ${nearbyStrip(nearby, sport)}`;
+}
+
+export function programPageTemplate(org, { site = SITE, nearby = [] } = {}) {
+  const name = org.name || "Adaptive sports program";
+  const sport = org.sportLabel || "Multi-Sport";
+  const loc = locLine(org);
+  const canonical = `${site}/programs/${org.id}`;
+  const photo = photoPath(org.sport);
+  const body = `<header class="bar"><a class="back" href="/">← Directory</a></header>
+${listingInnerHtml(org, { nearby })}`;
   return page({
     title: `${name} · Adaptive Sports Near Me`,
     description: `${sport} in ${loc}.`,
