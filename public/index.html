@@ -357,7 +357,10 @@ a.cta{text-decoration:none;text-align:center;} /* link-CTAs center exactly like 
 .sheet .empty{font-size:15px;color:var(--muted);margin:0;}
 .sheet .nearby{margin-top:8px;}
 .sheet .nearby h2{font-family:'DM Sans',sans-serif;font-weight:700;font-size:16px;letter-spacing:-.01em;margin:0 0 10px;}
-.sheet .nearby .grid{padding:0;}
+.sheet .nearby .frow-scroll>.pcard{flex:0 0 78vw;width:78vw;max-width:none;}
+@media(min-width:721px){
+  .sheet .nearby .frow-scroll>.pcard{flex:0 0 calc((100% - 48px)/4.2);width:calc((100% - 48px)/4.2);}
+}
 @media(max-width:600px){
   .sheet .act .cta{width:100%;min-width:0;}
   .sheet .act .save-btn{width:100%;}
@@ -1522,7 +1525,7 @@ function relatedRow(p){
   }
   list=list.slice(0,6);
   if(!list.length) return '';
-  return '<div class="nearby"><h2>Nearby '+(p.sportLabel||'programs').toLowerCase()+'</h2>'+cardGrid(list)+'</div>';
+  return '<div class="nearby"><h2>Nearby '+(p.sportLabel||'programs').toLowerCase()+'</h2><div class="frow-scroll">'+list.map(cardItem).join('')+'</div></div>';
 }
 function saveButton(p){
   // "Save this program" — the listing sheet only, never on directory cards.

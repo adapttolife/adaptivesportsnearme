@@ -176,11 +176,43 @@ test("programPageTemplate: Kansas Omnium still has an action + nearby strip", ()
   assert.ok(!html.includes("No website on file."));
   assert.ok(!html.includes("Visit website"));
   assert.ok(html.includes('class="nearby"'));
+  assert.ok(html.includes('class="frow-scroll"'));
+  assert.ok(!html.includes('class="grid"'));
+  assert.ok(html.includes("scroll-snap-type:x"));
+  assert.ok(html.includes("78vw"));
   assert.ok(html.includes("Sunflower Adaptive Cycling"));
   assert.ok(html.includes("Prairie Handcycle"));
   assert.ok(html.includes("42 mi away"));
+  assert.ok(html.includes("Wichita, KS"));
+  assert.equal(html.split("Sunflower Adaptive Cycling").length - 1, 1);
+  assert.equal((html.match(/class="nearby"/g) || []).length, 1);
+  assert.equal((html.match(/<h2>/g) || []).length, 1);
+  assert.ok(html.includes("Nearby adaptive cycling"));
   assert.ok(!html.includes("class=\"desc\""));
   assert.ok(html.includes("Unverified"));
+});
+
+test("programPageTemplate: nearby is one horizontal rail, not a wrapping grid or second dump", () => {
+  const nearby = [
+    { id: "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb", name: "Sunflower Adaptive Cycling", sport: "cycling", sportLabel: "Adaptive Cycling", city: "Wichita", state: "KS", dist: 42 },
+    { id: "cccccccc-cccc-cccc-cccc-cccccccccccc", name: "Prairie Handcycle", sport: "cycling", sportLabel: "Adaptive Cycling", city: "Lawrence", state: "KS", dist: 51 },
+  ];
+  const html = programPageTemplate(KANSAS, { nearby });
+  const nearbyAt = html.indexOf('class="nearby"');
+  const nearbyHtml = html.slice(nearbyAt);
+  assert.ok(nearbyAt > 0);
+  assert.ok(nearbyHtml.includes('class="frow-scroll"'));
+  assert.ok(!nearbyHtml.includes('class="grid"'));
+  assert.ok(!nearbyHtml.includes("grid-template-columns"));
+  assert.ok(nearbyHtml.includes("pcard-sport") && nearbyHtml.includes("Adaptive Cycling"));
+  assert.ok(nearbyHtml.includes("pcard-name") && nearbyHtml.includes("Sunflower Adaptive Cycling"));
+  assert.ok(nearbyHtml.includes("pcard-loc") && nearbyHtml.includes("Wichita, KS"));
+  assert.ok(nearbyHtml.includes("pcard-line") && nearbyHtml.includes("42 mi away"));
+  assert.ok(!html.includes("See all"));
+  assert.ok(!html.includes("frow-sub"));
+  const empty = programPageTemplate(KANSAS, { nearby: [] });
+  assert.ok(!empty.includes('class="nearby"'));
+  assert.ok(!empty.includes('class="frow-scroll"'));
 });
 
 test("programPageTemplate: dense rows only when present; desc only when present", () => {

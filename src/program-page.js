@@ -1,7 +1,8 @@
 // Server-rendered program detail page — the shareable URL for one listing.
 // Same sheet as the in-app detail (public/index.html): photo hero, name,
 // city+state (or statewide), primary action, dense rows only when present.
-// A listing, not a marketing page — no invented copy, no rail, no filler.
+// A listing, not a marketing page — no invented copy, no filler.
+// Nearby same-sport programs are a horizontal shelf (Airbnb rail), not a stack.
 
 const SITE = "https://adaptivesportsnearme.com";
 
@@ -137,7 +138,7 @@ function nearbyCard(p) {
 function nearbyStrip(items, sportLabel) {
   if (!items || !items.length) return "";
   const list = items.slice(0, 6);
-  return `<div class="nearby"><h2>Nearby ${esc((sportLabel || "adaptive sport").toLowerCase())}</h2><div class="grid">${list.map(nearbyCard).join("")}</div></div>`;
+  return `<div class="nearby"><h2>Nearby ${esc((sportLabel || "adaptive sport").toLowerCase())}</h2><div class="frow-scroll">${list.map(nearbyCard).join("")}</div></div>`;
 }
 
 const CSS = `
@@ -174,7 +175,9 @@ h1{font-size:clamp(22px,2.8vw,30px);font-weight:700;letter-spacing:-.02em;line-h
 .empty{color:var(--muted);margin:0;}
 .nearby{margin-top:8px;}
 .nearby h2{font-size:16px;font-weight:700;letter-spacing:-.01em;margin:0 0 10px;}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:12px 10px;}
+.frow-scroll{display:flex;gap:16px;overflow-x:auto;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;padding-bottom:6px;padding-right:var(--gut);margin-right:calc(-1 * var(--gut));scrollbar-width:none;}
+.frow-scroll::-webkit-scrollbar{display:none;}
+.frow-scroll>.pcard{flex:0 0 78vw;width:78vw;scroll-snap-align:start;}
 .pcard{display:block;color:inherit;text-decoration:none;}
 .pcard-media{position:relative;aspect-ratio:4/3;border-radius:10px;overflow:hidden;background:var(--sand);}
 .pcard-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
@@ -182,6 +185,12 @@ h1{font-size:clamp(22px,2.8vw,30px);font-weight:700;letter-spacing:-.02em;line-h
 .pcard-sport{font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--faint);}
 .pcard-name{font-size:14px;font-weight:600;line-height:1.25;margin:1px 0 0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
 .pcard-loc,.pcard-line{font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+@media(max-width:720px){
+  .frow-scroll{gap:12px;}
+}
+@media(min-width:721px){
+  .frow-scroll>.pcard{flex:0 0 calc((100% - 48px)/4.2);width:calc((100% - 48px)/4.2);}
+}
 @media(max-width:600px){
   .cta{width:100%;min-width:0;}
 }
