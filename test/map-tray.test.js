@@ -6,8 +6,9 @@ import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import {
   PIN_HIT_PX, TRAY_MS, SWIPE_DISMISS_PX, PEEK_VH, EXPANDED_VH,
+  DESKTOP_MIN_PX, DESKTOP_PANEL_WIDTH_PX, DESKTOP_PANEL_INSET_PX, DESKTOP_PANEL_CLASS,
   createTrayState, selectPin, dismissTray, setTrayHeight, mapClickAction, classifyHit,
-  swipeDismisses, snapHeight, trayAction, trayPills, trayMetaLine,
+  swipeDismisses, snapHeight, trayAction, trayPills, trayMetaLine, trayChrome,
   trayPeekHtml, trayExpandedHtml, trayHtml,
 } from "../src/map-tray.js";
 
@@ -92,6 +93,7 @@ test("dismiss", () => {
   assert.equal(classifyHit("mpill"), "cluster");
   assert.equal(classifyHit("map-tray"), "tray");
   assert.equal(classifyHit("tray-handle"), "tray");
+  assert.equal(classifyHit("tray-x"), "tray");
   assert.equal(classifyHit("maplibregl-canvas"), "empty");
 
   const already = dismissTray(createTrayState(), "empty-map");
@@ -137,6 +139,7 @@ test("peek HTML: title, city · sport, Visit/Call/Email pills, handle — no pho
   assert.ok(reno.includes("tel:7754672025"));
   assert.ok(reno.includes("mailto:reno@3rdshotpickleball.com"));
   assert.ok(reno.includes("tray-handle"));
+  assert.ok(reno.includes("tray-x"));
   assert.ok(reno.includes("tray-pills"));
   assert.ok(!reno.includes("tray-photo"));
   assert.ok(!reno.includes("Unverified"));
@@ -221,4 +224,43 @@ test("pins are 44px hit targets; tray slides 280ms; two heights are wired on /ma
   assert.ok(!index.includes("Unverified"));
   assert.ok(!index.includes("Last checked"));
   assert.ok(!index.includes("class=\"overview\""));
+});
+
+test("desktop is a left panel (class + 420px), phone stays a bottom tray", () => {
+  assert.equal(DESKTOP_MIN_PX, 721);
+  assert.equal(DESKTOP_PANEL_WIDTH_PX, 420);
+  assert.equal(DESKTOP_PANEL_INSET_PX, 24);
+  assert.equal(DESKTOP_PANEL_CLASS, "panel");
+  assert.equal(trayChrome(720), "sheet");
+  assert.equal(trayChrome(721), "panel");
+  assert.equal(trayChrome(1280), "panel");
+
+  assert.ok(index.includes('class="map-tray panel"'));
+  assert.ok(index.includes("width:420px"));
+  assert.ok(index.includes("function isDesktopTray("));
+  assert.ok(index.includes("class=\"tray-x\"") || index.includes("class='tray-x'") || index.includes('class="tray-x"'));
+
+  // Default (phone) rules stay a full-width bottom sheet.
+  const mobile = index.match(/\.map-tray\{([^}]+)\}/);
+  assert.ok(mobile, "base .map-tray rule");
+  assert.match(mobile[1], /left:0/);
+  assert.match(mobile[1], /right:0/);
+  assert.match(mobile[1], /bottom:0/);
+  assert.match(mobile[1], /height:35%/);
+  assert.ok(index.includes(".map-tray.expanded{height:90%;}"));
+
+  // Desktop media query restyles the same node into a left panel.
+  const deskStart = index.indexOf("/* Desktop: Google Maps WEB left panel.");
+  assert.ok(deskStart >= 0, "desktop panel comment");
+  const desk = index.slice(deskStart, deskStart + 1600);
+  assert.ok(desk.includes("@media(min-width:721px)"));
+  assert.ok(desk.includes("width:420px"));
+  assert.ok(desk.includes("left:var(--space-page)"));
+  assert.ok(desk.includes("right:auto"));
+  assert.ok(desk.includes("top:var(--space-page)"));
+  assert.ok(desk.includes("border-radius:var(--r-xl)"));
+  assert.ok(desk.includes(".map-tray .tray-x{display:flex;}"));
+  assert.ok(desk.includes(".map-tray .tray-handle{display:none;}"));
+  assert.ok(desk.includes("tray-expanded::after{display:none;}"));
+  assert.ok(!desk.includes("left:0;right:0;bottom:0"));
 });

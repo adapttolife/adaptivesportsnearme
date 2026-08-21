@@ -1,5 +1,5 @@
-// Google-Maps two-height pin tray: peek (~35%) and expanded (~90%).
-// Tap a pin → peek from below. Drag the handle up → full listing.
+// Phone: Google-Maps two-height bottom tray — peek (~35%) and expanded (~90%).
+// Desktop (≥721px): Google Maps WEB left panel — same HTML, not a scaled-up tray.
 // The homepage (public/index.html) mirrors this state machine on /maps.
 
 import { locLine, listingInnerHtml } from "./program-page.js";
@@ -9,6 +9,14 @@ export const TRAY_MS = 280;
 export const SWIPE_DISMISS_PX = 56;
 export const PEEK_VH = 35;
 export const EXPANDED_VH = 90;
+export const DESKTOP_MIN_PX = 721;
+export const DESKTOP_PANEL_WIDTH_PX = 420;
+export const DESKTOP_PANEL_INSET_PX = 24;
+export const DESKTOP_PANEL_CLASS = "panel";
+
+export function trayChrome(viewportW) {
+  return Number(viewportW) >= DESKTOP_MIN_PX ? "panel" : "sheet";
+}
 
 function esc(s) {
   return s == null ? "" : String(s)
@@ -128,7 +136,8 @@ function pillHtml(action, org, primary) {
 export function trayPeekHtml(org) {
   const pills = trayPills(org);
   const pillRow = pills.map((a, i) => pillHtml(a, org, i === 0)).join("");
-  return `<div class="tray-handle-hit"><div class="tray-handle" aria-hidden="true"></div></div>`
+  return `<div class="tray-handle-hit"><div class="tray-handle" aria-hidden="true"></div>`
+    + `<button class="tray-x" type="button" aria-label="Close"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>`
     + `<div class="tray-peek">`
     + `<div class="tray-name">${esc(org && org.name ? org.name : "")}</div>`
     + `<div class="tray-meta">${esc(trayMetaLine(org))}</div>`
