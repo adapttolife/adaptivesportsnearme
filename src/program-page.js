@@ -1,8 +1,8 @@
 // Server-rendered program detail page — the shareable URL for one listing.
-// Same sheet as the in-app detail (public/index.html): photo hero, name,
-// city+state (or statewide), primary action, dense rows only when present.
-// A listing, not a marketing page — no invented copy, no filler.
-// Nearby same-sport programs are a horizontal shelf (Airbnb rail), not a stack.
+// Same sheet as the in-app detail (public/index.html): Directory header,
+// photo hero, name, city+state (or statewide), primary action, fact rows
+// only when present. A listing, not a marketing page — no invented copy,
+// no verification/trust line. Nearby is a horizontal shelf, not a stack.
 
 const SITE = "https://adaptivesportsnearme.com";
 
@@ -50,24 +50,8 @@ export function photoPath(sport) {
   return sport && SPORT_PHOTOS.has(sport) ? `/assets/sport-photos/${sport}.jpg` : null;
 }
 
-export function formatChecked(iso) {
-  if (!iso) return null;
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return null;
-  return d.toLocaleDateString("en-US", {
-    month: "short", day: "numeric", year: "numeric",
-    timeZone: "America/Chicago",
-  });
-}
-
 function hostFromUrl(u) {
   try { return new URL(u).hostname.replace(/^www\./, ""); } catch { return u; }
-}
-
-function firstSource(org) {
-  if (org.sources && org.sources.length) return org.sources[0];
-  if (org.primarySource) return { name: org.primarySource, url: org.primarySourceUrl || null };
-  return null;
 }
 
 function sourceWithUrl(org) {
@@ -111,20 +95,6 @@ function denseRows(org) {
   }).join("")}</div>`;
 }
 
-function listedLine(org) {
-  const bits = [];
-  bits.push(org.verification === "verified" ? "Verified" : "Unverified");
-  const checked = formatChecked(org.lastChecked);
-  if (checked) bits.push(`Last checked ${esc(checked)}`);
-  const src = firstSource(org);
-  if (src && src.name) {
-    bits.push(src.url
-      ? `<a href="${esc(src.url)}" rel="noopener">${esc(src.name)}</a>`
-      : esc(src.name));
-  }
-  return `<p class="listed">${bits.join(' <span class="sep">·</span> ')}</p>`;
-}
-
 function nearbyCard(p) {
   const loc = locLine(p);
   const line = p.dist != null ? `${p.dist} mi away` : (typeLabel(p) || "");
@@ -142,49 +112,50 @@ function nearbyStrip(items, sportLabel) {
 }
 
 const CSS = `
-:root{color-scheme:light;--ink:#1A1A1A;--ink2:#3A3A37;--paper:#FFFFFF;--mist:#F7F7F5;--sand:#F0EFEC;--line:#E7E6E2;--muted:#6E6D6A;--faint:#736F6A;--orange:#C5430C;--orange-ink:#A8370A;--r:12px;--r-lg:16px;--r-full:999px;--gut:clamp(20px,4vw,40px);}
+:root{color-scheme:light;--ink:#1A1A1A;--ink2:#3A3A37;--paper:#FFFFFF;--mist:#F7F7F5;--sand:#F0EFEC;--line:#E7E6E2;--muted:#6E6D6A;--faint:#736F6A;--orange:#C5430C;--orange-ink:#A8370A;--r:12px;--r-lg:16px;--r-full:999px;--gut:24px;}
 *{box-sizing:border-box;}
 html,body{margin:0;padding:0;background:var(--mist);color:var(--ink);}
-body{font-family:'DM Sans',system-ui,sans-serif;font-size:15px;line-height:1.45;-webkit-font-smoothing:antialiased;}
+body{font-family:'DM Sans',system-ui,sans-serif;font-size:16px;line-height:1.45;-webkit-font-smoothing:antialiased;}
 img,svg{display:block;max-width:100%;}
 a{color:var(--orange-ink);}
-.wrap{max-width:880px;margin:0 auto;padding:14px var(--gut) 48px;}
-.back{display:inline-block;font-size:13.5px;font-weight:600;color:var(--muted);text-decoration:none;margin-bottom:12px;}
-.back:hover{color:var(--ink);}
-.dhero{position:relative;width:100%;height:clamp(180px,24vw,260px);border-radius:var(--r-lg);overflow:hidden;margin:0 0 12px;}
+.wrap{max-width:880px;margin:0 auto;padding:24px var(--gut) 64px;}
+.bar{min-height:64px;display:flex;align-items:center;}
+.back{display:inline-flex;align-items:center;min-height:44px;font-size:16px;font-weight:600;color:var(--ink);text-decoration:none;}
+.back:hover{color:var(--orange-ink);}
+.dhero{position:relative;width:100%;height:clamp(180px,24vw,260px);border-radius:var(--r-lg);overflow:hidden;margin:0 0 32px;}
 .dhero.has-dphoto{background:#23211f;}
 .dhero.g-sand{background:linear-gradient(140deg,#F2EFEA 0%,#E5DED3 100%);}
 .dhero-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 30%;}
 .dhero::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 45%,rgba(0,0,0,.55));pointer-events:none;}
-.dov{position:absolute;left:14px;bottom:12px;z-index:1;color:#fff;}
-.dov-sport{display:block;font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;}
-.dov-loc{display:block;font-size:13.5px;font-weight:500;margin-top:2px;}
-h1{font-size:clamp(22px,2.8vw,30px);font-weight:700;letter-spacing:-.02em;line-height:1.15;margin:0 0 4px;}
-.loc{font-size:15px;color:var(--ink2);margin:0 0 12px;}
-.desc{font-size:15px;line-height:1.55;color:var(--ink2);margin:-4px 0 12px;max-width:68ch;}
-.cta{display:inline-flex;align-items:center;justify-content:center;min-width:220px;height:44px;padding:0 22px;background:var(--orange);color:#fff;border-radius:var(--r);font-size:15px;font-weight:700;text-decoration:none;}
+.dov{position:absolute;left:16px;bottom:16px;z-index:1;color:#fff;}
+.dov-sport{display:block;font-size:12px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;}
+.dov-loc{display:block;font-size:14px;font-weight:500;margin-top:2px;}
+h1{font-size:clamp(22px,2.8vw,30px);font-weight:700;letter-spacing:-.02em;line-height:1.15;margin:0 0 8px;}
+.loc{font-size:16px;color:var(--ink2);margin:0;}
+.desc{font-size:16px;line-height:1.55;color:var(--ink2);margin:16px 0 0;max-width:68ch;}
+.titleb{margin:0 0 40px;}
+.cta{display:inline-flex;align-items:center;justify-content:center;min-width:220px;height:44px;padding:0 22px;background:var(--orange);color:#fff;border-radius:var(--r);font-size:16px;font-weight:700;text-decoration:none;}
 .cta:hover{background:var(--orange-ink);}
-.host{font-size:13.5px;color:var(--muted);margin-left:10px;}
-.act{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 12px;}
-.rows{margin:0 0 12px;border-top:1px solid var(--line);}
-.row{display:flex;gap:14px;padding:8px 0;border-bottom:1px solid var(--line);font-size:14px;}
+.host{font-size:14px;color:var(--muted);margin-left:12px;}
+.act{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 40px;}
+.rows{margin:0;border-top:1px solid var(--line);}
+.row{display:flex;gap:16px;padding:16px 0;border-bottom:1px solid var(--line);font-size:16px;}
 .row .k{color:var(--muted);width:92px;flex:0 0 auto;}
 .row .v{color:var(--ink);font-weight:500;min-width:0;}
-.listed{font-size:13px;color:var(--muted);margin:0 0 18px;}
-.listed .sep{color:var(--faint);}
 .empty{color:var(--muted);margin:0;}
-.nearby{margin-top:8px;}
-.nearby h2{font-size:16px;font-weight:700;letter-spacing:-.01em;margin:0 0 10px;}
+.nearby{margin-top:48px;}
+.act + .nearby,.titleb + .nearby{margin-top:8px;}
+.nearby h2{font-size:22px;font-weight:700;letter-spacing:-.02em;margin:0 0 16px;}
 .frow-scroll{display:flex;gap:16px;overflow-x:auto;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;padding-bottom:6px;padding-right:var(--gut);margin-right:calc(-1 * var(--gut));scrollbar-width:none;}
 .frow-scroll::-webkit-scrollbar{display:none;}
 .frow-scroll>.pcard{flex:0 0 78vw;width:78vw;scroll-snap-align:start;}
 .pcard{display:block;color:inherit;text-decoration:none;}
 .pcard-media{position:relative;aspect-ratio:4/3;border-radius:10px;overflow:hidden;background:var(--sand);}
 .pcard-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
-.pcard-body{padding:6px 1px 0;}
-.pcard-sport{font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--faint);}
-.pcard-name{font-size:14px;font-weight:600;line-height:1.25;margin:1px 0 0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
-.pcard-loc,.pcard-line{font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.pcard-body{padding:8px 1px 0;}
+.pcard-sport{font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--faint);}
+.pcard-name{font-size:16px;font-weight:600;line-height:1.25;margin:2px 0 0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.pcard-loc,.pcard-line{font-size:14px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 @media(max-width:720px){
   .frow-scroll{gap:12px;}
 }
@@ -241,14 +212,15 @@ export function programPageTemplate(org, { site = SITE, nearby = [] } = {}) {
     ? `<div class="act"><a class="cta" href="${esc(cta.href)}" rel="noopener">${esc(cta.label)}</a>${org.website ? `<span class="host">${esc(hostFromUrl(org.website))}</span>` : ""}</div>`
     : "";
   const desc = org.desc ? `<p class="desc">${esc(org.desc)}</p>` : "";
-  const body = `<a class="back" href="/">← Directory</a>
+  const body = `<header class="bar"><a class="back" href="/">← Directory</a></header>
 ${hero}
+<div class="titleb">
 <h1>${esc(name)}</h1>
 <p class="loc">${esc(loc)}</p>
 ${desc}
+</div>
 ${action}
 ${denseRows(org)}
-${listedLine(org)}
 ${nearbyStrip(nearby, sport)}`;
   return page({
     title: `${name} · Adaptive Sports Near Me`,
@@ -260,7 +232,7 @@ ${nearbyStrip(nearby, sport)}`;
 }
 
 export function programNotFoundTemplate({ site = SITE } = {}) {
-  const body = `<a class="back" href="/">← Directory</a>
+  const body = `<header class="bar"><a class="back" href="/">← Directory</a></header>
 <h1>Program not found</h1>
 <p class="empty">That listing is not in the directory.</p>`;
   return page({

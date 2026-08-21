@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   programPageTemplate, programNotFoundTemplate, PROGRAM_ID_RE,
-  locLine, photoPath, typeLabel, primaryCta, formatChecked,
+  locLine, photoPath, typeLabel, primaryCta,
 } from "../src/program-page.js";
 
 const ORG = {
@@ -111,26 +111,27 @@ test("primaryCta: website → tel → mailto → source. Never an empty-page stu
   assert.equal(primaryCta({}), null);
 });
 
-test("programPageTemplate: photo hero, name, city+state, website button, source — not four labeled cards", () => {
+test("programPageTemplate: photo hero, name, city+state, website button — not four labeled cards", () => {
   const html = programPageTemplate(ORG, { site: "https://asnm-staging.alec-af3.workers.dev" });
   assert.ok(html.includes("Denver Rolling Nuggets"));
   assert.ok(html.includes("Wheelchair Basketball"));
   assert.ok(html.includes("Denver, CO"));
   assert.ok(html.includes("https://www.example.org/nuggets"));
-  assert.ok(html.includes("US Paralympics Club Finder"));
   assert.ok(html.includes("<h1>Denver Rolling Nuggets</h1>"));
   assert.ok(html.includes("/assets/sport-photos/basketball.jpg"));
   assert.ok(html.includes("has-dphoto"));
   assert.ok(html.includes("dhero-img"));
   assert.ok(html.includes("Visit website"));
   assert.ok(html.includes("← Directory"));
+  assert.ok(html.includes('class="bar"'));
   assert.ok(!html.includes("We are not live yet"));
   assert.ok(!html.includes(">Sport</p>"));
   assert.ok(!html.includes("City / state"));
   assert.ok(!html.includes("class=\"card\""));
   assert.ok(html.includes("dov-sport") && html.includes("Wheelchair Basketball"));
-  assert.ok(html.includes('href="https://www.teamusa.org"'));
   assert.ok(html.includes("clamp(180px,24vw,260px)"));
+  assert.ok(!html.includes("Unverified"));
+  assert.ok(!html.includes("Last checked"));
 });
 
 test("programPageTemplate: Reno pickleball reads like a listing", () => {
@@ -151,12 +152,32 @@ test("programPageTemplate: Reno pickleball reads like a listing", () => {
   assert.ok(html.includes("775-467-2025"));
   assert.ok(html.includes("reno@3rdshotpickleball.com"));
   assert.ok(html.includes("Inclusive club"));
-  assert.ok(html.includes("Unverified"));
-  assert.ok(html.includes("Last checked"));
-  assert.ok(html.includes(formatChecked(RENO.lastChecked)));
+  assert.ok(!html.includes("Unverified"));
+  assert.ok(!html.includes("Last checked"));
+  assert.ok(!html.includes("Aug 21, 2026"));
+  assert.ok(!html.includes('class="listed"'));
   assert.ok(!html.includes("No website on file."));
   assert.ok(!html.includes("Before you go"));
   assert.ok(!html.includes("Funding that fits"));
+});
+
+test("programPageTemplate: Airbnb listing rhythm, no verification chrome", () => {
+  const html = programPageTemplate(RENO);
+  assert.ok(html.includes("--gut:24px"));
+  assert.ok(html.includes("min-height:64px"));
+  assert.ok(html.includes("min-height:44px"));
+  assert.ok(html.includes("padding:24px var(--gut)"));
+  assert.ok(html.includes("margin:0 0 32px"));
+  assert.ok(html.includes("margin:0 0 8px"));
+  assert.ok(html.includes("margin:0 0 40px"));
+  assert.ok(html.includes("margin-top:48px"));
+  assert.ok(html.includes("padding:16px 0"));
+  assert.ok(html.includes("font-size:22px"));
+  assert.ok(html.includes('class="titleb"'));
+  assert.ok(html.includes(".nearby h2{font-size:22px;font-weight:700"));
+  assert.ok(!html.includes("Unverified"));
+  assert.ok(!html.includes("Last checked"));
+  assert.ok(!html.includes("Builder web search"));
 });
 
 test("programPageTemplate: Kansas Omnium still has an action + nearby strip", () => {
@@ -189,7 +210,8 @@ test("programPageTemplate: Kansas Omnium still has an action + nearby strip", ()
   assert.equal((html.match(/<h2>/g) || []).length, 1);
   assert.ok(html.includes("Nearby adaptive cycling"));
   assert.ok(!html.includes("class=\"desc\""));
-  assert.ok(html.includes("Unverified"));
+  assert.ok(!html.includes("Unverified"));
+  assert.ok(!html.includes("Last checked"));
 });
 
 test("programPageTemplate: nearby is one horizontal rail, not a wrapping grid or second dump", () => {

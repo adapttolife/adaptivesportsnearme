@@ -331,32 +331,34 @@ a.cta{text-decoration:none;text-align:center;} /* link-CTAs center exactly like 
 .cta:hover{background:var(--orange-ink);}
 
 /* ---- LISTING SHEET ----
-   Same shape as /programs/:id (src/program-page.js): photo, title, city+state
-   or statewide, desc, one action, dense rows only when present, trust line. */
-.sheet{max-width:880px;margin:0 auto;padding:14px 0 44px;}
-.sheet .back{display:inline-block;font-size:13.5px;font-weight:600;color:var(--muted);margin-bottom:12px;}
-.sheet .back:hover{color:var(--ink);}
-.sheet .dhero{margin:0 0 12px;}
+   Same shape as /programs/:id (src/program-page.js): Directory header,
+   photo, title, city+state or statewide, desc, one action, fact rows
+   only when present. No verification/trust line. Nearby is a rail. */
+.sheet{max-width:880px;margin:0 auto;padding:0 0 48px;}
+.sheet .bar{min-height:64px;display:flex;align-items:center;}
+.sheet .back{display:inline-flex;align-items:center;min-height:44px;font-size:16px;font-weight:600;color:var(--ink);}
+.sheet .back:hover{color:var(--orange-ink);}
+.sheet .dhero{margin:0 0 32px;}
 .sheet .dhero::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 45%,rgba(0,0,0,.55));pointer-events:none;}
-.dov{position:absolute;left:14px;bottom:12px;z-index:2;color:#fff;}
-.dov-sport{display:block;font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;}
-.dov-loc{display:block;font-size:13.5px;font-weight:500;margin-top:2px;}
-.sheet h1{font-family:'DM Sans',sans-serif;font-size:clamp(22px,2.8vw,30px);font-weight:700;letter-spacing:-.02em;line-height:1.15;margin:0 0 4px;}
-.sheet .loc{font-size:15px;color:var(--ink2);margin:0 0 12px;}
-.sheet .desc{font-size:15px;line-height:1.55;color:var(--ink2);margin:-4px 0 12px;max-width:68ch;}
-.sheet .act{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 12px;}
-.sheet .act .cta{width:auto;min-width:220px;height:44px;padding:0 22px;font-size:15px;}
+.dov{position:absolute;left:16px;bottom:16px;z-index:2;color:#fff;}
+.dov-sport{display:block;font-size:12px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;}
+.dov-loc{display:block;font-size:14px;font-weight:500;margin-top:2px;}
+.sheet h1{font-family:'DM Sans',sans-serif;font-size:clamp(22px,2.8vw,30px);font-weight:700;letter-spacing:-.02em;line-height:1.15;margin:0 0 8px;}
+.sheet .loc{font-size:16px;color:var(--ink2);margin:0;}
+.sheet .desc{font-size:16px;line-height:1.55;color:var(--ink2);margin:16px 0 0;max-width:68ch;}
+.sheet .titleb{margin:0 0 40px;}
+.sheet .act{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 40px;}
+.sheet .act .cta{width:auto;min-width:220px;height:44px;padding:0 22px;font-size:16px;}
 .sheet .act .save-btn{width:auto;height:44px;padding:0 16px;border-radius:var(--r);}
-.sheet .host{font-size:13.5px;color:var(--muted);}
-.sheet .rows{margin:0 0 12px;border-top:1px solid var(--line);}
-.sheet .row{display:flex;gap:14px;padding:8px 0;border-bottom:1px solid var(--line);font-size:14px;}
+.sheet .host{font-size:14px;color:var(--muted);}
+.sheet .rows{margin:0;border-top:1px solid var(--line);}
+.sheet .row{display:flex;gap:16px;padding:16px 0;border-bottom:1px solid var(--line);font-size:16px;}
 .sheet .row .k{color:var(--muted);width:92px;flex:0 0 auto;}
 .sheet .row .v{color:var(--ink);font-weight:500;min-width:0;}
-.sheet .listed{font-size:13px;color:var(--muted);margin:0 0 18px;}
-.sheet .listed .sep,.sheet .sep{color:var(--faint);}
-.sheet .empty{font-size:15px;color:var(--muted);margin:0;}
-.sheet .nearby{margin-top:8px;}
-.sheet .nearby h2{font-family:'DM Sans',sans-serif;font-weight:700;font-size:16px;letter-spacing:-.01em;margin:0 0 10px;}
+.sheet .empty{font-size:16px;color:var(--muted);margin:0;}
+.sheet .nearby{margin-top:48px;}
+.sheet .act + .nearby,.sheet .titleb + .nearby{margin-top:8px;}
+.sheet .nearby h2{font-family:'DM Sans',sans-serif;font-weight:700;font-size:22px;letter-spacing:-.02em;margin:0 0 16px;}
 .sheet .nearby .frow-scroll>.pcard{flex:0 0 78vw;width:78vw;max-width:none;}
 @media(min-width:721px){
   .sheet .nearby .frow-scroll>.pcard{flex:0 0 calc((100% - 48px)/4.2);width:calc((100% - 48px)/4.2);}
@@ -1472,12 +1474,6 @@ function primaryCta(p){
   if(src) return {href:src.url,label:'View source'};
   return null;
 }
-function formatChecked(iso){
-  if(!iso) return null;
-  const d=new Date(iso);
-  if(isNaN(d.getTime())) return null;
-  return d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric',timeZone:'America/Chicago'});
-}
 function denseRows(p){
   const type=p.provider||null;
   const pairs=[['Cost',p.cost],['Ages',p.ages],['Equipment',p.equipment],['Phone',p.phone],['Email',p.email],['Type',type]].filter(x=>x[1]);
@@ -1489,14 +1485,6 @@ function denseRows(p){
     return '<div class="row"><span class="k">'+k+'</span><span class="v">'+val+'</span></div>';
   }).join('')+'</div>';
 }
-function listedLine(p){
-  const bits=[p.verification==='verified'?'Verified':'Unverified'];
-  const checked=formatChecked(p.lastChecked);
-  if(checked) bits.push('Last checked '+checked);
-  const src=(p.sources&&p.sources[0])||(p.primarySource?{name:p.primarySource}:null);
-  if(src&&src.name) bits.push(src.url?'<a href="'+src.url+'" target="_blank" rel="noopener">'+src.name+'</a>':src.name);
-  return '<p class="listed">'+bits.join(' <span class="sep">·</span> ')+'</p>';
-}
 function listingSheet(p, o){
   const loc=locLine(p);
   const cta=primaryCta(p);
@@ -1504,14 +1492,11 @@ function listingSheet(p, o){
     ? '<a class="cta" href="'+cta.href+'" target="_blank" rel="noopener">'+cta.label+'</a>'+(p.website?'<span class="host">'+hostFromUrl(p.website)+'</span>':'')
     : '';
   return '<div class="wrap"><div class="sheet">'
-    +'<a class="back" href="/" data-home>← Directory</a>'
+    +'<header class="bar"><a class="back" href="/" data-home>← Directory</a></header>'
     +sheetHero(p)
-    +'<h1>'+p.name+'</h1>'
-    +'<p class="loc">'+loc+'</p>'
-    +(p.desc?'<p class="desc">'+p.desc+'</p>':'')
+    +'<div class="titleb"><h1>'+p.name+'</h1><p class="loc">'+loc+'</p>'+(p.desc?'<p class="desc">'+p.desc+'</p>':'')+'</div>'
     +'<div class="act">'+action+(o.save||'')+'</div>'
     +denseRows(p)
-    +listedLine(p)
     +(o.related||'')
     +'</div></div>';
 }
