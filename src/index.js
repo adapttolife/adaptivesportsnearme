@@ -20,7 +20,7 @@
 //   *    /api/admin/*          -> review queue + lane triggers (ADMIN_KEY bearer)
 // All secrets stay server-side (Worker secrets). Bot defence: honeypot + optional Turnstile.
 
-import { listPrograms, getOrg, stats } from "./data.js";
+import { listPrograms, getOrg, stats, listSameSportNearby } from "./data.js";
 import { programPageTemplate, programNotFoundTemplate, PROGRAM_ID_RE } from "./program-page.js";
 import { listEvents, eventsToRss, eventsToIcs } from "./events.js";
 import { handleAdmin } from "./admin.js";
@@ -131,7 +131,8 @@ export default {
       try {
         const record = await getOrg(env.DB, programPath[1]);
         if (!record) return text(programNotFoundTemplate({ site: url.origin }), 404, "text/html; charset=utf-8");
-        return text(programPageTemplate(record, { site: url.origin }), 200, "text/html; charset=utf-8", API_CACHE);
+        const nearby = await listSameSportNearby(env.DB, record, 6);
+        return text(programPageTemplate(record, { site: url.origin, nearby }), 200, "text/html; charset=utf-8", API_CACHE);
       } catch (err) {
         console.error("program page error:", err);
         return text(programNotFoundTemplate({ site: url.origin }), 500, "text/html; charset=utf-8");

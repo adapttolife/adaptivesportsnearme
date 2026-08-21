@@ -2,7 +2,7 @@
 // null if never checked) is computed here rather than in SQL — D1 lacks pow().
 // listPrograms filters: sport, state, q (text), plus nearby via zip / city / lat-lng.
 
-import { loadZcta, resolveOrigin, applyNearby } from "./geo.js";
+import { loadZcta, resolveOrigin, applyNearby, milesBetween } from "./geo.js";
 
 export function freshness(lastOkAt, now = Date.now()) {
   if (!lastOkAt) return null;
@@ -157,4 +157,35 @@ export async function stats(db) {
     byState: byState.results,
     lastPipelineRun: lastRun || null,
   };
+}
+
+// Same-sport neighbors for the program sheet (4–6 cards). Distance when the
+// listing has coordinates; otherwise directory order. Never invents a city.
+export async function listSameSportNearby(db, org, limit = 6) {
+  const n = Math.min(Math.max(limit || 6, 1), 6);
+  const sportKey = org.sport;
+  const sportLabel = org.sportLabel;
+  if (!org.id || (!sportKey && !sportLabel)) return [];
+  const where = ["is_public = 1", "status = 'active'", "id != ?"];
+  const binds = [org.id];
+  if (sportKey) {
+    where.push("(sport_key = ? OR sport = ?)");
+    binds.push(sportKey, sportLabel || sportKey);
+  } else {
+    where.push("sport = ?");
+    binds.push(sportLabel);
+  }
+  const rows = await db.prepare(
+    `SELECT ${LIST_COLS} FROM organizations WHERE ${where.join(" AND ")} LIMIT 80`
+  ).bind(...binds).all();
+  let items = (rows.results || []).map((r) => rowToProgram(r));
+  if (org.lat != null && org.lng != null) {
+    items = items.map((p) => {
+      const dist = (p.lat != null && p.lng != null)
+        ? Math.round(milesBetween(org.lat, org.lng, p.lat, p.lng) * 10) / 10
+        : null;
+      return { ...p, dist };
+    }).sort((a, b) => (a.dist ?? 1e9) - (b.dist ?? 1e9));
+  }
+  return items.slice(0, n);
 }

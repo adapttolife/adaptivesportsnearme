@@ -1,6 +1,8 @@
 // Server-rendered program detail page — the shareable URL for one listing.
-// Same visual language as the in-app sheet: sport photo hero, name, city+state,
-// website button, source, back to directory. No extra chrome, no repeated fields.
+// Same sheet as the in-app detail (public/index.html): Directory header,
+// photo hero, name, city+state (or statewide), primary action, fact rows
+// only when present. A listing, not a marketing page — no invented copy,
+// no verification/trust line. Nearby is a horizontal shelf, not a stack.
 
 const SITE = "https://adaptivesportsnearme.com";
 
@@ -11,6 +13,14 @@ export const SPORT_PHOTOS = new Set([
   "pickleball", "rugby", "skiing", "sledhockey", "tennis", "waterskiing",
 ]);
 
+// org_type -> the human label. Mirrors TYPE_LABEL in public/index.html so the
+// shared link and the in-app sheet name the same thing the same way.
+const TYPE_LABEL = {
+  member: "Community program", team: "Competitive team", chapter: "Chapter",
+  adaptive_club: "Adaptive club", inclusive_club: "Inclusive club",
+  affiliate: "Affiliate", event_partner: "Event partner",
+};
+
 function esc(s) {
   return s == null ? "" : String(s)
     .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
@@ -18,12 +28,22 @@ function esc(s) {
 }
 
 export function locLine(org) {
+  const statewide = org.geoPrecision === "state" || org.geoPrecision === "state-level";
+  if (statewide) {
+    const st = org.stateName || org.state;
+    return st ? `${st} · statewide` : "United States · statewide";
+  }
   if (org.city && org.state) return `${org.city}, ${org.state}`;
   if (org.city && org.stateName) return `${org.city}, ${org.stateName}`;
   if (org.city) return org.city;
   if (org.stateName) return org.stateName;
   if (org.state) return org.state;
   return "United States";
+}
+
+export function typeLabel(org) {
+  if (!org || !org.type) return null;
+  return TYPE_LABEL[org.type] || null;
 }
 
 export function photoPath(sport) {
@@ -34,46 +54,129 @@ function hostFromUrl(u) {
   try { return new URL(u).hostname.replace(/^www\./, ""); } catch { return u; }
 }
 
-function sourceLines(org) {
-  const srcs = (org.sources && org.sources.length)
+function sourceWithUrl(org) {
+  const list = (org.sources && org.sources.length)
     ? org.sources
-    : (org.primarySource ? [{ name: org.primarySource }] : []);
-  if (!srcs.length) return "<p class=\"src\">Community submission</p>";
-  return srcs.map((s) => {
-    const name = esc(s.name || "Source");
-    const orgName = s.organization ? ` <span class="muted">${esc(s.organization)}</span>` : "";
-    const link = s.url
-      ? `<a href="${esc(s.url)}" rel="noopener">${name}</a>${orgName}`
-      : `${name}${orgName}`;
-    return `<p class="src">${link}</p>`;
-  }).join("");
+    : (org.primarySource ? [{ name: org.primarySource, url: org.primarySourceUrl || null }] : []);
+  return list.find((s) => s && s.url) || null;
+}
+
+// website → tel → mailto → primary source link. Never an empty-page stub.
+export function primaryCta(org) {
+  if (org.website) return { href: org.website, label: "Visit website" };
+  const phone = org.phone && String(org.phone).trim();
+  if (phone) return { href: `tel:${phone.replace(/[^\d+]/g, "")}`, label: "Call" };
+  if (org.email) return { href: `mailto:${org.email}`, label: "Email" };
+  const src = sourceWithUrl(org);
+  if (src) return { href: src.url, label: "View source" };
+  return null;
+}
+
+function denseRows(org) {
+  const type = typeLabel(org);
+  const pairs = [
+    ["Cost", org.cost],
+    ["Ages", org.ages],
+    ["Equipment", org.equipment],
+    ["Phone", org.phone],
+    ["Email", org.email],
+    ["Type", type],
+  ].filter(([, v]) => v);
+  if (!pairs.length) return "";
+  return `<div class="rows">${pairs.map(([k, v]) => {
+    let val = esc(v);
+    if (k === "Phone") {
+      const tel = String(v).replace(/[^\d+]/g, "");
+      val = `<a href="tel:${esc(tel)}">${esc(v)}</a>`;
+    } else if (k === "Email") {
+      val = `<a href="mailto:${esc(v)}">${esc(v)}</a>`;
+    }
+    return `<div class="row"><span class="k">${k}</span><span class="v">${val}</span></div>`;
+  }).join("")}</div>`;
+}
+
+function nearbyCard(p) {
+  const loc = locLine(p);
+  const line = p.dist != null ? `${p.dist} mi away` : (typeLabel(p) || "");
+  const photo = photoPath(p.sport);
+  const media = photo
+    ? `<div class="pcard-media has-photo"><img class="pcard-img" src="${esc(photo)}" alt=""></div>`
+    : `<div class="pcard-media g-sand"></div>`;
+  return `<a class="pcard" href="/programs/${esc(p.id)}">${media}<div class="pcard-body"><div class="pcard-sport">${esc(p.sportLabel || "Multi-Sport")}</div><div class="pcard-name">${esc(p.name)}</div><div class="pcard-loc">${esc(loc)}</div>${line ? `<div class="pcard-line">${esc(line)}</div>` : ""}</div></a>`;
+}
+
+function nearbyStrip(items, sportLabel) {
+  if (!items || !items.length) return "";
+  const list = items.slice(0, 6);
+  return `<div class="nearby"><h2>Nearby ${esc((sportLabel || "adaptive sport").toLowerCase())}</h2><div class="frow-scroll">${list.map(nearbyCard).join("")}</div></div>`;
 }
 
 const CSS = `
-:root{color-scheme:light;--ink:#1A1A1A;--ink2:#3A3A37;--paper:#FFFFFF;--mist:#F7F7F5;--sand:#F0EFEC;--line:#E7E6E2;--muted:#6E6D6A;--faint:#736F6A;--orange:#C5430C;--orange-ink:#A8370A;--r:12px;--r-lg:16px;--r-xl:20px;--r-full:999px;--gut:clamp(20px,4vw,48px);}
+:root{
+  color-scheme:light;--ink:#1A1A1A;--ink2:#3A3A37;--paper:#FFFFFF;--mist:#F7F7F5;--sand:#F0EFEC;--line:#E7E6E2;--muted:#6E6D6A;--faint:#736F6A;--orange:#C5430C;--orange-ink:#A8370A;--r:12px;--r-lg:16px;--r-full:999px;
+  /* Rhythm. Do not tighten these to "fix AI look"; Alec locked 24/32/40/48/64 on 2026-08-21. */
+  --space-page: 24px;  /* gutter */
+  --space-header: 64px;
+  --tap: 44px;
+  --space-title-gap: 8px;
+  --space-after-photo: 32px;
+  --space-section: 40px;
+  --space-nearby: 48px;
+  --space-row: 16px;
+  --gut: var(--space-page);
+}
 *{box-sizing:border-box;}
 html,body{margin:0;padding:0;background:var(--mist);color:var(--ink);}
-body{font-family:'DM Sans',system-ui,sans-serif;font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased;}
+body{font-family:'DM Sans',system-ui,sans-serif;font-size:16px;line-height:1.45;-webkit-font-smoothing:antialiased;}
 img,svg{display:block;max-width:100%;}
 a{color:var(--orange-ink);}
-.wrap{max-width:760px;margin:0 auto;padding:22px var(--gut) 64px;}
-.back{display:inline-block;font-size:14px;font-weight:600;color:var(--muted);text-decoration:none;margin-bottom:18px;}
-.back:hover{color:var(--ink);}
-.dhero{position:relative;width:100%;height:clamp(220px,32vw,360px);border-radius:var(--r-xl);overflow:hidden;margin:0 0 22px;}
+.wrap{max-width:880px;margin:0 auto;padding:var(--space-page) var(--space-page) var(--space-header);}
+.bar{min-height:var(--space-header);display:flex;align-items:center;}
+.back{display:inline-flex;align-items:center;min-height:var(--tap);font-size:16px;font-weight:600;color:var(--ink);text-decoration:none;}
+.back:hover{color:var(--orange-ink);}
+.dhero{position:relative;width:100%;height:clamp(180px,24vw,260px);border-radius:var(--r-lg);overflow:hidden;margin:0 0 var(--space-after-photo);}
 .dhero.has-dphoto{background:#23211f;}
 .dhero.g-sand{background:linear-gradient(140deg,#F2EFEA 0%,#E5DED3 100%);}
 .dhero-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 30%;}
-.dhero .eyebrow{position:absolute;bottom:16px;left:18px;background:rgba(255,255,255,.9);border-radius:var(--r-full);padding:6px 12px;font-size:11px;letter-spacing:.13em;text-transform:uppercase;color:var(--muted);}
-h1{font-size:clamp(28px,4vw,40px);font-weight:700;letter-spacing:-.02em;line-height:1.1;margin:0 0 8px;}
-.loc{font-size:16px;color:var(--ink2);margin:0 0 22px;}
-.cta{display:flex;align-items:center;justify-content:center;width:100%;height:50px;background:var(--orange);color:#fff;border-radius:var(--r);font-size:16px;font-weight:700;text-decoration:none;}
+.dhero::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 45%,rgba(0,0,0,.55));pointer-events:none;}
+.dov{position:absolute;left:16px;bottom:16px;z-index:1;color:#fff;}
+.dov-sport{display:block;font-size:12px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;}
+.dov-loc{display:block;font-size:14px;font-weight:500;margin-top:2px;}
+h1{font-size:clamp(22px,2.8vw,30px);font-weight:700;letter-spacing:-.02em;line-height:1.15;margin:0 0 var(--space-title-gap);}
+.loc{font-size:16px;color:var(--ink2);margin:0;}
+.desc{font-size:16px;line-height:1.55;color:var(--ink2);margin:16px 0 0;max-width:68ch;}
+.titleb{margin:0 0 var(--space-section);}
+.cta{display:inline-flex;align-items:center;justify-content:center;min-width:220px;height:var(--tap);padding:0 22px;background:var(--orange);color:#fff;border-radius:var(--r);font-size:16px;font-weight:700;text-decoration:none;}
 .cta:hover{background:var(--orange-ink);}
-.empty{color:var(--muted);margin:0 0 8px;}
-.listed{margin-top:28px;}
-.listed .k{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);margin:0 0 8px;}
-.src{margin:0 0 6px;}
-.src:last-child{margin-bottom:0;}
-.muted{color:var(--muted);font-weight:400;}
+.host{font-size:14px;color:var(--muted);margin-left:12px;}
+.act{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 var(--space-section);}
+.rows{margin:0;border-top:1px solid var(--line);}
+.row{display:flex;gap:var(--space-row);padding:var(--space-row) 0;border-bottom:1px solid var(--line);font-size:16px;}
+.row .k{color:var(--muted);width:92px;flex:0 0 auto;}
+.row .v{color:var(--ink);font-weight:500;min-width:0;}
+.empty{color:var(--muted);margin:0;}
+.nearby{margin-top:var(--space-nearby);}
+.act + .nearby,.titleb + .nearby{margin-top:8px;}
+.nearby h2{font-size:22px;font-weight:700;letter-spacing:-.02em;margin:0 0 var(--space-row);}
+.frow-scroll{display:flex;gap:var(--space-row);overflow-x:auto;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;padding-bottom:6px;padding-right:var(--space-page);margin-right:calc(-1 * var(--space-page));scrollbar-width:none;}
+.frow-scroll::-webkit-scrollbar{display:none;}
+.frow-scroll>.pcard{flex:0 0 78vw;width:78vw;scroll-snap-align:start;}
+.pcard{display:block;color:inherit;text-decoration:none;}
+.pcard-media{position:relative;aspect-ratio:4/3;border-radius:10px;overflow:hidden;background:var(--sand);}
+.pcard-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
+.pcard-body{padding:8px 1px 0;}
+.pcard-sport{font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--faint);}
+.pcard-name{font-size:16px;font-weight:600;line-height:1.25;margin:2px 0 0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.pcard-loc,.pcard-line{font-size:14px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+@media(max-width:720px){
+  .frow-scroll{gap:12px;}
+}
+@media(min-width:721px){
+  .frow-scroll>.pcard{flex:0 0 calc((100% - 48px)/4.2);width:calc((100% - 48px)/4.2);}
+}
+@media(max-width:600px){
+  .cta{width:100%;min-width:0;}
+}
 `;
 
 function page({ title, description, canonical, image, body }) {
@@ -96,6 +199,7 @@ ${ogImage}
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/tokens.css">
 <style>${CSS}</style>
 </head>
 <body>
@@ -106,24 +210,31 @@ ${body}
 </html>`;
 }
 
-export function programPageTemplate(org, { site = SITE } = {}) {
+export function programPageTemplate(org, { site = SITE, nearby = [] } = {}) {
   const name = org.name || "Adaptive sports program";
   const sport = org.sportLabel || "Multi-Sport";
   const loc = locLine(org);
   const canonical = `${site}/programs/${org.id}`;
   const photo = photoPath(org.sport);
+  const overlay = `<div class="dov"><span class="dov-sport">${esc(sport)}</span><span class="dov-loc">${esc(loc)}</span></div>`;
   const hero = photo
-    ? `<div class="dhero has-dphoto"><img class="dhero-img" src="${esc(photo)}" alt=""><span class="eyebrow">${esc(sport)}</span></div>`
-    : `<div class="dhero g-sand"><span class="eyebrow">${esc(sport)}</span></div>`;
-  const website = org.website
-    ? `<a class="cta" href="${esc(org.website)}" rel="noopener">Visit website</a>`
-    : `<p class="empty">No website on file.</p>`;
-  const body = `<a class="back" href="/">← Directory</a>
+    ? `<div class="dhero has-dphoto"><img class="dhero-img" src="${esc(photo)}" alt="">${overlay}</div>`
+    : `<div class="dhero g-sand">${overlay}</div>`;
+  const cta = primaryCta(org);
+  const action = cta
+    ? `<div class="act"><a class="cta" href="${esc(cta.href)}" rel="noopener">${esc(cta.label)}</a>${org.website ? `<span class="host">${esc(hostFromUrl(org.website))}</span>` : ""}</div>`
+    : "";
+  const desc = org.desc ? `<p class="desc">${esc(org.desc)}</p>` : "";
+  const body = `<header class="bar"><a class="back" href="/">← Directory</a></header>
 ${hero}
+<div class="titleb">
 <h1>${esc(name)}</h1>
 <p class="loc">${esc(loc)}</p>
-${website}
-<div class="listed"><p class="k">Listed from</p>${sourceLines(org)}</div>`;
+${desc}
+</div>
+${action}
+${denseRows(org)}
+${nearbyStrip(nearby, sport)}`;
   return page({
     title: `${name} · Adaptive Sports Near Me`,
     description: `${sport} in ${loc}.`,
@@ -134,8 +245,7 @@ ${website}
 }
 
 export function programNotFoundTemplate({ site = SITE } = {}) {
-  const body = `<a class="back" href="/">← Directory</a>
-<p class="empty">Program</p>
+  const body = `<header class="bar"><a class="back" href="/">← Directory</a></header>
 <h1>Program not found</h1>
 <p class="empty">That listing is not in the directory.</p>`;
   return page({

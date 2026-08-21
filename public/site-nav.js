@@ -46,7 +46,8 @@
   var CSS =
     ":root{" +
     "--sand2:#E8E7E3;--orange-soft:#FBEBDC;" +
-    "--hdr:64px;--r-xl:20px;" +
+    "--space-page:24px;--space-header:64px;--tap:44px;" +
+    "--hdr:var(--space-header);--r-xl:20px;" +
     "--shadow-sm:0 1px 2px rgba(17,17,19,.04),0 1px 3px rgba(17,17,19,.06);" +
     "--shadow:0 6px 20px rgba(17,17,19,.08);" +
     "--shadow-lg:0 12px 34px rgba(17,17,19,.13);" +
@@ -55,7 +56,7 @@
     /* ---- header ---- */
     ".hdr{position:sticky;top:0;z-index:60;background:rgba(255,255,255,.92);backdrop-filter:saturate(150%) blur(10px);border-bottom:1px solid var(--line);}" +
     ".hdr.scrolled{box-shadow:var(--shadow-sm);}" +
-    ".hdr-in{height:var(--hdr);display:flex;align-items:center;justify-content:space-between;gap:18px;}" +
+    ".hdr-in{height:var(--space-header);display:flex;align-items:center;justify-content:space-between;gap:18px;}" +
     ".brand{flex:0 0 auto;transition:opacity .15s;}" +
     ".brand:hover{opacity:.7;}" +
     ".brand b{font-family:'DM Sans',sans-serif;font-weight:700;font-size:16px;letter-spacing:-.015em;color:var(--ink);white-space:nowrap;}" +
