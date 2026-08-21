@@ -112,17 +112,29 @@ function nearbyStrip(items, sportLabel) {
 }
 
 const CSS = `
-:root{color-scheme:light;--ink:#1A1A1A;--ink2:#3A3A37;--paper:#FFFFFF;--mist:#F7F7F5;--sand:#F0EFEC;--line:#E7E6E2;--muted:#6E6D6A;--faint:#736F6A;--orange:#C5430C;--orange-ink:#A8370A;--r:12px;--r-lg:16px;--r-full:999px;--gut:24px;}
+:root{
+  color-scheme:light;--ink:#1A1A1A;--ink2:#3A3A37;--paper:#FFFFFF;--mist:#F7F7F5;--sand:#F0EFEC;--line:#E7E6E2;--muted:#6E6D6A;--faint:#736F6A;--orange:#C5430C;--orange-ink:#A8370A;--r:12px;--r-lg:16px;--r-full:999px;
+  /* Rhythm. Do not tighten these to "fix AI look"; Alec locked 24/32/40/48/64 on 2026-08-21. */
+  --space-page: 24px;  /* gutter */
+  --space-header: 64px;
+  --tap: 44px;
+  --space-title-gap: 8px;
+  --space-after-photo: 32px;
+  --space-section: 40px;
+  --space-nearby: 48px;
+  --space-row: 16px;
+  --gut: var(--space-page);
+}
 *{box-sizing:border-box;}
 html,body{margin:0;padding:0;background:var(--mist);color:var(--ink);}
 body{font-family:'DM Sans',system-ui,sans-serif;font-size:16px;line-height:1.45;-webkit-font-smoothing:antialiased;}
 img,svg{display:block;max-width:100%;}
 a{color:var(--orange-ink);}
-.wrap{max-width:880px;margin:0 auto;padding:24px var(--gut) 64px;}
-.bar{min-height:64px;display:flex;align-items:center;}
-.back{display:inline-flex;align-items:center;min-height:44px;font-size:16px;font-weight:600;color:var(--ink);text-decoration:none;}
+.wrap{max-width:880px;margin:0 auto;padding:var(--space-page) var(--space-page) var(--space-header);}
+.bar{min-height:var(--space-header);display:flex;align-items:center;}
+.back{display:inline-flex;align-items:center;min-height:var(--tap);font-size:16px;font-weight:600;color:var(--ink);text-decoration:none;}
 .back:hover{color:var(--orange-ink);}
-.dhero{position:relative;width:100%;height:clamp(180px,24vw,260px);border-radius:var(--r-lg);overflow:hidden;margin:0 0 32px;}
+.dhero{position:relative;width:100%;height:clamp(180px,24vw,260px);border-radius:var(--r-lg);overflow:hidden;margin:0 0 var(--space-after-photo);}
 .dhero.has-dphoto{background:#23211f;}
 .dhero.g-sand{background:linear-gradient(140deg,#F2EFEA 0%,#E5DED3 100%);}
 .dhero-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 30%;}
@@ -130,23 +142,23 @@ a{color:var(--orange-ink);}
 .dov{position:absolute;left:16px;bottom:16px;z-index:1;color:#fff;}
 .dov-sport{display:block;font-size:12px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;}
 .dov-loc{display:block;font-size:14px;font-weight:500;margin-top:2px;}
-h1{font-size:clamp(22px,2.8vw,30px);font-weight:700;letter-spacing:-.02em;line-height:1.15;margin:0 0 8px;}
+h1{font-size:clamp(22px,2.8vw,30px);font-weight:700;letter-spacing:-.02em;line-height:1.15;margin:0 0 var(--space-title-gap);}
 .loc{font-size:16px;color:var(--ink2);margin:0;}
 .desc{font-size:16px;line-height:1.55;color:var(--ink2);margin:16px 0 0;max-width:68ch;}
-.titleb{margin:0 0 40px;}
-.cta{display:inline-flex;align-items:center;justify-content:center;min-width:220px;height:44px;padding:0 22px;background:var(--orange);color:#fff;border-radius:var(--r);font-size:16px;font-weight:700;text-decoration:none;}
+.titleb{margin:0 0 var(--space-section);}
+.cta{display:inline-flex;align-items:center;justify-content:center;min-width:220px;height:var(--tap);padding:0 22px;background:var(--orange);color:#fff;border-radius:var(--r);font-size:16px;font-weight:700;text-decoration:none;}
 .cta:hover{background:var(--orange-ink);}
 .host{font-size:14px;color:var(--muted);margin-left:12px;}
-.act{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 40px;}
+.act{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 var(--space-section);}
 .rows{margin:0;border-top:1px solid var(--line);}
-.row{display:flex;gap:16px;padding:16px 0;border-bottom:1px solid var(--line);font-size:16px;}
+.row{display:flex;gap:var(--space-row);padding:var(--space-row) 0;border-bottom:1px solid var(--line);font-size:16px;}
 .row .k{color:var(--muted);width:92px;flex:0 0 auto;}
 .row .v{color:var(--ink);font-weight:500;min-width:0;}
 .empty{color:var(--muted);margin:0;}
-.nearby{margin-top:48px;}
+.nearby{margin-top:var(--space-nearby);}
 .act + .nearby,.titleb + .nearby{margin-top:8px;}
-.nearby h2{font-size:22px;font-weight:700;letter-spacing:-.02em;margin:0 0 16px;}
-.frow-scroll{display:flex;gap:16px;overflow-x:auto;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;padding-bottom:6px;padding-right:var(--gut);margin-right:calc(-1 * var(--gut));scrollbar-width:none;}
+.nearby h2{font-size:22px;font-weight:700;letter-spacing:-.02em;margin:0 0 var(--space-row);}
+.frow-scroll{display:flex;gap:var(--space-row);overflow-x:auto;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;padding-bottom:6px;padding-right:var(--space-page);margin-right:calc(-1 * var(--space-page));scrollbar-width:none;}
 .frow-scroll::-webkit-scrollbar{display:none;}
 .frow-scroll>.pcard{flex:0 0 78vw;width:78vw;scroll-snap-align:start;}
 .pcard{display:block;color:inherit;text-decoration:none;}
@@ -187,6 +199,7 @@ ${ogImage}
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/tokens.css">
 <style>${CSS}</style>
 </head>
 <body>

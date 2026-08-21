@@ -205,23 +205,32 @@ const BLOG_CSS = `
   --line:#E7E6E2; --muted:#6E6D6A; --faint:#736F6A;
   --orange:#C5430C; --orange-ink:#A8370A; --orange-soft:#FBEBDC; --sand2:#E8E7E3;
   /* --faint darkened to meet WCAG AA (matches index.html) */
-  --hdr:64px;
+  /* Rhythm. Do not tighten these to "fix AI look"; Alec locked 24/32/40/48/64 on 2026-08-21. */
+  --space-page: 24px;  /* gutter */
+  --space-header: 64px;
+  --tap: 44px;
+  --space-title-gap: 8px;
+  --space-after-photo: 32px;
+  --space-section: 40px;
+  --space-nearby: 48px;
+  --space-row: 16px;
+  --hdr: var(--space-header);
   --shadow-sm:0 1px 2px rgba(17,17,19,.04),0 1px 3px rgba(17,17,19,.06);
-  --r:12px; --r-lg:16px; --r-full:999px; --max:920px; --gut:clamp(20px,4vw,48px);
+  --r:12px; --r-lg:16px; --r-full:999px; --max:920px; --gut: var(--space-page);
 }
 *{box-sizing:border-box;}
 html,body{margin:0;padding:0;background:var(--mist);color:var(--ink);}
 body{font-family:'DM Sans',system-ui,sans-serif;font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased;}
 img{display:block;max-width:100%;}
 a{color:inherit;text-decoration:none;}
-.wrap{max-width:var(--max);margin:0 auto;padding:0 var(--gut);}
+.wrap{max-width:var(--max);margin:0 auto;padding:0 var(--space-page);}
 .skip{position:absolute;left:-999px;top:8px;background:var(--ink);color:#fff;padding:10px 16px;border-radius:var(--r);}
 .skip:focus{left:12px;}
 /* App-matching header (☰ · brand · search pill · orange "+"). Rendered server-side
    for zero-flash + no-JS styling; site-nav.js mirrors this CSS and owns the drawer. */
 .hdr{position:sticky;top:0;z-index:60;background:rgba(255,255,255,.92);backdrop-filter:saturate(150%) blur(10px);border-bottom:1px solid var(--line);}
 .hdr.scrolled{box-shadow:var(--shadow-sm);}
-.hdr-in{height:var(--hdr);display:flex;align-items:center;justify-content:space-between;gap:18px;}
+.hdr-in{height:var(--space-header);display:flex;align-items:center;justify-content:space-between;gap:18px;}
 .brand{flex:0 0 auto;transition:opacity .15s;}
 .brand:hover{opacity:.7;}
 .brand b{font-family:'DM Sans',sans-serif;font-weight:700;font-size:16px;letter-spacing:-.015em;color:var(--ink);white-space:nowrap;}
@@ -242,8 +251,8 @@ a{color:inherit;text-decoration:none;}
 .hdr-add:hover{background:var(--orange);color:#fff;border-color:var(--orange);}
 .hdr-add svg{width:19px;height:19px;}
 @media (max-width:720px){.hdr-add{width:36px;height:36px;}.hdr-add svg{width:17px;height:17px;}.hdr .brand{display:none;}.search{flex:1 1 100%;max-width:none;min-width:0;}.search .loc span{display:none;}.search input{min-width:0;}}
-.blog-main{padding:48px var(--gut) 64px;}
-.eyebrow{font-size:11px;letter-spacing:.13em;text-transform:uppercase;color:var(--faint);margin:0 0 8px;}
+.blog-main{padding:var(--space-nearby) var(--space-page) var(--space-header);}
+.eyebrow{font-size:11px;letter-spacing:.13em;text-transform:uppercase;color:var(--faint);margin:0 0 var(--space-title-gap);}
 .blog-h1{font-family:'DM Sans',sans-serif;font-size:34px;font-weight:700;letter-spacing:-.02em;line-height:1.15;margin:0 0 20px;}
 .blog-empty{color:var(--muted);font-size:15px;}
 .blog-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:28px;}
@@ -255,7 +264,7 @@ a{color:inherit;text-decoration:none;}
 .blog-card-date{font-size:12px;color:var(--faint);margin:0 0 6px;font-weight:600;}
 .blog-card-title{font-family:'DM Sans',sans-serif;font-size:17px;font-weight:700;line-height:1.3;margin:0 0 6px;color:var(--ink);}
 .blog-card-sub{font-size:14px;color:var(--muted);margin:0;line-height:1.45;}
-.blog-back{display:inline-block;font-size:14px;font-weight:600;color:var(--muted);margin-bottom:24px;}
+.blog-back{display:inline-block;font-size:14px;font-weight:600;color:var(--muted);margin-bottom:var(--space-page);}
 .blog-back:hover{color:var(--ink);}
 .blog-sub{font-size:17px;color:var(--muted);margin:0 0 20px;line-height:1.5;}
 .blog-hero{border-radius:var(--r-lg);overflow:hidden;margin:0 0 28px;background:var(--sand);}
@@ -264,7 +273,7 @@ a{color:inherit;text-decoration:none;}
 .blog-body img{border-radius:var(--r);margin:16px 0;}
 .blog-body a{color:var(--orange-ink);text-decoration:underline;}
 .blog-body h2,.blog-body h3{font-family:'DM Sans',sans-serif;color:var(--ink);letter-spacing:-.01em;}
-.foot{border-top:1px solid var(--line);margin-top:24px;padding:48px var(--gut) 56px;background:var(--paper);}
+.foot{border-top:1px solid var(--line);margin-top:var(--space-page);padding:var(--space-nearby) var(--space-page) 56px;background:var(--paper);}
 .foot-in{display:flex;justify-content:space-between;gap:36px 48px;flex-wrap:wrap;}
 .foot .brand b{font-size:15px;}
 .foot .tagline{font-size:14px;color:var(--muted);margin:10px 0 0;max-width:380px;line-height:1.5;}
@@ -298,7 +307,8 @@ function pageShell({ title, description, canonical, ogImage, bodyHtml, jsonLd })
 <meta name="twitter:image" content="${esc(ogImage)}">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">${
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/tokens.css">${
   jsonLd ? `\n<script type="application/ld+json">${jsonLdScript(jsonLd)}</script>` : ""
 }
 <style>${BLOG_CSS}</style>
@@ -335,7 +345,7 @@ ${bodyHtml}
   </div>
 </footer>
 <!-- bump ?v= on any site-nav.js change so browsers fetch the new file (cache-bust) -->
-<script src="/site-nav.js?v=20260726a" defer></script>
+<script src="/site-nav.js?v=20260821a" defer></script>
 </body>
 </html>
 `;

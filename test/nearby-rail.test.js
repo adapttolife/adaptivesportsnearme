@@ -37,12 +37,12 @@ test("in-app sheet has no verification/trust line", () => {
 
 test("in-app sheet Directory is a 64px header control with Airbnb rhythm", () => {
   assert.ok(index.includes('<header class="bar"><a class="back" href="/" data-home>← Directory</a></header>'));
-  assert.ok(index.includes(".sheet .bar{min-height:64px"));
-  assert.ok(index.includes("min-height:44px"));
-  assert.ok(index.includes(".sheet .dhero{margin:0 0 32px;}"));
-  assert.ok(index.includes(".sheet h1") && index.includes("margin:0 0 8px"));
-  assert.ok(index.includes(".sheet .row{display:flex;gap:16px;padding:16px 0;"));
-  assert.ok(index.includes(".sheet .nearby{margin-top:48px;}"));
+  assert.ok(index.includes(".sheet .bar{min-height:var(--space-header)"));
+  assert.ok(index.includes("min-height:var(--tap)"));
+  assert.ok(index.includes(".sheet .dhero{margin:0 0 var(--space-after-photo);}"));
+  assert.ok(index.includes(".sheet h1") && index.includes("margin:0 0 var(--space-title-gap)"));
+  assert.ok(index.includes(".sheet .row{display:flex;gap:var(--space-row);padding:var(--space-row) 0;"));
+  assert.ok(index.includes(".sheet .nearby{margin-top:var(--space-nearby);}"));
   assert.ok(index.includes(".sheet .nearby h2{font-family:'DM Sans',sans-serif;font-weight:700;font-size:22px;"));
   assert.ok(index.includes('class="titleb"'));
 });

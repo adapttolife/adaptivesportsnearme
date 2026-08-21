@@ -163,18 +163,21 @@ test("programPageTemplate: Reno pickleball reads like a listing", () => {
 
 test("programPageTemplate: Airbnb listing rhythm, no verification chrome", () => {
   const html = programPageTemplate(RENO);
-  assert.ok(html.includes("--gut:24px"));
-  assert.ok(html.includes("min-height:64px"));
-  assert.ok(html.includes("min-height:44px"));
-  assert.ok(html.includes("padding:24px var(--gut)"));
-  assert.ok(html.includes("margin:0 0 32px"));
-  assert.ok(html.includes("margin:0 0 8px"));
-  assert.ok(html.includes("margin:0 0 40px"));
-  assert.ok(html.includes("margin-top:48px"));
-  assert.ok(html.includes("padding:16px 0"));
+  assert.ok(html.includes("--space-page: 24px"));
+  assert.ok(html.includes("--space-header: 64px"));
+  assert.ok(html.includes("--tap: 44px"));
+  assert.ok(html.includes("min-height:var(--space-header)"));
+  assert.ok(html.includes("min-height:var(--tap)"));
+  assert.ok(html.includes("padding:var(--space-page) var(--space-page) var(--space-header)"));
+  assert.ok(html.includes("margin:0 0 var(--space-after-photo)"));
+  assert.ok(html.includes("margin:0 0 var(--space-title-gap)"));
+  assert.ok(html.includes("margin:0 0 var(--space-section)"));
+  assert.ok(html.includes("margin-top:var(--space-nearby)"));
+  assert.ok(html.includes("padding:var(--space-row) 0"));
   assert.ok(html.includes("font-size:22px"));
   assert.ok(html.includes('class="titleb"'));
   assert.ok(html.includes(".nearby h2{font-size:22px;font-weight:700"));
+  assert.ok(html.includes('href="/tokens.css"'));
   assert.ok(!html.includes("Unverified"));
   assert.ok(!html.includes("Last checked"));
   assert.ok(!html.includes("Builder web search"));
