@@ -133,7 +133,11 @@ a{color:var(--orange-ink);}
 .back{display:inline-flex;align-items:center;min-height:var(--tap);font-size:16px;font-weight:600;color:var(--ink);text-decoration:none;}
 .back:hover{color:var(--orange-ink);}
 .dhero{position:relative;width:100%;height:clamp(180px,24vw,260px);border-radius:var(--r-lg);overflow:hidden;margin:0 0 var(--space-after-photo);}
-.dhero.has-dphoto{background:#23211f;}
+.dhero.has-dphoto{background:#23211f;height:clamp(240px,48vw,520px);}
+.dhero.has-dphoto .dhero-img{object-fit:cover;object-position:50% 58%;}
+@media(min-width:900px){
+  main.wrap>.dhero.has-dphoto{width:100vw;max-width:100vw;margin-left:calc(50% - 50vw);margin-right:calc(50% - 50vw);border-radius:0;height:min(48vw,560px);}
+}
 .dhero.has-stamp{background:#F6F4F0;display:flex;align-items:center;justify-content:center;}
 .dhero-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 30%;}
 .dhero-stamp{width:min(42%,180px);height:auto;object-fit:contain;position:relative;z-index:1;}

@@ -212,8 +212,15 @@ input,select{font-family:inherit;}
 .tthumb .sport-icon{position:absolute;inset:0;margin:auto;width:92%;height:92%;object-fit:contain;}
 .thumb-full{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
 .cat-img{width:38px;height:38px;object-fit:contain;border-radius:9px;}
-.dhero-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 30%;} /* faces live in the upper third of the square action shots */
+.dhero-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 58%;}
 .dhero.has-dphoto{background:#23211f;}
+.sheet .dhero.has-dphoto{height:clamp(240px,48vw,520px);}
+.sheet .dhero.has-dphoto .dhero-img{object-position:50% 58%;}
+.pcard-img,.thumb-full{object-position:50% 58%;}
+@media(min-width:900px){
+  .sheet>.dhero.has-dphoto{width:100vw;max-width:100vw;margin-left:calc(50% - 50vw);margin-right:calc(50% - 50vw);border-radius:0;height:min(48vw,560px);}
+  .map-tray .dhero.has-dphoto,.tray-full .dhero.has-dphoto,.mapx .dhero.has-dphoto{width:100%;max-width:100%;margin-left:0;margin-right:0;border-radius:var(--r-lg);height:clamp(200px,30vw,280px);}
+}
 .dhero.has-stamp{background:#F6F4F0;display:flex;align-items:center;justify-content:center;}
 .dhero-stamp{width:min(42%,180px);height:auto;object-fit:contain;position:relative;z-index:1;}
 .sheet .dhero.has-stamp::after{background:linear-gradient(180deg,transparent 58%,rgba(26,26,26,.10));}
