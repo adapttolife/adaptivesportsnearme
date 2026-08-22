@@ -96,9 +96,10 @@ test("photoPath: scene when we have one, else stamp (null cover)", () => {
   assert.equal(photoPath("cycling"), "/scenes/cycling-road.png");
   assert.equal(photoPath("basketball"), "/scenes/basketball-gym.png");
   assert.equal(photoPath("skiing"), "/scenes/skiing-mountain.png");
-  assert.equal(photoPath("pickleball"), null);
+  assert.equal(photoPath("pickleball"), "/scenes/pickleball-court.png");
+  assert.equal(photoPath("tennis"), "/scenes/tennis-court.png");
   assert.equal(photoPath(null), null);
-  assert.equal(photoPath("rowing"), null);
+  assert.equal(photoPath("rowing"), "/scenes/rowing-lake.png");
   assert.equal(photoPath(null, { photo: "/photos/mine.jpg" }), "/photos/mine.jpg");
 });
 

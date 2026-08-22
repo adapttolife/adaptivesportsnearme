@@ -1004,18 +1004,20 @@ const MAPPOS = {
 const SPGRAD = {basketball:"g-warm",tennis:"g-sand",pickleball:"g-warm",rugby:"g-sand",football:"g-warm",baseball:"g-sand",cycling:"g-cool",sledhockey:"g-cool",skiing:"g-cool",waterskiing:"g-cool",goalball:"g-sand"};
 function iconSrc(key){ return "assets/sport-icons/"+key+".png"; }   // 3D transparent icons — category chips
 function photoSrc(key){ return "assets/sport-photos/"+key+".jpg"; } // kept on disk; not the locked fallback
-const SPORT_SCENES={basketball:"/scenes/basketball-gym.png",cycling:"/scenes/cycling-road.png",skiing:"/scenes/skiing-mountain.png"};
+const SPORT_SCENES={basketball:"/scenes/basketball-gym.png",cycling:"/scenes/cycling-road.png",skiing:"/scenes/skiing-mountain.png",baseball:"/scenes/baseball-diamond.png",boccia:"/scenes/boccia-court.png",climbing:"/scenes/climbing-gym.png",football:"/scenes/football-field.png",goalball:"/scenes/goalball-gym.png",golf:"/scenes/golf-fairway.png",rowing:"/scenes/rowing-lake.png",rugby:"/scenes/rugby-pitch.png",pickleball:"/scenes/pickleball-court.png",sledhockey:"/scenes/sledhockey-rink.png",swimming:"/scenes/swimming-pool.png",tennis:"/scenes/tennis-court.png",volleyball:"/scenes/volleyball-court.png",waterskiing:"/scenes/waterskiing-lake.png"};
 const GRANT_TRACK_SCENE="/scenes/grant-track.png";
+const PROGRAM_GRANT_SCENE="/scenes/program-grant-gym.png";
+const EVENT_SCENE="/scenes/event-field.png";
 const EMBLEM_KEYS={"athlete-grant":1,"program-grant":1,"event":1,basketball:1,tennis:1,pickleball:1,rugby:1,football:1,baseball:1,cycling:1,sledhockey:1,skiing:1,waterskiing:1,goalball:1,rowing:1,swimming:1,golf:1,boccia:1,volleyball:1,climbing:1};
 function emblemSrc(key){ return key&&EMBLEM_KEYS[key]?"/emblems/"+key+".png":null; }
 function sceneSrc(sport){ return (sport&&SPORT_SCENES[sport])||null; }
 function listingVisual(item, role){
   if(item&&item.photo) return {kind:"photo",src:item.photo};
-  if(role==="grant") return {kind:"scene",src:GRANT_TRACK_SCENE};
+  if(role==="grant") return {kind:"scene",src:(item&&item.audience==="program")?PROGRAM_GRANT_SCENE:GRANT_TRACK_SCENE};
   if(role==="event"){
     const sc=sceneSrc(item&&item.sport);
     if(sc) return {kind:"scene",src:sc};
-    return {kind:"stamp",src:emblemSrc(item&&item.sport)||emblemSrc("event")};
+    return {kind:"scene",src:EVENT_SCENE};
   }
   const sc=sceneSrc(item&&item.sport);
   if(sc) return {kind:"scene",src:sc};

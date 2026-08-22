@@ -15,19 +15,20 @@ test("listingVisual: basketball/cycling/skiing use scenes", () => {
   assert.deepEqual(listingVisual({ sport: "skiing" }, "program"), { kind: "scene", src: "/scenes/skiing-mountain.png" });
 });
 
-test("listingVisual: other sports use the black stamp", () => {
-  assert.deepEqual(listingVisual({ sport: "pickleball" }, "program"), { kind: "stamp", src: "/emblems/pickleball.png" });
-  assert.deepEqual(listingVisual({ sport: "rowing" }, "program"), { kind: "stamp", src: "/emblems/rowing.png" });
+test("listingVisual: extra scenes resolve; no-sport stays a stamp card", () => {
+  assert.deepEqual(listingVisual({ sport: "pickleball" }, "program"), { kind: "scene", src: "/scenes/pickleball-court.png" });
+  assert.deepEqual(listingVisual({ sport: "tennis" }, "program"), { kind: "scene", src: "/scenes/tennis-court.png" });
+  assert.deepEqual(listingVisual({ sport: "rowing" }, "program"), { kind: "scene", src: "/scenes/rowing-lake.png" });
   assert.deepEqual(listingVisual({ sport: null }, "program"), { kind: "stamp", src: null });
 });
 
-test("listingVisual: athlete and program grants use grant-track", () => {
+test("listingVisual: athlete grants use grant-track; program grants use program-grant-gym", () => {
   assert.deepEqual(listingVisual({ audience: "athlete" }, "grant"), { kind: "scene", src: "/scenes/grant-track.png" });
-  assert.deepEqual(listingVisual({ audience: "program" }, "grant"), { kind: "scene", src: "/scenes/grant-track.png" });
+  assert.deepEqual(listingVisual({ audience: "program" }, "grant"), { kind: "scene", src: "/scenes/program-grant-gym.png" });
 });
 
-test("listingVisual: events use event stamp unless a sport scene exists", () => {
-  assert.deepEqual(listingVisual({ sport: null }, "event"), { kind: "stamp", src: "/emblems/event.png" });
+test("listingVisual: events use event-field unless a sport scene exists", () => {
+  assert.deepEqual(listingVisual({ sport: null }, "event"), { kind: "scene", src: "/scenes/event-field.png" });
   assert.deepEqual(listingVisual({ sport: "basketball" }, "event"), { kind: "scene", src: "/scenes/basketball-gym.png" });
 });
 
@@ -60,7 +61,7 @@ test("grant page keeps Athlete / Program tags on the grant-track hero", () => {
     audience: "program",
     source: "U.S. Department of Veterans Affairs",
   });
-  assert.ok(program.includes("/scenes/grant-track.png"));
+  assert.ok(program.includes("/scenes/program-grant-gym.png"));
   assert.ok(program.includes("Program grant"));
   assert.ok(!program.includes("Athlete grant"));
 });

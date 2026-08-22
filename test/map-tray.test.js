@@ -167,8 +167,8 @@ test("peek HTML: title, city · sport, Visit/Call/Email pills, handle — no pho
 
 test("expanded HTML reuses the listing sheet: photo, title, city, desc, facts, Visit, nearby rail", () => {
   const html = trayExpandedHtml(RENO, NEARBY);
-  assert.ok(html.includes("/emblems/pickleball.png"));
-  assert.ok(html.includes("has-stamp"));
+  assert.ok(html.includes("/scenes/pickleball-court.png"));
+  assert.ok(html.includes("has-dphoto"));
   assert.ok(html.includes("<h1>3rd Shot Pickleball Reno Adaptive</h1>"));
   assert.ok(html.includes("Reno, NV"));
   assert.ok(html.includes("Sunday adaptive"));
