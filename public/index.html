@@ -214,8 +214,15 @@ input,select{font-family:inherit;}
 .cat-img{width:38px;height:38px;object-fit:contain;border-radius:9px;}
 .dhero-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 30%;} /* faces live in the upper third of the square action shots */
 .dhero.has-dphoto{background:#23211f;}
+.dhero.has-stamp{background:#F6F4F0;display:flex;align-items:center;justify-content:center;}
+.dhero-stamp{width:min(42%,180px);height:auto;object-fit:contain;position:relative;z-index:1;}
+.sheet .dhero.has-stamp::after{background:linear-gradient(180deg,transparent 58%,rgba(26,26,26,.10));}
+.sheet .dhero.has-stamp .dov{color:var(--ink);}
+.pcard-media.has-stamp,.mthumb.has-stamp,.tthumb.has-stamp{background:#F6F4F0;display:flex;align-items:center;justify-content:center;}
+.pcard-stamp,.thumb-stamp{width:46%;height:auto;object-fit:contain;position:relative;z-index:1;}
+.ev-stamp{width:28px;height:28px;object-fit:contain;display:block;}
 
-/* gradients (calm, photo-ready) */
+/* gradients (calm, photo-ready) — kept for leftover sample tiles, not missing-photo */
 .g-sand{background:linear-gradient(140deg,#F2EFEA 0%,#E5DED3 100%);}
 .g-cool{background:linear-gradient(140deg,#EEF1F1 0%,#DBE0E1 100%);}
 .g-warm{background:linear-gradient(140deg,#F8F0E7 0%,#EFDDC8 100%);}
@@ -996,7 +1003,27 @@ const MAPPOS = {
 };
 const SPGRAD = {basketball:"g-warm",tennis:"g-sand",pickleball:"g-warm",rugby:"g-sand",football:"g-warm",baseball:"g-sand",cycling:"g-cool",sledhockey:"g-cool",skiing:"g-cool",waterskiing:"g-cool",goalball:"g-sand"};
 function iconSrc(key){ return "assets/sport-icons/"+key+".png"; }   // 3D transparent icons — category chips
-function photoSrc(key){ return "assets/sport-photos/"+key+".jpg"; } // square action photos — cards, hero, thumbs
+function photoSrc(key){ return "assets/sport-photos/"+key+".jpg"; } // kept on disk; not the locked fallback
+const SPORT_SCENES={basketball:"/scenes/basketball-gym.png",cycling:"/scenes/cycling-road.png",skiing:"/scenes/skiing-mountain.png"};
+const GRANT_TRACK_SCENE="/scenes/grant-track.png";
+const EMBLEM_KEYS={"athlete-grant":1,"program-grant":1,"event":1,basketball:1,tennis:1,pickleball:1,rugby:1,football:1,baseball:1,cycling:1,sledhockey:1,skiing:1,waterskiing:1,goalball:1,rowing:1,swimming:1,golf:1,boccia:1,volleyball:1,climbing:1};
+function emblemSrc(key){ return key&&EMBLEM_KEYS[key]?"/emblems/"+key+".png":null; }
+function sceneSrc(sport){ return (sport&&SPORT_SCENES[sport])||null; }
+function listingVisual(item, role){
+  if(item&&item.photo) return {kind:"photo",src:item.photo};
+  if(role==="grant") return {kind:"scene",src:GRANT_TRACK_SCENE};
+  if(role==="event"){
+    const sc=sceneSrc(item&&item.sport);
+    if(sc) return {kind:"scene",src:sc};
+    return {kind:"stamp",src:emblemSrc(item&&item.sport)||emblemSrc("event")};
+  }
+  const sc=sceneSrc(item&&item.sport);
+  if(sc) return {kind:"scene",src:sc};
+  const st=emblemSrc(item&&item.sport);
+  if(st) return {kind:"stamp",src:st};
+  return {kind:"stamp",src:null};
+}
+function isCoverVisual(v){ return !!(v&&(v.kind==="photo"||v.kind==="scene")&&v.src); }
 function sportIcon(key, cls){ return '<img class="'+(cls||'')+'" src="'+iconSrc(key)+'" alt="" loading="lazy">'; }
 
 /* ============================ ICONS ============================ */
@@ -1066,15 +1093,16 @@ function cardTagsHtml(p){
 }
 const CHAIR_GLY=NAVICON.chair.replace('<svg','<svg class="gly"'); // the brand wheelchair mark, one source
 function thumbHtml(p){
-  // small thumbs (map cards, list rows): photo when the sport has one, glyph tile otherwise
-  return p.sport?'<img class="thumb-full" src="'+photoSrc(p.sport)+'" alt="" loading="lazy">':ringBg('ringbg')+CHAIR_GLY;
+  const v=listingVisual(p,'program');
+  if(isCoverVisual(v)) return '<img class="thumb-full" src="'+v.src+'" alt="" loading="lazy">';
+  return v.src?'<img class="thumb-stamp" src="'+v.src+'" alt="" loading="lazy">':'';
 }
 function media(p, kind){
-  // Airbnb-style: real action photo + tag badges (top-left).
-  // Sports outside the launch photo set fall back to the gradient + glyph tile.
   const overlay = (kind && kind!=='pcard-media') ? '' : cardTagsHtml(p);
-  if(!p.sport) return '<div class="'+(kind||'pcard-media')+' g-sand">'+ringBg('ringbg')+CHAIR_GLY+overlay+'</div>';
-  return '<div class="'+(kind||'pcard-media')+' has-photo"><img class="pcard-img" src="'+photoSrc(p.sport)+'" alt="" loading="lazy" decoding="async">'+overlay+'</div>';
+  const v=listingVisual(p,'program');
+  const cls=kind||'pcard-media';
+  if(isCoverVisual(v)) return '<div class="'+cls+' has-photo"><img class="pcard-img" src="'+v.src+'" alt="" loading="lazy" decoding="async">'+overlay+'</div>';
+  return '<div class="'+cls+' has-stamp">'+(v.src?'<img class="pcard-stamp" src="'+v.src+'" alt="" loading="lazy">':'')+overlay+'</div>';
 }
 // One useful line under the city: distance when we searched near somewhere,
 // otherwise the org type, otherwise the website host. Never cost/ages chips —
@@ -1370,7 +1398,7 @@ function mapxShowState(k){
   d.querySelector('.mapxd-head .sub').textContent=list.length+(list.length===1?' program':' programs');
   d.querySelector('.mapxd-list').innerHTML=list.map(p=>
     '<div class="mcard" data-prog="'+p.id+'">'
-    +'<div class="mthumb'+(p.sport?'':' g-sand')+'">'+thumbHtml(p)+'</div>'
+    +'<div class="mthumb'+(isCoverVisual(listingVisual(p,'program'))?'':' has-stamp')+'">'+thumbHtml(p)+'</div>'
     +'<div class="minfo"><div class="pcard-sport">'+p.sportLabel+'</div><div class="nm">'+p.name+'</div>'
     +'<div class="sub">'+locLine(p)+'</div><div class="mt">'+cardLine(p)+'</div></div></div>').join('');
   d.querySelector('.mapxd-foot a').setAttribute('data-mapx-dir',name);
@@ -1571,7 +1599,7 @@ function mapLayout(list){
   if(!list.length) return empty();
   const cards=list.map((p,i)=>
     '<div class="mcard" data-prog="'+p.id+'">'
-      +'<div class="mthumb'+(p.sport?'':' g-sand')+'">'+thumbHtml(p)+'<span class="mnum">'+(i+1)+'</span></div>'
+      +'<div class="mthumb'+(isCoverVisual(listingVisual(p,'program'))?'':' has-stamp')+'">'+thumbHtml(p)+'<span class="mnum">'+(i+1)+'</span></div>'
       +'<div class="minfo">'
         +'<div class="pcard-sport">'+p.sportLabel+'</div>'
         +'<div class="nm">'+p.name+'</div>'
@@ -1603,7 +1631,7 @@ function listLayout(list){
   if(!list.length) return empty();
   const rows=list.map(p=>
     '<tr data-prog="'+p.id+'">'
-      +'<td><div class="tcell"><div class="tthumb'+(p.sport?'':' g-sand')+'">'+thumbHtml(p)+'</div><div><div class="nm">'+p.name+'</div><div class="sub">'+p.sportLabel+'</div></div></div></td>'
+      +'<td><div class="tcell"><div class="tthumb'+(isCoverVisual(listingVisual(p,'program'))?'':' has-stamp')+'">'+thumbHtml(p)+'</div><div><div class="nm">'+p.name+'</div><div class="sub">'+p.sportLabel+'</div></div></div></td>'
       +'<td class="t-prov">'+locLine(p)+'</td>'
       +'<td>'+(cardLine(p)||'—')+'</td>'
       +'<td class="chev" style="text-align:right;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 6 6 6-6 6"/></svg></td>'
@@ -1754,9 +1782,9 @@ async function loadOrgDetail(p){
 function sheetHero(p){
   const loc=locLine(p);
   const ov='<div class="dov"><span class="dov-sport">'+(p.sportLabel||'Multi-Sport')+'</span><span class="dov-loc">'+loc+'</span></div>';
-  return p.sport
-    ? '<div class="dhero has-dphoto"><img class="dhero-img" src="'+photoSrc(p.sport)+'" alt="">'+ov+'</div>'
-    : '<div class="dhero '+(SPGRAD[p.sport]||'g-sand')+'">'+ringBg('ringbg')+CHAIR_GLY+ov+'</div>';
+  const v=listingVisual(p,'program');
+  if(isCoverVisual(v)) return '<div class="dhero has-dphoto"><img class="dhero-img" src="'+v.src+'" alt="">'+ov+'</div>';
+  return '<div class="dhero has-stamp">'+(v.src?'<img class="dhero-stamp" src="'+v.src+'" alt="">':'')+ov+'</div>';
 }
 function sourceWithUrl(p){
   const srcs=(p.sources&&p.sources.length)?p.sources:(p.primarySource?[{name:p.primarySource,url:p.primarySourceUrl}]:[]);
@@ -1871,17 +1899,18 @@ function grantHero(g){
   const who=grantAudienceLabel(g);
   const badge=who?'<div class="cardtags"><span class="cbadge '+(g.audience==='program'?'rsvp':'eq')+'">'+who+'</span></div>':'';
   const ov='<div class="dov"><span class="dov-sport">'+kind+'</span><span class="dov-loc">'+loc+'</span></div>';
-  return g.sport
-    ? '<div class="dhero has-dphoto">'+badge+'<img class="dhero-img" src="'+photoSrc(g.sport)+'" alt="">'+ov+'</div>'
-    : '<div class="dhero g-sand">'+badge+ov+'</div>';
+  const v=listingVisual(g,'grant');
+  if(isCoverVisual(v)) return '<div class="dhero has-dphoto">'+badge+'<img class="dhero-img" src="'+v.src+'" alt="">'+ov+'</div>';
+  return '<div class="dhero has-stamp">'+badge+(v.src?'<img class="dhero-stamp" src="'+v.src+'" alt="">':'')+ov+'</div>';
 }
 function grantCard(g){
   const loc=g.source||'United States \u00b7 national';
   const line=g.amountDisplay||g.deadlineDisplay||'';
   const kind=grantAudienceLabel(g)||grantTypeLabel(g)||'Grant';
-  const media=g.sport
-    ? '<div class="pcard-media has-photo"><img class="pcard-img" src="'+photoSrc(g.sport)+'" alt=""></div>'
-    : '<div class="pcard-media g-sand"></div>';
+  const v=listingVisual(g,'grant');
+  const media=isCoverVisual(v)
+    ? '<div class="pcard-media has-photo"><img class="pcard-img" src="'+v.src+'" alt=""></div>'
+    : '<div class="pcard-media has-stamp">'+(v.src?'<img class="pcard-stamp" src="'+v.src+'" alt="">':'')+'</div>';
   return '<a class="pcard" href="/grants/'+g.id+'" data-grant="'+g.id+'">'+media
     +'<div class="pcard-body"><div class="pcard-sport">'+kind+'</div><div class="pcard-name">'+g.name+'</div>'
     +'<div class="pcard-loc">'+loc+'</div>'+(line?'<div class="pcard-line">'+line+'</div>':'')+'</div></a>';
@@ -2002,7 +2031,8 @@ function dayChip(iso){ const d=new Date(iso); return isNaN(d)?{mon:'',day:''}:{m
 function eventCardHtml(e){
   const chip=dayChip(e.startsAt);
   const loc=[e.city,e.state].filter(Boolean).join(', ');
-  const icon=e.sport&&GLYPH[e.sport]?glyph(e.sport,'ev-gly'):NAVICON.cal;
+  const ev=listingVisual({sport:e.sport},'event');
+  const icon=ev.src?'<img class="ev-stamp" src="'+ev.src+'" alt="">':NAVICON.cal;
   const link=e.url?' href="'+e.url+'" target="_blank" rel="noopener"':'';
   return '<'+(e.url?'a':'div')+' class="evrow"'+link+'>'
     +'<div class="evdate"><span class="evmon">'+chip.mon+'</span><span class="evday">'+chip.day+'</span></div>'
@@ -2065,8 +2095,9 @@ function profileEditView(){
     ? PROFILE.favorites.map(f=>{
         const label=(SPORTS.find(s=>s.key===f.sport)||{}).label||'Multi-Sport';
         const loc=[f.city,f.state].filter(Boolean).join(', ');
-        return '<div class="pcard" data-prog="'+esc(f.id)+'"><div class="pcard-media '+(f.sport?'has-photo':(SPGRAD[f.sport]||'g-sand'))+'">'
-          +(f.sport?'<img class="pcard-img" src="'+photoSrc(f.sport)+'" alt="">':(ringBg('ringbg')+CHAIR_GLY))
+        const fv=listingVisual(f,'program');
+        return '<div class="pcard" data-prog="'+esc(f.id)+'"><div class="pcard-media '+(isCoverVisual(fv)?'has-photo':'has-stamp')+'">'
+          +(isCoverVisual(fv)?'<img class="pcard-img" src="'+fv.src+'" alt="">':(fv.src?'<img class="pcard-stamp" src="'+fv.src+'" alt="">':''))
           +'</div><div class="pcard-body"><div class="pcard-sport">'+esc(label)+'</div><div class="pcard-name">'+esc(f.name)+'</div>'
           +(loc?'<div class="pcard-loc">'+esc(loc)+'</div>':'')+'</div></div>';
       }).join('')
@@ -2622,6 +2653,7 @@ function mapOrg(o){
     quality:o.quality?esc(o.quality.charAt(0).toUpperCase()+o.quality.slice(1)):null,
     lat:o.lat, lng:o.lng, geoPrecision:o.geoPrecision,
     type:o.type||null, lastChecked:o.lastChecked||null,
+    photo:o.photo||null,
   };
 }
 (async function hydrate(){

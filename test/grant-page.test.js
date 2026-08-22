@@ -109,10 +109,12 @@ test("grantPageTemplate: program grant uses the rsvp chip, not athlete", () => {
   assert.ok(html.includes("grants4vets@va.gov"));
 });
 
-test("grantPageTemplate: facts only when present; sand fallback; no empty CTA", () => {
+test("grantPageTemplate: facts only when present; grant-track scene; no empty CTA", () => {
   const html = grantPageTemplate(BARE);
   assert.ok(html.includes("Bare Fund"));
-  assert.ok(html.includes("g-sand"));
+  assert.ok(html.includes("/scenes/grant-track.png"));
+  assert.ok(html.includes("has-dphoto"));
+  assert.ok(!html.includes("g-sand"));
   assert.ok(!html.includes("sport-photos/"));
   assert.ok(!html.includes('class="cta"'));
   assert.ok(!html.includes(">Amount</span>"));

@@ -4,10 +4,12 @@
 // only when present. A listing, not a marketing page — no invented copy,
 // no verification/trust line. Nearby is a horizontal shelf, not a stack.
 
+import { listingVisual, isCoverVisual } from "./visuals.js";
+
 const SITE = "https://adaptivesportsnearme.com";
 
-// The 11-photo launch set in public/assets/sport-photos/. Same keys the
-// homepage cards and in-app sheet use (photoSrc in public/index.html).
+// Legacy 11-photo launch set. Kept so older callers still resolve a key.
+// New listings use listingVisual (scene or stamp) unless a real photo exists.
 export const SPORT_PHOTOS = new Set([
   "baseball", "basketball", "cycling", "football", "goalball",
   "pickleball", "rugby", "skiing", "sledhockey", "tennis", "waterskiing",
@@ -46,8 +48,9 @@ export function typeLabel(org) {
   return TYPE_LABEL[org.type] || null;
 }
 
-export function photoPath(sport) {
-  return sport && SPORT_PHOTOS.has(sport) ? `/assets/sport-photos/${sport}.jpg` : null;
+export function photoPath(sport, item) {
+  const v = listingVisual(item || { sport }, "program");
+  return isCoverVisual(v) ? v.src : null;
 }
 
 function hostFromUrl(u) {
@@ -98,10 +101,10 @@ function denseRows(org) {
 function nearbyCard(p) {
   const loc = locLine(p);
   const line = p.dist != null ? `${p.dist} mi away` : (typeLabel(p) || "");
-  const photo = photoPath(p.sport);
-  const media = photo
-    ? `<div class="pcard-media has-photo"><img class="pcard-img" src="${esc(photo)}" alt=""></div>`
-    : `<div class="pcard-media g-sand"></div>`;
+  const v = listingVisual(p, "program");
+  const media = isCoverVisual(v)
+    ? `<div class="pcard-media has-photo"><img class="pcard-img" src="${esc(v.src)}" alt=""></div>`
+    : `<div class="pcard-media has-stamp">${v.src ? `<img class="pcard-stamp" src="${esc(v.src)}" alt="">` : ""}</div>`;
   return `<a class="pcard" href="/programs/${esc(p.id)}">${media}<div class="pcard-body"><div class="pcard-sport">${esc(p.sportLabel || "Multi-Sport")}</div><div class="pcard-name">${esc(p.name)}</div><div class="pcard-loc">${esc(loc)}</div>${line ? `<div class="pcard-line">${esc(line)}</div>` : ""}</div></a>`;
 }
 
@@ -136,9 +139,12 @@ a{color:var(--orange-ink);}
 .back:hover{color:var(--orange-ink);}
 .dhero{position:relative;width:100%;height:clamp(180px,24vw,260px);border-radius:var(--r-lg);overflow:hidden;margin:0 0 var(--space-after-photo);}
 .dhero.has-dphoto{background:#23211f;}
-.dhero.g-sand{background:linear-gradient(140deg,#F2EFEA 0%,#E5DED3 100%);}
+.dhero.has-stamp{background:#F6F4F0;display:flex;align-items:center;justify-content:center;}
 .dhero-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 30%;}
+.dhero-stamp{width:min(42%,180px);height:auto;object-fit:contain;position:relative;z-index:1;}
 .dhero::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 45%,rgba(0,0,0,.55));pointer-events:none;}
+.dhero.has-stamp::after{background:linear-gradient(180deg,transparent 58%,rgba(26,26,26,.10));}
+.dhero.has-stamp .dov{color:var(--ink);}
 .dov{position:absolute;left:16px;bottom:16px;z-index:1;color:#fff;}
 .dov-sport{display:block;font-size:12px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;}
 .dov-loc{display:block;font-size:14px;font-weight:500;margin-top:2px;}
@@ -162,8 +168,10 @@ h1{font-size:clamp(22px,2.8vw,30px);font-weight:700;letter-spacing:-.02em;line-h
 .frow-scroll::-webkit-scrollbar{display:none;}
 .frow-scroll>.pcard{flex:0 0 78vw;width:78vw;scroll-snap-align:start;}
 .pcard{display:block;color:inherit;text-decoration:none;}
-.pcard-media{position:relative;aspect-ratio:4/3;border-radius:10px;overflow:hidden;background:var(--sand);}
+.pcard-media{position:relative;aspect-ratio:4/3;border-radius:10px;overflow:hidden;background:#F6F4F0;}
+.pcard-media.has-stamp{display:flex;align-items:center;justify-content:center;}
 .pcard-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
+.pcard-stamp{width:46%;height:auto;object-fit:contain;position:relative;z-index:1;}
 .pcard-body{padding:8px 1px 0;}
 .pcard-sport{font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--faint);}
 .pcard-name{font-size:16px;font-weight:600;line-height:1.25;margin:2px 0 0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
@@ -216,11 +224,11 @@ export function listingInnerHtml(org, { nearby = [] } = {}) {
   const name = org.name || "Adaptive sports program";
   const sport = org.sportLabel || "Multi-Sport";
   const loc = locLine(org);
-  const photo = photoPath(org.sport);
+  const v = listingVisual(org, "program");
   const overlay = `<div class="dov"><span class="dov-sport">${esc(sport)}</span><span class="dov-loc">${esc(loc)}</span></div>`;
-  const hero = photo
-    ? `<div class="dhero has-dphoto"><img class="dhero-img" src="${esc(photo)}" alt="">${overlay}</div>`
-    : `<div class="dhero g-sand">${overlay}</div>`;
+  const hero = isCoverVisual(v)
+    ? `<div class="dhero has-dphoto"><img class="dhero-img" src="${esc(v.src)}" alt="">${overlay}</div>`
+    : `<div class="dhero has-stamp">${v.src ? `<img class="dhero-stamp" src="${esc(v.src)}" alt="">` : ""}${overlay}</div>`;
   const cta = primaryCta(org);
   const action = cta
     ? `<div class="act"><a class="cta" href="${esc(cta.href)}" rel="noopener">${esc(cta.label)}</a>${org.website ? `<span class="host">${esc(hostFromUrl(org.website))}</span>` : ""}</div>`
@@ -242,7 +250,7 @@ export function programPageTemplate(org, { site = SITE, nearby = [] } = {}) {
   const sport = org.sportLabel || "Multi-Sport";
   const loc = locLine(org);
   const canonical = `${site}/programs/${org.id}`;
-  const photo = photoPath(org.sport);
+  const photo = photoPath(org.sport, org);
   const body = `<header class="bar"><a class="back" href="/">← Directory</a></header>
 ${listingInnerHtml(org, { nearby })}`;
   return page({

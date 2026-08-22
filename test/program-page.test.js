@@ -92,12 +92,14 @@ test("typeLabel: the org type reads as a human fact, null when missing", () => {
   assert.equal(typeLabel({ type: "inclusive_club" }), "Inclusive club");
 });
 
-test("photoPath: only the existing sport-photos set", () => {
-  assert.equal(photoPath("cycling"), "/assets/sport-photos/cycling.jpg");
-  assert.equal(photoPath("basketball"), "/assets/sport-photos/basketball.jpg");
-  assert.equal(photoPath("pickleball"), "/assets/sport-photos/pickleball.jpg");
+test("photoPath: scene when we have one, else stamp (null cover)", () => {
+  assert.equal(photoPath("cycling"), "/scenes/cycling-road.png");
+  assert.equal(photoPath("basketball"), "/scenes/basketball-gym.png");
+  assert.equal(photoPath("skiing"), "/scenes/skiing-mountain.png");
+  assert.equal(photoPath("pickleball"), null);
   assert.equal(photoPath(null), null);
   assert.equal(photoPath("rowing"), null);
+  assert.equal(photoPath(null, { photo: "/photos/mine.jpg" }), "/photos/mine.jpg");
 });
 
 test("primaryCta: website → tel → mailto → source. Never an empty-page stub", () => {
@@ -118,7 +120,7 @@ test("programPageTemplate: photo hero, name, city+state, website button — not 
   assert.ok(html.includes("Denver, CO"));
   assert.ok(html.includes("https://www.example.org/nuggets"));
   assert.ok(html.includes("<h1>Denver Rolling Nuggets</h1>"));
-  assert.ok(html.includes("/assets/sport-photos/basketball.jpg"));
+  assert.ok(html.includes("/scenes/basketball-gym.png"));
   assert.ok(html.includes("has-dphoto"));
   assert.ok(html.includes("dhero-img"));
   assert.ok(html.includes("Visit website"));
@@ -260,10 +262,11 @@ test("programPageTemplate: no website falls back — never 'No website on file.'
   assert.ok(html.includes("tel:3035550100"));
 });
 
-test("programPageTemplate: no photo key uses the sand fallback, still has name + loc", () => {
+test("programPageTemplate: no photo key uses the stamp card, still has name + loc", () => {
   const html = programPageTemplate({ ...ORG, sport: null, sportLabel: "Multi-Sport" });
   assert.ok(!html.includes("sport-photos/"));
-  assert.ok(html.includes("g-sand"));
+  assert.ok(!html.includes("g-sand"));
+  assert.ok(html.includes("has-stamp"));
   assert.ok(html.includes("Denver Rolling Nuggets"));
   assert.ok(html.includes("Denver, CO"));
 });
@@ -280,7 +283,7 @@ test("programPageTemplate: state-only listing shows the state name, not a blank 
     website: "http://bicyclingblind.org",
   });
   assert.ok(html.includes("Bicycling Blind Los Angeles"));
-  assert.ok(html.includes("/assets/sport-photos/cycling.jpg"));
+  assert.ok(html.includes("/scenes/cycling-road.png"));
   assert.ok(html.includes("California"));
   assert.ok(!html.includes("null"));
   assert.ok(html.includes("Visit website"));
