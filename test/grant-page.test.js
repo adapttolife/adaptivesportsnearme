@@ -112,7 +112,7 @@ test("grantPageTemplate: program grant uses the rsvp chip, not athlete", () => {
 test("grantPageTemplate: facts only when present; grant-track scene; no empty CTA", () => {
   const html = grantPageTemplate(BARE);
   assert.ok(html.includes("Bare Fund"));
-  assert.ok(html.includes("/scenes/grant-track.png"));
+  assert.ok(html.includes("/scenes/grant-track.jpg"));
   assert.ok(html.includes("has-dphoto"));
   assert.ok(!html.includes("g-sand"));
   assert.ok(!html.includes("sport-photos/"));

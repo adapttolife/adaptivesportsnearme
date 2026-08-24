@@ -4,7 +4,7 @@
 // no verification/trust line.
 
 import { SPORT_PHOTOS, photoPath } from "./program-page.js";
-import { listingVisual, isCoverVisual } from "./visuals.js";
+import { listingVisual, isCoverVisual, stampAttr } from "./visuals.js";
 
 const SITE = "https://adaptivesportsnearme.com";
 
@@ -97,7 +97,7 @@ function otherCard(g) {
   const line = g.amountDisplay || g.deadlineDisplay || "";
   const v = listingVisual(g, "grant");
   const media = isCoverVisual(v)
-    ? `<div class="pcard-media has-photo"><img class="pcard-img" src="${esc(v.src)}" alt=""></div>`
+    ? `<div class="pcard-media has-photo"><img class="pcard-img" src="${esc(v.src)}" alt=""${stampAttr(g, "grant")}></div>`
     : `<div class="pcard-media has-stamp">${v.src ? `<img class="pcard-stamp" src="${esc(v.src)}" alt="">` : ""}</div>`;
   const kind = grantAudienceLabel(g) || grantTypeLabel(g) || "Grant";
   return `<a class="pcard" href="/grants/${esc(g.id)}">${media}<div class="pcard-body"><div class="pcard-sport">${esc(kind)}</div><div class="pcard-name">${esc(g.name)}</div><div class="pcard-loc">${esc(loc)}</div>${line ? `<div class="pcard-line">${esc(line)}</div>` : ""}</div></a>`;
@@ -230,7 +230,7 @@ export function listingInnerHtml(grant, { nearby = [] } = {}) {
   const overlay = `<div class="dov"><span class="dov-sport">${esc(kind)}</span><span class="dov-loc">${esc(overlayLoc)}</span></div>`;
   const badge = audienceBadge(grant);
   const hero = isCoverVisual(v)
-    ? `<div class="dhero has-dphoto">${badge}<img class="dhero-img" src="${esc(v.src)}" alt="">${overlay}</div>`
+    ? `<div class="dhero has-dphoto">${badge}<img class="dhero-img" src="${esc(v.src)}" alt=""${stampAttr(grant, "grant")}>${overlay}</div>`
     : `<div class="dhero has-stamp">${badge}${v.src ? `<img class="dhero-stamp" src="${esc(v.src)}" alt="">` : ""}${overlay}</div>`;
   const cta = primaryCta(grant);
   const action = cta

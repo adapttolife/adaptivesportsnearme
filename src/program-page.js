@@ -4,7 +4,7 @@
 // only when present. A listing, not a marketing page — no invented copy,
 // no verification/trust line. Nearby is a horizontal shelf, not a stack.
 
-import { listingVisual, isCoverVisual } from "./visuals.js";
+import { listingVisual, isCoverVisual, stampAttr } from "./visuals.js";
 
 const SITE = "https://adaptivesportsnearme.com";
 
@@ -103,7 +103,7 @@ function nearbyCard(p) {
   const line = p.dist != null ? `${p.dist} mi away` : (typeLabel(p) || "");
   const v = listingVisual(p, "program");
   const media = isCoverVisual(v)
-    ? `<div class="pcard-media has-photo"><img class="pcard-img" src="${esc(v.src)}" alt=""></div>`
+    ? `<div class="pcard-media has-photo"><img class="pcard-img" src="${esc(v.src)}" alt=""${stampAttr(p, "program")}></div>`
     : `<div class="pcard-media has-stamp">${v.src ? `<img class="pcard-stamp" src="${esc(v.src)}" alt="">` : ""}</div>`;
   return `<a class="pcard" href="/programs/${esc(p.id)}">${media}<div class="pcard-body"><div class="pcard-sport">${esc(p.sportLabel || "Multi-Sport")}</div><div class="pcard-name">${esc(p.name)}</div><div class="pcard-loc">${esc(loc)}</div>${line ? `<div class="pcard-line">${esc(line)}</div>` : ""}</div></a>`;
 }
@@ -231,7 +231,7 @@ export function listingInnerHtml(org, { nearby = [] } = {}) {
   const v = listingVisual(org, "program");
   const overlay = `<div class="dov"><span class="dov-sport">${esc(sport)}</span><span class="dov-loc">${esc(loc)}</span></div>`;
   const hero = isCoverVisual(v)
-    ? `<div class="dhero has-dphoto"><img class="dhero-img" src="${esc(v.src)}" alt="">${overlay}</div>`
+    ? `<div class="dhero has-dphoto"><img class="dhero-img" src="${esc(v.src)}" alt=""${stampAttr(org, "program")}>${overlay}</div>`
     : `<div class="dhero has-stamp">${v.src ? `<img class="dhero-stamp" src="${esc(v.src)}" alt="">` : ""}${overlay}</div>`;
   const cta = primaryCta(org);
   const action = cta

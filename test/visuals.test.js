@@ -10,26 +10,26 @@ test("listingVisual: real photo wins", () => {
 });
 
 test("listingVisual: basketball/cycling/skiing use scenes", () => {
-  assert.deepEqual(listingVisual({ sport: "basketball" }, "program"), { kind: "scene", src: "/scenes/basketball-gym.png" });
-  assert.deepEqual(listingVisual({ sport: "cycling" }, "program"), { kind: "scene", src: "/scenes/cycling-road.png" });
-  assert.deepEqual(listingVisual({ sport: "skiing" }, "program"), { kind: "scene", src: "/scenes/skiing-mountain.png" });
+  assert.deepEqual(listingVisual({ sport: "basketball" }, "program"), { kind: "scene", src: "/scenes/basketball-gym.jpg" });
+  assert.deepEqual(listingVisual({ sport: "cycling" }, "program"), { kind: "scene", src: "/scenes/cycling-road.jpg" });
+  assert.deepEqual(listingVisual({ sport: "skiing" }, "program"), { kind: "scene", src: "/scenes/skiing-mountain.jpg" });
 });
 
 test("listingVisual: extra scenes resolve; no-sport stays a stamp card", () => {
-  assert.deepEqual(listingVisual({ sport: "pickleball" }, "program"), { kind: "scene", src: "/scenes/pickleball-court.png" });
-  assert.deepEqual(listingVisual({ sport: "tennis" }, "program"), { kind: "scene", src: "/scenes/tennis-court.png" });
-  assert.deepEqual(listingVisual({ sport: "rowing" }, "program"), { kind: "scene", src: "/scenes/rowing-lake.png" });
+  assert.deepEqual(listingVisual({ sport: "pickleball" }, "program"), { kind: "scene", src: "/scenes/pickleball-court.jpg" });
+  assert.deepEqual(listingVisual({ sport: "tennis" }, "program"), { kind: "scene", src: "/scenes/tennis-court.jpg" });
+  assert.deepEqual(listingVisual({ sport: "rowing" }, "program"), { kind: "scene", src: "/scenes/rowing-lake.jpg" });
   assert.deepEqual(listingVisual({ sport: null }, "program"), { kind: "stamp", src: null });
 });
 
 test("listingVisual: athlete grants use grant-track; program grants use program-grant-gym", () => {
-  assert.deepEqual(listingVisual({ audience: "athlete" }, "grant"), { kind: "scene", src: "/scenes/grant-track.png" });
-  assert.deepEqual(listingVisual({ audience: "program" }, "grant"), { kind: "scene", src: "/scenes/program-grant-gym.png" });
+  assert.deepEqual(listingVisual({ audience: "athlete" }, "grant"), { kind: "scene", src: "/scenes/grant-track.jpg" });
+  assert.deepEqual(listingVisual({ audience: "program" }, "grant"), { kind: "scene", src: "/scenes/program-grant-gym.jpg" });
 });
 
 test("listingVisual: events use event-field unless a sport scene exists", () => {
-  assert.deepEqual(listingVisual({ sport: null }, "event"), { kind: "scene", src: "/scenes/event-field.png" });
-  assert.deepEqual(listingVisual({ sport: "basketball" }, "event"), { kind: "scene", src: "/scenes/basketball-gym.png" });
+  assert.deepEqual(listingVisual({ sport: null }, "event"), { kind: "scene", src: "/scenes/event-field.jpg" });
+  assert.deepEqual(listingVisual({ sport: "basketball" }, "event"), { kind: "scene", src: "/scenes/basketball-gym.jpg" });
 });
 
 test("program page keeps a real photo and does not fall back to a scene", () => {
@@ -43,7 +43,7 @@ test("program page keeps a real photo and does not fall back to a scene", () => 
     photo: "/photos/nuggets.jpg",
   });
   assert.ok(html.includes("/photos/nuggets.jpg"));
-  assert.ok(!html.includes("/scenes/basketball-gym.png"));
+  assert.ok(!html.includes("/scenes/basketball-gym.jpg"));
 });
 
 test("grant page keeps Athlete / Program tags on the grant-track hero", () => {
@@ -53,7 +53,7 @@ test("grant page keeps Athlete / Program tags on the grant-track hero", () => {
     audience: "athlete",
     source: "Adapt To Life",
   });
-  assert.ok(athlete.includes("/scenes/grant-track.png"));
+  assert.ok(athlete.includes("/scenes/grant-track.jpg"));
   assert.ok(athlete.includes("Athlete grant"));
   const program = grantPageTemplate({
     id: "c7168314-73f4-5559-8387-d04651e400a9",
@@ -61,7 +61,7 @@ test("grant page keeps Athlete / Program tags on the grant-track hero", () => {
     audience: "program",
     source: "U.S. Department of Veterans Affairs",
   });
-  assert.ok(program.includes("/scenes/program-grant-gym.png"));
+  assert.ok(program.includes("/scenes/program-grant-gym.jpg"));
   assert.ok(program.includes("Program grant"));
   assert.ok(!program.includes("Athlete grant"));
 });

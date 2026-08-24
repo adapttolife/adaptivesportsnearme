@@ -4,28 +4,28 @@
 // Else the black stamp on a quiet paper card. Not the old sand block.
 
 export const SPORT_SCENES = {
-  basketball: "/scenes/basketball-gym.png",
-  cycling: "/scenes/cycling-road.png",
-  skiing: "/scenes/skiing-mountain.png",
-  baseball: "/scenes/baseball-diamond.png",
-  boccia: "/scenes/boccia-court.png",
-  climbing: "/scenes/climbing-gym.png",
-  football: "/scenes/football-field.png",
-  goalball: "/scenes/goalball-gym.png",
-  golf: "/scenes/golf-fairway.png",
-  rowing: "/scenes/rowing-lake.png",
-  rugby: "/scenes/rugby-pitch.png",
-  pickleball: "/scenes/pickleball-court.png",
-  sledhockey: "/scenes/sledhockey-rink.png",
-  swimming: "/scenes/swimming-pool.png",
-  tennis: "/scenes/tennis-court.png",
-  volleyball: "/scenes/volleyball-court.png",
-  waterskiing: "/scenes/waterskiing-lake.png",
+  basketball: "/scenes/basketball-gym.jpg",
+  cycling: "/scenes/cycling-road.jpg",
+  skiing: "/scenes/skiing-mountain.jpg",
+  baseball: "/scenes/baseball-diamond.jpg",
+  boccia: "/scenes/boccia-court.jpg",
+  climbing: "/scenes/climbing-gym.jpg",
+  football: "/scenes/football-field.jpg",
+  goalball: "/scenes/goalball-gym.jpg",
+  golf: "/scenes/golf-fairway.jpg",
+  rowing: "/scenes/rowing-lake.jpg",
+  rugby: "/scenes/rugby-pitch.jpg",
+  pickleball: "/scenes/pickleball-court.jpg",
+  sledhockey: "/scenes/sledhockey-rink.jpg",
+  swimming: "/scenes/swimming-pool.jpg",
+  tennis: "/scenes/tennis-court.jpg",
+  volleyball: "/scenes/volleyball-court.jpg",
+  waterskiing: "/scenes/waterskiing-lake.jpg",
 };
 
-export const GRANT_TRACK_SCENE = "/scenes/grant-track.png";
-export const PROGRAM_GRANT_SCENE = "/scenes/program-grant-gym.png";
-export const EVENT_SCENE = "/scenes/event-field.png";
+export const GRANT_TRACK_SCENE = "/scenes/grant-track.jpg";
+export const PROGRAM_GRANT_SCENE = "/scenes/program-grant-gym.jpg";
+export const EVENT_SCENE = "/scenes/event-field.jpg";
 
 export const EMBLEM_KEYS = new Set([
   "athlete-grant", "program-grant", "event",
@@ -62,6 +62,16 @@ export function listingVisual(item, role = "program") {
   const stamp = emblemPath(item && item.sport);
   if (stamp) return { kind: "stamp", src: stamp };
   return { kind: "stamp", src: null };
+}
+
+// Cover images carry the stamp they fall back to (index.html swaps it in on img error).
+export function stampAttr(item, role = "program") {
+  let key;
+  if (role === "grant") key = item && item.audience === "program" ? "program-grant" : "athlete-grant";
+  else if (role === "event") key = "event";
+  else key = item && item.sport;
+  const p = emblemPath(key);
+  return p ? ` data-stamp="${p}"` : "";
 }
 
 export function isCoverVisual(v) {

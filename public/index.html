@@ -189,13 +189,14 @@ input,select{font-family:inherit;}
 .frow-scroll{display:flex;gap:var(--space-row);overflow-x:auto;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;padding-bottom:6px;padding-right:var(--space-page);margin-right:calc(-1 * var(--space-page));scrollbar-width:none;}
 .frow-scroll::-webkit-scrollbar{display:none;}
 .frow-scroll>.pcard{flex:0 0 226px;width:226px;scroll-snap-align:start;}
-.pcard-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;}
+.pcard-img,.dhero-img,.thumb-full{position:absolute;inset:0;width:100%;height:100%;max-width:none;object-fit:cover;object-position:26% 58%;}
+.pcard-img{z-index:0;}
 .pcard-media.has-photo .ringbg,.pcard-media.has-photo .gly{display:none;}
 .pcard-media.has-photo::after{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;background:linear-gradient(180deg,rgba(0,0,0,.16),rgba(0,0,0,0) 30%,rgba(0,0,0,0) 70%,rgba(0,0,0,.12));}
 .pcard-media .status{z-index:2;}
 .pcard-media .heart{z-index:2;}
 .pcard{cursor:pointer;display:block;}
-.pcard-media{position:relative;aspect-ratio:4/3;border-radius:var(--r);overflow:hidden;background:var(--sand);}
+.pcard-media{position:relative;aspect-ratio:4/3;border-radius:var(--r);overflow:hidden;background:#F6F4F0;}
 .pcard:hover .pcard-name{text-decoration:underline;text-underline-offset:2px;}
 .pcard-media .gly{position:absolute;inset:0;margin:auto;width:42%;height:42%;color:rgba(26,26,26,.82);}
 .pcard-media .ringbg{position:absolute;inset:0;margin:auto;width:62%;height:62%;color:rgba(255,255,255,.55);}
@@ -210,13 +211,9 @@ input,select{font-family:inherit;}
 .pcard-media .sport-icon{position:absolute;inset:0;margin:auto;width:80%;height:80%;object-fit:contain;z-index:1;filter:drop-shadow(0 9px 14px rgba(20,18,14,.17));transition:transform .25s var(--ease);}
 .mthumb .sport-icon{position:absolute;inset:0;margin:auto;width:88%;height:88%;object-fit:contain;}
 .tthumb .sport-icon{position:absolute;inset:0;margin:auto;width:92%;height:92%;object-fit:contain;}
-.thumb-full{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
 .cat-img{width:38px;height:38px;object-fit:contain;border-radius:9px;}
-.dhero-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 58%;}
 .dhero.has-dphoto{background:#23211f;}
 .sheet .dhero.has-dphoto{height:clamp(240px,48vw,520px);}
-.sheet .dhero.has-dphoto .dhero-img{object-position:50% 58%;}
-.pcard-img,.thumb-full{object-position:50% 58%;}
 @media(min-width:900px){
   .sheet>.dhero.has-dphoto{width:100vw;max-width:100vw;margin-left:calc(50% - 50vw);margin-right:calc(50% - 50vw);border-radius:0;height:min(48vw,560px);}
   .map-tray .dhero.has-dphoto,.tray-full .dhero.has-dphoto,.mapx .dhero.has-dphoto{width:100%;max-width:100%;margin-left:0;margin-right:0;border-radius:var(--r-lg);height:clamp(200px,30vw,280px);}
@@ -1011,10 +1008,10 @@ const MAPPOS = {
 const SPGRAD = {basketball:"g-warm",tennis:"g-sand",pickleball:"g-warm",rugby:"g-sand",football:"g-warm",baseball:"g-sand",cycling:"g-cool",sledhockey:"g-cool",skiing:"g-cool",waterskiing:"g-cool",goalball:"g-sand"};
 function iconSrc(key){ return "assets/sport-icons/"+key+".png"; }   // 3D transparent icons — category chips
 function photoSrc(key){ return "assets/sport-photos/"+key+".jpg"; } // kept on disk; not the locked fallback
-const SPORT_SCENES={basketball:"/scenes/basketball-gym.png",cycling:"/scenes/cycling-road.png",skiing:"/scenes/skiing-mountain.png",baseball:"/scenes/baseball-diamond.png",boccia:"/scenes/boccia-court.png",climbing:"/scenes/climbing-gym.png",football:"/scenes/football-field.png",goalball:"/scenes/goalball-gym.png",golf:"/scenes/golf-fairway.png",rowing:"/scenes/rowing-lake.png",rugby:"/scenes/rugby-pitch.png",pickleball:"/scenes/pickleball-court.png",sledhockey:"/scenes/sledhockey-rink.png",swimming:"/scenes/swimming-pool.png",tennis:"/scenes/tennis-court.png",volleyball:"/scenes/volleyball-court.png",waterskiing:"/scenes/waterskiing-lake.png"};
-const GRANT_TRACK_SCENE="/scenes/grant-track.png";
-const PROGRAM_GRANT_SCENE="/scenes/program-grant-gym.png";
-const EVENT_SCENE="/scenes/event-field.png";
+const SPORT_SCENES={basketball:"/scenes/basketball-gym.jpg",cycling:"/scenes/cycling-road.jpg",skiing:"/scenes/skiing-mountain.jpg",baseball:"/scenes/baseball-diamond.jpg",boccia:"/scenes/boccia-court.jpg",climbing:"/scenes/climbing-gym.jpg",football:"/scenes/football-field.jpg",goalball:"/scenes/goalball-gym.jpg",golf:"/scenes/golf-fairway.jpg",rowing:"/scenes/rowing-lake.jpg",rugby:"/scenes/rugby-pitch.jpg",pickleball:"/scenes/pickleball-court.jpg",sledhockey:"/scenes/sledhockey-rink.jpg",swimming:"/scenes/swimming-pool.jpg",tennis:"/scenes/tennis-court.jpg",volleyball:"/scenes/volleyball-court.jpg",waterskiing:"/scenes/waterskiing-lake.jpg"};
+const GRANT_TRACK_SCENE="/scenes/grant-track.jpg";
+const PROGRAM_GRANT_SCENE="/scenes/program-grant-gym.jpg";
+const EVENT_SCENE="/scenes/event-field.jpg";
 const EMBLEM_KEYS={"athlete-grant":1,"program-grant":1,"event":1,basketball:1,tennis:1,pickleball:1,rugby:1,football:1,baseball:1,cycling:1,sledhockey:1,skiing:1,waterskiing:1,goalball:1,rowing:1,swimming:1,golf:1,boccia:1,volleyball:1,climbing:1};
 function emblemSrc(key){ return key&&EMBLEM_KEYS[key]?"/emblems/"+key+".png":null; }
 function sceneSrc(sport){ return (sport&&SPORT_SCENES[sport])||null; }
@@ -1033,6 +1030,15 @@ function listingVisual(item, role){
   return {kind:"stamp",src:null};
 }
 function isCoverVisual(v){ return !!(v&&(v.kind==="photo"||v.kind==="scene")&&v.src); }
+function stampSrc(item, role){
+  if(role==="grant") return emblemSrc((item&&item.audience==="program")?"program-grant":"athlete-grant");
+  if(role==="event") return emblemSrc("event");
+  return emblemSrc(item&&item.sport);
+}
+function coverStampAttr(item, role){
+  const st=stampSrc(item, role);
+  return st?' data-stamp="'+st+'"':'';
+}
 function sportIcon(key, cls){ return '<img class="'+(cls||'')+'" src="'+iconSrc(key)+'" alt="" loading="lazy">'; }
 
 /* ============================ ICONS ============================ */
@@ -1103,14 +1109,14 @@ function cardTagsHtml(p){
 const CHAIR_GLY=NAVICON.chair.replace('<svg','<svg class="gly"'); // the brand wheelchair mark, one source
 function thumbHtml(p){
   const v=listingVisual(p,'program');
-  if(isCoverVisual(v)) return '<img class="thumb-full" src="'+v.src+'" alt="" loading="lazy">';
+  if(isCoverVisual(v)) return '<img class="thumb-full" src="'+v.src+'" alt="" loading="lazy"'+coverStampAttr(p,'program')+'>';
   return v.src?'<img class="thumb-stamp" src="'+v.src+'" alt="" loading="lazy">':'';
 }
 function media(p, kind){
   const overlay = (kind && kind!=='pcard-media') ? '' : cardTagsHtml(p);
   const v=listingVisual(p,'program');
   const cls=kind||'pcard-media';
-  if(isCoverVisual(v)) return '<div class="'+cls+' has-photo"><img class="pcard-img" src="'+v.src+'" alt="" loading="lazy" decoding="async">'+overlay+'</div>';
+  if(isCoverVisual(v)) return '<div class="'+cls+' has-photo"><img class="pcard-img" src="'+v.src+'" alt="" loading="lazy" decoding="async"'+coverStampAttr(p,'program')+'>'+overlay+'</div>';
   return '<div class="'+cls+' has-stamp">'+(v.src?'<img class="pcard-stamp" src="'+v.src+'" alt="" loading="lazy">':'')+overlay+'</div>';
 }
 // One useful line under the city: distance when we searched near somewhere,
@@ -1792,7 +1798,7 @@ function sheetHero(p){
   const loc=locLine(p);
   const ov='<div class="dov"><span class="dov-sport">'+(p.sportLabel||'Multi-Sport')+'</span><span class="dov-loc">'+loc+'</span></div>';
   const v=listingVisual(p,'program');
-  if(isCoverVisual(v)) return '<div class="dhero has-dphoto"><img class="dhero-img" src="'+v.src+'" alt="">'+ov+'</div>';
+  if(isCoverVisual(v)) return '<div class="dhero has-dphoto"><img class="dhero-img" src="'+v.src+'" alt=""'+coverStampAttr(p,'program')+'>'+ov+'</div>';
   return '<div class="dhero has-stamp">'+(v.src?'<img class="dhero-stamp" src="'+v.src+'" alt="">':'')+ov+'</div>';
 }
 function sourceWithUrl(p){
@@ -1909,7 +1915,7 @@ function grantHero(g){
   const badge=who?'<div class="cardtags"><span class="cbadge '+(g.audience==='program'?'rsvp':'eq')+'">'+who+'</span></div>':'';
   const ov='<div class="dov"><span class="dov-sport">'+kind+'</span><span class="dov-loc">'+loc+'</span></div>';
   const v=listingVisual(g,'grant');
-  if(isCoverVisual(v)) return '<div class="dhero has-dphoto">'+badge+'<img class="dhero-img" src="'+v.src+'" alt="">'+ov+'</div>';
+  if(isCoverVisual(v)) return '<div class="dhero has-dphoto">'+badge+'<img class="dhero-img" src="'+v.src+'" alt=""'+coverStampAttr(g,'grant')+'>'+ov+'</div>';
   return '<div class="dhero has-stamp">'+badge+(v.src?'<img class="dhero-stamp" src="'+v.src+'" alt="">':'')+ov+'</div>';
 }
 function grantCard(g){
@@ -1918,7 +1924,7 @@ function grantCard(g){
   const kind=grantAudienceLabel(g)||grantTypeLabel(g)||'Grant';
   const v=listingVisual(g,'grant');
   const media=isCoverVisual(v)
-    ? '<div class="pcard-media has-photo"><img class="pcard-img" src="'+v.src+'" alt=""></div>'
+    ? '<div class="pcard-media has-photo"><img class="pcard-img" src="'+v.src+'" alt=""'+coverStampAttr(g,'grant')+'></div>'
     : '<div class="pcard-media has-stamp">'+(v.src?'<img class="pcard-stamp" src="'+v.src+'" alt="">':'')+'</div>';
   return '<a class="pcard" href="/grants/'+g.id+'" data-grant="'+g.id+'">'+media
     +'<div class="pcard-body"><div class="pcard-sport">'+kind+'</div><div class="pcard-name">'+g.name+'</div>'
@@ -2040,8 +2046,8 @@ function dayChip(iso){ const d=new Date(iso); return isNaN(d)?{mon:'',day:''}:{m
 function eventCardHtml(e){
   const chip=dayChip(e.startsAt);
   const loc=[e.city,e.state].filter(Boolean).join(', ');
-  const ev=listingVisual({sport:e.sport},'event');
-  const icon=ev.src?'<img class="ev-stamp" src="'+ev.src+'" alt="">':NAVICON.cal;
+  const evStamp=emblemSrc(e.sport)||emblemSrc('event');
+  const icon=evStamp?'<img class="ev-stamp" src="'+evStamp+'" alt="">':NAVICON.cal;
   const link=e.url?' href="'+e.url+'" target="_blank" rel="noopener"':'';
   return '<'+(e.url?'a':'div')+' class="evrow"'+link+'>'
     +'<div class="evdate"><span class="evmon">'+chip.mon+'</span><span class="evday">'+chip.day+'</span></div>'
@@ -2106,7 +2112,7 @@ function profileEditView(){
         const loc=[f.city,f.state].filter(Boolean).join(', ');
         const fv=listingVisual(f,'program');
         return '<div class="pcard" data-prog="'+esc(f.id)+'"><div class="pcard-media '+(isCoverVisual(fv)?'has-photo':'has-stamp')+'">'
-          +(isCoverVisual(fv)?'<img class="pcard-img" src="'+fv.src+'" alt="">':(fv.src?'<img class="pcard-stamp" src="'+fv.src+'" alt="">':''))
+          +(isCoverVisual(fv)?'<img class="pcard-img" src="'+fv.src+'" alt=""'+coverStampAttr(f,'program')+'>':(fv.src?'<img class="pcard-stamp" src="'+fv.src+'" alt="">':''))
           +'</div><div class="pcard-body"><div class="pcard-sport">'+esc(label)+'</div><div class="pcard-name">'+esc(f.name)+'</div>'
           +(loc?'<div class="pcard-loc">'+esc(loc)+'</div>':'')+'</div></div>';
       }).join('')
@@ -2744,6 +2750,26 @@ async function hydrateProfile(){
   syncProfileBtn();
   if(state.section==='profile'&&!viewFormBusy()) render(true);
 })();
+
+/* Cover image failed (iOS object-fit + max-width, or a 404) → black stamp, never a sand block. */
+document.addEventListener('error',function(e){
+  const t=e.target;
+  if(!t||t.tagName!=='IMG') return;
+  const p=t.parentNode;
+  if(!p||!(p.classList.contains('has-photo')||p.classList.contains('has-dphoto')||t.classList.contains('thumb-full'))) return;
+  if(t.dataset.coverFailed) return;
+  t.dataset.coverFailed='1';
+  const st=t.getAttribute('data-stamp');
+  if(p.classList){ p.classList.remove('has-photo','has-dphoto'); p.classList.add('has-stamp'); }
+  if(st){
+    const isHero=p.classList&&p.classList.contains('dhero');
+    const isThumb=t.classList.contains('thumb-full');
+    t.classList.remove('pcard-img','dhero-img','thumb-full');
+    t.classList.add(isHero?'dhero-stamp':(isThumb?'thumb-stamp':'pcard-stamp'));
+    t.removeAttribute('style');
+    t.src=st;
+  } else t.remove();
+}, true);
 
 /* installable app (mobile + desktop) */
 if('serviceWorker' in navigator){

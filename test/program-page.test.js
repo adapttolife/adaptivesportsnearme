@@ -93,13 +93,13 @@ test("typeLabel: the org type reads as a human fact, null when missing", () => {
 });
 
 test("photoPath: scene when we have one, else stamp (null cover)", () => {
-  assert.equal(photoPath("cycling"), "/scenes/cycling-road.png");
-  assert.equal(photoPath("basketball"), "/scenes/basketball-gym.png");
-  assert.equal(photoPath("skiing"), "/scenes/skiing-mountain.png");
-  assert.equal(photoPath("pickleball"), "/scenes/pickleball-court.png");
-  assert.equal(photoPath("tennis"), "/scenes/tennis-court.png");
+  assert.equal(photoPath("cycling"), "/scenes/cycling-road.jpg");
+  assert.equal(photoPath("basketball"), "/scenes/basketball-gym.jpg");
+  assert.equal(photoPath("skiing"), "/scenes/skiing-mountain.jpg");
+  assert.equal(photoPath("pickleball"), "/scenes/pickleball-court.jpg");
+  assert.equal(photoPath("tennis"), "/scenes/tennis-court.jpg");
   assert.equal(photoPath(null), null);
-  assert.equal(photoPath("rowing"), "/scenes/rowing-lake.png");
+  assert.equal(photoPath("rowing"), "/scenes/rowing-lake.jpg");
   assert.equal(photoPath(null, { photo: "/photos/mine.jpg" }), "/photos/mine.jpg");
 });
 
@@ -121,7 +121,7 @@ test("programPageTemplate: photo hero, name, city+state, website button — not 
   assert.ok(html.includes("Denver, CO"));
   assert.ok(html.includes("https://www.example.org/nuggets"));
   assert.ok(html.includes("<h1>Denver Rolling Nuggets</h1>"));
-  assert.ok(html.includes("/scenes/basketball-gym.png"));
+  assert.ok(html.includes("/scenes/basketball-gym.jpg"));
   assert.ok(html.includes("has-dphoto"));
   assert.ok(html.includes("dhero-img"));
   assert.ok(html.includes("Visit website"));
@@ -284,7 +284,7 @@ test("programPageTemplate: state-only listing shows the state name, not a blank 
     website: "http://bicyclingblind.org",
   });
   assert.ok(html.includes("Bicycling Blind Los Angeles"));
-  assert.ok(html.includes("/scenes/cycling-road.png"));
+  assert.ok(html.includes("/scenes/cycling-road.jpg"));
   assert.ok(html.includes("California"));
   assert.ok(!html.includes("null"));
   assert.ok(html.includes("Visit website"));
