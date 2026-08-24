@@ -1297,6 +1297,7 @@ function geoPos(p){
 /* ---- real map: MapLibre GL + OpenFreeMap (free/open vector tiles, no keys, no limits) ---- */
 const OFM_STYLE='https://tiles.openfreemap.org/styles/bright'; // flat Apple-Maps-like, warm cream that matches the site palette
 let MAPLIB=null, liveMap=null, mapToken=0;
+const PAN_BOUNDS=[[-179,-16],[-45,71]]; // Americas only; Mercator midpoint sits at ~39.5N
 function loadMapLibre(){
   // vendored same-origin (assets/vendor/) so the service worker caches it and
   // the only third party involved is the tile server itself
@@ -1362,7 +1363,6 @@ async function initLiveMap(list,opts){
     if(t&&t.closest&&t.closest('.mdot,.mpin,.mpill,.map-tray,.maplibregl-ctrl,.mapx-close,.mapx-open,.mapx-drawer,.mapchip')) return;
     closeMapTray();
   });
-  liveMap.setMaxBounds([[-179,10],[-45,74]]); // keep panning on the map, not the mid-Atlantic
   if(byState.size>1){
     // frame the pills that are actually on the mainland — AK/HI/PR markers still
     // render, they just don't stretch the opening frame to the whole hemisphere
@@ -1375,6 +1375,11 @@ async function initLiveMap(list,opts){
     const lngs=pts.map(m=>m[0]), lats=pts.map(m=>m[1]);
     liveMap.fitBounds([[Math.min(...lngs),Math.min(...lats)],[Math.max(...lngs),Math.max(...lats)]],{padding:90,maxZoom:7,duration:0});
   } else if(pts.length===1){ liveMap.jumpTo({center:pts[0],zoom:5.8}); }
+  // Panning guard, applied after the opening frame so it never overrides it.
+  // The latitude range is centred in Mercator on the middle of the lower 48: if a
+  // wide frame on a tall phone viewport ever has to be clamped, it lands on the
+  // United States instead of Hudson Bay.
+  liveMap.setMaxBounds(PAN_BOUNDS);
 }
 // Called after every view paint: stand up or tear down map instances to match.
 function afterRender(){
