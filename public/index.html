@@ -280,7 +280,9 @@ input,select{font-family:inherit;}
 #livemap{position:absolute;inset:0;}
 .mpill{display:flex;align-items:center;gap:6px;min-height:var(--tap);background:#fff;border:1px solid var(--line);border-radius:999px;padding:7px 12px;font-family:'DM Sans',sans-serif;font-weight:700;font-size:13px;color:var(--ink);box-shadow:0 2px 10px rgba(20,18,14,.18);cursor:pointer;transition:background .12s,color .12s;white-space:nowrap;touch-action:manipulation;}
 .mpill .mc{font-weight:600;color:var(--muted);}
-.mpill:hover,.mpill.active{background:var(--ink);color:#fff;}
+/* A pill under the cursor rises above its neighbours so its label is never
+   half-covered by the state next door. */
+.mpill:hover,.mpill:focus-visible,.mpill.active{background:var(--ink);color:#fff;z-index:5;}
 .mpill:hover .mc,.mpill.active .mc{color:rgba(255,255,255,.75);}
 .mpin{width:var(--tap);height:var(--tap);min-width:var(--tap);display:flex;align-items:center;justify-content:center;background:#fff;border:1px solid var(--line);border-radius:999px;font-family:'DM Sans',sans-serif;font-weight:700;font-size:13px;color:var(--ink);box-shadow:0 2px 10px rgba(20,18,14,.18);cursor:pointer;transition:background .12s,color .12s;touch-action:manipulation;-webkit-tap-highlight-color:transparent;}
 .mpin:hover,.mpin.active{background:var(--ink);color:#fff;}
@@ -1298,6 +1300,11 @@ function geoPos(p){
 const OFM_STYLE='https://tiles.openfreemap.org/styles/bright'; // flat Apple-Maps-like, warm cream that matches the site palette
 let MAPLIB=null, liveMap=null, mapToken=0;
 const PAN_BOUNDS=[[-179,-16],[-45,71]]; // Americas only; Mercator midpoint sits at ~39.5N
+// The Northeast corridor packs ten states into about six degrees, so at national
+// zoom their count pills land on top of each other. A fixed pixel nudge fans them
+// down the open Atlantic: deterministic, no leader lines, and small enough at
+// street zoom to still read as the same state.
+const PILL_NUDGE={VT:[-16,-44],ME:[-10,-36],NH:[22,-28],MA:[56,-18],RI:[64,8],CT:[38,54],NJ:[48,53],DE:[72,60],MD:[26,34],DC:[40,86]};
 function loadMapLibre(){
   // vendored same-origin (assets/vendor/) so the service worker caches it and
   // the only third party involved is the tile server itself
@@ -1348,7 +1355,9 @@ async function initLiveMap(list,opts){
       d.setAttribute('aria-label',(p.stateName||k)+': '+arr.length+' programs');
       if(explorer) d.addEventListener('click',()=>mapxShowState(k));
       else if(!oneState) d.addEventListener('click',()=>{ state.q=p.stateName||k; state.see=null; render(true); });
-      pts.push([p.lng,p.lat]); new ml.Marker({element:d}).setLngLat([p.lng,p.lat]).addTo(liveMap);
+      const nudge=PILL_NUDGE[k];
+      pts.push([p.lng,p.lat]);
+      new ml.Marker(nudge?{element:d,offset:nudge}:{element:d}).setLngLat([p.lng,p.lat]).addTo(liveMap);
     });
   }
   precise.forEach(p=>{
