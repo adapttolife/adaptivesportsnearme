@@ -202,7 +202,9 @@ input,select{font-family:inherit;}
 .pcard-media .ringbg{position:absolute;inset:0;margin:auto;width:62%;height:62%;color:rgba(255,255,255,.55);}
 .pcard-body{padding:7px 1px 0;}
 .pcard-sport{font-family:'DM Sans',sans-serif;font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--faint);line-height:1.3;}
-.pcard-name{font-size:14.5px;font-weight:600;line-height:1.25;margin:1px 0 0;color:var(--ink);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+/* Two-line box whether the name needs one line or two, so the city sits on the
+   same baseline across a rail instead of stepping up and down card to card. */
+.pcard-name{font-size:14.5px;font-weight:600;line-height:1.25;margin:1px 0 0;color:var(--ink);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:2.5em;}
 /* card text = name, city, one useful line. No leftover cost/ages chips. */
 .pcard-loc{font-size:13.5px;color:var(--ink2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px;}
 .pcard-line{font-size:13px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
@@ -1120,15 +1122,13 @@ function media(p, kind){
   if(isCoverVisual(v)) return '<div class="'+cls+' has-photo"><img class="pcard-img" src="'+v.src+'" alt="" loading="lazy" decoding="async"'+coverStampAttr(p,'program')+'>'+overlay+'</div>';
   return '<div class="'+cls+' has-stamp">'+(v.src?'<img class="pcard-stamp" src="'+v.src+'" alt="" loading="lazy">':'')+overlay+'</div>';
 }
-// One useful line under the city: distance when we searched near somewhere,
-// otherwise the org type, otherwise the website host. Never cost/ages chips —
-// those are empty on most live D1 records.
-function cardLine(p){
-  if(p.dist!=null) return p.dist+' mi away';
-  if(p.provider) return p.provider;
-  if(p.website) return hostFromUrl(p.website);
-  return '';
-}
+// One line under the city, and only when it says something: how far away this is.
+function cardLine(p){ return p.dist!=null ? p.dist+' mi away' : ''; }
+// The org type is a default, not a difference: 47 of 72 home cards read
+// "Adaptive club". It belongs in a labelled column and on the listing page,
+// not as an unlabelled fourth line under every card.
+function typeLine(p){ return p.provider||''; }
+function mtLine(p){ const l=cardLine(p); return l?'<div class="mt">'+l+'</div>':''; }
 function milesBetween(aLat,aLng,bLat,bLng){
   const toR=d=>d*Math.PI/180, dLat=toR(bLat-aLat), dLng=toR(bLng-aLng);
   const a=Math.sin(dLat/2)**2+Math.cos(toR(aLat))*Math.cos(toR(bLat))*Math.sin(dLng/2)**2;
@@ -1416,7 +1416,7 @@ function mapxShowState(k){
     '<div class="mcard" data-prog="'+p.id+'">'
     +'<div class="mthumb'+(isCoverVisual(listingVisual(p,'program'))?'':' has-stamp')+'">'+thumbHtml(p)+'</div>'
     +'<div class="minfo"><div class="pcard-sport">'+p.sportLabel+'</div><div class="nm">'+p.name+'</div>'
-    +'<div class="sub">'+locLine(p)+'</div><div class="mt">'+cardLine(p)+'</div></div></div>').join('');
+    +'<div class="sub">'+locLine(p)+'</div>'+mtLine(p)+'</div></div>').join('');
   d.querySelector('.mapxd-foot a').setAttribute('data-mapx-dir',name);
   d.hidden=false;
   const p0=list.find(p=>p.lat!=null);
@@ -1620,7 +1620,7 @@ function mapLayout(list){
         +'<div class="pcard-sport">'+p.sportLabel+'</div>'
         +'<div class="nm">'+p.name+'</div>'
         +'<div class="sub">'+locLine(p)+'</div>'
-        +'<div class="mt">'+cardLine(p)+'</div>'
+        +mtLine(p)
       +'</div></div>').join('');
   let mapEl;
   if(DATA_LIVE){
@@ -1649,11 +1649,11 @@ function listLayout(list){
     '<tr data-prog="'+p.id+'">'
       +'<td><div class="tcell"><div class="tthumb'+(isCoverVisual(listingVisual(p,'program'))?'':' has-stamp')+'">'+thumbHtml(p)+'</div><div><div class="nm">'+p.name+'</div><div class="sub">'+p.sportLabel+'</div></div></div></td>'
       +'<td class="t-prov">'+locLine(p)+'</td>'
-      +'<td>'+(cardLine(p)||'—')+'</td>'
+      +'<td>'+((DATA_LIVE?typeLine(p):cardLine(p))||'—')+'</td>'
       +'<td class="chev" style="text-align:right;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 6 6 6-6 6"/></svg></td>'
     +'</tr>').join('');
-  // Third column mirrors the card's one useful line: distance when we searched
-  // near somewhere, the org type on live data.
+  // A labelled column is where a repeated value like the org type is still
+  // useful — the header tells you what it is.
   const thirdHead = DATA_LIVE ? 'Type' : 'Distance';
   return '<div class="tablewrap"><table class="list"><thead><tr><th>Program</th><th>Location</th><th>'+thirdHead+'</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div>';
 }

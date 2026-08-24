@@ -100,7 +100,8 @@ function denseRows(org) {
 
 function nearbyCard(p) {
   const loc = locLine(p);
-  const line = p.dist != null ? `${p.dist} mi away` : (typeLabel(p) || "");
+  // Distance or nothing. The org type is a default, not a difference (see cardLine in index.html).
+  const line = p.dist != null ? `${p.dist} mi away` : "";
   const v = listingVisual(p, "program");
   const media = isCoverVisual(v)
     ? `<div class="pcard-media has-photo"><img class="pcard-img" src="${esc(v.src)}" alt=""${stampAttr(p, "program")}></div>`
@@ -178,7 +179,8 @@ h1{font-size:clamp(22px,2.8vw,30px);font-weight:700;letter-spacing:-.02em;line-h
 .pcard-stamp{width:46%;height:auto;object-fit:contain;position:relative;z-index:1;}
 .pcard-body{padding:8px 1px 0;}
 .pcard-sport{font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--faint);}
-.pcard-name{font-size:16px;font-weight:600;line-height:1.25;margin:2px 0 0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+/* Two-line box either way, so the rail keeps its baselines. */
+.pcard-name{font-size:16px;font-weight:600;line-height:1.25;margin:2px 0 0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:2.5em;}
 .pcard-loc,.pcard-line{font-size:14px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 @media(max-width:720px){
   .frow-scroll{gap:12px;}
