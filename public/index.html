@@ -459,6 +459,17 @@ a.cta{text-decoration:none;text-align:center;} /* link-CTAs center exactly like 
 .sheet h1{font-family:'DM Sans',sans-serif;font-size:clamp(22px,2.8vw,30px);font-weight:700;letter-spacing:-.02em;line-height:1.15;margin:0 0 var(--space-title-gap);}
 .sheet .loc{font-size:16px;color:var(--ink2);margin:0;}
 .sheet .desc{font-size:16px;line-height:1.55;color:var(--ink2);margin:16px 0 0;max-width:68ch;}
+/* Scraped descriptions run long and tail off into source notes. Show a readable
+   opening and let the reader ask for the rest. No JS: the toggle is a label,
+   and the full text stays in the document for search engines and copy-paste. */
+.desc-x{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;}
+.desc-long{display:-webkit-box;-webkit-line-clamp:5;-webkit-box-orient:vertical;overflow:hidden;}
+.desc-x:checked ~ .desc-long{display:block;-webkit-line-clamp:none;}
+.desc-btn{display:inline-flex;align-items:center;min-height:var(--tap);font-size:15px;font-weight:600;color:var(--orange-ink);cursor:pointer;text-decoration:underline;text-underline-offset:3px;}
+.desc-btn .dm-less,.desc-x:checked ~ .desc-btn .dm-more{display:none;}
+.desc-x:checked ~ .desc-btn .dm-less{display:inline;}
+.desc-x:focus-visible ~ .desc-btn{outline:2px solid var(--orange);outline-offset:3px;border-radius:4px;}
+@media(max-width:720px){.desc-long{-webkit-line-clamp:8;}}
 .sheet .titleb{margin:0 0 var(--space-section);}
 .sheet .act{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 var(--space-section);}
 .sheet .act .cta{width:auto;min-width:220px;height:var(--tap);padding:0 22px;font-size:16px;}
@@ -1477,7 +1488,7 @@ function mapTrayHtml(p){
     +'</div>'
     +'<div class="tray-full sheet">'
     +sheetHero(p)
-    +'<div class="titleb"><h1>'+p.name+'</h1><p class="loc">'+loc+'</p>'+(p.desc?'<p class="desc">'+p.desc+'</p>':'')+'</div>'
+    +'<div class="titleb"><h1>'+p.name+'</h1><p class="loc">'+loc+'</p>'+descBlock(p.desc)+'</div>'
     +'<div class="tray-pills tray-pills-full">'+mapTrayPills(p)+'</div>'
     +'<div class="act">'+action+'</div>'
     +denseRows(p)
@@ -1816,6 +1827,16 @@ function sheetHero(p){
   if(isCoverVisual(v)) return '<div class="dhero has-dphoto"><img class="dhero-img" src="'+v.src+'" alt=""'+coverStampAttr(p,'program')+'>'+ov+'</div>';
   return '<div class="dhero has-stamp">'+(v.src?'<img class="dhero-stamp" src="'+v.src+'" alt="">':'')+ov+'</div>';
 }
+// Long descriptions get a clamp plus a native toggle. 340 characters is roughly
+// what the clamp shows at the 68ch measure, so the toggle only appears when it
+// is actually hiding something.
+function descBlock(desc){
+  if(!desc) return '';
+  if(String(desc).length<=340) return '<p class="desc">'+desc+'</p>';
+  return '<input class="desc-x" type="checkbox" id="descmore" aria-label="Show the full description">'
+    +'<p class="desc desc-long">'+desc+'</p>'
+    +'<label class="desc-btn" for="descmore"><span class="dm-more">More</span><span class="dm-less">Less</span></label>';
+}
 function sourceWithUrl(p){
   const srcs=(p.sources&&p.sources.length)?p.sources:(p.primarySource?[{name:p.primarySource,url:p.primarySourceUrl}]:[]);
   return srcs.find(s=>s&&s.url)||null;
@@ -1848,7 +1869,7 @@ function listingSheet(p, o){
   return '<div class="wrap"><div class="sheet">'
     +'<header class="bar"><a class="back" href="/" data-home>← Directory</a></header>'
     +sheetHero(p)
-    +'<div class="titleb"><h1>'+p.name+'</h1><p class="loc">'+loc+'</p>'+(p.desc?'<p class="desc">'+p.desc+'</p>':'')+'</div>'
+    +'<div class="titleb"><h1>'+p.name+'</h1><p class="loc">'+loc+'</p>'+descBlock(p.desc)+'</div>'
     +'<div class="act">'+action+(o.save||'')+'</div>'
     +denseRows(p)
     +(o.related||'')

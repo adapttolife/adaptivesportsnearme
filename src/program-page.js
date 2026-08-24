@@ -98,6 +98,17 @@ function denseRows(org) {
   }).join("")}</div>`;
 }
 
+// Long descriptions get a clamp plus a native toggle. 340 characters is roughly
+// what the clamp shows at the 68ch measure, so the toggle only appears when it
+// is actually hiding something.
+function descBlock(desc) {
+  if (!desc) return "";
+  if (String(desc).length <= 340) return `<p class="desc">${esc(desc)}</p>`;
+  return `<input class="desc-x" type="checkbox" id="descmore" aria-label="Show the full description">`
+    + `<p class="desc desc-long">${esc(desc)}</p>`
+    + `<label class="desc-btn" for="descmore"><span class="dm-more">More</span><span class="dm-less">Less</span></label>`;
+}
+
 function nearbyCard(p) {
   const loc = locLine(p);
   // Distance or nothing. The org type is a default, not a difference (see cardLine in index.html).
@@ -156,6 +167,17 @@ a{color:var(--orange-ink);}
 h1{font-size:clamp(22px,2.8vw,30px);font-weight:700;letter-spacing:-.02em;line-height:1.15;margin:0 0 var(--space-title-gap);}
 .loc{font-size:16px;color:var(--ink2);margin:0;}
 .desc{font-size:16px;line-height:1.55;color:var(--ink2);margin:16px 0 0;max-width:68ch;}
+/* Scraped descriptions run long and tail off into source notes. Show a readable
+   opening and let the reader ask for the rest. No JS: the toggle is a label,
+   and the full text stays in the document for search engines and copy-paste. */
+.desc-x{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;}
+.desc-long{display:-webkit-box;-webkit-line-clamp:5;-webkit-box-orient:vertical;overflow:hidden;}
+.desc-x:checked ~ .desc-long{display:block;-webkit-line-clamp:none;}
+.desc-btn{display:inline-flex;align-items:center;min-height:var(--tap);font-size:15px;font-weight:600;color:var(--orange-ink);cursor:pointer;text-decoration:underline;text-underline-offset:3px;}
+.desc-btn .dm-less,.desc-x:checked ~ .desc-btn .dm-more{display:none;}
+.desc-x:checked ~ .desc-btn .dm-less{display:inline;}
+.desc-x:focus-visible ~ .desc-btn{outline:2px solid var(--orange);outline-offset:3px;border-radius:4px;}
+@media(max-width:720px){.desc-long{-webkit-line-clamp:8;}}
 .titleb{margin:0 0 var(--space-section);}
 .cta{display:inline-flex;align-items:center;justify-content:center;min-width:220px;height:var(--tap);padding:0 22px;background:var(--orange);color:#fff;border-radius:var(--r);font-size:16px;font-weight:700;text-decoration:none;}
 .cta:hover{background:var(--orange-ink);}
@@ -239,7 +261,7 @@ export function listingInnerHtml(org, { nearby = [] } = {}) {
   const action = cta
     ? `<div class="act"><a class="cta" href="${esc(cta.href)}" rel="noopener">${esc(cta.label)}</a>${org.website ? `<span class="host">${esc(hostFromUrl(org.website))}</span>` : ""}</div>`
     : "";
-  const desc = org.desc ? `<p class="desc">${esc(org.desc)}</p>` : "";
+  const desc = descBlock(org.desc);
   return `${hero}
 <div class="titleb">
 <h1>${esc(name)}</h1>
