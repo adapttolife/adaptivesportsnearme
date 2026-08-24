@@ -1013,6 +1013,9 @@ const GRANT_TRACK_SCENE="/scenes/grant-track.jpg";
 const PROGRAM_GRANT_SCENE="/scenes/program-grant-gym.jpg";
 const EVENT_SCENE="/scenes/event-field.jpg";
 const EMBLEM_KEYS={"athlete-grant":1,"program-grant":1,"event":1,basketball:1,tennis:1,pickleball:1,rugby:1,football:1,baseball:1,cycling:1,sledhockey:1,skiing:1,waterskiing:1,goalball:1,rowing:1,swimming:1,golf:1,boccia:1,volleyball:1,climbing:1};
+// No sport art and no photo: the house mark still gives the card a picture
+// instead of an empty tile (840 of 1,478 live orgs carry no sport). Mirrors src/visuals.js.
+const GENERIC_STAMP="/emblems/adaptive.svg";
 function emblemSrc(key){ return key&&EMBLEM_KEYS[key]?"/emblems/"+key+".png":null; }
 function sceneSrc(sport){ return (sport&&SPORT_SCENES[sport])||null; }
 function listingVisual(item, role){
@@ -1025,15 +1028,13 @@ function listingVisual(item, role){
   }
   const sc=sceneSrc(item&&item.sport);
   if(sc) return {kind:"scene",src:sc};
-  const st=emblemSrc(item&&item.sport);
-  if(st) return {kind:"stamp",src:st};
-  return {kind:"stamp",src:null};
+  return {kind:"stamp",src:emblemSrc(item&&item.sport)||GENERIC_STAMP};
 }
 function isCoverVisual(v){ return !!(v&&(v.kind==="photo"||v.kind==="scene")&&v.src); }
 function stampSrc(item, role){
   if(role==="grant") return emblemSrc((item&&item.audience==="program")?"program-grant":"athlete-grant");
   if(role==="event") return emblemSrc("event");
-  return emblemSrc(item&&item.sport);
+  return emblemSrc(item&&item.sport)||GENERIC_STAMP;
 }
 function coverStampAttr(item, role){
   const st=stampSrc(item, role);

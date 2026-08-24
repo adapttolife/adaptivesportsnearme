@@ -27,6 +27,10 @@ export const GRANT_TRACK_SCENE = "/scenes/grant-track.jpg";
 export const PROGRAM_GRANT_SCENE = "/scenes/program-grant-gym.jpg";
 export const EVENT_SCENE = "/scenes/event-field.jpg";
 
+// No sport art (no scene, no emblem) and no photo: the house mark still gives the
+// card a picture instead of an empty tile. 840 of 1,478 live orgs carry no sport.
+export const GENERIC_STAMP = "/emblems/adaptive.svg";
+
 export const EMBLEM_KEYS = new Set([
   "athlete-grant", "program-grant", "event",
   "basketball", "tennis", "pickleball", "rugby", "football",
@@ -59,9 +63,7 @@ export function listingVisual(item, role = "program") {
   }
   const scene = scenePath(item && item.sport);
   if (scene) return { kind: "scene", src: scene };
-  const stamp = emblemPath(item && item.sport);
-  if (stamp) return { kind: "stamp", src: stamp };
-  return { kind: "stamp", src: null };
+  return { kind: "stamp", src: emblemPath(item && item.sport) || GENERIC_STAMP };
 }
 
 // Cover images carry the stamp they fall back to (index.html swaps it in on img error).
@@ -70,8 +72,7 @@ export function stampAttr(item, role = "program") {
   if (role === "grant") key = item && item.audience === "program" ? "program-grant" : "athlete-grant";
   else if (role === "event") key = "event";
   else key = item && item.sport;
-  const p = emblemPath(key);
-  return p ? ` data-stamp="${p}"` : "";
+  return ` data-stamp="${emblemPath(key) || GENERIC_STAMP}"`;
 }
 
 export function isCoverVisual(v) {

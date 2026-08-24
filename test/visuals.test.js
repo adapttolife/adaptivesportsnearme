@@ -19,7 +19,12 @@ test("listingVisual: extra scenes resolve; no-sport stays a stamp card", () => {
   assert.deepEqual(listingVisual({ sport: "pickleball" }, "program"), { kind: "scene", src: "/scenes/pickleball-court.jpg" });
   assert.deepEqual(listingVisual({ sport: "tennis" }, "program"), { kind: "scene", src: "/scenes/tennis-court.jpg" });
   assert.deepEqual(listingVisual({ sport: "rowing" }, "program"), { kind: "scene", src: "/scenes/rowing-lake.jpg" });
-  assert.deepEqual(listingVisual({ sport: null }, "program"), { kind: "stamp", src: null });
+  // A listing with no sport must still get a picture: the house-mark stamp, never src:null.
+  assert.deepEqual(listingVisual({ sport: null }, "program"), { kind: "stamp", src: "/emblems/adaptive.svg" });
+  assert.deepEqual(listingVisual({ sport: "soccer" }, "program"), { kind: "stamp", src: "/emblems/adaptive.svg" });
+  for (const item of [{}, { sport: null }, { sport: "surfing" }, { sport: "curling" }, { sport: "beepbaseball" }]) {
+    assert.ok(listingVisual(item, "program").src, "every program listing resolves to a visual");
+  }
 });
 
 test("listingVisual: athlete grants use grant-track; program grants use program-grant-gym", () => {
