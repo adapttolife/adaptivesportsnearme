@@ -220,10 +220,18 @@ const BLOG_CSS = `
 }
 *{box-sizing:border-box;}
 html,body{margin:0;padding:0;background:var(--mist);color:var(--ink);}
-body{font-family:'DM Sans',system-ui,sans-serif;font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased;}
+/* Column layout so the footer sits at the bottom of a short page instead of
+   leaving a band of body background under it. */
+body{font-family:'DM Sans',system-ui,sans-serif;font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased;min-height:100vh;display:flex;flex-direction:column;}
+body>main{flex:1 0 auto;}
+/* The app resets buttons; without it the hamburger renders with the browser's
+   border and grey fill, which is why blog chrome read as a different site. */
+button{font:inherit;color:inherit;border:0;background:none;padding:0;cursor:pointer;}
 img{display:block;max-width:100%;}
 a{color:inherit;text-decoration:none;}
 .wrap{max-width:var(--max);margin:0 auto;padding:0 var(--space-page);}
+/* Header and footer span the app's measure; only the article stays narrow. */
+.hdr .wrap,.foot .wrap{max-width:1280px;}
 .skip{position:absolute;left:-999px;top:8px;background:var(--ink);color:#fff;padding:10px 16px;border-radius:var(--r);}
 .skip:focus{left:12px;}
 /* App-matching header (☰ · brand · search pill · orange "+"). Rendered server-side
@@ -251,7 +259,11 @@ a{color:inherit;text-decoration:none;}
 .hdr-add:hover{background:var(--orange);color:#fff;border-color:var(--orange);}
 .hdr-add svg{width:19px;height:19px;}
 @media (max-width:720px){.hdr-add{width:36px;height:36px;}.hdr-add svg{width:17px;height:17px;}.hdr .brand{display:none;}.search{flex:1 1 100%;max-width:none;min-width:0;}.search .loc span{display:none;}.search input{min-width:0;}}
-.blog-main{padding:var(--space-nearby) var(--space-page) var(--space-header);}
+/* One reading column, left-aligned with the app. Body copy ran the full 872px
+   measure, about 110 characters a line; 70ch is what the listing pages use. */
+.blog-main{padding:var(--space-nearby) var(--space-page) var(--space-header);max-width:1280px;}
+.blog-main>*{max-width:70ch;}
+.blog-main>.blog-grid{max-width:none;}
 .eyebrow{font-size:11px;letter-spacing:.13em;text-transform:uppercase;color:var(--faint);margin:0 0 var(--space-title-gap);}
 .blog-h1{font-family:'DM Sans',sans-serif;font-size:34px;font-weight:700;letter-spacing:-.02em;line-height:1.15;margin:0 0 20px;}
 .blog-empty{color:var(--muted);font-size:15px;}
@@ -322,7 +334,7 @@ function pageShell({ title, description, canonical, ogImage, bodyHtml, jsonLd })
     <form class="search" role="search" action="/" method="get">
       <span class="loc" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s7-5.7 7-11a7 7 0 1 0-14 0c0 5.3 7 11 7 11Z"/><circle cx="12" cy="10" r="2.5"/></svg><span>United States</span></span>
       <span class="sep"></span>
-      <input id="q" name="q" type="text" placeholder="Search a sport, program or provider" aria-label="Search programs">
+      <input id="q" name="q" type="text" placeholder="Search a sport, zip, or program" aria-label="Search programs">
     </form>
     <div class="hdr-actions">
       <a class="hdr-add" href="/?add=program" aria-label="Submit a program" title="Submit a program"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></a>
