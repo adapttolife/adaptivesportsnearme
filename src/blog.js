@@ -219,6 +219,7 @@ const BLOG_CSS = `
   --r:12px; --r-lg:16px; --r-full:999px; --max:920px; --gut: var(--space-page);
 }
 *{box-sizing:border-box;}
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important;}}
 html,body{margin:0;padding:0;background:var(--mist);color:var(--ink);}
 /* Column layout so the footer sits at the bottom of a short page instead of
    leaving a band of body background under it. */

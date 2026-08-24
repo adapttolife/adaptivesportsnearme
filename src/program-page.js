@@ -141,6 +141,7 @@ const CSS = `
   --gut: var(--space-page);
 }
 *{box-sizing:border-box;}
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important;}}
 html,body{margin:0;padding:0;background:var(--mist);color:var(--ink);}
 body{font-family:'DM Sans',system-ui,sans-serif;font-size:16px;line-height:1.45;-webkit-font-smoothing:antialiased;}
 img,svg{display:block;max-width:100%;}
