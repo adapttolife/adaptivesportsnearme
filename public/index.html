@@ -1315,7 +1315,7 @@ const PAN_BOUNDS=[[-179,-16],[-45,71]]; // Americas only; Mercator midpoint sits
 // zoom their count pills land on top of each other. A fixed pixel nudge fans them
 // down the open Atlantic: deterministic, no leader lines, and small enough at
 // street zoom to still read as the same state.
-const PILL_NUDGE={VT:[-16,-44],ME:[-10,-36],NH:[22,-28],MA:[56,-18],RI:[64,8],CT:[38,54],NJ:[48,53],DE:[72,60],MD:[26,34],DC:[40,86]};
+const PILL_NUDGE={VT:[-30,-44],ME:[-30,-30],NH:[22,-28],MA:[56,-18],RI:[64,8],CT:[38,54],NJ:[48,53],DE:[72,60],MD:[26,34],DC:[40,86]};
 function loadMapLibre(){
   // vendored same-origin (assets/vendor/) so the service worker caches it and
   // the only third party involved is the tile server itself
@@ -1366,7 +1366,9 @@ async function initLiveMap(list,opts){
       d.setAttribute('aria-label',(p.stateName||k)+': '+arr.length+' programs');
       if(explorer) d.addEventListener('click',()=>mapxShowState(k));
       else if(!oneState) d.addEventListener('click',()=>{ state.q=p.stateName||k; state.see=null; render(true); });
-      const nudge=PILL_NUDGE[k];
+      // Half offset on a phone: the full fan would push NJ, DE and DC off the right edge.
+      const n=PILL_NUDGE[k], f=window.innerWidth<=720?0.5:1;
+      const nudge=n?[n[0]*f,n[1]*f]:null;
       pts.push([p.lng,p.lat]);
       new ml.Marker(nudge?{element:d,offset:nudge}:{element:d}).setLngLat([p.lng,p.lat]).addTo(liveMap);
     });
