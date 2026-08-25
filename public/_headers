@@ -1,0 +1,69 @@
+# public/_headers — browser cache policy for static assets.
+#
+# Why this exists: Workers Assets defaults every file to
+# `cache-control: public, max-age=0, must-revalidate`. Measured on staging
+# 2026-08-25: all 36 assets on the homepage revalidate on every navigation,
+# and a page that shows the same sport scene on fifteen cards paid for it
+# repeatedly. That is round-trips of latency on every click, forever, on a
+# directory whose visitors are often on a phone.
+#
+# Same policy adapt-to-life already runs (public/_headers there, shipped
+# 2026-07-25). The constraint that shapes it: this repo has NO build step and
+# NO content hashing, so /site-nav.js keeps its name across deploys and can
+# never be `immutable`. The split below is by "how bad is one stale view":
+#
+#   code (js/css) — short freshness plus a SHORT stale-while-revalidate window.
+#                   Navigation inside a session costs zero round-trips, which is
+#                   the win. Worst case is one view of last-deploy JS against
+#                   current HTML, which self-heals in the background. One hour,
+#                   not one day, because this repo deploys several times a day.
+#   media         — long. Scenes, emblems, icons and photos are effectively
+#                   content-addressed by filename. We add art far more often
+#                   than we overwrite it.
+#   HTML          — deliberately absent, so content edits are never served
+#                   stale. /sw.js is absent on purpose too: a long-cached
+#                   service worker is how you strand a visitor on an old shell.
+#
+# If you REPLACE a media file, rename it or bump a ?v= on the reference. A
+# visitor who already has the old bytes will not ask again for up to 30 days.
+# This is the same trap that made the blog serve a stale /site-nav.js three
+# times in one day (2026-07-16); versioning the URL is the cure.
+
+/site-nav.js
+  Cache-Control: public, max-age=300, stale-while-revalidate=3600
+
+/tokens.css
+  Cache-Control: public, max-age=300, stale-while-revalidate=3600
+
+# Sport scenes and the black emblem stamps: the locked visual language.
+/scenes/*
+  Cache-Control: public, max-age=2592000
+
+/emblems/*
+  Cache-Control: public, max-age=2592000
+
+# Category icons, sport photos, and the vendored MapLibre bundle.
+/assets/*
+  Cache-Control: public, max-age=2592000
+
+# Brand marks and the social card.
+/favicon.svg
+  Cache-Control: public, max-age=2592000
+
+/favicon-32.png
+  Cache-Control: public, max-age=2592000
+
+/apple-touch-icon.png
+  Cache-Control: public, max-age=2592000
+
+/icon-192.png
+  Cache-Control: public, max-age=2592000
+
+/icon-512.png
+  Cache-Control: public, max-age=2592000
+
+/og-image.jpg
+  Cache-Control: public, max-age=2592000
+
+/manifest.json
+  Cache-Control: public, max-age=300, stale-while-revalidate=3600
