@@ -236,3 +236,27 @@ test("the shared footer names the same three columns as the app's footer", () =>
   assert.ok(appIndex.includes("BOOT_ABOUT"));
   assert.ok(!html.includes('href="#"'));
 });
+
+// Browser caches ignore CDN purges, so /site-nav.js is only ever referenced
+// through one versioned constant. If a page hard-codes its own ?v= (or none),
+// a stale drawer ships next to fresh chrome.
+test("site-nav.js is referenced through the one versioned constant", async () => {
+  const root = join(dirname(fileURLToPath(import.meta.url)), "..");
+  const { NAV_VERSION } = await import("../src/site-chrome.js");
+  const { programPageTemplate } = await import("../src/program-page.js");
+  const { grantPageTemplate } = await import("../src/grant-page.js");
+
+  const pages = [
+    blogIndexTemplate([], { site: SITE }),
+    programPageTemplate({ id: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa", name: "X", sport: "tennis" }),
+    grantPageTemplate({ id: "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb", name: "Y" }),
+  ];
+  for (const html of pages) {
+    assert.ok(html.includes(`/site-nav.js?v=${NAV_VERSION}`));
+    assert.equal((html.match(/<script src="\/site-nav\.js/g) || []).length, 1);
+  }
+  for (const rel of ["src/blog.js", "src/program-page.js", "src/grant-page.js"]) {
+    const text = readFileSync(join(root, rel), "utf8");
+    assert.ok(!text.includes("site-nav.js?v="), `${rel} hard-codes its own cache-buster`);
+  }
+});

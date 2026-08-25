@@ -8,7 +8,7 @@
 // that file, so bump it on any site-nav.js change (browser caches ignore CDN
 // purges, and that has bitten us three times).
 
-export const NAV_VERSION = "20260821a";
+export const NAV_VERSION = "20260825a";
 
 // Chrome-only CSS. Self-contained: it declares the few tokens the listing pages
 // don't already have, and it scopes link colour inside .hdr/.foot so a host page
