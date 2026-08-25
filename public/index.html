@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="color-scheme" content="light">
-<title>Adaptive Sports Near Me — Find adaptive sport near you</title>
-<meta name="description" content="A free, national directory of adaptive sports programs, events, and funding. No login, no walls. Find adaptive sport near you.">
+<title>Adaptive Sports Near Me — Find adaptive sports near you</title>
+<meta name="description" content="A free, national directory of adaptive sports programs, events, and funding. No login, no walls. Find adaptive sports near you.">
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
@@ -594,14 +594,17 @@ a.evrow:hover{border-color:var(--ink);box-shadow:var(--shadow-sm);}
 .foot-in{display:flex;align-items:flex-start;justify-content:space-between;gap:44px 32px;padding-top:56px;padding-bottom:48px;flex-wrap:wrap;}
 .foot .brand b{font-size:15px;}
 .foot .tagline{font-size:14px;color:var(--muted);margin-top:12px;max-width:340px;line-height:1.5;}
+/* The Adapt To Life credit is a link; without this it is indistinguishable from the sentence around it. */
+.foot .tagline a{color:var(--ink2);text-decoration:underline;text-underline-offset:2px;}
 .foot-links{display:flex;gap:36px 48px;flex-wrap:wrap;}
 .foot-col h2{font-family:'DM Sans',sans-serif;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);font-weight:400;margin:0 0 12px;}
 .foot-col a{display:block;font-size:14px;color:var(--ink2);padding:6px 0;}
 .foot-col a:hover{color:var(--orange);}
 /* Slim footer newsletter line — quiet last-chance capture, not a second billboard */
 .foot-sub{display:flex;align-items:center;justify-content:space-between;gap:18px 40px;flex-wrap:wrap;padding:34px 0;border-bottom:1px solid var(--line);}
-.foot-sub-txt h2{font-family:'DM Sans',sans-serif;font-size:17px;font-weight:700;letter-spacing:-.01em;color:var(--ink);margin:0 0 4px;}
-.foot-sub-txt p{font-size:13px;color:var(--muted);margin:0;}
+/* The newsletter promise lives in the inbox band, once. Down here the form is
+   the actor and this line is its caption, not a second billboard. */
+.foot-sub-txt p{font-size:16px;color:var(--ink2);margin:0;}
 .foot-sub-form{flex:0 0 auto;}
 .fc-sub{display:flex;gap:8px;max-width:400px;}
 .fc-sub input{flex:1 1 auto;height:42px;padding:0 14px;border:1px solid var(--line);border-radius:var(--r);background:var(--paper);color:var(--ink);font-size:14px;min-width:0;}
@@ -843,8 +846,7 @@ body.drawer-open{overflow:hidden;}
   <div class="wrap">
     <div class="foot-sub">
       <div class="foot-sub-txt">
-        <h2>Programs, events &amp; funding near you.</h2>
-        <p>Free directory updates in your inbox. No spam, unsubscribe anytime.</p>
+        <p>We email when there is something worth sending.</p>
       </div>
       <div class="foot-sub-form">
         <div class="fc-sub" id="subWrap">
@@ -1713,7 +1715,6 @@ function empty(){
 
 /* ---- Email CTA: shared value-promise copy (edit here, layout untouched) ---- */
 const CTA_HEAD='Programs, events, and funding near you.';
-const CTA_SUBCOPY='The adaptive sports directory, in your inbox. New programs, grants, and events near you — no spam, unsubscribe anytime.';
 const CTA_BTN='Get updates';
 const CTA_PH='you@email.com';
 /* The one capture form every surface reuses; wired by the delegated form.cta-sub handler.
@@ -1747,7 +1748,7 @@ function ctaBand(){
 
 function heroSection(){
   return '<section class="hero"><div class="wrap hero-in">'
-    +'<p class="eyebrow">Find adaptive sport near you</p>'
+    +'<p class="eyebrow">Find adaptive sports near you</p>'
     +'<h1>Your place in adaptive sports.</h1>'
     +'<p class="lede">Adaptive sports programs, events, equipment and funding across the country. Search by where you are and what you want to play.</p>'
     +'<div class="hsearch" role="search">'
@@ -2681,9 +2682,14 @@ if(BOOT_QP.get('profile')) state.section='profile';
 if(BOOT_QP.get('zip')) state.nearZip=BOOT_QP.get('zip').trim();
 if(BOOT_QP.get('city')) state.nearCity=BOOT_QP.get('city').trim();
 if(isZipQuery(state.q)) state.nearZip=state.q.trim();
-if(BOOT_QP.get('db')==='grants'){ state.section='database'; state.db='grants'; }
+const BOOT_DB=BOOT_QP.get('db');
+if(BOOT_DB==='grants'||BOOT_DB==='programs'){ state.section='database'; state.db=BOOT_DB; }
 render();
 if(BOOT_QP.get('add')==='program') openGate('program');
+/* Deep links for the About panel, so the server-rendered footers can point at the
+   same three sections the app's own footer opens. */
+const BOOT_ABOUT=BOOT_QP.get('about');
+if(BOOT_ABOUT&&document.getElementById('ab-'+BOOT_ABOUT)){ aboutEl.classList.add('open'); document.body.style.overflow='hidden'; document.getElementById('ab-'+BOOT_ABOUT).scrollIntoView({block:'nearest'}); }
 
 /* ============================ LIVE DATA HYDRATION ============================ */
 // Swap the inline sample for the real directory (D1 via /api/programs).

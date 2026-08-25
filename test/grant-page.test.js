@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import {
   grantPageTemplate, grantNotFoundTemplate, GRANT_ID_RE,
-  grantLocLine, grantAudienceLabel, primaryCta,
+  grantLocLine, grantAudienceLabel, primaryCta, listingInnerHtml,
 } from "../src/grant-page.js";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -179,4 +179,22 @@ test("SPA grant sheet reuses listing classes and has no Unverified", () => {
   assert.ok(index.includes("data-db-link=\"grants\"") || index.includes("/?db=grants"));
   assert.ok(!index.includes("Unverified"));
   assert.ok(!index.includes("Last checked"));
+});
+
+// Same split as /programs/:id: the standalone grant page wears the site chrome,
+// the shared inner renderer stays bare for the in-app sheet.
+test("grantPageTemplate: the standalone grant page wears the app header and footer", () => {
+  const html = grantPageTemplate(HUSTLE);
+  assert.ok(html.includes('<header class="hdr">'));
+  assert.ok(html.includes('<footer class="foot">'));
+  assert.ok(html.includes('/site-nav.js?v='));
+  assert.ok(html.includes('<form class="search" role="search" action="/" method="get">'));
+});
+
+test("grant listingInnerHtml: the in-app sheet stays bare", () => {
+  const inner = listingInnerHtml(HUSTLE);
+  assert.ok(!inner.includes("<header"));
+  assert.ok(!inner.includes("<footer"));
+  assert.ok(!inner.includes("site-nav.js"));
+  assert.ok(!inner.includes("<!DOCTYPE"));
 });

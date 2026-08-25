@@ -1,10 +1,13 @@
 // Server-rendered program detail page — the shareable URL for one listing.
+// The standalone page wears the site header and the sitemap footer (shared with
+// /blog via site-chrome.js); the in-app sheet reuses listingInnerHtml only.
 // Same sheet as the in-app detail (public/index.html): Directory header,
 // photo hero, name, city+state (or statewide), primary action, fact rows
 // only when present. A listing, not a marketing page — no invented copy,
 // no verification/trust line. Nearby is a horizontal shelf, not a stack.
 
 import { listingVisual, isCoverVisual, stampAttr } from "./visuals.js";
+import { CHROME_CSS, headerHtml, footerHtml, navScriptHtml } from "./site-chrome.js";
 
 const SITE = "https://adaptivesportsnearme.com";
 
@@ -214,6 +217,10 @@ h1{font-size:clamp(22px,2.8vw,30px);font-weight:700;letter-spacing:-.02em;line-h
 @media(max-width:600px){
   .cta{width:100%;min-width:0;}
 }
+/* The app header owns the top of the page now, so the Directory bar no longer
+   needs the gutter above it. */
+main.wrap{padding-top:0;}
+${CHROME_CSS}
 `;
 
 function page({ title, description, canonical, image, body }) {
@@ -240,15 +247,22 @@ ${ogImage}
 <style>${CSS}</style>
 </head>
 <body>
-<main class="wrap">
+<a class="skip" href="#main">Skip to content</a>
+${headerHtml()}
+<main id="main" class="wrap">
 ${body}
 </main>
+${footerHtml()}
+${navScriptHtml()}
 </body>
 </html>`;
 }
 
 // The listing body shared by /programs/:id and the map tray expanded height.
-// Photo, title, city, desc, fact rows, Visit CTA, nearby rail. No Directory chrome.
+// Photo, title, city, desc, fact rows, Visit CTA, nearby rail. Deliberately
+// bare: the site header and footer belong to the standalone page's wrapper
+// (page() below), never here, because in the app this HTML is already inside
+// the app's own chrome.
 export function listingInnerHtml(org, { nearby = [] } = {}) {
   const name = org.name || "Adaptive sports program";
   const sport = org.sportLabel || "Multi-Sport";

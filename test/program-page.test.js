@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   programPageTemplate, programNotFoundTemplate, PROGRAM_ID_RE,
-  locLine, photoPath, typeLabel, primaryCta,
+  locLine, photoPath, typeLabel, primaryCta, listingInnerHtml,
 } from "../src/program-page.js";
 
 const ORG = {
@@ -213,7 +213,10 @@ test("programPageTemplate: Kansas Omnium still has an action + nearby strip", ()
   assert.ok(html.includes("Wichita, KS"));
   assert.equal(html.split("Sunflower Adaptive Cycling").length - 1, 1);
   assert.equal((html.match(/class="nearby"/g) || []).length, 1);
-  assert.equal((html.match(/<h2>/g) || []).length, 1);
+  // One section heading in the listing itself. The sitemap footer's column
+  // headings are chrome, so count inside <main> only.
+  const listing = html.slice(html.indexOf("<main"), html.indexOf("</main>"));
+  assert.equal((listing.match(/<h2>/g) || []).length, 1);
   assert.ok(html.includes("Nearby adaptive cycling"));
   assert.ok(!html.includes("class=\"desc\""));
   assert.ok(!html.includes("Unverified"));
@@ -306,4 +309,48 @@ test("programNotFoundTemplate: no launch modal, says not found", () => {
   const html = programNotFoundTemplate({ site: "https://example.test" });
   assert.ok(html.includes("Program not found"));
   assert.ok(!html.includes("We are not live yet"));
+});
+
+// ---- the chrome split -------------------------------------------------------
+// The standalone page is where Google lands strangers, so it wears the site
+// header and the sitemap footer. The same listing opened inside the app is
+// already surrounded by the app's chrome, so the shared inner renderer must
+// stay bare. If these two ever agree, the in-app sheet has grown a second
+// header.
+
+test("programPageTemplate: the standalone page wears the app header and footer", () => {
+  const html = programPageTemplate(ORG);
+  assert.ok(html.includes('<header class="hdr">'));
+  assert.ok(html.includes('class="menu-btn"'));
+  assert.ok(html.includes('class="hdr-add"'));
+  assert.ok(html.includes('<footer class="foot">'));
+  assert.ok(html.includes('Skip to content'));
+  assert.ok(html.includes('/site-nav.js?v='));
+  // 64px header and 44px tap targets survive.
+  assert.ok(html.includes(".hdr-in{max-width:1280px;margin:0 auto;padding:0 var(--space-page);height:var(--space-header)"));
+  assert.ok(html.includes("--space-header: 64px"));
+  assert.ok(html.includes("--tap: 44px"));
+  // The search field goes somewhere real: GET /?q=, which index.html boots on.
+  assert.ok(html.includes('<form class="search" role="search" action="/" method="get">'));
+  assert.ok(html.includes('name="q"'));
+});
+
+test("programNotFoundTemplate: the 404 wears the same chrome", () => {
+  const html = programNotFoundTemplate({ site: "https://example.test" });
+  assert.ok(html.includes('<header class="hdr">'));
+  assert.ok(html.includes('<footer class="foot">'));
+});
+
+test("listingInnerHtml: the in-app sheet stays bare", () => {
+  const inner = listingInnerHtml(ORG, { nearby: [] });
+  assert.ok(!inner.includes("<header"));
+  assert.ok(!inner.includes("<footer"));
+  assert.ok(!inner.includes("hdr"));
+  assert.ok(!inner.includes("menu-btn"));
+  assert.ok(!inner.includes("foot"));
+  assert.ok(!inner.includes("site-nav.js"));
+  assert.ok(!inner.includes("Skip to content"));
+  assert.ok(!inner.includes("<!DOCTYPE"));
+  // It is still the listing.
+  assert.ok(inner.includes("Denver Rolling Nuggets"));
 });

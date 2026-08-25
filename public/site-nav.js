@@ -83,6 +83,9 @@
     "body.drawer-open{overflow:hidden;}" +
     ".drawer{position:fixed;top:0;left:0;bottom:0;width:min(320px,86vw);background:var(--paper);z-index:120;transform:translateX(-100%);transition:transform .28s var(--ease);display:flex;flex-direction:column;overflow-y:auto;box-shadow:var(--shadow-lg);}" +
     ".drawer.open{transform:none;}" +
+    /* Host pages that don't reset <a> (the listing pages set only a colour)
+       otherwise render every drawer row underlined. */
+    ".drawer a{text-decoration:none;}" +
     ".drawer-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 16px 14px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--paper);z-index:1;}" +
     ".drawer-head b{font-family:'DM Sans',sans-serif;font-weight:700;font-size:15px;letter-spacing:-.015em;color:var(--ink);}" +
     ".drawer-profile{display:flex;align-items:center;gap:11px;width:100%;text-align:left;padding:11px 16px;background:none;transition:background .15s;}" +
