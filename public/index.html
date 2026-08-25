@@ -280,6 +280,10 @@ input,select{font-family:inherit;}
 #livemap{position:absolute;inset:0;}
 .mpill{display:flex;align-items:center;gap:6px;min-height:var(--tap);background:#fff;border:1px solid var(--line);border-radius:999px;padding:7px 12px;font-family:'DM Sans',sans-serif;font-weight:700;font-size:13px;color:var(--ink);box-shadow:0 2px 10px rgba(20,18,14,.18);cursor:pointer;transition:background .12s,color .12s;white-space:nowrap;touch-action:manipulation;}
 .mpill .mc{font-weight:600;color:var(--muted);}
+/* Region chip for the zoomed-out country: the same paper pill, one step up, so
+   "West 312" reads as a place rather than a blob. */
+.mpill-region{font-size:14.5px;padding:9px 15px;gap:7px;}
+@media(max-width:720px){.mpill-region{font-size:13.5px;padding:8px 11px;gap:5px;}}
 /* A pill under the cursor rises above its neighbours so its label is never
    half-covered by the state next door. */
 .mpill:hover,.mpill:focus-visible,.mpill.active{background:var(--ink);color:#fff;z-index:5;}
@@ -1321,6 +1325,23 @@ const PAN_BOUNDS=[[-179,-16],[-45,71]]; // Americas only; Mercator midpoint sits
 // down the open Atlantic: deterministic, no leader lines, and small enough at
 // street zoom to still read as the same state.
 const PILL_NUDGE={VT:[-30,-44],ME:[-30,-30],NH:[22,-28],MA:[56,-18],RI:[64,8],CT:[38,54],NJ:[48,53],DE:[72,60],MD:[26,34],DC:[40,86]};
+/* ---- region clustering (mirrors src/map-regions.js — change both) ----
+   Zoomed out, the country is four US Census region chips; zoom past
+   CLUSTER_MAX_ZOOM and they split into the per-state pills. Census REGIONS and
+   not Census DIVISIONS because nobody scanning for Kansas thinks "West North
+   Central", and clustering must never make someone guess which chip holds their
+   state. Four chips also fit across a 390px phone; nine do not. */
+const CENSUS_REGIONS={Northeast:['CT','ME','MA','NH','RI','VT','NJ','NY','PA'],Midwest:['IL','IN','MI','OH','WI','IA','KS','MN','MO','NE','ND','SD'],South:['DE','DC','FL','GA','MD','NC','SC','VA','WV','AL','KY','MS','TN','AR','LA','OK','TX'],West:['AZ','CO','ID','MT','NV','NM','UT','WY','AK','CA','HI','OR','WA']};
+// AK and HI are Census West but never draw as West: their programs sit thousands
+// of miles from that chip. They keep their own pill at every zoom, where nothing
+// can collide with them. Territories have no Census region at all, same rule.
+const OFFSHORE_STATES=['AK','HI'];
+const REGION_ANCHOR={Northeast:[-77.5,42],Midwest:[-97.5,43],South:[-88,32.5],West:[-115,41.5]};
+const CLUSTER_MAX_ZOOM=4, REGION_ZOOM_MARGIN=.35, REGION_MAX_ZOOM=6.5;
+const REGION_OF={}; Object.keys(CENSUS_REGIONS).forEach(r=>CENSUS_REGIONS[r].forEach(s=>{REGION_OF[s]=r;}));
+function clusterKeyFor(s){ const k=String(s||'').toUpperCase(); if(!k) return ''; return OFFSHORE_STATES.indexOf(k)>=0?k:(REGION_OF[k]||k); }
+function shouldCluster(z){ return Number(z)<CLUSTER_MAX_ZOOM; }
+function regionZoom(z){ const f=CLUSTER_MAX_ZOOM+REGION_ZOOM_MARGIN; return Number.isFinite(z)?Math.min(Math.max(z,f),REGION_MAX_ZOOM):f; }
 function loadMapLibre(){
   // vendored same-origin (assets/vendor/) so the service worker caches it and
   // the only third party involved is the tile server itself
@@ -1350,7 +1371,7 @@ async function initLiveMap(list,opts){
   stateLevel.forEach(p=>{ const k=p.state||'US'; if(!byState.has(k)) byState.set(k,[]); byState.get(k).push(p); });
   liveMap=new ml.Map({container:el, style:OFM_STYLE, center:[-96.9,38.5], zoom:3.4, attributionControl:{compact:true}});
   liveMap.addControl(new ml.NavigationControl({showCompass:false}),'top-right');
-  const pts=[];
+  const pts=[], statePills=[], regionPills=[], byRegion=new Map();
   const oneState=byState.size===1;
   const ring=oneState&&!explorer&&[...byState.values()][0].length<=12; // numbered ring only when it stays readable
   if(ring){
@@ -1375,7 +1396,22 @@ async function initLiveMap(list,opts){
       const n=PILL_NUDGE[k], f=window.innerWidth<=720?0.5:1;
       const nudge=n?[n[0]*f,n[1]*f]:null;
       pts.push([p.lng,p.lat]);
-      new ml.Marker(nudge?{element:d,offset:nudge}:{element:d}).setLngLat([p.lng,p.lat]).addTo(liveMap);
+      const m=new ml.Marker(nudge?{element:d,offset:nudge}:{element:d}).setLngLat([p.lng,p.lat]);
+      const key=clusterKeyFor(k);
+      // Mainland states fold into a region chip when zoomed out; AK, HI and the
+      // territories have no mainland chip to fold into, so they are always up.
+      if(REGION_ANCHOR[key]){ statePills.push(m); byRegion.has(key)||byRegion.set(key,{count:0,pts:[]});
+        const g=byRegion.get(key); g.count+=arr.length; g.pts.push([p.lng,p.lat]); }
+      else m.addTo(liveMap);
+    });
+    // One chip per region, name plus count, so nobody has to guess which one
+    // holds their state. Skipped when it would not actually merge anything.
+    if(byRegion.size>1&&byRegion.size<byState.size) byRegion.forEach((g,key)=>{
+      const d=document.createElement('button'); d.className='mpill mpill-region'; d.setAttribute('data-region',key);
+      d.innerHTML='<span>'+key+'</span><span class="mc">'+g.count+'</span>';
+      d.setAttribute('aria-label',key+': '+g.count+' programs. Zoom in for states.');
+      d.addEventListener('click',()=>zoomToRegion(g.pts));
+      regionPills.push(new ml.Marker({element:d}).setLngLat(REGION_ANCHOR[key]));
     });
   }
   precise.forEach(p=>{
@@ -1385,6 +1421,18 @@ async function initLiveMap(list,opts){
     d.addEventListener('click',e=>selectMapPin(p,e));
     pts.push([p.lng,p.lat]); new ml.Marker({element:d}).setLngLat([p.lng,p.lat]).addTo(liveMap);
   });
+  // Swap the two marker sets when the threshold is crossed. The markers are built
+  // once and re-attached, never rebuilt, and zoomend fires per gesture rather than
+  // per frame. mapToken keeps a stale map's handler from touching a fresh one.
+  let clustered=null;
+  function applyClusterMode(on){
+    if(token!==mapToken||!liveMap||on===clustered) return;
+    clustered=on;
+    (on?statePills:regionPills).forEach(m=>m.remove());
+    (on?regionPills:statePills).forEach(m=>m.addTo(liveMap));
+  }
+  const canCluster=regionPills.length>0;
+  liveMap.on('zoomend',()=>{ applyClusterMode(canCluster&&shouldCluster(liveMap.getZoom())); });
   liveMap.on('click',e=>{
     const t=e.originalEvent&&e.originalEvent.target;
     if(t&&t.closest&&t.closest('.mdot,.mpin,.mpill,.map-tray,.maplibregl-ctrl,.mapx-close,.mapx-open,.mapx-drawer,.mapchip')) return;
@@ -1407,6 +1455,23 @@ async function initLiveMap(list,opts){
   // wide frame on a tall phone viewport ever has to be clamped, it lands on the
   // United States instead of Hudson Bay.
   liveMap.setMaxBounds(PAN_BOUNDS);
+  // Decide against the frame we actually landed on, not the constructor zoom: a
+  // 390px phone opens below the threshold and starts on region chips, a 1440px
+  // desktop opens above it and starts on states.
+  applyClusterMode(canCluster&&shouldCluster(liveMap.getZoom()));
+}
+// The CSS reduced-motion block cannot reach a MapLibre camera move, so the map
+// asks for itself.
+function mapMotionMs(ms){ try{ return matchMedia('(prefers-reduced-motion: reduce)').matches?0:ms; }catch(_){ return ms; } }
+// A region chip zooms to its states. Floored past the threshold so the state
+// pills always turn up, even for a region too wide to fit on the screen.
+function zoomToRegion(pts){
+  if(!liveMap||!pts||!pts.length) return;
+  const lngs=pts.map(m=>m[0]), lats=pts.map(m=>m[1]);
+  const b=[[Math.min(...lngs),Math.min(...lats)],[Math.max(...lngs),Math.max(...lats)]];
+  let cam=null; try{ cam=liveMap.cameraForBounds(b,{padding:window.innerWidth>720?80:44}); }catch(_){}
+  const c=(cam&&cam.center)||[(b[0][0]+b[1][0])/2,(b[0][1]+b[1][1])/2];
+  liveMap.easeTo({center:c,zoom:regionZoom(cam&&cam.zoom),duration:mapMotionMs(650)});
 }
 // Called after every view paint: stand up or tear down map instances to match.
 function afterRender(){
@@ -1452,7 +1517,7 @@ function mapxShowState(k){
   d.querySelector('.mapxd-foot a').setAttribute('data-mapx-dir',name);
   d.hidden=false;
   const p0=list.find(p=>p.lat!=null);
-  if(liveMap&&p0) liveMap.easeTo({center:[p0.lng,p0.lat],zoom:5.2,duration:650});
+  if(liveMap&&p0) liveMap.easeTo({center:[p0.lng,p0.lat],zoom:5.2,duration:mapMotionMs(650)});
   closeMapTray();
 }
 
