@@ -60,6 +60,9 @@ button{font:inherit;color:inherit;border:0;background:none;padding:0;cursor:poin
 .foot-col h2{font-family:'DM Sans',sans-serif;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);font-weight:400;margin:0 0 12px;}
 .foot-col a{display:block;font-size:14px;color:var(--ink2);padding:6px 0;transition:color .15s;}
 .foot-col a:hover{color:var(--orange);}
+/* Same mobile behaviour as the app's footer: three columns stay three columns
+   instead of wrapping two-plus-one. */
+@media(max-width:720px){.foot-cols{width:100%;justify-content:space-between;gap:32px 16px;}}
 `;
 
 // Hamburger · brand · search · orange "+". Every control is a plain link or a
@@ -81,16 +84,22 @@ export function headerHtml() {
 </header>`;
 }
 
+// Same three columns, same order, same destinations as the app's own footer in
+// public/index.html. The app opens them through click handlers; these are the
+// URLs those handlers land on, so the two pages never disagree about what the
+// site contains. "Browse by sport" is a filter rather than a destination, so it
+// stays where it works, in the drawer.
 export function footerHtml() {
   return `<footer class="foot">
   <div class="foot-in">
     <div class="foot-brand">
       <a class="brand" href="/"><b>Adaptive Sports Near Me</b></a>
-      <p class="tagline">An open directory of adaptive sports programs across the country. No logins, no walls. Built for the community.</p>
+      <p class="tagline">An open directory of adaptive sports programs across the country. No logins, no walls, because it is a free service of <a href="https://adapttolife.org" target="_blank" rel="noopener">Adapt To Life</a>, a recognized 501(c)(3) nonprofit.</p>
     </div>
     <div class="foot-cols">
-      <div class="foot-col"><h2>Explore</h2><a href="/">Discover</a><a href="/maps">Map view</a><a href="/events">Events</a><a href="/blog">All stories</a></div>
-      <div class="foot-col"><h2>About</h2><a href="/">The project</a><a href="https://sign.adapttolife.org/waiver?source=asnm">Sign waiver</a></div>
+      <div class="foot-col"><h2>Explore</h2><a href="/">Discover</a><a href="/maps">Map view</a><a href="/?db=programs">Browse all</a><a href="/events">Events</a><a href="/?db=grants">Funding</a><a href="/blog">Blog</a></div>
+      <div class="foot-col"><h2>Programs</h2><a href="/?add=program">Add a program</a><a href="/?add=program">Update a listing</a></div>
+      <div class="foot-col"><h2>About</h2><a href="/?about=project">The project</a><a href="/?about=verify">How we verify</a><a href="/?about=a11y">Accessibility</a><a href="/?profile=1">Your profile</a><a href="https://adapttolife.org" target="_blank" rel="noopener">Adapt To Life</a><a href="https://sign.adapttolife.org/waiver?source=asnm">Sign waiver</a></div>
     </div>
   </div>
 </footer>`;

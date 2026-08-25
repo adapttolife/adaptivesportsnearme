@@ -594,6 +594,8 @@ a.evrow:hover{border-color:var(--ink);box-shadow:var(--shadow-sm);}
 .foot-in{display:flex;align-items:flex-start;justify-content:space-between;gap:44px 32px;padding-top:56px;padding-bottom:48px;flex-wrap:wrap;}
 .foot .brand b{font-size:15px;}
 .foot .tagline{font-size:14px;color:var(--muted);margin-top:12px;max-width:340px;line-height:1.5;}
+/* The Adapt To Life credit is a link; without this it is indistinguishable from the sentence around it. */
+.foot .tagline a{color:var(--ink2);text-decoration:underline;text-underline-offset:2px;}
 .foot-links{display:flex;gap:36px 48px;flex-wrap:wrap;}
 .foot-col h2{font-family:'DM Sans',sans-serif;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);font-weight:400;margin:0 0 12px;}
 .foot-col a{display:block;font-size:14px;color:var(--ink2);padding:6px 0;}
@@ -2681,9 +2683,14 @@ if(BOOT_QP.get('profile')) state.section='profile';
 if(BOOT_QP.get('zip')) state.nearZip=BOOT_QP.get('zip').trim();
 if(BOOT_QP.get('city')) state.nearCity=BOOT_QP.get('city').trim();
 if(isZipQuery(state.q)) state.nearZip=state.q.trim();
-if(BOOT_QP.get('db')==='grants'){ state.section='database'; state.db='grants'; }
+const BOOT_DB=BOOT_QP.get('db');
+if(BOOT_DB==='grants'||BOOT_DB==='programs'){ state.section='database'; state.db=BOOT_DB; }
 render();
 if(BOOT_QP.get('add')==='program') openGate('program');
+/* Deep links for the About panel, so the server-rendered footers can point at the
+   same three sections the app's own footer opens. */
+const BOOT_ABOUT=BOOT_QP.get('about');
+if(BOOT_ABOUT&&document.getElementById('ab-'+BOOT_ABOUT)){ aboutEl.classList.add('open'); document.body.style.overflow='hidden'; document.getElementById('ab-'+BOOT_ABOUT).scrollIntoView({block:'nearest'}); }
 
 /* ============================ LIVE DATA HYDRATION ============================ */
 // Swap the inline sample for the real directory (D1 via /api/programs).

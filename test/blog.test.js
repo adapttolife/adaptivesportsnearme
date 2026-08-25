@@ -1,6 +1,9 @@
 // blog lane tests (Lane C) — pure functions only, no caches.default/Request mocking.
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { dirname, join } from "node:path";
 import {
   sanitizeHtml, normalizePosts, normalizePostDetail, findPostBySlug, formatPostDate,
   blogIndexTemplate, blogPostTemplate, blogFallbackTemplate, blogNotFoundTemplate,
@@ -203,4 +206,33 @@ test("blogNotFoundTemplate: friendly 404 copy, links back to /blog", () => {
   const html = blogNotFoundTemplate({ site: SITE });
   assert.ok(html.includes("Story not found"));
   assert.ok(html.includes('href="/blog"'));
+});
+
+// ---- footer IA parity ----------------------------------------------------------
+// The server-rendered footer used to be a two-column subset of the app's three,
+// so /blog and / disagreed about what the site contains. Lock the columns and
+// the destinations together, and keep every href a real URL the app boots on.
+
+test("the shared footer names the same three columns as the app's footer", () => {
+  const root = join(dirname(fileURLToPath(import.meta.url)), "..");
+  const appIndex = readFileSync(join(root, "public/index.html"), "utf8");
+  const html = blogIndexTemplate([], { site: SITE });
+
+  for (const col of ["Explore", "Programs", "About"]) {
+    assert.ok(html.includes(`<h2>${col}</h2>`), `footer is missing the ${col} column`);
+    assert.ok(appIndex.includes(`<h2>${col}</h2>`), `app footer is missing the ${col} column`);
+  }
+  for (const label of [
+    "Discover", "Map view", "Browse all", "Events", "Funding", "Blog",
+    "Add a program", "Update a listing",
+    "The project", "How we verify", "Accessibility", "Your profile",
+    "Adapt To Life", "Sign waiver",
+  ]) {
+    assert.ok(html.includes(`>${label}</a>`), `footer is missing ${label}`);
+    assert.ok(appIndex.includes(`>${label}</a>`), `app footer is missing ${label}`);
+  }
+  // No dead links: the app boots these query params (see BOOT_QP in index.html).
+  assert.ok(appIndex.includes("BOOT_DB==='programs'"));
+  assert.ok(appIndex.includes("BOOT_ABOUT"));
+  assert.ok(!html.includes('href="#"'));
 });
