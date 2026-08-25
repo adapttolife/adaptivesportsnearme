@@ -1458,6 +1458,9 @@ async function initLiveMap(list,opts){
   // desktop opens above it and starts on states.
   applyClusterMode(canCluster&&shouldCluster(liveMap.getZoom()));
 }
+// The CSS reduced-motion block cannot reach a MapLibre camera move, so the map
+// asks for itself.
+function mapMotionMs(ms){ try{ return matchMedia('(prefers-reduced-motion: reduce)').matches?0:ms; }catch(_){ return ms; } }
 // A region chip zooms to its states. Floored past the threshold so the state
 // pills always turn up, even for a region too wide to fit on the screen.
 function zoomToRegion(pts){
@@ -1466,7 +1469,7 @@ function zoomToRegion(pts){
   const b=[[Math.min(...lngs),Math.min(...lats)],[Math.max(...lngs),Math.max(...lats)]];
   let cam=null; try{ cam=liveMap.cameraForBounds(b,{padding:window.innerWidth>720?80:44}); }catch(_){}
   const c=(cam&&cam.center)||[(b[0][0]+b[1][0])/2,(b[0][1]+b[1][1])/2];
-  liveMap.easeTo({center:c,zoom:regionZoom(cam&&cam.zoom),duration:650});
+  liveMap.easeTo({center:c,zoom:regionZoom(cam&&cam.zoom),duration:mapMotionMs(650)});
 }
 // Called after every view paint: stand up or tear down map instances to match.
 function afterRender(){
@@ -1512,7 +1515,7 @@ function mapxShowState(k){
   d.querySelector('.mapxd-foot a').setAttribute('data-mapx-dir',name);
   d.hidden=false;
   const p0=list.find(p=>p.lat!=null);
-  if(liveMap&&p0) liveMap.easeTo({center:[p0.lng,p0.lat],zoom:5.2,duration:650});
+  if(liveMap&&p0) liveMap.easeTo({center:[p0.lng,p0.lat],zoom:5.2,duration:mapMotionMs(650)});
   closeMapTray();
 }
 
