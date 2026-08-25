@@ -1,10 +1,13 @@
-// Server-rendered grant detail page — same sheet as /programs/:id.
+// Server-rendered grant detail page — same sheet as /programs/:id, and the same
+// chrome: it is a standalone shareable URL, so it wears the site header and the
+// sitemap footer from site-chrome.js.
 // Photo hero, name, funder/amount/deadline, Apply CTA, fact rows only when
 // present. Other grants is a horizontal rail, not miles. No invented copy,
 // no verification/trust line.
 
 import { SPORT_PHOTOS, photoPath } from "./program-page.js";
 import { listingVisual, isCoverVisual, stampAttr } from "./visuals.js";
+import { CHROME_CSS, headerHtml, footerHtml, navScriptHtml } from "./site-chrome.js";
 
 const SITE = "https://adaptivesportsnearme.com";
 
@@ -190,6 +193,10 @@ h1{font-size:clamp(22px,2.8vw,30px);font-weight:700;letter-spacing:-.02em;line-h
 @media(max-width:600px){
   .cta{width:100%;min-width:0;}
 }
+/* The app header owns the top of the page now, so the Grants bar no longer
+   needs the gutter above it. */
+main.wrap{padding-top:0;}
+${CHROME_CSS}
 `;
 
 function page({ title, description, canonical, image, body }) {
@@ -216,9 +223,13 @@ ${ogImage}
 <style>${CSS}</style>
 </head>
 <body>
-<main class="wrap">
+<a class="skip" href="#main">Skip to content</a>
+${headerHtml()}
+<main id="main" class="wrap">
 ${body}
 </main>
+${footerHtml()}
+${navScriptHtml()}
 </body>
 </html>`;
 }
