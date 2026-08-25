@@ -602,8 +602,9 @@ a.evrow:hover{border-color:var(--ink);box-shadow:var(--shadow-sm);}
 .foot-col a:hover{color:var(--orange);}
 /* Slim footer newsletter line — quiet last-chance capture, not a second billboard */
 .foot-sub{display:flex;align-items:center;justify-content:space-between;gap:18px 40px;flex-wrap:wrap;padding:34px 0;border-bottom:1px solid var(--line);}
-.foot-sub-txt h2{font-family:'DM Sans',sans-serif;font-size:17px;font-weight:700;letter-spacing:-.01em;color:var(--ink);margin:0 0 4px;}
-.foot-sub-txt p{font-size:13px;color:var(--muted);margin:0;}
+/* The newsletter promise lives in the inbox band, once. Down here the form is
+   the actor and this line is its caption, not a second billboard. */
+.foot-sub-txt p{font-size:16px;color:var(--ink2);margin:0;}
 .foot-sub-form{flex:0 0 auto;}
 .fc-sub{display:flex;gap:8px;max-width:400px;}
 .fc-sub input{flex:1 1 auto;height:42px;padding:0 14px;border:1px solid var(--line);border-radius:var(--r);background:var(--paper);color:var(--ink);font-size:14px;min-width:0;}
@@ -845,8 +846,7 @@ body.drawer-open{overflow:hidden;}
   <div class="wrap">
     <div class="foot-sub">
       <div class="foot-sub-txt">
-        <h2>Programs, events &amp; funding near you.</h2>
-        <p>Free directory updates in your inbox. No spam, unsubscribe anytime.</p>
+        <p>We email when there is something worth sending.</p>
       </div>
       <div class="foot-sub-form">
         <div class="fc-sub" id="subWrap">
@@ -1715,7 +1715,6 @@ function empty(){
 
 /* ---- Email CTA: shared value-promise copy (edit here, layout untouched) ---- */
 const CTA_HEAD='Programs, events, and funding near you.';
-const CTA_SUBCOPY='The adaptive sports directory, in your inbox. New programs, grants, and events near you — no spam, unsubscribe anytime.';
 const CTA_BTN='Get updates';
 const CTA_PH='you@email.com';
 /* The one capture form every surface reuses; wired by the delegated form.cta-sub handler.
