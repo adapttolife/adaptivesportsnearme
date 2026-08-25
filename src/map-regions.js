@@ -31,10 +31,10 @@ export const OFFSHORE_STATES = ["AK", "HI"];
 // the phone opens at. Close to each region's bounding-box centre, nudged inland
 // so the Northeast chip does not hang off the right edge of a 390px screen.
 export const REGION_ANCHOR = {
-  Northeast: [-75.5, 42.0],
-  Midwest: [-93.5, 42.5],
+  Northeast: [-77.5, 42.0],
+  Midwest: [-97.5, 43.0],
   South: [-88.0, 32.5],
-  West: [-112.0, 41.5],
+  West: [-115.0, 41.5],
 };
 
 // Below this the country is region pills, at or above it every state gets its

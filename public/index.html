@@ -283,7 +283,7 @@ input,select{font-family:inherit;}
 /* Region chip for the zoomed-out country: the same paper pill, one step up, so
    "West 312" reads as a place rather than a blob. */
 .mpill-region{font-size:14.5px;padding:9px 15px;gap:7px;}
-@media(max-width:720px){.mpill-region{font-size:13.5px;padding:8px 12px;gap:6px;}}
+@media(max-width:720px){.mpill-region{font-size:13.5px;padding:8px 11px;gap:5px;}}
 /* A pill under the cursor rises above its neighbours so its label is never
    half-covered by the state next door. */
 .mpill:hover,.mpill:focus-visible,.mpill.active{background:var(--ink);color:#fff;z-index:5;}
@@ -1334,7 +1334,7 @@ const CENSUS_REGIONS={Northeast:['CT','ME','MA','NH','RI','VT','NJ','NY','PA'],M
 // of miles from that chip. They keep their own pill at every zoom, where nothing
 // can collide with them. Territories have no Census region at all, same rule.
 const OFFSHORE_STATES=['AK','HI'];
-const REGION_ANCHOR={Northeast:[-75.5,42],Midwest:[-93.5,42.5],South:[-88,32.5],West:[-112,41.5]};
+const REGION_ANCHOR={Northeast:[-77.5,42],Midwest:[-97.5,43],South:[-88,32.5],West:[-115,41.5]};
 const CLUSTER_MAX_ZOOM=4, REGION_ZOOM_MARGIN=.35, REGION_MAX_ZOOM=6.5;
 const REGION_OF={}; Object.keys(CENSUS_REGIONS).forEach(r=>CENSUS_REGIONS[r].forEach(s=>{REGION_OF[s]=r;}));
 function clusterKeyFor(s){ const k=String(s||'').toUpperCase(); if(!k) return ''; return OFFSHORE_STATES.indexOf(k)>=0?k:(REGION_OF[k]||k); }
