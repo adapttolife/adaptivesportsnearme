@@ -33,7 +33,7 @@ The default branch on GitHub stays `main`. That is on purpose. It does not mean 
 
 `scripts/deploy.sh prod` is locked on this branch. Do not unlock it.
 
-Auto-deploy to staging from GitHub is a stub until Cloudflare secrets exist on the repo. Until then, a person with Wrangler access deploys the tester on purpose — not from a merge to `main`.
+Auto-deploy to staging from GitHub is not wired. Cloudflare secrets are not on the repo, and the token we have cannot create GitHub Actions workflow files. The intended stub lives in docs/deploy-staging.workflow.yml — staging only, never production. Until a person with workflow+secrets access adds it, a person with Wrangler access deploys the tester on purpose — not from a merge to `main`.
 
 ## Directory tools
 
