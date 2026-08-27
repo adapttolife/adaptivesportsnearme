@@ -2,7 +2,9 @@
 # One deploy path for ASNM. Usage: scripts/deploy.sh sandbox|staging|prod
 # Wraps `cfrun wrangler deploy` and smoke-tests the deployed worker.
 # Lanes: sandbox = v2-milestone workshop (deploy from the v2 branch);
-#        staging = what's next (deploy from main); prod = the live site (gated).
+#        staging = tester (deploy from the staging branch);
+#        prod    = live site — LOCKED. Do not deploy asnm. Do not write asnm-db.
+# Live public count must stay 1544 until Alec unlocks a live ship.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -11,7 +13,17 @@ case "$target" in
   sandbox) args=(--env sandbox); url="https://asnm-sandbox.alec-af3.workers.dev" ;;
   next)    args=(--env next);    url="https://asnm-next.alec-af3.workers.dev" ;;
   staging) args=(--env staging); url="https://asnm-staging.alec-af3.workers.dev" ;;
-  prod)    args=();              url="https://adaptivesportsnearme.com" ;;
+  prod)
+    # LIVE LOCK. Refuse production worker deploy. Public live count must stay 1544.
+    if [ "${ASNM_UNLOCK_LIVE:-}" != "1" ]; then
+      echo "LIVE IS LOCKED. Refusing scripts/deploy.sh prod." >&2
+      echo "This would deploy the production worker (asnm) to adaptivesportsnearme.com." >&2
+      echo "Do not write D1 asnm-db. Public live count must stay 1544." >&2
+      echo "Alec unlocks this. Students do not." >&2
+      exit 1
+    fi
+    args=(); url="https://adaptivesportsnearme.com"
+    ;;
   *) echo "usage: scripts/deploy.sh sandbox|staging|prod" >&2; exit 1 ;;
 esac
 

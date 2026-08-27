@@ -38,16 +38,14 @@ the freshness score — half-life 45 days, computed in the Worker).
 | Gate | `PRELAUNCH=true` (teaser + modal) | `PRELAUNCH=false` (full directory) | `PRELAUNCH=false` |
 | D1 | asnm-db | asnm-db-staging | asnm-db-sandbox (starts empty) |
 | Crons | validate 2h / enrich 20min | same | none (run lanes by hand) |
-| Deploys from | `main`, explicit | `main` | `v2` |
+| Deploys from | `main`, explicit, locked | `staging` | `v2` |
 
-**Branch model (one repo, three lanes):**
+**Branch model (Fall 2026):**
 
-- `main` is the trunk — what collaborators branch from and PR into; deploys to **staging**.
-- `v2` is the long-running milestone branch — the data-infrastructure fill + design-to-data
-  work happens here; collaborator PRs target `v2`; deploys to **sandbox**. When the
-  milestone is done: one PR `v2 → main`, verify on staging, then the prod cutover.
-- **prod only changes via an explicit `scripts/deploy.sh prod`** — merging is never
-  deploying. That separation, not a second repo, is what protects the live site.
+- `staging` is the student integration branch — closest to the tester. Branch off it. Open pull requests **into `staging`**.
+- `main` is the production recipe. Default branch stays `main`. Do not PR into it. Do not merge to it. Do not try to make it match live.
+- Live is locked until Alec says otherwise. Merging is never deploying production.
+- Students: [docs/STUDENTS.md](docs/STUDENTS.md). Directory tools: [tools/directory/README.md](tools/directory/README.md).
 
 The front-end hydrates from `/api/config` + `/api/programs`; if the API is absent or errors,
 the inline sample stays and the page never breaks. Real listings render honestly: no
@@ -57,14 +55,12 @@ outside the 11-photo launch set, state-centroid map pins marked `state-level`.
 ## Deploy
 
 ```
-cd /srv/alec-version-2
-scripts/deploy.sh sandbox   # deploy + smoke test sandbox (from the v2 branch)
-scripts/deploy.sh staging   # deploy + smoke test staging
-scripts/deploy.sh prod      # deploy + smoke test production (keeps the prelaunch gate)
+scripts/deploy.sh staging   # tester only — asnm-staging + asnm-db-staging
+scripts/deploy.sh sandbox   # sandbox workshop (v2)
+# scripts/deploy.sh prod   # LOCKED. Do not. Live public count stays 1,544.
 ```
 
-Launch cutover = set `PRELAUNCH` to `"false"` in the prod `vars` in `wrangler.jsonc`,
-then `scripts/deploy.sh prod`.
+Production stays gated (`PRELAUNCH=true`). Alec unlocks a live ship; students do not.
 
 ## Secrets (per worker, via `wrangler secret put`)
 
