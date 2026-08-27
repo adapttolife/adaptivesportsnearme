@@ -1,0 +1,17 @@
+{
+  "ids": [
+    "6851b8b5-7de0-4a84-b749-cbfef41e133e",
+    "13ca8772-ecd6-4329-8072-d82670f558ef",
+    "f28a3bb7-6e25-42b0-90af-db583ffd0673"
+  ],
+  "prefixes": [
+    "6851b8b5",
+    "13ca8772",
+    "f28a3bb7"
+  ],
+  "notes": {
+    "6851b8b5-7de0-4a84-b749-cbfef41e133e": "Special Olympics California \u2014 do not rewrite parent; children allowed",
+    "13ca8772-ecd6-4329-8072-d82670f558ef": "CAF HQ San Diego \u2014 do not invent CAF-region parents",
+    "f28a3bb7-6e25-42b0-90af-db583ffd0673": "Challenge Aspen \u2014 do not smash into Challenge Alaska"
+  }
+}

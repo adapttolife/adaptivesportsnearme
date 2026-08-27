@@ -1,0 +1,72 @@
+{
+  "pile": {
+    "name": "Example only \u2014 do not apply",
+    "slug": "example",
+    "region": "WI",
+    "approved": false,
+    "approved_by": "",
+    "approved_at": null
+  },
+  "do_not_touch": [
+    "6851b8b5-7de0-4a84-b749-cbfef41e133e"
+  ],
+  "taps": [
+    "elkhorn"
+  ],
+  "queue": {
+    "approve": [],
+    "reject": []
+  },
+  "fills": [
+    {
+      "id": "00000000-0000-4000-8000-000000000001",
+      "source_url": "https://example.org/program",
+      "fields": {
+        "city": "Elkhorn",
+        "state": "WI",
+        "state_name": "Wisconsin",
+        "website_url": "https://example.org/program",
+        "email": null,
+        "phone": null,
+        "zip": null,
+        "description": "Official facts only. Blank if not stated."
+      }
+    }
+  ],
+  "folds": [],
+  "adds": [
+    {
+      "name": "Example leftover city game",
+      "parent_id": "00000000-0000-4000-8000-000000000001",
+      "sport": "Adaptive Soccer",
+      "sport_key": "soccer",
+      "sports": [
+        "soccer"
+      ],
+      "website_url": "https://example.org/game",
+      "source_url": "https://example.org/game",
+      "city": "Elkhorn",
+      "state": "WI",
+      "state_name": "Wisconsin",
+      "email": null,
+      "phone": null,
+      "zip": null,
+      "description": "Official leftover city game. Not Adaptive Sports Wisconsin.",
+      "cost_note": null,
+      "equipment_provided": null,
+      "ages": null
+    }
+  ],
+  "holds": [
+    {
+      "name": "Example with no printed date",
+      "reason": "no printed date"
+    }
+  ],
+  "outs": [
+    {
+      "name": "Adaptive Sports Wisconsin",
+      "reason": "invented name"
+    }
+  ]
+}
