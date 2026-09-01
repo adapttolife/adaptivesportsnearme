@@ -1,4 +1,4 @@
--- 0004 — the description contract.
+-- 0005 — the description contract. (0004 is grants, on the staging branch.)
 --
 -- `description` is public copy shown to an athlete. The pipeline's verification
 -- memos ("Official ... is still that program", "Do not invent a gym", "Not

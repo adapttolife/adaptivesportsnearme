@@ -12,7 +12,7 @@
 //   node scripts/repair-public-text.mjs --env staging
 //   node scripts/repair-public-text.mjs --env staging --apply
 //
-// Background: docs/FIELD-CONTRACTS.md, db/migrations/0004_description_contract.sql
+// Background: docs/FIELD-CONTRACTS.md, db/migrations/0005_description_contract.sql
 
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";
