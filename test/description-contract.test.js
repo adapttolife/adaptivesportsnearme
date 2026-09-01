@@ -128,6 +128,11 @@ const REAL_MEMOS_OTHER_FIELDS = [
   "Those pages do not print a Warriors Unlimited calendar - none invented.",
   "Not CAF-Far-North / CAF-Shasta (invented names).",
   "Office hours 8:30am-7:15pm are desk hours, not class hours.",
+  // Survivors of the first live repair, caught by reading the live corpus:
+  "Org is not marked gone from a dead Tripod host alone.",
+  "Org is not marked inactive from the 404 alone.",
+  "Chapters index does not print Reno / Nevada this pass.",
+  "Listing kept as stale.",
 ];
 
 test("the memo voice is refused in every public field, not just description", () => {
