@@ -1,0 +1,39 @@
+{
+  // The REAL production config for the live site (worker "asnm",
+  // adaptivesportsnearme.com). Used ONLY by `scripts/deploy.sh prod`, which is
+  // locked behind ASNM_UNLOCK_LIVE=1. Alec unlocks live ships. Students never.
+  //
+  // This lives in its own file because the repo's top-level wrangler.jsonc is
+  // a DECOY: a Cloudflare Workers Builds trigger (installed 2026-06-26,
+  // discovered 2026-09-01 after it deployed the trunk to the live site five
+  // times in one night) runs `npx wrangler deploy` on every push to main,
+  // deploying whatever the top-level config names. Pointing the top level at
+  // a routeless scratch worker makes that trigger harmless. Do not "clean
+  // this up" by merging the two files - that re-arms the trigger.
+  "name": "asnm",
+  "compatibility_date": "2026-06-26",
+  "main": "src/index.js",
+  "workers_dev": true,
+  "preview_urls": true,
+  "routes": [
+    { "pattern": "adaptivesportsnearme.com", "custom_domain": true },
+    { "pattern": "www.adaptivesportsnearme.com", "custom_domain": true }
+  ],
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    "not_found_handling": "404-page",
+    "html_handling": "auto-trailing-slash"
+  },
+  "vars": {
+    "AIRTABLE_BASE_ID": "apphZsPGanzJ5xyl7",
+    "AIRTABLE_INBOX_TABLE_ID": "tblBcgV7oQ9Q3q34L",
+    "ENV_NAME": "production",
+    "PRELAUNCH": "true"
+  },
+  "d1_databases": [
+    { "binding": "DB", "database_name": "asnm-db", "database_id": "d8566621-99b1-4430-af47-d107ed64195e" }
+  ],
+  "triggers": { "crons": ["0 */2 * * *", "*/20 * * * *"] },
+  "observability": { "enabled": true }
+}

@@ -22,7 +22,7 @@ case "$target" in
       echo "Alec unlocks this. Students do not." >&2
       exit 1
     fi
-    args=(); url="https://adaptivesportsnearme.com"
+    args=(--config wrangler.prod.jsonc); url="https://adaptivesportsnearme.com"
     ;;
   *) echo "usage: scripts/deploy.sh sandbox|staging|prod" >&2; exit 1 ;;
 esac

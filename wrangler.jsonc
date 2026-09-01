@@ -4,15 +4,16 @@
   // everything else is served from ./public via the ASSETS binding.
   // Deploy:  scripts/deploy.sh staging  -> https://asnm-staging.alec-af3.workers.dev (ungated, real data)
   //          scripts/deploy.sh prod    -> adaptivesportsnearme.com (gated prelaunch)
-  "name": "asnm",
+  "name": "asnm-trunk-decoy",
   "compatibility_date": "2026-06-26",
   "main": "src/index.js",
-  "workers_dev": true,
-  "preview_urls": true,
-  "routes": [
-    { "pattern": "adaptivesportsnearme.com", "custom_domain": true },
-    { "pattern": "www.adaptivesportsnearme.com", "custom_domain": true }
-  ],
+  "workers_dev": false,
+  "preview_urls": false,
+  // NO routes, NO crons, staging D1: this top level is a deliberate decoy.
+  // A Workers Builds trigger deploys it on every push to main (see
+  // wrangler.prod.jsonc header for the 2026-09-01 incident). The real live
+  // config is wrangler.prod.jsonc, shipped only via scripts/deploy.sh prod.
+  "routes": [],
   "assets": {
     "directory": "./public",
     "binding": "ASSETS",
