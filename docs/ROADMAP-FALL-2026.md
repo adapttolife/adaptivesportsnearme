@@ -33,7 +33,11 @@ The programs door is open *in Wisconsin*. Run it with `--place MT` or
 `--place WY` and it is closed: listings exist there but none carry a city plus
 a website, phone, or email — nothing a stranger could act on. New York has 41
 listings and exactly one actionable. **The programs door opens state by state,
-and the map of closed states is the enrichment backlog.**
+and the map of closed states is the enrichment backlog. Swept across all 52
+jurisdictions on 2026-08-31: **open in 27 states, closed in 24** (each closed
+state already has listings waiting for enrichment — MD has 21, NC and PA have
+30 each), empty only in PR. "Open the programs door in all 50 states" is a
+semester-sized goal with a per-state scoreboard.**
 
 ## What we build (the four doors, plus the engine under them)
 
