@@ -26,6 +26,9 @@ function opt(name, fallback) {
   return i >= 0 ? args[i + 1] : fallback;
 }
 const BASE = (opt("base", "https://asnm-staging.alec-af3.workers.dev")).replace(/\/$/, "");
+// --launch: Karen's v1.0 gate (2026-08-31): programs + grants + the letter.
+// Events stays on the full scoreboard as the first post-launch ship.
+const LAUNCH = args.includes("--launch");
 // Default place: Karen's home state. Override with --place.
 const PLACE = (opt("place", "WI")).toUpperCase();
 
@@ -100,17 +103,18 @@ const doors = [];
 }
 
 // ---- report ----
-console.log(`\nFour-doors check — ${BASE}  (place: ${PLACE})\n`);
+const scored = LAUNCH ? doors.filter((d) => d.door !== "Events") : doors;
+console.log(`\n${LAUNCH ? "Launch gate (v1.0: programs, grants, the letter)" : "Four-doors check"} — ${BASE}  (place: ${PLACE})\n`);
 let openCount = 0;
-for (const d of doors) {
+for (const d of scored) {
   const mark = d.open ? "OPEN  " : "CLOSED";
   if (d.open) openCount++;
   console.log(`  ${mark}  ${d.door.padEnd(12)} ${d.detail}`);
 }
-console.log(`\n  ${openCount} of 4 doors open.`);
+console.log(`\n  ${openCount} of ${scored.length} doors open.`);
 console.log(
-  openCount === 4
+  openCount === scored.length
     ? "  Every door opens. Now ask Karen — this script is the rehearsal, she is the test.\n"
     : "  Not open yet. That is the honest state, and closing these is the semester.\n"
 );
-process.exit(openCount === 4 ? 0 : 1);
+process.exit(openCount === scored.length ? 0 : 1);

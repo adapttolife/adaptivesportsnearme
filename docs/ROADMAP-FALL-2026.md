@@ -6,6 +6,17 @@ aspirational except the parts labeled vision. When a number here disagrees
 with the tester, the tester is right — rerun `node tools/four-doors-check.mjs`
 and trust it over this file.
 
+## Version 1.0 (decided 2026-08-31, Karen's call)
+
+**Launch ships on three doors: programs, grants, and the letter.** Events is
+the hardest data problem in the project (the data must be built, not just
+served), so it comes off the launch gate and becomes the first post-launch
+ship — while an honest events page collects real events from program
+directors into the review queue. Check the launch gate with
+`node tools/four-doors-check.mjs --launch`; the four-door run stays the
+semester's full scoreboard. The coverage map doubles as the sponsor story:
+a sponsor can fund the enrichment sprint that flips a waiting state orange.
+
 ## The one-sentence mission
 
 **A person leaves rehab, names a place, and finds four things: a program near
