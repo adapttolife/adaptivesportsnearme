@@ -21,13 +21,40 @@
 // A sentence matching any of these was written to a machine, not to a person.
 const MEMO_PATTERNS = [
   [/\bdo not (invent|write|add|store|smash|guess|make up|fabricate)\b/i, "operator instruction"],
+  [/\bdo not\b/i, "operator instruction"],
+  [/\bnone invented\b|\(invented names?\)/i, "negative-space note"],
+  [/\bsame legal org\b/i, "internal merge note"],
+  [/\bfolded\b/i, "internal merge note"],
+  [/\bHOLD\b/, "internal triage marker"],
+  [/\b(is|are|was|were)\s+past\b/i, "internal recency triage"],
+  [/\bstays? on (this|the) parent\b/i, "internal record-shape note"],
+  [/\bstays? on (this|the)\b[^.]*\b(row|parent)\b/i, "internal record-shape note"],
+  [/\b(this|the) row\b/i, "internal record-shape note"],
+  [/\bthis\s+[\w-]+\s+row\b/i, "internal record-shape note"],
+  [/\b(this|the) parent\b/i, "internal record-shape note"],
+  [/\bwritten onto\b|\benriches this\b/i, "internal record-shape note"],
+  [/\bnot written as\b/i, "internal record-shape note"],
+  [/^no\b[^.]*\bstored\b/i, "extraction outcome"],
+  [/\bpages? opened\b/i, "extraction outcome"],
+  [/^[\w\s&/'-]{0,40}\bpages?\.$/i, "source-reference stub"],
+  [/\bDNS-dead\b|\bDNS\b/i, "raw DNS diagnostic"],
+  [/^no\b[^.]*\b(printed|official pages?)\b/i, "extraction outcome"],
+  [/\bprinted on the official\b/i, "extraction outcome"],
+  [/\bfolds? into\b|\bfold into\b/i, "internal merge note"],
+  [/\bas a (sports )?parent\b/i, "internal record-shape note"],
+  [/\bsplit as new parents?\b/i, "internal record-shape note"],
+  [/\bnot invented\b/i, "negative-space note"],
+  [/\bwithout a printed\b|\breprints?\b/i, "extraction commentary"],
+  [/\bare\s+\w+\s+hours\b|\bprinted\s+\w*\s*hours\b/i, "internal field-meaning note"],
+  [/\bno official[^.]*\bprinted\b/i, "extraction outcome"],
+  [/^(office card|sports desk|volunteer \/ [^:]*inbox)\s*:/i, "internal label"],
+  [/(?<![\/\w-])(?=[a-f0-9]*\d)[0-9a-f]{8}(?![\/\w-])/, "bare record id"],
   [/\bthis pass\b/i, "pipeline-run jargon"],
   [/\bnot stored\b/i, "storage decision"],
   [/\bnot printed\b/i, "extraction outcome"],
   [/\bis still (that|the)\b/i, "verification voice"],
   [/\bis still [A-Z][\w'&.-]*,\s*not\b/, "verification voice"],
   [/^\s*official\b/i, "verification voice (leading \"Official\")"],
-  [/^not\b/i, "dedupe note (sentence opens \"Not …\")"],
   [/[.;)]\s+not\s+(a\s+|an\s+|the\s+)?[A-Z0-9]/i, "dedupe note (\"Not X\")"],
   [/\bnot\s+(a|an)\s+\w+\s+(parent|child|row|affiliate)\b/i, "dedupe note"],
   [/\bstays a\s+\w+\s+row\b/i, "internal record-shape note"],
@@ -43,7 +70,7 @@ const MEMO_PATTERNS = [
   [/\bNXDOMAIN\b/i, "raw DNS diagnostic"],
   [/\bHTTP \d{3}\b/, "raw HTTP status"],
   [/\b\d{3}s\b(?=[^.]*\b(redirect|Cloudflare|chrome)\b)/i, "raw status jargon"],
-  [/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i, "raw record UUID"],
+  [/(?<!\/)\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/i, "raw record UUID"],
   [/\(\s*[0-9a-f]{8}\s*\)/i, "raw record id fragment"],
   [/\bremaining[^.]{0,40}\bclock\b/i, "pipeline scheduling jargon"],
   [/\bleftover\b/i, "pipeline triage jargon"],
@@ -86,9 +113,26 @@ export function splitSentences(text) {
   return out.filter(Boolean);
 }
 
+// Rules that need more than a pattern.
+//
+// A sentence opening "Not <Capitalised>" is how the pipeline records "this org
+// is not that other org". Measured against the whole corpus in Aug 2026: 364
+// such sentences, every one a dedupe note, longest 13 words. Exactly one real
+// organisation is named "Not Forgotten Outreach", so the rule is bounded by
+// length — a real sentence about that org runs longer than any dedupe note
+// ever does, and its own description was memo end to end regardless.
+const MEMO_PREDICATES = [
+  [
+    (sentence) =>
+      /^Not\s+[A-Z0-9]/.test(sentence) && sentence.trim().split(/\s+/).length <= 14,
+    'dedupe note (sentence opens "Not X")',
+  ],
+];
+
 function sentenceMemoReasons(sentence) {
   const reasons = [];
   for (const [re, why] of MEMO_PATTERNS) if (re.test(sentence)) reasons.push(why);
+  for (const [fn, why] of MEMO_PREDICATES) if (fn(sentence)) reasons.push(why);
   return reasons;
 }
 
@@ -129,4 +173,75 @@ export function splitPublicDescription(text) {
     movedSentences: notesParts.length,
     keptSentences: publicParts.length,
   };
+}
+
+// ---------------------------------------------------------------------------
+// Operator vocabulary.
+//
+// `cost_note` and `ages` are public too, and they carry the same voice in a
+// different shape: "Official cycling $20; mountain biking $40", "Kickball ages
+// 5 and older (official). Upper bound not printed." The facts are correct and
+// hard-won. Only the vocabulary is wrong, so these are stripped rather than
+// moved — deleting the sentence would throw away real prices and real age
+// ranges that nobody wants to re-source.
+
+// Sentences (or semicolon clauses) that are purely a report on the extraction
+// itself, carrying no fact a reader could use.
+const EXTRACTION_OUTCOME = /^[^.;]*\b(not printed|not collapsed|not stored|this pass)\b[^.;]*$/i;
+
+// Asides the pipeline adds to mark provenance.
+const OPERATOR_ASIDE =
+  /\s*\((?:official[^)]*|unofficial[^)]*|[^)]*\bnot (?:printed|stored|collapsed)\b[^)]*)\)/gi;
+
+export function stripOperatorVocabulary(text) {
+  let s = typeof text === "string" ? text : "";
+  if (!s.trim()) return "";
+
+  s = s.replace(OPERATOR_ASIDE, "");
+
+  // Drop pure extraction-outcome clauses, keeping the useful ones beside them.
+  s = splitSentences(s)
+    .map((sentence) => {
+      const clauses = sentence.split(/;\s*/).filter((c) => !EXTRACTION_OUTCOME.test(c.trim()));
+      return clauses.join("; ").trim();
+    })
+    .filter((sentence) => sentence && !EXTRACTION_OUTCOME.test(sentence.replace(/[.!?]+$/, "")))
+    .join(" ");
+
+  // "Official cycling $20" -> "Cycling $20"; also mid-sentence after a period.
+  s = s.replace(/(^|[.!?]\s+)official\s*:?\s+/gi, (m, lead) => lead);
+  s = s.replace(/(^|[.!?]\s)(\p{Ll})/gu, (m, lead, ch) => lead + ch.toUpperCase());
+
+  return s.replace(/\s{2,}/g, " ").replace(/\s+([.,;])/g, "$1").trim();
+}
+
+// The full repair for any public free-text field: strip the vocabulary first,
+// then move whatever is still a memo into internal_notes.
+export function repairPublicText(text) {
+  const original = typeof text === "string" ? text : "";
+  const stripped = stripOperatorVocabulary(original);
+  const split = splitPublicDescription(stripped);
+  const removedTail = original.trim() && !stripped.trim();
+  return {
+    value: split.description,
+    internalNotes: split.internalNotes || (removedTail ? original.trim() : null),
+    changed: (split.description || "") !== original.trim(),
+    reasons: split.reasons,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Navigation labels are not organisations.
+//
+// A directory scrape walks a site's nav bar as readily as its member list, so
+// "Donate", "Our Team" and "Events Calendar" arrived as listings with a URL and
+// a data source, indistinguishable in shape from a real program. Eight were
+// live on the tester in Aug 2026. A person spots these instantly; the pipeline
+// never will, because they are structurally perfect rows.
+
+const NAVIGATION_LABEL =
+  /^(volunteer|donate|home|about( us)?|contact( us)?|events?( calendar)?|programs?|news|resources|staff|board|menu|search|log ?in|sign ?in|leadership|sponsors?|partners?|gallery|blog|faq|shop|store|careers?|jobs|press|media|privacy( policy)?|terms|sitemap|calendar|schedule|register|membership|newsletter|subscribe|give|support us|get involved|our team|our story|mission|history|donate now|learn more|read more|click here)\.?$/i;
+
+export function looksLikeNavigationLabel(name) {
+  return NAVIGATION_LABEL.test(String(name ?? "").trim());
 }

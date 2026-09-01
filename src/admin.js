@@ -3,7 +3,7 @@
 
 import { runLane } from "./pipeline.js";
 import { json } from "./http.js";
-import { checkPublicDescription } from "./description-contract.js";
+import { checkPublicDescription, looksLikeNavigationLabel } from "./description-contract.js";
 
 // Only these organization fields may be changed by an approved review item.
 const APPLY_WHITELIST = new Set([
@@ -112,6 +112,16 @@ export async function handleAdmin(request, env, url) {
       }
       const newOrgMemo = rejectMemoDescription(fields);
       if (newOrgMemo) return newOrgMemo;
+      if (looksLikeNavigationLabel(fields.name)) {
+        return json({
+          ok: false,
+          error: "name_is_navigation_label",
+          detail:
+            "\"" + fields.name + "\" is a website navigation label, not an " +
+            "organisation. A directory scrape walks the nav bar as readily as " +
+            "the member list. Reject this proposal rather than approving it.",
+        }, 422);
+      }
       const evidence = parse(item.evidence) || {};
       const id = crypto.randomUUID();
       const cols = ["id", "status", "is_public", "verification_status", "created_at", "updated_at", "primary_data_source"];
