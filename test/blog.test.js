@@ -1,6 +1,9 @@
 // blog lane tests (Lane C) — pure functions only, no caches.default/Request mocking.
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { dirname, join } from "node:path";
 import {
   sanitizeHtml, normalizePosts, normalizePostDetail, findPostBySlug, formatPostDate,
   blogIndexTemplate, blogPostTemplate, blogFallbackTemplate, blogNotFoundTemplate,
@@ -203,4 +206,57 @@ test("blogNotFoundTemplate: friendly 404 copy, links back to /blog", () => {
   const html = blogNotFoundTemplate({ site: SITE });
   assert.ok(html.includes("Story not found"));
   assert.ok(html.includes('href="/blog"'));
+});
+
+// ---- footer IA parity ----------------------------------------------------------
+// The server-rendered footer used to be a two-column subset of the app's three,
+// so /blog and / disagreed about what the site contains. Lock the columns and
+// the destinations together, and keep every href a real URL the app boots on.
+
+test("the shared footer names the same three columns as the app's footer", () => {
+  const root = join(dirname(fileURLToPath(import.meta.url)), "..");
+  const appIndex = readFileSync(join(root, "public/index.html"), "utf8");
+  const html = blogIndexTemplate([], { site: SITE });
+
+  for (const col of ["Explore", "Programs", "About"]) {
+    assert.ok(html.includes(`<h2>${col}</h2>`), `footer is missing the ${col} column`);
+    assert.ok(appIndex.includes(`<h2>${col}</h2>`), `app footer is missing the ${col} column`);
+  }
+  for (const label of [
+    "Discover", "Map view", "Browse all", "Events", "Funding", "Blog",
+    "Add a program", "Update a listing",
+    "The project", "How we verify", "Accessibility", "Your profile",
+    "Adapt To Life", "Sign waiver",
+  ]) {
+    assert.ok(html.includes(`>${label}</a>`), `footer is missing ${label}`);
+    assert.ok(appIndex.includes(`>${label}</a>`), `app footer is missing ${label}`);
+  }
+  // No dead links: the app boots these query params (see BOOT_QP in index.html).
+  assert.ok(appIndex.includes("BOOT_DB==='programs'"));
+  assert.ok(appIndex.includes("BOOT_ABOUT"));
+  assert.ok(!html.includes('href="#"'));
+});
+
+// Browser caches ignore CDN purges, so /site-nav.js is only ever referenced
+// through one versioned constant. If a page hard-codes its own ?v= (or none),
+// a stale drawer ships next to fresh chrome.
+test("site-nav.js is referenced through the one versioned constant", async () => {
+  const root = join(dirname(fileURLToPath(import.meta.url)), "..");
+  const { NAV_VERSION } = await import("../src/site-chrome.js");
+  const { programPageTemplate } = await import("../src/program-page.js");
+  const { grantPageTemplate } = await import("../src/grant-page.js");
+
+  const pages = [
+    blogIndexTemplate([], { site: SITE }),
+    programPageTemplate({ id: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa", name: "X", sport: "tennis" }),
+    grantPageTemplate({ id: "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb", name: "Y" }),
+  ];
+  for (const html of pages) {
+    assert.ok(html.includes(`/site-nav.js?v=${NAV_VERSION}`));
+    assert.equal((html.match(/<script src="\/site-nav\.js/g) || []).length, 1);
+  }
+  for (const rel of ["src/blog.js", "src/program-page.js", "src/grant-page.js"]) {
+    const text = readFileSync(join(root, rel), "utf8");
+    assert.ok(!text.includes("site-nav.js?v="), `${rel} hard-codes its own cache-buster`);
+  }
 });

@@ -6,6 +6,9 @@
 //   GET  /api/config           -> env name + prelaunch flag (front-end gate)
 //   GET  /api/programs         -> directory list (sport/state/q + zip/city/lat-lng nearby, paged)
 //   GET  /programs/:id         -> shareable program page (photo hero, name, city/state, website, source)
+//   GET  /api/grants           -> public grant list (athlete + program)
+//   GET  /api/grants/:id       -> one grant
+//   GET  /grants/:id           -> shareable grant page (same listing sheet as programs)
 //   GET  /api/orgs/:id         -> one org with source provenance
 //   GET  /api/stats            -> counts by sport/state
 //   GET  /api/events           -> upcoming public events (json)
@@ -20,8 +23,9 @@
 //   *    /api/admin/*          -> review queue + lane triggers (ADMIN_KEY bearer)
 // All secrets stay server-side (Worker secrets). Bot defence: honeypot + optional Turnstile.
 
-import { listPrograms, getOrg, stats, listSameSportNearby } from "./data.js";
+import { listPrograms, getOrg, stats, listSameSportNearby, listGrants, getGrant, listOtherGrants } from "./data.js";
 import { programPageTemplate, programNotFoundTemplate, PROGRAM_ID_RE } from "./program-page.js";
+import { grantPageTemplate, grantNotFoundTemplate, GRANT_ID_RE } from "./grant-page.js";
 import { listEvents, eventsToRss, eventsToIcs } from "./events.js";
 import { handleAdmin } from "./admin.js";
 import { runLane } from "./pipeline.js";
@@ -95,6 +99,15 @@ export default {
         if (url.pathname === "/api/stats") {
           return json({ ok: true, ...(await stats(env.DB)) }, 200, API_CACHE);
         }
+        if (url.pathname === "/api/grants") {
+          return json({ ok: true, ...(await listGrants(env.DB, url.searchParams)) }, 200, API_CACHE);
+        }
+        const grantApi = url.pathname.match(/^\/api\/grants\/([0-9a-f-]{36})$/);
+        if (grantApi) {
+          const record = await getGrant(env.DB, grantApi[1]);
+          return record ? json({ ok: true, grant: record }, 200, API_CACHE)
+                        : json({ ok: false, error: "Not found" }, 404);
+        }
         if (url.pathname === "/api/events") {
           return json({ ok: true, ...(await listEvents(env.DB, url.searchParams)) }, 200, API_CACHE);
         }
@@ -136,6 +149,19 @@ export default {
       } catch (err) {
         console.error("program page error:", err);
         return text(programNotFoundTemplate({ site: url.origin }), 500, "text/html; charset=utf-8");
+      }
+    }
+
+    const grantPath = url.pathname.match(GRANT_ID_RE);
+    if (grantPath && env.DB) {
+      try {
+        const record = await getGrant(env.DB, grantPath[1]);
+        if (!record) return text(grantNotFoundTemplate({ site: url.origin }), 404, "text/html; charset=utf-8");
+        const nearby = await listOtherGrants(env.DB, record, 6);
+        return text(grantPageTemplate(record, { site: url.origin, nearby }), 200, "text/html; charset=utf-8", API_CACHE);
+      } catch (err) {
+        console.error("grant page error:", err);
+        return text(grantNotFoundTemplate({ site: url.origin }), 500, "text/html; charset=utf-8");
       }
     }
 

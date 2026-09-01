@@ -3,5 +3,19 @@ node_modules/
 .DS_Store
 out/
 
-# local dev secrets (wrangler dev)
+# local secrets
 .dev.vars
+.env
+.env.*
+
+# local directory-tool state (tools/directory)
+tools/directory/inbox/
+tools/directory/approved/
+tools/directory/shipped/
+tools/directory/.local/
+tools/directory/*-receipt.json
+tools/directory/leftover-candidates.json
+tools/directory/queue-snapshot.json
+tools/directory/recheck-validate.json
+tools/directory/validate-404s.json
+tools/directory/twin-review.json

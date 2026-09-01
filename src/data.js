@@ -189,3 +189,95 @@ export async function listSameSportNearby(db, org, limit = 6) {
   }
   return items.slice(0, n);
 }
+
+
+// ---- Grants (athlete-facing public directory) --------------------------------
+const GRANT_COLS = `id, name, source, type, audience, amount_min_cents, amount_max_cents,
+  amount_display, deadline_display, deadline_next, description,
+  eligibility_criteria, how_to_apply, application_url, source_url,
+  email, phone, sports_json, is_open, is_renewable`;
+
+const PHOTO_KEYS = new Set([
+  "baseball", "basketball", "cycling", "football", "goalball",
+  "pickleball", "rugby", "skiing", "sledhockey", "tennis", "waterskiing",
+]);
+
+function sportsLabel(keys) {
+  if (!keys || !keys.length) return null;
+  const names = {
+    baseball: "Baseball", basketball: "Basketball", cycling: "Cycling",
+    football: "Football", goalball: "Goalball", pickleball: "Pickleball",
+    rugby: "Rugby", skiing: "Skiing", sledhockey: "Sled Hockey",
+    tennis: "Tennis", waterskiing: "Water Ski",
+  };
+  return keys.map((k) => names[k] || k).join(", ");
+}
+
+function rowToGrant(r) {
+  let sports = [];
+  try { sports = r.sports_json ? JSON.parse(r.sports_json) : []; } catch { sports = []; }
+  if (!Array.isArray(sports)) sports = [];
+  const sport = sports.find((k) => PHOTO_KEYS.has(k)) || sports[0] || null;
+  return {
+    id: r.id,
+    name: r.name,
+    source: r.source,
+    type: r.type,
+    audience: r.audience === "program" ? "program" : "athlete",
+    amountDisplay: r.amount_display,
+    amountMinCents: r.amount_min_cents,
+    amountMaxCents: r.amount_max_cents,
+    deadlineDisplay: r.deadline_display,
+    deadlineNext: r.deadline_next,
+    desc: r.description,
+    eligibility: r.eligibility_criteria,
+    howToApply: r.how_to_apply,
+    applicationUrl: r.application_url,
+    sourceUrl: r.source_url,
+    email: r.email,
+    phone: r.phone,
+    sports,
+    sport,
+    sportsLabel: sportsLabel(sports),
+    isOpen: r.is_open === 1,
+    isRenewable: r.is_renewable === 1,
+  };
+}
+
+export async function listGrants(db, params) {
+  const where = ["is_public = 1", "status = 'active'"];
+  const binds = [];
+  const audience = params && typeof params.get === "function" ? (params.get("audience") || "").trim() : "";
+  if (audience === "athlete" || audience === "program") {
+    where.push("audience = ?");
+    binds.push(audience);
+  }
+  const rows = await db.prepare(
+    `SELECT ${GRANT_COLS} FROM grants
+     WHERE ${where.join(" AND ")}
+     ORDER BY CASE WHEN name LIKE 'Hustle & Heart%' THEN 0 ELSE 1 END,
+              CASE WHEN audience = 'athlete' THEN 0 ELSE 1 END, name`
+  ).bind(...binds).all();
+  const items = (rows.results || []).map(rowToGrant);
+  return { total: items.length, items };
+}
+
+export async function getGrant(db, id) {
+  const row = await db.prepare(
+    `SELECT ${GRANT_COLS} FROM grants WHERE id = ? AND is_public = 1`
+  ).bind(id).first();
+  return row ? rowToGrant(row) : null;
+}
+
+export async function listOtherGrants(db, grant, limit = 6) {
+  const n = Math.min(Math.max(limit || 6, 1), 6);
+  if (!grant || !grant.id) return [];
+  const rows = await db.prepare(
+    `SELECT ${GRANT_COLS} FROM grants
+     WHERE is_public = 1 AND status = 'active' AND id != ?
+     ORDER BY CASE WHEN audience = ? THEN 0 ELSE 1 END,
+              CASE WHEN name LIKE 'Hustle & Heart%' THEN 0 ELSE 1 END, name
+     LIMIT ?`
+  ).bind(grant.id, grant.audience || "athlete", n).all();
+  return (rows.results || []).map(rowToGrant);
+}

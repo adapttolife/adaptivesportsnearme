@@ -5,6 +5,8 @@
 // (listPosts, getPostBySlug); everything below the "pure" line is pure and
 // covered by test/blog.test.js without touching the Cache API.
 
+import { CHROME_CSS, headerHtml, footerHtml, navScriptHtml } from "./site-chrome.js";
+
 const SITE = "https://adaptivesportsnearme.com";
 const HOT_TTL = 300; // normal serve window — matches API_CACHE/FEED_CACHE elsewhere
 const STALE_TTL = 86400; // outlives a bad beehiiv day; served only when a live fetch fails
@@ -193,10 +195,10 @@ function jsonLdScript(obj) {
   return JSON.stringify(obj).replace(/</g, "\\u003c");
 }
 
-// ---- shared page shell ---------------------------------------------------------
-// Lifted from public/index.html: DM Sans via the same Google Fonts link, the
-// same design tokens (ink/paper/mist/line/orange), the same brand wordmark
-// linking home, a simple footer. No client JS — this is server-rendered HTML.
+// ---- page shell ---------------------------------------------------------------
+// Tokens and reading-column CSS for the blog itself. The header, the footer and
+// the CSS that styles them come from site-chrome.js, shared with the listing
+// pages so there is one site chrome, not one per lane.
 const BLOG_CSS = `
 :root{
   color-scheme: light;
@@ -219,39 +221,18 @@ const BLOG_CSS = `
   --r:12px; --r-lg:16px; --r-full:999px; --max:920px; --gut: var(--space-page);
 }
 *{box-sizing:border-box;}
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important;}}
 html,body{margin:0;padding:0;background:var(--mist);color:var(--ink);}
 body{font-family:'DM Sans',system-ui,sans-serif;font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased;}
 img{display:block;max-width:100%;}
 a{color:inherit;text-decoration:none;}
 .wrap{max-width:var(--max);margin:0 auto;padding:0 var(--space-page);}
-.skip{position:absolute;left:-999px;top:8px;background:var(--ink);color:#fff;padding:10px 16px;border-radius:var(--r);}
-.skip:focus{left:12px;}
-/* App-matching header (☰ · brand · search pill · orange "+"). Rendered server-side
-   for zero-flash + no-JS styling; site-nav.js mirrors this CSS and owns the drawer. */
-.hdr{position:sticky;top:0;z-index:60;background:rgba(255,255,255,.92);backdrop-filter:saturate(150%) blur(10px);border-bottom:1px solid var(--line);}
-.hdr.scrolled{box-shadow:var(--shadow-sm);}
-.hdr-in{height:var(--space-header);display:flex;align-items:center;justify-content:space-between;gap:18px;}
-.brand{flex:0 0 auto;transition:opacity .15s;}
-.brand:hover{opacity:.7;}
-.brand b{font-family:'DM Sans',sans-serif;font-weight:700;font-size:16px;letter-spacing:-.015em;color:var(--ink);white-space:nowrap;}
-.menu-btn{flex:0 0 auto;width:40px;height:40px;display:grid;place-items:center;border-radius:var(--r-full);color:var(--ink);transition:background .15s;}
-.menu-btn:hover{background:var(--mist);}
-.menu-btn svg{width:22px;height:22px;}
-.search{flex:0 1 520px;max-width:520px;height:54px;display:flex;align-items:center;background:var(--paper);border:1px solid var(--line);border-radius:var(--r-full);box-shadow:0 3px 12px rgba(17,17,19,.10),0 1px 2px rgba(17,17,19,.05);transition:box-shadow .2s,border-color .2s;}
-.search:hover{box-shadow:0 6px 16px rgba(17,17,19,.13),0 1px 3px rgba(17,17,19,.06);}
-.search:focus-within{box-shadow:0 8px 22px rgba(17,17,19,.15),0 1px 3px rgba(17,17,19,.06);border-color:var(--sand2);}
-.search .loc{display:flex;align-items:center;gap:8px;padding:0 14px 0 20px;height:100%;border-radius:var(--r-full) 0 0 var(--r-full);white-space:nowrap;color:var(--ink);font-size:15px;font-weight:600;cursor:default;}
-.search .loc:hover{background:transparent;}
-.search .loc svg{width:16px;height:16px;color:var(--orange);}
-.search .sep{width:1px;height:26px;background:var(--line);flex:0 0 auto;}
-.search input{flex:1 1 auto;min-width:40px;height:100%;border:none;background:transparent;outline:none;padding:0 22px 0 16px;font-size:15px;font-weight:500;color:var(--ink);}
-.search input::placeholder{color:var(--muted);font-weight:500;}
-.hdr-actions{flex:0 0 auto;display:flex;align-items:center;gap:10px;}
-.hdr-add{flex:0 0 auto;width:40px;height:40px;border-radius:50%;display:grid;place-items:center;color:var(--orange-ink);border:1px solid var(--orange-soft);background:var(--orange-soft);transition:border-color .15s,background .15s,color .15s;}
-.hdr-add:hover{background:var(--orange);color:#fff;border-color:var(--orange);}
-.hdr-add svg{width:19px;height:19px;}
-@media (max-width:720px){.hdr-add{width:36px;height:36px;}.hdr-add svg{width:17px;height:17px;}.hdr .brand{display:none;}.search{flex:1 1 100%;max-width:none;min-width:0;}.search .loc span{display:none;}.search input{min-width:0;}}
-.blog-main{padding:var(--space-nearby) var(--space-page) var(--space-header);}
+${CHROME_CSS}
+/* One reading column, left-aligned with the app. Body copy ran the full 872px
+   measure, about 110 characters a line; 70ch is what the listing pages use. */
+.blog-main{padding:var(--space-nearby) var(--space-page) var(--space-header);max-width:1280px;}
+.blog-main>*{max-width:70ch;}
+.blog-main>.blog-grid{max-width:none;}
 .eyebrow{font-size:11px;letter-spacing:.13em;text-transform:uppercase;color:var(--faint);margin:0 0 var(--space-title-gap);}
 .blog-h1{font-family:'DM Sans',sans-serif;font-size:34px;font-weight:700;letter-spacing:-.02em;line-height:1.15;margin:0 0 20px;}
 .blog-empty{color:var(--muted);font-size:15px;}
@@ -273,14 +254,6 @@ a{color:inherit;text-decoration:none;}
 .blog-body img{border-radius:var(--r);margin:16px 0;}
 .blog-body a{color:var(--orange-ink);text-decoration:underline;}
 .blog-body h2,.blog-body h3{font-family:'DM Sans',sans-serif;color:var(--ink);letter-spacing:-.01em;}
-.foot{border-top:1px solid var(--line);margin-top:var(--space-page);padding:var(--space-nearby) var(--space-page) 56px;background:var(--paper);}
-.foot-in{display:flex;justify-content:space-between;gap:36px 48px;flex-wrap:wrap;}
-.foot .brand b{font-size:15px;}
-.foot .tagline{font-size:14px;color:var(--muted);margin:10px 0 0;max-width:380px;line-height:1.5;}
-.foot-cols{display:flex;gap:36px 48px;flex-wrap:wrap;}
-.foot-col h2{font-family:'DM Sans',sans-serif;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);font-weight:400;margin:0 0 12px;}
-.foot-col a{display:block;font-size:14px;color:var(--ink2);padding:6px 0;transition:color .15s;}
-.foot-col a:hover{color:var(--orange);}
 @media(max-width:720px){.blog-h1{font-size:26px;}.blog-grid{grid-template-columns:1fr;}}
 `;
 
@@ -315,37 +288,12 @@ function pageShell({ title, description, canonical, ogImage, bodyHtml, jsonLd })
 </head>
 <body>
 <a class="skip" href="#main">Skip to content</a>
-<header class="hdr">
-  <div class="wrap hdr-in">
-    <button class="menu-btn" id="menuBtn" aria-label="Menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
-    <a class="brand" href="/" aria-label="Adaptive Sports Near Me home"><b>Adaptive Sports Near Me</b></a>
-    <form class="search" role="search" action="/" method="get">
-      <span class="loc" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s7-5.7 7-11a7 7 0 1 0-14 0c0 5.3 7 11 7 11Z"/><circle cx="12" cy="10" r="2.5"/></svg><span>United States</span></span>
-      <span class="sep"></span>
-      <input id="q" name="q" type="text" placeholder="Search a sport, program or provider" aria-label="Search programs">
-    </form>
-    <div class="hdr-actions">
-      <a class="hdr-add" href="/?add=program" aria-label="Submit a program" title="Submit a program"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></a>
-    </div>
-  </div>
-</header>
+${headerHtml()}
 <main id="main" class="wrap blog-main">
 ${bodyHtml}
 </main>
-<footer class="foot">
-  <div class="wrap foot-in">
-    <div class="foot-brand">
-      <a class="brand" href="/"><b>Adaptive Sports Near Me</b></a>
-      <p class="tagline">An open directory of adaptive sports programs across the country. No logins, no walls. Built for the community.</p>
-    </div>
-    <div class="foot-cols">
-      <div class="foot-col"><h2>Explore</h2><a href="/">Discover</a><a href="/maps">Map view</a><a href="/events">Events</a><a href="/blog">All stories</a></div>
-      <div class="foot-col"><h2>About</h2><a href="/">The project</a><a href="https://sign.adapttolife.org/waiver?source=asnm">Sign waiver</a></div>
-    </div>
-  </div>
-</footer>
-<!-- bump ?v= on any site-nav.js change so browsers fetch the new file (cache-bust) -->
-<script src="/site-nav.js?v=20260821a" defer></script>
+${footerHtml()}
+${navScriptHtml()}
 </body>
 </html>
 `;

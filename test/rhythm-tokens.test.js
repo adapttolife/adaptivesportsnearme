@@ -66,6 +66,7 @@ test("Unverified / Last checked stay out of site-wide UI copy", () => {
     "public/index.html",
     "public/site-nav.js",
     "src/program-page.js",
+    "src/grant-page.js",
     "src/blog.js",
     "src/index.js",
     "src/events.js",

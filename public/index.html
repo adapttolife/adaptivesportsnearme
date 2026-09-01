@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="color-scheme" content="light">
-<title>Adaptive Sports Near Me — Find adaptive sport near you</title>
-<meta name="description" content="A free, national directory of adaptive sports programs, events, and funding. No login, no walls. Find adaptive sport near you.">
+<title>Adaptive Sports Near Me — Find adaptive sports near you</title>
+<meta name="description" content="A free, national directory of adaptive sports programs, events, and funding. No login, no walls. Find adaptive sports near you.">
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
@@ -189,19 +189,22 @@ input,select{font-family:inherit;}
 .frow-scroll{display:flex;gap:var(--space-row);overflow-x:auto;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;padding-bottom:6px;padding-right:var(--space-page);margin-right:calc(-1 * var(--space-page));scrollbar-width:none;}
 .frow-scroll::-webkit-scrollbar{display:none;}
 .frow-scroll>.pcard{flex:0 0 226px;width:226px;scroll-snap-align:start;}
-.pcard-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;}
+.pcard-img,.dhero-img,.thumb-full{position:absolute;inset:0;width:100%;height:100%;max-width:none;object-fit:cover;object-position:26% 58%;}
+.pcard-img{z-index:0;}
 .pcard-media.has-photo .ringbg,.pcard-media.has-photo .gly{display:none;}
 .pcard-media.has-photo::after{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;background:linear-gradient(180deg,rgba(0,0,0,.16),rgba(0,0,0,0) 30%,rgba(0,0,0,0) 70%,rgba(0,0,0,.12));}
 .pcard-media .status{z-index:2;}
 .pcard-media .heart{z-index:2;}
 .pcard{cursor:pointer;display:block;}
-.pcard-media{position:relative;aspect-ratio:4/3;border-radius:var(--r);overflow:hidden;background:var(--sand);}
+.pcard-media{position:relative;aspect-ratio:4/3;border-radius:var(--r);overflow:hidden;background:#F6F4F0;}
 .pcard:hover .pcard-name{text-decoration:underline;text-underline-offset:2px;}
 .pcard-media .gly{position:absolute;inset:0;margin:auto;width:42%;height:42%;color:rgba(26,26,26,.82);}
 .pcard-media .ringbg{position:absolute;inset:0;margin:auto;width:62%;height:62%;color:rgba(255,255,255,.55);}
 .pcard-body{padding:7px 1px 0;}
 .pcard-sport{font-family:'DM Sans',sans-serif;font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--faint);line-height:1.3;}
-.pcard-name{font-size:14.5px;font-weight:600;line-height:1.25;margin:1px 0 0;color:var(--ink);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+/* Two-line box whether the name needs one line or two, so the city sits on the
+   same baseline across a rail instead of stepping up and down card to card. */
+.pcard-name{font-size:14.5px;font-weight:600;line-height:1.25;margin:1px 0 0;color:var(--ink);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:2.5em;}
 /* card text = name, city, one useful line. No leftover cost/ages chips. */
 .pcard-loc{font-size:13.5px;color:var(--ink2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px;}
 .pcard-line{font-size:13px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
@@ -210,12 +213,22 @@ input,select{font-family:inherit;}
 .pcard-media .sport-icon{position:absolute;inset:0;margin:auto;width:80%;height:80%;object-fit:contain;z-index:1;filter:drop-shadow(0 9px 14px rgba(20,18,14,.17));transition:transform .25s var(--ease);}
 .mthumb .sport-icon{position:absolute;inset:0;margin:auto;width:88%;height:88%;object-fit:contain;}
 .tthumb .sport-icon{position:absolute;inset:0;margin:auto;width:92%;height:92%;object-fit:contain;}
-.thumb-full{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
 .cat-img{width:38px;height:38px;object-fit:contain;border-radius:9px;}
-.dhero-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 30%;} /* faces live in the upper third of the square action shots */
 .dhero.has-dphoto{background:#23211f;}
+.sheet .dhero.has-dphoto{height:clamp(240px,48vw,520px);}
+@media(min-width:900px){
+  .sheet>.dhero.has-dphoto{width:100vw;max-width:100vw;margin-left:calc(50% - 50vw);margin-right:calc(50% - 50vw);border-radius:0;height:min(48vw,560px);}
+  .map-tray .dhero.has-dphoto,.tray-full .dhero.has-dphoto,.mapx .dhero.has-dphoto{width:100%;max-width:100%;margin-left:0;margin-right:0;border-radius:var(--r-lg);height:clamp(200px,30vw,280px);}
+}
+.dhero.has-stamp{background:#F6F4F0;display:flex;align-items:center;justify-content:center;}
+.dhero-stamp{width:min(42%,180px);height:auto;object-fit:contain;position:relative;z-index:1;}
+.sheet .dhero.has-stamp::after{background:linear-gradient(180deg,transparent 58%,rgba(26,26,26,.10));}
+.sheet .dhero.has-stamp .dov{color:var(--ink);}
+.pcard-media.has-stamp,.mthumb.has-stamp,.tthumb.has-stamp{background:#F6F4F0;display:flex;align-items:center;justify-content:center;}
+.pcard-stamp,.thumb-stamp{width:46%;height:auto;object-fit:contain;position:relative;z-index:1;}
+.ev-stamp{width:28px;height:28px;object-fit:contain;display:block;}
 
-/* gradients (calm, photo-ready) */
+/* gradients (calm, photo-ready) — kept for leftover sample tiles, not missing-photo */
 .g-sand{background:linear-gradient(140deg,#F2EFEA 0%,#E5DED3 100%);}
 .g-cool{background:linear-gradient(140deg,#EEF1F1 0%,#DBE0E1 100%);}
 .g-warm{background:linear-gradient(140deg,#F8F0E7 0%,#EFDDC8 100%);}
@@ -263,15 +276,23 @@ input,select{font-family:inherit;}
 .map .water{position:absolute;background:#D4E2E6;border-radius:40%;filter:blur(.3px);}
 .map .park{position:absolute;background:#D7E5D2;border-radius:42% 58% 50% 50%;}
 .map .mapchip,.mapx .mapchip{position:absolute;top:14px;left:14px;background:rgba(255,255,255,.9);border:1px solid var(--line);border-radius:var(--r-full);padding:6px 12px;font-family:'DM Sans',sans-serif;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);z-index:5;}
-/* live map (MapLibre GL + OpenFreeMap) — Airbnb-style white count pills */
+/* live map (MapLibre GL + OpenFreeMap) — fat 44px hit targets, small visible marks */
 #livemap{position:absolute;inset:0;}
-.mpill{display:flex;align-items:center;gap:6px;background:#fff;border:1px solid var(--line);border-radius:999px;padding:7px 12px;font-family:'DM Sans',sans-serif;font-weight:700;font-size:13px;color:var(--ink);box-shadow:0 2px 10px rgba(20,18,14,.18);cursor:pointer;transition:transform .12s var(--ease),background .12s,color .12s;white-space:nowrap;}
+.mpill{display:flex;align-items:center;gap:6px;min-height:var(--tap);background:#fff;border:1px solid var(--line);border-radius:999px;padding:7px 12px;font-family:'DM Sans',sans-serif;font-weight:700;font-size:13px;color:var(--ink);box-shadow:0 2px 10px rgba(20,18,14,.18);cursor:pointer;transition:background .12s,color .12s;white-space:nowrap;touch-action:manipulation;}
 .mpill .mc{font-weight:600;color:var(--muted);}
-.mpill:hover,.mpill.active{background:var(--ink);color:#fff;transform:scale(1.08);}
+/* Region chip for the zoomed-out country: the same paper pill, one step up, so
+   "West 312" reads as a place rather than a blob. */
+.mpill-region{font-size:14.5px;padding:9px 15px;gap:7px;}
+@media(max-width:720px){.mpill-region{font-size:13.5px;padding:8px 11px;gap:5px;}}
+/* A pill under the cursor rises above its neighbours so its label is never
+   half-covered by the state next door. */
+.mpill:hover,.mpill:focus-visible,.mpill.active{background:var(--ink);color:#fff;z-index:5;}
 .mpill:hover .mc,.mpill.active .mc{color:rgba(255,255,255,.75);}
-.mpin{width:30px;height:30px;display:flex;align-items:center;justify-content:center;background:#fff;border:1px solid var(--line);border-radius:999px;font-family:'DM Sans',sans-serif;font-weight:700;font-size:13px;color:var(--ink);box-shadow:0 2px 10px rgba(20,18,14,.18);cursor:pointer;transition:transform .12s var(--ease),background .12s,color .12s;}
-.mpin:hover,.mpin.active{background:var(--ink);color:#fff;transform:scale(1.12);}
-.mdot{width:14px;height:14px;border-radius:50%;background:var(--orange);border:2.5px solid #fff;box-shadow:0 1px 6px rgba(20,18,14,.35);}
+.mpin{width:var(--tap);height:var(--tap);min-width:var(--tap);display:flex;align-items:center;justify-content:center;background:#fff;border:1px solid var(--line);border-radius:999px;font-family:'DM Sans',sans-serif;font-weight:700;font-size:13px;color:var(--ink);box-shadow:0 2px 10px rgba(20,18,14,.18);cursor:pointer;transition:background .12s,color .12s;touch-action:manipulation;-webkit-tap-highlight-color:transparent;}
+.mpin:hover,.mpin.active{background:var(--ink);color:#fff;}
+.mdot{width:var(--tap);height:var(--tap);display:flex;align-items:center;justify-content:center;background:transparent;border:0;box-shadow:none;padding:0;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;}
+.mdot-mark{width:16px;height:16px;border-radius:50%;background:var(--orange);border:2.5px solid #fff;box-shadow:0 1px 6px rgba(20,18,14,.35);pointer-events:none;transition:transform .12s var(--ease);}
+.mdot:hover .mdot-mark,.mdot.active .mdot-mark{transform:scale(1.2);}
 /* full-screen map explorer */
 .mapx{position:relative;height:calc(100vh - 132px);min-height:480px;}
 .mapx-close{position:absolute;top:14px;right:14px;z-index:6;display:flex;align-items:center;gap:7px;background:#fff;border:1px solid var(--line);border-radius:var(--r-full);padding:9px 15px;font-family:'DM Sans',sans-serif;font-weight:600;font-size:13.5px;color:var(--ink);box-shadow:0 2px 10px rgba(20,18,14,.14);cursor:pointer;}
@@ -293,10 +314,96 @@ input,select{font-family:inherit;}
 .mapxd-foot{padding:12px 18px;border-top:1px solid var(--line);}
 .mapxd-foot a{display:flex;align-items:center;justify-content:center;gap:7px;height:42px;border:1px solid var(--ink);border-radius:var(--r);font-weight:600;font-size:14px;color:var(--ink);text-decoration:none;}
 .mapxd-foot a:hover{background:var(--ink);color:#fff;}
+/* Phone bottom tray — peek 35% / expanded 90%. Desktop overrides to a left panel. */
+.map-tray{position:absolute;left:0;right:0;bottom:0;z-index:8;background:#fff;border-radius:var(--r-xl) var(--r-xl) 0 0;box-shadow:0 -8px 30px rgba(20,18,14,.18);height:35%;transform:translateY(calc(100% + 28px));transition:transform 280ms ease,height 280ms ease;pointer-events:none;display:flex;flex-direction:column;overflow:hidden;}
+.map-tray.open{transform:translateY(0);pointer-events:auto;}
+.map-tray.expanded{height:90%;}
+.map-tray .tray-handle-hit{flex:0 0 auto;padding:12px 0 6px;cursor:grab;touch-action:none;}
+.map-tray .tray-handle{width:36px;height:4px;border-radius:99px;background:var(--sand2);margin:0 auto;}
+.map-tray .tray-peek{padding:0 var(--space-page) var(--space-page);flex:1;min-height:0;}
+.map-tray.expanded .tray-peek{display:none;}
+.map-tray:not(.expanded) .tray-full{display:none;}
+.map-tray.expanded .tray-full{display:block;flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 var(--space-page) var(--space-nearby);}
+.map-tray .tray-name{font-family:'DM Sans',sans-serif;font-weight:700;font-size:20px;letter-spacing:-.02em;line-height:1.2;margin:0;}
+.map-tray .tray-meta{font-size:14px;color:var(--ink2);margin-top:var(--space-title-gap);}
+.map-tray .tray-pills{display:flex;flex-wrap:wrap;gap:8px;margin-top:var(--space-row);}
+.map-tray .tray-pill{display:inline-flex;align-items:center;justify-content:center;min-height:var(--tap);padding:0 18px;border-radius:var(--r-full);border:1px solid var(--line);background:#fff;color:var(--ink);font-weight:600;font-size:14px;}
+.map-tray .tray-pill.primary{background:var(--ink);color:#fff;border-color:var(--ink);}
+.map-tray .tray-pill.primary:hover{background:#000;}
+.mapx.tray-expanded::after,.map-live.tray-expanded::after{content:"";position:absolute;inset:0;background:rgba(20,18,14,.28);z-index:7;pointer-events:none;}
 @media(max-width:720px){
   .mapx{height:calc(100vh - 118px);min-height:420px;}
   .mapx-drawer{top:auto;left:10px;right:10px;bottom:10px;width:auto;max-height:52%;}
 }
+/* Desktop: Google Maps WEB left column. Full height, 420px, map on the right. Not a floating peek card. */
+.map-tray .tray-x{display:none;width:32px;height:32px;flex:0 0 auto;align-items:center;justify-content:center;border-radius:50%;color:var(--muted);cursor:pointer;background:#fff;border:1px solid var(--line);box-shadow:0 1px 4px rgba(20,18,14,.12);}
+.map-tray .tray-x:hover{background:var(--mist);color:var(--ink);}
+.map-tray .tray-x svg{width:15px;height:15px;}
+.tray-pills-full{display:none;}
+@media(min-width:721px){
+  .map-tray{
+    left:0;
+    right:auto;
+    top:0;
+    bottom:0;
+    width:420px;
+    height:100%;
+    max-height:none;
+    border-radius:0;
+    box-shadow:8px 0 24px rgba(20,18,14,.12);
+    transform:translateX(-100%);
+    border-right:1px solid var(--line);
+  }
+  .map-tray.open{transform:none;}
+  .map-tray.expanded{height:100%;}
+  .map-tray .tray-handle{display:none;}
+  .map-tray .tray-handle-hit{position:absolute;top:8px;right:8px;padding:0;z-index:3;cursor:default;}
+  .map-tray .tray-x{display:flex;}
+  .map-tray.open .tray-peek{display:none;}
+  .map-tray.open .tray-full,
+  .map-tray.open:not(.expanded) .tray-full{
+    display:block;
+    flex:1;
+    min-height:0;
+    overflow-y:auto;
+    -webkit-overflow-scrolling:touch;
+    padding:0 var(--space-page) var(--space-nearby);
+  }
+  .map-tray .tray-full .dhero{
+    margin-left:calc(-1 * var(--space-page));
+    margin-right:calc(-1 * var(--space-page));
+    width:calc(100% + 2 * var(--space-page));
+    max-width:none;
+    border-radius:0;
+  }
+  .map-tray .tray-pills-full{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 var(--space-section);}
+  .map-tray .sheet .act{display:none;}
+  .map-tray .sheet .nearby .frow-scroll{
+    display:flex;
+    flex-direction:column;
+    overflow-x:hidden;
+    margin-right:0;
+    padding-right:0;
+    gap:var(--space-row);
+  }
+  .map-tray .sheet .nearby .frow-scroll>.pcard{
+    flex:0 0 auto;
+    width:100%;
+    max-width:none;
+    display:grid;
+    grid-template-columns:72px 1fr;
+    gap:12px;
+    align-items:center;
+  }
+  .map-tray .sheet .nearby .frow-scroll>.pcard .pcard-media{aspect-ratio:1;border-radius:8px;}
+  .map-tray .sheet .nearby .frow-scroll>.pcard .pcard-body{padding:0;}
+  .mapx.tray-expanded::after,.map-live.tray-expanded::after{display:none;}
+  .mapx:has(.map-tray.open) #livemap,
+  .map-live:has(.map-tray.open) #livemap{left:420px;}
+  .mapx:has(.map-tray.open) .mapchip,
+  .map-live:has(.map-tray.open) .mapchip{left:calc(420px + 14px);}
+}
+.map-live:has(.map-tray.open) .mapx-open{display:none;}
 .map-live .maplibregl-ctrl-attrib{font-size:10px;}
 .minimap .maplibregl-ctrl-attrib{font-size:9px;}
 .map .scalebar{position:absolute;bottom:14px;left:14px;display:flex;align-items:center;gap:8px;font-size:11px;color:var(--muted);z-index:5;}
@@ -356,6 +463,20 @@ a.cta{text-decoration:none;text-align:center;} /* link-CTAs center exactly like 
 .sheet h1{font-family:'DM Sans',sans-serif;font-size:clamp(22px,2.8vw,30px);font-weight:700;letter-spacing:-.02em;line-height:1.15;margin:0 0 var(--space-title-gap);}
 .sheet .loc{font-size:16px;color:var(--ink2);margin:0;}
 .sheet .desc{font-size:16px;line-height:1.55;color:var(--ink2);margin:16px 0 0;max-width:68ch;}
+/* Scraped descriptions run long and tail off into source notes. Show a readable
+   opening and let the reader ask for the rest. No JS: the toggle is a label,
+   and the full text stays in the document for search engines and copy-paste. */
+.desc-x{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;}
+.desc-long{display:-webkit-box;-webkit-line-clamp:5;-webkit-box-orient:vertical;overflow:hidden;}
+.desc-x:checked ~ .desc-long{display:block;-webkit-line-clamp:none;}
+.desc-btn{display:inline-flex;align-items:center;min-height:var(--tap);font-size:15px;font-weight:600;color:var(--orange-ink);cursor:pointer;text-decoration:underline;text-underline-offset:3px;}
+.desc-btn .dm-less,.desc-x:checked ~ .desc-btn .dm-more{display:none;}
+.desc-x:checked ~ .desc-btn .dm-less{display:inline;}
+.desc-x:focus-visible ~ .desc-btn{outline:2px solid var(--orange);outline-offset:3px;border-radius:4px;}
+@media(max-width:720px){.desc-long{-webkit-line-clamp:8;}}
+/* The result grid drops to one column below ~476px, where a reserved second
+   title line is just a gap. Rails still show two cards abreast, so they keep it. */
+@media(max-width:460px){.grid .pcard-name{min-height:0;}}
 .sheet .titleb{margin:0 0 var(--space-section);}
 .sheet .act{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 var(--space-section);}
 .sheet .act .cta{width:auto;min-width:220px;height:var(--tap);padding:0 22px;font-size:16px;}
@@ -404,7 +525,11 @@ a.cta{text-decoration:none;text-align:center;} /* link-CTAs center exactly like 
 .dbtable th{text-align:left;font-family:'DM Sans',sans-serif;font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--faint);font-weight:400;padding:13px 16px;border-bottom:1px solid var(--line);}
 .dbtable td{padding:12px 16px;border-bottom:1px solid var(--line2);font-size:14px;}
 .dbtable tr:last-child td{border-bottom:none;}
+.dbtable tbody tr[data-grant]{cursor:pointer;transition:background .12s;}
+.dbtable tbody tr[data-grant]:hover{background:var(--mist);}
 .dbtable .tag{margin:0;}
+.dbtable .cbadge{position:static;}
+.dbtable .cbadge.eq{background:var(--sand);box-shadow:none;}
 
 /* ============================ EVENTS ============================ */
 .ev-head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:var(--space-row);padding:var(--space-page) 0 var(--space-after-photo);}
@@ -473,14 +598,17 @@ a.evrow:hover{border-color:var(--ink);box-shadow:var(--shadow-sm);}
 .foot-in{display:flex;align-items:flex-start;justify-content:space-between;gap:44px 32px;padding-top:56px;padding-bottom:48px;flex-wrap:wrap;}
 .foot .brand b{font-size:15px;}
 .foot .tagline{font-size:14px;color:var(--muted);margin-top:12px;max-width:340px;line-height:1.5;}
+/* The Adapt To Life credit is a link; without this it is indistinguishable from the sentence around it. */
+.foot .tagline a{color:var(--ink2);text-decoration:underline;text-underline-offset:2px;}
 .foot-links{display:flex;gap:36px 48px;flex-wrap:wrap;}
 .foot-col h2{font-family:'DM Sans',sans-serif;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);font-weight:400;margin:0 0 12px;}
 .foot-col a{display:block;font-size:14px;color:var(--ink2);padding:6px 0;}
 .foot-col a:hover{color:var(--orange);}
 /* Slim footer newsletter line — quiet last-chance capture, not a second billboard */
 .foot-sub{display:flex;align-items:center;justify-content:space-between;gap:18px 40px;flex-wrap:wrap;padding:34px 0;border-bottom:1px solid var(--line);}
-.foot-sub-txt h2{font-family:'DM Sans',sans-serif;font-size:17px;font-weight:700;letter-spacing:-.01em;color:var(--ink);margin:0 0 4px;}
-.foot-sub-txt p{font-size:13px;color:var(--muted);margin:0;}
+/* The newsletter promise lives in the inbox band, once. Down here the form is
+   the actor and this line is its caption, not a second billboard. */
+.foot-sub-txt p{font-size:16px;color:var(--ink2);margin:0;}
 .foot-sub-form{flex:0 0 auto;}
 .fc-sub{display:flex;gap:8px;max-width:400px;}
 .fc-sub input{flex:1 1 auto;height:42px;padding:0 14px;border:1px solid var(--line);border-radius:var(--r);background:var(--paper);color:var(--ink);font-size:14px;min-width:0;}
@@ -722,8 +850,7 @@ body.drawer-open{overflow:hidden;}
   <div class="wrap">
     <div class="foot-sub">
       <div class="foot-sub-txt">
-        <h2>Programs, events &amp; funding near you.</h2>
-        <p>Free directory updates in your inbox. No spam, unsubscribe anytime.</p>
+        <p>We email when there is something worth sending.</p>
       </div>
       <div class="foot-sub-form">
         <div class="fc-sub" id="subWrap">
@@ -840,16 +967,15 @@ const PROVIDERS = {
   "Mountain Access Project":{type:"Nonprofit", city:"Golden, CO", blurb:"Adaptive climbing nights with trained volunteers and adaptive belay systems."},
 };
 const GRANTS = [
-  // Adapt To Life runs this directory and also runs a fund, so the fund is
-  // listed here on the merits, as a peer of the others and with no special
-  // placement. Amount is deliberately "Varies": there is no published cap and
-  // inventing one would be a promise we cannot keep.
-  {name:"Hustle & Heart Fund (Adapt To Life)", meta:"Varies \u00b7 Rolling"},
-  {name:"Challenged Athletes Foundation Grant", meta:"Up to $5,000 \u00b7 Rolling"},
-  {name:"Kelly Brush Active Fund", meta:"Up to $5,000 \u00b7 Mar 1 / Sep 1"},
-  {name:"Move United Equipment Fund", meta:"Varies \u00b7 Rolling"},
-  {name:"High Fives Empowerment Grant", meta:"Up to $7,500 \u00b7 Rolling"},
-  {name:"Travis Roy Quality of Life", meta:"Up to $5,000 \u00b7 Spring / Fall"},
+  // Offline fallback — the six names already on the site plus CAF Rebound.
+  // /api/grants hydrates the full athlete + program set. Hustle & Heart first.
+  {id:"b0298125-6d6a-4114-b0a2-5275750c09ae", name:"Hustle & Heart Fund (Adapt To Life)", source:"Adapt To Life", audience:"athlete", amountDisplay:"Varies", deadlineDisplay:"Rolling", applicationUrl:"https://adapttolife.org", meta:"Varies \u00b7 Rolling"},
+  {id:"c7f9f8e6-29a1-492b-bce2-1ca8df9e0051", name:"Challenged Athletes Foundation Grant", source:"Challenged Athletes Foundation", audience:"athlete", amountDisplay:"Varies", deadlineDisplay:"Annual \u00b7 Oct\u2013Nov", applicationUrl:"https://www.challengedathletes.org/grants/", meta:"Varies \u00b7 Annual \u00b7 Oct\u2013Nov"},
+  {id:"ecae6365-b388-4e3a-a00e-de3f6b7b354f", name:"CAF Operation Rebound", source:"Challenged Athletes Foundation", audience:"athlete", deadlineDisplay:"Year-round", applicationUrl:"https://www.challengedathletes.org/operation-rebound/", meta:"Year-round"},
+  {id:"07cd3de4-34aa-49d1-a5c5-d60d44f5339c", name:"Kelly Brush Active Fund", source:"Kelly Brush Foundation", audience:"athlete", amountDisplay:"Up to $5,000", applicationUrl:"https://kbf.org/theactivefund/", sport:"cycling", meta:"Up to $5,000"},
+  {id:"62cf6170-6b94-48f1-a091-bc9882b6f3c0", name:"Move United Equipment Fund", source:"Move United", audience:"athlete", amountDisplay:"Up to $500", deadlineDisplay:"As funding available", applicationUrl:"https://moveunitedsport.org/athlete-equipment-grant-application/", meta:"Up to $500 \u00b7 As funding available"},
+  {id:"cce93d6d-d686-4a42-9855-c3f7f2151b37", name:"High Fives Empowerment Grant", source:"High Fives Foundation", audience:"athlete", amountDisplay:"Varies", deadlineDisplay:"Mar / Jul / Aug", applicationUrl:"https://highfivesfoundation.org/grant-application/", sport:"skiing", meta:"Varies \u00b7 Mar / Jul / Aug"},
+  {id:"630ca7a3-01a6-418f-b5d4-21d089a47867", name:"Travis Roy Quality of Life", source:"Travis Roy Foundation", audience:"athlete", amountDisplay:"Up to $5,000", deadlineDisplay:"Spring / Fall", meta:"Up to $5,000 \u00b7 Spring / Fall"},
 ];
 const EVENTS = [
   {name:"Rocky Mountain Sled Classic", date:"Mar 14", city:"Littleton, CO", sport:"Sled Hockey"},
@@ -893,7 +1019,7 @@ const TABLE_META = [
   {key:"providers", label:"Providers", count:6, icon:"building"},
   {key:"events", label:"Events", count:5, icon:"cal"},
   {key:"equipment", label:"Equipment", count:5, icon:"dumb"},
-  {key:"grants", label:"Grants", count:6, icon:"price"},
+  {key:"grants", label:"Grants", count:GRANTS.length, icon:"price"},
   {key:"resources", label:"Resources", count:4, icon:"book"},
 ];
 const MAPPOS = {
@@ -905,7 +1031,39 @@ const MAPPOS = {
 };
 const SPGRAD = {basketball:"g-warm",tennis:"g-sand",pickleball:"g-warm",rugby:"g-sand",football:"g-warm",baseball:"g-sand",cycling:"g-cool",sledhockey:"g-cool",skiing:"g-cool",waterskiing:"g-cool",goalball:"g-sand"};
 function iconSrc(key){ return "assets/sport-icons/"+key+".png"; }   // 3D transparent icons — category chips
-function photoSrc(key){ return "assets/sport-photos/"+key+".jpg"; } // square action photos — cards, hero, thumbs
+function photoSrc(key){ return "assets/sport-photos/"+key+".jpg"; } // kept on disk; not the locked fallback
+const SPORT_SCENES={basketball:"/scenes/basketball-gym.jpg",cycling:"/scenes/cycling-road.jpg",skiing:"/scenes/skiing-mountain.jpg",baseball:"/scenes/baseball-diamond.jpg",boccia:"/scenes/boccia-court.jpg",climbing:"/scenes/climbing-gym.jpg",football:"/scenes/football-field.jpg",goalball:"/scenes/goalball-gym.jpg",golf:"/scenes/golf-fairway.jpg",rowing:"/scenes/rowing-lake.jpg",rugby:"/scenes/rugby-pitch.jpg",pickleball:"/scenes/pickleball-court.jpg",sledhockey:"/scenes/sledhockey-rink.jpg",swimming:"/scenes/swimming-pool.jpg",tennis:"/scenes/tennis-court.jpg",volleyball:"/scenes/volleyball-court.jpg",waterskiing:"/scenes/waterskiing-lake.jpg"};
+const GRANT_TRACK_SCENE="/scenes/grant-track.jpg";
+const PROGRAM_GRANT_SCENE="/scenes/program-grant-gym.jpg";
+const EVENT_SCENE="/scenes/event-field.jpg";
+const EMBLEM_KEYS={"athlete-grant":1,"program-grant":1,"event":1,basketball:1,tennis:1,pickleball:1,rugby:1,football:1,baseball:1,cycling:1,sledhockey:1,skiing:1,waterskiing:1,goalball:1,rowing:1,swimming:1,golf:1,boccia:1,volleyball:1,climbing:1};
+// No sport art and no photo: the house mark still gives the card a picture
+// instead of an empty tile (840 of 1,478 live orgs carry no sport). Mirrors src/visuals.js.
+const GENERIC_STAMP="/emblems/adaptive.svg";
+function emblemSrc(key){ return key&&EMBLEM_KEYS[key]?"/emblems/"+key+".png":null; }
+function sceneSrc(sport){ return (sport&&SPORT_SCENES[sport])||null; }
+function listingVisual(item, role){
+  if(item&&item.photo) return {kind:"photo",src:item.photo};
+  if(role==="grant") return {kind:"scene",src:(item&&item.audience==="program")?PROGRAM_GRANT_SCENE:GRANT_TRACK_SCENE};
+  if(role==="event"){
+    const sc=sceneSrc(item&&item.sport);
+    if(sc) return {kind:"scene",src:sc};
+    return {kind:"scene",src:EVENT_SCENE};
+  }
+  const sc=sceneSrc(item&&item.sport);
+  if(sc) return {kind:"scene",src:sc};
+  return {kind:"stamp",src:emblemSrc(item&&item.sport)||GENERIC_STAMP};
+}
+function isCoverVisual(v){ return !!(v&&(v.kind==="photo"||v.kind==="scene")&&v.src); }
+function stampSrc(item, role){
+  if(role==="grant") return emblemSrc((item&&item.audience==="program")?"program-grant":"athlete-grant");
+  if(role==="event") return emblemSrc("event");
+  return emblemSrc(item&&item.sport)||GENERIC_STAMP;
+}
+function coverStampAttr(item, role){
+  const st=stampSrc(item, role);
+  return st?' data-stamp="'+st+'"':'';
+}
 function sportIcon(key, cls){ return '<img class="'+(cls||'')+'" src="'+iconSrc(key)+'" alt="" loading="lazy">'; }
 
 /* ============================ ICONS ============================ */
@@ -957,7 +1115,7 @@ const BOOT_PROFILE=location.pathname==='/profile'; // /profile is the profile se
 const BOOT_EVENTS=location.pathname==='/events'; // /events too — it's where the RSS feed's item links land
 const US_STATES=["AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID","IL","IN","IA","KS","KY","LA","ME","MD","MA","MI","MN","MS","MO","MT","NE","NV","NH","NJ","NM","NY","NC","ND","OH","OK","OR","PA","RI","SC","SD","TN","TX","UT","VT","VA","WA","WV","WI","WY","DC"];
 const BAND_STYLE = (new URLSearchParams(location.search).get('band')||'warm'); // warm (default) | soft — inbox-band skin
-const state = { section:"discover", layout:"grid", sport:"all", q:"", dist:"any", cost:"any", level:"any", filtersOpen:false, sort:"rec", db:"programs", dbView:"gallery", programId:null, loc:"Denver, CO", see:null, profileNudge:false, nearZip:"", nearCity:"", near:null };
+const state = { section:"discover", layout:"grid", sport:"all", q:"", dist:"any", cost:"any", level:"any", filtersOpen:false, sort:"rec", db:"programs", dbView:"gallery", programId:null, grantId:null, grantAudience:"all", loc:"Denver, CO", see:null, profileNudge:false, nearZip:"", nearCity:"", near:null };
 const saved = new Set();
 function statusCls(s){ return s==='Open'?'st-open':s==='Waitlist'?'st-wait':'st-seas'; }
 function pill(s){ return '<span class="status '+statusCls(s)+'">'+s+'</span>'; }
@@ -975,25 +1133,24 @@ function cardTagsHtml(p){
 }
 const CHAIR_GLY=NAVICON.chair.replace('<svg','<svg class="gly"'); // the brand wheelchair mark, one source
 function thumbHtml(p){
-  // small thumbs (map cards, list rows): photo when the sport has one, glyph tile otherwise
-  return p.sport?'<img class="thumb-full" src="'+photoSrc(p.sport)+'" alt="" loading="lazy">':ringBg('ringbg')+CHAIR_GLY;
+  const v=listingVisual(p,'program');
+  if(isCoverVisual(v)) return '<img class="thumb-full" src="'+v.src+'" alt="" loading="lazy"'+coverStampAttr(p,'program')+'>';
+  return v.src?'<img class="thumb-stamp" src="'+v.src+'" alt="" loading="lazy">':'';
 }
 function media(p, kind){
-  // Airbnb-style: real action photo + tag badges (top-left).
-  // Sports outside the launch photo set fall back to the gradient + glyph tile.
   const overlay = (kind && kind!=='pcard-media') ? '' : cardTagsHtml(p);
-  if(!p.sport) return '<div class="'+(kind||'pcard-media')+' g-sand">'+ringBg('ringbg')+CHAIR_GLY+overlay+'</div>';
-  return '<div class="'+(kind||'pcard-media')+' has-photo"><img class="pcard-img" src="'+photoSrc(p.sport)+'" alt="" loading="lazy" decoding="async">'+overlay+'</div>';
+  const v=listingVisual(p,'program');
+  const cls=kind||'pcard-media';
+  if(isCoverVisual(v)) return '<div class="'+cls+' has-photo"><img class="pcard-img" src="'+v.src+'" alt="" loading="lazy" decoding="async"'+coverStampAttr(p,'program')+'>'+overlay+'</div>';
+  return '<div class="'+cls+' has-stamp">'+(v.src?'<img class="pcard-stamp" src="'+v.src+'" alt="" loading="lazy">':'')+overlay+'</div>';
 }
-// One useful line under the city: distance when we searched near somewhere,
-// otherwise the org type, otherwise the website host. Never cost/ages chips —
-// those are empty on most live D1 records.
-function cardLine(p){
-  if(p.dist!=null) return p.dist+' mi away';
-  if(p.provider) return p.provider;
-  if(p.website) return hostFromUrl(p.website);
-  return '';
-}
+// One line under the city, and only when it says something: how far away this is.
+function cardLine(p){ return p.dist!=null ? p.dist+' mi away' : ''; }
+// The org type is a default, not a difference: 47 of 72 home cards read
+// "Adaptive club". It belongs in a labelled column and on the listing page,
+// not as an unlabelled fourth line under every card.
+function typeLine(p){ return p.provider||''; }
+function mtLine(p){ const l=cardLine(p); return l?'<div class="mt">'+l+'</div>':''; }
 function milesBetween(aLat,aLng,bLat,bLng){
   const toR=d=>d*Math.PI/180, dLat=toR(bLat-aLat), dLng=toR(bLng-aLng);
   const a=Math.sin(dLat/2)**2+Math.cos(toR(aLat))*Math.cos(toR(bLat))*Math.sin(dLng/2)**2;
@@ -1162,6 +1319,29 @@ function geoPos(p){
 /* ---- real map: MapLibre GL + OpenFreeMap (free/open vector tiles, no keys, no limits) ---- */
 const OFM_STYLE='https://tiles.openfreemap.org/styles/bright'; // flat Apple-Maps-like, warm cream that matches the site palette
 let MAPLIB=null, liveMap=null, mapToken=0;
+const PAN_BOUNDS=[[-179,-16],[-45,71]]; // Americas only; Mercator midpoint sits at ~39.5N
+// The Northeast corridor packs ten states into about six degrees, so at national
+// zoom their count pills land on top of each other. A fixed pixel nudge fans them
+// down the open Atlantic: deterministic, no leader lines, and small enough at
+// street zoom to still read as the same state.
+const PILL_NUDGE={VT:[-30,-44],ME:[-30,-30],NH:[22,-28],MA:[56,-18],RI:[64,8],CT:[38,54],NJ:[48,53],DE:[72,60],MD:[26,34],DC:[40,86]};
+/* ---- region clustering (mirrors src/map-regions.js — change both) ----
+   Zoomed out, the country is four US Census region chips; zoom past
+   CLUSTER_MAX_ZOOM and they split into the per-state pills. Census REGIONS and
+   not Census DIVISIONS because nobody scanning for Kansas thinks "West North
+   Central", and clustering must never make someone guess which chip holds their
+   state. Four chips also fit across a 390px phone; nine do not. */
+const CENSUS_REGIONS={Northeast:['CT','ME','MA','NH','RI','VT','NJ','NY','PA'],Midwest:['IL','IN','MI','OH','WI','IA','KS','MN','MO','NE','ND','SD'],South:['DE','DC','FL','GA','MD','NC','SC','VA','WV','AL','KY','MS','TN','AR','LA','OK','TX'],West:['AZ','CO','ID','MT','NV','NM','UT','WY','AK','CA','HI','OR','WA']};
+// AK and HI are Census West but never draw as West: their programs sit thousands
+// of miles from that chip. They keep their own pill at every zoom, where nothing
+// can collide with them. Territories have no Census region at all, same rule.
+const OFFSHORE_STATES=['AK','HI'];
+const REGION_ANCHOR={Northeast:[-77.5,42],Midwest:[-97.5,43],South:[-88,32.5],West:[-115,41.5]};
+const CLUSTER_MAX_ZOOM=4, REGION_ZOOM_MARGIN=.35, REGION_MAX_ZOOM=6.5;
+const REGION_OF={}; Object.keys(CENSUS_REGIONS).forEach(r=>CENSUS_REGIONS[r].forEach(s=>{REGION_OF[s]=r;}));
+function clusterKeyFor(s){ const k=String(s||'').toUpperCase(); if(!k) return ''; return OFFSHORE_STATES.indexOf(k)>=0?k:(REGION_OF[k]||k); }
+function shouldCluster(z){ return Number(z)<CLUSTER_MAX_ZOOM; }
+function regionZoom(z){ const f=CLUSTER_MAX_ZOOM+REGION_ZOOM_MARGIN; return Number.isFinite(z)?Math.min(Math.max(z,f),REGION_MAX_ZOOM):f; }
 function loadMapLibre(){
   // vendored same-origin (assets/vendor/) so the service worker caches it and
   // the only third party involved is the tile server itself
@@ -1191,7 +1371,7 @@ async function initLiveMap(list,opts){
   stateLevel.forEach(p=>{ const k=p.state||'US'; if(!byState.has(k)) byState.set(k,[]); byState.get(k).push(p); });
   liveMap=new ml.Map({container:el, style:OFM_STYLE, center:[-96.9,38.5], zoom:3.4, attributionControl:{compact:true}});
   liveMap.addControl(new ml.NavigationControl({showCompass:false}),'top-right');
-  const pts=[];
+  const pts=[], statePills=[], regionPills=[], byRegion=new Map();
   const oneState=byState.size===1;
   const ring=oneState&&!explorer&&[...byState.values()][0].length<=12; // numbered ring only when it stays readable
   if(ring){
@@ -1200,7 +1380,7 @@ async function initLiveMap(list,opts){
       const a=2*Math.PI*i/arr.length, lng=p.lng+R*Math.cos(a), lat=p.lat+R*Math.sin(a)*0.7;
       const d=document.createElement('button'); d.className='mpin'; d.textContent=String(i+1);
       d.setAttribute('data-prog',p.id); d.setAttribute('aria-label',p.name);
-      d.addEventListener('click',()=>{ state.section='program'; state.programId=p.id; render(); });
+      d.addEventListener('click',e=>selectMapPin(p,e));
       pts.push([lng,lat]); new ml.Marker({element:d}).setLngLat([lng,lat]).addTo(liveMap);
     });
   } else {
@@ -1212,16 +1392,52 @@ async function initLiveMap(list,opts){
       d.setAttribute('aria-label',(p.stateName||k)+': '+arr.length+' programs');
       if(explorer) d.addEventListener('click',()=>mapxShowState(k));
       else if(!oneState) d.addEventListener('click',()=>{ state.q=p.stateName||k; state.see=null; render(true); });
-      pts.push([p.lng,p.lat]); new ml.Marker({element:d}).setLngLat([p.lng,p.lat]).addTo(liveMap);
+      // Half offset on a phone: the full fan would push NJ, DE and DC off the right edge.
+      const n=PILL_NUDGE[k], f=window.innerWidth<=720?0.5:1;
+      const nudge=n?[n[0]*f,n[1]*f]:null;
+      pts.push([p.lng,p.lat]);
+      const m=new ml.Marker(nudge?{element:d,offset:nudge}:{element:d}).setLngLat([p.lng,p.lat]);
+      const key=clusterKeyFor(k);
+      // Mainland states fold into a region chip when zoomed out; AK, HI and the
+      // territories have no mainland chip to fold into, so they are always up.
+      if(REGION_ANCHOR[key]){ statePills.push(m); byRegion.has(key)||byRegion.set(key,{count:0,pts:[]});
+        const g=byRegion.get(key); g.count+=arr.length; g.pts.push([p.lng,p.lat]); }
+      else m.addTo(liveMap);
+    });
+    // One chip per region, name plus count, so nobody has to guess which one
+    // holds their state. Skipped when it would not actually merge anything.
+    if(byRegion.size>1&&byRegion.size<byState.size) byRegion.forEach((g,key)=>{
+      const d=document.createElement('button'); d.className='mpill mpill-region'; d.setAttribute('data-region',key);
+      d.innerHTML='<span>'+key+'</span><span class="mc">'+g.count+'</span>';
+      d.setAttribute('aria-label',key+': '+g.count+' programs. Zoom in for states.');
+      d.addEventListener('click',()=>zoomToRegion(g.pts));
+      regionPills.push(new ml.Marker({element:d}).setLngLat(REGION_ANCHOR[key]));
     });
   }
   precise.forEach(p=>{
-    const d=document.createElement('button'); d.className='mdot'; d.style.cursor='pointer';
+    const d=document.createElement('button'); d.className='mdot';
+    d.innerHTML='<span class="mdot-mark" aria-hidden="true"></span>';
     d.setAttribute('data-prog',p.id); d.setAttribute('aria-label',p.name);
-    d.addEventListener('click',()=>{ state.section='program'; state.programId=p.id; render(); });
+    d.addEventListener('click',e=>selectMapPin(p,e));
     pts.push([p.lng,p.lat]); new ml.Marker({element:d}).setLngLat([p.lng,p.lat]).addTo(liveMap);
   });
-  liveMap.setMaxBounds([[-179,10],[-45,74]]); // keep panning on the map, not the mid-Atlantic
+  // Swap the two marker sets when the threshold is crossed. The markers are built
+  // once and re-attached, never rebuilt, and zoomend fires per gesture rather than
+  // per frame. mapToken keeps a stale map's handler from touching a fresh one.
+  let clustered=null;
+  function applyClusterMode(on){
+    if(token!==mapToken||!liveMap||on===clustered) return;
+    clustered=on;
+    (on?statePills:regionPills).forEach(m=>m.remove());
+    (on?regionPills:statePills).forEach(m=>m.addTo(liveMap));
+  }
+  const canCluster=regionPills.length>0;
+  liveMap.on('zoomend',()=>{ applyClusterMode(canCluster&&shouldCluster(liveMap.getZoom())); });
+  liveMap.on('click',e=>{
+    const t=e.originalEvent&&e.originalEvent.target;
+    if(t&&t.closest&&t.closest('.mdot,.mpin,.mpill,.map-tray,.maplibregl-ctrl,.mapx-close,.mapx-open,.mapx-drawer,.mapchip')) return;
+    closeMapTray();
+  });
   if(byState.size>1){
     // frame the pills that are actually on the mainland — AK/HI/PR markers still
     // render, they just don't stretch the opening frame to the whole hemisphere
@@ -1234,6 +1450,28 @@ async function initLiveMap(list,opts){
     const lngs=pts.map(m=>m[0]), lats=pts.map(m=>m[1]);
     liveMap.fitBounds([[Math.min(...lngs),Math.min(...lats)],[Math.max(...lngs),Math.max(...lats)]],{padding:90,maxZoom:7,duration:0});
   } else if(pts.length===1){ liveMap.jumpTo({center:pts[0],zoom:5.8}); }
+  // Panning guard, applied after the opening frame so it never overrides it.
+  // The latitude range is centred in Mercator on the middle of the lower 48: if a
+  // wide frame on a tall phone viewport ever has to be clamped, it lands on the
+  // United States instead of Hudson Bay.
+  liveMap.setMaxBounds(PAN_BOUNDS);
+  // Decide against the frame we actually landed on, not the constructor zoom: a
+  // 390px phone opens below the threshold and starts on region chips, a 1440px
+  // desktop opens above it and starts on states.
+  applyClusterMode(canCluster&&shouldCluster(liveMap.getZoom()));
+}
+// The CSS reduced-motion block cannot reach a MapLibre camera move, so the map
+// asks for itself.
+function mapMotionMs(ms){ try{ return matchMedia('(prefers-reduced-motion: reduce)').matches?0:ms; }catch(_){ return ms; } }
+// A region chip zooms to its states. Floored past the threshold so the state
+// pills always turn up, even for a region too wide to fit on the screen.
+function zoomToRegion(pts){
+  if(!liveMap||!pts||!pts.length) return;
+  const lngs=pts.map(m=>m[0]), lats=pts.map(m=>m[1]);
+  const b=[[Math.min(...lngs),Math.min(...lats)],[Math.max(...lngs),Math.max(...lats)]];
+  let cam=null; try{ cam=liveMap.cameraForBounds(b,{padding:window.innerWidth>720?80:44}); }catch(_){}
+  const c=(cam&&cam.center)||[(b[0][0]+b[1][0])/2,(b[0][1]+b[1][1])/2];
+  liveMap.easeTo({center:c,zoom:regionZoom(cam&&cam.zoom),duration:mapMotionMs(650)});
 }
 // Called after every view paint: stand up or tear down map instances to match.
 function afterRender(){
@@ -1261,7 +1499,8 @@ function mapExplorer(){
       +'<div class="mapxd-head"><div><h2></h2><div class="sub"></div></div><button class="mapxd-x" type="button" aria-label="Close list">'+X+'</button></div>'
       +'<div class="mapxd-list"></div>'
       +'<div class="mapxd-foot"><a href="#" data-mapx-dir="">Open in directory</a></div>'
-    +'</div></div>';
+    +'</div>'
+    +'<div class="map-tray panel" id="mapTray" aria-hidden="true"></div></div>';
 }
 function mapxShowState(k){
   const list=(state.see?seeList():filtered()).filter(p=>p.state===k);
@@ -1272,32 +1511,221 @@ function mapxShowState(k){
   d.querySelector('.mapxd-head .sub').textContent=list.length+(list.length===1?' program':' programs');
   d.querySelector('.mapxd-list').innerHTML=list.map(p=>
     '<div class="mcard" data-prog="'+p.id+'">'
-    +'<div class="mthumb'+(p.sport?'':' g-sand')+'">'+thumbHtml(p)+'</div>'
+    +'<div class="mthumb'+(isCoverVisual(listingVisual(p,'program'))?'':' has-stamp')+'">'+thumbHtml(p)+'</div>'
     +'<div class="minfo"><div class="pcard-sport">'+p.sportLabel+'</div><div class="nm">'+p.name+'</div>'
-    +'<div class="sub">'+locLine(p)+'</div><div class="mt">'+cardLine(p)+'</div></div></div>').join('');
+    +'<div class="sub">'+locLine(p)+'</div>'+mtLine(p)+'</div></div>').join('');
   d.querySelector('.mapxd-foot a').setAttribute('data-mapx-dir',name);
   d.hidden=false;
   const p0=list.find(p=>p.lat!=null);
-  if(liveMap&&p0) liveMap.easeTo({center:[p0.lng,p0.lat],zoom:5.2,duration:650});
+  if(liveMap&&p0) liveMap.easeTo({center:[p0.lng,p0.lat],zoom:5.2,duration:mapMotionMs(650)});
+  closeMapTray();
+}
+
+/* ---- Phone: two-height bottom tray (peek 35% / expanded 90%). Desktop: full-height left column. ---- */
+const PEEK_VH=35;
+const EXPANDED_VH=90;
+function snapMapTray(current,dy,viewportH){
+  const peek=viewportH*(PEEK_VH/100);
+  const exp=viewportH*(EXPANDED_VH/100);
+  const mid=(exp-peek)/2;
+  if(current==='peek'){
+    if(dy>=56) return 'closed';
+    if(-dy>=mid) return 'expanded';
+    return 'peek';
+  }
+  if(dy>=mid) return 'peek';
+  return 'expanded';
+}
+function mapTrayPills(p){
+  const pills=[];
+  if(p.website) pills.push('<a class="tray-pill primary" href="'+p.website+'" target="_blank" rel="noopener">Visit</a>');
+  else if(p.id) pills.push('<a class="tray-pill primary" href="/programs/'+p.id+'" data-prog="'+p.id+'">Open listing</a>');
+  if(p.phone) pills.push('<a class="tray-pill" href="tel:'+String(p.phone).replace(/[^\d+]/g,'')+'">Call</a>');
+  if(p.email) pills.push('<a class="tray-pill" href="mailto:'+p.email+'">Email</a>');
+  return pills.join('');
+}
+function mapTrayHtml(p){
+  const loc=locLine(p);
+  const meta=p.sportLabel? loc+' · '+p.sportLabel : loc;
+  const cta=primaryCta(p);
+  const action=cta
+    ? '<a class="cta" href="'+cta.href+'" target="_blank" rel="noopener">'+cta.label+'</a>'+(p.website?'<span class="host">'+hostFromUrl(p.website)+'</span>':'')
+    : '';
+  return '<div class="tray-handle-hit"><div class="tray-handle" aria-hidden="true"></div>'
+    +'<button class="tray-x" type="button" aria-label="Close"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>'
+    +'<div class="tray-peek">'
+    +'<div class="tray-name">'+p.name+'</div>'
+    +'<div class="tray-meta">'+meta+'</div>'
+    +'<div class="tray-pills">'+mapTrayPills(p)+'</div>'
+    +'</div>'
+    +'<div class="tray-full sheet">'
+    +sheetHero(p)
+    +'<div class="titleb"><h1>'+p.name+'</h1><p class="loc">'+loc+'</p>'+descBlock(p.desc)+'</div>'
+    +'<div class="tray-pills tray-pills-full">'+mapTrayPills(p)+'</div>'
+    +'<div class="act">'+action+'</div>'
+    +denseRows(p)
+    +relatedRow(p)
+    +'</div>';
+}
+function trayHeightOf(el){
+  return el&&el.classList.contains('expanded')?'expanded':'peek';
+}
+function setMapTrayHeight(el,height){
+  if(!el) return;
+  const next=height==='expanded'?'expanded':'peek';
+  el.classList.toggle('expanded', next==='expanded');
+  el.classList.toggle('peek', next==='peek');
+  el.setAttribute('data-tray-height',next);
+  el.setAttribute('aria-expanded', next==='expanded'?'true':'false');
+  const host=el.closest('.mapx,.map-live');
+  if(host) host.classList.toggle('tray-expanded', next==='expanded');
+  el.style.height='';
+  el.style.transform='';
+  el.style.transition='';
+}
+function expandMapTray(){
+  const el=document.getElementById('mapTray');
+  if(!el||!el.classList.contains('open')) return;
+  setMapTrayHeight(el,'expanded');
+}
+function resizeLiveMap(){
+  if(liveMap && typeof liveMap.resize==='function'){
+    requestAnimationFrame(function(){ try{ liveMap.resize(); }catch(_){ } });
+  }
+}
+function openMapTray(p){
+  const el=document.getElementById('mapTray'); if(!el||!p) return;
+  const drawer=document.getElementById('mapxDrawer'); if(drawer) drawer.hidden=true;
+  const wasOpen=el.classList.contains('open');
+  const desktop=isDesktopTray();
+  const keepHeight=wasOpen && el.classList.contains('expanded') ? 'expanded' : (desktop ? 'expanded' : 'peek');
+  el.style.transform='';
+  el.style.transition='';
+  el.style.height='';
+  el.innerHTML=mapTrayHtml(p);
+  el.setAttribute('data-tray-prog',p.id);
+  el.setAttribute('aria-hidden','false');
+  bindMapTrayGestures(el);
+  if(wasOpen){
+    el.classList.add('open');
+    setMapTrayHeight(el, keepHeight);
+  } else {
+    el.classList.remove('open');
+    setMapTrayHeight(el, desktop ? 'expanded' : 'peek');
+    void el.offsetWidth;
+    el.classList.add('open');
+  }
+  document.querySelectorAll('.mdot.active,.mpin.active').forEach(n=>n.classList.remove('active'));
+  document.querySelectorAll('.mdot[data-prog="'+p.id+'"],.mpin[data-prog="'+p.id+'"]').forEach(n=>n.classList.add('active'));
+  resizeLiveMap();
+  loadOrgDetail(p).then(function(){
+    if(el.getAttribute('data-tray-prog')!==p.id) return;
+    const h=desktop ? 'expanded' : trayHeightOf(el);
+    el.innerHTML=mapTrayHtml(p);
+    setMapTrayHeight(el, h);
+  });
+}
+function closeMapTray(){
+  const el=document.getElementById('mapTray');
+  if(!el||!el.classList.contains('open')) return;
+  el.classList.remove('open','expanded','peek');
+  el.setAttribute('aria-hidden','true');
+  el.setAttribute('aria-expanded','false');
+  el.removeAttribute('data-tray-prog');
+  el.removeAttribute('data-tray-height');
+  const host=el.closest('.mapx,.map-live');
+  if(host) host.classList.remove('tray-expanded');
+  document.querySelectorAll('.mdot.active,.mpin.active').forEach(n=>n.classList.remove('active'));
+  resizeLiveMap();
+}
+function selectMapPin(p,e){
+  if(e){ e.preventDefault(); e.stopPropagation(); }
+  if(!p) return;
+  openMapTray(p);
+}
+let trayDrag=null;
+function isDesktopTray(){ return window.matchMedia('(min-width:721px)').matches; }
+function bindMapTrayGestures(el){
+  if(!el||el._trayBound) return;
+  el._trayBound=true;
+  el.addEventListener('click',e=>{
+    if(e.target.closest('.tray-x')){ e.preventDefault(); closeMapTray(); return; }
+    if(!isDesktopTray()) return;
+    if(e.target.closest('a,button')) return;
+    if(!el.classList.contains('expanded')) expandMapTray();
+  });
+  el.addEventListener('pointerdown',e=>{
+    if(isDesktopTray()) return;
+    if(e.target.closest('a,button')) return;
+    if(el.classList.contains('expanded') && !e.target.closest('.tray-handle-hit,.tray-handle')) return;
+    const map=el.parentElement;
+    const mapH=map?map.clientHeight:window.innerHeight;
+    trayDrag={id:e.pointerId,y0:e.clientY,y:e.clientY,height:trayHeightOf(el),mapH};
+    try{ el.setPointerCapture(e.pointerId); }catch(_){}
+  });
+  el.addEventListener('pointermove',e=>{
+    if(!trayDrag||e.pointerId!==trayDrag.id) return;
+    trayDrag.y=e.clientY;
+    const dy=trayDrag.y-trayDrag.y0;
+    const peekH=trayDrag.mapH*(PEEK_VH/100);
+    const expH=trayDrag.mapH*(EXPANDED_VH/100);
+    const mid=(expH-peekH)/2;
+    el.style.transition='none';
+    if(trayDrag.height==='peek'){
+      if(dy>0){
+        el.style.height=peekH+'px';
+        el.style.transform='translateY('+dy+'px)';
+      } else {
+        el.style.height=Math.min(expH, peekH-dy)+'px';
+        el.style.transform='translateY(0)';
+        el.classList.toggle('expanded', -dy>=mid);
+      }
+    } else {
+      el.style.height=Math.max(peekH, Math.min(expH, expH-dy))+'px';
+      el.style.transform='translateY(0)';
+      el.classList.toggle('expanded', dy<mid);
+    }
+  });
+  function endDrag(e){
+    if(!trayDrag||(e&&e.pointerId!==trayDrag.id)) return;
+    const dy=trayDrag.y-trayDrag.y0;
+    const from=trayDrag.height;
+    const mapH=trayDrag.mapH;
+    trayDrag=null;
+    let next;
+    if(Math.abs(dy)<8){
+      next=from==='peek'?'expanded':'peek';
+    } else {
+      next=snapMapTray(from,dy,mapH);
+    }
+    el.style.transition='';
+    el.style.height='';
+    el.style.transform='';
+    if(next==='closed') closeMapTray();
+    else setMapTrayHeight(el, next);
+  }
+  el.addEventListener('pointerup',endDrag);
+  el.addEventListener('pointercancel',endDrag);
 }
 
 function mapLayout(list){
   if(!list.length) return empty();
   const cards=list.map((p,i)=>
     '<div class="mcard" data-prog="'+p.id+'">'
-      +'<div class="mthumb'+(p.sport?'':' g-sand')+'">'+thumbHtml(p)+'<span class="mnum">'+(i+1)+'</span></div>'
+      +'<div class="mthumb'+(isCoverVisual(listingVisual(p,'program'))?'':' has-stamp')+'">'+thumbHtml(p)+'<span class="mnum">'+(i+1)+'</span></div>'
       +'<div class="minfo">'
         +'<div class="pcard-sport">'+p.sportLabel+'</div>'
         +'<div class="nm">'+p.name+'</div>'
         +'<div class="sub">'+locLine(p)+'</div>'
-        +'<div class="mt">'+cardLine(p)+'</div>'
+        +mtLine(p)
       +'</div></div>').join('');
   let mapEl;
   if(DATA_LIVE){
     // real map \u2014 MapLibre mounts into #livemap via afterRender()
     mapEl='<div class="map map-live"><div id="livemap" role="region" aria-label="Map of programs"></div>'
       +'<div class="mapchip">Map \u00b7 United States</div>'
-      +'<button class="mapx-open" type="button" data-mapx>'+NAVICON.map+'<span>Expand map</span></button></div>';
+      +'<button class="mapx-open" type="button" data-mapx>'+NAVICON.map+'<span>Expand map</span></button>'
+      +'<div class="map-tray panel" id="mapTray" aria-hidden="true"></div></div>';
   } else {
     const markers=list.map((p,i)=>{ const pos=MAPPOS[p.id]||geoPos(p)||{x:50,y:50}; return '<div class="mk" data-prog="'+p.id+'" style="left:'+pos.x+'%;top:'+pos.y+'%;"><button aria-label="'+p.name+'">'+(i+1)+'</button></div>'; }).join('');
     mapEl='<div class="map">'
@@ -1316,13 +1744,13 @@ function listLayout(list){
   if(!list.length) return empty();
   const rows=list.map(p=>
     '<tr data-prog="'+p.id+'">'
-      +'<td><div class="tcell"><div class="tthumb'+(p.sport?'':' g-sand')+'">'+thumbHtml(p)+'</div><div><div class="nm">'+p.name+'</div><div class="sub">'+p.sportLabel+'</div></div></div></td>'
+      +'<td><div class="tcell"><div class="tthumb'+(isCoverVisual(listingVisual(p,'program'))?'':' has-stamp')+'">'+thumbHtml(p)+'</div><div><div class="nm">'+p.name+'</div><div class="sub">'+p.sportLabel+'</div></div></div></td>'
       +'<td class="t-prov">'+locLine(p)+'</td>'
-      +'<td>'+(cardLine(p)||'—')+'</td>'
+      +'<td>'+((DATA_LIVE?typeLine(p):cardLine(p))||'—')+'</td>'
       +'<td class="chev" style="text-align:right;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 6 6 6-6 6"/></svg></td>'
     +'</tr>').join('');
-  // Third column mirrors the card's one useful line: distance when we searched
-  // near somewhere, the org type on live data.
+  // A labelled column is where a repeated value like the org type is still
+  // useful — the header tells you what it is.
   const thirdHead = DATA_LIVE ? 'Type' : 'Distance';
   return '<div class="tablewrap"><table class="list"><thead><tr><th>Program</th><th>Location</th><th>'+thirdHead+'</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div>';
 }
@@ -1352,7 +1780,6 @@ function empty(){
 
 /* ---- Email CTA: shared value-promise copy (edit here, layout untouched) ---- */
 const CTA_HEAD='Programs, events, and funding near you.';
-const CTA_SUBCOPY='The adaptive sports directory, in your inbox. New programs, grants, and events near you — no spam, unsubscribe anytime.';
 const CTA_BTN='Get updates';
 const CTA_PH='you@email.com';
 /* The one capture form every surface reuses; wired by the delegated form.cta-sub handler.
@@ -1386,7 +1813,7 @@ function ctaBand(){
 
 function heroSection(){
   return '<section class="hero"><div class="wrap hero-in">'
-    +'<p class="eyebrow">Find adaptive sport near you</p>'
+    +'<p class="eyebrow">Find adaptive sports near you</p>'
     +'<h1>Your place in adaptive sports.</h1>'
     +'<p class="lede">Adaptive sports programs, events, equipment and funding across the country. Search by where you are and what you want to play.</p>'
     +'<div class="hsearch" role="search">'
@@ -1467,9 +1894,19 @@ async function loadOrgDetail(p){
 function sheetHero(p){
   const loc=locLine(p);
   const ov='<div class="dov"><span class="dov-sport">'+(p.sportLabel||'Multi-Sport')+'</span><span class="dov-loc">'+loc+'</span></div>';
-  return p.sport
-    ? '<div class="dhero has-dphoto"><img class="dhero-img" src="'+photoSrc(p.sport)+'" alt="">'+ov+'</div>'
-    : '<div class="dhero '+(SPGRAD[p.sport]||'g-sand')+'">'+ringBg('ringbg')+CHAIR_GLY+ov+'</div>';
+  const v=listingVisual(p,'program');
+  if(isCoverVisual(v)) return '<div class="dhero has-dphoto"><img class="dhero-img" src="'+v.src+'" alt=""'+coverStampAttr(p,'program')+'>'+ov+'</div>';
+  return '<div class="dhero has-stamp">'+(v.src?'<img class="dhero-stamp" src="'+v.src+'" alt="">':'')+ov+'</div>';
+}
+// Long descriptions get a clamp plus a native toggle. 340 characters is roughly
+// what the clamp shows at the 68ch measure, so the toggle only appears when it
+// is actually hiding something.
+function descBlock(desc){
+  if(!desc) return '';
+  if(String(desc).length<=340) return '<p class="desc">'+desc+'</p>';
+  return '<input class="desc-x" type="checkbox" id="descmore" aria-label="Show the full description">'
+    +'<p class="desc desc-long">'+desc+'</p>'
+    +'<label class="desc-btn" for="descmore"><span class="dm-more">More</span><span class="dm-less">Less</span></label>';
 }
 function sourceWithUrl(p){
   const srcs=(p.sources&&p.sources.length)?p.sources:(p.primarySource?[{name:p.primarySource,url:p.primarySourceUrl}]:[]);
@@ -1503,7 +1940,7 @@ function listingSheet(p, o){
   return '<div class="wrap"><div class="sheet">'
     +'<header class="bar"><a class="back" href="/" data-home>← Directory</a></header>'
     +sheetHero(p)
-    +'<div class="titleb"><h1>'+p.name+'</h1><p class="loc">'+loc+'</p>'+(p.desc?'<p class="desc">'+p.desc+'</p>':'')+'</div>'
+    +'<div class="titleb"><h1>'+p.name+'</h1><p class="loc">'+loc+'</p>'+descBlock(p.desc)+'</div>'
     +'<div class="act">'+action+(o.save||'')+'</div>'
     +denseRows(p)
     +(o.related||'')
@@ -1539,6 +1976,117 @@ function program(){
   return listingSheet(p, { save:saveButton(p), related:relatedRow(p) });
 }
 
+/* ---- Grant sheet. Same listing sheet as programs; facts are grant-flavored. ---- */
+function grantMeta(g){
+  if(g.meta) return g.meta;
+  return [g.amountDisplay,g.deadlineDisplay].filter(Boolean).join(' \u00b7 ')||'\u2014';
+}
+function grantAudienceLabel(g){
+  if(g.audience==='program') return 'Program grant';
+  if(g.audience==='athlete') return 'Athlete grant';
+  return null;
+}
+function grantTypeLabel(g){
+  const m={equipment:'Equipment',training:'Training',program:'Program',general:'Grant',quality_of_life:'Quality of life'};
+  return (g.type&&m[g.type])||null;
+}
+function grantLocLine(g){
+  const parts=[g.source,g.amountDisplay,g.deadlineDisplay].filter(Boolean);
+  if(parts.length) return parts.join(' \u00b7 ');
+  if(g.meta) return g.meta;
+  return 'United States \u00b7 national';
+}
+function grantPrimaryCta(g){
+  if(g.applicationUrl) return {href:g.applicationUrl,label:'Apply'};
+  if(g.phone) return {href:'tel:'+String(g.phone).replace(/[^\d+]/g,''),label:'Call'};
+  if(g.email) return {href:'mailto:'+g.email,label:'Email'};
+  if(g.sourceUrl) return {href:g.sourceUrl,label:'View source'};
+  return null;
+}
+function grantDenseRows(g){
+  const type=grantTypeLabel(g);
+  const who=grantAudienceLabel(g);
+  const pairs=[['Amount',g.amountDisplay],['Deadline',g.deadlineDisplay],['Eligibility',g.eligibility],['Sports',g.sportsLabel],['Who',who],['Phone',g.phone],['Email',g.email],['Type',type],['Org',g.source],['How to apply',g.howToApply]].filter(x=>x[1]);
+  if(!pairs.length) return '';
+  return '<div class="rows">'+pairs.map(([k,v])=>{
+    let val=v;
+    if(k==='Phone') val='<a href="tel:'+String(v).replace(/[^\d+]/g,'')+'">'+v+'</a>';
+    if(k==='Email') val='<a href="mailto:'+v+'">'+v+'</a>';
+    return '<div class="row"><span class="k">'+k+'</span><span class="v">'+val+'</span></div>';
+  }).join('')+'</div>';
+}
+function grantHero(g){
+  const loc=g.source||'United States \u00b7 national';
+  const kind=grantTypeLabel(g)||'Grant';
+  const who=grantAudienceLabel(g);
+  const badge=who?'<div class="cardtags"><span class="cbadge '+(g.audience==='program'?'rsvp':'eq')+'">'+who+'</span></div>':'';
+  const ov='<div class="dov"><span class="dov-sport">'+kind+'</span><span class="dov-loc">'+loc+'</span></div>';
+  const v=listingVisual(g,'grant');
+  if(isCoverVisual(v)) return '<div class="dhero has-dphoto">'+badge+'<img class="dhero-img" src="'+v.src+'" alt=""'+coverStampAttr(g,'grant')+'>'+ov+'</div>';
+  return '<div class="dhero has-stamp">'+badge+(v.src?'<img class="dhero-stamp" src="'+v.src+'" alt="">':'')+ov+'</div>';
+}
+function grantCard(g){
+  const loc=g.source||'United States \u00b7 national';
+  const line=g.amountDisplay||g.deadlineDisplay||'';
+  const kind=grantAudienceLabel(g)||grantTypeLabel(g)||'Grant';
+  const v=listingVisual(g,'grant');
+  const media=isCoverVisual(v)
+    ? '<div class="pcard-media has-photo"><img class="pcard-img" src="'+v.src+'" alt=""'+coverStampAttr(g,'grant')+'></div>'
+    : '<div class="pcard-media has-stamp">'+(v.src?'<img class="pcard-stamp" src="'+v.src+'" alt="">':'')+'</div>';
+  return '<a class="pcard" href="/grants/'+g.id+'" data-grant="'+g.id+'">'+media
+    +'<div class="pcard-body"><div class="pcard-sport">'+kind+'</div><div class="pcard-name">'+g.name+'</div>'
+    +'<div class="pcard-loc">'+loc+'</div>'+(line?'<div class="pcard-line">'+line+'</div>':'')+'</div></a>';
+}
+function grantRelatedRow(g){
+  const same=GRANTS.filter(x=>x.id&&x.id!==g.id&&x.audience===g.audience);
+  const rest=GRANTS.filter(x=>x.id&&x.id!==g.id&&x.audience!==g.audience);
+  const list=same.concat(rest).slice(0,6);
+  if(!list.length) return '';
+  return '<div class="nearby"><h2>Other grants</h2><div class="frow-scroll">'+list.map(grantCard).join('')+'</div></div>';
+}
+function grantSheet(g){
+  const loc=grantLocLine(g);
+  const cta=grantPrimaryCta(g);
+  const action=cta
+    ? '<a class="cta" href="'+cta.href+'" target="_blank" rel="noopener">'+cta.label+'</a>'+(g.applicationUrl?'<span class="host">'+hostFromUrl(g.applicationUrl)+'</span>':'')
+    : '';
+  return '<div class="wrap"><div class="sheet">'
+    +'<header class="bar"><a class="back" href="/?db=grants" data-db-link="grants">\u2190 Grants</a></header>'
+    +grantHero(g)
+    +'<div class="titleb"><h1>'+g.name+'</h1><p class="loc">'+loc+'</p>'+(g.desc?'<p class="desc">'+g.desc+'</p>':'')+'</div>'
+    +'<div class="act">'+action+'</div>'
+    +grantDenseRows(g)
+    +grantRelatedRow(g)
+    +'</div></div>';
+}
+async function loadGrantDetail(g){
+  if(g._detail||!g.id) return;
+  g._detail=true;
+  try{
+    const r=await fetch('/api/grants/'+g.id); const j=await r.json();
+    if(j&&j.ok&&j.grant){
+      const o=j.grant;
+      Object.assign(g,{
+        source:esc(o.source)||g.source, type:o.type||g.type, audience:o.audience||g.audience,
+        amountDisplay:esc(o.amountDisplay)||g.amountDisplay, deadlineDisplay:esc(o.deadlineDisplay)||g.deadlineDisplay,
+        desc:esc(o.desc)||g.desc, eligibility:esc(o.eligibility)||g.eligibility,
+        howToApply:esc(o.howToApply)||g.howToApply,
+        applicationUrl:esc(o.applicationUrl)||g.applicationUrl, sourceUrl:esc(o.sourceUrl)||g.sourceUrl,
+        email:esc(o.email)||g.email, phone:esc(o.phone)||g.phone,
+        sportsLabel:esc(o.sportsLabel)||g.sportsLabel, sport:o.sport||g.sport,
+        meta:[o.amountDisplay,o.deadlineDisplay].filter(Boolean).join(' \u00b7 ')||g.meta
+      });
+    }
+  }catch(_){ }
+  if(state.section==='grant'&&state.grantId===g.id) render(true);
+}
+function grantView(){
+  const g=GRANTS.find(x=>x.id===state.grantId);
+  if(!g){ state.section='database'; state.db='grants'; return database(); }
+  loadGrantDetail(g);
+  return grantSheet(g);
+}
+
 /* ============================ RENDER: DATABASE ============================ */
 function dbTableData(key){
   if(key==='programs') return null;
@@ -1546,7 +2094,7 @@ function dbTableData(key){
   if(key==='providers') return {cols:["Name","Type","Location","Programs"], rows:Object.keys(PROVIDERS).map(n=>[n,PROVIDERS[n].type,PROVIDERS[n].city,String(PROGRAMS.filter(p=>p.provider===n).length)])};
   if(key==='events') return {cols:["Event","Date","Sport","City"], rows:EVENTS.map(e=>[e.name,e.date,e.sport,e.city])};
   if(key==='equipment') return {cols:["Item","Type","Source","Cost"], rows:EQUIPMENT.map(e=>[e.item,e.type,e.source,e.cost])};
-  if(key==='grants') return {cols:["Grant","Amount and deadline"], rows:GRANTS.map(g=>[g.name,g.meta])};
+  if(key==='grants') return {cols:["Grant","Who","Amount and deadline"], rows:GRANTS.map(g=>[g.name,grantAudienceLabel(g)||'',grantMeta(g)])};
   if(key==='resources') return {cols:["Title","Type"], rows:RESOURCES.map(r=>[r.title,r.type])};
   return {cols:[],rows:[]};
 }
@@ -1573,11 +2121,27 @@ function database(){
     let cols, rows;
     if(state.db==='programs'){ cols=["Program","Sport","Provider","City","Distance","Cost","Status"]; rows=PROGRAMS.map(p=>[p.name,p.sportLabel,p.provider||'—',p.city||p.stateName||'—',p.dist!=null?p.dist+' mi':'—',p.cost||'—',p.status]); }
     else { const d=dbTableData(state.db); cols=d.cols; rows=d.rows; }
-    body='<div class="dbtable"><table><thead><tr>'+cols.map(c=>'<th>'+c+'</th>').join('')+'</tr></thead><tbody>'
-      +rows.map(r=>'<tr>'+r.map((c,i)=>'<td>'+((i===0)?'<b style="font-weight:600">'+c+'</b>':c)+'</td>').join('')+'</tr>').join('')
-      +'</tbody></table></div>';
+    if(state.db==='grants'){
+      const shown=GRANTS.filter(g=>state.grantAudience==='all'||g.audience===state.grantAudience);
+      body='<div class="dbtable"><table><thead><tr><th>Grant</th><th>Who</th><th>Amount and deadline</th></tr></thead><tbody>'
+        +shown.map(g=>{
+          const id=g.id||'';
+          const who=grantAudienceLabel(g)||'';
+          const cls=g.audience==='program'?'rsvp':'eq';
+          const open=id?' data-grant="'+id+'"':'';
+          const name=id?'<a href="/grants/'+id+'" data-grant="'+id+'"><b style="font-weight:600">'+g.name+'</b></a>':'<b style="font-weight:600">'+g.name+'</b>';
+          const tag=who?'<span class="cbadge '+cls+'">'+who+'</span>':'';
+          return '<tr'+open+'><td>'+name+'</td><td>'+tag+'</td><td>'+grantMeta(g)+'</td></tr>';
+        }).join('')
+        +'</tbody></table></div>';
+    } else {
+      body='<div class="dbtable"><table><thead><tr>'+cols.map(c=>'<th>'+c+'</th>').join('')+'</tr></thead><tbody>'
+        +rows.map(r=>'<tr>'+r.map((c,i)=>'<td>'+((i===0)?'<b style="font-weight:600">'+c+'</b>':c)+'</td>').join('')+'</tr>').join('')
+        +'</tbody></table></div>';
+    }
   }
-  const galToggle = state.db==='programs' ? '<div class="seg"><button class="'+(state.dbView==='gallery'?'on':'')+'" data-dbview="gallery">'+NAVICON.grid+'Gallery</button><button class="'+(state.dbView==='table'?'on':'')+'" data-dbview="table">'+NAVICON.rows+'Table</button></div>' : '';
+  const galToggle = state.db==='programs' ? '<div class="seg"><button class="'+(state.dbView==='gallery'?'on':'')+'" data-dbview="gallery">'+NAVICON.grid+'Gallery</button><button class="'+(state.dbView==='table'?'on':'')+'" data-dbview="table">'+NAVICON.rows+'Table</button></div>'
+    : state.db==='grants' ? '<div class="seg"><button class="'+(state.grantAudience==='all'?'on':'')+'" data-grant-aud="all">All</button><button class="'+(state.grantAudience==='athlete'?'on':'')+'" data-grant-aud="athlete">Athlete</button><button class="'+(state.grantAudience==='program'?'on':'')+'" data-grant-aud="program">Program</button></div>' : '';
   return '<div class="wrap"><nav class="crumb"><a href="#" data-home>Home</a><span class="sl">/</span><b>Browse all</b></nav></div>'
     +'<div class="db"><aside class="db-side"><p class="eyebrow">Tables</p>'+side+'</aside>'
     +'<div class="db-main"><div class="db-head"><h1>'+meta.label+' <span class="rec">'+meta.count+' records</span></h1>'+galToggle+'</div>'+body+'</div></div>';
@@ -1589,7 +2153,8 @@ function dayChip(iso){ const d=new Date(iso); return isNaN(d)?{mon:'',day:''}:{m
 function eventCardHtml(e){
   const chip=dayChip(e.startsAt);
   const loc=[e.city,e.state].filter(Boolean).join(', ');
-  const icon=e.sport&&GLYPH[e.sport]?glyph(e.sport,'ev-gly'):NAVICON.cal;
+  const evStamp=emblemSrc(e.sport)||emblemSrc('event');
+  const icon=evStamp?'<img class="ev-stamp" src="'+evStamp+'" alt="">':NAVICON.cal;
   const link=e.url?' href="'+e.url+'" target="_blank" rel="noopener"':'';
   return '<'+(e.url?'a':'div')+' class="evrow"'+link+'>'
     +'<div class="evdate"><span class="evmon">'+chip.mon+'</span><span class="evday">'+chip.day+'</span></div>'
@@ -1652,8 +2217,9 @@ function profileEditView(){
     ? PROFILE.favorites.map(f=>{
         const label=(SPORTS.find(s=>s.key===f.sport)||{}).label||'Multi-Sport';
         const loc=[f.city,f.state].filter(Boolean).join(', ');
-        return '<div class="pcard" data-prog="'+esc(f.id)+'"><div class="pcard-media '+(f.sport?'has-photo':(SPGRAD[f.sport]||'g-sand'))+'">'
-          +(f.sport?'<img class="pcard-img" src="'+photoSrc(f.sport)+'" alt="">':(ringBg('ringbg')+CHAIR_GLY))
+        const fv=listingVisual(f,'program');
+        return '<div class="pcard" data-prog="'+esc(f.id)+'"><div class="pcard-media '+(isCoverVisual(fv)?'has-photo':'has-stamp')+'">'
+          +(isCoverVisual(fv)?'<img class="pcard-img" src="'+fv.src+'" alt=""'+coverStampAttr(f,'program')+'>':(fv.src?'<img class="pcard-stamp" src="'+fv.src+'" alt="">':''))
           +'</div><div class="pcard-body"><div class="pcard-sport">'+esc(label)+'</div><div class="pcard-name">'+esc(f.name)+'</div>'
           +(loc?'<div class="pcard-loc">'+esc(loc)+'</div>':'')+'</div></div>';
       }).join('')
@@ -1689,6 +2255,7 @@ function render(keepScroll){
   const v=document.getElementById('view');
   if(state.section==='database') v.innerHTML=database();
   else if(state.section==='program') v.innerHTML=program();
+  else if(state.section==='grant') v.innerHTML=grantView();
   else if(state.section==='mapx') v.innerHTML=mapExplorer();
   else if(state.section==='events') v.innerHTML=eventsView();
   else if(state.section==='profile') v.innerHTML=profile();
@@ -1750,6 +2317,7 @@ function filterChanged(){
     const list=state.see?seeList():filtered();
     const chip=document.querySelector('.mapx .mapchip'); if(chip) chip.textContent=list.length.toLocaleString()+' programs · United States';
     const d=document.getElementById('mapxDrawer'); if(d) d.hidden=true;
+    closeMapTray();
     destroyMaps(); initLiveMap(list,{explorer:true});
     updateHeaderSearch();
     return;
@@ -1790,18 +2358,24 @@ function searchRender(){ if(isFeedMode()){ render(); return; } if(document.getEl
 document.addEventListener('click',e=>{
   const h=e.target.closest('[data-heart]');
   if(h){ e.preventDefault();e.stopPropagation(); const id=h.getAttribute('data-heart'); if(saved.has(id))saved.delete(id);else saved.add(id); h.classList.toggle('on'); h.setAttribute('aria-pressed',saved.has(id)); return; }
-  const t=e.target.closest('[data-prog],[data-sport],[data-layout],[data-dist],[data-cost],[data-level],[data-section],[data-db],[data-dbview],[data-home],[data-sport-link],[data-seeall],[data-clear-filters],#filtBtn,[data-noop]');
+  const t=e.target.closest('[data-prog],[data-grant],[data-grant-aud],[data-sport],[data-layout],[data-dist],[data-cost],[data-level],[data-section],[data-db],[data-dbview],[data-home],[data-sport-link],[data-seeall],[data-clear-filters],#filtBtn,[data-noop]');
   if(!t) return;
   if(t.matches('[data-noop]')){ e.preventDefault(); return; }
-  if(t.hasAttribute('data-home')){ e.preventDefault(); state.section='discover'; state.programId=null; goFeed(); render(); return; }
-  if(t.hasAttribute('data-clear-filters')){ e.preventDefault(); state.section='discover'; state.programId=null; goFeed(); render(); return; }
-  if(t.hasAttribute('data-section')){ e.preventDefault(); const sec=t.getAttribute('data-section'); state.section=sec; state.programId=null; if(sec==='discover') goFeed(); render(); return; }
-  if(t.hasAttribute('data-sport-link')){ e.preventDefault(); state.section='discover'; state.sport=t.getAttribute('data-sport-link'); state.see=null; state.programId=null; render(true); scrollToResults(); return; }
+  if(t.hasAttribute('data-home')){ e.preventDefault(); state.section='discover'; state.programId=null; state.grantId=null; goFeed(); render(); return; }
+  if(t.hasAttribute('data-clear-filters')){ e.preventDefault(); state.section='discover'; state.programId=null; state.grantId=null; goFeed(); render(); return; }
+  if(t.hasAttribute('data-section')){ e.preventDefault(); const sec=t.getAttribute('data-section'); state.section=sec; state.programId=null; state.grantId=null; if(sec==='discover') goFeed(); render(); return; }
+  if(t.hasAttribute('data-sport-link')){ e.preventDefault(); state.section='discover'; state.sport=t.getAttribute('data-sport-link'); state.see=null; state.programId=null; state.grantId=null; render(true); scrollToResults(); return; }
   if(t.hasAttribute('data-prog')){
-    // Modifier-click keeps the shareable /programs/:id URL. A plain click opens
-    // the designed in-app sheet (photo hero), not a thin four-card page.
+    // Pins open the bottom tray and stay on /maps. Directory cards still
+    // open the listing sheet. Modifier-click keeps the shareable URL.
+    if(t.closest('.mdot,.mpin')){ e.preventDefault(); return; }
     if(e.metaKey||e.ctrlKey||e.shiftKey||e.altKey) return;
-    e.preventDefault(); state.section='program'; state.programId=t.getAttribute('data-prog'); render(); return;
+    e.preventDefault(); state.section='program'; state.programId=t.getAttribute('data-prog'); state.grantId=null; render(); return;
+  }
+  if(t.hasAttribute('data-grant-aud')){ e.preventDefault(); state.grantAudience=t.getAttribute('data-grant-aud'); render(); return; }
+  if(t.hasAttribute('data-grant')){
+    if(e.metaKey||e.ctrlKey||e.shiftKey||e.altKey) return;
+    e.preventDefault(); state.section='grant'; state.grantId=t.getAttribute('data-grant'); state.programId=null; render(); return;
   }
   if(t.hasAttribute('data-seeall')){ e.preventDefault(); const v=t.getAttribute('data-seeall'); if(v==='beginner'){ state.see=null; if(DATA_LIVE){ state.cost='free'; } else { state.level='beginner'; } } else if(v==='free'){ state.see=null; state.cost='free'; } else if(v.indexOf('sport:')===0){ state.see=null; state.sport=v.slice(6); } else { state.see=v; } filterChanged(); return; }
   if(t.hasAttribute('data-sport')){ e.preventDefault(); state.sport=t.getAttribute('data-sport'); state.see=null; filterChanged(); return; }
@@ -1882,7 +2456,12 @@ document.addEventListener('click',e=>{
   // perform the nav; this only dismisses the overlay.
   if(e.target.closest('#drawer [data-sport],#drawer [data-section],#drawer [data-home],#drawer [data-mapx],#drawer [data-db-link],#drawer [data-about],#drawer [data-addprogram],#drawer a[href]')){ closeDrawer(); }
 });
-document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeDrawer(); });
+document.addEventListener('keydown',e=>{
+  if(e.key!=='Escape') return;
+  const tray=document.getElementById('mapTray');
+  if(tray&&tray.classList.contains('open')){ closeMapTray(); return; }
+  closeDrawer();
+});
 renderDrawer();
 /* map explorer open/close + state drawer. /maps is its real URL. */
 function setMapxUrl(on){
@@ -1899,6 +2478,7 @@ window.addEventListener('popstate',()=>{
   else if(!want&&inMapx){ state.section='discover'; render(); }
 });
 document.addEventListener('click',e=>{
+  if(e.target.closest('.tray-x')){ e.preventDefault(); closeMapTray(); return; }
   if(e.target.closest('[data-mapx-close]')){ e.preventDefault(); state.section='discover'; setMapxUrl(false); render(); return; }
   if(e.target.closest('.mapxd-x')){ const d=document.getElementById('mapxDrawer'); if(d) d.hidden=true; return; }
   const dir=e.target.closest('[data-mapx-dir]');
@@ -1912,7 +2492,7 @@ document.addEventListener('click',e=>{
   if(bs){ e.preventDefault(); state.section='discover'; state.programId=null; goFeed(); render();
     const cb=document.querySelector('.catbar'); if(cb){ const top=cb.getBoundingClientRect().top+window.scrollY-70; window.scrollTo({top:Math.max(0,top),behavior:'smooth'}); } return; }
   const dbl=e.target.closest('[data-db-link]');
-  if(dbl){ e.preventDefault(); state.section='database'; state.programId=null; state.db=dbl.getAttribute('data-db-link'); render(); return; }
+  if(dbl){ e.preventDefault(); state.section='database'; state.programId=null; state.grantId=null; state.db=dbl.getAttribute('data-db-link'); render(); return; }
 });
 /* about dialog (project / verification / accessibility) */
 const aboutEl=document.getElementById('about');
@@ -2167,8 +2747,14 @@ if(BOOT_QP.get('profile')) state.section='profile';
 if(BOOT_QP.get('zip')) state.nearZip=BOOT_QP.get('zip').trim();
 if(BOOT_QP.get('city')) state.nearCity=BOOT_QP.get('city').trim();
 if(isZipQuery(state.q)) state.nearZip=state.q.trim();
+const BOOT_DB=BOOT_QP.get('db');
+if(BOOT_DB==='grants'||BOOT_DB==='programs'){ state.section='database'; state.db=BOOT_DB; }
 render();
 if(BOOT_QP.get('add')==='program') openGate('program');
+/* Deep links for the About panel, so the server-rendered footers can point at the
+   same three sections the app's own footer opens. */
+const BOOT_ABOUT=BOOT_QP.get('about');
+if(BOOT_ABOUT&&document.getElementById('ab-'+BOOT_ABOUT)){ aboutEl.classList.add('open'); document.body.style.overflow='hidden'; document.getElementById('ab-'+BOOT_ABOUT).scrollIntoView({block:'nearest'}); }
 
 /* ============================ LIVE DATA HYDRATION ============================ */
 // Swap the inline sample for the real directory (D1 via /api/programs).
@@ -2194,6 +2780,7 @@ function mapOrg(o){
     quality:o.quality?esc(o.quality.charAt(0).toUpperCase()+o.quality.slice(1)):null,
     lat:o.lat, lng:o.lng, geoPrecision:o.geoPrecision,
     type:o.type||null, lastChecked:o.lastChecked||null,
+    photo:o.photo||null,
   };
 }
 (async function hydrate(){
@@ -2232,6 +2819,30 @@ function mapEvent(e){
     if(state.section==='events') render(true);
   }catch(_){ /* keep the empty state — the subscribe links still work */ }
 })();
+function mapGrant(o){
+  return {
+    id:o.id, name:esc(o.name), source:esc(o.source)||null, type:o.type||null,
+    audience:o.audience==='program'?'program':'athlete',
+    amountDisplay:esc(o.amountDisplay)||null, deadlineDisplay:esc(o.deadlineDisplay)||null,
+    desc:esc(o.desc)||null, eligibility:esc(o.eligibility)||null,
+    howToApply:esc(o.howToApply)||null,
+    applicationUrl:esc(o.applicationUrl)||null, sourceUrl:esc(o.sourceUrl)||null,
+    email:esc(o.email)||null, phone:esc(o.phone)||null,
+    sports:o.sports||[], sport:o.sport||null, sportsLabel:esc(o.sportsLabel)||null,
+    meta:[o.amountDisplay,o.deadlineDisplay].filter(Boolean).join(' \u00b7 ')
+  };
+}
+(async function hydrateGrants(){
+  try{
+    const j=await fetch('/api/grants').then(r=>r.json());
+    if(!j||!j.ok||!Array.isArray(j.items)||!j.items.length) return;
+    GRANTS.length=0; Array.prototype.push.apply(GRANTS, j.items.map(mapGrant));
+    const tm=TABLE_META.find(t=>t.key==='grants'); if(tm) tm.count=GRANTS.length;
+    if((state.section==='database'&&state.db==='grants')||state.section==='grant'){
+      if(!viewFormBusy()) render(true);
+    }
+  }catch(_){ /* keep the fallback six */ }
+})();
 
 /* ============================ PROFILE ============================ */
 // GET /api/profile once at boot (mirrors hydrateEvents' pattern). 401 (signed
@@ -2251,6 +2862,26 @@ async function hydrateProfile(){
   syncProfileBtn();
   if(state.section==='profile'&&!viewFormBusy()) render(true);
 })();
+
+/* Cover image failed (iOS object-fit + max-width, or a 404) → black stamp, never a sand block. */
+document.addEventListener('error',function(e){
+  const t=e.target;
+  if(!t||t.tagName!=='IMG') return;
+  const p=t.parentNode;
+  if(!p||!(p.classList.contains('has-photo')||p.classList.contains('has-dphoto')||t.classList.contains('thumb-full'))) return;
+  if(t.dataset.coverFailed) return;
+  t.dataset.coverFailed='1';
+  const st=t.getAttribute('data-stamp');
+  if(p.classList){ p.classList.remove('has-photo','has-dphoto'); p.classList.add('has-stamp'); }
+  if(st){
+    const isHero=p.classList&&p.classList.contains('dhero');
+    const isThumb=t.classList.contains('thumb-full');
+    t.classList.remove('pcard-img','dhero-img','thumb-full');
+    t.classList.add(isHero?'dhero-stamp':(isThumb?'thumb-stamp':'pcard-stamp'));
+    t.removeAttribute('style');
+    t.src=st;
+  } else t.remove();
+}, true);
 
 /* installable app (mobile + desktop) */
 if('serviceWorker' in navigator){

@@ -1,13 +1,18 @@
 // Server-rendered program detail page — the shareable URL for one listing.
+// The standalone page wears the site header and the sitemap footer (shared with
+// /blog via site-chrome.js); the in-app sheet reuses listingInnerHtml only.
 // Same sheet as the in-app detail (public/index.html): Directory header,
 // photo hero, name, city+state (or statewide), primary action, fact rows
 // only when present. A listing, not a marketing page — no invented copy,
 // no verification/trust line. Nearby is a horizontal shelf, not a stack.
 
+import { listingVisual, isCoverVisual, stampAttr } from "./visuals.js";
+import { CHROME_CSS, headerHtml, footerHtml, navScriptHtml } from "./site-chrome.js";
+
 const SITE = "https://adaptivesportsnearme.com";
 
-// The 11-photo launch set in public/assets/sport-photos/. Same keys the
-// homepage cards and in-app sheet use (photoSrc in public/index.html).
+// Legacy 11-photo launch set. Kept so older callers still resolve a key.
+// New listings use listingVisual (scene or stamp) unless a real photo exists.
 export const SPORT_PHOTOS = new Set([
   "baseball", "basketball", "cycling", "football", "goalball",
   "pickleball", "rugby", "skiing", "sledhockey", "tennis", "waterskiing",
@@ -46,8 +51,9 @@ export function typeLabel(org) {
   return TYPE_LABEL[org.type] || null;
 }
 
-export function photoPath(sport) {
-  return sport && SPORT_PHOTOS.has(sport) ? `/assets/sport-photos/${sport}.jpg` : null;
+export function photoPath(sport, item) {
+  const v = listingVisual(item || { sport }, "program");
+  return isCoverVisual(v) ? v.src : null;
 }
 
 function hostFromUrl(u) {
@@ -95,13 +101,25 @@ function denseRows(org) {
   }).join("")}</div>`;
 }
 
+// Long descriptions get a clamp plus a native toggle. 340 characters is roughly
+// what the clamp shows at the 68ch measure, so the toggle only appears when it
+// is actually hiding something.
+function descBlock(desc) {
+  if (!desc) return "";
+  if (String(desc).length <= 340) return `<p class="desc">${esc(desc)}</p>`;
+  return `<input class="desc-x" type="checkbox" id="descmore" aria-label="Show the full description">`
+    + `<p class="desc desc-long">${esc(desc)}</p>`
+    + `<label class="desc-btn" for="descmore"><span class="dm-more">More</span><span class="dm-less">Less</span></label>`;
+}
+
 function nearbyCard(p) {
   const loc = locLine(p);
-  const line = p.dist != null ? `${p.dist} mi away` : (typeLabel(p) || "");
-  const photo = photoPath(p.sport);
-  const media = photo
-    ? `<div class="pcard-media has-photo"><img class="pcard-img" src="${esc(photo)}" alt=""></div>`
-    : `<div class="pcard-media g-sand"></div>`;
+  // Distance or nothing. The org type is a default, not a difference (see cardLine in index.html).
+  const line = p.dist != null ? `${p.dist} mi away` : "";
+  const v = listingVisual(p, "program");
+  const media = isCoverVisual(v)
+    ? `<div class="pcard-media has-photo"><img class="pcard-img" src="${esc(v.src)}" alt=""${stampAttr(p, "program")}></div>`
+    : `<div class="pcard-media has-stamp">${v.src ? `<img class="pcard-stamp" src="${esc(v.src)}" alt="">` : ""}</div>`;
   return `<a class="pcard" href="/programs/${esc(p.id)}">${media}<div class="pcard-body"><div class="pcard-sport">${esc(p.sportLabel || "Multi-Sport")}</div><div class="pcard-name">${esc(p.name)}</div><div class="pcard-loc">${esc(loc)}</div>${line ? `<div class="pcard-line">${esc(line)}</div>` : ""}</div></a>`;
 }
 
@@ -126,6 +144,7 @@ const CSS = `
   --gut: var(--space-page);
 }
 *{box-sizing:border-box;}
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important;}}
 html,body{margin:0;padding:0;background:var(--mist);color:var(--ink);}
 body{font-family:'DM Sans',system-ui,sans-serif;font-size:16px;line-height:1.45;-webkit-font-smoothing:antialiased;}
 img,svg{display:block;max-width:100%;}
@@ -135,16 +154,34 @@ a{color:var(--orange-ink);}
 .back{display:inline-flex;align-items:center;min-height:var(--tap);font-size:16px;font-weight:600;color:var(--ink);text-decoration:none;}
 .back:hover{color:var(--orange-ink);}
 .dhero{position:relative;width:100%;height:clamp(180px,24vw,260px);border-radius:var(--r-lg);overflow:hidden;margin:0 0 var(--space-after-photo);}
-.dhero.has-dphoto{background:#23211f;}
-.dhero.g-sand{background:linear-gradient(140deg,#F2EFEA 0%,#E5DED3 100%);}
+.dhero.has-dphoto{background:#23211f;height:clamp(240px,48vw,520px);}
+.dhero.has-dphoto .dhero-img{object-fit:cover;object-position:50% 58%;}
+@media(min-width:900px){
+  main.wrap>.dhero.has-dphoto{width:100vw;max-width:100vw;margin-left:calc(50% - 50vw);margin-right:calc(50% - 50vw);border-radius:0;height:min(48vw,560px);}
+}
+.dhero.has-stamp{background:#F6F4F0;display:flex;align-items:center;justify-content:center;}
 .dhero-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 30%;}
+.dhero-stamp{width:min(42%,180px);height:auto;object-fit:contain;position:relative;z-index:1;}
 .dhero::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 45%,rgba(0,0,0,.55));pointer-events:none;}
+.dhero.has-stamp::after{background:linear-gradient(180deg,transparent 58%,rgba(26,26,26,.10));}
+.dhero.has-stamp .dov{color:var(--ink);}
 .dov{position:absolute;left:16px;bottom:16px;z-index:1;color:#fff;}
 .dov-sport{display:block;font-size:12px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;}
 .dov-loc{display:block;font-size:14px;font-weight:500;margin-top:2px;}
 h1{font-size:clamp(22px,2.8vw,30px);font-weight:700;letter-spacing:-.02em;line-height:1.15;margin:0 0 var(--space-title-gap);}
 .loc{font-size:16px;color:var(--ink2);margin:0;}
 .desc{font-size:16px;line-height:1.55;color:var(--ink2);margin:16px 0 0;max-width:68ch;}
+/* Scraped descriptions run long and tail off into source notes. Show a readable
+   opening and let the reader ask for the rest. No JS: the toggle is a label,
+   and the full text stays in the document for search engines and copy-paste. */
+.desc-x{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;}
+.desc-long{display:-webkit-box;-webkit-line-clamp:5;-webkit-box-orient:vertical;overflow:hidden;}
+.desc-x:checked ~ .desc-long{display:block;-webkit-line-clamp:none;}
+.desc-btn{display:inline-flex;align-items:center;min-height:var(--tap);font-size:15px;font-weight:600;color:var(--orange-ink);cursor:pointer;text-decoration:underline;text-underline-offset:3px;}
+.desc-btn .dm-less,.desc-x:checked ~ .desc-btn .dm-more{display:none;}
+.desc-x:checked ~ .desc-btn .dm-less{display:inline;}
+.desc-x:focus-visible ~ .desc-btn{outline:2px solid var(--orange);outline-offset:3px;border-radius:4px;}
+@media(max-width:720px){.desc-long{-webkit-line-clamp:8;}}
 .titleb{margin:0 0 var(--space-section);}
 .cta{display:inline-flex;align-items:center;justify-content:center;min-width:220px;height:var(--tap);padding:0 22px;background:var(--orange);color:#fff;border-radius:var(--r);font-size:16px;font-weight:700;text-decoration:none;}
 .cta:hover{background:var(--orange-ink);}
@@ -162,11 +199,14 @@ h1{font-size:clamp(22px,2.8vw,30px);font-weight:700;letter-spacing:-.02em;line-h
 .frow-scroll::-webkit-scrollbar{display:none;}
 .frow-scroll>.pcard{flex:0 0 78vw;width:78vw;scroll-snap-align:start;}
 .pcard{display:block;color:inherit;text-decoration:none;}
-.pcard-media{position:relative;aspect-ratio:4/3;border-radius:10px;overflow:hidden;background:var(--sand);}
+.pcard-media{position:relative;aspect-ratio:4/3;border-radius:10px;overflow:hidden;background:#F6F4F0;}
+.pcard-media.has-stamp{display:flex;align-items:center;justify-content:center;}
 .pcard-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
+.pcard-stamp{width:46%;height:auto;object-fit:contain;position:relative;z-index:1;}
 .pcard-body{padding:8px 1px 0;}
 .pcard-sport{font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--faint);}
-.pcard-name{font-size:16px;font-weight:600;line-height:1.25;margin:2px 0 0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+/* Two-line box either way, so the rail keeps its baselines. */
+.pcard-name{font-size:16px;font-weight:600;line-height:1.25;margin:2px 0 0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:2.5em;}
 .pcard-loc,.pcard-line{font-size:14px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 @media(max-width:720px){
   .frow-scroll{gap:12px;}
@@ -177,6 +217,10 @@ h1{font-size:clamp(22px,2.8vw,30px);font-weight:700;letter-spacing:-.02em;line-h
 @media(max-width:600px){
   .cta{width:100%;min-width:0;}
 }
+/* The app header owns the top of the page now, so the Directory bar no longer
+   needs the gutter above it. */
+main.wrap{padding-top:0;}
+${CHROME_CSS}
 `;
 
 function page({ title, description, canonical, image, body }) {
@@ -203,30 +247,37 @@ ${ogImage}
 <style>${CSS}</style>
 </head>
 <body>
-<main class="wrap">
+<a class="skip" href="#main">Skip to content</a>
+${headerHtml()}
+<main id="main" class="wrap">
 ${body}
 </main>
+${footerHtml()}
+${navScriptHtml()}
 </body>
 </html>`;
 }
 
-export function programPageTemplate(org, { site = SITE, nearby = [] } = {}) {
+// The listing body shared by /programs/:id and the map tray expanded height.
+// Photo, title, city, desc, fact rows, Visit CTA, nearby rail. Deliberately
+// bare: the site header and footer belong to the standalone page's wrapper
+// (page() below), never here, because in the app this HTML is already inside
+// the app's own chrome.
+export function listingInnerHtml(org, { nearby = [] } = {}) {
   const name = org.name || "Adaptive sports program";
   const sport = org.sportLabel || "Multi-Sport";
   const loc = locLine(org);
-  const canonical = `${site}/programs/${org.id}`;
-  const photo = photoPath(org.sport);
+  const v = listingVisual(org, "program");
   const overlay = `<div class="dov"><span class="dov-sport">${esc(sport)}</span><span class="dov-loc">${esc(loc)}</span></div>`;
-  const hero = photo
-    ? `<div class="dhero has-dphoto"><img class="dhero-img" src="${esc(photo)}" alt="">${overlay}</div>`
-    : `<div class="dhero g-sand">${overlay}</div>`;
+  const hero = isCoverVisual(v)
+    ? `<div class="dhero has-dphoto"><img class="dhero-img" src="${esc(v.src)}" alt=""${stampAttr(org, "program")}>${overlay}</div>`
+    : `<div class="dhero has-stamp">${v.src ? `<img class="dhero-stamp" src="${esc(v.src)}" alt="">` : ""}${overlay}</div>`;
   const cta = primaryCta(org);
   const action = cta
     ? `<div class="act"><a class="cta" href="${esc(cta.href)}" rel="noopener">${esc(cta.label)}</a>${org.website ? `<span class="host">${esc(hostFromUrl(org.website))}</span>` : ""}</div>`
     : "";
-  const desc = org.desc ? `<p class="desc">${esc(org.desc)}</p>` : "";
-  const body = `<header class="bar"><a class="back" href="/">← Directory</a></header>
-${hero}
+  const desc = descBlock(org.desc);
+  return `${hero}
 <div class="titleb">
 <h1>${esc(name)}</h1>
 <p class="loc">${esc(loc)}</p>
@@ -235,6 +286,16 @@ ${desc}
 ${action}
 ${denseRows(org)}
 ${nearbyStrip(nearby, sport)}`;
+}
+
+export function programPageTemplate(org, { site = SITE, nearby = [] } = {}) {
+  const name = org.name || "Adaptive sports program";
+  const sport = org.sportLabel || "Multi-Sport";
+  const loc = locLine(org);
+  const canonical = `${site}/programs/${org.id}`;
+  const photo = photoPath(org.sport, org);
+  const body = `<header class="bar"><a class="back" href="/">← Directory</a></header>
+${listingInnerHtml(org, { nearby })}`;
   return page({
     title: `${name} · Adaptive Sports Near Me`,
     description: `${sport} in ${loc}.`,

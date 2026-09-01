@@ -1,0 +1,50 @@
+# Staging-only. Never deploys the production worker (asnm).
+# Cloudflare secrets are not on this repo yet (gh secret list is empty),
+# so this workflow is a documented dry stub. It will not invent tokens
+# and it will not deploy anything until CLOUDFLARE_API_TOKEN and
+# CLOUDFLARE_ACCOUNT_ID exist as GitHub Actions secrets.
+#
+# When those secrets are added by someone with account access (not a
+# student guessing, not Alec being asked for a token in chat):
+#   - this job can call `wrangler deploy --env staging`
+#   - it must still refuse a deploy without --env staging
+#   - it must never run `wrangler deploy` for production / asnm / asnm-db
+
+name: Deploy staging (stub)
+
+on:
+  push:
+    branches: [staging]
+  pull_request:
+    branches: [staging]
+    types: [closed]
+
+jobs:
+  staging-only:
+    if: >
+      github.ref == 'refs/heads/staging' &&
+      (github.event_name == 'push' || github.event.pull_request.merged == true)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Refuse production
+        run: |
+          echo "This workflow deploys staging only."
+          echo "It will never wrangler-deploy the production worker (asnm)."
+          echo "It will never write D1 asnm-db."
+
+      - name: Check for Cloudflare secrets
+        env:
+          HAS_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          HAS_ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          if [ -z "$HAS_TOKEN" ] || [ -z "$HAS_ACCOUNT" ]; then
+            echo "Cloudflare GitHub secrets are not set."
+            echo "Skipping auto-deploy. Tester stays as last hand deploy."
+            echo "Do not invent a token. Do not ask Alec for one in chat."
+            exit 0
+          fi
+          echo "Secrets exist, but this stub still does not deploy."
+          echo "Wire wrangler deploy --env staging here only after a human review."
+          echo "Production deploy must not be added to this file."
