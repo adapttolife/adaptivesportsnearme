@@ -24,6 +24,7 @@
 // All secrets stay server-side (Worker secrets). Bot defence: honeypot + optional Turnstile.
 
 import { listPrograms, getOrg, stats, listSameSportNearby, listGrants, getGrant, listOtherGrants } from "./data.js";
+import { sendSignupWelcome } from "./email.js";
 import { programPageTemplate, programNotFoundTemplate, PROGRAM_ID_RE } from "./program-page.js";
 import { grantPageTemplate, grantNotFoundTemplate, GRANT_ID_RE } from "./grant-page.js";
 import { listEvents, eventsToRss, eventsToIcs } from "./events.js";
@@ -221,6 +222,15 @@ async function handleSubscribe(request, env) {
   const source = str(data.source).slice(0, 80) || "asnm-prelaunch";
   const result = await subscribeToBeehiiv(env, email, source);
   if (!result.ok) return json({ ok: false, error: result.error }, result.status);
+
+  // The signup receipt (carried over from adapt-to-life's transactional
+  // receipts). Never fail the signup over a mail hiccup - the capture is the
+  // point; the welcome is the courtesy.
+  try {
+    await sendSignupWelcome(env, email);
+  } catch (err) {
+    console.error("signup welcome failed:", err);
+  }
 
   return json({ ok: true });
 }

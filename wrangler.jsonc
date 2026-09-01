@@ -58,6 +58,7 @@
       "d1_databases": [
         { "binding": "DB", "database_name": "asnm-db-staging", "database_id": "ae83f752-9f7a-476c-914a-94b9ced0627f" }
       ],
+      "send_email": [{ "name": "SEND_EMAIL" }],
       "triggers": {
         "crons": ["0 */2 * * *", "*/20 * * * *"]
       },
