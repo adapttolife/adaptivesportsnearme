@@ -3,12 +3,14 @@
 
 import { runLane } from "./pipeline.js";
 import { json } from "./http.js";
+import { checkPublicDescription, looksLikeNavigationLabel } from "./description-contract.js";
 
 // Only these organization fields may be changed by an approved review item.
 const APPLY_WHITELIST = new Set([
   "email", "phone", "city", "state", "state_name", "zip", "website_url",
   "status", "description", "cost_note", "ages", "equipment_provided",
   "sport", "sport_key", "sports_json", "lat", "lng", "geo_precision",
+  "internal_notes",
 ]);
 
 // Fields a NEW org may be created from (a subset of organizations columns —
@@ -16,7 +18,7 @@ const APPLY_WHITELIST = new Set([
 const NEW_ORG_WHITELIST = new Set([
   "name", "org_type", "sport", "sport_key", "sports_json", "website_url",
   "email", "phone", "city", "state", "state_name", "zip", "description",
-  "cost_note", "ages", "lat", "lng", "geo_precision",
+  "cost_note", "ages", "lat", "lng", "geo_precision", "internal_notes",
 ]);
 
 // Fields an event may be created/updated with — mirrors db/migrations/0003_next_level.sql
@@ -29,6 +31,24 @@ const EVENT_WHITELIST = new Set([
 // D1 binds scalars only — stringify anything array/object shaped.
 function bindValue(v) {
   return v && typeof v === "object" ? JSON.stringify(v) : v;
+}
+
+// `description` is the one free-text field an athlete reads. Refuse to publish a
+// pipeline memo into it — loudly, with the reason, so the caller fixes the lane
+// rather than discovering it live months later (Aug 2026 incident).
+function rejectMemoDescription(fields) {
+  const d = fields && fields.description;
+  if (typeof d !== "string" || !d.trim()) return null;
+  const check = checkPublicDescription(d);
+  if (check.ok) return null;
+  return json({
+    ok: false,
+    error: "description_is_operator_note",
+    detail:
+      "description is public copy shown to an athlete. This text reads as a " +
+      "pipeline memo. Put it in internal_notes instead.",
+    reasons: check.reasons,
+  }, 422);
 }
 
 function str(v, max = 2000) {
@@ -90,6 +110,18 @@ export async function handleAdmin(request, env, url) {
       if (!fields.name) {
         return json({ ok: false, error: "New-org approval requires a 'name' field in proposed_change" }, 422);
       }
+      const newOrgMemo = rejectMemoDescription(fields);
+      if (newOrgMemo) return newOrgMemo;
+      if (looksLikeNavigationLabel(fields.name)) {
+        return json({
+          ok: false,
+          error: "name_is_navigation_label",
+          detail:
+            "\"" + fields.name + "\" is a website navigation label, not an " +
+            "organisation. A directory scrape walks the nav bar as readily as " +
+            "the member list. Reject this proposal rather than approving it.",
+        }, 422);
+      }
       const evidence = parse(item.evidence) || {};
       const id = crypto.randomUUID();
       const cols = ["id", "status", "is_public", "verification_status", "created_at", "updated_at", "primary_data_source"];
@@ -113,11 +145,18 @@ export async function handleAdmin(request, env, url) {
     ).bind(action === "approve" ? "approved" : "rejected", now, body.by || "admin", item.item_id)];
 
     if (action === "approve" && item.organization_id) {
-      const sets = [], binds = [];
+      const applyFields = {};
       for (const [field, d] of Object.entries(change)) {
         if (!APPLY_WHITELIST.has(field)) continue;
+        applyFields[field] = d && typeof d === "object" && "to" in d ? d.to : d;
+      }
+      const applyMemo = rejectMemoDescription(applyFields);
+      if (applyMemo) return applyMemo;
+
+      const sets = [], binds = [];
+      for (const [field, value] of Object.entries(applyFields)) {
         sets.push(`${field} = ?`);
-        binds.push(bindValue(d && typeof d === "object" && "to" in d ? d.to : d));
+        binds.push(bindValue(value));
       }
       if (sets.length) {
         sets.push("updated_at = ?");
