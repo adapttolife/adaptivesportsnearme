@@ -1,20 +1,24 @@
 #!/usr/bin/env node
-// The four-doors check — the definition of done for Fall 2026.
+// The three-doors check — the definition of done for Fall 2026.
 //
 // Karen's test, as machinery. She names a place. She says yes only when she can
-// find, near that place: a real program, an event (it can be far), a grant she
-// could use, and the letter. If those doors fail, we are not open.
+// find, near that place: a real program, an event (it can be far), and a grant
+// she could use. If those doors fail, we are not open.
 //
 // This script runs that test the way she would — over public HTTP against the
 // tester, with no credentials and no database access. It reads the product,
 // not the plan. Any student can run it a minute after cloning:
 //
-//   node tools/four-doors-check.mjs
-//   node tools/four-doors-check.mjs --place WI
-//   node tools/four-doors-check.mjs --base https://adaptivesportsnearme.com
+//   node tools/three-doors-check.mjs
+//   node tools/three-doors-check.mjs --place WI
+//   node tools/three-doors-check.mjs --base https://adaptivesportsnearme.com
 //
-// Exit code 0 only when all four doors open. It is expected to fail today;
+// Exit code 0 only when all three doors open. It is expected to fail today;
 // the semester is over when it stops failing and Karen agrees with it.
+//
+// There was a fourth door — "the letter", a page at /letter in Alec and Karen's
+// own words. Alec retired it on 2026-09-02 ("not a thing"). It is not a door,
+// not a launch gate, and not owed by anyone.
 //
 // A listing counts as ACTIONABLE only if a stranger could act on it tonight:
 // it names a place (city or zip) AND offers a route in (website or phone or
@@ -26,8 +30,8 @@ function opt(name, fallback) {
   return i >= 0 ? args[i + 1] : fallback;
 }
 const BASE = (opt("base", "https://asnm-staging.alec-af3.workers.dev")).replace(/\/$/, "");
-// --launch: Karen's v1.0 gate (2026-08-31): programs + grants + the letter.
-// Events stays on the full scoreboard as the first post-launch ship.
+// --launch: the v1.0 gate is programs + grants. Events stays on the full
+// scoreboard as the first post-launch ship.
 const LAUNCH = args.includes("--launch");
 // Default place: Karen's home state. Override with --place.
 const PLACE = (opt("place", "WI")).toUpperCase();
@@ -37,11 +41,6 @@ async function getJson(path) {
   if (!res.ok) return { __status: res.status };
   try { return await res.json(); } catch { return { __status: res.status, __notJson: true }; }
 }
-async function getStatus(path) {
-  const res = await fetch(BASE + path, { redirect: "follow" });
-  return res.status;
-}
-
 const actionable = (p) =>
   (p.city || p.zip) && (p.website || p.phone || p.email);
 
@@ -91,20 +90,9 @@ const doors = [];
   });
 }
 
-// Door 4 — the letter. A human-written page that tells someone leaving rehab
-// that sport is still possible. Not a form, not a feed. Alec and Karen's words.
-{
-  const status = await getStatus(`/letter`);
-  doors.push({
-    door: "The letter",
-    open: status === 200,
-    detail: status === 200 ? "/letter answers" : `/letter -> ${status} (the page does not exist yet)`,
-  });
-}
-
 // ---- report ----
 const scored = LAUNCH ? doors.filter((d) => d.door !== "Events") : doors;
-console.log(`\n${LAUNCH ? "Launch gate (v1.0: programs, grants, the letter)" : "Four-doors check"} — ${BASE}  (place: ${PLACE})\n`);
+console.log(`\n${LAUNCH ? "Launch gate (v1.0: programs, grants)" : "Three-doors check"} — ${BASE}  (place: ${PLACE})\n`);
 let openCount = 0;
 for (const d of scored) {
   const mark = d.open ? "OPEN  " : "CLOSED";

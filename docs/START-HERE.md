@@ -16,13 +16,13 @@ defect every automated check had missed for months.
 ## Minute 10–20: run the scoreboard
 
 ```
-node tools/four-doors-check.mjs
-node tools/four-doors-check.mjs --place MT
+node tools/three-doors-check.mjs
+node tools/three-doors-check.mjs --place MT
 ```
 
-Four doors: programs, events, grants, the letter. The semester is over when
-all four open and Karen — a retired Army captain who tests this as a real
-user — agrees. Try a few states. The closed ones are the work.
+Three doors: programs, events, grants. The semester is over when all three
+open and Karen — a retired Army captain who tests this as a real user —
+agrees. Try a few states. The closed ones are the work.
 
 ## Minute 20–40: run the system
 

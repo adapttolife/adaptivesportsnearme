@@ -3,40 +3,42 @@
 Written 2026-08-31, the night before the fall class. Every number in this
 document was measured that night against the live tester; nothing is
 aspirational except the parts labeled vision. When a number here disagrees
-with the tester, the tester is right — rerun `node tools/four-doors-check.mjs`
+with the tester, the tester is right — rerun `node tools/three-doors-check.mjs`
 and trust it over this file.
 
-## Version 1.0 (decided 2026-08-31, Karen's call)
+## Version 1.0 (decided 2026-08-31, Karen's call; amended 2026-09-02, Alec)
 
-**Launch ships on three doors: programs, grants, and the letter.** Events is
-the hardest data problem in the project (the data must be built, not just
-served), so it comes off the launch gate and becomes the first post-launch
-ship — while an honest events page collects real events from program
-directors into the review queue. Check the launch gate with
-`node tools/four-doors-check.mjs --launch`; the four-door run stays the
-semester's full scoreboard. The coverage map doubles as the sponsor story:
+**Launch ships on two doors: programs and grants.** Events is the hardest
+data problem in the project (the data must be built, not just served), so it
+comes off the launch gate and becomes the first post-launch ship — while an
+honest events page collects real events from program directors into the
+review queue. Check the launch gate with
+`node tools/three-doors-check.mjs --launch`; the three-door run stays the
+semester's full scoreboard.
+
+**The letter is retired** (Alec, 2026-09-02: "not a thing"). It was the fourth
+door and the last item on the v1.0 gate. It is not a door, not a gate, and not
+owed by anyone. With it gone the launch gate passes today: `--launch` exits 0. The coverage map doubles as the sponsor story:
 a sponsor can fund the enrichment sprint that flips a waiting state orange.
 
 ## The one-sentence mission
 
-**A person leaves rehab, names a place, and finds four things: a program near
-them, an event to show up to, a grant they could use, and a letter that tells
-them sport is still possible. When those four doors open for a stranger, we
-launch.**
+**A person leaves rehab, names a place, and finds three things: a program near
+them, an event to show up to, and a grant they could use. When those three
+doors open for a stranger, we launch.**
 
 Everything below serves that sentence. Anything that doesn't can wait.
 
 ## The scoreboard (measured 2026-08-31)
 
 ```
-$ node tools/four-doors-check.mjs
+$ node tools/three-doors-check.mjs
 
   OPEN    Programs     22 actionable listings in WI — e.g. "Adaptive Mobility Providers"
   CLOSED  Events       events API answers but lists nothing upcoming
   OPEN    Grants       41 open grants with an application route
-  CLOSED  The letter   /letter -> 404 (the page does not exist yet)
 
-  2 of 4 doors open.
+  2 of 3 doors open.
 ```
 
 Two doors already open. That is not spin — it is also not the whole truth.
@@ -50,7 +52,7 @@ state already has listings waiting for enrichment — MD has 21, NC and PA have
 30 each), empty only in PR. "Open the programs door in all 50 states" is a
 semester-sized goal with a per-state scoreboard.**
 
-## What we build (the four doors, plus the engine under them)
+## What we build (the three doors, plus the engine under them)
 
 ### Door 1 — Programs: open it in all 50 states
 Already open where the data is enriched. The work is data, not features:
@@ -82,15 +84,13 @@ is worse than none — freshness checking belongs in the validate lane), grow
 coverage beyond the seed set, and connect grants to programs so a listing can
 say "athletes here often use these."
 
-### Door 4 — The letter: the only door software cannot build
-The letter is a page at `/letter` written by Alec and Karen in their own
-words, to the person who just got home from rehab believing sport is over.
-It is the emotional front door of the entire site and the one deliverable in
-this document that must **never** be machine-written. Students build the page
-frame, the print stylesheet, and the "bring this to your PT" affordance; the
-words are human. (This door is why the field contracts exist: the site speaks
-to people, and we now have machinery that keeps machine voice out of people's
-fields — see `FIELD-CONTRACTS.md`.)
+### Door 4 — The letter: retired 2026-09-02
+There was a fourth door: a page at `/letter` in Alec and Karen's own words, to
+the person who just got home from rehab. Alec retired it on 2026-09-02 ("not a
+thing"). Nothing replaces it and nobody owes it. The field contracts still
+stand on their own reasoning — the site speaks to people, and we keep machine
+voice out of people's fields regardless of how many doors there are (see
+`FIELD-CONTRACTS.md`).
 
 ### The engine — trust, or none of the doors matter
 - Every listing shows an honest last-checked date (44% have one; the validate
@@ -129,7 +129,7 @@ fields — see `FIELD-CONTRACTS.md`.)
 
 | Check | Command / ritual | Passes when |
 |---|---|---|
-| The four doors | `node tools/four-doors-check.mjs` | exit 0 — all doors open |
+| The three doors | `node tools/three-doors-check.mjs` | exit 0 — all doors open |
 | Doors, everywhere | same, `--place <state>` across all 56 | programs door open per state |
 | The queue is alive | `/api/admin/digest-stats` | pending shrinking; approvals > 0 every week |
 | Data speaks to people | `npm test` (191 tests incl. field contracts) | green, always |
@@ -145,18 +145,17 @@ The directory is phase one, and phase one is almost real: the database, the
 site, five automated lanes, a grants layer, and a review discipline all exist.
 What sits on top, once the foundation earns trust, is a toolbox for the
 community — a grants agent that helps someone assemble an application a human
-reviews; instance-level "show up here Saturday" freshness; the letter carried
-into rehab hospitals by PTs. Each tool is small, each solves one obstacle a
+reviews; instance-level "show up here Saturday" freshness. Each tool is
+small, each solves one obstacle a
 real person hits after the moment of "I found a program."
 
 This is being built by people who live it — Alec, Karen, the coaches and
 engineers around Adapt To Life — and by students whose code will not die in a
 classroom folder. The invitation to the fall class is exactly that: two doors
-are open, two are yours, and a real person is waiting behind each one.
+are open, one is yours, and a real person is waiting behind it.
 
 ## Decisions still owed (named so nobody re-litigates silently)
 
-- **Alec:** the words of the letter (with Karen). The frame can be built now.
 - **Alec:** hide the 356 name-only listings until enriched
   (`is_public = 0`, staged SQL exists) or leave them visible. Recommendation:
   hide — a locked door reads better than a painted one.

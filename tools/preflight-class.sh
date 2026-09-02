@@ -27,8 +27,8 @@ check "live homepage"     "https://adaptivesportsnearme.com/"                 "a
 check "practice site up"  "https://asnm-staging.alec-af3.workers.dev/api/config" '"prelaunch":false'
 check "practice data"     "https://asnm-staging.alec-af3.workers.dev/api/stats"  '"programs":'
 
-echo "== four doors =="
-node "$(dirname "$0")/four-doors-check.mjs" | tail -6
+echo "== three doors =="
+node "$(dirname "$0")/three-doors-check.mjs" | tail -6
 
 if [ $fail -eq 0 ]; then echo "== PREFLIGHT PASS — go teach =="; else
   echo "== PREFLIGHT FAIL — fix before class; backup PDF is in Drive =="; fi
