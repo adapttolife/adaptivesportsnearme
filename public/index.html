@@ -919,7 +919,7 @@ body.drawer-open{overflow:hidden;}
       <button class="gate-x" type="button" data-gate-close aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
       <p class="gate-eyebrow">Opening soon</p>
       <h2 id="gateTitle">Be first through the door.</h2>
-      <p class="lede"><span id="gateCount">1,544</span> adaptive sports programs are in. We are checking every one before we open, and you hear the day it happens.</p>
+      <p class="lede"><span id="gateCount">1,544</span> adaptive sports programs are in, and we are checking every one so what you find is real. You hear the day the doors open.</p>
     </div>
     <div class="gate-tabs" role="tablist">
       <button class="gate-tab on" type="button" data-gate-tab="notify" role="tab">Get notified</button>
@@ -934,7 +934,7 @@ body.drawer-open{overflow:hidden;}
           <label class="gcheck" for="ntfBeta">
             <input id="ntfBeta" type="checkbox" name="beta" value="1">
             <span class="gcheck-box" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span>
-            <span class="gcheck-text"><strong>I want to be a beta tester</strong><span>You get in before we open and tell us what is broken.</span></span>
+            <span class="gcheck-text"><strong>I want the first look</strong><span>A small group gets in before we open. Whatever is missing near you is what we work on next.</span></span>
           </label>
           <div class="cf-turnstile" data-sitekey="0x4AAAAAADr2WPepRgjp8g-R" data-appearance="interaction-only"></div>
           <button class="gate-cta" type="submit">Count me in</button>
@@ -2682,8 +2682,8 @@ document.getElementById('notifyForm').addEventListener('submit',async function(e
   if(res.ok){
     // esc(): the name is user input and paneDone writes innerHTML.
     paneDone('notify', nm? 'You are in, '+esc(nm) : 'You are in',
-      beta ? 'We will email you before we open with your beta link. Reply to it and a person reads it.'
-           : 'We will email you the day Adaptive Sports Near Me opens.');
+      beta ? 'Your link comes before the doors open. Anything you write back gets read by a person, not a form.'
+           : 'We will email you the day the doors open.');
   }
   else{ btn.disabled=false; btn.textContent=lbl; msg.textContent=res.error||'Something went wrong. Please try again.'; msg.className='gate-msg err'; }
 });

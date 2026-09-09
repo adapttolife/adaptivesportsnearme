@@ -44,19 +44,20 @@ function shell(bodyHtml) {
 // the prelaunch site. It answers the only three questions a new signup has:
 // did it work, what is this, and what happens next.
 export async function sendSignupWelcome(env, email, { name = "", beta = false } = {}) {
-  const subject = "You're on the list";
+  const subject = beta ? "You're on the early list" : "You're on the list";
   // The name is a courtesy, never a requirement: an unnamed signup gets the
   // same note without an awkward blank.
   const hi = name ? `You're in, ${name}.` : "You're in.";
   const betaText = beta
-    ? "You said you want to test it. That means you get a link before we open, " +
-      "and whatever you tell us is broken gets fixed before a stranger finds it. " +
-      "We will email you when the beta is ready.\n\n"
+    ? "You asked for the first look, so that is what you get. Your link comes " +
+      "before we open. Tell us what is missing where you live and that is what " +
+      "we work on next, so the next person who searches your town finds " +
+      "something real.\n\n"
     : "";
   const betaHtml = beta
-    ? `<p style="margin:0 0 16px">You said you want to test it. That means you get a link before ` +
-      `we open, and whatever you tell us is broken gets fixed before a stranger finds it. ` +
-      `We will email you when the beta is ready.</p>`
+    ? `<p style="margin:0 0 16px">You asked for the first look, so that is what you get. Your link ` +
+      `comes before we open. Tell us what is missing where you live and that is what we work on ` +
+      `next, so the next person who searches your town finds something real.</p>`
     : "";
   const text =
     hi + "\n\n" +
