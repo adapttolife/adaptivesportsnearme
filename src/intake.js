@@ -67,6 +67,15 @@ export async function recordIntake(env, entry) {
       entry.source || null,
       entry.isCanary ? 1 : 0
     ).run();
+    // Some forms already have a notification Alec receives (the waiver receipt
+    // BCCs him a copy of the signed release). Those are recorded for the shared
+    // record and the sheet, but stamped as notified so the sweeper does not send
+    // a second email about the same submission.
+    if (entry.alreadyNotified) {
+      await env.INTAKE.prepare(
+        `UPDATE intake SET notified_at = ?, notify_error = 'covered by this form''s own receipt' WHERE id = ?`
+      ).bind(now, id).run();
+    }
     return { ok: true, id };
   } catch (err) {
     console.error("intake: insert failed:", err);
