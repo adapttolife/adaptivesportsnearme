@@ -43,30 +43,42 @@ function shell(bodyHtml) {
 // The signup receipt. Fires once, right after a successful email capture on
 // the prelaunch site. It answers the only three questions a new signup has:
 // did it work, what is this, and what happens next.
-export async function sendSignupWelcome(env, email) {
-  const subject = "You're on the list";
+export async function sendSignupWelcome(env, email, { name = "", beta = false } = {}) {
+  const subject = beta ? "You're on the early list" : "You're on the list";
+  // The name is a courtesy, never a requirement: an unnamed signup gets the
+  // same note without an awkward blank.
+  const hi = name ? `You're in, ${name}.` : "You're in.";
+  const middleText = beta
+    ? "You asked for the first look, so that is what you get. Your link comes " +
+      "before the doors open. Tell us what is missing where you live and that " +
+      "is what we work on next, so the next person who searches your town " +
+      "finds something real.\n\n"
+    : "We are checking every listing so that what you find is real. You hear " +
+      "the day the doors open, before anyone else.\n\n";
+  const middleHtml = beta
+    ? `<p style="margin:0 0 16px">You asked for the first look, so that is what you get. Your link ` +
+      `comes before the doors open. Tell us what is missing where you live and that is what we ` +
+      `work on next, so the next person who searches your town finds something real.</p>`
+    : `<p style="margin:0 0 16px">We are checking every listing so that what you find is real. ` +
+      `You hear the day the doors open, before anyone else.</p>`;
   const text =
-    "You're in.\n\n" +
+    hi + "\n\n" +
     "Adaptive Sports Near Me is a free national directory of adaptive sports " +
     "programs: one place to find a program near you, an event to show up to, " +
     "and grants that help pay for it. No account, no fee, and nobody here " +
     "will ever ask you for money.\n\n" +
-    "We are not open yet. We are testing every listing so that when the doors " +
-    "open, what you find is real. You signed up, so you hear the day that " +
-    "happens - before anyone else.\n\n" +
+    middleText +
     "If you run a program, or know one we should list, just reply to this " +
     "email. A person reads it.\n\n" +
     "Talk soon,\nAlec and Karen\n\n" +
     "Adaptive Sports Near Me\n" +
     "an Adapt To Life project - 501(c)(3) nonprofit - EIN 41-3213344";
   const html = shell(
-    `<p style="margin:0 0 16px"><strong>You're in.</strong></p>` +
+    `<p style="margin:0 0 16px"><strong>${esc(hi)}</strong></p>` +
     `<p style="margin:0 0 16px">Adaptive Sports Near Me is a free national directory of adaptive sports ` +
     `programs: one place to find a program near you, an event to show up to, and grants that help pay ` +
     `for it. No account, no fee, and nobody here will ever ask you for money.</p>` +
-    `<p style="margin:0 0 16px">We are not open yet. We are testing every listing so that when the ` +
-    `doors open, what you find is real. You signed up, so you hear the day that happens, before ` +
-    `anyone else.</p>` +
+    middleHtml +
     `<p style="margin:0 0 16px">If you run a program, or know one we should list, just reply to this ` +
     `email. A person reads it.</p>` +
     `<p style="margin:0">Talk soon,<br>Alec and Karen</p>`
