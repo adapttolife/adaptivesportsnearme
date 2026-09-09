@@ -668,6 +668,21 @@ a.evrow:hover{border-color:var(--ink);box-shadow:var(--shadow-sm);}
 .gate-done h3{font-family:'DM Sans',sans-serif;font-weight:700;font-size:20px;margin:0 0 7px;}
 .gate-done p{font-size:14px;color:var(--muted);line-height:1.5;margin:0;}
 .gate-fine{font-size:12px;color:var(--faint);margin:13px 0 0;line-height:1.4;}
+/* Beta opt-in: the whole row is the tap target (>=44px), the native box is kept
+   for a11y/forms but visually replaced so it does not inherit .gate input's
+   full-width 46px field styling. */
+.gcheck{display:flex;align-items:flex-start;gap:11px;min-height:var(--tap);margin:4px 0 14px;padding:12px 13px;border:1px solid var(--line);border-radius:var(--r);background:var(--mist);cursor:pointer;transition:border-color .15s,background .15s;}
+.gcheck:hover{border-color:var(--sand2);}
+.gcheck input[type=checkbox]{position:absolute;width:1px;height:1px;opacity:0;margin:0;padding:0;}
+.gcheck-box{flex:0 0 auto;width:22px;height:22px;margin-top:1px;border:1.5px solid var(--sand2);border-radius:6px;background:var(--paper);display:grid;place-items:center;color:#fff;transition:background .15s,border-color .15s;}
+.gcheck-box svg{width:14px;height:14px;opacity:0;transform:scale(.7);transition:opacity .12s,transform .12s;}
+.gcheck input:checked ~ .gcheck-box{background:var(--orange);border-color:var(--orange);}
+.gcheck input:checked ~ .gcheck-box svg{opacity:1;transform:scale(1);}
+.gcheck input:focus-visible ~ .gcheck-box{outline:2px solid var(--orange);outline-offset:2px;}
+.gcheck input:checked ~ .gcheck-text strong{color:var(--orange-ink);}
+.gcheck-text{display:block;line-height:1.35;}
+.gcheck-text strong{display:block;font-size:14px;font-weight:600;color:var(--ink);}
+.gcheck-text span{display:block;font-size:12.5px;color:var(--muted);margin-top:2px;}
 
 /* ============================ EMAIL CTA (hero | bar | band) ============================ */
 /* Shared capture form — one look, recoloured per treatment below. */
@@ -902,9 +917,9 @@ body.drawer-open{overflow:hidden;}
   <div class="gate">
     <div class="gate-head">
       <button class="gate-x" type="button" data-gate-close aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
-      <p class="gate-eyebrow">Launching soon</p>
-      <h2 id="gateTitle">We are not live yet</h2>
-      <p class="lede">Adaptive Sports Near Me is a free, national directory of adaptive sports programs, events, and funding. Leave your email and we will tell you the day it opens — then get new programs, grants, and events near you.</p>
+      <p class="gate-eyebrow">Opening soon</p>
+      <h2 id="gateTitle">Be first through the door.</h2>
+      <p class="lede"><span id="gateCount">1,544</span> adaptive sports programs are in. We are checking every one before we open, and you hear the day it happens.</p>
     </div>
     <div class="gate-tabs" role="tablist">
       <button class="gate-tab on" type="button" data-gate-tab="notify" role="tab">Get notified</button>
@@ -914,10 +929,17 @@ body.drawer-open{overflow:hidden;}
       <div class="gate-pane on" data-pane="notify">
         <form id="notifyForm" novalidate>
           <input class="hp" type="text" name="company" tabindex="-1" autocomplete="off" aria-hidden="true">
+          <div class="gfield"><label for="ntfName">First name</label><input id="ntfName" type="text" name="nm" placeholder="Alex" autocomplete="given-name" maxlength="60"></div>
           <div class="gfield"><label for="ntfEmail">Email</label><input id="ntfEmail" type="email" name="em" placeholder="you@email.com" autocomplete="email" required></div>
+          <label class="gcheck" for="ntfBeta">
+            <input id="ntfBeta" type="checkbox" name="beta" value="1">
+            <span class="gcheck-box" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span>
+            <span class="gcheck-text"><strong>I want to be a beta tester</strong><span>You get in before we open and tell us what is broken.</span></span>
+          </label>
           <div class="cf-turnstile" data-sitekey="0x4AAAAAADr2WPepRgjp8g-R" data-appearance="interaction-only"></div>
-          <button class="gate-cta" type="submit">Notify me at launch</button>
+          <button class="gate-cta" type="submit">Count me in</button>
           <div class="gate-msg" id="notifyMsg" aria-live="polite"></div>
+          <p class="gate-fine">Free, no account, and no one here will ever ask you for money. An Adapt To Life 501(c)(3) project.</p>
         </form>
       </div>
       <div class="gate-pane" data-pane="program">
@@ -2571,6 +2593,18 @@ document.addEventListener('submit', async function(e){
 
 /* ============================ PRELAUNCH GATE ============================ */
 let PRELAUNCH = true; // server-driven: /api/config flips this per environment
+/* The gate's one number comes from the same table the directory serves, fetched once
+   on first open. The HTML ships a real fallback, so a failed call shows a stale-but-true
+   count rather than a hole. */
+let gateCountDone=false;
+async function hydrateGateCount(){
+  if(gateCountDone) return; gateCountDone=true;
+  const el=document.getElementById('gateCount'); if(!el) return;
+  try{
+    const r=await fetch('/api/stats'); const j=await r.json();
+    if(j&&j.ok&&typeof j.programs==='number'&&j.programs>0) el.textContent=j.programs.toLocaleString('en-US');
+  }catch(_){ /* keep the shipped fallback */ }
+}
 const gateEl = document.getElementById('gate');
 (function(){ const sel=document.getElementById('pgSport'); if(sel){ SPORTS.forEach(s=>{ const o=document.createElement('option'); o.value=s.label; o.textContent=s.label; sel.appendChild(o); }); const ot=document.createElement('option'); ot.value='Other'; ot.textContent='Other'; sel.appendChild(ot); } })();
 let gateLastFocus=null;
@@ -2587,9 +2621,12 @@ function openGate(tab){
     if(ey) ey.textContent='Free and open';
     if(ti) ti.textContent='Help the directory grow';
     if(le) le.textContent='Know a program we should list, or want programs, events, and funding near you in your inbox? That all starts here.';
-    const nb=document.querySelector('#notifyForm .gate-cta'); if(nb) nb.textContent='Get updates'; // not "Notify me at launch" on a live site
+    const nb=document.querySelector('#notifyForm .gate-cta'); if(nb) nb.textContent='Get updates'; // not "Count me in" on a live site
+    // "Beta tester" is a pre-launch offer only; on a live site there is no beta to join.
+    const bt=document.querySelector('#notifyForm .gcheck'); if(bt){ const cb=bt.querySelector('input'); if(cb) cb.checked=false; bt.style.display='none'; }
   }
   setGateTab(tab||'notify');
+  hydrateGateCount();
   gateEl.classList.add('open');
   document.body.style.overflow='hidden';
   const f=gateEl.querySelector('.gate-pane.on input:not(.hp)'); if(f) setTimeout(()=>{try{f.focus();}catch(_){}},60);
@@ -2638,9 +2675,16 @@ document.getElementById('notifyForm').addEventListener('submit',async function(e
   msg.textContent=''; msg.className='gate-msg';
   const em=(this.em.value||'').trim();
   if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)){ msg.textContent='Please enter a valid email.'; msg.className='gate-msg err'; return; }
+  const nm=(this.nm&&this.nm.value||'').trim().slice(0,60);
+  const beta=!!(this.beta&&this.beta.checked);
   btn.disabled=true; const lbl=btn.textContent; btn.textContent='Signing you up...';
   const res=await postForm('/api/subscribe',this);
-  if(res.ok){ paneDone('notify','You are on the list','We will email you the day Adaptive Sports Near Me opens.'); }
+  if(res.ok){
+    // esc(): the name is user input and paneDone writes innerHTML.
+    paneDone('notify', nm? 'You are in, '+esc(nm) : 'You are in',
+      beta ? 'We will email you before we open with your beta link. Reply to it and a person reads it.'
+           : 'We will email you the day Adaptive Sports Near Me opens.');
+  }
   else{ btn.disabled=false; btn.textContent=lbl; msg.textContent=res.error||'Something went wrong. Please try again.'; msg.className='gate-msg err'; }
 });
 document.getElementById('programForm').addEventListener('submit',async function(e){

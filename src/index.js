@@ -220,14 +220,20 @@ async function handleSubscribe(request, env) {
   }
 
   const source = str(data.source).slice(0, 80) || "asnm-prelaunch";
-  const result = await subscribeToBeehiiv(env, email, source);
+  // First name and the beta opt-in are both optional. Name is a courtesy (it
+  // personalises the receipt and the launch email); beta is a real segment we
+  // mail before anyone else. Neither may ever block the capture: the email is
+  // the point.
+  const name = str(data.nm).slice(0, 60);
+  const beta = parseBetaFlag(data.beta);
+  const result = await subscribeToBeehiiv(env, email, source, { name, beta });
   if (!result.ok) return json({ ok: false, error: result.error }, result.status);
 
   // The signup receipt (carried over from adapt-to-life's transactional
   // receipts). Never fail the signup over a mail hiccup - the capture is the
   // point; the welcome is the courtesy.
   try {
-    await sendSignupWelcome(env, email);
+    await sendSignupWelcome(env, email, { name, beta });
   } catch (err) {
     console.error("signup welcome failed:", err);
   }
@@ -235,10 +241,26 @@ async function handleSubscribe(request, env) {
   return json({ ok: true });
 }
 
+// Maps our two optional signup answers onto the publication's custom fields.
+// `name` is dropped when blank so a later signup without a name cannot wipe an
+// earlier one; `beta` is only sent when true, for the same reason.
+// An unchecked checkbox is simply absent from the form body, so anything we do
+// not recognise as a yes is a no. Exported for test.
+export function parseBetaFlag(v) {
+  return ["1", "true", "on", "yes"].includes(str(v).toLowerCase());
+}
+
+export function beehiivCustomFields({ name, beta } = {}) {
+  const out = [];
+  if (name) out.push({ name: "First Name", value: name });
+  if (beta) out.push({ name: "Beta Tester", value: true });
+  return out;
+}
+
 // Shared beehiiv POST, factored out of handleSubscribe so /api/profile's newsletter
 // opt-in reuses the exact same call instead of duplicating it. Returns a plain
 // {ok, status, error} shape rather than a Response — callers decide the envelope.
-async function subscribeToBeehiiv(env, email, campaign) {
+async function subscribeToBeehiiv(env, email, campaign, extra = {}) {
   if (!env.BEEHIIV_API_KEY || !env.BEEHIIV_PUBLICATION_ID) {
     console.error("beehiiv not configured (missing API key or publication id)");
     return { ok: false, status: 503, error: "Sign-up is temporarily unavailable. Please try again soon." };
@@ -259,6 +281,10 @@ async function subscribeToBeehiiv(env, email, campaign) {
           utm_medium: "website",
           utm_campaign: campaign,
           referring_site: "adaptivesportsnearme.com",
+          // The two custom fields exist on the publication ("First Name",
+          // "Beta Tester"). Only send what we actually have: an empty name
+          // would overwrite a good one on a repeat signup.
+          ...(beehiivCustomFields(extra).length ? { custom_fields: beehiivCustomFields(extra) } : {}),
         }),
       }
     );
