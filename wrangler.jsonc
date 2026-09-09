@@ -96,6 +96,37 @@
     // from a copy of staging data. No crons (design preview, not a live pipeline);
     // routes stay empty. Iterate with `wrangler versions upload --env next` for
     // parallel preview URLs.
+    // Dedicated review lane for the prelaunch gate change (2026-09-09). Cut from
+    // the commit production is actually running (aa88dba), so what is reviewed
+    // here is exactly what production becomes: nothing else rides along. Its own
+    // D1, seeded from a live export, so the photos and counts match the live
+    // site. PRELAUNCH is true because the gate is the thing under review. No
+    // crons: this lane never proposes into a review queue.
+    "gate": {
+      "name": "asnm-gate",
+      "main": "src/index.js",
+      "workers_dev": true,
+      "preview_urls": true,
+      "routes": [],
+      "assets": {
+        "directory": "./public",
+        "binding": "ASSETS",
+        "not_found_handling": "404-page",
+        "html_handling": "auto-trailing-slash"
+      },
+      "vars": {
+        "AIRTABLE_BASE_ID": "apphZsPGanzJ5xyl7",
+        "AIRTABLE_INBOX_TABLE_ID": "tblBcgV7oQ9Q3q34L",
+        "ENV_NAME": "gate",
+        "PRELAUNCH": "true"
+      },
+      "d1_databases": [
+        { "binding": "DB", "database_name": "asnm-db-gate", "database_id": "ccc144a2-9b5f-4fa4-8ce3-fe8575549757" }
+      ],
+      "triggers": {
+        "crons": []
+      }
+    },
     "next": {
       "name": "asnm-next",
       "main": "src/index.js",
