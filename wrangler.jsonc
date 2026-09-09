@@ -28,6 +28,12 @@
   "d1_databases": [
     { "binding": "DB", "database_name": "asnm-db", "database_id": "d8566621-99b1-4430-af47-d107ed64195e" }
   ],
+  // Outbound transactional mail (the signup receipt). adaptivesportsnearme.com is
+  // NOT onboarded to Cloudflare Email Sending — its SPF/MX are Google-only — so the
+  // receipt sends as Adapt To Life, whose zone IS onboarded with no recipient
+  // restriction. Same binding shape ATL's Worker uses.
+  "send_email": [{ "name": "SEND_EMAIL" }],
+
   "triggers": {
     // 0 */2: validate lane (link liveness); */20: enrich lane (contact/location scrape)
     "crons": ["0 */2 * * *", "*/20 * * * *"]
@@ -123,6 +129,7 @@
       "d1_databases": [
         { "binding": "DB", "database_name": "asnm-db-gate", "database_id": "ccc144a2-9b5f-4fa4-8ce3-fe8575549757" }
       ],
+      "send_email": [{ "name": "SEND_EMAIL" }],
       "triggers": {
         "crons": []
       }

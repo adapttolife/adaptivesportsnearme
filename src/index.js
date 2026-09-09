@@ -34,6 +34,7 @@ import {
 import {
   listPosts, getPostBySlug, blogIndexTemplate, blogPostTemplate, blogFallbackTemplate, blogNotFoundTemplate,
 } from "./blog.js";
+import { sendSignupWelcome } from "./email.js";
 
 const API_CACHE = "public, max-age=300, stale-while-revalidate=600";
 const FEED_CACHE = "public, max-age=300";
@@ -198,8 +199,18 @@ async function handleSubscribe(request, env) {
   // Neither may ever block the capture: the email is the point.
   const name = str(data.nm).slice(0, 60);
   const beta = parseBetaFlag(data.beta);
-  const result = await subscribeToBeehiiv(env, email, source, { name, beta });
+  // sendWelcome:false — this handler sends its own receipt below, and beehiiv's
+  // generic welcome would arrive seconds later saying the same thing twice.
+  const result = await subscribeToBeehiiv(env, email, source, { name, beta, sendWelcome: false });
   if (!result.ok) return json({ ok: false, error: result.error }, result.status);
+
+  // The signup receipt. Never fail the signup over a mail hiccup: the capture
+  // is the point, the welcome is the courtesy.
+  try {
+    await sendSignupWelcome(env, email, { name, beta });
+  } catch (err) {
+    console.error("signup welcome failed:", err);
+  }
 
   return json({ ok: true });
 }
@@ -224,6 +235,9 @@ export function beehiivCustomFields({ name, beta } = {}) {
 }
 
 async function subscribeToBeehiiv(env, email, campaign, extra = {}) {
+  // Default true: /api/profile's newsletter opt-in has no receipt of its own and
+  // relies on beehiiv's welcome, so only a caller that sends its own turns it off.
+  const sendWelcome = extra.sendWelcome !== false;
   if (!env.BEEHIIV_API_KEY || !env.BEEHIIV_PUBLICATION_ID) {
     console.error("beehiiv not configured (missing API key or publication id)");
     return { ok: false, status: 503, error: "Sign-up is temporarily unavailable. Please try again soon." };
@@ -239,7 +253,7 @@ async function subscribeToBeehiiv(env, email, campaign, extra = {}) {
         body: JSON.stringify({
           email,
           reactivate_existing: true,
-          send_welcome_email: true,
+          send_welcome_email: sendWelcome,
           utm_source: "asnm-prelaunch",
           utm_medium: "website",
           utm_campaign: campaign,
