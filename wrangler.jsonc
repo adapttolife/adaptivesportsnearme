@@ -26,7 +26,8 @@
     "PRELAUNCH": "true"
   },
   "d1_databases": [
-    { "binding": "DB", "database_name": "asnm-db", "database_id": "d8566621-99b1-4430-af47-d107ed64195e" }
+    { "binding": "DB", "database_name": "asnm-db", "database_id": "d8566621-99b1-4430-af47-d107ed64195e" },
+    { "binding": "INTAKE", "database_name": "atl-intake", "database_id": "916e841e-50cc-4661-806a-865cd24fbb53" }
   ],
   // Outbound transactional mail (the signup receipt). adaptivesportsnearme.com is
   // NOT onboarded to Cloudflare Email Sending — its SPF/MX are Google-only — so the
@@ -36,7 +37,9 @@
 
   "triggers": {
     // 0 */2: validate lane (link liveness); */20: enrich lane (contact/location scrape)
-    "crons": ["0 */2 * * *", "*/20 * * * *"]
+    // */10: intake sweep — re-notify anything owed, and run the end-to-end
+    //        canary when none has passed in the last 6 hours
+    "crons": ["0 */2 * * *", "*/20 * * * *", "*/10 * * * *"]
   },
   "observability": { "enabled": true },
   "env": {
@@ -124,14 +127,21 @@
         "AIRTABLE_BASE_ID": "apphZsPGanzJ5xyl7",
         "AIRTABLE_INBOX_TABLE_ID": "tblBcgV7oQ9Q3q34L",
         "ENV_NAME": "gate",
-        "PRELAUNCH": "true"
+        "PRELAUNCH": "true",
+        // Review lane only: notifications go somewhere readable from the box so
+        // the path is PROVEN, not assumed. Production has no override and uses
+        // the hello@adapttolife.org default.
+        "INTAKE_INBOX": "stingel@alectranel.com"
       },
       "d1_databases": [
-        { "binding": "DB", "database_name": "asnm-db-gate", "database_id": "ccc144a2-9b5f-4fa4-8ce3-fe8575549757" }
+        { "binding": "DB", "database_name": "asnm-db-gate", "database_id": "ccc144a2-9b5f-4fa4-8ce3-fe8575549757" },
+        { "binding": "INTAKE", "database_name": "atl-intake", "database_id": "916e841e-50cc-4661-806a-865cd24fbb53" }
       ],
       "send_email": [{ "name": "SEND_EMAIL" }],
       "triggers": {
-        "crons": []
+        // Intake schedules only. The directory lanes stay off here: this lane
+        // must never propose into a review queue.
+        "crons": ["*/10 * * * *"]
       }
     },
     "next": {

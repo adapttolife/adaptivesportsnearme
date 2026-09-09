@@ -35,6 +35,16 @@ import {
   listPosts, getPostBySlug, blogIndexTemplate, blogPostTemplate, blogFallbackTemplate, blogNotFoundTemplate,
 } from "./blog.js";
 import { sendSignupWelcome } from "./email.js";
+import { recordIntake, notifyIntake, sweepIntake, runIntakeCanary, canaryIsFresh } from "./intake.js";
+
+const INTAKE_SITE = "adaptivesportsnearme.com";
+
+/* Run work after the response without making the submitter wait for it. Falls
+   back to awaiting when there is no ctx, so a caller can never silently skip it. */
+function after(ctx, promise) {
+  if (ctx && typeof ctx.waitUntil === "function") ctx.waitUntil(promise);
+  return promise;
+}
 
 const API_CACHE = "public, max-age=300, stale-while-revalidate=600";
 const FEED_CACHE = "public, max-age=300";
@@ -48,17 +58,28 @@ const CRON_LANES = {
   "*/20 * * * *": "dispatch", // rotates enrich -> classify -> geocode -> resolve (pipeline.js)
 };
 
+// Intake runs on its own schedule, independent of the directory lanes: the sweep
+// retries any submission nobody has been told about yet, and the canary proves
+// the whole path still works when no real person has used it lately.
+// ONE intake schedule, not two. The sweep retries anything nobody has been told
+// about, and then runs the end-to-end canary if none has passed recently. Folding
+// the canary into the sweep means it self-schedules, it proves itself within ten
+// minutes of a deploy instead of a day, and there is one less cron that can
+// quietly stop without anyone noticing.
+const INTAKE_SWEEP_CRON = "*/10 * * * *";
+const INTAKE_CANARY_MAX_AGE_H = 6;
+
 export default {
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     const url = new URL(request.url);
 
     if (url.pathname === "/api/subscribe") {
       if (request.method !== "POST") return json({ ok: false, error: "Method not allowed" }, 405);
-      return handleSubscribe(request, env);
+      return handleSubscribe(request, env, ctx);
     }
     if (url.pathname === "/api/submit-program") {
       if (request.method !== "POST") return json({ ok: false, error: "Method not allowed" }, 405);
-      return handleSubmitProgram(request, env);
+      return handleSubmitProgram(request, env, ctx);
     }
     if (url.pathname === "/api/profile") {
       if (request.method === "POST") return handleProfileUpsert(request, env);
@@ -155,6 +176,22 @@ export default {
   },
 
   async scheduled(controller, env, ctx) {
+    // Intake schedules are handled first and return: they do not depend on the
+    // directory's D1, and must keep running even if that is unavailable.
+    if (controller.cron === INTAKE_SWEEP_CRON) {
+      ctx.waitUntil((async () => {
+        await sweepIntake(env).catch((err) => console.error("intake sweep failed:", err));
+        if (!(await canaryIsFresh(env, INTAKE_CANARY_MAX_AGE_H))) {
+          const r = await runIntakeCanary(env, INTAKE_SITE).catch((err) => {
+            console.error("intake canary failed:", err);
+            return { ok: false, stage: "threw" };
+          });
+          console.log(`intake canary: ok=${r.ok} stage=${r.stage}`);
+        }
+      })());
+      return;
+    }
+
     if (!env.DB) return;
     const lane = CRON_LANES[controller.cron];
     if (!lane) {
@@ -171,7 +208,7 @@ export default {
 };
 
 // ---- Email capture -> beehiiv ------------------------------------------------
-async function handleSubscribe(request, env) {
+async function handleSubscribe(request, env, ctx) {
   const data = await readBody(request);
   if (data === null) return json({ ok: false, error: "Could not read your submission." }, 400);
 
@@ -204,13 +241,25 @@ async function handleSubscribe(request, env) {
   const result = await subscribeToBeehiiv(env, email, source, { name, beta, sendWelcome: false });
   if (!result.ok) return json({ ok: false, error: result.error }, result.status);
 
-  // The signup receipt. Never fail the signup over a mail hiccup: the capture
-  // is the point, the welcome is the courtesy.
-  try {
-    await sendSignupWelcome(env, email, { name, beta });
-  } catch (err) {
-    console.error("signup welcome failed:", err);
-  }
+  // Intake: beehiiv is this form's store, so intake is the durable mirror and the
+  // notification. A failure here must never fail a signup that already landed.
+  const rec = await recordIntake(env, {
+    site: INTAKE_SITE,
+    kind: "newsletter",
+    name,
+    email,
+    summary: beta
+      ? `New first-look signup: ${name || email}`
+      : `New signup: ${name || email}`,
+    source,
+    payload: { "First look": beta ? "yes" : "no", "First name": name || "" },
+  });
+
+  // Both of these run after the response is decided, so the person is never kept
+  // waiting on mail. The row is already written either way.
+  after(ctx, sendSignupWelcome(env, email, { name, beta }).catch(
+    (err) => console.error("signup welcome failed:", err)));
+  if (rec.ok) after(ctx, notifyIntake(env, rec.id));
 
   return json({ ok: true });
 }
@@ -279,7 +328,7 @@ async function subscribeToBeehiiv(env, email, campaign, extra = {}) {
 }
 
 // ---- Program submission -> Airtable Agent Inbox ------------------------------
-async function handleSubmitProgram(request, env) {
+async function handleSubmitProgram(request, env, ctx) {
   const data = await readBody(request);
   if (data === null) return json({ ok: false, error: "Could not read your submission." }, 400);
 
@@ -364,6 +413,23 @@ async function handleSubmitProgram(request, env) {
       console.error("D1 submission mirror failed:", err); // Airtable write already succeeded
     }
   }
+
+  // Intake: the notification lane. Airtable stays the team surface (and ClickUp
+  // stays where ATL works), so a failure here can never fail a submission that
+  // has already been saved.
+  const rec = await recordIntake(env, {
+    site: INTAKE_SITE,
+    kind: "program",
+    name: email ? "" : null,
+    email: email || null,
+    summary: `New program submitted: ${program}`,
+    source: "asnm-add-a-program",
+    payload: {
+      Program: program, Organization: org, Sport: sport,
+      City: city, State: stateRegion, Notes: notes,
+    },
+  });
+  if (rec.ok) after(ctx, notifyIntake(env, rec.id));
 
   return json({ ok: true });
 }
