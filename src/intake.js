@@ -246,7 +246,11 @@ export async function runIntakeCanary(env, site) {
     name: "Intake canary",
     email: intakeInbox(env),
     summary: `Intake canary from ${site}`,
-    source: "scheduled-canary",
+    // Stamped with the environment on purpose. Without it the meter cannot tell
+    // a production canary from a review-lane one, and a review lane firing every
+    // 10 minutes makes the meter read GREEN while production is broken. That is
+    // the false-green this whole design exists to prevent, and it happened.
+    source: `canary:${(env && env.ENV_NAME) || "unknown"}`,
     payload: { note: "Automated end-to-end check. If this stops arriving, intake is broken.", at: stamp },
     isCanary: true,
   });
