@@ -117,3 +117,32 @@ export async function sendProgramReceipt(env, email, { program, org, name } = {}
   );
   return cfSend(env, { from: HOUSE_FROM, to: email, replyTo: HOUSE_REPLY, subject, text, html });
 }
+
+// The receipt for someone who saves a profile. A profile here has no password —
+// it is an email and a cookie — so this note is also the only durable record the
+// person has that it exists, and the thing they will search for when they change
+// phones. It says what was saved and how to get back, and nothing else.
+export async function sendProfileReceipt(env, email, { name, isNew } = {}) {
+  const who = (name || "").trim();
+  const subject = isNew === false ? "Your Adaptive Sports Near Me profile" : "Your profile is saved";
+  const text =
+    (who ? `Hi ${who},\n\n` : "Hi,\n\n") +
+    "Your Adaptive Sports Near Me profile is saved. There is no password: the " +
+    "programs you save are tied to this email address.\n\n" +
+    "Keep this note. If you switch phones or clear your browser, it is how we " +
+    "find you again.\n\n" +
+    "Anything you want to tell us, just reply. A person reads it.\n\n" +
+    "Talk soon,\nAlec and Karen\n\n" +
+    "Adaptive Sports Near Me\n" +
+    "an Adapt To Life project - 501(c)(3) nonprofit - EIN 41-3213344";
+  const html = shell(
+    `<p style="margin:0 0 16px"><strong>${who ? `Hi ${esc(who)},` : "Hi,"}</strong></p>` +
+    `<p style="margin:0 0 16px">Your Adaptive Sports Near Me profile is saved. There is no ` +
+    `password: the programs you save are tied to this email address.</p>` +
+    `<p style="margin:0 0 16px">Keep this note. If you switch phones or clear your browser, ` +
+    `it is how we find you again.</p>` +
+    `<p style="margin:0 0 16px">Anything you want to tell us, just reply. A person reads it.</p>` +
+    `<p style="margin:0">Talk soon,<br>Alec and Karen</p>`
+  );
+  return cfSend(env, { from: HOUSE_FROM, to: email, replyTo: HOUSE_REPLY, subject, text, html });
+}

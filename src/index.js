@@ -507,8 +507,21 @@ async function handleProfileUpsert(request, env) {
   }
 
   if (newsletter) {
-    const result = await subscribeToBeehiiv(env, email, "asnm-profile");
+    // sendWelcome:false so beehiiv's generic note does not arrive alongside
+    // ours. Opting in here should feel identical to opting in at the gate.
+    const result = await subscribeToBeehiiv(env, email, "asnm-profile", { name, sendWelcome: false });
     if (!result.ok) console.error("profile newsletter opt-in failed:", result.error); // profile save already succeeded
+    else await sendSignupWelcome(env, email, { name, beta: false }).catch(
+      (err) => console.error("profile newsletter welcome failed:", err));
+  }
+
+  // Confirm the profile itself. Without this a person creates a passwordless
+  // profile and has no record it exists — nothing to search for when they
+  // change phones. Never allowed to fail the save that already succeeded.
+  try {
+    await sendProfileReceipt(env, email, { name, isNew });
+  } catch (err) {
+    console.error("profile receipt failed:", err);
   }
 
   const sig = await signProfileId(id, env.PROFILE_SIGNING_KEY);
