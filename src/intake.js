@@ -225,10 +225,15 @@ export async function sweepIntake(env, limit = 25) {
 export async function canaryIsFresh(env, hours = 6) {
   try {
     const cut = new Date(Date.now() - hours * 3600e3).toISOString();
+    // Scoped to THIS environment. Every environment shares one table, so an
+    // unscoped check let a review lane's canary convince production that one had
+    // run recently — production then skipped its own and never proved itself,
+    // while the meter waited for a production canary that was never going to
+    // fire. The freshness check and the meter have to agree on what counts.
     const row = await env.INTAKE.prepare(
       `SELECT COUNT(*) AS n FROM intake
-        WHERE is_canary = 1 AND notified_at IS NOT NULL AND notified_at > ?`
-    ).bind(cut).first();
+        WHERE is_canary = 1 AND source = ? AND notified_at IS NOT NULL AND notified_at > ?`
+    ).bind(`canary:${(env && env.ENV_NAME) || "unknown"}`, cut).first();
     return (row?.n || 0) > 0;
   } catch (err) {
     // Fails closed: if we cannot tell, run one. A redundant canary costs an
