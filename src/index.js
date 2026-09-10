@@ -431,6 +431,16 @@ async function handleSubmitProgram(request, env, ctx) {
   });
   if (rec.ok) after(ctx, notifyIntake(env, rec.id));
 
+  // Acknowledge the person who submitted. Until 2026-09-10 this form sent them
+  // nothing: they handed us a program, saw a thank-you on screen, and never
+  // heard from us again. Email is optional on this form, so only when we have
+  // one, and after the response so it can never fail or slow a submission that
+  // is already saved to Airtable and to intake.
+  if (email) {
+    after(ctx, sendProgramReceipt(env, email, { program, org }).catch(
+      (err) => console.error("program receipt failed:", err)));
+  }
+
   return json({ ok: true });
 }
 

@@ -85,3 +85,35 @@ export async function sendSignupWelcome(env, email, { name = "", beta = false } 
   );
   return cfSend(env, { from: HOUSE_FROM, to: esc(email) && email, replyTo: HOUSE_REPLY, subject, text, html });
 }
+
+// The receipt for someone who submits a program. Until 2026-09-10 this form sent
+// the submitter nothing at all: they handed us their program, saw a "thank you"
+// on screen, and never heard from us again. A person who takes the trouble to
+// tell us about a program should get something back that a human clearly wrote.
+export async function sendProgramReceipt(env, email, { program, org, name } = {}) {
+  const who = (name || "").trim();
+  const what = (program || "the program").trim();
+  const subject = "We got your program";
+  const text =
+    (who ? `Thanks, ${who}.\n\n` : "Thanks.\n\n") +
+    `We received ${what}${org ? ` (${org})` : ""} and a person will look at it before ` +
+    "the directory opens.\n\n" +
+    "We check every listing by hand, so it may take us a few days. If we need " +
+    "anything from you, we will just reply to this email.\n\n" +
+    "If you spot something we got wrong, or you know other programs we should " +
+    "list, reply here too. A person reads it.\n\n" +
+    "Talk soon,\nAlec and Karen\n\n" +
+    "Adaptive Sports Near Me\n" +
+    "an Adapt To Life project - 501(c)(3) nonprofit - EIN 41-3213344";
+  const html = shell(
+    `<p style="margin:0 0 16px"><strong>${who ? `Thanks, ${esc(who)}.` : "Thanks."}</strong></p>` +
+    `<p style="margin:0 0 16px">We received <strong>${esc(what)}</strong>${org ? ` (${esc(org)})` : ""} ` +
+    `and a person will look at it before the directory opens.</p>` +
+    `<p style="margin:0 0 16px">We check every listing by hand, so it may take us a few days. ` +
+    `If we need anything from you, we will just reply to this email.</p>` +
+    `<p style="margin:0 0 16px">If you spot something we got wrong, or you know other programs we ` +
+    `should list, reply here too. A person reads it.</p>` +
+    `<p style="margin:0">Talk soon,<br>Alec and Karen</p>`
+  );
+  return cfSend(env, { from: HOUSE_FROM, to: email, replyTo: HOUSE_REPLY, subject, text, html });
+}
