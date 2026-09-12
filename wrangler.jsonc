@@ -34,6 +34,13 @@
   // receipt sends as Adapt To Life, whose zone IS onboarded with no recipient
   // restriction. Same binding shape ATL's Worker uses.
   "send_email": [{ "name": "SEND_EMAIL" }],
+  // Per-network form rate limit (Workers Rate Limiting binding; src/turnstile.js
+  // overFormLimit). 6 form POSTs per minute per connecting IP — a person cannot
+  // hit it, a script cannot avoid it. Bindings are not inherited by environments,
+  // so every env that serves forms declares the same one.
+  "ratelimits": [
+    { "name": "FORM_LIMITER", "namespace_id": "1001", "simple": { "limit": 6, "period": 60 } }
+  ],
 
   "triggers": {
     // 0 */2: validate lane (link liveness); */20: enrich lane (contact/location scrape)
@@ -63,6 +70,7 @@
         "ENV_NAME": "staging",
         "PRELAUNCH": "false"
       },
+      "ratelimits": [{ "name": "FORM_LIMITER", "namespace_id": "1001", "simple": { "limit": 6, "period": 60 } }],
       "d1_databases": [
         { "binding": "DB", "database_name": "asnm-db-staging", "database_id": "ae83f752-9f7a-476c-914a-94b9ced0627f" }
       ],
@@ -90,8 +98,10 @@
         "AIRTABLE_BASE_ID": "apphZsPGanzJ5xyl7",
         "AIRTABLE_INBOX_TABLE_ID": "tblBcgV7oQ9Q3q34L",
         "ENV_NAME": "sandbox",
+        "TURNSTILE_MODE": "off",
         "PRELAUNCH": "false"
       },
+      "ratelimits": [{ "name": "FORM_LIMITER", "namespace_id": "1001", "simple": { "limit": 6, "period": 60 } }],
       "d1_databases": [
         { "binding": "DB", "database_name": "asnm-db-sandbox", "database_id": "28995f6c-077b-4a61-ad5d-29e33a54a59c" }
       ],
@@ -133,6 +143,7 @@
         // the hello@adapttolife.org default.
         "INTAKE_INBOX": "stingel@alectranel.com"
       },
+      "ratelimits": [{ "name": "FORM_LIMITER", "namespace_id": "1001", "simple": { "limit": 6, "period": 60 } }],
       "d1_databases": [
         { "binding": "DB", "database_name": "asnm-db-gate", "database_id": "ccc144a2-9b5f-4fa4-8ce3-fe8575549757" },
         { "binding": "INTAKE", "database_name": "atl-intake", "database_id": "916e841e-50cc-4661-806a-865cd24fbb53" }
@@ -160,8 +171,10 @@
         "AIRTABLE_BASE_ID": "apphZsPGanzJ5xyl7",
         "AIRTABLE_INBOX_TABLE_ID": "tblBcgV7oQ9Q3q34L",
         "ENV_NAME": "next",
+        "TURNSTILE_MODE": "off",
         "PRELAUNCH": "false"
       },
+      "ratelimits": [{ "name": "FORM_LIMITER", "namespace_id": "1001", "simple": { "limit": 6, "period": 60 } }],
       "d1_databases": [
         { "binding": "DB", "database_name": "asnm-db-next", "database_id": "f92c5a5d-87d8-4c3e-9b26-3f7fabd63f13" }
       ],

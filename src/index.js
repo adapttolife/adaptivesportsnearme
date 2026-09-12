@@ -36,6 +36,7 @@ import {
 } from "./blog.js";
 import { sendSignupWelcome } from "./email.js";
 import { recordIntake, notifyIntake, sweepIntake, runIntakeCanary, canaryIsFresh } from "./intake.js";
+import { verifyTurnstile, overFormLimit, RATE_LIMITED } from "./turnstile.js";
 
 const INTAKE_SITE = "adaptivesportsnearme.com";
 
@@ -75,14 +76,19 @@ export default {
 
     if (url.pathname === "/api/subscribe") {
       if (request.method !== "POST") return json({ ok: false, error: "Method not allowed" }, 405);
+      if (await overFormLimit(env, request)) return json(RATE_LIMITED, 429);
       return handleSubscribe(request, env, ctx);
     }
     if (url.pathname === "/api/submit-program") {
       if (request.method !== "POST") return json({ ok: false, error: "Method not allowed" }, 405);
+      if (await overFormLimit(env, request)) return json(RATE_LIMITED, 429);
       return handleSubmitProgram(request, env, ctx);
     }
     if (url.pathname === "/api/profile") {
-      if (request.method === "POST") return handleProfileUpsert(request, env);
+      if (request.method === "POST") {
+        if (await overFormLimit(env, request)) return json(RATE_LIMITED, 429);
+        return handleProfileUpsert(request, env);
+      }
       if (request.method === "GET") return handleProfileGet(request, env);
       return json({ ok: false, error: "Method not allowed" }, 405);
     }
@@ -215,13 +221,13 @@ async function handleSubscribe(request, env, ctx) {
   // Honeypot — bots fill the hidden "company" field. Accept silently, do nothing.
   if (str(data.company)) return json({ ok: true });
 
-  // Newsletter subscribe is honeypot-only by design: it's a low-value target (Beehiiv
-  // dedupes/validates, nothing writes to our systems), so we don't tax the highest-
-  // conversion forms with a Turnstile widget. If a token IS sent (footer/gate forms
-  // include one) we still verify it; a missing token is fine here. Turnstile stays
-  // REQUIRED on handleSubmitProgram, which writes to the Airtable inbox.
-  const cfTok = str(data.cf_token);
-  if (cfTok && !(await verifyTurnstile(env, cfTok, request.headers.get("CF-Connecting-IP")))) {
+  // Turnstile is REQUIRED here too (2026-09-12). This endpoint used to be
+  // honeypot-only because "nothing writes to our systems" — no longer true: a
+  // signup writes an intake row, emails hello@, and adds a beehiiv subscriber
+  // whose bounces cost sender reputation. Every capture form renders an
+  // interaction-only widget (invisible unless a challenge is needed), so a real
+  // person never sees the cost.
+  if (!(await verifyTurnstile(env, str(data.cf_token), request.headers.get("CF-Connecting-IP")))) {
     return json({ ok: false, error: "Verification failed. Please reload the page and try again." }, 403);
   }
 
@@ -623,22 +629,6 @@ async function readBody(request) {
   }
 }
 
-async function verifyTurnstile(env, token, ip) {
-  if (!env.TURNSTILE_SECRET_KEY) return true; // not configured yet -> honeypot only
-  if (!token) return false;
-  try {
-    const res = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ secret: env.TURNSTILE_SECRET_KEY, response: token, remoteip: ip || undefined }),
-    });
-    const out = await res.json();
-    return !!out.success;
-  } catch (err) {
-    console.error("turnstile verify failed:", err);
-    return false;
-  }
-}
 
 function str(v) {
   return (typeof v === "string" ? v : "").trim().slice(0, 5000);

@@ -25,6 +25,24 @@ export const INTAKE_INBOX_DEFAULT = "hello@adapttolife.org";
 export const INTAKE_FROM = "Adapt To Life Intake <hello@adapttolife.org>";
 export const intakeInbox = (env) => (env && env.INTAKE_INBOX) || INTAKE_INBOX_DEFAULT;
 
+// Canary notifications go to a machine-read inbox, never the one a person works.
+// Production used to mail hello@ four "[canary]" messages a day — noise that
+// looked like spam to the person the real inbox exists for. stingel@ is readable
+// from the box, so the canary is proven by delivery, not just by a stamp.
+export const INTAKE_CANARY_INBOX_DEFAULT = "stingel@alectranel.com";
+export const canaryInbox = (env) => (env && env.INTAKE_CANARY_INBOX) || INTAKE_CANARY_INBOX_DEFAULT;
+
+// Every environment (production, gate, ...) shares ONE intake table. The lane
+// is stamped on write so the sweeper only re-notifies rows its own environment
+// owns: before this, the review lane's sweep picked up production rows in the
+// two seconds before production stamped them and mailed them to ITS inbox —
+// a real submission notified twice, once to the wrong place.
+export const intakeLane = (env) => (env && env.ENV_NAME) || "unknown";
+
+// A row younger than this is still being notified by the request that wrote
+// it; the sweep leaves it alone so the two never race each other.
+export const SWEEP_GRACE_MS = 2 * 60e3;
+
 const esc = (s) =>
   String(s ?? "").replace(/[&<>"']/g, (c) =>
     ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -53,8 +71,8 @@ export async function recordIntake(env, entry) {
   try {
     await env.INTAKE.prepare(
       `INSERT INTO intake
-         (id, received_at, site, kind, name, email, phone, summary, payload, source, is_canary)
-       VALUES (?,?,?,?,?,?,?,?,?,?,?)`
+         (id, received_at, site, kind, name, email, phone, summary, payload, source, is_canary, lane)
+       VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`
     ).bind(
       id, now,
       entry.site || "unknown",
@@ -65,7 +83,8 @@ export async function recordIntake(env, entry) {
       entry.summary || `${entry.kind} from ${entry.site}`,
       JSON.stringify(entry.payload ?? {}),
       entry.source || null,
-      entry.isCanary ? 1 : 0
+      entry.isCanary ? 1 : 0,
+      intakeLane(env)
     ).run();
     // Some forms already have a notification Alec receives (the waiver receipt
     // BCCs him a copy of the signed release). Those are recorded for the shared
@@ -134,6 +153,9 @@ function notificationBody(row) {
  * an unstamped row is one the sweeper must pick up again.
  */
 export async function notifyIntakeRow(env, row) {
+  // Already told someone (another lane's sweep, or this request's own notify
+  // racing the sweep): a second email is the failure we are here to prevent.
+  if (row.notified_at) return true;
   if (!env.SEND_EMAIL) {
     console.error("intake: SEND_EMAIL binding missing — cannot notify", row.id);
     await bumpAttempt(env, row.id, "no SEND_EMAIL binding");
@@ -146,7 +168,7 @@ export async function notifyIntakeRow(env, row) {
   try {
     await env.SEND_EMAIL.send({
       from: INTAKE_FROM,
-      to: intakeInbox(env),
+      to: row.is_canary ? canaryInbox(env) : intakeInbox(env),
       // Reply goes to the person who submitted, so answering is one tap.
       replyTo: row.email || intakeInbox(env),
       subject,
@@ -198,11 +220,17 @@ export async function notifyIntake(env, id) {
 export async function sweepIntake(env, limit = 25) {
   let rows = [];
   try {
+    // Own lane only, plus (production only) rows written before the lane column
+    // existed, so nothing recorded by an older build is ever orphaned.
+    const lane = intakeLane(env);
+    const cut = new Date(Date.now() - SWEEP_GRACE_MS).toISOString();
     const res = await env.INTAKE.prepare(
       `SELECT * FROM intake
         WHERE notified_at IS NULL AND notify_attempts < 20
+          AND received_at < ?
+          AND (lane = ? OR (lane IS NULL AND ? = 'production'))
         ORDER BY received_at ASC LIMIT ?`
-    ).bind(limit).all();
+    ).bind(cut, lane, lane, limit).all();
     rows = res.results || [];
   } catch (err) {
     console.error("intake: sweep query failed:", err);
@@ -249,7 +277,7 @@ export async function runIntakeCanary(env, site) {
     site,
     kind: "canary",
     name: "Intake canary",
-    email: intakeInbox(env),
+    email: canaryInbox(env),
     summary: `Intake canary from ${site}`,
     // Stamped with the environment on purpose. Without it the meter cannot tell
     // a production canary from a review-lane one, and a review lane firing every

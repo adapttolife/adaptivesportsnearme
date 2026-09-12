@@ -158,6 +158,9 @@
       '<input class="hp" name="company" tabindex="-1" autocomplete="off" aria-hidden="true">' +
       '<input name="em" type="email" placeholder="you@email.com" aria-label="Email address">' +
       '<button class="cta-go" type="submit">Get updates</button>' +
+      // Turnstile is required by /api/subscribe (2026-09-12); interaction-only stays
+      // invisible unless Cloudflare needs a challenge. Mounted by mountTurnstile().
+      '<div class="cf-turnstile" data-sitekey="0x4AAAAAADr2WPepRgjp8g-R" data-appearance="interaction-only"></div>' +
       '<div class="cta-msg" aria-live="polite"></div>' +
       "</form>" +
       '<p class="dn-fine">Free. No spam.</p>' +
@@ -208,6 +211,31 @@
 
     document.body.appendChild(scrim);
     document.body.appendChild(drawer);
+    mountTurnstile();
+  }
+
+  // Mount the drawer's Turnstile widget. The homepage already loads the Turnstile
+  // script (its own renderTurnstiles() covers every .cf-turnstile, ours included);
+  // pages that only carry site-nav.js (the blog) load it here, once.
+  function mountTurnstile() {
+    function render() {
+      if (!window.turnstile) return;
+      document.querySelectorAll("#drawer .cf-turnstile").forEach(function (el) {
+        if (el.childElementCount === 0) { try { window.turnstile.render(el); } catch (_) {} }
+      });
+    }
+    if (window.turnstile) { render(); return; }
+    if (document.querySelector('script[src*="challenges.cloudflare.com/turnstile"]')) {
+      // Loading already (the homepage's tag, onload=tsReady). Chain onto it.
+      var prev = window.tsReady;
+      window.tsReady = function () { if (typeof prev === "function") prev(); render(); };
+      return;
+    }
+    window.asnmNavTurnstileReady = render;
+    var s = document.createElement("script");
+    s.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?onload=asnmNavTurnstileReady";
+    s.async = true; s.defer = true;
+    document.head.appendChild(s);
   }
 
   var opener = null;
@@ -253,7 +281,7 @@
       if (e.key === "Escape") closeDrawer();
     });
     // Newsletter subscribe — standalone (no shared ctaForm handler on the blog).
-    // Validate → POST /api/subscribe (honeypot-only endpoint) → success/inline-error.
+    // Validate → POST /api/subscribe (Turnstile + honeypot) → success/inline-error.
     document.addEventListener("submit", function (e) {
       var form = e.target.closest && e.target.closest("form.cta-sub");
       if (!form) return;
@@ -267,10 +295,15 @@
         return;
       }
       if (btn) { btn.disabled = true; btn.textContent = "Signing up..."; }
+      var body = new URLSearchParams(new FormData(form));
+      // The widget writes its token into a hidden cf-turnstile-response input;
+      // the Worker reads cf_token, same as the homepage's postForm().
+      var tok = form.querySelector('[name="cf-turnstile-response"]');
+      if (tok && tok.value) body.set("cf_token", tok.value);
       fetch("/api/subscribe", {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: new URLSearchParams(new FormData(form)),
+        body: body,
       })
         .then(function (r) { return r.json().catch(function () { return {}; }); })
         .then(function (res) {
