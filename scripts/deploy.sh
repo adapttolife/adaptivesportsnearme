@@ -15,6 +15,11 @@ case "$target" in
   *) echo "usage: scripts/deploy.sh sandbox|staging|prod" >&2; exit 1 ;;
 esac
 
+# Shared owner-approved intake safety policy; stale worktrees fail closed.
+if [[ "$target" == "prod" ]]; then
+  /usr/bin/python3 /srv/agentos/scripts/asnm-production-preflight.py "$PWD"
+fi
+
 cfrun wrangler deploy "${args[@]}"
 
 echo "— smoke test: $url"

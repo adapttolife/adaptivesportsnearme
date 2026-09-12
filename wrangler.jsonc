@@ -44,9 +44,9 @@
 
   "triggers": {
     // 0 */2: validate lane (link liveness); */20: enrich lane (contact/location scrape)
-    // */10: intake sweep — re-notify anything owed, and run the end-to-end
-    //        canary when none has passed in the last 6 hours
-    "crons": ["0 */2 * * *", "*/20 * * * *", "*/10 * * * *"]
+    // Real notifications retry in adapt-to-life-intake; synthetic mail is retired.
+    // Shared policy: /srv/agentos/deploy/asnm-intake-policy.json
+    "crons": ["0 */2 * * *", "*/20 * * * *"]
   },
   "observability": { "enabled": true },
   "env": {
