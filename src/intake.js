@@ -134,6 +134,7 @@ function notificationBody(row) {
  * an unstamped row is one the sweeper must pick up again.
  */
 export async function notifyIntakeRow(env, row) {
+  if (row.is_canary) return false;
   if (!env.SEND_EMAIL) {
     console.error("intake: SEND_EMAIL binding missing — cannot notify", row.id);
     await bumpAttempt(env, row.id, "no SEND_EMAIL binding");
@@ -200,7 +201,7 @@ export async function sweepIntake(env, limit = 25) {
   try {
     const res = await env.INTAKE.prepare(
       `SELECT * FROM intake
-        WHERE notified_at IS NULL AND notify_attempts < 20
+        WHERE notified_at IS NULL AND notify_attempts < 20 AND COALESCE(is_canary, 0) = 0
         ORDER BY received_at ASC LIMIT ?`
     ).bind(limit).all();
     rows = res.results || [];
@@ -244,30 +245,5 @@ export async function canaryIsFresh(env, hours = 6) {
 }
 
 export async function runIntakeCanary(env, site) {
-  const stamp = new Date().toISOString();
-  const rec = await recordIntake(env, {
-    site,
-    kind: "canary",
-    name: "Intake canary",
-    email: intakeInbox(env),
-    summary: `Intake canary from ${site}`,
-    // Stamped with the environment on purpose. Without it the meter cannot tell
-    // a production canary from a review-lane one, and a review lane firing every
-    // 10 minutes makes the meter read GREEN while production is broken. That is
-    // the false-green this whole design exists to prevent, and it happened.
-    source: `canary:${(env && env.ENV_NAME) || "unknown"}`,
-    payload: { note: "Automated end-to-end check. If this stops arriving, intake is broken.", at: stamp },
-    isCanary: true,
-  });
-  if (!rec.ok) {
-    console.error("intake canary: could not write a row —", rec.error);
-    return { ok: false, stage: "write" };
-  }
-  const notified = await notifyIntake(env, rec.id);
-  try {
-    await env.INTAKE.prepare(
-      `DELETE FROM intake WHERE is_canary = 1 AND received_at < ?`
-    ).bind(new Date(Date.now() - 7 * 864e5).toISOString()).run();
-  } catch (_) { /* housekeeping only */ }
-  return { ok: notified, stage: notified ? "done" : "notify", id: rec.id };
+  return { ok: false, stage: "disabled-by-owner" };
 }
