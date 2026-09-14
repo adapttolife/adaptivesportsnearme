@@ -32,7 +32,7 @@
     "PRELAUNCH": "true"
   },
   "d1_databases": [
-    { "binding": "DB", "database_name": "asnm-db", "database_id": "d8566621-99b1-4430-af47-d107ed64195e" }
+    { "binding": "DB", "database_name": "asnm-db", "database_id": "055916fd-3e58-4599-b11e-ffaedabe0f0b" }
   ],
   "send_email": [{ "name": "SEND_EMAIL" }],
   "triggers": { "crons": ["0 */2 * * *", "*/20 * * * *"] },
