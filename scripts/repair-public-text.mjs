@@ -24,9 +24,9 @@ const env = envIdx >= 0 ? args[envIdx + 1] : "staging";
 const apply = args.includes("--apply");
 
 const FIELDS = ["description", "cost_note", "ages"];
-const DB = { sandbox: "asnm-db-sandbox", staging: "asnm-db-staging", prod: "asnm-db" }[env];
+const DB = { prod: "asnm-db", staging: "asnm-db-staging" }[env];
 if (!DB) {
-  console.error(`unknown --env ${env} (expected sandbox|staging|prod)`);
+  console.error(`unknown --env ${env} (expected prod|staging)`);
   process.exit(2);
 }
 

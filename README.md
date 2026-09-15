@@ -17,7 +17,7 @@ src/pipeline.js        cron lanes: validate (link liveness) + enrich (contact sc
 src/admin.js           /api/admin/* review queue (ADMIN_KEY bearer)
 db/schema.sql          D1 schema (ported from adaptivesportsnearme-data's Postgres design)
 scripts/pg-to-d1.py    one-time migration: local Postgres → cleaned SQL → D1
-wrangler.json          production deployment plus named staging, sandbox, and next environments
+wrangler.json          production deployment plus named staging environment
 ```
 
 **Data plane:** two D1 databases — `asnm-db` (prod) and `asnm-db-staging`. Same schema,
@@ -32,13 +32,13 @@ the freshness score — half-life 45 days, computed in the Worker).
 
 **Environments:**
 
-| | prod (`asnm`) | staging (`asnm-staging`) | sandbox (`asnm-sandbox`) |
-|---|---|---|---|
-| URL | adaptivesportsnearme.com | asnm-staging.adapt-to-life.workers.dev | asnm-sandbox.adapt-to-life.workers.dev |
-| Gate | `PRELAUNCH=true` (teaser + modal) | `PRELAUNCH=false` (full directory) | `PRELAUNCH=false` |
-| D1 | asnm-db | asnm-db-staging | asnm-db-sandbox (starts empty) |
-| Crons | validate 2h / enrich 20min | same | none (run lanes by hand) |
-| Deploys from | `main`, explicit, locked | `staging` | `v2` |
+| | prod (`asnm`) | staging (`asnm-staging`) |
+|---|---|---|
+| URL | adaptivesportsnearme.com | asnm-staging.adapt-to-life.workers.dev |
+| Gate | `PRELAUNCH=true` (teaser + modal) | `PRELAUNCH=false` (full directory) |
+| D1 | asnm-db | asnm-db-staging |
+| Crons | validate 2h / enrich 20min | same |
+| Deploys from | `main`, explicit, locked | `staging` |
 
 **Branch model (Fall 2026):**
 
@@ -59,8 +59,6 @@ Named environments remain available for deliberate previews:
 
 ```
 npx wrangler deploy --env staging
-npx wrangler deploy --env sandbox
-npx wrangler deploy --env next
 ```
 
 Production stays gated (`PRELAUNCH=true`).
