@@ -40,7 +40,7 @@ Inbox cards live under `tools/directory/inbox/` on your machine. That folder is 
 
 Ship and discover refuse a non-SELECT against `asnm-db`. If the public live count is not 1,544, they abort. Do not pass `--allow-live-drift` unless Alec said the live number is allowed to move — it is not, right now.
 
-Do not deploy the production worker (`asnm`). Do not run `scripts/deploy.sh prod` from this branch.
+Do not deploy the production worker (`asnm`) from this branch. Pushing `main` deploys production.
 
 ## What is not here
 

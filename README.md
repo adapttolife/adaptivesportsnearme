@@ -17,7 +17,7 @@ src/pipeline.js        cron lanes: validate (link liveness) + enrich (contact sc
 src/admin.js           /api/admin/* review queue (ADMIN_KEY bearer)
 db/schema.sql          D1 schema (ported from adaptivesportsnearme-data's Postgres design)
 scripts/pg-to-d1.py    one-time migration: local Postgres → cleaned SQL → D1
-scripts/deploy.sh      the deploy path (sandbox | staging | prod) with post-deploy smoke test
+wrangler.json          production deployment plus named staging, sandbox, and next environments
 ```
 
 **Data plane:** two D1 databases — `asnm-db` (prod) and `asnm-db-staging`. Same schema,
@@ -43,8 +43,8 @@ the freshness score — half-life 45 days, computed in the Worker).
 **Branch model (Fall 2026):**
 
 - `staging` is the student integration branch — closest to the tester. Branch off it. Open pull requests **into `staging`**.
-- `main` is the production recipe. Default branch stays `main`. Do not PR into it. Do not merge to it. Do not try to make it match live.
-- Live is locked until Alec says otherwise. Merging is never deploying production.
+- `main` is the production recipe and deploys to the live site on every push. Default branch stays `main`. Do not PR into it. Do not merge to it casually.
+- Production remains gated by `PRELAUNCH=true`; a push to `main` deploys the current production recipe.
 - Students: [docs/STUDENTS.md](docs/STUDENTS.md). Directory tools: [tools/directory/README.md](tools/directory/README.md).
 
 The front-end hydrates from `/api/config` + `/api/programs`; if the API is absent or errors,
@@ -54,13 +54,16 @@ outside the 11-photo launch set, state-centroid map pins marked `state-level`.
 
 ## Deploy
 
+Cloudflare Workers Builds deploys the production worker from `main` using `wrangler.json`.
+Named environments remain available for deliberate previews:
+
 ```
-scripts/deploy.sh staging   # tester only — asnm-staging + asnm-db-staging
-scripts/deploy.sh sandbox   # sandbox workshop (v2)
-# scripts/deploy.sh prod   # LOCKED. Do not. Live public count stays 1,544.
+npx wrangler deploy --env staging
+npx wrangler deploy --env sandbox
+npx wrangler deploy --env next
 ```
 
-Production stays gated (`PRELAUNCH=true`). Alec unlocks a live ship; students do not.
+Production stays gated (`PRELAUNCH=true`).
 
 ## Secrets (per worker, via `wrangler secret put`)
 

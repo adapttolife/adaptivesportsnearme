@@ -46,7 +46,7 @@ const BLOG_PAGE_CACHE = "public, max-age=300";
 const BLOG_FALLBACK_CACHE = "public, max-age=60"; // short — self-heals fast once beehiiv/secrets are back
 
 // Single source for cron -> lane routing; must list every schedule in
-// wrangler.jsonc triggers. Unknown crons error loudly instead of misrouting.
+// wrangler.json triggers. Unknown crons error loudly instead of misrouting.
 const CRON_LANES = {
   "0 */2 * * *": "validate",
   "*/20 * * * *": "dispatch", // rotates enrich -> classify -> geocode -> resolve (pipeline.js)
@@ -184,7 +184,7 @@ export default {
     if (!env.DB) return;
     const lane = CRON_LANES[controller.cron];
     if (!lane) {
-      console.error(`no lane mapped for cron "${controller.cron}" — update CRON_LANES + wrangler.jsonc together`);
+      console.error(`no lane mapped for cron "${controller.cron}" — update CRON_LANES + wrangler.json together`);
       return;
     }
     ctx.waitUntil(

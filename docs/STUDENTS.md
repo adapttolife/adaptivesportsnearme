@@ -31,7 +31,7 @@ The default branch on GitHub stays `main`. That is on purpose. It does not mean 
 - Staging worker: `asnm-staging` at the tester URL, database `asnm-db-staging`.
 - Production worker: `asnm` at adaptivesportsnearme.com, database `asnm-db`. **Do not deploy this.**
 
-`scripts/deploy.sh prod` is locked on this branch. Do not unlock it.
+Pushing `main` deploys production. Students work through `staging` and must not push to `main` or deploy the production worker.
 
 Auto-deploy to staging from GitHub is not wired. Cloudflare secrets are not on the repo, and the token we have cannot create GitHub Actions workflow files. The intended stub lives in docs/deploy-staging.workflow.yml — staging only, never production. Until a person with workflow+secrets access adds it, a person with Wrangler access deploys the tester on purpose — not from a merge to `main`.
 
@@ -51,4 +51,4 @@ The worker already has cron jobs (validate and enrich) on tester and on live. Th
 
 ## If you are unsure
 
-If a command mentions `asnm-db` without `-staging`, or `adaptivesportsnearme.com`, or `scripts/deploy.sh prod`, it is the live site. Stop.
+If a command mentions `asnm-db` without `-staging` or `adaptivesportsnearme.com`, it is the live site. Stop.

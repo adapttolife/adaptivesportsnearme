@@ -1,19 +1,13 @@
 {
-  // Worker + static assets + D1 data plane. The Worker (src/index.js) handles /api/*
-  // (directory data, beehiiv, Airtable, admin review queue) and the cron pipeline;
-  // everything else is served from ./public via the ASSETS binding.
-  // Deploy:  scripts/deploy.sh staging  -> https://asnm-staging.adapt-to-life.workers.dev (ungated, real data)
-  //          scripts/deploy.sh prod    -> adaptivesportsnearme.com (gated prelaunch)
-  "name": "asnm-trunk-decoy",
+  "name": "asnm",
   "compatibility_date": "2026-06-26",
   "main": "src/index.js",
-  "workers_dev": false,
-  "preview_urls": false,
-  // NO routes, NO crons, staging D1: this top level is a deliberate decoy.
-  // A Workers Builds trigger deploys it on every push to main (see
-  // wrangler.prod.jsonc header for the 2026-09-01 incident). The real live
-  // config is wrangler.prod.jsonc, shipped only via scripts/deploy.sh prod.
-  "routes": [],
+  "workers_dev": true,
+  "preview_urls": true,
+  "routes": [
+    { "pattern": "adaptivesportsnearme.com", "custom_domain": true },
+    { "pattern": "www.adaptivesportsnearme.com", "custom_domain": true }
+  ],
   "assets": {
     "directory": "./public",
     "binding": "ASSETS",
@@ -29,8 +23,8 @@
   "d1_databases": [
     { "binding": "DB", "database_name": "asnm-db", "database_id": "055916fd-3e58-4599-b11e-ffaedabe0f0b" }
   ],
+  "send_email": [{ "name": "SEND_EMAIL" }],
   "triggers": {
-    // 0 */2: validate lane (link liveness); */20: enrich lane (contact/location scrape)
     "crons": ["0 */2 * * *", "*/20 * * * *"]
   },
   "observability": { "enabled": true },
@@ -40,8 +34,6 @@
       "main": "src/index.js",
       "workers_dev": true,
       "preview_urls": true,
-      // Explicitly empty: named envs can inherit production routes, and inheriting
-      // would steal the live apex domains on a staging deploy.
       "routes": [],
       "assets": {
         "directory": "./public",
@@ -59,14 +51,9 @@
         { "binding": "DB", "database_name": "asnm-db-staging", "database_id": "ae83f752-9f7a-476c-914a-94b9ced0627f" }
       ],
       "send_email": [{ "name": "SEND_EMAIL" }],
-      "triggers": {
-        "crons": []
-      },
+      "triggers": { "crons": [] },
       "observability": { "enabled": true }
     },
-    // Sandbox: the v2-milestone workshop (fill the DB + design-to-data), deployed
-    // from the long-running v2 branch. Own D1, no crons (run pipeline lanes by
-    // hand while the data model is in flux), and routes stay explicitly empty.
     "sandbox": {
       "name": "asnm-sandbox",
       "main": "src/index.js",
@@ -88,16 +75,10 @@
       "d1_databases": [
         { "binding": "DB", "database_name": "asnm-db-sandbox", "database_id": "28995f6c-077b-4a61-ad5d-29e33a54a59c" }
       ],
-      "triggers": {
-        "crons": []
-      },
+      "send_email": [{ "name": "SEND_EMAIL" }],
+      "triggers": { "crons": [] },
       "observability": { "enabled": true }
     },
-    // Next: the "next level" decision surface — deploy design/UX iterations here
-    // to SEE them (blog, events, profiles, Reddit nav, unified email CTA). Seeded
-    // from a copy of staging data. No crons (design preview, not a live pipeline);
-    // routes stay empty. Iterate with `wrangler versions upload --env next` for
-    // parallel preview URLs.
     "next": {
       "name": "asnm-next",
       "main": "src/index.js",
@@ -119,9 +100,8 @@
       "d1_databases": [
         { "binding": "DB", "database_name": "asnm-db-next", "database_id": "f92c5a5d-87d8-4c3e-9b26-3f7fabd63f13" }
       ],
-      "triggers": {
-        "crons": []
-      },
+      "send_email": [{ "name": "SEND_EMAIL" }],
+      "triggers": { "crons": [] },
       "observability": { "enabled": true }
     }
   }
