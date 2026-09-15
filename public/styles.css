@@ -3217,6 +3217,18 @@ a.evrow:hover {
   flex-wrap: wrap;
 }
 
+.foot-col {
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-gap: 0px 22px;
+  align-content: start;
+  width: max-content;
+}
+
+.foot-col:has(> *:nth-child(5)) {
+  grid-template-columns: repeat(2, auto);
+}
+
 .foot-col h2 {
   font-family: "DM Sans", sans-serif;
   font-size: 11px;
@@ -3225,6 +3237,22 @@ a.evrow:hover {
   color: var(--faint);
   font-weight: 400;
   margin: 0 0 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.foot-col > h2::after {
+  content: " ";
+  background: var(--line);
+  width: min(100%, 20px);
+  height: 1px;
+  display: inline-block;
+  position: relative;
+}
+
+.foot-col:has(> *:nth-child(5)) h2 {
+  grid-area: 1 / 1 / 2 / 3;
 }
 
 .foot-col a {
@@ -4080,6 +4108,7 @@ a.evrow:hover {
     width: 100%;
     justify-content: space-between;
     gap: 32px 16px;
+    flex-direction: column;
   }
 
   /* discover list view: stacked cards on phones (no crushed columns) */
