@@ -60,7 +60,7 @@
       ],
       "send_email": [{ "name": "SEND_EMAIL" }],
       "triggers": {
-        "crons": ["0 */2 * * *", "*/20 * * * *"]
+        "crons": []
       },
       "observability": { "enabled": true }
     },
