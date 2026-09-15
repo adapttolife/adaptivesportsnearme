@@ -1,12 +1,12 @@
 // ASNM service worker — installable app shell, offline-tolerant directory.
-// HTML/navigation + /api/*: network-first with cache fallback, so deploys reach
+// HTML/navigation, CSS/JS + /api/*: network-first with cache fallback, so deploys reach
 // returning visitors immediately and the last-seen page/directory still renders
 // offline. Immutable static assets (photos, icons, fonts): cache-first.
 // POST endpoints and /api/admin are never cached.
-const VERSION = "asnm-v7";
+const VERSION = "asnm-v8";
 
 self.addEventListener("install", (e) => {
-  e.waitUntil(caches.open(VERSION).then((c) => c.addAll(["/", "/manifest.json", "/favicon.svg", "/icon-192.png"])).then(() => self.skipWaiting()));
+  e.waitUntil(caches.open(VERSION).then((c) => c.addAll(["/", "/styles.css", "/manifest.json", "/favicon.svg", "/icon-192.png"])).then(() => self.skipWaiting()));
 });
 
 self.addEventListener("activate", (e) => {
@@ -39,7 +39,7 @@ self.addEventListener("fetch", (e) => {
   if (url.pathname.startsWith("/api/admin")) return;
 
   const isHTML = req.mode === "navigate" || (req.headers.get("accept") || "").includes("text/html");
-  if (isHTML || url.pathname.startsWith("/api/")) {
+  if (isHTML || url.pathname.startsWith("/api/") || /\.(css|js)$/.test(url.pathname)) {
     // offline navigations to /maps (or any route) fall back to the cached shell
     e.respondWith(networkFirst(req, isHTML ? "/" : null));
     return;

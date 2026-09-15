@@ -32,6 +32,9 @@
 /site-nav.js
   Cache-Control: public, max-age=300, stale-while-revalidate=3600
 
+/styles.css
+  Cache-Control: public, max-age=300, stale-while-revalidate=3600
+
 /tokens.css
   Cache-Control: public, max-age=300, stale-while-revalidate=3600
 

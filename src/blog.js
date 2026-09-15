@@ -5,7 +5,7 @@
 // (listPosts, getPostBySlug); everything below the "pure" line is pure and
 // covered by test/blog.test.js without touching the Cache API.
 
-import { CHROME_CSS, headerHtml, footerHtml, navScriptHtml } from "./site-chrome.js";
+import { headerHtml, footerHtml, navScriptHtml } from "./site-chrome.js";
 
 const SITE = "https://adaptivesportsnearme.com";
 const HOT_TTL = 300; // normal serve window — matches API_CACHE/FEED_CACHE elsewhere
@@ -196,67 +196,7 @@ function jsonLdScript(obj) {
 }
 
 // ---- page shell ---------------------------------------------------------------
-// Tokens and reading-column CSS for the blog itself. The header, the footer and
-// the CSS that styles them come from site-chrome.js, shared with the listing
-// pages so there is one site chrome, not one per lane.
-const BLOG_CSS = `
-:root{
-  color-scheme: light;
-  --ink:#1A1A1A; --ink2:#3A3A37;
-  --paper:#FFFFFF; --mist:#F7F7F5; --sand:#F0EFEC;
-  --line:#E7E6E2; --muted:#6E6D6A; --faint:#736F6A;
-  --orange:#C5430C; --orange-ink:#A8370A; --orange-soft:#FBEBDC; --sand2:#E8E7E3;
-  /* --faint darkened to meet WCAG AA (matches index.html) */
-  /* Rhythm. Do not tighten these to "fix AI look"; Alec locked 24/32/40/48/64 on 2026-08-21. */
-  --space-page: 24px;  /* gutter */
-  --space-header: 64px;
-  --tap: 44px;
-  --space-title-gap: 8px;
-  --space-after-photo: 32px;
-  --space-section: 40px;
-  --space-nearby: 48px;
-  --space-row: 16px;
-  --hdr: var(--space-header);
-  --shadow-sm:0 1px 2px rgba(17,17,19,.04),0 1px 3px rgba(17,17,19,.06);
-  --r:12px; --r-lg:16px; --r-full:999px; --max:920px; --gut: var(--space-page);
-}
-*{box-sizing:border-box;}
-@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important;}}
-html,body{margin:0;padding:0;background:var(--mist);color:var(--ink);}
-body{font-family:'DM Sans',system-ui,sans-serif;font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased;}
-img{display:block;max-width:100%;}
-a{color:inherit;text-decoration:none;}
-.wrap{max-width:var(--max);margin:0 auto;padding:0 var(--space-page);}
-${CHROME_CSS}
-/* One reading column, left-aligned with the app. Body copy ran the full 872px
-   measure, about 110 characters a line; 70ch is what the listing pages use. */
-.blog-main{padding:var(--space-nearby) var(--space-page) var(--space-header);max-width:1280px;}
-.blog-main>*{max-width:70ch;}
-.blog-main>.blog-grid{max-width:none;}
-.eyebrow{font-size:11px;letter-spacing:.13em;text-transform:uppercase;color:var(--faint);margin:0 0 var(--space-title-gap);}
-.blog-h1{font-family:'DM Sans',sans-serif;font-size:34px;font-weight:700;letter-spacing:-.02em;line-height:1.15;margin:0 0 20px;}
-.blog-empty{color:var(--muted);font-size:15px;}
-.blog-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:28px;}
-.blog-card{display:block;background:var(--paper);border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden;transition:box-shadow .15s,border-color .15s;}
-.blog-card:hover{border-color:var(--ink);box-shadow:0 6px 20px rgba(17,17,19,.08);}
-.blog-card-media{aspect-ratio:16/9;background:var(--sand);overflow:hidden;}
-.blog-card-media img{width:100%;height:100%;object-fit:cover;}
-.blog-card-body{padding:16px 18px 20px;}
-.blog-card-date{font-size:12px;color:var(--faint);margin:0 0 6px;font-weight:600;}
-.blog-card-title{font-family:'DM Sans',sans-serif;font-size:17px;font-weight:700;line-height:1.3;margin:0 0 6px;color:var(--ink);}
-.blog-card-sub{font-size:14px;color:var(--muted);margin:0;line-height:1.45;}
-.blog-back{display:inline-block;font-size:14px;font-weight:600;color:var(--muted);margin-bottom:var(--space-page);}
-.blog-back:hover{color:var(--ink);}
-.blog-sub{font-size:17px;color:var(--muted);margin:0 0 20px;line-height:1.5;}
-.blog-hero{border-radius:var(--r-lg);overflow:hidden;margin:0 0 28px;background:var(--sand);}
-.blog-hero img{width:100%;height:auto;}
-.blog-body{font-size:16px;line-height:1.7;color:var(--ink2);}
-.blog-body img{border-radius:var(--r);margin:16px 0;}
-.blog-body a{color:var(--orange-ink);text-decoration:underline;}
-.blog-body h2,.blog-body h3{font-family:'DM Sans',sans-serif;color:var(--ink);letter-spacing:-.01em;}
-@media(max-width:720px){.blog-h1{font-size:26px;}.blog-grid{grid-template-columns:1fr;}}
-`;
-
+// Page presentation is shared through public/styles.css.
 function pageShell({ title, description, canonical, ogImage, bodyHtml, jsonLd }) {
   return `<!DOCTYPE html>
 <html lang="en">
@@ -281,12 +221,11 @@ function pageShell({ title, description, canonical, ogImage, bodyHtml, jsonLd })
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/tokens.css">${
+<link rel="stylesheet" href="/styles.css">${
   jsonLd ? `\n<script type="application/ld+json">${jsonLdScript(jsonLd)}</script>` : ""
 }
-<style>${BLOG_CSS}</style>
 </head>
-<body>
+<body class="content-page">
 <a class="skip" href="#main">Skip to content</a>
 ${headerHtml()}
 <main id="main" class="wrap blog-main">

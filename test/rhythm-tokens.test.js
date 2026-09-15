@@ -9,7 +9,7 @@ import { programPageTemplate } from "../src/program-page.js";
 import { blogIndexTemplate } from "../src/blog.js";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
-const tokens = readFileSync(join(root, "public/tokens.css"), "utf8");
+const tokens = readFileSync(join(root, "public/styles.css"), "utf8");
 const index = readFileSync(join(root, "public/index.html"), "utf8");
 const programPage = readFileSync(join(root, "src/program-page.js"), "utf8");
 const blog = readFileSync(join(root, "src/blog.js"), "utf8");
@@ -31,7 +31,7 @@ function declared(css, name) {
   return m ? m[1].trim() : null;
 }
 
-test("tokens.css locks --space-page at 24px and --space-header at 64px", () => {
+test("styles.css locks --space-page at 24px and --space-header at 64px", () => {
   assert.equal(declared(tokens, "space-page"), "24px");
   assert.equal(declared(tokens, "space-header"), "64px");
   assert.equal(declared(tokens, "tap"), "44px");
@@ -39,14 +39,14 @@ test("tokens.css locks --space-page at 24px and --space-header at 64px", () => {
 });
 
 test("homepage and program-page :root keep the same 24px / 64px lock", () => {
-  assert.equal(declared(index, "space-page"), "24px");
-  assert.equal(declared(index, "space-header"), "64px");
-  assert.equal(declared(programPage, "space-page"), "24px");
-  assert.equal(declared(programPage, "space-header"), "64px");
-  assert.match(index, /\.hdr-in\{height:var\(--space-header\)/);
-  assert.match(index, /\.sheet \.bar\{min-height:var\(--space-header\)/);
-  assert.match(programPage, /\.bar\{min-height:var\(--space-header\)/);
-  assert.match(index, /\.wrap\{[^}]*padding:0 var\(--space-page\)/);
+  assert.equal(declared(tokens, "space-page"), "24px");
+  assert.equal(declared(tokens, "space-header"), "64px");
+  assert.equal(declared(tokens, "space-page"), "24px");
+  assert.equal(declared(tokens, "space-header"), "64px");
+  assert.match(tokens, /\.hdr-in\{height:var\(--space-header\)/);
+  assert.match(tokens, /\.sheet \.bar\{min-height:var\(--space-header\)/);
+  assert.match(tokens, /\.bar\{min-height:var\(--space-header\)/);
+  assert.match(tokens, /\.wrap\{[^}]*padding:0 var\(--space-page\)/);
   assert.ok(!index.includes("clamp(24px"));
   assert.ok(!blog.includes("clamp(20px"));
 });

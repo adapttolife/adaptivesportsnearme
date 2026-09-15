@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+const styles = readFileSync(new URL("../public/styles.css", import.meta.url), "utf8");
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
@@ -132,7 +134,7 @@ test("programPageTemplate: photo hero, name, city+state, website button — not 
   assert.ok(!html.includes("City / state"));
   assert.ok(!html.includes("class=\"card\""));
   assert.ok(html.includes("dov-sport") && html.includes("Wheelchair Basketball"));
-  assert.ok(html.includes("clamp(180px,24vw,260px)"));
+  assert.ok(styles.includes("clamp(180px,24vw,260px)"));
   assert.ok(!html.includes("Unverified"));
   assert.ok(!html.includes("Last checked"));
 });
@@ -166,21 +168,21 @@ test("programPageTemplate: Reno pickleball reads like a listing", () => {
 
 test("programPageTemplate: Airbnb listing rhythm, no verification chrome", () => {
   const html = programPageTemplate(RENO);
-  assert.ok(html.includes("--space-page: 24px"));
-  assert.ok(html.includes("--space-header: 64px"));
-  assert.ok(html.includes("--tap: 44px"));
-  assert.ok(html.includes("min-height:var(--space-header)"));
-  assert.ok(html.includes("min-height:var(--tap)"));
-  assert.ok(html.includes("padding:var(--space-page) var(--space-page) var(--space-header)"));
-  assert.ok(html.includes("margin:0 0 var(--space-after-photo)"));
-  assert.ok(html.includes("margin:0 0 var(--space-title-gap)"));
-  assert.ok(html.includes("margin:0 0 var(--space-section)"));
-  assert.ok(html.includes("margin-top:var(--space-nearby)"));
-  assert.ok(html.includes("padding:var(--space-row) 0"));
-  assert.ok(html.includes("font-size:22px"));
+  assert.ok(styles.includes("--space-page: 24px"));
+  assert.ok(styles.includes("--space-header: 64px"));
+  assert.ok(styles.includes("--tap: 44px"));
+  assert.ok(styles.includes("min-height:var(--space-header)"));
+  assert.ok(styles.includes("min-height:var(--tap)"));
+  assert.ok(styles.includes("padding:var(--space-page) var(--space-page) var(--space-header)"));
+  assert.ok(styles.includes("margin:0 0 var(--space-after-photo)"));
+  assert.ok(styles.includes("margin:0 0 var(--space-title-gap)"));
+  assert.ok(styles.includes("margin:0 0 var(--space-section)"));
+  assert.ok(styles.includes("margin-top:var(--space-nearby)"));
+  assert.ok(styles.includes("padding:var(--space-row) 0"));
+  assert.ok(styles.includes("font-size:22px"));
   assert.ok(html.includes('class="titleb"'));
-  assert.ok(html.includes(".nearby h2{font-size:22px;font-weight:700"));
-  assert.ok(html.includes('href="/tokens.css"'));
+  assert.ok(styles.includes(".nearby h2{font-size:22px;font-weight:700"));
+  assert.ok(html.includes('href="/styles.css"'));
   assert.ok(!html.includes("Unverified"));
   assert.ok(!html.includes("Last checked"));
   assert.ok(!html.includes("Builder web search"));
@@ -205,8 +207,8 @@ test("programPageTemplate: Kansas Omnium still has an action + nearby strip", ()
   assert.ok(html.includes('class="nearby"'));
   assert.ok(html.includes('class="frow-scroll"'));
   assert.ok(!html.includes('class="grid"'));
-  assert.ok(html.includes("scroll-snap-type:x"));
-  assert.ok(html.includes("78vw"));
+  assert.ok(styles.includes("scroll-snap-type:x"));
+  assert.ok(styles.includes("78vw"));
   assert.ok(html.includes("Sunflower Adaptive Cycling"));
   assert.ok(html.includes("Prairie Handcycle"));
   assert.ok(html.includes("42 mi away"));
@@ -327,9 +329,9 @@ test("programPageTemplate: the standalone page wears the app header and footer",
   assert.ok(html.includes('Skip to content'));
   assert.ok(html.includes('/site-nav.js?v='));
   // 64px header and 44px tap targets survive.
-  assert.ok(html.includes(".hdr-in{max-width:1280px;margin:0 auto;padding:0 var(--space-page);height:var(--space-header)"));
-  assert.ok(html.includes("--space-header: 64px"));
-  assert.ok(html.includes("--tap: 44px"));
+  assert.ok(styles.includes(".hdr-in{height:var(--space-header)"));
+  assert.ok(styles.includes("--space-header: 64px"));
+  assert.ok(styles.includes("--tap: 44px"));
   // The search field goes somewhere real: GET /?q=, which index.html boots on.
   assert.ok(html.includes('<form class="search" role="search" action="/" method="get">'));
   assert.ok(html.includes('name="q"'));
