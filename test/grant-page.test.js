@@ -69,7 +69,7 @@ test("primaryCta: Apply → Call → Email → View source. Never an empty stub"
 });
 
 test("grantPageTemplate: listing sheet tokens, Apply CTA, audience tag", () => {
-  const html = grantPageTemplate(HUSTLE, { site: "https://asnm-staging.alec-af3.workers.dev" });
+  const html = grantPageTemplate(HUSTLE, { site: "https://asnm-staging.adapt-to-life.workers.dev" });
   assert.ok(html.includes("Hustle &amp; Heart Fund (Adapt To Life)"));
   assert.ok(html.includes("<h1>Hustle &amp; Heart Fund (Adapt To Life)</h1>"));
   assert.ok(html.includes("Adapt To Life") && html.includes("Varies") && html.includes("Rolling"));

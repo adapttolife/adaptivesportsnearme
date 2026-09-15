@@ -2,7 +2,7 @@
 
 These scripts are how students work the Adaptive Sports Near Me directory **on the tester**. They never write the live database (`asnm-db`). Live public count must stay **1,544**.
 
-Tester: https://asnm-staging.alec-af3.workers.dev  
+Tester: https://asnm-staging.adapt-to-life.workers.dev  
 Live (locked): https://adaptivesportsnearme.com
 
 Discover is this folder. There is no production cron that writes live. Do not add one.

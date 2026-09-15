@@ -22,7 +22,7 @@ const STAGING_DB = "asnm-db-staging";
 const STAGING_ID = "ae83f752-9f7a-476c-914a-94b9ced0627f";
 const LIVE_DB = "asnm-db";
 const LIVE_PUBLIC_EXPECTED = 1544;
-const TESTER = "https://asnm-staging.alec-af3.workers.dev";
+const TESTER = "https://asnm-staging.adapt-to-life.workers.dev";
 
 const STATE_NAMES = {
   AL: "Alabama", AK: "Alaska", AZ: "Arizona", AR: "Arkansas", CA: "California",

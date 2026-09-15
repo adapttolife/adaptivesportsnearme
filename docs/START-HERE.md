@@ -5,7 +5,7 @@ sport they thought they'd lost. This hour gets you from clone to contribution.
 
 ## Minute 0–10: see the real thing
 
-Open the tester: https://asnm-staging.alec-af3.workers.dev/
+Open the tester: https://asnm-staging.adapt-to-life.workers.dev/
 
 Pick ten listings at random. For each one, ask a single question: *could a
 stranger act on this tonight?* (Is there a place? A website, phone, or email?)

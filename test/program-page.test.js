@@ -115,7 +115,7 @@ test("primaryCta: website → tel → mailto → source. Never an empty-page stu
 });
 
 test("programPageTemplate: photo hero, name, city+state, website button — not four labeled cards", () => {
-  const html = programPageTemplate(ORG, { site: "https://asnm-staging.alec-af3.workers.dev" });
+  const html = programPageTemplate(ORG, { site: "https://asnm-staging.adapt-to-life.workers.dev" });
   assert.ok(html.includes("Denver Rolling Nuggets"));
   assert.ok(html.includes("Wheelchair Basketball"));
   assert.ok(html.includes("Denver, CO"));

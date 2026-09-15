@@ -11,7 +11,7 @@ export const AUDIT_DIR = join(HERE, ".local");
 export const STAGING_DB = "asnm-db-staging";
 export const LIVE_DB = "asnm-db";
 export const LIVE_PUBLIC_EXPECTED = 1544;
-export const TESTER = "https://asnm-staging.alec-af3.workers.dev";
+export const TESTER = "https://asnm-staging.adapt-to-life.workers.dev";
 export const LIVE = "https://adaptivesportsnearme.com";
 
 export function sqlQuote(v) {

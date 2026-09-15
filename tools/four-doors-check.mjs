@@ -25,7 +25,7 @@ function opt(name, fallback) {
   const i = args.indexOf(`--${name}`);
   return i >= 0 ? args[i + 1] : fallback;
 }
-const BASE = (opt("base", "https://asnm-staging.alec-af3.workers.dev")).replace(/\/$/, "");
+const BASE = (opt("base", "https://asnm-staging.adapt-to-life.workers.dev")).replace(/\/$/, "");
 // --launch: Karen's v1.0 gate (2026-08-31): programs + grants + the letter.
 // Events stays on the full scoreboard as the first post-launch ship.
 const LAUNCH = args.includes("--launch");

@@ -4,7 +4,7 @@ Plain language for Fall students. If a step would change the live site, stop.
 
 ## Two sites
 
-- **Tester** (where you work): https://asnm-staging.alec-af3.workers.dev  
+- **Tester** (where you work): https://asnm-staging.adapt-to-life.workers.dev  
   Map is open. About 1,449 programs. Grants are the current 45. Prelaunch is off.
 - **Live** (locked): https://adaptivesportsnearme.com  
   Map is gated. 1,544 programs. Grants are still the old six-name list. Nothing goes live until Alec says, and not until you have done rigorous testing.

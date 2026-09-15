@@ -34,7 +34,7 @@ the freshness score — half-life 45 days, computed in the Worker).
 
 | | prod (`asnm`) | staging (`asnm-staging`) | sandbox (`asnm-sandbox`) |
 |---|---|---|---|
-| URL | adaptivesportsnearme.com | asnm-staging.alec-af3.workers.dev | asnm-sandbox.alec-af3.workers.dev |
+| URL | adaptivesportsnearme.com | asnm-staging.adapt-to-life.workers.dev | asnm-sandbox.adapt-to-life.workers.dev |
 | Gate | `PRELAUNCH=true` (teaser + modal) | `PRELAUNCH=false` (full directory) | `PRELAUNCH=false` |
 | D1 | asnm-db | asnm-db-staging | asnm-db-sandbox (starts empty) |
 | Crons | validate 2h / enrich 20min | same | none (run lanes by hand) |

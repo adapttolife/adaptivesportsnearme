@@ -24,8 +24,8 @@ check "pitch hero image"  "https://adaptivesportsnearme.com/rcos/asnm-live-home.
 check "portraits"         "https://adaptivesportsnearme.com/rcos/karen.jpg"   ""
 check "live site gated"   "https://adaptivesportsnearme.com/api/config"       '"prelaunch":true'
 check "live homepage"     "https://adaptivesportsnearme.com/"                 "adaptive sports"
-check "practice site up"  "https://asnm-staging.alec-af3.workers.dev/api/config" '"prelaunch":false'
-check "practice data"     "https://asnm-staging.alec-af3.workers.dev/api/stats"  '"programs":'
+check "practice site up"  "https://asnm-staging.adapt-to-life.workers.dev/api/config" '"prelaunch":false'
+check "practice data"     "https://asnm-staging.adapt-to-life.workers.dev/api/stats"  '"programs":'
 
 echo "== four doors =="
 node "$(dirname "$0")/four-doors-check.mjs" | tail -6

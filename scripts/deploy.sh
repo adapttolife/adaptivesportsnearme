@@ -10,9 +10,9 @@ cd "$(dirname "$0")/.."
 
 target="${1:-}"
 case "$target" in
-  sandbox) args=(--env sandbox); url="https://asnm-sandbox.alec-af3.workers.dev" ;;
-  next)    args=(--env next);    url="https://asnm-next.alec-af3.workers.dev" ;;
-  staging) args=(--env staging); url="https://asnm-staging.alec-af3.workers.dev" ;;
+  sandbox) args=(--env sandbox); url="https://asnm-sandbox.adapt-to-life.workers.dev" ;;
+  next)    args=(--env next);    url="https://asnm-next.adapt-to-life.workers.dev" ;;
+  staging) args=(--env staging); url="https://asnm-staging.adapt-to-life.workers.dev" ;;
   prod)
     # LIVE LOCK. Refuse production worker deploy. Public live count must stay 1544.
     if [ "${ASNM_UNLOCK_LIVE:-}" != "1" ]; then
