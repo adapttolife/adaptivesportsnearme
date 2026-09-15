@@ -25,8 +25,8 @@
   --space-header: 64px;
   --tap: 44px;
   --space-title-gap: 8px;
-  --space-after-photo: 32px;
-  --space-section: 25px;
+  --space-after-photo: min(10vh, 100px);
+  --space-section: 15px;
   --space-nearby: 48px;
   --space-row: 16px;
   --hdr: var(--space-header);
@@ -46,6 +46,8 @@
 
 * {
   box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
 html,
@@ -468,7 +470,7 @@ select {
 /* ============================ HERO ============================ */
 .hero {
   position: relative;
-  padding: var(--space-section) 0 var(--space-after-photo);
+  padding: var(--space-after-photo) calc(var(--space-after-photo) * 0.25);
   text-align: center;
   overflow: hidden;
 }
@@ -810,11 +812,19 @@ select {
 
 .feed .frow {
   margin: 0 0 var(--space-section);
-  padding-top: var(--space-section);
+  padding-top: calc(var(--space-section) * 1.75);
 }
 
 .feed .frow:last-child {
   margin-bottom: var(--space-title-gap);
+}
+
+.frow-head {
+  width: stretch;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  margin-bottom: 1em;
 }
 
 .frow-titlerow {
@@ -841,7 +851,6 @@ select {
   font-size: 13.5px;
   margin-top: 2px;
   line-height: 1.4;
-  margin-bottom: 1em;
 }
 
 .frow-all {
@@ -3187,8 +3196,8 @@ a.evrow:hover {
   align-items: flex-start;
   justify-content: space-between;
   gap: 44px 32px;
-  padding-top: 48px;
-  padding-bottom: 56px;
+  padding-top: min(5vh, 45px);
+  padding-bottom: min(10vh, 100px);
   flex-wrap: wrap;
 }
 
@@ -3715,6 +3724,7 @@ a.evrow:hover {
   flex-wrap: wrap;
   gap: 8px;
   align-items: center;
+  justify-content: center;
 }
 
 .cta-sub input {
@@ -3799,7 +3809,7 @@ a.evrow:hover {
    (warm | soft) share one centered layout. Light, warm, low-contrast — belongs
    in the feed, never a dark ad-slab. */
 .ctaband {
-  margin: 16px 0;
+  margin: 10px 0;
   border-radius: var(--r-xl);
   text-align: center;
   overflow: hidden;
@@ -4051,7 +4061,7 @@ a.evrow:hover {
   }
 
   .hero {
-    padding: var(--space-section) 0 var(--space-after-photo);
+    padding: calc(var(--space-after-photo) * 0.5) calc(var(--space-after-photo) * 0.25);
   }
 
   .hsearch {
