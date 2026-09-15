@@ -44,7 +44,7 @@
   --tap: 44px;
   --space-title-gap: 8px;
   --space-after-photo: 32px;
-  --space-section: 40px;
+  --space-section: 25px;
   --space-nearby: 48px;
   --space-row: 16px;
   --hdr: var(--space-header);
@@ -165,7 +165,7 @@ input,select{font-family:inherit;}
 /* filters panel */
 .filters{background:var(--paper);border:1px solid var(--line);border-radius:var(--r-lg);padding:6px 18px;margin-bottom:6px;overflow:hidden;max-height:0;opacity:0;border-width:0;transition:max-height .25s var(--ease),opacity .2s,padding .2s,margin .2s;}
 .filters.open{max-height:260px;opacity:1;border-width:1px;padding:16px 18px;margin-bottom:14px;}
-.frow{display:flex;align-items:center;gap:12px;padding:8px 0;flex-wrap:wrap;}
+.frow{display:flex;flex-direction:column;align-items:flex-start;gap:12px;padding:8px 0;}
 .frow+.frow{border-top:1px solid var(--line2);}
 .frow>.flabel{font-family:'DM Sans',sans-serif;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);width:84px;flex:0 0 auto;}
 .chip{padding:7px 13px;border:1px solid var(--line);background:var(--paper);border-radius:var(--r-full);font-size:13px;font-weight:600;color:var(--ink2);transition:.15s;}
@@ -176,17 +176,16 @@ input,select{font-family:inherit;}
 #main{padding-bottom:var(--space-page);}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(206px,1fr));gap:var(--space-after-photo) var(--space-row);padding:4px 0 var(--space-section);}
 .feed{padding:var(--space-page) var(--space-page) var(--space-section);}
-.feed .frow{margin:0 0 var(--space-section);}
+.feed .frow{margin:0 0 var(--space-section); padding-top: var(--space-section);}
 .feed .frow:last-child{margin-bottom:var(--space-title-gap);}
-.frow-head{margin-bottom:var(--space-title-gap);}
 .frow-titlerow{display:flex;align-items:center;justify-content:space-between;gap:var(--space-row);}
 .frow-titlerow h2{font-family:'DM Sans',sans-serif;font-size:19px;font-weight:700;letter-spacing:-.015em;color:var(--ink);line-height:1.2;margin:0;min-width:0;text-wrap:balance;}
-.frow-sub{color:var(--muted);font-size:13.5px;margin-top:2px;line-height:1.4;}
+.frow-sub{color:var(--muted);font-size:13.5px;margin-top:2px;line-height:1.4;margin-bottom: 1em;}
 .frow-all{flex:0 0 auto;display:inline-flex;align-items:center;gap:6px;background:none;border:none;color:var(--ink);font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;padding:0;white-space:nowrap;transition:gap .15s,color .15s;}
 .frow-all:hover{gap:9px;color:var(--orange-ink);}
 /* Rail bleeds to the right screen edge (cards peek off — Airbnb's scroll affordance)
    while the header + first card stay aligned to the page gutter. */
-.frow-scroll{display:flex;gap:var(--space-row);overflow-x:auto;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;padding-bottom:6px;padding-right:var(--space-page);margin-right:calc(-1 * var(--space-page));scrollbar-width:none;}
+.frow-scroll{display:flex;gap:var(--space-row);overflow-x:auto;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;padding-bottom:6px;padding-right:var(--space-page);margin-right:calc(-1 * var(--space-page));scrollbar-width:none;width:100%;border-radius:var(--r);}
 .frow-scroll::-webkit-scrollbar{display:none;}
 .frow-scroll>.pcard{flex:0 0 226px;width:226px;scroll-snap-align:start;}
 .pcard-img,.dhero-img,.thumb-full{position:absolute;inset:0;width:100%;height:100%;max-width:none;object-fit:cover;object-position:26% 58%;}
@@ -200,11 +199,11 @@ input,select{font-family:inherit;}
 .pcard:hover .pcard-name{text-decoration:underline;text-underline-offset:2px;}
 .pcard-media .gly{position:absolute;inset:0;margin:auto;width:42%;height:42%;color:rgba(26,26,26,.82);}
 .pcard-media .ringbg{position:absolute;inset:0;margin:auto;width:62%;height:62%;color:rgba(255,255,255,.55);}
-.pcard-body{padding:7px 1px 0;}
+.pcard-body{padding:16px 5px 0 1px;}
 .pcard-sport{font-family:'DM Sans',sans-serif;font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--faint);line-height:1.3;}
 /* Two-line box whether the name needs one line or two, so the city sits on the
    same baseline across a rail instead of stepping up and down card to card. */
-.pcard-name{font-size:14.5px;font-weight:600;line-height:1.25;margin:1px 0 0;color:var(--ink);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:2.5em;}
+.pcard-name{font-size:14.5px;font-weight:600;line-height:1.25;margin:1px 0 0;color:var(--ink);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
 /* card text = name, city, one useful line. No leftover cost/ages chips. */
 .pcard-loc{font-size:13.5px;color:var(--ink2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px;}
 .pcard-line{font-size:13px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
@@ -474,9 +473,6 @@ a.cta{text-decoration:none;text-align:center;} /* link-CTAs center exactly like 
 .desc-x:checked ~ .desc-btn .dm-less{display:inline;}
 .desc-x:focus-visible ~ .desc-btn{outline:2px solid var(--orange);outline-offset:3px;border-radius:4px;}
 @media(max-width:720px){.desc-long{-webkit-line-clamp:8;}}
-/* The result grid drops to one column below ~476px, where a reserved second
-   title line is just a gap. Rails still show two cards abreast, so they keep it. */
-@media(max-width:460px){.grid .pcard-name{min-height:0;}}
 .sheet .titleb{margin:0 0 var(--space-section);}
 .sheet .act{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 var(--space-section);}
 .sheet .act .cta{width:auto;min-width:220px;height:var(--tap);padding:0 22px;font-size:16px;}
