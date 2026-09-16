@@ -33,6 +33,7 @@ import { runLane } from "./pipeline.js";
 import {
   recordIntake, notifyIntake, sweepIntake, canaryIsFresh, runIntakeCanary,
 } from "./intake.js";
+import { syncIntakeToSheet } from "./intake_sheet.js";
 import { json, text } from "./http.js";
 import {
   readProfileCookie, signProfileId, serializeProfileCookie, clearProfileCookie,
@@ -203,6 +204,12 @@ export default {
     if (controller.cron === INTAKE_SWEEP_CRON) {
       ctx.waitUntil((async () => {
         await sweepIntake(env).catch((err) => console.error("intake sweep failed:", err));
+        // The sheet is the record a person reads. Its own stamp, after the
+        // notification's, so neither can hide the other's failure.
+        const sheet = await syncIntakeToSheet(env);
+        if (sheet.appended || sheet.error) {
+          console.log(`intake sheet: appended=${sheet.appended} skipped=${sheet.skipped}${sheet.error ? " error=" + sheet.error : ""}`);
+        }
         if (!(await canaryIsFresh(env, INTAKE_CANARY_MAX_AGE_H))) {
           const r = await runIntakeCanary(env, INTAKE_SITE).catch((err) => {
             console.error("intake canary failed:", err);
