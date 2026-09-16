@@ -49,7 +49,7 @@ const BLOG_FALLBACK_CACHE = "public, max-age=60"; // short — self-heals fast o
 // wrangler.json triggers. Unknown crons error loudly instead of misrouting.
 const CRON_LANES = {
   "0 */2 * * *": "validate",
-  "*/20 * * * *": "dispatch", // rotates enrich -> classify -> geocode -> resolve (pipeline.js)
+  "0 * * * *": "dispatch", // rotates enrich -> classify -> geocode -> resolve (pipeline.js)
 };
 
 export default {
