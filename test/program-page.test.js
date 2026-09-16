@@ -92,12 +92,13 @@ test("typeLabel: the org type reads as a human fact, null when missing", () => {
   assert.equal(typeLabel({ type: "inclusive_club" }), "Inclusive club");
 });
 
-test("photoPath: scene when we have one, else stamp (null cover)", () => {
-  assert.equal(photoPath("cycling"), "/scenes/cycling-road.jpg");
-  assert.equal(photoPath("basketball"), "/scenes/basketball-gym.jpg");
-  assert.equal(photoPath("skiing"), "/scenes/skiing-mountain.jpg");
-  assert.equal(photoPath("pickleball"), "/scenes/pickleball-court.jpg");
-  assert.equal(photoPath("tennis"), "/scenes/tennis-court.jpg");
+test("photoPath: the sport photo first, then a scene, else stamp (null cover)", () => {
+  assert.equal(photoPath("cycling"), "/assets/sport-photos/cycling.jpg");
+  assert.equal(photoPath("basketball"), "/assets/sport-photos/basketball.jpg");
+  assert.equal(photoPath("skiing"), "/assets/sport-photos/skiing.jpg");
+  assert.equal(photoPath("pickleball"), "/assets/sport-photos/pickleball.jpg");
+  assert.equal(photoPath("tennis"), "/assets/sport-photos/tennis.jpg");
+  // No action photo for rowing, so the scene is still the fallback.
   assert.equal(photoPath(null), null);
   assert.equal(photoPath("rowing"), "/scenes/rowing-lake.jpg");
   assert.equal(photoPath(null, { photo: "/photos/mine.jpg" }), "/photos/mine.jpg");
@@ -121,7 +122,7 @@ test("programPageTemplate: photo hero, name, city+state, website button — not 
   assert.ok(html.includes("Denver, CO"));
   assert.ok(html.includes("https://www.example.org/nuggets"));
   assert.ok(html.includes("<h1>Denver Rolling Nuggets</h1>"));
-  assert.ok(html.includes("/scenes/basketball-gym.jpg"));
+  assert.ok(html.includes("/assets/sport-photos/basketball.jpg"));
   assert.ok(html.includes("has-dphoto"));
   assert.ok(html.includes("dhero-img"));
   assert.ok(html.includes("Visit website"));
@@ -287,7 +288,7 @@ test("programPageTemplate: state-only listing shows the state name, not a blank 
     website: "http://bicyclingblind.org",
   });
   assert.ok(html.includes("Bicycling Blind Los Angeles"));
-  assert.ok(html.includes("/scenes/cycling-road.jpg"));
+  assert.ok(html.includes("/assets/sport-photos/cycling.jpg"));
   assert.ok(html.includes("California"));
   assert.ok(!html.includes("null"));
   assert.ok(html.includes("Visit website"));
