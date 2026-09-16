@@ -2,7 +2,7 @@
 // Serves the static site (env.ASSETS), the D1-backed directory API, the admin
 // review surface, and the cron maintenance pipeline (validate + enrich lanes).
 //   POST /api/subscribe        -> beehiiv (email capture, tagged asnm-prelaunch)
-//   POST /api/submit-program   -> Airtable Agent Inbox + D1 submissions
+//   POST /api/submit-program   -> atl-intake (durable) + D1 submissions queue
 //   GET  /api/config           -> env name + prelaunch flag (front-end gate)
 //   GET  /api/programs         -> directory list (sport/state/q + zip/city/lat-lng nearby, paged)
 //   GET  /programs/:id         -> shareable program page (photo hero, name, city/state, website, source)
@@ -30,6 +30,9 @@ import { grantPageTemplate, grantNotFoundTemplate, GRANT_ID_RE } from "./grant-p
 import { listEvents, eventsToRss, eventsToIcs } from "./events.js";
 import { handleAdmin } from "./admin.js";
 import { runLane } from "./pipeline.js";
+import {
+  recordIntake, notifyIntake, sweepIntake, canaryIsFresh, runIntakeCanary,
+} from "./intake.js";
 import { json, text } from "./http.js";
 import {
   readProfileCookie, signProfileId, serializeProfileCookie, clearProfileCookie,
@@ -52,8 +55,22 @@ const CRON_LANES = {
   "*/20 * * * *": "dispatch", // rotates enrich -> classify -> geocode -> resolve (pipeline.js)
 };
 
+// The intake sweep is its own schedule, not a lane: it must keep running when
+// the directory's D1 is unavailable, because its whole job is that a submission
+// nobody was told about gets retried. Declared in wrangler.json next to the others.
+const INTAKE_SWEEP_CRON = "*/10 * * * *";
+const INTAKE_CANARY_MAX_AGE_H = 6;
+const INTAKE_SITE = "adaptivesportsnearme.com";
+
+// A side effect that must not delay or fail the response. Falls back to awaiting
+// in a context with no waitUntil (tests) rather than dropping the promise.
+function after(ctx, promise) {
+  if (ctx && typeof ctx.waitUntil === "function") ctx.waitUntil(promise);
+  return promise;
+}
+
 export default {
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     const url = new URL(request.url);
 
     if (url.pathname === "/api/subscribe") {
@@ -62,7 +79,7 @@ export default {
     }
     if (url.pathname === "/api/submit-program") {
       if (request.method !== "POST") return json({ ok: false, error: "Method not allowed" }, 405);
-      return handleSubmitProgram(request, env);
+      return handleSubmitProgram(request, env, ctx);
     }
     if (url.pathname === "/api/profile") {
       if (request.method === "POST") return handleProfileUpsert(request, env);
@@ -181,6 +198,22 @@ export default {
   },
 
   async scheduled(controller, env, ctx) {
+    // Intake first, and it returns: the sweep and its canary do not depend on
+    // the directory's D1 and must keep running even when that is unavailable.
+    if (controller.cron === INTAKE_SWEEP_CRON) {
+      ctx.waitUntil((async () => {
+        await sweepIntake(env).catch((err) => console.error("intake sweep failed:", err));
+        if (!(await canaryIsFresh(env, INTAKE_CANARY_MAX_AGE_H))) {
+          const r = await runIntakeCanary(env, INTAKE_SITE).catch((err) => {
+            console.error("intake canary failed:", err);
+            return { ok: false, stage: "threw" };
+          });
+          console.log(`intake canary: ok=${r.ok} stage=${r.stage}`);
+        }
+      })());
+      return;
+    }
+
     if (!env.DB) return;
     const lane = CRON_LANES[controller.cron];
     if (!lane) {
@@ -275,8 +308,13 @@ async function subscribeToBeehiiv(env, email, campaign) {
   return { ok: true };
 }
 
-// ---- Program submission -> Airtable Agent Inbox ------------------------------
-async function handleSubmitProgram(request, env) {
+// ---- Program submission -> intake (durable) + the directory's review queue --
+// Airtable was the team surface until 2026-09-15 (Alec: "we delete Airtable, we
+// don't use it anymore"). The record is now the shared intake table: the row is
+// written BEFORE the person is answered, the notification to hello@ is a stamp
+// on that row, and an hourly host job mirrors it into the Adapt To Life CRM
+// sheet. Nothing here calls a third-party API on the request path.
+async function handleSubmitProgram(request, env, ctx) {
   const data = await readBody(request);
   if (data === null) return json({ ok: false, error: "Could not read your submission." }, 400);
 
@@ -299,69 +337,45 @@ async function handleSubmitProgram(request, env) {
     return json({ ok: false, error: "That email does not look right." }, 422);
   }
 
-  if (!env.AIRTABLE_TOKEN || !env.AIRTABLE_BASE_ID || !env.AIRTABLE_INBOX_TABLE_ID) {
-    console.error("Airtable not configured");
-    return json({ ok: false, error: "Submissions are temporarily unavailable. Please try again soon." }, 503);
-  }
-
   const location = [city, stateRegion].filter(Boolean).join(", ");
-  const description = [
-    `Program: ${program}`,
-    org && `Organization: ${org}`,
-    sport && `Sport: ${sport}`,
-    location && `Location: ${location}`,
-    email && `Contact: ${email}`,
-    notes && `Notes: ${notes}`,
-    ``,
-    `Submitted via the adaptivesportsnearme.com pre-launch page.`,
-  ].filter((l) => l !== false && l !== undefined).join("\n");
 
-  const fields = {
-    Title: program,
-    Type: "New program",
-    From: "Volunteer / Guest",
-    Status: "New",
-    Priority: "Medium",
-    Description: description,
-    Submitted: new Date().toISOString(),
-  };
-
-  let res;
-  try {
-    res = await fetch(
-      `https://api.airtable.com/v0/${env.AIRTABLE_BASE_ID}/${env.AIRTABLE_INBOX_TABLE_ID}`,
-      {
-        method: "POST",
-        headers: { Authorization: `Bearer ${env.AIRTABLE_TOKEN}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ records: [{ fields }], typecast: true }),
-      }
-    );
-  } catch (err) {
-    console.error("Airtable request failed:", err);
-    return json({ ok: false, error: "Could not save right now. Please try again soon." }, 502);
+  // The durable write, and the only one that can refuse the submission. If this
+  // fails we say so instead of thanking someone for a program we did not keep.
+  const rec = await recordIntake(env, {
+    site: INTAKE_SITE,
+    kind: "program",
+    email: email || null,
+    summary: `New program submitted: ${program}`,
+    source: "asnm-add-a-program",
+    payload: {
+      Program: program, Organization: org, Sport: sport,
+      City: city, State: stateRegion, Location: location, Notes: notes,
+    },
+  });
+  if (!rec.ok) {
+    console.error("program submission not recorded:", rec.error);
+    return json({ ok: false, error: "Could not save right now. Please try again soon." }, 503);
   }
 
-  if (!res.ok) {
-    console.error("Airtable error", res.status, await safeText(res));
-    return json({ ok: false, error: "Could not save right now. Please try again soon." }, 502);
-  }
-
-  // Also record in D1 (the directory's own data plane) — Airtable stays the team surface.
+  // The directory's own review queue, in the directory's own database. Secondary
+  // on purpose: the submission is already safe, so a queue write that fails is
+  // logged, not surfaced to the person.
   if (env.DB) {
     try {
       await env.DB.prepare(
         `INSERT INTO submissions (kind, payload, contact_email, status, created_at)
          VALUES ('new_program', ?, ?, 'new', ?)`
       ).bind(
-        JSON.stringify({ program, org, sport, city, state: stateRegion, notes }),
+        JSON.stringify({ program, org, sport, city, state: stateRegion, notes, intake_id: rec.id }),
         email || null,
         new Date().toISOString()
       ).run();
     } catch (err) {
-      console.error("D1 submission mirror failed:", err); // Airtable write already succeeded
+      console.error("D1 submission queue write failed:", err); // intake row already holds it
     }
   }
 
+  after(ctx, notifyIntake(env, rec.id));
   return json({ ok: true });
 }
 

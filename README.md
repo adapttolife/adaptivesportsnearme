@@ -65,7 +65,7 @@ Production stays gated (`PRELAUNCH=true`).
 
 ## Secrets (per worker, via `wrangler secret put`)
 
-`BEEHIIV_API_KEY`, `BEEHIIV_PUBLICATION_ID`, `AIRTABLE_TOKEN`, `TURNSTILE_SECRET_KEY`,
+`BEEHIIV_API_KEY`, `BEEHIIV_PUBLICATION_ID`, `TURNSTILE_SECRET_KEY`,
 and `ADMIN_KEY` (enables `/api/admin/*`; unset = admin disabled, 401).
 
 ## Maintaining the data
