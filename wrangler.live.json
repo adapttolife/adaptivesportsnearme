@@ -1,0 +1,28 @@
+{
+  "name": "asnm",
+  "compatibility_date": "2026-06-26",
+  "main": "src/index.js",
+  "workers_dev": true,
+  "preview_urls": true,
+  "routes": [
+    { "pattern": "adaptivesportsnearme.com", "custom_domain": true },
+    { "pattern": "www.adaptivesportsnearme.com", "custom_domain": true }
+  ],
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    "not_found_handling": "404-page",
+    "html_handling": "auto-trailing-slash"
+  },
+  "vars": {
+    "AIRTABLE_BASE_ID": "apphZsPGanzJ5xyl7",
+    "AIRTABLE_INBOX_TABLE_ID": "tblBcgV7oQ9Q3q34L",
+    "ENV_NAME": "production",
+    "PRELAUNCH": "true"
+  },
+  "d1_databases": [
+    { "binding": "DB", "database_name": "asnm-db", "database_id": "d8566621-99b1-4430-af47-d107ed64195e" }
+  ],
+  "triggers": { "crons": ["0 */2 * * *", "*/20 * * * *"] },
+  "observability": { "enabled": true }
+}

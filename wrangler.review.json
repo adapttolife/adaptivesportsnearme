@@ -1,0 +1,25 @@
+{
+  "name": "asnm-next",
+  "compatibility_date": "2026-06-26",
+  "main": "src/index.js",
+  "workers_dev": true,
+  "preview_urls": false,
+  "routes": [],
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    "not_found_handling": "404-page",
+    "html_handling": "auto-trailing-slash"
+  },
+  "vars": {
+    "AIRTABLE_BASE_ID": "apphZsPGanzJ5xyl7",
+    "AIRTABLE_INBOX_TABLE_ID": "tblBcgV7oQ9Q3q34L",
+    "ENV_NAME": "next",
+    "PRELAUNCH": "true"
+  },
+  "d1_databases": [
+    { "binding": "DB", "database_name": "asnm-db-gate", "database_id": "ccc144a2-9b5f-4fa4-8ce3-fe8575549757" }
+  ],
+  "triggers": { "crons": [] },
+  "observability": { "enabled": true }
+}
