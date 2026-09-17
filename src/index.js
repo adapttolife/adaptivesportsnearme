@@ -55,6 +55,12 @@ const CRON_LANES = {
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
+    // Provider-generated version URLs inherit production bindings. They are not
+    // isolated test lanes. Never accept mutations through that alternate host.
+    if (env.ENV_NAME === 'production' && !['GET','HEAD'].includes(request.method) &&
+        !['adaptivesportsnearme.com','www.adaptivesportsnearme.com'].includes(url.hostname)) {
+      return json({ok:false,error:'This preview is read-only. Use the isolated review environment.'},403);
+    }
 
     if (url.pathname === "/api/subscribe") {
       if (request.method !== "POST") return json({ ok: false, error: "Method not allowed" }, 405);

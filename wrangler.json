@@ -3,7 +3,7 @@
   "compatibility_date": "2026-06-26",
   "main": "src/index.js",
   "workers_dev": true,
-  "preview_urls": true,
+  "preview_urls": false,
   "routes": [
     {
       "pattern": "adaptivesportsnearme.com",

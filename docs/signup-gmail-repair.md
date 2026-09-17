@@ -1,5 +1,9 @@
 # Signup repair / Gmail cutover
 
+## Automatic build preview boundary
+
+The existing Cloudflare Builds integration creates version previews from the root production config, not `wrangler.preview.json`. Its first build of this branch inherited production D1 and secret bindings. Julia disabled version-preview URLs on the `adaptivesportsnearme` Worker, preserving its regular workers.dev endpoint, custom domains and traffic-serving version. The generated preview then returned HTTP 404; the dedicated `asnm-preview` remained available. Root config now keeps `preview_urls:false`. The request handler additionally refuses mutations on alternate hosts when bound as production. Use the dedicated, isolated preview config for review—not an auto-generated production-version link. No mail/DNS change or serving-version deployment accompanied this safety correction.
+
 ## What this branch does
 
 This is an ASNM contribution based on `staging` at `b3cc1ab`, not a direct-to-main release. It reconciles the useful changes in the old `gate-name-beta` PR without replacing the team's shared stylesheet or importing obsolete deployment files. It does not deploy anything.

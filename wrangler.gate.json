@@ -16,6 +16,7 @@
     }
   ],
   "vars": {
+    "ENV_NAME": "production",
     "BEEHIIV_PUBLICATION_ID": "pub_fb930d38-568a-4d98-b9d2-5f403d117a00",
     "MAIL_TRANSPORT": "gmail",
     "GMAIL_FROM": "hello@adapttolife.org",
