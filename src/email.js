@@ -1,24 +1,11 @@
-// Outbound transactional email — Cloudflare Email Sending via the native
-// `send_email` Worker binding. Carried over from adapt-to-life's email.js
-// (the contact / grant / waiver receipts): one helper, one house shell, so
-// every note from this project reads as one organisation.
-//
-// Sender note (2026-09-01): adaptivesportsnearme.com is NOT onboarded to
-// Cloudflare Email Service (its SPF/MX are Google-only), so mail goes out as
-// Adapt To Life — which is true: ASNM is an Adapt To Life project. If the
-// asnm domain is ever onboarded (SPF include + DKIM on the zone), change
-// HOUSE_FROM and nothing else.
-
+import { sendMail } from './mail-transport.js';
+// Transactional mail through the explicitly selected transport. Gmail is opt-in
+// and fails closed; the cfSend name is retained for caller compatibility.
 export const HOUSE_FROM = "Adaptive Sports Near Me <hello@adapttolife.org>";
 export const HOUSE_REPLY = "hello@adapttolife.org";
 
-export async function cfSend(env, { from, to, replyTo, subject, text, html }) {
-  if (!env.SEND_EMAIL) throw new Error("SEND_EMAIL binding not configured");
-  const msg = { from, to, subject };
-  if (text) msg.text = text;
-  if (html) msg.html = html;
-  if (replyTo) msg.replyTo = replyTo;
-  return (await env.SEND_EMAIL.send(msg)) || {};
+export async function cfSend(env, message) {
+  return sendMail(env, message);
 }
 
 const esc = (s) =>

@@ -1,5 +1,5 @@
 // Signup extras (first name + beta opt-in) -> beehiiv custom fields.
-// Pure mapping only; the live round trip was verified against the publication.
+// Tests the actual outbound mapping; no live provider writes occur here.
 import test from "node:test";
 import assert from "node:assert/strict";
 import { beehiivCustomFields, parseBetaFlag } from "../src/index.js";
@@ -25,10 +25,10 @@ test("custom fields: each answer maps to its own publication field", () => {
     { name: "First Name", value: "Alec" },
   ]);
   assert.deepEqual(beehiivCustomFields({ name: "", beta: true }), [
-    { name: "Beta Tester", value: true },
+    { name: "Beta Tester", value: "true" },
   ]);
   assert.deepEqual(beehiivCustomFields({ name: "Alec", beta: true }), [
     { name: "First Name", value: "Alec" },
-    { name: "Beta Tester", value: true },
+    { name: "Beta Tester", value: "true" },
   ]);
 });

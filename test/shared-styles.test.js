@@ -23,7 +23,7 @@ test("static and nested server-rendered pages load the same public stylesheet", 
   assert.equal(config.assets.directory, "./public");
   assert.equal(config.env.staging.assets.directory, "./public");
   const css = read("public/styles.css");
-  assert.match(css, /--space-section:\s*25px;/);
+  assert.match(css, /--space-section:\s*15px;/);
   assert.equal((css.match(/--space-section:/g) || []).length, 1);
   assert.ok(!read("public/site-nav.js").includes('createElement("style")'));
 });

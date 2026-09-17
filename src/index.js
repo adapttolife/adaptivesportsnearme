@@ -1,3 +1,4 @@
+import { safeNewsletterSubscribe } from './newsletter.js';
 // Adaptive Sports Near Me — Worker entry.
 // Serves the static site (env.ASSETS), the D1-backed directory API, the admin
 // review surface, and the cron maintenance pipeline (validate + enrich lanes).
@@ -24,7 +25,6 @@
 // All secrets stay server-side (Worker secrets). Bot defence: honeypot + optional Turnstile.
 
 import { listPrograms, getOrg, stats, listSameSportNearby, listGrants, getGrant, listOtherGrants } from "./data.js";
-import { sendSignupWelcome } from "./email.js";
 import { programPageTemplate, programNotFoundTemplate, PROGRAM_ID_RE } from "./program-page.js";
 import { grantPageTemplate, grantNotFoundTemplate, GRANT_ID_RE } from "./grant-page.js";
 import { listEvents, eventsToRss, eventsToIcs } from "./events.js";
@@ -53,19 +53,27 @@ const CRON_LANES = {
 };
 
 export default {
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     const url = new URL(request.url);
 
     if (url.pathname === "/api/subscribe") {
       if (request.method !== "POST") return json({ ok: false, error: "Method not allowed" }, 405);
-      return handleSubscribe(request, env);
+      if (env.FORM_LIMITER) {
+        try {
+          const { success } = await env.FORM_LIMITER.limit({key: request.headers.get('CF-Connecting-IP') || 'unknown'});
+          if (!success) return json({ok:false,error:'Too many submissions. Please try again later.'},429);
+        } catch { return json({ok:false,error:'Sign-up is temporarily unavailable.'},503); }
+      } else if (env.REQUIRE_FORM_LIMITER === 'true') {
+        return json({ok:false,error:'Sign-up is temporarily unavailable.'},503);
+      }
+      return handleSubscribe(request, env, ctx);
     }
     if (url.pathname === "/api/submit-program") {
       if (request.method !== "POST") return json({ ok: false, error: "Method not allowed" }, 405);
       return handleSubmitProgram(request, env);
     }
     if (url.pathname === "/api/profile") {
-      if (request.method === "POST") return handleProfileUpsert(request, env);
+      if (request.method === "POST") return handleProfileUpsert(request, env, ctx);
       if (request.method === "GET") return handleProfileGet(request, env);
       return json({ ok: false, error: "Method not allowed" }, 405);
     }
@@ -197,7 +205,7 @@ export default {
 };
 
 // ---- Email capture -> beehiiv ------------------------------------------------
-async function handleSubscribe(request, env) {
+async function handleSubscribe(request, env, ctx) {
   const data = await readBody(request);
   if (data === null) return json({ ok: false, error: "Could not read your submission." }, 400);
 
@@ -226,16 +234,11 @@ async function handleSubscribe(request, env) {
   // the point.
   const name = str(data.nm).slice(0, 60);
   const beta = parseBetaFlag(data.beta);
-  const result = await subscribeToBeehiiv(env, email, source, { name, beta });
+  const result = await safeNewsletterSubscribe(env, email, source, { name, beta });
   if (!result.ok) return json({ ok: false, error: result.error }, result.status);
-
-  // The signup receipt (carried over from adapt-to-life's transactional
-  // receipts). Never fail the signup over a mail hiccup - the capture is the
-  // point; the welcome is the courtesy.
-  try {
-    await sendSignupWelcome(env, email, { name, beta });
-  } catch (err) {
-    console.error("signup welcome failed:", err);
+  if (result.welcomeJob) {
+    if (ctx?.waitUntil) ctx.waitUntil(result.welcomeJob);
+    else await result.welcomeJob;
   }
 
   return json({ ok: true });
@@ -250,55 +253,13 @@ export function parseBetaFlag(v) {
   return ["1", "true", "on", "yes"].includes(str(v).toLowerCase());
 }
 
-export function beehiivCustomFields({ name, beta } = {}) {
-  const out = [];
-  if (name) out.push({ name: "First Name", value: name });
-  if (beta) out.push({ name: "Beta Tester", value: true });
-  return out;
-}
+export { beehiivCustomFields } from './newsletter.js';
 
 // Shared beehiiv POST, factored out of handleSubscribe so /api/profile's newsletter
 // opt-in reuses the exact same call instead of duplicating it. Returns a plain
 // {ok, status, error} shape rather than a Response — callers decide the envelope.
 async function subscribeToBeehiiv(env, email, campaign, extra = {}) {
-  if (!env.BEEHIIV_API_KEY || !env.BEEHIIV_PUBLICATION_ID) {
-    console.error("beehiiv not configured (missing API key or publication id)");
-    return { ok: false, status: 503, error: "Sign-up is temporarily unavailable. Please try again soon." };
-  }
-
-  let res;
-  try {
-    res = await fetch(
-      `https://api.beehiiv.com/v2/publications/${env.BEEHIIV_PUBLICATION_ID}/subscriptions`,
-      {
-        method: "POST",
-        headers: { Authorization: `Bearer ${env.BEEHIIV_API_KEY}`, "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email,
-          reactivate_existing: true,
-          send_welcome_email: true,
-          utm_source: "asnm-prelaunch",
-          utm_medium: "website",
-          utm_campaign: campaign,
-          referring_site: "adaptivesportsnearme.com",
-          // The two custom fields exist on the publication ("First Name",
-          // "Beta Tester"). Only send what we actually have: an empty name
-          // would overwrite a good one on a repeat signup.
-          ...(beehiivCustomFields(extra).length ? { custom_fields: beehiivCustomFields(extra) } : {}),
-        }),
-      }
-    );
-  } catch (err) {
-    console.error("beehiiv request failed:", err);
-    return { ok: false, status: 502, error: "Could not sign you up right now. Please try again soon." };
-  }
-
-  if (!res.ok) {
-    console.error("beehiiv error", res.status, await safeText(res));
-    return { ok: false, status: 502, error: "Could not sign you up right now. Please try again soon." };
-  }
-
-  return { ok: true };
+  return safeNewsletterSubscribe(env, email, campaign, { ...extra, noWelcome: true });
 }
 
 // ---- Program submission -> Airtable Agent Inbox ------------------------------
@@ -394,7 +355,7 @@ async function handleSubmitProgram(request, env) {
 // ---- Profiles (no passwords) -------------------------------------------------
 const PROFILE_CACHE = "private, no-store"; // a profile is one person's data, never shared
 
-async function handleProfileUpsert(request, env) {
+async function handleProfileUpsert(request, env, ctx) {
   if (!env.DB) return json({ ok: false, error: "Profiles are temporarily unavailable. Please try again soon." }, 503);
   if (!env.PROFILE_SIGNING_KEY) {
     console.error("PROFILE_SIGNING_KEY not configured");
@@ -455,6 +416,10 @@ async function handleProfileUpsert(request, env) {
 
   if (newsletter) {
     const result = await subscribeToBeehiiv(env, email, "asnm-profile");
+    if (result.welcomeJob) {
+    if (ctx?.waitUntil) ctx.waitUntil(result.welcomeJob);
+    else await result.welcomeJob;
+  }
     if (!result.ok) console.error("profile newsletter opt-in failed:", result.error); // profile save already succeeded
   }
 

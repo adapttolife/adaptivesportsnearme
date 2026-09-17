@@ -1,12 +1,18 @@
 {
-  "name": "asnm",
+  "name": "adaptivesportsnearme",
   "compatibility_date": "2026-06-26",
   "main": "src/index.js",
   "workers_dev": true,
   "preview_urls": true,
   "routes": [
-    { "pattern": "adaptivesportsnearme.com", "custom_domain": true },
-    { "pattern": "www.adaptivesportsnearme.com", "custom_domain": true }
+    {
+      "pattern": "adaptivesportsnearme.com",
+      "custom_domain": true
+    },
+    {
+      "pattern": "www.adaptivesportsnearme.com",
+      "custom_domain": true
+    }
   ],
   "assets": {
     "directory": "./public",
@@ -18,16 +24,38 @@
     "AIRTABLE_BASE_ID": "apphZsPGanzJ5xyl7",
     "AIRTABLE_INBOX_TABLE_ID": "tblBcgV7oQ9Q3q34L",
     "ENV_NAME": "production",
-    "PRELAUNCH": "true"
+    "PRELAUNCH": "true",
+    "BEEHIIV_PUBLICATION_ID": "pub_fb930d38-568a-4d98-b9d2-5f403d117a00",
+    "MAIL_TRANSPORT": "gmail",
+    "GMAIL_FROM": "hello@adapttolife.org",
+    "REQUIRE_FORM_LIMITER": "true"
   },
   "d1_databases": [
-    { "binding": "DB", "database_name": "asnm-db", "database_id": "055916fd-3e58-4599-b11e-ffaedabe0f0b" }
+    {
+      "binding": "DB",
+      "database_name": "asnm-db",
+      "database_id": "055916fd-3e58-4599-b11e-ffaedabe0f0b"
+    },
+    {
+      "binding": "INTAKE",
+      "database_name": "atl-intake",
+      "database_id": "5f9c4771-25ba-4e83-aadf-00bc698329bf"
+    }
   ],
-  "send_email": [{ "name": "SEND_EMAIL" }],
+  "send_email": [
+    {
+      "name": "SEND_EMAIL"
+    }
+  ],
   "triggers": {
-    "crons": ["0 */2 * * *", "0 * * * *"]
+    "crons": [
+      "0 */2 * * *",
+      "0 * * * *"
+    ]
   },
-  "observability": { "enabled": true },
+  "observability": {
+    "enabled": true
+  },
   "env": {
     "staging": {
       "name": "asnm-staging",
@@ -45,14 +73,56 @@
         "AIRTABLE_BASE_ID": "apphZsPGanzJ5xyl7",
         "AIRTABLE_INBOX_TABLE_ID": "tblBcgV7oQ9Q3q34L",
         "ENV_NAME": "staging",
-        "PRELAUNCH": "false"
+        "PRELAUNCH": "false",
+        "BEEHIIV_PUBLICATION_ID": "pub_fb930d38-568a-4d98-b9d2-5f403d117a00",
+        "MAIL_TRANSPORT": "gmail",
+        "GMAIL_FROM": "hello@adapttolife.org",
+        "REQUIRE_FORM_LIMITER": "true"
       },
       "d1_databases": [
-        { "binding": "DB", "database_name": "asnm-db-staging", "database_id": "ae83f752-9f7a-476c-914a-94b9ced0627f" }
+        {
+          "binding": "DB",
+          "database_name": "asnm-db-staging",
+          "database_id": "d3f67da7-60a3-44b6-9215-28665492d3f9"
+        },
+        {
+          "binding": "INTAKE",
+          "database_name": "asnm-db-staging",
+          "database_id": "d3f67da7-60a3-44b6-9215-28665492d3f9"
+        }
       ],
-      "send_email": [{ "name": "SEND_EMAIL" }],
-      "triggers": { "crons": [] },
-      "observability": { "enabled": true }
+      "send_email": [
+        {
+          "name": "SEND_EMAIL"
+        }
+      ],
+      "triggers": {
+        "crons": []
+      },
+      "observability": {
+        "enabled": true
+      },
+      "ratelimits": [
+        {
+          "name": "FORM_LIMITER",
+          "namespace_id": "1001",
+          "simple": {
+            "limit": 6,
+            "period": 60
+          }
+        }
+      ]
     }
-  }
+  },
+  "account_id": "1d08b2fb0d19775b304a616ab3d4a48f",
+  "ratelimits": [
+    {
+      "name": "FORM_LIMITER",
+      "namespace_id": "1001",
+      "simple": {
+        "limit": 6,
+        "period": 60
+      }
+    }
+  ]
 }

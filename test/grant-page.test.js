@@ -1,3 +1,4 @@
+import { cssIncludes } from './helpers/css.js';
 const styles = readFileSync(new URL("../public/styles.css", import.meta.url), "utf8");
 import test from "node:test";
 import assert from "node:assert/strict";
@@ -80,15 +81,15 @@ test("grantPageTemplate: listing sheet tokens, Apply CTA, audience tag", () => {
   assert.ok(html.includes("cbadge"));
   assert.ok(html.includes("← Grants"));
   assert.ok(html.includes('class="bar"'));
-  assert.ok(styles.includes("--space-page: 24px"));
-  assert.ok(styles.includes("--space-header: 64px"));
-  assert.ok(styles.includes("--tap: 44px"));
-  assert.ok(styles.includes("min-height:var(--space-header)"));
-  assert.ok(styles.includes("margin:0 0 var(--space-after-photo)"));
-  assert.ok(styles.includes("margin:0 0 var(--space-section)"));
-  assert.ok(styles.includes("margin-top:var(--space-nearby)"));
-  assert.ok(styles.includes("padding:var(--space-row) 0"));
-  assert.ok(styles.includes("clamp(180px,24vw,260px)"));
+  assert.ok(cssIncludes(styles, "--space-page: 24px"));
+  assert.ok(cssIncludes(styles, "--space-header: 64px"));
+  assert.ok(cssIncludes(styles, "--tap: 44px"));
+  assert.ok(cssIncludes(styles, "min-height:var(--space-header)"));
+  assert.ok(cssIncludes(styles, "margin:0 0 var(--space-after-photo)"));
+  assert.ok(cssIncludes(styles, "margin:0 0 var(--space-section)"));
+  assert.ok(cssIncludes(styles, "margin-top:var(--space-nearby)"));
+  assert.ok(cssIncludes(styles, "padding:var(--space-row) 0"));
+  assert.ok(cssIncludes(styles, "clamp(180px,24vw,260px)"));
   assert.ok(html.includes('href="/styles.css"'));
   assert.ok(html.includes(">Amount</span>") && html.includes("Varies"));
   assert.ok(html.includes(">Deadline</span>") && html.includes("Rolling"));
@@ -134,7 +135,7 @@ test("grantPageTemplate: Other grants is one horizontal rail", () => {
   assert.ok(html.includes('class="nearby"'));
   assert.ok(html.includes('class="frow-scroll"'));
   assert.ok(html.includes("Kelly Brush Active Fund"));
-  assert.ok(styles.includes("78vw"));
+  assert.ok(cssIncludes(styles, "78vw"));
   assert.ok(!html.includes('class="grid"'));
   assert.ok(!html.includes("Nearby "));
   const empty = grantPageTemplate(HUSTLE, { nearby: [] });
