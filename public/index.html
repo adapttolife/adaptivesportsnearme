@@ -248,7 +248,11 @@ const MAPPOS = {
 };
 const SPGRAD = {basketball:"g-warm",tennis:"g-sand",pickleball:"g-warm",rugby:"g-sand",football:"g-warm",baseball:"g-sand",cycling:"g-cool",sledhockey:"g-cool",skiing:"g-cool",waterskiing:"g-cool",goalball:"g-sand"};
 function iconSrc(key){ return "assets/sport-icons/"+key+".png"; }   // 3D transparent icons — category chips
-function photoSrc(key){ return "assets/sport-photos/"+key+".jpg"; } // kept on disk; not the locked fallback
+function photoSrc(key){ return "/assets/sport-photos/"+key+".jpg"; } // square action photos — cards, hero, thumbs
+// The launch sports with a real action photo. Alec, 2026-09-15: cards show the
+// athlete, not the silhouette scene, so a photo wins and the scene is the fallback.
+const SPORT_PHOTOS={basketball:1,tennis:1,pickleball:1,rugby:1,football:1,baseball:1,cycling:1,sledhockey:1,skiing:1,waterskiing:1,goalball:1};
+function sportPhotoSrc(sport){ return sport&&SPORT_PHOTOS[sport]?photoSrc(sport):null; }
 const SPORT_SCENES={basketball:"/scenes/basketball-gym.jpg",cycling:"/scenes/cycling-road.jpg",skiing:"/scenes/skiing-mountain.jpg",baseball:"/scenes/baseball-diamond.jpg",boccia:"/scenes/boccia-court.jpg",climbing:"/scenes/climbing-gym.jpg",football:"/scenes/football-field.jpg",goalball:"/scenes/goalball-gym.jpg",golf:"/scenes/golf-fairway.jpg",rowing:"/scenes/rowing-lake.jpg",rugby:"/scenes/rugby-pitch.jpg",pickleball:"/scenes/pickleball-court.jpg",sledhockey:"/scenes/sledhockey-rink.jpg",swimming:"/scenes/swimming-pool.jpg",tennis:"/scenes/tennis-court.jpg",volleyball:"/scenes/volleyball-court.jpg",waterskiing:"/scenes/waterskiing-lake.jpg"};
 const GRANT_TRACK_SCENE="/scenes/grant-track.jpg";
 const PROGRAM_GRANT_SCENE="/scenes/program-grant-gym.jpg";
@@ -263,10 +267,14 @@ function listingVisual(item, role){
   if(item&&item.photo) return {kind:"photo",src:item.photo};
   if(role==="grant") return {kind:"scene",src:(item&&item.audience==="program")?PROGRAM_GRANT_SCENE:GRANT_TRACK_SCENE};
   if(role==="event"){
+    const ph=sportPhotoSrc(item&&item.sport);
+    if(ph) return {kind:"photo",src:ph};
     const sc=sceneSrc(item&&item.sport);
     if(sc) return {kind:"scene",src:sc};
     return {kind:"scene",src:EVENT_SCENE};
   }
+  const ph=sportPhotoSrc(item&&item.sport);
+  if(ph) return {kind:"photo",src:ph};
   const sc=sceneSrc(item&&item.sport);
   if(sc) return {kind:"scene",src:sc};
   return {kind:"stamp",src:emblemSrc(item&&item.sport)||GENERIC_STAMP};
