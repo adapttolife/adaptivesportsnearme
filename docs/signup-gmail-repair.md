@@ -1,5 +1,7 @@
 # Signup repair / Gmail cutover
 
+Start with [the consolidated Faisal review](faisal-repair-review.md) for current credential status, executed evidence, superseded PR and outstanding release gates.
+
 ## Automatic build preview boundary
 
 The existing Cloudflare Builds integration creates version previews from the root production config, not `wrangler.preview.json`. Its first build of this branch inherited production D1 and secret bindings. Julia disabled version-preview URLs on the `adaptivesportsnearme` Worker, preserving its regular workers.dev endpoint, custom domains and traffic-serving version. The generated preview then returned HTTP 404; the dedicated `asnm-preview` remained available. Root config now keeps `preview_urls:false`. The request handler additionally refuses mutations on alternate hosts when bound as production. Use the dedicated, isolated preview config for review—not an auto-generated production-version link. No mail/DNS change or serving-version deployment accompanied this safety correction.
@@ -53,12 +55,12 @@ Cloud migrations are a separate reviewed release step. Confirm the account/datab
 
 The existing formatting-sensitive CSS tests now compare selectors/values independently of whitespace. They still check the substantive layout values; the section-spacing expectation follows the team's current 15px value rather than reverting its design to make the old test pass. A test-only GitHub workflow is included; it has read-only repository permissions and no deploy/secret access. It is not a claim that branch protection has been enabled.
 
-Keep contributions on `staging` and PRs into `staging`, per CONTRIBUTING.md. Review deployment as a separate change. Do not simply retarget the old divergent branch or merge it wholesale; this branch contains its intentionally reconciled changes. The old PR can be superseded after this replacement is accepted.
+Keep contributions on `staging` and PRs into `staging`, per CONTRIBUTING.md. Review deployment as a separate change. Do not simply retarget the old divergent branch or merge it wholesale; this branch contains its intentionally reconciled changes. PR #24 is superseded by this single staging review; its source branch/history is retained, not deleted.
 
 ## Release gates / how to finish
 
 1. Review this exact candidate and CI on `staging`; preserve other developers' concurrent edits.
-2. Complete approved Gmail sender authorization. Verify account/send-as identity and securely provision the dedicated secrets in each intended Worker. No credential was provisioned by writing this branch.
+2. The dedicated hello@ sender credential is now provisioned, identity/scope-verified, tested through the actual native mail transport and staged in undeployed Worker versions. Preserve those secrets when uploading reviewed source. Confirm Google app audience/publishing policy before claiming durable production authorization. See the consolidated review for receipts and boundaries.
 3. Apply the additive schema first to isolated staging; exercise the configured candidate without public subscriber fixtures.
 4. Coordinate an approved recipient-controlled delivery check: capture and correct publication/fields, one welcome, internal notification, provider ID, and recipient receipt. Do not call a Gmail HTTP 200 or a database stamp inbox-delivery proof. No live test emails have been sent as part of the automated suite.
 5. Capture current deployment IDs and database backup. Release the intended app/gate versions separately through the project's normal production approval; leave MX, unrelated routes and directory data untouched. Refresh the preview from the same reviewed source but keep its D1 isolated.
