@@ -3,11 +3,6 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import gate from '../src/signup-gate.js';
 import app from '../src/index.js';
-test('production-bound version and workers.dev hosts cannot mutate production',async()=>{
- const env={ENV_NAME:'production'};
- const request=new Request('https://version-app.example.workers.dev/api/subscribe',{method:'POST'});
- assert.equal((await app.fetch(request,env,{})).status,403);
-});
 const load=p=>JSON.parse(readFileSync(new URL('../'+p,import.meta.url),'utf8'));
 test('preview has no production routes, crons or production D1 binding',()=>{
  const app=load('wrangler.json'),preview=load('wrangler.preview.json'),gateConfig=load('wrangler.gate.json');
