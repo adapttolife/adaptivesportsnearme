@@ -4061,7 +4061,8 @@ a.evrow:hover {
   }
 
   .hero {
-    padding: calc(var(--space-after-photo) * 0.5) calc(var(--space-after-photo) * 0.25);
+    padding: calc(var(--space-after-photo) * 0.5)
+      calc(var(--space-after-photo) * 0.25);
   }
 
   .hsearch {
@@ -5734,16 +5735,95 @@ main.detail-page.wrap {
 /* Beta opt-in: the whole row is the tap target (>=44px), the native box is kept
    for a11y/forms but visually replaced so it does not inherit .gate input's
    full-width 46px field styling. */
-.gcheck{display:flex;align-items:flex-start;gap:11px;min-height:var(--tap);margin:4px 0 14px;padding:12px 13px;border:1px solid var(--line);border-radius:var(--r);background:var(--mist);cursor:pointer;transition:border-color .15s,background .15s;}
-.gcheck:hover{border-color:var(--sand2);}
-.gcheck input[type=checkbox]{position:absolute;width:1px;height:1px;opacity:0;margin:0;padding:0;}
-.gcheck-box{flex:0 0 auto;width:22px;height:22px;margin-top:1px;border:1.5px solid var(--sand2);border-radius:6px;background:var(--paper);display:grid;place-items:center;color:#fff;transition:background .15s,border-color .15s;}
-.gcheck-box svg{width:14px;height:14px;opacity:0;transform:scale(.7);transition:opacity .12s,transform .12s;}
-.gcheck input:checked ~ .gcheck-box{background:var(--orange);border-color:var(--orange);}
-.gcheck input:checked ~ .gcheck-box svg{opacity:1;transform:scale(1);}
-.gcheck input:focus-visible ~ .gcheck-box{outline:2px solid var(--orange);outline-offset:2px;}
-.gcheck input:checked ~ .gcheck-text strong{color:var(--orange-ink);}
-.gcheck-text{display:block;line-height:1.35;}
-.gcheck-text strong{display:block;font-size:14px;font-weight:600;color:var(--ink);}
-.gcheck-text span{display:block;font-size:12.5px;color:var(--muted);margin-top:2px;}
+.gcheck {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  min-height: var(--tap);
+  margin: 4px 0 14px;
+  padding: 12px 13px;
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  background: var(--mist);
+  cursor: pointer;
+  transition:
+    border-color 0.15s,
+    background 0.15s;
+}
 
+.gcheck:hover {
+  border-color: var(--sand2);
+}
+
+.gcheck input[type="checkbox"] {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  margin: 0;
+  padding: 0;
+}
+
+.gcheck-box {
+  flex: 0 0 auto;
+  width: 22px;
+  height: 22px;
+  margin-top: 1px;
+  border: 1.5px solid var(--sand2);
+  border-radius: 6px;
+  background: var(--paper);
+  display: grid;
+  place-items: center;
+  color: #fff;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
+}
+
+.gcheck-box svg {
+  width: 14px;
+  height: 14px;
+  opacity: 0;
+  transform: scale(0.7);
+  transition:
+    opacity 0.12s,
+    transform 0.12s;
+}
+
+.gcheck input:checked ~ .gcheck-box {
+  background: var(--orange);
+  border-color: var(--orange);
+}
+
+.gcheck input:checked ~ .gcheck-box svg {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.gcheck input:focus-visible ~ .gcheck-box {
+  outline: 2px solid var(--orange);
+  outline-offset: 2px;
+}
+
+.gcheck input:checked ~ .gcheck-text strong {
+  color: var(--orange-ink);
+}
+
+.gcheck-text {
+  display: block;
+  line-height: 1.35;
+}
+
+.gcheck-text strong {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.gcheck-text span {
+  display: block;
+  font-size: 12.5px;
+  color: var(--muted);
+  margin-top: 2px;
+}
