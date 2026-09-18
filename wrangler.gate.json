@@ -4,7 +4,7 @@
   "main": "src/signup-gate.js",
   "compatibility_date": "2026-06-26",
   "workers_dev": true,
-  "preview_urls": false,
+  "preview_urls": true,
   "routes": [
     {
       "pattern": "adaptivesportsnearme.com/api/subscribe*",

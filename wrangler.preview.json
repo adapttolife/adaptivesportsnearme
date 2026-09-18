@@ -2,7 +2,7 @@
   "name": "asnm-preview",
   "main": "src/index.js",
   "workers_dev": true,
-  "preview_urls": false,
+  "preview_urls": true,
   "routes": [],
   "assets": {
     "directory": "./public",
