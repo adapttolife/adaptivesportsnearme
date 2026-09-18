@@ -11,12 +11,9 @@ import { headerHtml, footerHtml, navScriptHtml } from "./site-chrome.js";
 
 const SITE = "https://adaptivesportsnearme.com";
 
-// Legacy 11-photo launch set. Kept so older callers still resolve a key.
-// New listings use listingVisual (scene or stamp) unless a real photo exists.
-export const SPORT_PHOTOS = new Set([
-  "baseball", "basketball", "cycling", "football", "goalball",
-  "pickleball", "rugby", "skiing", "sledhockey", "tennis", "waterskiing",
-]);
+// The 11 launch sports that have an action photo. One list, owned by
+// visuals.js, re-exported here for the callers that already import it.
+export { SPORT_PHOTOS } from "./visuals.js";
 
 // org_type -> the human label. Mirrors TYPE_LABEL in public/index.html so the
 // shared link and the in-app sheet name the same thing the same way.

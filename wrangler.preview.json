@@ -1,0 +1,54 @@
+{
+  "name": "asnm-preview",
+  "main": "src/index.js",
+  "workers_dev": true,
+  "preview_urls": true,
+  "routes": [],
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    "not_found_handling": "404-page",
+    "html_handling": "auto-trailing-slash"
+  },
+  "vars": {
+    "AIRTABLE_BASE_ID": "apphZsPGanzJ5xyl7",
+    "AIRTABLE_INBOX_TABLE_ID": "tblBcgV7oQ9Q3q34L",
+    "ENV_NAME": "preview",
+    "PRELAUNCH": "true",
+    "BEEHIIV_PUBLICATION_ID": "pub_fb930d38-568a-4d98-b9d2-5f403d117a00",
+    "MAIL_TRANSPORT": "gmail",
+    "GMAIL_FROM": "hello@adapttolife.org",
+    "REQUIRE_FORM_LIMITER": "true"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "asnm-db-staging",
+      "database_id": "d3f67da7-60a3-44b6-9215-28665492d3f9"
+    },
+    {
+      "binding": "INTAKE",
+      "database_name": "asnm-db-staging",
+      "database_id": "d3f67da7-60a3-44b6-9215-28665492d3f9"
+    }
+  ],
+  "send_email": [],
+  "triggers": {
+    "crons": []
+  },
+  "observability": {
+    "enabled": true
+  },
+  "ratelimits": [
+    {
+      "name": "FORM_LIMITER",
+      "namespace_id": "1001",
+      "simple": {
+        "limit": 6,
+        "period": 60
+      }
+    }
+  ],
+  "account_id": "1d08b2fb0d19775b304a616ab3d4a48f",
+  "compatibility_date": "2026-06-26"
+}

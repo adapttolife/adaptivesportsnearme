@@ -1,3 +1,4 @@
+import { cssIncludes, compactCss } from './helpers/css.js';
 // Google Maps two-height tray: peek opens, expand, dismiss, second pin updates.
 import test from "node:test";
 import assert from "node:assert/strict";
@@ -168,7 +169,7 @@ test("peek HTML: title, city · sport, Visit/Call/Email pills, handle — no pho
 
 test("expanded HTML reuses the listing sheet: photo, title, city, desc, facts, Visit, nearby rail", () => {
   const html = trayExpandedHtml(RENO, NEARBY);
-  assert.ok(html.includes("/scenes/pickleball-court.jpg"));
+  assert.ok(html.includes("/assets/sport-photos/pickleball.jpg"));
   assert.ok(html.includes("has-dphoto"));
   assert.ok(html.includes("<h1>3rd Shot Pickleball Reno Adaptive</h1>"));
   assert.ok(html.includes("Reno, NV"));
@@ -199,8 +200,8 @@ test("pins are 44px hit targets; tray slides 280ms; two heights are wired on /ma
   assert.equal(TRAY_MS, 280);
   assert.equal(PEEK_VH, 35);
   assert.equal(EXPANDED_VH, 90);
-  assert.ok(styles.includes("width:var(--tap)") && styles.includes("height:var(--tap)"));
-  assert.ok(styles.includes(".mdot-mark") || index.includes("mdot-mark"));
+  assert.ok(cssIncludes(styles, "width:var(--tap)") && cssIncludes(styles, "height:var(--tap)"));
+  assert.ok(cssIncludes(styles, ".mdot-mark") || index.includes("mdot-mark"));
   assert.ok(index.includes("id=\"mapTray\"") || index.includes("id='mapTray'"));
   assert.ok(index.includes("function openMapTray("));
   assert.ok(index.includes("function closeMapTray("));
@@ -210,9 +211,9 @@ test("pins are 44px hit targets; tray slides 280ms; two heights are wired on /ma
   assert.ok(index.includes("function snapMapTray("));
   assert.ok(index.includes("PEEK_VH=35"));
   assert.ok(index.includes("EXPANDED_VH=90"));
-  assert.ok(styles.includes("height:35%"));
-  assert.ok(styles.includes("height:90%"));
-  assert.ok(styles.includes("transform") && styles.includes("280ms"));
+  assert.ok(cssIncludes(styles, "height:35%"));
+  assert.ok(cssIncludes(styles, "height:90%"));
+  assert.ok(cssIncludes(styles, "transform") && cssIncludes(styles, "280ms"));
   assert.ok(index.includes("tray-pills"));
   assert.ok(index.includes("tray-full sheet"));
   assert.ok(index.includes("sheetHero(p)"));
@@ -238,7 +239,7 @@ test("desktop is a full-height left column (420px), phone stays a bottom tray", 
   assert.equal(trayChrome(1280), "panel");
 
   assert.ok(index.includes('class="map-tray panel"'));
-  assert.ok(styles.includes("width:420px"));
+  assert.ok(cssIncludes(styles, "width:420px"));
   assert.ok(index.includes("function isDesktopTray("));
   assert.ok(index.includes("function resizeLiveMap("));
   assert.ok(index.includes("class=\"tray-x\"") || index.includes("class='tray-x'") || index.includes('class="tray-x"'));
@@ -246,20 +247,20 @@ test("desktop is a full-height left column (420px), phone stays a bottom tray", 
   assert.ok(index.includes("desktop ? 'expanded' : 'peek'"));
 
   // Default (phone) rules stay a full-width bottom sheet. Do not change.
-  const mobile = styles.match(/\.map-tray\{([^}]+)\}/);
+  const mobile = compactCss(styles).match(/\.map-tray\{([^}]+)\}/);
   assert.ok(mobile, "base .map-tray rule");
   assert.match(mobile[1], /left:0/);
   assert.match(mobile[1], /right:0/);
   assert.match(mobile[1], /bottom:0/);
   assert.match(mobile[1], /height:35%/);
-  assert.ok(styles.includes(".map-tray.expanded{height:90%;}"));
-  assert.ok(styles.includes(".map-tray.expanded .tray-peek{display:none;}"));
-  assert.ok(styles.includes(".map-tray:not(.expanded) .tray-full{display:none;}"));
+  assert.ok(cssIncludes(styles, ".map-tray.expanded{height:90%;}"));
+  assert.ok(cssIncludes(styles, ".map-tray.expanded .tray-peek{display:none;}"));
+  assert.ok(cssIncludes(styles, ".map-tray:not(.expanded) .tray-full{display:none;}"));
 
   // Desktop media query is a FULL-HEIGHT left sidebar, not a 160px floating card.
   const deskStart = styles.indexOf("/* Desktop: Google Maps WEB left column.");
   assert.ok(deskStart >= 0, "desktop column comment");
-  const desk = styles.slice(deskStart, deskStart + 4000);
+  const desk = compactCss(styles.slice(deskStart, deskStart + 4000));
   assert.ok(desk.includes("@media(min-width:721px)"));
   assert.ok(desk.includes("width:420px"));
   assert.ok(desk.includes("height:100%"));

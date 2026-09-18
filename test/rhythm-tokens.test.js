@@ -1,3 +1,4 @@
+import { compactCss } from './helpers/css.js';
 // Rhythm lock: listing HTML and shared tokens. Fail if someone tightens
 // 24/64 or brings back "Unverified" / "Last checked" as UI copy.
 import test from "node:test";
@@ -43,10 +44,10 @@ test("homepage and program-page :root keep the same 24px / 64px lock", () => {
   assert.equal(declared(tokens, "space-header"), "64px");
   assert.equal(declared(tokens, "space-page"), "24px");
   assert.equal(declared(tokens, "space-header"), "64px");
-  assert.match(tokens, /\.hdr-in\{height:var\(--space-header\)/);
-  assert.match(tokens, /\.sheet \.bar\{min-height:var\(--space-header\)/);
-  assert.match(tokens, /\.bar\{min-height:var\(--space-header\)/);
-  assert.match(tokens, /\.wrap\{[^}]*padding:0 var\(--space-page\)/);
+  assert.match(compactCss(tokens), /\.hdr-in\{height:var\(--space-header\)/);
+  assert.match(compactCss(tokens), /\.sheet \.bar\{min-height:var\(--space-header\)/);
+  assert.match(compactCss(tokens), /\.bar\{min-height:var\(--space-header\)/);
+  assert.match(compactCss(tokens), /\.wrap\{[^}]*padding:0 var\(--space-page\)/);
   assert.ok(!index.includes("clamp(24px"));
   assert.ok(!blog.includes("clamp(20px"));
 });
