@@ -1,6 +1,6 @@
 # Contributing
 
-Agents use the existing shared `Tranel-Labs/agentos:skills/github-publication-review/SKILL.md`; its source promotion is proposed in [AgentOS #742](https://github.com/Tranel-Labs/agentos/pull/742). The standing staging-first rule also covers ATL and Adapt Body Shop's Hydrogen storefront. Keep one shared skill source, not per-bot variants; proposed source is not verified runtime adoption.
+Agents use the shared [GitHub discipline](https://github.com/Tranel-Labs/agentos/blob/main/skills/github-publication-review/SKILL.md), merged by Alec through [AgentOS #742](https://github.com/Tranel-Labs/agentos/pull/742). The standing staging-first rule also covers ATL and Adapt Body Shop's Hydrogen storefront. Keep one shared skill source, not per-bot variants; merged source is not proof of every runtime's adoption. Faisal N is the website reviewer/approver; a green check is not his approval or production-release permission.
 
 Students: start with [docs/STUDENTS.md](docs/STUDENTS.md). Short version:
 
