@@ -1,6 +1,6 @@
-# Faisal review: one current repair PR
+# Faisal review: coordinated repair PRs
 
-**Review ASNM PR #25 into `staging`. PR #24 is superseded; do not merge its old direct-to-main branch.** This document is the current handoff, not a request to reconstruct progress from comments. Julia performed the work directly at Alec's request.
+**Review ASNM PR #25 into `staging`. ASNM #24 is superseded; do not merge its old direct-to-main branch. ATL #135 was withdrawn unmerged because it targeted main; no ATL review will proceed until the correct staging base exists and is confirmed. The intended final structure is one staging-based repair PR per repository.** This document is the current handoff, not a request to reconstruct progress from comments. Julia performed the work directly at Alec's request.
 
 ## Response to Faisal's requests
 
@@ -45,7 +45,7 @@ Version-only preview URLs were disabled on the production-backed app and gate; r
 
 The associated [ATL repair branch](https://github.com/adapttolife/adapt-to-life/tree/fix/julia-gmail-transport) contains the native sender across existing receipt/attachment/intake/donation paths and conservative donation claims. It has not been integrated or deployed. The repository has no git `staging` branch; Wrangler's staging environment is not a git integration ref and is front-end-only.
 
-There is deliberately no additional ATL repair PR to sort through. **This ASNM PR cannot merge code into a different repository.** The ATL integration base/process must be confirmed before that code can be integrated. Julia retains implementation ownership; this is a real release gate, not homework to recreate the repair. Unrelated existing ATL content/CRM PRs are outside this repair and remain untouched.
+The [ATL draft #135](https://github.com/adapttolife/adapt-to-life/pull/135) was closed unmerged after Alec reaffirmed staging-only ancestry and targets. Its existing source is preserved as a candidate, not an approved integration branch. The live repository has no git `staging` ref. Do not reopen against main or create a new integration branch without resolving the intended base with the project lead. Once staging is confirmed, port the candidate onto a fresh branch from that exact ref and open/retarget the companion into staging, then rerun the suite and check ancestry/conflicts. The intended PRs are parallel cross-repository companions, not a Git stack: neither imports the other's source. Both use the same native transport and separate sender grant; each actual runtime needs its own verified release. Julia retains implementation ownership. Unrelated existing ATL content/CRM PRs remain untouched.
 
 ## Session scope beyond website code
 
@@ -60,4 +60,4 @@ Julia's separate business-account connection already has the broad Workspace sco
 5. Inspect historical intake/donation/waiver delivery debt; never mass-replay uncertain claims. Upload reviewed source with preserved secrets; separately approve production release of the actual routed gate and ATL backend, not just the frontend.
 6. Verify resulting live deployments/routes, inspect receipts and monitor full-day account-wide D1 writes. Retain rollback versions and additive delivery evidence.
 
-**Current conclusion:** source repair and sender credential are prepared and tested as described. One current ASNM review is ready. Live website mail restoration and all-session release acceptance are not yet complete.
+**Current conclusion:** source repair and sender credential are prepared and tested as described. ASNM has one current staging-based review; ATL source is preserved and its review is blocked pending the correct staging base. Live website mail restoration and all-session release acceptance are not yet complete.
