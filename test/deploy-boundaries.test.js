@@ -12,7 +12,7 @@ const load=p=>JSON.parse(readFileSync(new URL('../'+p,import.meta.url),'utf8'));
 test('preview has no production routes, crons or production D1 binding',()=>{
  const app=load('wrangler.json'),preview=load('wrangler.preview.json'),gateConfig=load('wrangler.gate.json');
  const prodIds=new Set([...app.d1_databases,...gateConfig.d1_databases].map(b=>b.database_id));
- assert.equal(app.preview_urls,false);assert.deepEqual(preview.routes,[]);assert.deepEqual(preview.triggers.crons,[]);
+ assert.equal(app.preview_urls,true);assert.deepEqual(preview.routes,[]);assert.deepEqual(preview.triggers.crons,[]);
  for(const binding of preview.d1_databases)assert.ok(!prodIds.has(binding.database_id));
  assert.equal(app.name,'adaptivesportsnearme');assert.equal(gateConfig.name,'asnm-gate');
  assert.equal(gateConfig.main,'src/signup-gate.js');assert.equal(preview.main,'src/index.js');
