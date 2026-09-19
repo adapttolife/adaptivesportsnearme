@@ -9,11 +9,13 @@ import { pendingOrgIds, proposeStmt, checkUrl } from "../lane-utils.js";
 const VALIDATE_BATCH = 15;
 
 export async function validateLane({ db }) {
+  const cutoff = new Date(Date.now() - 7 * 86400000).toISOString();
   const { results: orgs } = await db.prepare(
     `SELECT id, name, website_url FROM organizations
      WHERE website_url IS NOT NULL AND status = 'active'
+       AND (last_checked_at IS NULL OR last_checked_at <= ?)
      ORDER BY (last_checked_at IS NOT NULL), last_checked_at ASC, id LIMIT ?`
-  ).bind(VALIDATE_BATCH).all();
+  ).bind(cutoff, VALIDATE_BATCH).all();
   if (!orgs.length) return { cursor: "", processed: 0, flagged: 0, detail: "no candidates" };
 
   const pending = await pendingOrgIds(db, "validate", orgs.map((o) => o.id));
@@ -28,10 +30,12 @@ export async function validateLane({ db }) {
       `INSERT INTO link_checks (organization_id, url, ok, http_status, detail, lane, checked_at)
        VALUES (?, ?, ?, ?, ?, 'validate', ?)`
     ).bind(org.id, org.website_url, check.ok ? 1 : 0, check.status, check.detail, now));
-    stmts.push(db.prepare(`UPDATE organizations SET last_checked_at = ? WHERE id = ?`).bind(now, org.id));
     if (check.ok) {
-      stmts.push(db.prepare(`UPDATE organizations SET last_ok_at = ? WHERE id = ?`).bind(now, org.id));
-    } else if (!pending.has(org.id)) {
+      stmts.push(db.prepare(`UPDATE organizations SET last_checked_at = ?, last_ok_at = ? WHERE id = ?`).bind(now, now, org.id));
+    } else {
+      stmts.push(db.prepare(`UPDATE organizations SET last_checked_at = ? WHERE id = ?`).bind(now, org.id));
+    }
+    if (!check.ok && !pending.has(org.id)) {
       flagged++;
       stmts.push(proposeStmt(db, org.id, "validate",
         { status: { from: "active", to: "inactive" } },

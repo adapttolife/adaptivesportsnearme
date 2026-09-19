@@ -1,3 +1,6 @@
+import { cssIncludes } from './helpers/css.js';
+import { readFileSync } from "node:fs";
+const styles = readFileSync(new URL("../public/styles.css", import.meta.url), "utf8");
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
@@ -92,12 +95,13 @@ test("typeLabel: the org type reads as a human fact, null when missing", () => {
   assert.equal(typeLabel({ type: "inclusive_club" }), "Inclusive club");
 });
 
-test("photoPath: scene when we have one, else stamp (null cover)", () => {
-  assert.equal(photoPath("cycling"), "/scenes/cycling-road.jpg");
-  assert.equal(photoPath("basketball"), "/scenes/basketball-gym.jpg");
-  assert.equal(photoPath("skiing"), "/scenes/skiing-mountain.jpg");
-  assert.equal(photoPath("pickleball"), "/scenes/pickleball-court.jpg");
-  assert.equal(photoPath("tennis"), "/scenes/tennis-court.jpg");
+test("photoPath: the sport photo first, then a scene, else stamp (null cover)", () => {
+  assert.equal(photoPath("cycling"), "/assets/sport-photos/cycling.jpg");
+  assert.equal(photoPath("basketball"), "/assets/sport-photos/basketball.jpg");
+  assert.equal(photoPath("skiing"), "/assets/sport-photos/skiing.jpg");
+  assert.equal(photoPath("pickleball"), "/assets/sport-photos/pickleball.jpg");
+  assert.equal(photoPath("tennis"), "/assets/sport-photos/tennis.jpg");
+  // No action photo for rowing, so the scene is still the fallback.
   assert.equal(photoPath(null), null);
   assert.equal(photoPath("rowing"), "/scenes/rowing-lake.jpg");
   assert.equal(photoPath(null, { photo: "/photos/mine.jpg" }), "/photos/mine.jpg");
@@ -121,7 +125,7 @@ test("programPageTemplate: photo hero, name, city+state, website button — not 
   assert.ok(html.includes("Denver, CO"));
   assert.ok(html.includes("https://www.example.org/nuggets"));
   assert.ok(html.includes("<h1>Denver Rolling Nuggets</h1>"));
-  assert.ok(html.includes("/scenes/basketball-gym.jpg"));
+  assert.ok(html.includes("/assets/sport-photos/basketball.jpg"));
   assert.ok(html.includes("has-dphoto"));
   assert.ok(html.includes("dhero-img"));
   assert.ok(html.includes("Visit website"));
@@ -132,7 +136,7 @@ test("programPageTemplate: photo hero, name, city+state, website button — not 
   assert.ok(!html.includes("City / state"));
   assert.ok(!html.includes("class=\"card\""));
   assert.ok(html.includes("dov-sport") && html.includes("Wheelchair Basketball"));
-  assert.ok(html.includes("clamp(180px,24vw,260px)"));
+  assert.ok(cssIncludes(styles, "clamp(180px,24vw,260px)"));
   assert.ok(!html.includes("Unverified"));
   assert.ok(!html.includes("Last checked"));
 });
@@ -166,21 +170,21 @@ test("programPageTemplate: Reno pickleball reads like a listing", () => {
 
 test("programPageTemplate: Airbnb listing rhythm, no verification chrome", () => {
   const html = programPageTemplate(RENO);
-  assert.ok(html.includes("--space-page: 24px"));
-  assert.ok(html.includes("--space-header: 64px"));
-  assert.ok(html.includes("--tap: 44px"));
-  assert.ok(html.includes("min-height:var(--space-header)"));
-  assert.ok(html.includes("min-height:var(--tap)"));
-  assert.ok(html.includes("padding:var(--space-page) var(--space-page) var(--space-header)"));
-  assert.ok(html.includes("margin:0 0 var(--space-after-photo)"));
-  assert.ok(html.includes("margin:0 0 var(--space-title-gap)"));
-  assert.ok(html.includes("margin:0 0 var(--space-section)"));
-  assert.ok(html.includes("margin-top:var(--space-nearby)"));
-  assert.ok(html.includes("padding:var(--space-row) 0"));
-  assert.ok(html.includes("font-size:22px"));
+  assert.ok(cssIncludes(styles, "--space-page: 24px"));
+  assert.ok(cssIncludes(styles, "--space-header: 64px"));
+  assert.ok(cssIncludes(styles, "--tap: 44px"));
+  assert.ok(cssIncludes(styles, "min-height:var(--space-header)"));
+  assert.ok(cssIncludes(styles, "min-height:var(--tap)"));
+  assert.ok(cssIncludes(styles, "padding:var(--space-page) var(--space-page) var(--space-header)"));
+  assert.ok(cssIncludes(styles, "margin:0 0 var(--space-after-photo)"));
+  assert.ok(cssIncludes(styles, "margin:0 0 var(--space-title-gap)"));
+  assert.ok(cssIncludes(styles, "margin:0 0 var(--space-section)"));
+  assert.ok(cssIncludes(styles, "margin-top:var(--space-nearby)"));
+  assert.ok(cssIncludes(styles, "padding:var(--space-row) 0"));
+  assert.ok(cssIncludes(styles, "font-size:22px"));
   assert.ok(html.includes('class="titleb"'));
-  assert.ok(html.includes(".nearby h2{font-size:22px;font-weight:700"));
-  assert.ok(html.includes('href="/tokens.css"'));
+  assert.ok(cssIncludes(styles, ".nearby h2{font-size:22px;font-weight:700"));
+  assert.ok(html.includes('href="/styles.css"'));
   assert.ok(!html.includes("Unverified"));
   assert.ok(!html.includes("Last checked"));
   assert.ok(!html.includes("Builder web search"));
@@ -205,8 +209,8 @@ test("programPageTemplate: Kansas Omnium still has an action + nearby strip", ()
   assert.ok(html.includes('class="nearby"'));
   assert.ok(html.includes('class="frow-scroll"'));
   assert.ok(!html.includes('class="grid"'));
-  assert.ok(html.includes("scroll-snap-type:x"));
-  assert.ok(html.includes("78vw"));
+  assert.ok(cssIncludes(styles, "scroll-snap-type:x"));
+  assert.ok(cssIncludes(styles, "78vw"));
   assert.ok(html.includes("Sunflower Adaptive Cycling"));
   assert.ok(html.includes("Prairie Handcycle"));
   assert.ok(html.includes("42 mi away"));
@@ -287,7 +291,7 @@ test("programPageTemplate: state-only listing shows the state name, not a blank 
     website: "http://bicyclingblind.org",
   });
   assert.ok(html.includes("Bicycling Blind Los Angeles"));
-  assert.ok(html.includes("/scenes/cycling-road.jpg"));
+  assert.ok(html.includes("/assets/sport-photos/cycling.jpg"));
   assert.ok(html.includes("California"));
   assert.ok(!html.includes("null"));
   assert.ok(html.includes("Visit website"));
@@ -327,9 +331,9 @@ test("programPageTemplate: the standalone page wears the app header and footer",
   assert.ok(html.includes('Skip to content'));
   assert.ok(html.includes('/site-nav.js?v='));
   // 64px header and 44px tap targets survive.
-  assert.ok(html.includes(".hdr-in{max-width:1280px;margin:0 auto;padding:0 var(--space-page);height:var(--space-header)"));
-  assert.ok(html.includes("--space-header: 64px"));
-  assert.ok(html.includes("--tap: 44px"));
+  assert.ok(cssIncludes(styles, ".hdr-in{height:var(--space-header)"));
+  assert.ok(cssIncludes(styles, "--space-header: 64px"));
+  assert.ok(cssIncludes(styles, "--tap: 44px"));
   // The search field goes somewhere real: GET /?q=, which index.html boots on.
   assert.ok(html.includes('<form class="search" role="search" action="/" method="get">'));
   assert.ok(html.includes('name="q"'));

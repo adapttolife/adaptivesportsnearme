@@ -1,0 +1,50 @@
+{
+  "name": "asnm-gate",
+  "account_id": "1d08b2fb0d19775b304a616ab3d4a48f",
+  "main": "src/signup-gate.js",
+  "compatibility_date": "2026-06-26",
+  "workers_dev": true,
+  "preview_urls": true,
+  "routes": [
+    {
+      "pattern": "adaptivesportsnearme.com/api/subscribe*",
+      "zone_name": "adaptivesportsnearme.com"
+    },
+    {
+      "pattern": "www.adaptivesportsnearme.com/api/subscribe*",
+      "zone_name": "adaptivesportsnearme.com"
+    }
+  ],
+  "vars": {
+    "ENV_NAME": "production",
+    "BEEHIIV_PUBLICATION_ID": "pub_fb930d38-568a-4d98-b9d2-5f403d117a00",
+    "MAIL_TRANSPORT": "gmail",
+    "GMAIL_FROM": "hello@adapttolife.org",
+    "REQUIRE_FORM_LIMITER": "true"
+  },
+  "d1_databases": [
+    {
+      "binding": "INTAKE",
+      "database_name": "atl-intake",
+      "database_id": "5f9c4771-25ba-4e83-aadf-00bc698329bf"
+    }
+  ],
+  "ratelimits": [
+    {
+      "name": "FORM_LIMITER",
+      "namespace_id": "1001",
+      "simple": {
+        "limit": 6,
+        "period": 60
+      }
+    }
+  ],
+  "triggers": {
+    "crons": [
+      "*/10 * * * *"
+    ]
+  },
+  "observability": {
+    "enabled": true
+  }
+}

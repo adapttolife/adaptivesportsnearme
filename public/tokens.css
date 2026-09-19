@@ -1,12 +1,2 @@
-/* Rhythm tokens used by the homepage, in-app sheet, /programs/:id, and blog.
-   Do not tighten these to "fix AI look"; Alec locked 24/32/40/48/64 on 2026-08-21. */
-:root {
-  --space-page: 24px;  /* gutter */
-  --space-header: 64px;
-  --tap: 44px;
-  --space-title-gap: 8px;
-  --space-after-photo: 32px;
-  --space-section: 40px;
-  --space-nearby: 48px;
-  --space-row: 16px;
-}
+/* Compatibility for older cached pages. Edit styles.css for all site styles. */
+@import url("/styles.css");

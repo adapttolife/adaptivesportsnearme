@@ -7,7 +7,7 @@
 
 import { pendingOrgIds, proposeStmt } from "../lane-utils.js";
 
-const GEOCODE_BATCH = 200;
+const GEOCODE_BATCH = 50; // bounded review backlog and D1 index-write cost
 
 // Pure. First 5 digits of the zip, tolerant of ZIP+4 ("55414-2109" -> "55414") and
 // surrounding whitespace. Anything that doesn't start with 5 consecutive digits after
