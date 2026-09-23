@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { sendMail, buildMime, mailConfigured } from '../src/mail-transport.js';
-const env = {MAIL_TRANSPORT:'gmail',GMAIL_FROM:'hello@adapttolife.org',GMAIL_CLIENT_ID:'test-client',GMAIL_CLIENT_SECRET:'test-secret',GMAIL_REFRESH_TOKEN:'test-refresh'};
-const message = {from:'Adaptive Sports Near Me <hello@adapttolife.org>',to:'recipient@example.test',replyTo:'hello@adapttolife.org',subject:'Welcome — Zoë',text:'Hello Zoë',html:'<p>Hello Zoë</p>'};
+const env = {MAIL_TRANSPORT:'gmail',GMAIL_FROM:'hello@adaptivesportsnearme.com',GMAIL_CLIENT_ID:'test-client',GMAIL_CLIENT_SECRET:'test-secret',GMAIL_REFRESH_TOKEN:'test-refresh'};
+const message = {from:'Adaptive Sports Near Me <hello@adaptivesportsnearme.com>',to:'recipient@example.test',replyTo:'hello@adaptivesportsnearme.com',subject:'Welcome — Zoë',text:'Hello Zoë',html:'<p>Hello Zoë</p>'};
 async function mocked(fn, run) { const old=globalThis.fetch;globalThis.fetch=fn;try {await run();}finally {globalThis.fetch=old;} }
 
 test('Gmail refresh + send uses expected endpoints, MIME and records provider acceptance', async () => {
@@ -14,7 +14,7 @@ test('Gmail refresh + send uses expected endpoints, MIME and records provider ac
   assert.equal(new URLSearchParams(calls[0][1].body).get('grant_type'),'refresh_token');
   assert.equal(calls[1][0],'https://gmail.googleapis.com/gmail/v1/users/me/messages/send');
   const mime=Buffer.from(JSON.parse(calls[1][1].body).raw,'base64url').toString();
-  assert.match(mime,/From: =\?UTF-8\?B\?.+ <hello@adapttolife.org>/);assert.match(mime,/multipart\/alternative/);
+  assert.match(mime,/From: =\?UTF-8\?B\?.+ <hello@adaptivesportsnearme.com>/);assert.match(mime,/multipart\/alternative/);
   assert.ok(mime.includes(Buffer.from('Hello Zoë').toString('base64')));
  });
 });

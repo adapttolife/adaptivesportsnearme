@@ -1,8 +1,8 @@
 import { sendMail } from './mail-transport.js';
 // Transactional mail through the explicitly selected transport. Gmail is opt-in
 // and fails closed; the cfSend name is retained for caller compatibility.
-export const HOUSE_FROM = "Adaptive Sports Near Me <hello@adapttolife.org>";
-export const HOUSE_REPLY = "hello@adapttolife.org";
+export const HOUSE_FROM = "Adaptive Sports Near Me <hello@adaptivesportsnearme.com>";
+export const HOUSE_REPLY = "hello@adaptivesportsnearme.com";
 
 export async function cfSend(env, message) {
   return sendMail(env, message);

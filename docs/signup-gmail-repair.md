@@ -20,7 +20,7 @@ This is an ASNM contribution based on `staging` at `b3cc1ab`, not a direct-to-ma
 
 `wrangler.json` now names the observed live app Worker (`adaptivesportsnearme`), the Adapt To Life account, and the current database identifiers. Its staging environment and `wrangler.preview.json` use the staging D1 database, **not the production gate database**. The preview remains `asnm-preview`; there is no new preview fleet. `wrangler.gate.json` owns only the already-existing subscription routes and its ten-minute notification sweep.
 
-Every candidate lane opts into Gmail with `MAIL_TRANSPORT=gmail` and `GMAIL_FROM=hello@adapttolife.org`. These non-secret variables do not grant send authority. Provision these as Worker secrets only after an approved sender authorization:
+Every candidate lane opts into Gmail with `MAIL_TRANSPORT=gmail` and `GMAIL_FROM=hello@adaptivesportsnearme.com`. These non-secret variables do not grant send authority. Provision these as Worker secrets only after an approved sender authorization:
 
 - `GMAIL_CLIENT_ID`
 - `GMAIL_CLIENT_SECRET`

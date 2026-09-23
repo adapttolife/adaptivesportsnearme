@@ -31,7 +31,7 @@ test('new signup captures fields durably, suppresses beehiiv welcome and sends o
  const body=JSON.parse(x.posts()[0].init.body);assert.equal(body.reactivate_existing,false);assert.equal(body.send_welcome_email,false);
  assert.deepEqual(body.custom_fields,[{name:'First Name',value:'Zoë'},{name:'Beta Tester',value:'true'}]);assert.deepEqual(body.automation_ids,[]);
  const rows=x.sqlite.prepare('SELECT * FROM intake').all();assert.equal(rows.length,1);assert.equal(rows[0].email,'person@example.test');assert.deepEqual(JSON.parse(rows[0].payload),{name:'Zoë',beta:true});
- assert.equal(x.mail.filter(m=>m.to==='person@example.test').length,1);assert.equal(x.mail.filter(m=>m.to==='hello@adapttolife.org').length,1);
+ assert.equal(x.mail.filter(m=>m.to==='person@example.test').length,1);assert.equal(x.mail.filter(m=>m.to==='hello@adaptivesportsnearme.com').length,1);
  assert.equal(x.state()[0].state,'sent');assert.equal(x.sqlite.prepare('SELECT count(*) AS n FROM newsletter_send_receipts').get().n,1);
  const again=await safeNewsletterSubscribe(x.env,'person@example.test','repeat',{beta:false});assert.equal(again.existing,true);assert.equal(x.posts().length,1);assert.equal(x.mail.length,2);
 }));
@@ -59,7 +59,7 @@ test('accepted welcome with lost receipt persistence stays reviewable and is not
  await safeNewsletterSubscribe(x.env,'person@example.test','repeat');assert.equal(x.mail.filter(m=>m.to==='person@example.test').length,1);
 }));
 test('full newsletter flow uses Gmail for welcome and house notification, not Cloudflare',async()=>run({},async x=>{
- Object.assign(x.env,{MAIL_TRANSPORT:'gmail',GMAIL_FROM:'hello@adapttolife.org',GMAIL_CLIENT_ID:'fixture',GMAIL_CLIENT_SECRET:'fixture',GMAIL_REFRESH_TOKEN:'fixture'});
+ Object.assign(x.env,{MAIL_TRANSPORT:'gmail',GMAIL_FROM:'hello@adaptivesportsnearme.com',GMAIL_CLIENT_ID:'fixture',GMAIL_CLIENT_SECRET:'fixture',GMAIL_REFRESH_TOKEN:'fixture'});
  let sends=0;globalThis.fetch=async(url,init)=>{if(url.includes('oauth2.googleapis.com'))return Response.json({access_token:'fixture',token_type:'Bearer'});if(url.includes('gmail.googleapis.com')){sends++;return Response.json({id:'gmail-fixture-'+sends});}return x.network(url,init);};
  const result=await safeNewsletterSubscribe(x.env,'person@example.test','x');await result.welcomeJob;
  assert.equal(sends,2);assert.equal(x.mail.length,0);assert.equal(x.state()[0].state,'sent');assert.equal(x.sqlite.prepare('SELECT provider FROM newsletter_send_receipts').get().provider,'gmail');
