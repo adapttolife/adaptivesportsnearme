@@ -28,8 +28,8 @@ The default branch on GitHub stays `main`. That is on purpose. It does not mean 
 
 ## Tester vs live deploys
 
-- Staging worker: `asnm-staging` at the tester URL, database `asnm-db-staging`.
-- Production worker: `asnm` at adaptivesportsnearme.com, database `asnm-db`. **Do not deploy this.**
+- Staging worker: `asnm-staging` at the tester URL, database `asnm-db-staging` for both `DB` and `INTAKE`; other services use production.
+- Production worker: `adaptivesportsnearme` at adaptivesportsnearme.com, database `asnm-db`. **Do not deploy this.**
 
 Pushing `main` deploys production. Students work through `staging` and must not push to `main` or deploy the production worker.
 
@@ -47,8 +47,11 @@ Discover is those scripts. It proposes into the tester review pile. A person sti
 
 ## Cron jobs
 
-The worker already has cron jobs (validate and enrich) on tester and on live. They propose; they should not silently rewrite public listings. Do not add a discover cron that writes live.
+Only production runs scheduled maintenance. Staging and preview export HTTP only and have no cron triggers. They propose; they should not silently rewrite public listings. Do not add a discover cron that writes live.
 
 ## If you are unsure
 
-If a command mentions `asnm-db` without `-staging` or `adaptivesportsnearme.com`, it is the live site. Stop.
+The staging website and directory tools use `asnm-db-staging`. Database changes
+stay there, but email, newsletter subscriptions, and Airtable actions use live
+production services and have real effects. Check the target before running a
+data-maintenance command.

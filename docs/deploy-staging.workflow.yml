@@ -32,7 +32,7 @@ jobs:
         run: |
           echo "This workflow deploys staging only."
           echo "It will never wrangler-deploy the production worker (asnm)."
-          echo "It will never write D1 asnm-db."
+          echo "Staging keeps asnm-db-staging for DB and INTAKE; other services use production."
 
       - name: Check for Cloudflare secrets
         env:

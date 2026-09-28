@@ -1,6 +1,6 @@
 {
   "name": "asnm-preview",
-  "main": "src/index.js",
+  "main": "src/staging.js",
   "workers_dev": true,
   "preview_urls": true,
   "routes": [],
@@ -14,7 +14,7 @@
     "AIRTABLE_BASE_ID": "apphZsPGanzJ5xyl7",
     "AIRTABLE_INBOX_TABLE_ID": "tblBcgV7oQ9Q3q34L",
     "ENV_NAME": "preview",
-    "PRELAUNCH": "true",
+    "PRELAUNCH": "false",
     "BEEHIIV_PUBLICATION_ID": "pub_fb930d38-568a-4d98-b9d2-5f403d117a00",
     "MAIL_TRANSPORT": "gmail",
     "GMAIL_FROM": "hello@adaptivesportsnearme.com",
@@ -32,7 +32,11 @@
       "database_id": "d3f67da7-60a3-44b6-9215-28665492d3f9"
     }
   ],
-  "send_email": [],
+  "send_email": [
+    {
+      "name": "SEND_EMAIL"
+    }
+  ],
   "triggers": {
     "crons": []
   },

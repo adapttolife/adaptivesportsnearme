@@ -59,7 +59,7 @@
   "env": {
     "staging": {
       "name": "asnm-staging",
-      "main": "src/index.js",
+      "main": "src/staging.js",
       "workers_dev": true,
       "preview_urls": true,
       "routes": [],

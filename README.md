@@ -20,10 +20,11 @@ scripts/pg-to-d1.py    one-time migration: local Postgres → cleaned SQL → D1
 wrangler.json          production deployment plus named staging environment
 ```
 
-**Data plane:** two D1 databases — `asnm-db` (prod) and `asnm-db-staging`. Same schema,
-seeded identically from the asnm Postgres (2,095 raw orgs → 1,544 after dropping scraped
-junk rows and merging duplicates). Provenance (22 sources + junction), 575 link checks and
-the review queue carried over.
+**Data plane:** staging and the dedicated preview retain `asnm-db-staging` for
+both `DB` and `INTAKE`. Production uses `asnm-db` and `atl-intake`. Staging and
+preview use live production email, newsletter, and Airtable services; external
+actions have real effects while directory, profile, and intake database writes
+stay in the staging database.
 
 **Core invariant (kept from the original Postgres design):** pipeline lanes *propose*
 changes into `review_queue`; a human approves via `/api/admin/queue/:id` before anything
@@ -32,12 +33,12 @@ the freshness score — half-life 45 days, computed in the Worker).
 
 **Environments:**
 
-| | prod (`asnm`) | staging (`asnm-staging`) |
+| | prod (`adaptivesportsnearme`) | staging (`asnm-staging`) |
 |---|---|---|
 | URL | adaptivesportsnearme.com | asnm-staging.adapt-to-life.workers.dev |
 | Gate | `PRELAUNCH=true` (teaser + modal) | `PRELAUNCH=false` (full directory) |
-| D1 | asnm-db | asnm-db-staging |
-| Crons | validate 2h / enrich 20min | same |
+| D1 | asnm-db + atl-intake | asnm-db-staging (DB + INTAKE) |
+| Crons | validate every 2h / dispatch hourly | None (HTTP-only entrypoint) |
 | Deploys from | `main`, explicit, locked | `staging` |
 
 **Branch model (Fall 2026):**
@@ -61,7 +62,16 @@ Named environments remain available for deliberate previews:
 npx wrangler deploy --env staging
 ```
 
-Production stays gated (`PRELAUNCH=true`).
+Production stays gated (`PRELAUNCH=true`). Staging and `wrangler.preview.json`
+serve the full directory (`PRELAUNCH=false`) through `src/staging.js`, which
+exports only `fetch`. Both have empty cron lists; production keeps its schedules.
+
+The staging and preview Workers remain separate Worker identities. Their runtime
+secrets (Gmail, Beehiiv, Airtable, profile signing, and admin credentials) must be
+configured with the corresponding production service credentials; Wrangler vars
+and D1 bindings do not copy secrets between Workers. Local `.dev.vars` is not a
+remote secret deployment. Existing authentication, validation, and rate limits
+remain in effect. No databases are created or migrated by this configuration.
 
 ## Secrets (per worker, via `wrangler secret put`)
 
