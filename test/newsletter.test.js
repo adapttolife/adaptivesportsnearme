@@ -26,6 +26,23 @@ function setup(options={}) {
 }
 async function run(options,fn){const x=setup(options),old=globalThis.fetch;globalThis.fetch=x.network;try{await fn(x);}finally{globalThis.fetch=old;x.sqlite.close();}}
 
+test('legacy lookup denial reports its stage and status without exposing provider data',async t=>run({},async x=>{
+ const logs=[];const original=console.error;console.error=(...args)=>{if(args[0]==='Newsletter signup failed closed')logs.push(args);else original(...args);};t.after(()=>{console.error=original;});
+ globalThis.fetch=async(url,init)=>url.includes(PUBLICATION)?x.network(url,init):new Response('person@example.test test-key',{status:403});
+ const result=await safeNewsletterSubscribe(x.env,'person@example.test','x');
+ assert.equal(result.status,502);assert.equal(x.state().length,0);assert.equal(x.posts().length,0);
+ assert.deepEqual(logs,[['Newsletter signup failed closed',{stage:'legacy-publication-lookup',providerStatus:403,reason:'operation-failed'}]]);
+}));
+
+test('missing intake schema reports capture failure without logging bound email or secrets',async t=>run({},async x=>{
+ const logs=[];const original=console.error;console.error=(...args)=>{if(args[0]==='Newsletter signup failed closed')logs.push(args);else original(...args);};t.after(()=>{console.error=original;});
+ x.sqlite.exec('DROP TABLE intake_delivery_claims');
+ const result=await safeNewsletterSubscribe(x.env,'person@example.test','x');
+ assert.equal(result.status,502);assert.equal(x.state().length,0);assert.equal(x.posts().length,0);
+ assert.equal(x.sqlite.prepare('SELECT count(*) AS n FROM intake').get().n,0);
+ assert.deepEqual(logs,[['Newsletter signup failed closed',{stage:'intake-capture',providerStatus:null,reason:'database-schema-missing'}]]);
+}));
+
 test('new signup captures fields durably, suppresses beehiiv welcome and sends one custom welcome + notification',async()=>run({},async x=>{
  const r=await safeNewsletterSubscribe(x.env,' Person@Example.test ','campaign',{name:'Zoë',beta:true});assert.equal(r.ok,true);await r.welcomeJob;
  const body=JSON.parse(x.posts()[0].init.body);assert.equal(body.reactivate_existing,false);assert.equal(body.send_welcome_email,false);

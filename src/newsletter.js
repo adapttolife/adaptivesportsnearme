@@ -22,8 +22,12 @@ export async function safeNewsletterSubscribe(env, input, campaign, extra = {}) 
   const beta = extra.beta === true;
   const headers = { Authorization: `Bearer ${env.BEEHIIV_API_KEY}`, 'Content-Type': 'application/json' };
   const root = `https://api.beehiiv.com/v2/publications/${PUBLICATION}/subscriptions`;
+  let stage = 'current-publication-lookup';
+  let providerStatus = null;
   async function lookup(pub) {
+    providerStatus = null;
     const r = await fetch(`https://api.beehiiv.com/v2/publications/${pub}/subscriptions/by_email/${encodeURIComponent(email)}?expand[]=newsletter_lists`, { headers, signal: AbortSignal.timeout(10000) });
+    providerStatus = r.status;
     if (r.status === 404) return null;
     if (!r.ok) throw new Error('Subscription lookup failed');
     const sub = (await r.json()).data;
@@ -35,23 +39,29 @@ export async function safeNewsletterSubscribe(env, input, campaign, extra = {}) 
     const old = await lookup(PUBLICATION);
     // Existing consent is authoritative. Never reactivate or resend on repeat.
     if (old) return acceptedStates.includes(old.status) ? { ok: true, existing: true } : suppressed;
+    stage = 'legacy-publication-lookup';
     const candidate = await lookup(LEGACY);
     const legacy = candidate?.utm_source === 'asnm-prelaunch' ? candidate : null;
     if (legacy && legacy.status !== 'active') return suppressed;
+    stage = 'claim-key';
+    providerStatus = null;
     key = Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(PUBLICATION + '\n' + email))), x => x.toString(16).padStart(2, '0')).join('');
     const intakeId = 'newsletter:' + key;
     const now = new Date().toISOString();
     // Both inserts are one D1 transaction. A repeat/concurrent request cannot
     // rewrite captured answers or manufacture a second house notification.
+    stage = 'intake-capture';
     await db.batch([
       db.prepare("INSERT OR IGNORE INTO newsletter_delivery_claims (claim_key,publication_id,state) VALUES (?,?,'pending')").bind(key, PUBLICATION),
       db.prepare(`INSERT OR IGNORE INTO intake (id,received_at,site,kind,name,email,summary,payload,source,is_canary) VALUES (?,?,'adaptivesportsnearme.com','newsletter',?,?,?,?,?,0)`)
         .bind(intakeId, now, name || null, email, 'ASNM newsletter signup', JSON.stringify({ name, beta }), campaign || 'asnm-prelaunch'),
       db.prepare("INSERT OR IGNORE INTO intake_delivery_claims (intake_id,state) VALUES (?,'pending')").bind(intakeId),
     ]);
+    stage = 'creation-claim';
     const claim = await db.prepare("UPDATE newsletter_delivery_claims SET state='creating' WHERE claim_key=? AND state='pending' RETURNING claim_key").bind(key).first();
     if (!claim) return { ...fail, status: 409, error: 'This signup is already being processed. Please try again later.' };
     const custom_fields = beehiivCustomFields({name,beta});
+    stage = 'subscription-create';
     const res = await fetch(root, {
       method: 'POST', headers, signal: AbortSignal.timeout(10000),
       body: JSON.stringify({ email, reactivate_existing: false, send_welcome_email: false,
@@ -59,10 +69,13 @@ export async function safeNewsletterSubscribe(env, input, campaign, extra = {}) 
         double_opt_override: 'not_set', utm_source: 'asnm-prelaunch', utm_medium: 'website',
         utm_campaign: campaign, referring_site: 'adaptivesportsnearme.com', custom_fields }),
     });
+    providerStatus = res.status;
     if (!res.ok) throw new Error('Subscription creation rejected');
     const sub = (await res.json()).data;
     if (!sub?.id || typeof sub.status !== 'string') throw new Error('Invalid creation response');
     const state = legacy ? 'legacy-no-welcome' : extra.noWelcome ? 'no-welcome-requested' : 'awaiting-validation';
+    stage = 'subscription-record';
+    providerStatus = null;
     await db.prepare('UPDATE newsletter_delivery_claims SET subscription_id=?,state=? WHERE claim_key=?').bind(sub.id, state, key).run();
     const welcomeJob = (async () => {
       if (legacy || extra.noWelcome) return;
@@ -98,11 +111,19 @@ export async function safeNewsletterSubscribe(env, input, campaign, extra = {}) 
     // Neither correspondence path holds the other. Capture already committed.
     const background = Promise.allSettled([welcomeJob, notifyIntake(env, intakeId)]);
     return { ok: true, existing: !!legacy, welcomeJob: background };
-  } catch {
+  } catch (error) {
+    // Log fixed diagnostic categories only: raw exceptions can contain PII,
+    // request URLs, credentials, SQL bindings, or provider response bodies.
+    const message = String(error?.message || '');
+    const reason = /no such table|no such column|has no column named/i.test(message) ? 'database-schema-missing'
+      : /constraint failed/i.test(message) ? 'database-constraint'
+      : error?.name === 'TimeoutError' ? 'timeout'
+      : error?.name === 'SyntaxError' ? 'invalid-json'
+      : 'operation-failed';
+    console.error('Newsletter signup failed closed', { stage, providerStatus, reason });
     if (key) {
       try { await db.prepare("UPDATE newsletter_delivery_claims SET state='needs-review' WHERE claim_key=? AND state='creating'").bind(key).run(); } catch { /* creating remains visible */ }
     }
-    console.error('Newsletter signup failed closed');
     return fail;
   }
 }
