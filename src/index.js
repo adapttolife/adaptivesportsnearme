@@ -55,8 +55,8 @@ const CRON_LANES = {
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
-    // Provider-generated version URLs inherit production bindings. They are not
-    // isolated test lanes. Never accept mutations through that alternate host.
+    // Versions uploaded with production config must not accept preview mutations.
+    // Staging uploads use ENV_NAME=staging and the staging database bindings.
     if (env.ENV_NAME === 'production' && !['GET','HEAD'].includes(request.method) &&
         !['adaptivesportsnearme.com','www.adaptivesportsnearme.com'].includes(url.hostname)) {
       return json({ok:false,error:'This preview is read-only. Use the isolated review environment.'},403);

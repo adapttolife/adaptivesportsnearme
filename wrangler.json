@@ -58,7 +58,7 @@
   },
   "env": {
     "staging": {
-      "name": "asnm-staging",
+      "name": "adaptivesportsnearme",
       "main": "src/staging.js",
       "workers_dev": true,
       "preview_urls": true,

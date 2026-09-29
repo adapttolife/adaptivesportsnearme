@@ -8,7 +8,7 @@ Students: start with [docs/STUDENTS.md](docs/STUDENTS.md). Short version:
 - Open a pull request **into `staging`**.
 - Feature/fix PRs never target `main`. Only the project lead opens a separately approved `staging` → `main` release PR after staging acceptance.
 - Never deploy production (`asnm`). Never write `asnm-db`. Live public count stays 1,544.
-- Tester: https://asnm-staging.adapt-to-life.workers.dev
+- Tester: https://staging-adaptivesportsnearme.adapt-to-life.workers.dev
 - Live (locked): https://adaptivesportsnearme.com
 
 ATL and ASNM share this method: fetch current staging → feature/fix branch → PR into staging → separately reviewed staging-to-main release. Keep one current repair PR per repository and link cross-repository companions. Check `git merge-base --is-ancestor origin/staging HEAD` before review; preserve concurrent work.

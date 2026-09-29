@@ -33,9 +33,9 @@ the freshness score — half-life 45 days, computed in the Worker).
 
 **Environments:**
 
-| | prod (`adaptivesportsnearme`) | staging (`asnm-staging`) |
+| | prod (`adaptivesportsnearme`) | staging version (`adaptivesportsnearme`) |
 |---|---|---|
-| URL | adaptivesportsnearme.com | asnm-staging.adapt-to-life.workers.dev |
+| URL | adaptivesportsnearme.com | staging-adaptivesportsnearme.adapt-to-life.workers.dev |
 | Gate | `PRELAUNCH=true` (teaser + modal) | `PRELAUNCH=false` (full directory) |
 | D1 | asnm-db + atl-intake | asnm-db-staging (DB + INTAKE) |
 | Crons | validate every 2h / dispatch hourly | None (HTTP-only entrypoint) |
@@ -55,23 +55,37 @@ outside the 11-photo launch set, state-centroid map pins marked `state-level`.
 
 ## Deploy
 
-Cloudflare Workers Builds deploys the production worker from `main` using `wrangler.json`.
-Named environments remain available for deliberate previews:
+One application Worker, `adaptivesportsnearme`, serves the deployed production version
+and an uploaded staging version. In its Cloudflare Settings > Builds configure:
+
+- Production branch: `main`.
+- Production deploy command: `npx wrangler deploy --config wrangler.json`.
+- Preview branch: `staging` only (so other branches cannot move the staging alias).
+- Preview command: `npx wrangler versions upload --config wrangler.preview.json --preview-alias staging`.
+
+The preview URL is https://staging-adaptivesportsnearme.adapt-to-life.workers.dev.
+An equivalent manual upload from the staging checkout is:
 
 ```
-npx wrangler deploy --env staging
+npx wrangler versions upload --env staging --preview-alias staging
 ```
 
-Production stays gated (`PRELAUNCH=true`). Staging and `wrangler.preview.json`
-serve the full directory (`PRELAUNCH=false`) through `src/staging.js`, which
-exports only `fetch`. Both have empty cron lists; production keeps its schedules.
+Both configurations explicitly target the same Worker name. Use `versions upload`
+for staging; `wrangler deploy --env staging` would replace the production deployment
+with staging code and bindings. Release production from `main` using production config,
+not by promoting a staging-configured version.
 
-The staging and preview Workers remain separate Worker identities. Their runtime
-secrets (Gmail, Beehiiv, Airtable, profile signing, and admin credentials) must be
-configured with the corresponding production service credentials; Wrangler vars
-and D1 bindings do not copy secrets between Workers. Local `.dev.vars` is not a
-remote secret deployment. Existing authentication, validation, and rate limits
-remain in effect. No databases are created or migrated by this configuration.
+Production stays gated (`PRELAUNCH=true`). Staging uses `ENV_NAME=staging`,
+`PRELAUNCH=false`, and `asnm-db-staging` for both `DB` and `INTAKE`. Its entrypoint
+exports only `fetch`. Version uploads do not update the Worker's routes or cron
+triggers; those remain managed by the production deployment.
+
+Verify the uploaded version has the runtime secrets needed by Beehiiv, Gmail,
+Airtable, profile signing, and admin authentication. Build variables and local
+`.dev.vars` files are not runtime secrets. No database schema is applied by an
+upload; newsletter capture requires `db/intake-schema.sql` in the staging database.
+The existing `asnm-gate` config is a separate production signup route and is not
+part of the staging preview setup.
 
 ## Secrets (per worker, via `wrangler secret put`)
 

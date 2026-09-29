@@ -1,3 +1,4 @@
+# Historical inactive stub. Current Workers Builds settings are in README.md#deploy.
 # Staging-only. Never deploys the production worker (asnm).
 # Cloudflare secrets are not on this repo yet (gh secret list is empty),
 # so this workflow is a documented dry stub. It will not invent tokens
@@ -6,8 +7,8 @@
 #
 # When those secrets are added by someone with account access (not a
 # student guessing, not Alec being asked for a token in chat):
-#   - this job can call `wrangler deploy --env staging`
-#   - it must still refuse a deploy without --env staging
+#   - this job can call `wrangler versions upload --env staging --preview-alias staging`
+#   - it must only upload a version, never deploy it
 #   - it must never run `wrangler deploy` for production / asnm / asnm-db
 
 name: Deploy staging (stub)
@@ -46,5 +47,5 @@ jobs:
             exit 0
           fi
           echo "Secrets exist, but this stub still does not deploy."
-          echo "Wire wrangler deploy --env staging here only after a human review."
+          echo "Wire wrangler versions upload --env staging --preview-alias staging here only after a human review."
           echo "Production deploy must not be added to this file."
