@@ -241,7 +241,10 @@ async function handleSubscribe(request, env, ctx) {
   const name = str(data.nm).slice(0, 60);
   const beta = parseBetaFlag(data.beta);
   const result = await safeNewsletterSubscribe(env, email, source, { name, beta });
-  if (!result.ok) return json({ ok: false, error: result.error }, result.status);
+  if (!result.ok) return json({
+    ok: false, error: result.error,
+    ...(env.ENV_NAME === 'staging' && result.diagnostic ? { diagnostic: result.diagnostic } : {}),
+  }, result.status);
   if (result.welcomeJob) {
     if (ctx?.waitUntil) ctx.waitUntil(result.welcomeJob);
     else await result.welcomeJob;

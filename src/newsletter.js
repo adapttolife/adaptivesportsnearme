@@ -124,6 +124,10 @@ export async function safeNewsletterSubscribe(env, input, campaign, extra = {}) 
     if (key) {
       try { await db.prepare("UPDATE newsletter_delivery_claims SET state='needs-review' WHERE claim_key=? AND state='creating'").bind(key).run(); } catch { /* creating remains visible */ }
     }
-    return fail;
+    // Aliased version URLs do not expose Workers Logs. Return only the fixed
+    // diagnostic categories in staging; never expose raw exception messages.
+    return env.ENV_NAME === 'staging'
+      ? { ...fail, diagnostic: { stage, providerStatus, reason } }
+      : fail;
   }
 }

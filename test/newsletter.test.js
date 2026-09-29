@@ -26,6 +26,25 @@ function setup(options={}) {
 }
 async function run(options,fn){const x=setup(options),old=globalThis.fetch;globalThis.fetch=x.network;try{await fn(x);}finally{globalThis.fetch=old;x.sqlite.close();}}
 
+for(const ENV_NAME of ['staging','production'])test(`${ENV_NAME} signup response scopes safe diagnostics correctly`,async()=>run({},async x=>{
+ x.env.ENV_NAME=ENV_NAME;
+ globalThis.fetch=async(url,init)=>url.includes(PUBLICATION)?x.network(url,init):new Response('private person@example.test test-key',{status:403});
+ const response=await worker.fetch(new Request('https://adaptivesportsnearme.com/api/subscribe',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({em:'person@example.test'})}),x.env,{});
+ assert.equal(response.status,502);
+ const body=await response.json();
+ const expected={ok:false,error:'Sign-up is temporarily unavailable. Please try again soon.'};
+ if(ENV_NAME==='staging')expected.diagnostic={stage:'legacy-publication-lookup',providerStatus:403,reason:'operation-failed'};
+ assert.deepEqual(body,expected);
+ assert.equal(x.posts().length,0);assert.equal(x.state().length,0);
+}));
+
+test('staging response diagnoses missing capture tables without exposing raw database errors',async()=>run({},async x=>{
+ x.env.ENV_NAME='staging';x.sqlite.exec('DROP TABLE intake_delivery_claims');
+ const response=await worker.fetch(new Request('https://staging-adaptivesportsnearme.adapt-to-life.workers.dev/api/subscribe',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({em:'person@example.test'})}),x.env,{});
+ assert.equal(response.status,502);
+ assert.deepEqual((await response.json()).diagnostic,{stage:'intake-capture',providerStatus:null,reason:'database-schema-missing'});
+}));
+
 test('legacy lookup denial reports its stage and status without exposing provider data',async t=>run({},async x=>{
  const logs=[];const original=console.error;console.error=(...args)=>{if(args[0]==='Newsletter signup failed closed')logs.push(args);else original(...args);};t.after(()=>{console.error=original;});
  globalThis.fetch=async(url,init)=>url.includes(PUBLICATION)?x.network(url,init):new Response('person@example.test test-key',{status:403});
