@@ -711,6 +711,29 @@ select {
   box-shadow: var(--shadow-sm);
 }
 
+.seg,
+.gate-tabs {
+  position: relative;
+  isolation: isolate;
+}
+
+.seg-indicator {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: -1;
+  pointer-events: none;
+  border-radius: var(--r-full);
+  background: var(--paper);
+  box-shadow: var(--shadow-sm);
+}
+
+.seg[data-sliding] > button.on,
+.gate-tabs[data-sliding] > button.on {
+  background: transparent;
+  box-shadow: none;
+}
+
 .sortsel {
   height: 38px;
   border: 1px solid var(--line);
