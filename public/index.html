@@ -1065,11 +1065,19 @@ function ctaBand(){
   +'</div></section>';
 }
 
+function heroTitle(){
+  const sport=SPORTS.find(s=>s.key===state.sport);
+  return 'Your place in adaptive ' + (sport ? sport.label : 'sports') + '.';
+}
+function heroSubtitle(){
+  const sport=SPORTS.find(s=>s.key===state.sport);
+  return 'Adaptive ' + (sport ? sport.label : 'sports') + ' programs, events, equipment and funding across the country. Search by where you are and what you want to play.';
+}
 function heroSection(){
   return '<section class="hero"><div class="wrap hero-in">'
     +'<p class="eyebrow">Find adaptive sports near you</p>'
-    +'<h1>Your place in adaptive sports.</h1>'
-    +'<p class="lede">Adaptive sports programs, events, equipment and funding across the country. Search by where you are and what you want to play.</p>'
+    +'<h1>'+esc(heroTitle())+'</h1>'
+    +'<p class="lede">'+esc(heroSubtitle())+'</p>'
     +'<div class="hsearch" role="search">'
       +'<button class="loc" id="hlocBtn" type="button" aria-label="Change location"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s7-5.7 7-11a7 7 0 1 0-14 0c0 5.3 7 11 7 11Z"/><circle cx="12" cy="10" r="2.5"/></svg><span>'+locLabel()+'</span></button>'
       +'<span class="sep"></span>'
@@ -1080,14 +1088,18 @@ function heroSection(){
 }
 function discover(){
   if(isFeedMode()) return heroSection()+catBar()+feedRows();
-  // Filtered / search view: no hero — keep the directory in focus so changing a
-  // sport refreshes results under the pinned category bar (Airbnb-style).
+  // Keep the hero above every sport/search view. Navigation scrolls to the
+  // results, so visitors can always scroll back up to the hero and its search.
   const list = state.see ? seeList() : filtered();
   const results = state.layout==='map'?mapLayout(list):state.layout==='list'?listLayout(list):cardGrid(list);
-  return catBar()+'<div class="wrap" id="main">'+toolbar(list)+filtersPanel()+'<div id="results">'+results+'</div></div>';
+  return heroSection()+catBar()+'<div class="wrap" id="main">'+toolbar(list)+filtersPanel()+'<div id="results">'+results+'</div></div>';
 }
 function renderResults(){
   if(state.section!=='discover') return;
+  const title=document.querySelector('.hero h1');
+  if(title) title.textContent=heroTitle();
+  const subtitle=document.querySelector('.hero .lede');
+  if(subtitle) subtitle.textContent=heroSubtitle();
   const list = state.see ? seeList() : filtered();
   const r=document.getElementById('results');
   if(r) r.innerHTML = state.layout==='map'?mapLayout(list):state.layout==='list'?listLayout(list):cardGrid(list);
@@ -1101,7 +1113,7 @@ function updateHeaderSearch(){
   const h=document.querySelector('.hdr'); if(h) h.classList.toggle('hide-search', hide);
 }
 function scrollToResults(){
-  const m=document.getElementById('main'); if(!m) return;
+  const m=document.getElementById('main')||document.querySelector('.feed'); if(!m) return;
   const hdr=document.querySelector('.hdr'); const cb=document.querySelector('.catbar');
   const off=(hdr?hdr.offsetHeight:64)+(cb?cb.offsetHeight:0)+12;
   const top=m.getBoundingClientRect().top+window.scrollY-off;
@@ -1576,7 +1588,9 @@ function filterChanged(){
     updateHeaderSearch();
     return;
   }
-  if(document.getElementById('results')){
+  if(isFeedMode()){
+    render(true);
+  } else if(document.getElementById('results')){
     syncControls();
     renderResults();
     updateHeaderSearch();
@@ -1632,7 +1646,7 @@ document.addEventListener('click',e=>{
     e.preventDefault(); state.section='grant'; state.grantId=t.getAttribute('data-grant'); state.programId=null; render(); return;
   }
   if(t.hasAttribute('data-seeall')){ e.preventDefault(); const v=t.getAttribute('data-seeall'); if(v==='beginner'){ state.see=null; if(DATA_LIVE){ state.cost='free'; } else { state.level='beginner'; } } else if(v==='free'){ state.see=null; state.cost='free'; } else if(v.indexOf('sport:')===0){ state.see=null; state.sport=v.slice(6); } else { state.see=v; } filterChanged(); return; }
-  if(t.hasAttribute('data-sport')){ e.preventDefault(); if(state.section!=='mapx') state.section='discover'; state.sport=t.getAttribute('data-sport'); state.see=null; filterChanged(); return; }
+  if(t.hasAttribute('data-sport')){ e.preventDefault(); if(state.section!=='mapx') state.section='discover'; state.sport=t.getAttribute('data-sport'); state.see=null; filterChanged(); if(state.section==='discover') scrollToResults(); return; }
   if(t.hasAttribute('data-layout')){ e.preventDefault(); state.layout=t.getAttribute('data-layout'); filterChanged(); return; }
   if(t.id==='filtBtn'){ e.preventDefault(); state.filtersOpen=!state.filtersOpen; const fp=document.querySelector('.filters'); if(fp){ fp.classList.toggle('open', state.filtersOpen); } else { render(true); } return; }
   if(t.hasAttribute('data-dist')){ state.dist=t.getAttribute('data-dist'); state.see=null; filterChanged(); return; }
@@ -2013,6 +2027,7 @@ Object.assign(state,DirectoryRoutes.read(new URL(location.href),SPORTS.map(s=>s.
 if(isZipQuery(state.q)) state.nearZip=state.q.trim();
 render();
 routeReady=true;
+if(state.section==='discover'&&state.sport!=='all') requestAnimationFrame(scrollToResults);
 if(BOOT_QP.get('add')==='program') openGate('program');
 /* Deep links for the About panel, so the server-rendered footers can point at the
    same three sections the app's own footer opens. */
