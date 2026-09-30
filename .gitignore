@@ -17,3 +17,5 @@ tools/directory/queue-snapshot.json
 tools/directory/recheck-validate.json
 tools/directory/validate-404s.json
 tools/directory/twin-review.json
+
+tmp

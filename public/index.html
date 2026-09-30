@@ -28,6 +28,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/styles.css">
+<script src="https://cdn.userway.org/widget.js" data-account="sFogOSJsXe"></script>
 </head>
 <body>
 <a class="skip" href="#view">Skip to results</a>
@@ -410,7 +411,7 @@ function catBar(){
   const browse='<span class="cat-sep" aria-hidden="true"></span>'
     +(DATA_LIVE?'<button class="cat cat-browse'+(state.section==='mapx'?' on':'')+'" data-mapx>'+NAVICON.map+'<span>Map view</span></button>':'')
     +'<button class="cat cat-browse" data-section="database">'+NAVICON.grid+'<span>Browse all</span></button>';
-  return '<div class="catbar"><div class="wrap catbar-in"><div class="cats">'+all+items+browse+'</div></div></div>';
+  return '<div class="catbar"><div class="wrap catbar-in"><div class="cats">'+all+items+'</div>'+browse+'</div></div>';
 }
 function locLabel(){
   if(state.nearZip) return state.nearZip;
