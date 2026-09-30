@@ -611,7 +611,7 @@ select {
   width: 1px;
   height: 30px;
   background: var(--line);
-  margin: 0 8px;
+  margin: 0 8px 0 16px;
 }
 
 /* ============================ TOOLBAR ============================ */
@@ -824,7 +824,7 @@ select {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  margin-bottom: 1em;
+  margin-bottom: min(1em, 4px);
 }
 
 .frow-titlerow {
@@ -4218,6 +4218,16 @@ a.evrow:hover {
   .evrow {
     gap: 12px;
     padding: 12px 14px;
+  }
+
+  .catbar-in {
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+  }
+
+  .catbar-in .cat-sep {
+    display: none !important;
   }
 }
 
