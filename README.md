@@ -5,6 +5,29 @@ Cloudflare Worker with a **D1 data plane** (1,544 real organizations), a cron ma
 pipeline, and an installable PWA. Production stays a gated pre-launch teaser; staging runs
 the full ungated directory on real data.
 
+## Local staging preview
+
+From the repository root, run:
+
+```sh
+npm run dev
+```
+
+Open http://127.0.0.1:8787. `npm run dev:staging` and `npm run preview`
+are aliases for the same local server. All three use `wrangler.preview.json`
+(`ENV_NAME=staging`, `PRELAUNCH=false`) and Wrangler 4. On first use, `npx`
+may ask to download Wrangler. Stop the server with Ctrl+C.
+
+Wrangler runs the Worker and D1 locally, with database state persisted in
+`.wrangler/state`. This does not download the hosted staging database or publish
+a Worker version. A fresh local database has no directory data; the frontend
+uses its sample listings when the directory API cannot load data.
+
+For form integration testing, put the necessary runtime secrets in the ignored
+`.dev.vars` file. External Beehiiv, Gmail, and Airtable requests still use real
+services when credentials are supplied; `--local` only keeps Cloudflare bindings
+local. See [Wrangler local development](https://developers.cloudflare.com/workers/local-development/).
+
 ## Architecture
 
 ```

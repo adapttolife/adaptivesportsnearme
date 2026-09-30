@@ -19,3 +19,4 @@ tools/directory/validate-404s.json
 tools/directory/twin-review.json
 
 tmp
+.vscode/

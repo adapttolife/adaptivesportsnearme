@@ -3,6 +3,9 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "dev": "npx wrangler dev --env staging",
+    "deploy:staging": "npx wrangler deploy --config wrangler.preview.json",
+    "preview": "npm run dev",
     "test": "node --test"
   }
 }
