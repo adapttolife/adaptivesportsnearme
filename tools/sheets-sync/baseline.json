@@ -1,0 +1,11 @@
+{
+  "worker": "asnm-sheets",
+  "serving_version": "39d1f52f-ed35-4074-84bb-1f0bf89a0312",
+  "source": "Exact recovered deployed modules; recovery baseline, not original unbundled source",
+  "sha256": {
+    "index.js": "491ed931b58f821e5cc4c4e7455568b468da90f9560bc56a1f6053031cbd1fba",
+    "staging-engine.js": "aaac5f340302146455485d73e7c21da5c9a6c44d6343bd29929b1a595bb93105"
+  },
+  "secrets_included": false,
+  "website_worker_changed": false
+}
