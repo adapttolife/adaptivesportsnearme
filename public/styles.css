@@ -728,6 +728,9 @@ select {
 
 /* filters panel */
 .filters {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
   background: var(--paper);
   border: 1px solid var(--line);
   border-radius: var(--r-lg);
@@ -745,23 +748,25 @@ select {
 }
 
 .filters.open {
-  max-height: 260px;
+  max-height: min(90vh, 1000px);
   opacity: 1;
   border-width: 1px;
   padding: 16px 18px;
   margin-bottom: 14px;
+  overflow-y: scroll;
 }
 
 .frow {
   display: flex;
-  flex-direction: column;
   align-items: flex-start;
   gap: 12px;
-  padding: 8px 0;
+  padding: 0 0 5px 0;
+  flex-wrap: wrap;
 }
 
 .frow + .frow {
   border-top: 1px solid var(--line2);
+  padding: 15px 0 0 0;
 }
 
 .frow > .flabel {
@@ -770,7 +775,7 @@ select {
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--faint);
-  width: 84px;
+  width: 100%;
   flex: 0 0 auto;
 }
 

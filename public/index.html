@@ -411,7 +411,7 @@ function milesBetween(aLat,aLng,bLat,bLng){
   return 2*3958.8*Math.asin(Math.min(1,Math.sqrt(a)));
 }
 function isZipQuery(q){ return /^\d{5}$/.test((q||'').trim()); }
-function filtered(){
+function filtered({ignoreCostDistance=false}={}){
   let list = PROGRAMS.slice();
   if(state.sport!=='all') list = list.filter(p=>p.sport===state.sport);
   const qraw=state.q.trim();
@@ -423,14 +423,14 @@ function filtered(){
       return Object.assign({},p,{dist});
     }).filter(p=>p.dist<=r);
   }
-  if(state.dist!=='any'){ const m={s:5,m:10,l:25}[state.dist]; list=list.filter(p=>p.dist==null||p.dist<=m); }
-  if(state.cost==='free') list=list.filter(p=>p.free);
+  if(!ignoreCostDistance && state.dist!=='any'){ const m={s:5,m:10,l:25}[state.dist]; list=list.filter(p=>p.dist!=null&&p.dist<=m); }
+  if(!ignoreCostDistance && state.cost==='free') list=list.filter(p=>p.free);
   if(state.level!=='any') list=list.filter(p=>!p.levels.length||p.levels.map(l=>l.toLowerCase()).includes(state.level));
   if(state.sort==='dist' || state.near) list.sort((a,b)=>(a.dist??1e9)-(b.dist??1e9)||(b.freshness??0)-(a.freshness??0));
   if(state.sort==='name') list.sort((a,b)=>a.name.localeCompare(b.name));
   return list;
 }
-function activeFilterCount(){ let n=0; if(!DATA_LIVE&&state.dist!=='any')n++; if(state.cost!=='any')n++; if(!DATA_LIVE&&state.level!=='any')n++; return n; }
+function activeFilterCount(){ let n=0; if(state.dist!=='any')n++; if(state.cost!=='any')n++; if(!DATA_LIVE&&state.level!=='any')n++; return n; }
 
 /* ============================ RENDER: DISCOVER ============================ */
 function catBar(){
@@ -479,13 +479,18 @@ function filtersPanel(){
   const d=(v,l)=>'<button class="chip'+(state.dist===v?' on':'')+'" data-dist="'+v+'">'+l+'</button>';
   const c=(v,l)=>'<button class="chip'+(state.cost===v?' on':'')+'" data-cost="'+v+'">'+l+'</button>';
   const lv=(v,l)=>'<button class="chip'+(state.level===v?' on':'')+'" data-level="'+v+'">'+l+'</button>';
-  // Live data has no distance or skill-level fields yet — showing those filters
-  // would be showing controls that do nothing. They return when the data does.
-  const dist=DATA_LIVE?'':'<div class="frow"><span class="flabel">Distance</span>'+d('any','Any')+d('s','Within 5 mi')+d('m','Within 10 mi')+d('l','Within 25 mi')+'</div>';
+  // Use the current sport/search scope before cost and distance restrictions.
+  // Keep a selected option available so an empty result can always be cleared.
+  const candidates=state.see?seeList():filtered({ignoreCostDistance:true});
+  const distances=[['s',5],['m',10],['l',25]].filter(([value,miles])=>
+    state.dist===value || candidates.some(p=>Number.isFinite(p.dist)&&p.dist>=0&&p.dist<=miles));
+  const dist=distances.length?'<div class="frow"><span class="flabel">Distance</span>'+d('any','Any')+distances.map(([value,miles])=>d(value,'Within '+miles+' mi')).join('')+'</div>':'';
+  const cost=candidates.some(p=>p.free)||state.cost==='free'
+    ? '<div class="frow"><span class="flabel">Cost</span>'+c('any','Any')+c('free','Free only')+'</div>' : '';
   const level=DATA_LIVE?'':'<div class="frow"><span class="flabel">Level</span>'+lv('any','Any')+lv('beginner','Beginner')+lv('intermediate','Intermediate')+lv('competitive','Competitive')+'</div>';
   return '<div class="filters'+(state.filtersOpen?' open':'')+'" id="filtPanel">'
     +dist
-    +'<div class="frow"><span class="flabel">Cost</span>'+c('any','Any')+c('free','Free only')+'</div>'
+    +cost
     +level
     +'</div>';
 }
@@ -1096,6 +1101,8 @@ function discover(){
 }
 function renderResults(){
   if(state.section!=='discover') return;
+  const panel=document.getElementById('filtPanel');
+  if(panel) panel.outerHTML=filtersPanel();
   const title=document.querySelector('.hero h1');
   if(title) title.textContent=heroTitle();
   const subtitle=document.querySelector('.hero .lede');
