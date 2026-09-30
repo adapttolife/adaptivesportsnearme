@@ -3593,6 +3593,9 @@ a.evrow:hover {
   margin-bottom: 12px;
 }
 
+.required-mark {
+  color: var(--orange, #b3261e);
+}
 .gfield label {
   display: block;
   font-size: 13px;

@@ -126,7 +126,7 @@
         <form id="notifyForm" novalidate>
           <input class="hp" type="text" name="company" tabindex="-1" autocomplete="off" aria-hidden="true">
           <div class="gfield"><label for="ntfName">First name</label><input id="ntfName" type="text" name="nm" placeholder="Alex" autocomplete="given-name" maxlength="60"></div>
-          <div class="gfield"><label for="ntfEmail">Email</label><input id="ntfEmail" type="email" name="em" placeholder="you@email.com" autocomplete="email" required></div>
+          <div class="gfield"><label for="ntfEmail">Email <span class="required-mark" aria-hidden="true">*</span></label><input id="ntfEmail" type="email" name="em" placeholder="you@email.com" autocomplete="email" required></div>
           <label class="gcheck" for="ntfBeta">
             <input id="ntfBeta" type="checkbox" name="beta" value="1">
             <span class="gcheck-box" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span>
@@ -142,14 +142,14 @@
         <p class="mb-15 lede">Run an adaptive sports program? Add it and we will feature it at launch.</p>
         <form id="programForm" novalidate>
           <input class="hp" type="text" name="company" tabindex="-1" autocomplete="off" aria-hidden="true">
-          <div class="gfield"><label for="pgName">Program name</label><input id="pgName" type="text" name="pn" required></div>
+          <div class="gfield"><label for="pgName">Program name <span class="required-mark" aria-hidden="true">*</span></label><input id="pgName" type="text" name="pn" required></div>
           <div class="gfield"><label for="pgOrg">Organization</label><input id="pgOrg" type="text" name="org"></div>
           <div class="gfield"><label for="pgSport">Sport</label><select id="pgSport" name="sport"><option value="">Choose a sport</option></select></div>
           <div class="grow2">
             <div class="gfield"><label for="pgCity">City</label><input id="pgCity" type="text" name="city"></div>
             <div class="gfield"><label for="pgState">State</label><input id="pgState" type="text" name="state"></div>
           </div>
-          <div class="gfield"><label for="pgEmail">Your email (required for confirmation)</label><input id="pgEmail" type="email" name="em" placeholder="you@email.com" autocomplete="email" required></div>
+          <div class="gfield"><label for="pgEmail">Your email <span class="required-mark" aria-hidden="true">*</span></label><input id="pgEmail" type="email" name="em" placeholder="you@email.com" autocomplete="email" required></div>
           <div class="gfield"><label for="pgNotes">Anything else</label><textarea id="pgNotes" name="notes" rows="2"></textarea></div>
           <div class="cf-turnstile" data-sitekey="0x4AAAAAADr2WPepRgjp8g-R" data-appearance="interaction-only"></div>
           <button class="gate-cta" type="submit">Submit program</button>
@@ -1470,7 +1470,7 @@ function profileCreateForm(){
     +'<form id="profileForm" novalidate>'
       +'<input class="hp" type="text" name="company" tabindex="-1" autocomplete="off" aria-hidden="true">'
       +'<div class="gfield"><label for="pfName">Name</label><input id="pfName" type="text" name="name" autocomplete="name"></div>'
-      +'<div class="gfield"><label for="pfEmail">Email</label><input id="pfEmail" type="email" name="em" placeholder="you@email.com" autocomplete="email" required></div>'
+      +'<div class="gfield"><label for="pfEmail">Email <span class="required-mark" aria-hidden="true">*</span></label><input id="pfEmail" type="email" name="em" placeholder="you@email.com" autocomplete="email" required></div>'
       +'<div class="gfield"><label for="pfState">State</label><select id="pfState" name="state">'+profileStateOptions('')+'</select></div>'
       +'<div class="gfield"><label>Sports you care about</label><div class="psports" id="pfSports">'+profileSportChips([])+'</div><input type="hidden" name="sports" value=""></div>'
       +'<div class="pcheck"><input id="pfNews" type="checkbox" name="newsletter"><label for="pfNews">Email me new programs and funding near me</label></div>'
@@ -1499,7 +1499,7 @@ function profileEditView(){
     +'<form id="profileEditForm" novalidate>'
       +'<input class="hp" type="text" name="company" tabindex="-1" autocomplete="off" aria-hidden="true">'
       +'<div class="gfield"><label for="peName">Name</label><input id="peName" type="text" name="name" value="'+esc(PROFILE.name)+'" autocomplete="name"></div>'
-      +'<div class="gfield"><label for="peEmail">Email</label><input id="peEmail" type="email" name="em" value="'+esc(PROFILE.email)+'" autocomplete="email" required></div>'
+      +'<div class="gfield"><label for="peEmail">Email <span class="required-mark" aria-hidden="true">*</span></label><input id="peEmail" type="email" name="em" value="'+esc(PROFILE.email)+'" autocomplete="email" required></div>'
       +'<div class="gfield"><label for="peState">State</label><select id="peState" name="state">'+profileStateOptions(PROFILE.state)+'</select></div>'
       +'<div class="gfield"><label>Sports you care about</label><div class="psports" id="peSports">'+profileSportChips(PROFILE.sports)+'</div><input type="hidden" name="sports" value="'+esc((PROFILE.sports||[]).join(','))+'"></div>'
       +'<div class="pcheck"><input id="peNews" type="checkbox" name="newsletter"'+(PROFILE.newsletter?' checked':'')+'><label for="peNews">Email me new programs and funding near me</label></div>'
