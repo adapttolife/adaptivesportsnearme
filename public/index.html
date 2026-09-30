@@ -248,7 +248,7 @@ const MAPPOS = {
   "waterski-clinic":{x:22,y:30},"goalball-club":{x:55,y:71},
 };
 const SPGRAD = {basketball:"g-warm",tennis:"g-sand",pickleball:"g-warm",rugby:"g-sand",football:"g-warm",baseball:"g-sand",cycling:"g-cool",sledhockey:"g-cool",skiing:"g-cool",waterskiing:"g-cool",goalball:"g-sand"};
-function iconSrc(key){ return "assets/sport-icons/"+key+".png"; }   // 3D transparent icons — category chips
+function iconSrc(key){ return "/assets/sport-icons/"+key+".png"; }   // 3D transparent icons — category chips
 function photoSrc(key){ return "/assets/sport-photos/"+key+".jpg"; } // square action photos — cards, hero, thumbs
 // The launch sports with a real action photo. Alec, 2026-09-15: cards show the
 // athlete, not the silhouette scene, so a photo wins and the scene is the fallback.
@@ -572,8 +572,8 @@ function loadMapLibre(){
   // vendored same-origin (assets/vendor/) so the service worker caches it and
   // the only third party involved is the tile server itself
   if(!MAPLIB) MAPLIB=new Promise((res,rej)=>{
-    const l=document.createElement('link'); l.rel='stylesheet'; l.href='assets/vendor/maplibre-gl.css'; document.head.appendChild(l);
-    const s=document.createElement('script'); s.src='assets/vendor/maplibre-gl.js';
+    const l=document.createElement('link'); l.rel='stylesheet'; l.href='/assets/vendor/maplibre-gl.css'; document.head.appendChild(l);
+    const s=document.createElement('script'); s.src='/assets/vendor/maplibre-gl.js';
     s.onload=()=>res(window.maplibregl); s.onerror=()=>rej(new Error('maplibre failed'));
     document.head.appendChild(s);
   });
