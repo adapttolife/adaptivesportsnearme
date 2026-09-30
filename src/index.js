@@ -1,4 +1,5 @@
 import { safeNewsletterSubscribe } from './newsletter.js';
+import { queueFormConfirmation } from './email.js';
 // Adaptive Sports Near Me — Worker entry.
 // Serves the static site (env.ASSETS), the D1-backed directory API, the admin
 // review surface, and the cron maintenance pipeline (validate + enrich lanes).
@@ -76,7 +77,7 @@ export default {
     }
     if (url.pathname === "/api/submit-program") {
       if (request.method !== "POST") return json({ ok: false, error: "Method not allowed" }, 405);
-      return handleSubmitProgram(request, env);
+      return handleSubmitProgram(request, env, ctx);
     }
     if (url.pathname === "/api/profile") {
       if (request.method === "POST") return handleProfileUpsert(request, env, ctx);
@@ -281,7 +282,7 @@ async function subscribeToBeehiiv(env, email, campaign, extra = {}) {
 }
 
 // ---- Program submission -> Airtable Agent Inbox ------------------------------
-async function handleSubmitProgram(request, env) {
+async function handleSubmitProgram(request, env, ctx) {
   const data = await readBody(request);
   if (data === null) return json({ ok: false, error: "Could not read your submission." }, 400);
 
@@ -300,8 +301,8 @@ async function handleSubmitProgram(request, env) {
   const notes = str(data.notes);
 
   if (!program) return json({ ok: false, error: "Please add the program name." }, 422);
-  if (email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
-    return json({ ok: false, error: "That email does not look right." }, 422);
+  if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+    return json({ ok: false, error: "Please enter a valid email so we can confirm your submission." }, 422);
   }
 
   if (!env.AIRTABLE_TOKEN || !env.AIRTABLE_BASE_ID || !env.AIRTABLE_INBOX_TABLE_ID) {
@@ -350,6 +351,8 @@ async function handleSubmitProgram(request, env) {
     console.error("Airtable error", res.status, await safeText(res));
     return json({ ok: false, error: "Could not save right now. Please try again soon." }, 502);
   }
+
+  await queueFormConfirmation(env, ctx, {kind:'program',email,program});
 
   // Also record in D1 (the directory's own data plane) — Airtable stays the team surface.
   if (env.DB) {
@@ -442,6 +445,7 @@ async function handleProfileUpsert(request, env, ctx) {
   }
 
   const sig = await signProfileId(id, env.PROFILE_SIGNING_KEY);
+  await queueFormConfirmation(env, ctx, {kind:isNew?'profile-created':'profile-updated',email});
   return new Response(JSON.stringify({ ok: true, id, isNew }), {
     status: isNew ? 201 : 200,
     headers: { "Content-Type": "application/json", "Cache-Control": "no-store", "Set-Cookie": serializeProfileCookie(id, sig) },

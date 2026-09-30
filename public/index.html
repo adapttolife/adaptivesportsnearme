@@ -149,7 +149,7 @@
             <div class="gfield"><label for="pgCity">City</label><input id="pgCity" type="text" name="city"></div>
             <div class="gfield"><label for="pgState">State</label><input id="pgState" type="text" name="state"></div>
           </div>
-          <div class="gfield"><label for="pgEmail">Your email</label><input id="pgEmail" type="email" name="em" placeholder="you@email.com" autocomplete="email"></div>
+          <div class="gfield"><label for="pgEmail">Your email (required for confirmation)</label><input id="pgEmail" type="email" name="em" placeholder="you@email.com" autocomplete="email" required></div>
           <div class="gfield"><label for="pgNotes">Anything else</label><textarea id="pgNotes" name="notes" rows="2"></textarea></div>
           <div class="cf-turnstile" data-sitekey="0x4AAAAAADr2WPepRgjp8g-R" data-appearance="interaction-only"></div>
           <button class="gate-cta" type="submit">Submit program</button>
@@ -1933,6 +1933,7 @@ document.getElementById('programForm').addEventListener('submit',async function(
   e.preventDefault(); const btn=this.querySelector('.gate-cta'); const msg=document.getElementById('programMsg');
   msg.textContent=''; msg.className='gate-msg';
   if(!(this.pn.value||'').trim()){ msg.textContent='Please add the program name.'; msg.className='gate-msg err'; return; }
+  if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test((this.em.value||'').trim())){ msg.textContent='Please enter a valid email so we can confirm your submission.'; msg.className='gate-msg err'; return; }
   btn.disabled=true; const lbl=btn.textContent; btn.textContent='Submitting...';
   const res=await postForm('/api/submit-program',this);
   if(res.ok){ paneDone('program','Thank you','We received your program and will be in touch before launch.'); }
