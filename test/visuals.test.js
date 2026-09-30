@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { listingVisual } from "../src/visuals.js";
+import { readdirSync } from "node:fs";
+import { listingVisual, SPORT_PHOTOS } from "../src/visuals.js";
 import { grantPageTemplate } from "../src/grant-page.js";
 import { programPageTemplate } from "../src/program-page.js";
 
@@ -9,16 +10,20 @@ test("listingVisual: real photo wins", () => {
   assert.deepEqual(v, { kind: "photo", src: "/photos/team.jpg" });
 });
 
-test("listingVisual: basketball/cycling/skiing use scenes", () => {
-  assert.deepEqual(listingVisual({ sport: "basketball" }, "program"), { kind: "scene", src: "/scenes/basketball-gym.jpg" });
-  assert.deepEqual(listingVisual({ sport: "cycling" }, "program"), { kind: "scene", src: "/scenes/cycling-road.jpg" });
-  assert.deepEqual(listingVisual({ sport: "skiing" }, "program"), { kind: "scene", src: "/scenes/skiing-mountain.jpg" });
+test("listingVisual: the launch sports show their action photo, not the scene", () => {
+  assert.deepEqual(listingVisual({ sport: "basketball" }, "program"), { kind: "photo", src: "/assets/sport-photos/basketball.jpg" });
+  assert.deepEqual(listingVisual({ sport: "cycling" }, "program"), { kind: "photo", src: "/assets/sport-photos/cycling.jpg" });
+  assert.deepEqual(listingVisual({ sport: "skiing" }, "program"), { kind: "photo", src: "/assets/sport-photos/skiing.jpg" });
+  // Every sport with a photo on disk resolves to it — no silhouette scene on a launch sport.
+  for (const sport of ["basketball", "tennis", "pickleball", "rugby", "football", "baseball", "cycling", "sledhockey", "skiing", "waterskiing", "goalball"]) {
+    assert.deepEqual(listingVisual({ sport }, "program"), { kind: "photo", src: `/assets/sport-photos/${sport}.jpg` }, sport);
+  }
 });
 
-test("listingVisual: extra scenes resolve; no-sport stays a stamp card", () => {
-  assert.deepEqual(listingVisual({ sport: "pickleball" }, "program"), { kind: "scene", src: "/scenes/pickleball-court.jpg" });
-  assert.deepEqual(listingVisual({ sport: "tennis" }, "program"), { kind: "scene", src: "/scenes/tennis-court.jpg" });
+test("listingVisual: a sport with no photo keeps its scene; no-sport stays a stamp card", () => {
   assert.deepEqual(listingVisual({ sport: "rowing" }, "program"), { kind: "scene", src: "/scenes/rowing-lake.jpg" });
+  assert.deepEqual(listingVisual({ sport: "swimming" }, "program"), { kind: "scene", src: "/scenes/swimming-pool.jpg" });
+  assert.deepEqual(listingVisual({ sport: "climbing" }, "program"), { kind: "scene", src: "/scenes/climbing-gym.jpg" });
   // A listing with no sport must still get a picture: the house-mark stamp, never src:null.
   assert.deepEqual(listingVisual({ sport: null }, "program"), { kind: "stamp", src: "/emblems/adaptive.svg" });
   assert.deepEqual(listingVisual({ sport: "soccer" }, "program"), { kind: "stamp", src: "/emblems/adaptive.svg" });
@@ -32,9 +37,10 @@ test("listingVisual: athlete grants use grant-track; program grants use program-
   assert.deepEqual(listingVisual({ audience: "program" }, "grant"), { kind: "scene", src: "/scenes/program-grant-gym.jpg" });
 });
 
-test("listingVisual: events use event-field unless a sport scene exists", () => {
+test("listingVisual: events use event-field unless the sport has art of its own", () => {
   assert.deepEqual(listingVisual({ sport: null }, "event"), { kind: "scene", src: "/scenes/event-field.jpg" });
-  assert.deepEqual(listingVisual({ sport: "basketball" }, "event"), { kind: "scene", src: "/scenes/basketball-gym.jpg" });
+  assert.deepEqual(listingVisual({ sport: "basketball" }, "event"), { kind: "photo", src: "/assets/sport-photos/basketball.jpg" });
+  assert.deepEqual(listingVisual({ sport: "rowing" }, "event"), { kind: "scene", src: "/scenes/rowing-lake.jpg" });
 });
 
 test("program page keeps a real photo and does not fall back to a scene", () => {
@@ -69,4 +75,16 @@ test("grant page keeps Athlete / Program tags on the grant-track hero", () => {
   assert.ok(program.includes("/scenes/program-grant-gym.jpg"));
   assert.ok(program.includes("Program grant"));
   assert.ok(!program.includes("Athlete grant"));
+});
+
+// The set and the disk have to agree: a key with no file gives the card a broken
+// image that falls back to the stamp, which is the look we just took out.
+test("every sport photo the resolver promises exists on disk, and none is orphaned", () => {
+  const onDisk = new Set(
+    readdirSync(new URL("../public/assets/sport-photos/", import.meta.url))
+      .filter((f) => f.endsWith(".jpg"))
+      .map((f) => f.replace(/\.jpg$/, ""))
+  );
+  for (const sport of SPORT_PHOTOS) assert.ok(onDisk.has(sport), `missing photo file for ${sport}`);
+  for (const file of onDisk) assert.ok(SPORT_PHOTOS.has(file), `photo ${file}.jpg is never used`);
 });

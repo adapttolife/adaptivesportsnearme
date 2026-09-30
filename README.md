@@ -20,10 +20,11 @@ scripts/pg-to-d1.py    one-time migration: local Postgres → cleaned SQL → D1
 wrangler.json          production deployment plus named staging environment
 ```
 
-**Data plane:** two D1 databases — `asnm-db` (prod) and `asnm-db-staging`. Same schema,
-seeded identically from the asnm Postgres (2,095 raw orgs → 1,544 after dropping scraped
-junk rows and merging duplicates). Provenance (22 sources + junction), 575 link checks and
-the review queue carried over.
+**Data plane:** staging and the dedicated preview retain `asnm-db-staging` for
+both `DB` and `INTAKE`. Production uses `asnm-db` and `atl-intake`. Staging and
+preview use live production email, newsletter, and Airtable services; external
+actions have real effects while directory, profile, and intake database writes
+stay in the staging database.
 
 **Core invariant (kept from the original Postgres design):** pipeline lanes *propose*
 changes into `review_queue`; a human approves via `/api/admin/queue/:id` before anything
@@ -32,12 +33,12 @@ the freshness score — half-life 45 days, computed in the Worker).
 
 **Environments:**
 
-| | prod (`asnm`) | staging (`asnm-staging`) |
+| | prod (`adaptivesportsnearme`) | staging version (`adaptivesportsnearme`) |
 |---|---|---|
-| URL | adaptivesportsnearme.com | asnm-staging.adapt-to-life.workers.dev |
+| URL | adaptivesportsnearme.com | staging-adaptivesportsnearme.adapt-to-life.workers.dev |
 | Gate | `PRELAUNCH=true` (teaser + modal) | `PRELAUNCH=false` (full directory) |
-| D1 | asnm-db | asnm-db-staging |
-| Crons | validate 2h / enrich 20min | same |
+| D1 | asnm-db + atl-intake | asnm-db-staging (DB + INTAKE) |
+| Crons | validate every 2h / dispatch hourly | None (HTTP-only entrypoint) |
 | Deploys from | `main`, explicit, locked | `staging` |
 
 **Branch model (Fall 2026):**
@@ -54,14 +55,37 @@ outside the 11-photo launch set, state-centroid map pins marked `state-level`.
 
 ## Deploy
 
-Cloudflare Workers Builds deploys the production worker from `main` using `wrangler.json`.
-Named environments remain available for deliberate previews:
+One application Worker, `adaptivesportsnearme`, serves the deployed production version
+and an uploaded staging version. In its Cloudflare Settings > Builds configure:
+
+- Production branch: `main`.
+- Production deploy command: `npx wrangler deploy --config wrangler.json`.
+- Preview branch: `staging` only (so other branches cannot move the staging alias).
+- Preview command: `npx wrangler versions upload --config wrangler.preview.json --preview-alias staging`.
+
+The preview URL is https://staging-adaptivesportsnearme.adapt-to-life.workers.dev.
+An equivalent manual upload from the staging checkout is:
 
 ```
-npx wrangler deploy --env staging
+npx wrangler versions upload --env staging --preview-alias staging
 ```
 
-Production stays gated (`PRELAUNCH=true`).
+Both configurations explicitly target the same Worker name. Use `versions upload`
+for staging; `wrangler deploy --env staging` would replace the production deployment
+with staging code and bindings. Release production from `main` using production config,
+not by promoting a staging-configured version.
+
+Production stays gated (`PRELAUNCH=true`). Staging uses `ENV_NAME=staging`,
+`PRELAUNCH=false`, and `asnm-db-staging` for both `DB` and `INTAKE`. Its entrypoint
+exports only `fetch`. Version uploads do not update the Worker's routes or cron
+triggers; those remain managed by the production deployment.
+
+Verify the uploaded version has the runtime secrets needed by Beehiiv, Gmail,
+Airtable, profile signing, and admin authentication. Build variables and local
+`.dev.vars` files are not runtime secrets. No database schema is applied by an
+upload; newsletter capture requires `db/intake-schema.sql` in the staging database.
+The existing `asnm-gate` config is a separate production signup route and is not
+part of the staging preview setup.
 
 ## Secrets (per worker, via `wrangler secret put`)
 

@@ -142,8 +142,10 @@ export async function createProfile(db, { email, name, state, sports, newsletter
 export async function updateProfile(db, id, { email, name, state, sports, newsletter }) {
   const now = new Date().toISOString();
   await db.prepare(
-    `UPDATE profiles SET email = ?, name = ?, state = ?, sports_json = ?, newsletter = ?, updated_at = ? WHERE id = ?`
-  ).bind(email, name || "", state || "", JSON.stringify(sports || []), newsletter ? 1 : 0, now, id).run();
+    `UPDATE profiles SET email = ?, name = ?, state = ?, sports_json = ?, newsletter = ?, updated_at = ? WHERE id = ?
+     AND (email IS NOT ? OR name IS NOT ? OR state IS NOT ? OR sports_json IS NOT ? OR newsletter IS NOT ?)`
+  ).bind(email, name || "", state || "", JSON.stringify(sports || []), newsletter ? 1 : 0, now, id,
+    email, name || "", state || "", JSON.stringify(sports || []), newsletter ? 1 : 0).run();
 }
 
 export async function orgExists(db, orgId) {

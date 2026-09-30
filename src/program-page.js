@@ -7,16 +7,13 @@
 // no verification/trust line. Nearby is a horizontal shelf, not a stack.
 
 import { listingVisual, isCoverVisual, stampAttr } from "./visuals.js";
-import { CHROME_CSS, headerHtml, footerHtml, navScriptHtml } from "./site-chrome.js";
+import { headerHtml, footerHtml, navScriptHtml } from "./site-chrome.js";
 
 const SITE = "https://adaptivesportsnearme.com";
 
-// Legacy 11-photo launch set. Kept so older callers still resolve a key.
-// New listings use listingVisual (scene or stamp) unless a real photo exists.
-export const SPORT_PHOTOS = new Set([
-  "baseball", "basketball", "cycling", "football", "goalball",
-  "pickleball", "rugby", "skiing", "sledhockey", "tennis", "waterskiing",
-]);
+// The 11 launch sports that have an action photo. One list, owned by
+// visuals.js, re-exported here for the callers that already import it.
+export { SPORT_PHOTOS } from "./visuals.js";
 
 // org_type -> the human label. Mirrors TYPE_LABEL in public/index.html so the
 // shared link and the in-app sheet name the same thing the same way.
@@ -129,99 +126,7 @@ function nearbyStrip(items, sportLabel) {
   return `<div class="nearby"><h2>Nearby ${esc((sportLabel || "adaptive sport").toLowerCase())}</h2><div class="frow-scroll">${list.map(nearbyCard).join("")}</div></div>`;
 }
 
-const CSS = `
-:root{
-  color-scheme:light;--ink:#1A1A1A;--ink2:#3A3A37;--paper:#FFFFFF;--mist:#F7F7F5;--sand:#F0EFEC;--line:#E7E6E2;--muted:#6E6D6A;--faint:#736F6A;--orange:#C5430C;--orange-ink:#A8370A;--r:12px;--r-lg:16px;--r-full:999px;
-  /* Rhythm. Do not tighten these to "fix AI look"; Alec locked 24/32/40/48/64 on 2026-08-21. */
-  --space-page: 24px;  /* gutter */
-  --space-header: 64px;
-  --tap: 44px;
-  --space-title-gap: 8px;
-  --space-after-photo: 32px;
-  --space-section: 40px;
-  --space-nearby: 48px;
-  --space-row: 16px;
-  --gut: var(--space-page);
-}
-*{box-sizing:border-box;}
-@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important;}}
-html,body{margin:0;padding:0;background:var(--mist);color:var(--ink);}
-body{font-family:'DM Sans',system-ui,sans-serif;font-size:16px;line-height:1.45;-webkit-font-smoothing:antialiased;}
-img,svg{display:block;max-width:100%;}
-a{color:var(--orange-ink);}
-.wrap{max-width:880px;margin:0 auto;padding:var(--space-page) var(--space-page) var(--space-header);}
-.bar{min-height:var(--space-header);display:flex;align-items:center;}
-.back{display:inline-flex;align-items:center;min-height:var(--tap);font-size:16px;font-weight:600;color:var(--ink);text-decoration:none;}
-.back:hover{color:var(--orange-ink);}
-.dhero{position:relative;width:100%;height:clamp(180px,24vw,260px);border-radius:var(--r-lg);overflow:hidden;margin:0 0 var(--space-after-photo);}
-.dhero.has-dphoto{background:#23211f;height:clamp(240px,48vw,520px);}
-.dhero.has-dphoto .dhero-img{object-fit:cover;object-position:50% 58%;}
-@media(min-width:900px){
-  main.wrap>.dhero.has-dphoto{width:100vw;max-width:100vw;margin-left:calc(50% - 50vw);margin-right:calc(50% - 50vw);border-radius:0;height:min(48vw,560px);}
-}
-.dhero.has-stamp{background:#F6F4F0;display:flex;align-items:center;justify-content:center;}
-.dhero-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 30%;}
-.dhero-stamp{width:min(42%,180px);height:auto;object-fit:contain;position:relative;z-index:1;}
-.dhero::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 45%,rgba(0,0,0,.55));pointer-events:none;}
-.dhero.has-stamp::after{background:linear-gradient(180deg,transparent 58%,rgba(26,26,26,.10));}
-.dhero.has-stamp .dov{color:var(--ink);}
-.dov{position:absolute;left:16px;bottom:16px;z-index:1;color:#fff;}
-.dov-sport{display:block;font-size:12px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;}
-.dov-loc{display:block;font-size:14px;font-weight:500;margin-top:2px;}
-h1{font-size:clamp(22px,2.8vw,30px);font-weight:700;letter-spacing:-.02em;line-height:1.15;margin:0 0 var(--space-title-gap);}
-.loc{font-size:16px;color:var(--ink2);margin:0;}
-.desc{font-size:16px;line-height:1.55;color:var(--ink2);margin:16px 0 0;max-width:68ch;}
-/* Scraped descriptions run long and tail off into source notes. Show a readable
-   opening and let the reader ask for the rest. No JS: the toggle is a label,
-   and the full text stays in the document for search engines and copy-paste. */
-.desc-x{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;}
-.desc-long{display:-webkit-box;-webkit-line-clamp:5;-webkit-box-orient:vertical;overflow:hidden;}
-.desc-x:checked ~ .desc-long{display:block;-webkit-line-clamp:none;}
-.desc-btn{display:inline-flex;align-items:center;min-height:var(--tap);font-size:15px;font-weight:600;color:var(--orange-ink);cursor:pointer;text-decoration:underline;text-underline-offset:3px;}
-.desc-btn .dm-less,.desc-x:checked ~ .desc-btn .dm-more{display:none;}
-.desc-x:checked ~ .desc-btn .dm-less{display:inline;}
-.desc-x:focus-visible ~ .desc-btn{outline:2px solid var(--orange);outline-offset:3px;border-radius:4px;}
-@media(max-width:720px){.desc-long{-webkit-line-clamp:8;}}
-.titleb{margin:0 0 var(--space-section);}
-.cta{display:inline-flex;align-items:center;justify-content:center;min-width:220px;height:var(--tap);padding:0 22px;background:var(--orange);color:#fff;border-radius:var(--r);font-size:16px;font-weight:700;text-decoration:none;}
-.cta:hover{background:var(--orange-ink);}
-.host{font-size:14px;color:var(--muted);margin-left:12px;}
-.act{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 var(--space-section);}
-.rows{margin:0;border-top:1px solid var(--line);}
-.row{display:flex;gap:var(--space-row);padding:var(--space-row) 0;border-bottom:1px solid var(--line);font-size:16px;}
-.row .k{color:var(--muted);width:92px;flex:0 0 auto;}
-.row .v{color:var(--ink);font-weight:500;min-width:0;}
-.empty{color:var(--muted);margin:0;}
-.nearby{margin-top:var(--space-nearby);}
-.act + .nearby,.titleb + .nearby{margin-top:8px;}
-.nearby h2{font-size:22px;font-weight:700;letter-spacing:-.02em;margin:0 0 var(--space-row);}
-.frow-scroll{display:flex;gap:var(--space-row);overflow-x:auto;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;padding-bottom:6px;padding-right:var(--space-page);margin-right:calc(-1 * var(--space-page));scrollbar-width:none;}
-.frow-scroll::-webkit-scrollbar{display:none;}
-.frow-scroll>.pcard{flex:0 0 78vw;width:78vw;scroll-snap-align:start;}
-.pcard{display:block;color:inherit;text-decoration:none;}
-.pcard-media{position:relative;aspect-ratio:4/3;border-radius:10px;overflow:hidden;background:#F6F4F0;}
-.pcard-media.has-stamp{display:flex;align-items:center;justify-content:center;}
-.pcard-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
-.pcard-stamp{width:46%;height:auto;object-fit:contain;position:relative;z-index:1;}
-.pcard-body{padding:8px 1px 0;}
-.pcard-sport{font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--faint);}
-/* Two-line box either way, so the rail keeps its baselines. */
-.pcard-name{font-size:16px;font-weight:600;line-height:1.25;margin:2px 0 0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:2.5em;}
-.pcard-loc,.pcard-line{font-size:14px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-@media(max-width:720px){
-  .frow-scroll{gap:12px;}
-}
-@media(min-width:721px){
-  .frow-scroll>.pcard{flex:0 0 calc((100% - 48px)/4.2);width:calc((100% - 48px)/4.2);}
-}
-@media(max-width:600px){
-  .cta{width:100%;min-width:0;}
-}
-/* The app header owns the top of the page now, so the Directory bar no longer
-   needs the gutter above it. */
-main.wrap{padding-top:0;}
-${CHROME_CSS}
-`;
+
 
 function page({ title, description, canonical, image, body }) {
   const ogImage = image
@@ -243,13 +148,12 @@ ${ogImage}
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/tokens.css">
-<style>${CSS}</style>
+<link rel="stylesheet" href="/styles.css">
 </head>
-<body>
+<body class="content-page">
 <a class="skip" href="#main">Skip to content</a>
 ${headerHtml()}
-<main id="main" class="wrap">
+<main id="main" class="wrap detail-page">
 ${body}
 </main>
 ${footerHtml()}

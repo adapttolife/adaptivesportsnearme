@@ -6,9 +6,9 @@
 //
 // Cron topology (two schedules, no more — CRON_LANES in index.js):
 //   0 */2 * * *   -> validate (stale-first, 15 orgs/run)
-//   */20 * * * *  -> dispatch (rotates enrich -> classify -> geocode -> resolve so every
+//   0 * * * *     -> dispatch (rotates enrich -> classify -> geocode -> resolve so every
 //                    lane stays inside the Workers subrequest budget on its own turn;
-//                    classify/geocode/resolve are pure-D1 and cheap, enrich fetches pages)
+//                    enrich/classify fetch pages; geocode/resolve use local data)
 
 import { validateLane } from "./lanes/validate.js";
 import { enrichLane } from "./lanes/enrich.js";
@@ -26,6 +26,19 @@ const LANES = {
 
 const DISPATCH_ROTATION = ["enrich", "classify", "geocode", "resolve"];
 
+// Also applies to admin-triggered runs. The conditional upsert claims a slot
+// atomically, so overlapping cron/manual requests cannot multiply batch writes.
+export async function claimLane(db, lane, now = new Date()) {
+  const hours = lane === "dispatch" ? 1 : lane === "validate" ? 2 : 4;
+  const cutoff = new Date(now.getTime() - hours * 3600000).toISOString();
+  return db.prepare(
+    `INSERT INTO lane_cursors (lane, cursor, updated_at) VALUES (?, '', ?)
+     ON CONFLICT(lane) DO UPDATE SET updated_at = excluded.updated_at
+     WHERE lane_cursors.updated_at <= ?
+     RETURNING cursor`
+  ).bind(lane, now.toISOString(), cutoff).first();
+}
+
 export async function runLane(env, lane) {
   if (lane === "dispatch") return runDispatch(env);
   const impl = LANES[lane];
@@ -33,36 +46,51 @@ export async function runLane(env, lane) {
 
   const db = env.DB;
   const started = new Date().toISOString();
-  const cursor = (await db.prepare(`SELECT cursor FROM lane_cursors WHERE lane = ?`)
-    .bind(lane).first())?.cursor || "";
+  const claim = await claimLane(db, lane);
+  if (!claim) return { lane, processed: 0, flagged: 0, skipped: true, detail: "maintenance cooldown" };
+  const cursor = claim.cursor;
 
-  const result = await impl({ db, env, cursor });
+  let batchRowsWritten = 0;
+  const measuredDb = {
+    prepare: (sql) => db.prepare(sql),
+    async batch(statements) {
+      const results = await db.batch(statements);
+      batchRowsWritten += results.reduce((sum, r) => sum + (r.meta?.rows_written || 0), 0);
+      return results;
+    },
+  };
+  const result = await impl({ db: measuredDb, env, cursor });
 
   const now = new Date().toISOString();
-  await db.batch([
+  await measuredDb.batch([
     db.prepare(
       `INSERT INTO lane_cursors (lane, cursor, updated_at) VALUES (?, ?, ?)
        ON CONFLICT(lane) DO UPDATE SET cursor = excluded.cursor, updated_at = excluded.updated_at`
-    ).bind(lane, result.cursor, now),
+    ).bind(lane, result.cursor, started),
     db.prepare(
       `INSERT INTO pipeline_runs (lane, started_at, finished_at, items_processed, items_flagged, detail)
        VALUES (?, ?, ?, ?, ?, ?)`
     ).bind(lane, started, now, result.processed, result.flagged, result.detail || null),
   ]);
-  return { lane, ...result, started, finished: now };
+  // D1 metadata includes index writes. Claims/dispatch bookkeeping are separate;
+  // this measures the data batches without writing a separate usage counter.
+  console.log(JSON.stringify({ event: "pipeline_writes", lane, batch_rows_written: batchRowsWritten }));
+  return { lane, ...result, started, finished: now, batchRowsWritten };
 }
 
-// The 20-minute schedule runs one rotation slot per firing. Rotation state lives in
+// The hourly schedule runs one rotation slot per firing. Rotation state lives in
 // lane_cursors under 'dispatch' (the lane that ran last); each lane keeps its own cursor.
 async function runDispatch(env) {
   const db = env.DB;
-  const last = (await db.prepare(`SELECT cursor FROM lane_cursors WHERE lane = 'dispatch'`)
-    .first())?.cursor || "";
+  const started = new Date();
+  const claim = await claimLane(db, "dispatch", started);
+  if (!claim) return { lane: "dispatch", processed: 0, flagged: 0, skipped: true, detail: "maintenance cooldown" };
+  const last = claim.cursor;
   const next = DISPATCH_ROTATION[(DISPATCH_ROTATION.indexOf(last) + 1) % DISPATCH_ROTATION.length];
   const result = await runLane(env, next);
   await db.prepare(
     `INSERT INTO lane_cursors (lane, cursor, updated_at) VALUES ('dispatch', ?, ?)
      ON CONFLICT(lane) DO UPDATE SET cursor = excluded.cursor, updated_at = excluded.updated_at`
-  ).bind(next, new Date().toISOString()).run();
+  ).bind(next, started.toISOString()).run();
   return result;
 }

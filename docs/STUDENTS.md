@@ -4,7 +4,7 @@ Plain language for Fall students. If a step would change the live site, stop.
 
 ## Two sites
 
-- **Tester** (where you work): https://asnm-staging.adapt-to-life.workers.dev  
+- **Tester** (where you work): https://staging-adaptivesportsnearme.adapt-to-life.workers.dev
   Map is open. About 1,449 programs. Grants are the current 45. Prelaunch is off.
 - **Live** (locked): https://adaptivesportsnearme.com  
   Map is gated. 1,544 programs. Grants are still the old six-name list. Nothing goes live until Alec says, and not until you have done rigorous testing.
@@ -28,12 +28,17 @@ The default branch on GitHub stays `main`. That is on purpose. It does not mean 
 
 ## Tester vs live deploys
 
-- Staging worker: `asnm-staging` at the tester URL, database `asnm-db-staging`.
-- Production worker: `asnm` at adaptivesportsnearme.com, database `asnm-db`. **Do not deploy this.**
+One application Worker, `adaptivesportsnearme`, serves both versions:
 
-Pushing `main` deploys production. Students work through `staging` and must not push to `main` or deploy the production worker.
+- Production: `main`, deployed at adaptivesportsnearme.com with production databases.
+- Staging: `staging`, uploaded at the tester alias with `asnm-db-staging` for both `DB` and `INTAKE`.
 
-Auto-deploy to staging from GitHub is not wired. Cloudflare secrets are not on the repo, and the token we have cannot create GitHub Actions workflow files. The intended stub lives in docs/deploy-staging.workflow.yml — staging only, never production. Until a person with workflow+secrets access adds it, a person with Wrangler access deploys the tester on purpose — not from a merge to `main`.
+Cloudflare Builds should upload staging with
+`npx wrangler versions upload --config wrangler.preview.json --preview-alias staging`.
+Restrict that preview build to the `staging` branch. See [README](../README.md#deploy).
+Never run `wrangler deploy --env staging`: both configs now name the same Worker,
+so that command would replace the production deployment. Students must not push to `main`.
+The workflow in `docs/deploy-staging.workflow.yml` is only an inactive historical stub.
 
 ## Directory tools
 
@@ -47,8 +52,11 @@ Discover is those scripts. It proposes into the tester review pile. A person sti
 
 ## Cron jobs
 
-The worker already has cron jobs (validate and enrich) on tester and on live. They propose; they should not silently rewrite public listings. Do not add a discover cron that writes live.
+Only production runs scheduled maintenance. Staging and preview export HTTP only and have no cron triggers. They propose; they should not silently rewrite public listings. Do not add a discover cron that writes live.
 
 ## If you are unsure
 
-If a command mentions `asnm-db` without `-staging` or `adaptivesportsnearme.com`, it is the live site. Stop.
+The staging website and directory tools use `asnm-db-staging`. Database changes
+stay there, but email, newsletter subscriptions, and Airtable actions use live
+production services and have real effects. Check the target before running a
+data-maintenance command.

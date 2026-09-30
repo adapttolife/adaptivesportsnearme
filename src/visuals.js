@@ -1,6 +1,8 @@
-// Locked ASNM visual language (Alec, 2026-08-21).
+// ASNM visual language.
 // Real listing photo → keep it.
-// Else a matching ChatGPT photoreal scene when we have one.
+// Else the sport's photoreal action photo when we have one (Alec, 2026-09-15:
+//   the cards show athletes, not the silhouette-object scene).
+// Else a matching scene when we have one — that is now the no-photo fallback.
 // Else the black stamp on a quiet paper card. Not the old sand block.
 
 export const SPORT_SCENES = {
@@ -22,6 +24,13 @@ export const SPORT_SCENES = {
   volleyball: "/scenes/volleyball-court.jpg",
   waterskiing: "/scenes/waterskiing-lake.jpg",
 };
+
+// The launch sports that have a real photoreal action photo on disk
+// (public/assets/sport-photos). These win over the scene composite.
+export const SPORT_PHOTOS = new Set([
+  "basketball", "tennis", "pickleball", "rugby", "football", "baseball",
+  "cycling", "sledhockey", "skiing", "waterskiing", "goalball",
+]);
 
 export const GRANT_TRACK_SCENE = "/scenes/grant-track.jpg";
 export const PROGRAM_GRANT_SCENE = "/scenes/program-grant-gym.jpg";
@@ -47,6 +56,10 @@ export function scenePath(sport) {
   return (sport && SPORT_SCENES[sport]) || null;
 }
 
+export function sportPhotoPath(sport) {
+  return sport && SPORT_PHOTOS.has(sport) ? `/assets/sport-photos/${sport}.jpg` : null;
+}
+
 // role: "program" | "grant" | "event"
 export function listingVisual(item, role = "program") {
   if (item && item.photo) return { kind: "photo", src: item.photo };
@@ -57,10 +70,14 @@ export function listingVisual(item, role = "program") {
     return { kind: "scene", src: GRANT_TRACK_SCENE };
   }
   if (role === "event") {
+    const shot = sportPhotoPath(item && item.sport);
+    if (shot) return { kind: "photo", src: shot };
     const scene = scenePath(item && item.sport);
     if (scene) return { kind: "scene", src: scene };
     return { kind: "scene", src: EVENT_SCENE };
   }
+  const shot = sportPhotoPath(item && item.sport);
+  if (shot) return { kind: "photo", src: shot };
   const scene = scenePath(item && item.sport);
   if (scene) return { kind: "scene", src: scene };
   return { kind: "stamp", src: emblemPath(item && item.sport) || GENERIC_STAMP };
