@@ -180,13 +180,22 @@ export default {
       }
     }
 
+    // Sample listings use slugs rather than D1 UUIDs. Load the shell so its
+    // route parser can select them on direct visits, just as it does on clicks.
+    // UUID requests with a DB have already used the server-rendered routes above.
+    if (/^\/(programs|grants)\/[a-z0-9]+(?:-[a-z0-9]+)*\/?$/i.test(url.pathname)) {
+      return env.ASSETS.fetch(new Request(new URL("/", url), request));
+    }
+
     // /maps is the map explorer's real URL — same app, booted into the map.
     if (url.pathname === "/maps" || url.pathname === "/maps/") {
       return env.ASSETS.fetch(new Request(new URL("/", url), request));
     }
     // /profile and /events are real URLs for their sections — same mechanism as
     // /maps. /events is also where the RSS feed's item links land.
-    if (/^\/(profile|events)\/?$/.test(url.pathname)) {
+    if (/^\/(profile|events|grants|sports|directory)\/?$/.test(url.pathname) ||
+        /^\/sports\/(basketball|tennis|pickleball|rugby|football|baseball|cycling|sledhockey|skiing|waterskiing|goalball)\/?$/.test(url.pathname) ||
+        /^\/directory\/(sports|programs|providers|events|equipment|grants|resources)\/?$/.test(url.pathname)) {
       return env.ASSETS.fetch(new Request(new URL("/", url), request));
     }
 

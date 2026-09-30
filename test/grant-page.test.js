@@ -160,8 +160,8 @@ test("grantNotFoundTemplate: no launch modal, says not found", () => {
   assert.ok(!html.includes("Unverified"));
 });
 
-test("SPA: BOOT_QP reads db=grants; rows use data-grant; count is not hardcoded 6", () => {
-  assert.ok(index.includes("BOOT_QP.get('db')"));
+test("SPA: route parser restores navigation; rows use data-grant; count is not hardcoded 6", () => {
+  assert.ok(index.includes("DirectoryRoutes.read(new URL(location.href)"));
   assert.ok(index.includes("data-grant"));
   assert.ok(index.includes("grantAudience"));
   assert.ok(index.includes("Athlete grant"));

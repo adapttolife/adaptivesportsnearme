@@ -36,7 +36,7 @@
 <header class="hdr">
   <div class="wrap hdr-in">
     <button class="menu-btn" id="menuBtn" aria-label="Menu" aria-expanded="false" aria-controls="drawer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
-    <a class="brand" href="#" data-home aria-label="Adaptive Sports Near Me home"><b>Adaptive Sports Near Me</b></a>
+    <a class="brand" href="/" data-home aria-label="Adaptive Sports Near Me home"><b>Adaptive Sports Near Me</b></a>
 
     <div class="search" role="search">
       <button class="loc" id="locBtn" aria-label="Change location">
@@ -73,13 +73,13 @@
     </div>
     <div class="foot-in">
       <div>
-        <a class="brand" href="#" data-home><b>Adaptive Sports Near Me</b></a>
+        <a class="brand" href="/" data-home><b>Adaptive Sports Near Me</b></a>
         <p class="tagline">An open directory of adaptive sports programs across the country. No logins, no walls, because it is a free service of <a href="https://adapttolife.org" target="_blank" rel="noopener">Adapt To Life</a>, a recognized 501(c)(3) nonprofit.</p>
       </div>
       <div class="foot-links">
-        <div class="foot-col"><h2>Explore</h2><a href="#" data-home>Discover</a><a href="/maps" data-mapx>Map view</a><a href="#" data-section="database">Browse all</a><a href="#" data-section="events">Events</a><a href="#" data-browse-sport>Browse by sport</a><a href="#" data-db-link="grants">Funding</a><a href="/blog">Blog</a></div>
+        <div class="foot-col"><h2>Explore</h2><a href="/" data-home>Discover</a><a href="/maps" data-mapx>Map view</a><a href="/directory/programs" data-section="database">Browse all</a><a href="/events" data-section="events">Events</a><a href="#" data-browse-sport>Browse by sport</a><a href="/grants" data-db-link="grants">Funding</a><a href="/blog">Blog</a></div>
         <div class="foot-col"><h2>Programs</h2><a href="#" data-gate-open="program">Add a program</a><a href="#" data-gate-open="program">Update a listing</a></div>
-        <div class="foot-col"><h2>About</h2><a href="#" data-about="project">The project</a><a href="#" data-about="verify">How we verify</a><a href="#" data-about="a11y">Accessibility</a><a href="#" data-section="profile">Your profile</a><a href="https://adapttolife.org" target="_blank" rel="noopener">Adapt To Life</a><a href="https://sign.adapttolife.org/waiver?source=asnm">Sign waiver</a></div>
+        <div class="foot-col"><h2>About</h2><a href="#" data-about="project">The project</a><a href="#" data-about="verify">How we verify</a><a href="#" data-about="a11y">Accessibility</a><a href="/profile" data-section="profile">Your profile</a><a href="https://adapttolife.org" target="_blank" rel="noopener">Adapt To Life</a><a href="https://sign.adapttolife.org/waiver?source=asnm">Sign waiver</a></div>
       </div>
     </div>
   </div>
@@ -161,6 +161,7 @@
   </div>
 </div>
 
+<script src="/directory-routes.js"></script>
 <script>
 /* ============================ DATA ============================ */
 const SPORTS = [
@@ -336,13 +337,40 @@ function esc(s){ return s==null?s:String(s).replace(/&/g,'&amp;').replace(/</g,'
 let DATA_LIVE=false; // flips true once /api/programs hydrates the real directory
 let SITE_EVENTS=[]; // upcoming public events, filled from /api/events (empty until hydrated)
 let PROFILE=null; // { id, email, name, state, sports, newsletter, favorites } once signed in, filled from /api/profile
-const BOOT_MAPX=location.pathname==='/maps'; // captured before any render can rewrite the URL
-const BOOT_PROFILE=location.pathname==='/profile'; // /profile is the profile section's real URL, same mechanism
-const BOOT_EVENTS=location.pathname==='/events'; // /events too — it's where the RSS feed's item links land
 const US_STATES=["AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID","IL","IN","IA","KS","KY","LA","ME","MD","MA","MI","MN","MS","MO","MT","NE","NV","NH","NJ","NM","NY","NC","ND","OH","OK","OR","PA","RI","SC","SD","TN","TX","UT","VT","VA","WA","WV","WI","WY","DC"];
 const BAND_STYLE = (new URLSearchParams(location.search).get('band')||'warm'); // warm (default) | soft — inbox-band skin
 const state = { section:"discover", layout:"grid", sport:"all", q:"", dist:"any", cost:"any", level:"any", filtersOpen:false, sort:"rec", db:"programs", dbView:"gallery", programId:null, grantId:null, grantAudience:"all", loc:"Denver, CO", see:null, profileNudge:false, nearZip:"", nearCity:"", near:null };
 const saved = new Set();
+// Keep directly linked fallback records available when live hydration replaces
+// the directory arrays. They are not appended to live search results.
+const FALLBACK_PROGRAMS = PROGRAMS.slice();
+const FALLBACK_GRANTS = GRANTS.slice();
+let routeReady=false, restoringRoute=false;
+function syncDirectoryUrl(replace=false){
+  if(!routeReady || restoringRoute) return;
+  const next=DirectoryRoutes.write(state);
+  if(next!==location.pathname+location.search) history[replace?'replaceState':'pushState']({},'',next);
+}
+function linkDirectoryControls(){
+  document.querySelectorAll('[data-home],[data-section],[data-sport],[data-sport-link],[data-db-link],[data-db],[data-mapx]').forEach(el=>{
+    let next={...state};
+    if(el.hasAttribute('data-home')) next=DirectoryRoutes.read(new URL('/',location.origin),[]);
+    else if(el.hasAttribute('data-sport')||el.hasAttribute('data-sport-link')) next={...next,section:'discover',sport:el.getAttribute('data-sport')||el.getAttribute('data-sport-link'),see:null};
+    else if(el.hasAttribute('data-db-link')||el.hasAttribute('data-db')) next={...next,section:'database',db:el.getAttribute('data-db-link')||el.getAttribute('data-db')};
+    else if(el.hasAttribute('data-section')) { next.section=el.getAttribute('data-section'); if(next.section==='discover') next=DirectoryRoutes.read(new URL('/',location.origin),[]); }
+    else next.section='mapx';
+    if(el.tagName==='BUTTON'){
+      const a=document.createElement('a');
+      for(const attr of el.attributes) if(attr.name!=='type') a.setAttribute(attr.name,attr.value);
+      a.innerHTML=el.innerHTML;el.replaceWith(a);el=a;
+    }
+    if(el.tagName==='A') el.href=DirectoryRoutes.write(next);
+  });
+}
+// Let the browser open real navigation links in a new tab/window.
+document.addEventListener('click',e=>{
+  if((e.metaKey||e.ctrlKey||e.shiftKey||e.altKey) && e.target.closest('a[href]')) e.stopImmediatePropagation();
+},true);
 function statusCls(s){ return s==='Open'?'st-open':s==='Waitlist'?'st-wait':'st-seas'; }
 function pill(s){ return '<span class="status '+statusCls(s)+'">'+s+'</span>'; }
 function heartBtn(id){ const on=saved.has(id)?' on':''; return '<button class="heart'+on+'" data-heart="'+id+'" aria-pressed="'+saved.has(id)+'" aria-label="Save program">'+HEART+'</button>'; }
@@ -406,8 +434,8 @@ function activeFilterCount(){ let n=0; if(!DATA_LIVE&&state.dist!=='any')n++; if
 
 /* ============================ RENDER: DISCOVER ============================ */
 function catBar(){
-  const all='<button class="cat'+(state.sport==='all'?' on':'')+'" data-sport="all">'+NAVICON.compass+'<span>All sports</span></button>';
-  const items=SPORTS.map(s=>'<button class="cat'+(state.sport===s.key?' on':'')+'" data-sport="'+s.key+'">'+sportIcon(s.key,'cat-img')+'<span>'+s.label+'</span></button>').join('');
+  const all='<a href="/" class="cat'+(state.sport==='all'?' on':'')+'" data-sport="all">'+NAVICON.compass+'<span>All sports</span></a>';
+  const items=SPORTS.map(s=>'<a href="/sports/'+s.key+'" class="cat'+(state.sport===s.key?' on':'')+'" data-sport="'+s.key+'">'+sportIcon(s.key,'cat-img')+'<span>'+s.label+'</span></a>').join('');
   const browse='<span class="cat-sep" aria-hidden="true"></span>'
     +(DATA_LIVE?'<button class="cat cat-browse'+(state.section==='mapx'?' on':'')+'" data-mapx>'+NAVICON.map+'<span>Map view</span></button>':'')
     +'<button class="cat cat-browse" data-section="database">'+NAVICON.grid+'<span>Browse all</span></button>';
@@ -1197,7 +1225,8 @@ function programReal(p){
 }
 
 function program(){
-  const p=PROGRAMS.find(x=>x.id===state.programId); if(!p) return discover();
+  const p=PROGRAMS.find(x=>x.id===state.programId)||FALLBACK_PROGRAMS.find(x=>x.id===state.programId);
+  if(!p) return '<div class="wrap"><h1>Program not found</h1><p>This listing is unavailable.</p><a href="/" data-home>Browse programs</a></div>';
   if(p.real) return programReal(p);
   return listingSheet(p, { save:saveButton(p), related:relatedRow(p) });
 }
@@ -1307,8 +1336,8 @@ async function loadGrantDetail(g){
   if(state.section==='grant'&&state.grantId===g.id) render(true);
 }
 function grantView(){
-  const g=GRANTS.find(x=>x.id===state.grantId);
-  if(!g){ state.section='database'; state.db='grants'; return database(); }
+  const g=GRANTS.find(x=>x.id===state.grantId)||FALLBACK_GRANTS.find(x=>x.id===state.grantId);
+  if(!g) return '<div class="wrap"><h1>Grant not found</h1><p>This listing is unavailable.</p><a href="/grants" data-db-link="grants">Browse grants</a></div>';
   loadGrantDetail(g);
   return grantSheet(g);
 }
@@ -1368,7 +1397,7 @@ function database(){
   }
   const galToggle = state.db==='programs' ? '<div class="seg"><button class="'+(state.dbView==='gallery'?'on':'')+'" data-dbview="gallery">'+NAVICON.grid+'Gallery</button><button class="'+(state.dbView==='table'?'on':'')+'" data-dbview="table">'+NAVICON.rows+'Table</button></div>'
     : state.db==='grants' ? '<div class="seg"><button class="'+(state.grantAudience==='all'?'on':'')+'" data-grant-aud="all">All</button><button class="'+(state.grantAudience==='athlete'?'on':'')+'" data-grant-aud="athlete">Athlete</button><button class="'+(state.grantAudience==='program'?'on':'')+'" data-grant-aud="program">Program</button></div>' : '';
-  return '<div class="wrap"><nav class="crumb"><a href="#" data-home>Home</a><span class="sl">/</span><b>Browse all</b></nav></div>'
+  return '<div class="wrap"><nav class="crumb"><a href="/" data-home>Home</a><span class="sl">/</span><b>Browse all</b></nav></div>'
     +'<div class="db"><aside class="db-side"><p class="eyebrow">Tables</p>'+side+'</aside>'
     +'<div class="db-main"><div class="db-head"><h1>'+meta.label+' <span class="rec">'+meta.count+' records</span></h1>'+galToggle+'</div>'+body+'</div></div>';
 }
@@ -1403,7 +1432,7 @@ function eventsView(){
   const body=SITE_EVENTS.length
     ? groups.map(g=>'<div class="evgroup"><h2 class="evmonth">'+g.label+'</h2><div class="evlist">'+g.items.map(eventCardHtml).join('')+'</div></div>').join('')
     : eventsEmpty();
-  return '<div class="wrap"><nav class="crumb"><a href="#" data-home>Home</a><span class="sl">/</span><b>Events</b></nav>'
+  return '<div class="wrap"><nav class="crumb"><a href="/" data-home>Home</a><span class="sl">/</span><b>Events</b></nav>'
     +'<div class="ev-head"><h1>Upcoming events</h1>'+(SITE_EVENTS.length?eventsSubLinks():'')+'</div>'
     +body+'</div>';
 }
@@ -1422,7 +1451,7 @@ function profileSportChips(selectedKeys){
 }
 function profileCreateForm(){
   const nudge=state.profileNudge?'<p class="pnudge">Create a free profile to save this program to your list.</p>':'';
-  return '<div class="wrap"><nav class="crumb"><a href="#" data-home>Home</a><span class="sl">/</span><b>Profile</b></nav>'
+  return '<div class="wrap"><nav class="crumb"><a href="/" data-home>Home</a><span class="sl">/</span><b>Profile</b></nav>'
     +'<div class="profile-view"><div class="pform">'
     +'<h1>Create your profile</h1><p class="lede">Save programs, set your sports and state, and hear about new ones. No password, ever.</p>'
     +nudge
@@ -1450,7 +1479,7 @@ function profileEditView(){
           +(loc?'<div class="pcard-loc">'+esc(loc)+'</div>':'')+'</div></div>';
       }).join('')
     : '<p class="lede">No saved programs yet. Open any program and tap "Save this program."</p>';
-  return '<div class="wrap"><nav class="crumb"><a href="#" data-home>Home</a><span class="sl">/</span><b>Profile</b></nav>'
+  return '<div class="wrap"><nav class="crumb"><a href="/" data-home>Home</a><span class="sl">/</span><b>Profile</b></nav>'
     +'<div class="profile-view">'
     +'<div class="profile-summary"><div><h1>'+(esc(PROFILE.name)||'Your profile')+'</h1><div class="muted">'+esc(PROFILE.email)+'</div></div>'
     +'<button class="profile-signout ghost" id="pfSignout" type="button">Sign out</button></div>'
@@ -1489,11 +1518,8 @@ function render(keepScroll){
   if(!keepScroll){ try{ window.scrollTo(0,0); }catch(e){} }
   const hq=document.getElementById('q'); if(hq) hq.value=state.q;
   const qh=document.getElementById('qHero'); if(qh) qh.value=state.q;
-  // keep the URL honest if a nav path (logo, footer) leaves the map view
-  try{
-    if(state.section==='mapx'&&location.pathname!=='/maps') history.replaceState({},'','/maps');
-    else if(state.section!=='mapx'&&location.pathname==='/maps') history.replaceState({},'','/');
-  }catch(_){ }
+  syncDirectoryUrl();
+  linkDirectoryControls();
   updateHeaderSearch();
   syncLocLabel();
   syncProfileBtn();
@@ -1537,6 +1563,8 @@ function syncControls(){
 // keeping the scroll exactly where it is. Coming from the feed → build the directory
 // once and snap the results up under the sticky bars.
 function filterChanged(){
+  syncDirectoryUrl();
+  linkDirectoryControls();
   if(state.section==='mapx'){
     // stay in the explorer: swap markers in place, no view rebuild
     syncControls();
@@ -1579,7 +1607,7 @@ function noteZipFromQuery(){
   if(state.nearZip && !BOOT_QP.get('zip')){ state.nearZip=''; state.near=null; }
   return !!state.nearZip || !!state.nearCity;
 }
-function searchRender(){ if(isFeedMode()){ render(); return; } if(document.getElementById('results')){ renderResults(); return; } render(); }
+function searchRender(){ syncDirectoryUrl(true); if(isFeedMode()){ render(); return; } if(document.getElementById('results')){ renderResults(); return; } render(); }
 /* ============================ EVENTS ============================ */
 document.addEventListener('click',e=>{
   const h=e.target.closest('[data-heart]');
@@ -1604,7 +1632,7 @@ document.addEventListener('click',e=>{
     e.preventDefault(); state.section='grant'; state.grantId=t.getAttribute('data-grant'); state.programId=null; render(); return;
   }
   if(t.hasAttribute('data-seeall')){ e.preventDefault(); const v=t.getAttribute('data-seeall'); if(v==='beginner'){ state.see=null; if(DATA_LIVE){ state.cost='free'; } else { state.level='beginner'; } } else if(v==='free'){ state.see=null; state.cost='free'; } else if(v.indexOf('sport:')===0){ state.see=null; state.sport=v.slice(6); } else { state.see=v; } filterChanged(); return; }
-  if(t.hasAttribute('data-sport')){ e.preventDefault(); state.sport=t.getAttribute('data-sport'); state.see=null; filterChanged(); return; }
+  if(t.hasAttribute('data-sport')){ e.preventDefault(); if(state.section!=='mapx') state.section='discover'; state.sport=t.getAttribute('data-sport'); state.see=null; filterChanged(); return; }
   if(t.hasAttribute('data-layout')){ e.preventDefault(); state.layout=t.getAttribute('data-layout'); filterChanged(); return; }
   if(t.id==='filtBtn'){ e.preventDefault(); state.filtersOpen=!state.filtersOpen; const fp=document.querySelector('.filters'); if(fp){ fp.classList.toggle('open', state.filtersOpen); } else { render(true); } return; }
   if(t.hasAttribute('data-dist')){ state.dist=t.getAttribute('data-dist'); state.see=null; filterChanged(); return; }
@@ -1654,6 +1682,7 @@ function renderDrawer(){
   // Profile block moves to the bottom (just above About), fronted by a divider.
   const profileBlock='<div class="drawer-div"></div>'+prof;
   d.innerHTML=head+news+dest+chips+contribute+profileBlock+about;
+  linkDirectoryControls();
 }
 let drawerOpener=null;
 function openDrawer(){
@@ -1690,19 +1719,14 @@ document.addEventListener('keydown',e=>{
 });
 renderDrawer();
 /* map explorer open/close + state drawer. /maps is its real URL. */
-function setMapxUrl(on){
-  try{
-    const here=location.pathname==='/maps';
-    if(on&&!here) history.pushState({mapx:true},'','/maps');
-    else if(!on&&here) history.pushState({},'','/');
-  }catch(_){ }
-}
+function setMapxUrl(on){ /* render() commits the complete navigation state. */ }
 window.addEventListener('popstate',()=>{
-  const want=location.pathname==='/maps';
-  const inMapx=state.section==='mapx';
-  if(want&&!inMapx&&DATA_LIVE&&!PRELAUNCH){ state.section='mapx'; state.programId=null; render(); }
-  else if(!want&&inMapx){ state.section='discover'; render(); }
+  Object.assign(state,DirectoryRoutes.read(new URL(location.href),SPORTS.map(s=>s.key)));
+  restoringRoute=true;
+  try { render(); } finally { restoringRoute=false; }
+  if(state.nearZip||state.nearCity) resolveNear().then(()=>render(true));
 });
+
 document.addEventListener('click',e=>{
   if(e.target.closest('.tray-x')){ e.preventDefault(); closeMapTray(); return; }
   if(e.target.closest('[data-mapx-close]')){ e.preventDefault(); state.section='discover'; setMapxUrl(false); render(); return; }
@@ -1984,20 +2008,11 @@ document.addEventListener('click', function(e){
 
 // /profile is a real feature (not gated behind live directory data like /maps), so
 // it boots directly into the profile section rather than waiting on hydrate().
-if(BOOT_PROFILE) state.section='profile';
-if(BOOT_EVENTS) state.section='events';
-// Deep-link params — the blog navbar (and any shared link) lands here: ?q=, ?add=program, ?sport=, ?profile=.
-// Additive only; render() reflects state.q into the search inputs and filters on it.
 const BOOT_QP=new URLSearchParams(location.search);
-if(BOOT_QP.get('q')) state.q=BOOT_QP.get('q');
-if(BOOT_QP.get('sport')&&SPORTS.some(s=>s.key===BOOT_QP.get('sport'))) state.sport=BOOT_QP.get('sport');
-if(BOOT_QP.get('profile')) state.section='profile';
-if(BOOT_QP.get('zip')) state.nearZip=BOOT_QP.get('zip').trim();
-if(BOOT_QP.get('city')) state.nearCity=BOOT_QP.get('city').trim();
+Object.assign(state,DirectoryRoutes.read(new URL(location.href),SPORTS.map(s=>s.key)));
 if(isZipQuery(state.q)) state.nearZip=state.q.trim();
-const BOOT_DB=BOOT_QP.get('db');
-if(BOOT_DB==='grants'||BOOT_DB==='programs'){ state.section='database'; state.db=BOOT_DB; }
 render();
+routeReady=true;
 if(BOOT_QP.get('add')==='program') openGate('program');
 /* Deep links for the About panel, so the server-rendered footers can point at the
    same three sections the app's own footer opens. */
@@ -2042,7 +2057,7 @@ function mapOrg(o){
     PROGRAMS.length=0; Array.prototype.push.apply(PROGRAMS, first.items.map(mapOrg));
     DATA_LIVE=true;
     // landing on /maps boots straight into the explorer (live, ungated only)
-    if(BOOT_MAPX&&!PRELAUNCH){ state.section='mapx'; }
+    // Hydration preserves the currently selected route, including Back/Forward.
     if(state.nearZip||state.nearCity) await resolveNear();
     if(!viewFormBusy()) render(true);
     const offs=[]; for(let o=200;o<Math.min(first.total,5000);o+=200) offs.push(o);
