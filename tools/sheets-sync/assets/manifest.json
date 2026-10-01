@@ -4,11 +4,13 @@
   "modules": {
     "production-engine.mjs": {
       "original_sha256": "491ed931b58f821e5cc4c4e7455568b468da90f9560bc56a1f6053031cbd1fba",
-      "host_sha256": "99021b5844dbff26be7ccdf654bcea934e5411ecd7a8a3858316726200468ca9"
+      "host_sha256": "bc6523b36c3fe2e30a66d9c8ce67dedb9cc106d2e692057fd1b53ace34c667f4",
+      "previous_host_sha256": "99021b5844dbff26be7ccdf654bcea934e5411ecd7a8a3858316726200468ca9"
     },
     "staging-engine.mjs": {
       "original_sha256": "aaac5f340302146455485d73e7c21da5c9a6c44d6343bd29929b1a595bb93105",
-      "host_sha256": "aaac5f340302146455485d73e7c21da5c9a6c44d6343bd29929b1a595bb93105"
+      "host_sha256": "2237792e40ef6daeece7399eabaf5e648106cc3aec2546d7caf0424ebb8bf514",
+      "previous_host_sha256": "aaac5f340302146455485d73e7c21da5c9a6c44d6343bd29929b1a595bb93105"
     }
   },
   "vars": {
@@ -21,5 +23,6 @@
   "databases": {
     "DB": "055916fd-3e58-4599-b11e-ffaedabe0f0b",
     "STAGING_DB": "d3f67da7-60a3-44b6-9215-28665492d3f9"
-  }
+  },
+  "host_revision": "single-read-organization-projection-v1"
 }

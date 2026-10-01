@@ -1,3 +1,4 @@
+import {assembleDirectory,readOrganizations,beginProjection} from '../scripts/directory-projection.mjs';
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 
@@ -2996,7 +2997,7 @@ function readmeRows(exportedAt, counts) {
     [""],
     ["HOW TO ADD AN ORGANIZATION"],
     ["1. Open the Intake tab and type one row: Name and State are required; Website, City, Sport, Type, Email, Phone, Notes, Source are optional."],
-    ["2. Within about 20 minutes the grey columns fill in: Status = admitted, duplicate:<id>, or rejected:<reason>."],
+    ["2. Within about 2 hours the grey columns fill in: Status = admitted, duplicate:<id>, or rejected:<reason>."],
     ["3. An admitted row appears on the Organizations tab at the next export and on the website (behind the launch gate until launch)."],
     ["4. A stamped row is never re-read. To correct something, add a new row; edits to existing listings go through the review queue."],
     [""],
@@ -3030,33 +3031,22 @@ async function sheetExportLane({ db, env }) {
   if (!sheetId) throw new Error("ASNM_MASTER_SHEET_ID not configured");
   let rowsRead = 0;
   const trackRows = (r) => { rowsRead += Number(r.meta?.rows_read || 0); return r.results; };
-  const [orgs, sports, sources, queue, changes, subs] = await Promise.all([
-    db.prepare(
-      `SELECT o.*, (SELECT group_concat(s.source_name, '; ') FROM organization_data_sources ods
-                    JOIN data_sources s ON s.source_id = ods.source_id WHERE ods.organization_id = o.id) AS sources
-       FROM organizations o ORDER BY o.name COLLATE NOCASE`
-    ).all().then(trackRows),
+  const [orgRows, sports, sourceRows, links, queueRows, changeRows, subs] = await Promise.all([
+    readOrganizations(db, env).then(trackRows),
     db.prepare(`SELECT * FROM sports ORDER BY name COLLATE NOCASE`).all().then(trackRows),
+    db.prepare(`SELECT * FROM data_sources ORDER BY source_name COLLATE NOCASE`).all().then(trackRows),
+    db.prepare(`SELECT organization_id, source_id FROM organization_data_sources ORDER BY organization_id, source_id`).all().then(trackRows),
     db.prepare(
-      `SELECT d.*, COALESCE(c.orgs_linked, 0) AS orgs_linked
-       FROM data_sources d
-       LEFT JOIN (SELECT source_id, count(*) AS orgs_linked
-                  FROM organization_data_sources GROUP BY source_id) c
-         ON c.source_id = d.source_id
-       ORDER BY d.source_name COLLATE NOCASE`
+      `SELECT r.item_id, r.lane, r.organization_id, r.proposed_change, r.evidence, r.confidence, r.created_at
+       FROM review_queue r WHERE r.status = 'pending' ORDER BY r.created_at ASC LIMIT ${QUEUE_CAP}`
     ).all().then(trackRows),
     db.prepare(
-      `SELECT r.item_id, r.lane, r.organization_id, r.proposed_change, r.evidence, r.confidence, r.created_at, o.name AS org_name
-       FROM review_queue r LEFT JOIN organizations o ON o.id = r.organization_id
-       WHERE r.status = 'pending' ORDER BY r.created_at ASC LIMIT ${QUEUE_CAP}`
-    ).all().then(trackRows),
-    db.prepare(
-      `SELECT r.proposed_change, r.evidence, r.resolved_at, r.resolved_by, r.created_at, r.organization_id, o.name AS org_name
-       FROM review_queue r LEFT JOIN organizations o ON o.id = r.organization_id
-       WHERE r.status = 'approved' ORDER BY r.resolved_at DESC LIMIT ${CHANGES_CAP}`
+      `SELECT r.proposed_change, r.evidence, r.resolved_at, r.resolved_by, r.created_at, r.organization_id
+       FROM review_queue r WHERE r.status = 'approved' ORDER BY r.resolved_at DESC LIMIT ${CHANGES_CAP}`
     ).all().then(trackRows),
     db.prepare(`SELECT * FROM submissions ORDER BY created_at DESC LIMIT ${SUBMISSIONS_CAP}`).all().then(trackRows)
   ]);
+  const {orgs, sources, queue, changes} = assembleDirectory(orgRows, sourceRows, links, queueRows, changeRows);
   const sportsByKey = new Map(sports.map((sp) => [sp.sport_key, sp]));
   const nowMs = Date.now();
   const exportedAt = new Date(nowMs).toISOString().slice(0, 16).replace("T", " ") + " UTC";
@@ -3134,6 +3124,7 @@ async function runDispatch(env) {
 }
 __name(runDispatch, "runDispatch");
 async function runSheets(env) {
+  env = beginProjection(env);
   let intake;
   try {
     intake = await runLane(env, "sheet-intake");

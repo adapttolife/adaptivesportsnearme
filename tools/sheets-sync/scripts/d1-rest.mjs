@@ -14,9 +14,10 @@ export class D1Rest {
   let result;try{result=await response.json();}catch{throw Error(`D1 non-JSON response (${response.status})`);}
   if(!response.ok||!result.success)throw Error(`D1 API failed (${response.status}): ${JSON.stringify(result.errors||[]).slice(0,800)}`);
   if(!Array.isArray(result.result)||result.result.length!==statements.length||result.result.some(r=>!r.success||!Array.isArray(r.results)))throw Error('D1 result shape or SQL success mismatch');
-  for(const r of result.result){
+  for(const [index,r] of result.result.entries()){
    if(typeof r.meta?.rows_read!=='number'||typeof r.meta?.rows_written!=='number')throw Error('D1 cost metadata missing');
    this.metrics.queries++;this.metrics.rows_read+=r.meta.rows_read;this.metrics.rows_written+=r.meta.rows_written;
+   (this.metrics.statements??=[]).push({sql:statements[index].sql.replace(/\s+/g,' ').trim(),rows_read:r.meta.rows_read,rows_written:r.meta.rows_written,rows_returned:r.results.length});
   }
   return result.result;
  }

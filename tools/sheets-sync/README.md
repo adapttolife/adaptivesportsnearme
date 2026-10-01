@@ -2,30 +2,49 @@
 
 ## Current execution contract
 
-The bulk sync runs on Julia's existing host, every 20 minutes at minutes 10, 30 and 50. It uses the same ATL D1 databases, separate production/staging Master Sheets, and existing Google service account. Cloudflare remains on Free; this adds no paid service. The public website Workers are unchanged.
+The bulk sync runs on Julia's existing host every two hours (`10 */2 * * *`, scheduler Central time), using the same ATL D1 databases, separate production/staging Master Sheets and existing Google service account. Cloudflare remains on Free. Success output is local; failures alert the owner. The separate ATL CRM source-refresh schedule is unchanged.
 
-The old `asnm-sheets` Worker is retired. `retired-worker.mjs` does no data work; its live timer, bindings and Google secret were removed and read back. The configuration here must remain inert. Do not deploy the recovered engines as Workers or restore a second scheduled writer.
+D1 is authoritative for exported tabs. Intake admits new organizations and proposes supported updates for review; editing exported Organizations does not update D1. This is not unrestricted two-way editing.
 
-`assets/manifest.json` pins the recovered, query-optimized engine version and hashes. The only module changes for host execution are the local staging import extension and named production export. Existing Intake validation, exported tables and staging CRM logic are preserved. The host's `D1Rest` adapter implements the used binding methods against Cloudflare's native REST query API. Its batch rollback semantics were exercised in an isolated staging probe, followed by verified probe removal.
+The old ATL `asnm-sheets` Worker is inert, with no bindings, secrets or schedule. `retired-worker.mjs` and `wrangler.json` document that retirement, not a replacement website. Other retired Sheets writers must remain disabled.
 
-D1 is authoritative for Organizations and related exported tabs. Intake admits new organizations; editing Organizations does not write changes back to D1. Production and staging are intentionally independent datasets, not replicas.
+## Organization query design
 
-## Invocation and ownership
+- Read organizations once per environment after Intake completes. Staging CRM and export share this invocation-local snapshot, not a persistent cache.
+- Read source links once through their covering primary index. Assemble organization source labels and source counts from that same data on the host, eliminating per-organization correlated lookups and repeat link aggregation.
+- Resolve Queue/Recent Changes organization names from the same organization snapshot, rather than joining organizations again.
+- Sort organizations on the host using SQLite NOCASE semantics, including ASCII-only case folding, stable ties, nulls and UTF-8 byte ordering. Do not substitute localeCompare.
+- Refresh the entire snapshot each cycle: edits, deletions and link changes are not missed by timestamp-only change detection. Intake duplicate matching may need an additional pre-write scan when new rows actually exist; that earlier state must not be reused for export.
+- Record per-statement D1 cost metadata without bound parameter values.
 
-The portable engine entrypoint is `scripts/run.mjs`. It requires the existing `CLOUDFLARE_API_TOKEN` and `GOOGLE_SA_JSON` in process memory and an `ASNM_RESULT_PATH` for its private result. Never commit secrets or copy production receipts into this public repository.
+Live measured results at the current dataset size:
 
-**Do not schedule or run this entrypoint independently.** The installed profile launcher is the single operational entrypoint. It takes a nonblocking host lock, checks the exact retired Worker version and absence of schedules/secrets before any data write, acquires the existing vault credentials, enforces a bounded execution time and memory allowance, and preserves separate last-attempt and last-success receipts. Private profile paths and vault references are intentionally not part of this public source.
+| Measurement | Before | Optimized |
+|---|---:|---:|
+| Production organization query reads | 12,772 | 2,465 |
+| Staging organization query reads | 18,238 | 3,435 |
+| Complete production + staging cycle, including CRM and bookkeeping | 56,140 | 17,060 |
+| Nominal daily cycles | 72 | 12 |
+| Projected daily sync reads | 4,042,080 | 204,720 |
 
-A no-agent scheduler job owns execution. Healthy receipts remain local; failures alert Alec. A partial environment failure must fail the overall run. A read-budget violation opens a persistent circuit that requires investigation before explicitly clearing it. No automatic write retry may turn an ambiguous mutation into a duplicate.
+The last line is a projection, not measured full-day account consumption. Other website/CRM/maintenance reads are separate. Intake activity and growing datasets can change the totals. The existing 60,000-read per-run circuit remains; unexpected excess opens a hold for investigation.
 
-## Readback and cost
+Live old/new query results were compared across every exported dataset and matched completely. The optimized full sync then wrote both environments and read back every written range exactly. Organization counts remained 2,465 production and 3,435 staging; no data/schema migration or index changes were needed.
 
-Every successful run reads back the exact Google value ranges it wrote. Anchor ranges such as `Organizations!A1` are expanded to their full dimensions; empty trailing cells are normalized without discarding meaningful zero/false cells. Partial writes, absent ranges and mismatches fail the run. This is stronger than checking only a row count or a process exit code.
+## Source provenance and safe execution
 
-Host execution removes the Worker CPU/memory constraint, **not** D1's shared daily read allowance. Workers Free allows only 10 ms CPU for both HTTP and cron invocations; the earlier claim that scheduled context supplied a larger Free allowance was incorrect. Grouped SQL remains essential. Measured initial host execution used 56,140 D1 reads across both environments, approximately 4.04 million per day at the regular cadence. Site traffic, separate CRM refreshes, audits and manual runs also consume the shared 5 million daily allowance. This estimate is not an account-wide usage measurement or an unlimited growth guarantee.
+`assets/` preserves the recovered serving source and records original and successive host hashes in `manifest.json`. Host adaptations include module imports/exports, the single-read projection, snapshot reuse, and two-hour Intake instructions. These engines are host-only and must not be deployed as Workers.
 
-## Tests and release boundaries
+The portable runner is `scripts/run.mjs`; D1 binding compatibility is `scripts/d1-rest.mjs`; exact Sheet readback is `scripts/sheet-readback.mjs`. Julia's private credential launcher is intentionally excluded from this public repository. It retrieves existing credentials into child-process memory, holds one nonblocking host lock, enforces a 165-second deadline and verifies that the old Worker still has the exact retirement version, no cron and no Google secret before every run. It preserves the last successful receipt when a later attempt fails.
 
-Run `node --test tools/sheets-sync/scripts/*.test.mjs tools/sheets-sync/retired-worker.test.mjs`, then the repository's full test suite. Tests cover adapter failures, atomic batch response handling, target isolation, exact readback, missing writes and the retired Worker's inert behavior. A real staging batch-rollback probe, real host execution, actual scheduler fire, D1 import invariants and Google readbacks were checked separately from offline tests.
+Do not run the portable engine alongside its scheduled owner. One authorized host launcher/schedule owns writes. There is no automatic write retry or failover to the retired Worker; ambiguous mutations require reconciliation. Intake/CRM/readback failures remain overall failures even if export succeeds.
 
-Maintain one current source-review PR into `staging`. This source preservation is not approval to merge, deploy the public website, change billing, re-import organizations or restore a Cloudflare sync timer. Verify latest staging ancestry and preserve unrelated teammate changes. Reversal also requires a single-writer cutover: pause and fence the host before restoring any other execution owner.
+The D1 REST batch adapter's rollback behavior was proved with an isolated temporary staging-only probe, then its removal was verified. Sheet readback expands anchor ranges to complete write dimensions and preserves meaningful zero/false cells.
+
+## Verification and review
+
+Run `npm test` from the repository root. Portable tests cover adapter behavior, exact readback, actual SQLite projection equivalence and SQL-work regression, snapshot scoping, and inert Worker behavior. Private launcher tests separately prove timer/version/credential fencing, the read-budget hold and the execution lock. Fixtures are synthetic; live receipts stay private.
+
+Workers Free constrains both HTTP and cron CPU to 10 ms. The host removes that invocation constraint, not the account's D1 allowance. Data correctness, cost per run, actual cadence and sustained runtime reliability are distinct gates. A no-new-rows Intake run is not a new-row admission test.
+
+This source remains in the existing draft PR into `staging`. Source publication is not a merge, production website release or authorization to reactivate the retired Worker.
