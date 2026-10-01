@@ -1664,13 +1664,11 @@
 				).join("");
 				const browse =
 					'<span class="cat-sep" aria-hidden="true"></span>' +
-					(DATA_LIVE
-						? '<button class="cat cat-browse' +
-							(state.section === "mapx" ? " on" : "") +
-							'" data-mapx>' +
-							NAVICON.map +
-							"<span>Map view</span></button>"
-						: "") +
+					'<button class="cat cat-browse' +
+					(state.section === "mapx" ? " on" : "") +
+					'" data-mapx>' +
+					NAVICON.map +
+					"<span>Map view</span></button>" +
 					'<button class="cat cat-browse" data-section="database">' +
 					NAVICON.grid +
 					"<span>Browse all</span></button>";
@@ -2487,10 +2485,13 @@
 				});
 			}
 			// Called after every view paint: stand up or tear down map instances to match.
+			function canShowLiveMap() {
+				return DATA_LIVE || ["localhost", "127.0.0.1", "[::1]"].includes(location.hostname);
+			}
 			function afterRender() {
 				destroyMaps();
 				mapToken++;
-				if (!DATA_LIVE) return;
+				if (!canShowLiveMap()) return;
 				if (state.section === "discover" && state.layout === "map") {
 					const list = state.see ? seeList() : filtered();
 					if (list.length) initLiveMap(list);
@@ -2895,8 +2896,8 @@
 					)
 					.join("");
 				let mapEl;
-				if (DATA_LIVE) {
-					// real map \u2014 MapLibre mounts into #livemap via afterRender()
+				if (canShowLiveMap()) {
+					// Real map, including local previews without D1 data.
 					mapEl =
 						'<div class="map map-live"><div id="livemap" role="region" aria-label="Map of programs"></div>' +
 						'<div class="mapchip">Map \u00b7 United States</div>' +

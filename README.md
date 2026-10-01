@@ -66,6 +66,10 @@ npm run dev
 Open http://127.0.0.1:8787. `npm run dev` and `npm run preview` use
 Wrangler's staging environment with local database storage. `npm run dev:local`
 explicitly forces local bindings. Fresh local databases use the sample listings.
+Map view is available at http://127.0.0.1:8787/maps, including with sample data.
+Map tiles need internet access and a browser with WebGL support. Sample listings
+without coordinates remain in the list but do not produce map pins; use the
+staging database below to preview real program locations.
 
 To run local code against the real staging database:
 
