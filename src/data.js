@@ -3,6 +3,7 @@
 // listPrograms filters: sport, state, q (text), plus nearby via zip / city / lat-lng.
 
 import { loadZcta, resolveOrigin, applyNearby, milesBetween } from "./geo.js";
+import { cachedCount } from "./read-cache.js";
 
 export function freshness(lastOkAt, now = Date.now()) {
   if (!lastOkAt) return null;
@@ -52,6 +53,16 @@ function nearPayload(origin) {
     city: origin.city || null,
     source: origin.source,
   };
+}
+
+// The homepage already needs the whole directory for local filters and maps.
+// Read it once rather than repeating COUNT + OFFSET scans for every 200 rows.
+export async function directorySnapshot(db) {
+  const rows = await db.prepare(`SELECT ${LIST_COLS} FROM organizations
+    WHERE is_public = 1 AND status = 'active'
+    ORDER BY (sport_key IS NULL), (state IS NULL), name`).all();
+  const items = rows.results.map(row => rowToProgram(row));
+  return { total: items.length, items };
 }
 
 export async function listPrograms(db, params, opts = {}) {
@@ -109,7 +120,7 @@ export async function listPrograms(db, params, opts = {}) {
   }
 
   const [count, rows] = await Promise.all([
-    db.prepare(`SELECT COUNT(*) AS n FROM organizations WHERE ${cond}`).bind(...binds).first(),
+    cachedCount(db, cond, binds),
     db.prepare(
       `SELECT ${LIST_COLS} FROM organizations WHERE ${cond}
        ORDER BY (sport_key IS NULL), (state IS NULL), name LIMIT ? OFFSET ?`

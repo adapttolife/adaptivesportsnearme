@@ -5695,7 +5695,7 @@
 						fetch("/api/config")
 							.then((r) => r.json())
 							.catch(() => null),
-						fetch("/api/programs?limit=200")
+						fetch("/api/directory")
 							.then((r) => r.json())
 							.catch(() => null),
 					]);
@@ -5717,24 +5717,7 @@
 					// landing on /maps boots straight into the explorer (live, ungated only)
 					// Hydration preserves the currently selected route, including Back/Forward.
 					if (state.nearZip || state.nearCity) await resolveNear();
-					if (!viewFormBusy()) render(true);
-					const offs = [];
-					for (let o = 200; o < Math.min(first.total, 5000); o += 200)
-						offs.push(o);
-					const pages = await Promise.all(
-						offs.map((o) =>
-							fetch("/api/programs?limit=200&offset=" + o)
-								.then((r) => r.json())
-								.catch(() => null),
-						),
-					);
-					for (const page of pages) {
-						if (page && page.ok && page.items.length)
-							Array.prototype.push.apply(
-								PROGRAMS,
-								page.items.map(mapOrg),
-							);
-					}
+					// One cached snapshot supplies every card, filter and map marker.
 					const tm = TABLE_META.find((t) => t.key === "programs");
 					if (tm) tm.count = PROGRAMS.length;
 					if (!viewFormBusy()) render(true);

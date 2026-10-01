@@ -6,6 +6,7 @@ import { queueFormConfirmation } from './email.js';
 //   POST /api/subscribe        -> beehiiv (email capture, tagged asnm-prelaunch)
 //   POST /api/submit-program   -> Airtable Agent Inbox + D1 submissions
 //   GET  /api/config           -> env name + prelaunch flag (front-end gate)
+//   GET  /api/directory        -> cached full public snapshot for client filters/maps
 //   GET  /api/programs         -> directory list (sport/state/q + zip/city/lat-lng nearby, paged)
 //   GET  /programs/:id         -> shareable program page (photo hero, name, city/state, website, source)
 //   GET  /api/grants           -> public grant list (athlete + program)
@@ -25,13 +26,14 @@ import { queueFormConfirmation } from './email.js';
 //   *    /api/admin/*          -> review queue + lane triggers (ADMIN_KEY bearer)
 // All secrets stay server-side (Worker secrets). Bot defence: honeypot + optional Turnstile.
 
-import { listPrograms, getOrg, stats, listSameSportNearby, listGrants, getGrant, listOtherGrants } from "./data.js";
+import { directorySnapshot, listPrograms, getOrg, stats, listSameSportNearby, listGrants, getGrant, listOtherGrants } from "./data.js";
 import { programPageTemplate, programNotFoundTemplate, PROGRAM_ID_RE } from "./program-page.js";
 import { grantPageTemplate, grantNotFoundTemplate, GRANT_ID_RE } from "./grant-page.js";
 import { listEvents, eventsToRss, eventsToIcs } from "./events.js";
 import { handleAdmin } from "./admin.js";
 import { runLane } from "./pipeline.js";
 import { json, text } from "./http.js";
+import { cachedDirectoryResponse } from "./read-cache.js";
 import {
   readProfileCookie, signProfileId, serializeProfileCookie, clearProfileCookie,
   getValidSportKeys, getProfileById, getProfileByEmail, createProfile, updateProfile,
@@ -53,7 +55,7 @@ const CRON_LANES = {
   "0 * * * *": "dispatch", // rotates enrich -> classify -> geocode -> resolve (pipeline.js)
 };
 
-export default {
+const application = {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
     // Versions uploaded with production config must not accept preview mutations.
@@ -114,6 +116,9 @@ export default {
     }
     if (env.DB && request.method === "GET") {
       try {
+        if (url.pathname === "/api/directory") {
+          return json({ ok: true, ...(await directorySnapshot(env.DB)) }, 200, API_CACHE);
+        }
         if (url.pathname === "/api/programs") {
           return json({ ok: true, ...(await listPrograms(env.DB, url.searchParams, { assets: env.ASSETS })) }, 200, API_CACHE);
         }
@@ -228,6 +233,13 @@ export default {
         (err) => console.error(`lane ${lane} failed:`, err)
       )
     );
+  },
+};
+
+export default {
+  ...application,
+  fetch(request, env, ctx) {
+    return cachedDirectoryResponse(request, env, () => application.fetch(request, env, ctx));
   },
 };
 
