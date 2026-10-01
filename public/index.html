@@ -560,7 +560,8 @@ function feedRows(){
   // content rows, never before the first (an empty row must not float it to the top).
   const rows = [
     frow('New to adaptive sports?','Welcoming programs where first timers fit right in', diversify(beginner,'pickleball'), 'beginner'),
-    frow('Closest programs', 'Programs with known distances appear first', diversify(popular,'tennis'), 'popular'),
+    // Closest programs must retain distance order, without mixing sports.
+    frow('Closest programs', 'Programs with known distances appear first', popular, 'popular'),
     (DATA_LIVE
       ? frow('Recently verified','Websites confirmed active in recent checks', diversify(taking,'waterskiing'), 'fresh')
       : frow('Taking new players','Open and taking sign-ups', diversify(taking,'waterskiing'), 'open')),
@@ -1581,7 +1582,8 @@ function viewFormBusy(){
 // Reflect state on the existing controls (active chip etc.) without rebuilding them,
 // so the sticky category bar and its 3D icons never reload — no flash.
 function syncControls(){
-  document.querySelectorAll('.catbar .cat').forEach(c=>c.classList.toggle('on', c.getAttribute('data-sport')===state.sport));
+  document.querySelectorAll('.catbar .cat[data-sport]').forEach(c=>c.classList.toggle('on', c.getAttribute('data-sport')===state.sport));
+  document.querySelectorAll('.catbar [data-mapx]').forEach(c=>c.classList.toggle('on',state.section==='mapx'));
   document.querySelectorAll('[data-dist]').forEach(c=>c.classList.toggle('on', c.getAttribute('data-dist')===state.dist));
   document.querySelectorAll('[data-cost]').forEach(c=>c.classList.toggle('on', c.getAttribute('data-cost')===state.cost));
   document.querySelectorAll('[data-level]').forEach(c=>c.classList.toggle('on', c.getAttribute('data-level')===state.level));
@@ -1752,6 +1754,12 @@ document.addEventListener('keydown',e=>{
 renderDrawer();
 /* map explorer open/close + state drawer. /maps is its real URL. */
 function setMapxUrl(on){ /* render() commits the complete navigation state. */ }
+function toggleMapView(){
+  state.section=state.section==='mapx'?'discover':'mapx';
+  state.programId=null;
+  state.grantId=null;
+  render();
+}
 window.addEventListener('popstate',()=>{
   Object.assign(state,DirectoryRoutes.read(new URL(location.href),SPORTS.map(s=>s.key)));
   restoringRoute=true;
@@ -1766,7 +1774,7 @@ document.addEventListener('click',e=>{
   const dir=e.target.closest('[data-mapx-dir]');
   if(dir){ e.preventDefault(); state.q=dir.getAttribute('data-mapx-dir')||''; state.section='discover'; state.layout='grid'; state.see=null; setMapxUrl(false); render(); return; }
   const mx=e.target.closest('[data-mapx]');
-  if(mx){ e.preventDefault(); state.section='mapx'; state.programId=null; setMapxUrl(true); render(); return; }
+  if(mx){ e.preventDefault(); toggleMapView(); return; }
 });
 /* footer: browse-by-sport lands on the category bar; funding jumps straight to grants */
 document.addEventListener('click',e=>{
