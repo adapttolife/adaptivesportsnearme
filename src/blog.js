@@ -221,9 +221,8 @@ function pageShell({ title, description, canonical, ogImage, bodyHtml, jsonLd })
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/styles.css">${
-  jsonLd ? `\n<script type="application/ld+json">${jsonLdScript(jsonLd)}</script>` : ""
-}
+<link rel="stylesheet" href="/styles.css">${jsonLd ? `\n<script type="application/ld+json">${jsonLdScript(jsonLd)}</script>` : ""
+    }
 </head>
 <body class="content-page">
 <a class="skip" href="#main">Skip to content</a>
@@ -240,21 +239,18 @@ ${navScriptHtml()}
 
 function postCardHtml(p, site) {
   const date = formatPostDate(p.publishDate);
-  return `<a class="blog-card" href="${esc(site)}/blog/${esc(p.slug)}">${
-    p.thumbnailUrl ? `<div class="blog-card-media"><img src="${esc(p.thumbnailUrl)}" alt="" loading="lazy"></div>` : ""
-  }<div class="blog-card-body">${
-    date ? `<p class="blog-card-date">${esc(date)}</p>` : ""
-  }<h2 class="blog-card-title">${esc(p.title)}</h2>${
-    p.subtitle ? `<p class="blog-card-sub">${esc(p.subtitle)}</p>` : ""
-  }</div></a>`;
+  return `<a class="blog-card" href="${esc(site)}/blog/${esc(p.slug)}">${p.thumbnailUrl ? `<div class="blog-card-media"><img src="${esc(p.thumbnailUrl)}" alt="" loading="lazy"></div>` : ""
+    }<div class="blog-card-body">${date ? `<p class="blog-card-date">${esc(date)}</p>` : ""
+    }<h2 class="blog-card-title">${esc(p.title)}</h2>${p.subtitle ? `<p class="blog-card-sub">${esc(p.subtitle)}</p>` : ""
+    }</div></a>`;
 }
 
 export function blogIndexTemplate(posts, { site = SITE } = {}) {
   const body = `<p class="eyebrow">Stories</p>
 <h1 class="blog-h1">From Adaptive Sports Near Me</h1>
 ${posts.length
-    ? `<div class="blog-grid">${posts.map((p) => postCardHtml(p, site)).join("")}</div>`
-    : `<p class="blog-empty">Stories are on the way. Check back soon.</p>`}`;
+      ? `<div class="blog-grid">${posts.map((p) => postCardHtml(p, site)).join("")}</div>`
+      : `<p class="blog-empty">Stories are on the way. Check back soon.</p>`}`;
   return pageShell({
     title: "Blog · Adaptive Sports Near Me",
     description: "Stories, updates and guides from the adaptive sports community.",

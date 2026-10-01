@@ -96,7 +96,7 @@ test("eventsToIcs: empty list still produces a valid, event-less calendar", () =
   assert.equal(
     ics,
     "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Adaptive Sports Near Me//Events//EN\r\n" +
-      "CALSCALE:GREGORIAN\r\nMETHOD:PUBLISH\r\nX-WR-CALNAME:Adaptive Sports Near Me\r\nEND:VCALENDAR\r\n"
+    "CALSCALE:GREGORIAN\r\nMETHOD:PUBLISH\r\nX-WR-CALNAME:Adaptive Sports Near Me\r\nEND:VCALENDAR\r\n"
   );
 });
 

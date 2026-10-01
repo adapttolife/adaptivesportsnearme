@@ -8,10 +8,10 @@ const LEGACY = 'pub_d1bfe66c-074f-464a-a94a-d0cce6d21943';
 const fail = { ok: false, status: 502, error: 'Sign-up is temporarily unavailable. Please try again soon.' };
 const suppressed = { ok: false, status: 409, error: 'Your existing subscription preferences were preserved. Please manage your subscription in the newsletter.' };
 const acceptedStates = ['active', 'pending', 'validating'];
-export function beehiivCustomFields({name, beta} = {}) {
-  const fields=[];
-  if (typeof name === 'string' && name.trim()) fields.push({name:'First Name',value:name.trim().slice(0,60)});
-  if (beta === true) fields.push({name:'Beta Tester',value:'true'});
+export function beehiivCustomFields({ name, beta } = {}) {
+  const fields = [];
+  if (typeof name === 'string' && name.trim()) fields.push({ name: 'First Name', value: name.trim().slice(0, 60) });
+  if (beta === true) fields.push({ name: 'Beta Tester', value: 'true' });
   return fields;
 }
 export async function safeNewsletterSubscribe(env, input, campaign, extra = {}) {
@@ -60,14 +60,16 @@ export async function safeNewsletterSubscribe(env, input, campaign, extra = {}) 
     stage = 'creation-claim';
     const claim = await db.prepare("UPDATE newsletter_delivery_claims SET state='creating' WHERE claim_key=? AND state='pending' RETURNING claim_key").bind(key).first();
     if (!claim) return { ...fail, status: 409, error: 'This signup is already being processed. Please try again later.' };
-    const custom_fields = beehiivCustomFields({name,beta});
+    const custom_fields = beehiivCustomFields({ name, beta });
     stage = 'subscription-create';
     const res = await fetch(root, {
       method: 'POST', headers, signal: AbortSignal.timeout(10000),
-      body: JSON.stringify({ email, reactivate_existing: false, send_welcome_email: false,
+      body: JSON.stringify({
+        email, reactivate_existing: false, send_welcome_email: false,
         automation_ids: [], newsletter_list_ids: [], skip_newsletter_list_auto_subscribe: true,
         double_opt_override: 'not_set', utm_source: 'asnm-prelaunch', utm_medium: 'website',
-        utm_campaign: campaign, referring_site: 'adaptivesportsnearme.com', custom_fields }),
+        utm_campaign: campaign, referring_site: 'adaptivesportsnearme.com', custom_fields
+      }),
     });
     providerStatus = res.status;
     if (!res.ok) throw new Error('Subscription creation rejected');
@@ -117,9 +119,9 @@ export async function safeNewsletterSubscribe(env, input, campaign, extra = {}) 
     const message = String(error?.message || '');
     const reason = /no such table|no such column|has no column named/i.test(message) ? 'database-schema-missing'
       : /constraint failed/i.test(message) ? 'database-constraint'
-      : error?.name === 'TimeoutError' ? 'timeout'
-      : error?.name === 'SyntaxError' ? 'invalid-json'
-      : 'operation-failed';
+        : error?.name === 'TimeoutError' ? 'timeout'
+          : error?.name === 'SyntaxError' ? 'invalid-json'
+            : 'operation-failed';
     console.error('Newsletter signup failed closed', { stage, providerStatus, reason });
     if (key) {
       try { await db.prepare("UPDATE newsletter_delivery_claims SET state='needs-review' WHERE claim_key=? AND state='creating'").bind(key).run(); } catch { /* creating remains visible */ }

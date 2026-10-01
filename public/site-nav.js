@@ -126,7 +126,7 @@
     scrim.classList.add("open");
     document.body.classList.add("drawer-open");
     var x = d.querySelector(".drawer-x");
-    if (x) setTimeout(function () { try { x.focus(); } catch (_) {} }, 40);
+    if (x) setTimeout(function () { try { x.focus(); } catch (_) { } }, 40);
   }
 
   function closeDrawer() {
@@ -141,7 +141,7 @@
     var menuBtn = document.getElementById("menuBtn") || (opener && opener.closest ? opener.closest(".menu-btn") : null);
     if (menuBtn) menuBtn.setAttribute("aria-expanded", "false");
     var back = menuBtn || opener;
-    if (back && back.focus) { try { back.focus(); } catch (_) {} }
+    if (back && back.focus) { try { back.focus(); } catch (_) { } }
     opener = null;
   }
 

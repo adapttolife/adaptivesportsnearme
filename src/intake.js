@@ -65,8 +65,8 @@ function notificationBody(row) {
     `<p style="margin:0 0 14px;font-size:17px"><strong>${esc(row.summary)}</strong></p>` +
     `<table style="border-collapse:collapse;margin:0 0 14px">` +
     [["Name", row.name], ["Email", row.email], ["Phone", row.phone],
-     ["Site", row.site], ["Form", row.kind], ["Source", row.source],
-     ["Received", row.received_at]]
+    ["Site", row.site], ["Form", row.kind], ["Source", row.source],
+    ["Received", row.received_at]]
       .filter(([, v]) => String(v ?? "").trim())
       .map(([k, v]) => `<tr><td style="padding:2px 14px 2px 0;color:#6b6b70">${esc(k)}</td><td style="padding:2px 0">${esc(v)}</td></tr>`)
       .join("") +
@@ -93,24 +93,24 @@ export async function notifyIntakeRow(env, row) {
   // that debt rather than inventing safe-to-retry evidence.
   if (!mailConfigured(env)) return false;
   const claim = await env.INTAKE.prepare("UPDATE intake_delivery_claims SET state='sending',started_at=? WHERE intake_id=? AND state='pending' RETURNING intake_id")
-    .bind(new Date().toISOString(),row.id).first();
+    .bind(new Date().toISOString(), row.id).first();
   if (!claim) return false;
-  const {text,html}=notificationBody(row);
+  const { text, html } = notificationBody(row);
   try {
-    await sendMail(env, {from:INTAKE_FROM,to:intakeInbox(env),replyTo:row.email||intakeInbox(env),subject:row.summary,text,html});
-    const now=new Date().toISOString();
+    await sendMail(env, { from: INTAKE_FROM, to: intakeInbox(env), replyTo: row.email || intakeInbox(env), subject: row.summary, text, html });
+    const now = new Date().toISOString();
     await env.INTAKE.batch([
-      env.INTAKE.prepare("UPDATE intake SET notified_at=?,notify_error=NULL WHERE id=?").bind(now,row.id),
-      env.INTAKE.prepare("UPDATE intake_delivery_claims SET state='done',completed_at=?,error=NULL WHERE intake_id=? AND state='sending'").bind(now,row.id)
+      env.INTAKE.prepare("UPDATE intake SET notified_at=?,notify_error=NULL WHERE id=?").bind(now, row.id),
+      env.INTAKE.prepare("UPDATE intake_delivery_claims SET state='done',completed_at=?,error=NULL WHERE intake_id=? AND state='sending'").bind(now, row.id)
     ]);
     return true;
-  } catch(e) {
+  } catch (e) {
     // A transport exception or failed post-send stamp is ambiguous. Keep it
     // reviewable; automatically resending can duplicate the visitor's message.
-    const error=String(e.message).slice(0,300);
+    const error = String(e.message).slice(0, 300);
     await env.INTAKE.batch([
-      env.INTAKE.prepare("UPDATE intake_delivery_claims SET state='review',error=? WHERE intake_id=? AND state='sending'").bind(error,row.id),
-      env.INTAKE.prepare("UPDATE intake SET notify_attempts=notify_attempts+1,notify_error=? WHERE id=? AND notified_at IS NULL").bind('Needs review: '+error,row.id)
+      env.INTAKE.prepare("UPDATE intake_delivery_claims SET state='review',error=? WHERE intake_id=? AND state='sending'").bind(error, row.id),
+      env.INTAKE.prepare("UPDATE intake SET notify_attempts=notify_attempts+1,notify_error=? WHERE id=? AND notified_at IS NULL").bind('Needs review: ' + error, row.id)
     ]);
     return false;
   }
@@ -140,15 +140,15 @@ export async function notifyIntake(env, id) {
  * The cron's job: anything still unnotified gets another try. This is what makes
  * an email outage a delay instead of a loss.
  */
-export async function sweepIntake(env, limit=25) {
-  const expired=new Date(Date.now()-15*60_000).toISOString();
+export async function sweepIntake(env, limit = 25) {
+  const expired = new Date(Date.now() - 15 * 60_000).toISOString();
   await env.INTAKE.prepare("UPDATE intake_delivery_claims SET state='review',error='Sender interrupted: verify provider acceptance before retry' WHERE state='sending' AND started_at<? AND intake_id IN (SELECT id FROM intake WHERE site='adaptivesportsnearme.com')").bind(expired).run();
-  const {results:rows}=await env.INTAKE.prepare(`SELECT intake.* FROM intake
+  const { results: rows } = await env.INTAKE.prepare(`SELECT intake.* FROM intake
     JOIN intake_delivery_claims c ON c.intake_id=intake.id
     WHERE notified_at IS NULL AND COALESCE(is_canary,0)=0 AND c.state='pending'
       AND intake.site='adaptivesportsnearme.com'
     ORDER BY received_at ASC LIMIT ?`).bind(limit).all();
-  let sent=0;
-  for(const row of rows) if(await notifyIntakeRow(env,row))sent++;
-  return {swept:rows.length,sent,failed:rows.length-sent};
+  let sent = 0;
+  for (const row of rows) if (await notifyIntakeRow(env, row)) sent++;
+  return { swept: rows.length, sent, failed: rows.length - sent };
 }

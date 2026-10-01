@@ -4,7 +4,7 @@ import app from './index.js';
 import { sweepIntake } from './intake.js';
 export default {
   async fetch(request, env, ctx) {
-    if (new URL(request.url).pathname !== '/api/subscribe') return new Response('Not found', {status:404});
+    if (new URL(request.url).pathname !== '/api/subscribe') return new Response('Not found', { status: 404 });
     return app.fetch(request, env, ctx);
   },
   scheduled(controller, env, ctx) {
