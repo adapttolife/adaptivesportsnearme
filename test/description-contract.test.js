@@ -144,15 +144,15 @@ test("the memo voice is refused in every public field, not just description", ()
 test("operator vocabulary is stripped, not the facts underneath it", () => {
   const cases = [
     ["Official cycling $20; mountain biking $40; hiking FREE.",
-     "Cycling $20; mountain biking $40; hiking FREE."],
+      "Cycling $20; mountain biking $40; hiking FREE."],
     ["Official: $25.00 includes a TOPS t-shirt.",
-     "$25.00 includes a TOPS t-shirt."],
+      "$25.00 includes a TOPS t-shirt."],
     ["Official cycling / kayaking: Ages 8+. Official mountain biking: Ages 18+.",
-     "Cycling / kayaking: Ages 8+. Mountain biking: Ages 18+."],
+      "Cycling / kayaking: Ages 8+. Mountain biking: Ages 18+."],
     ["Kickball ages 5 and older (official). Upper bound not printed.",
-     "Kickball ages 5 and older."],
+      "Kickball ages 5 and older."],
     ["Open to all ages (official). Numeric floor/ceiling not printed.",
-     "Open to all ages."],
+      "Open to all ages."],
   ];
   for (const [before, after] of cases) {
     assert.equal(repairPublicText(before).value, after, `repairing: ${before}`);
@@ -198,13 +198,13 @@ test("stripping is idempotent", () => {
 
 test("navigation labels are not organisations", () => {
   // All eight were live listings on the tester, scraped from the CAF directory.
-  for (const n of ["Blog","Donate","Events Calendar","History","Our Team","Partner","Programs","Volunteer"]) {
+  for (const n of ["Blog", "Donate", "Events Calendar", "History", "Our Team", "Partner", "Programs", "Volunteer"]) {
     assert.equal(looksLikeNavigationLabel(n), true, `should be refused: ${n}`);
   }
   // Real organisation names that contain those words must still pass.
-  for (const n of ["Achilles International","Adaptive Sports Ohio","Move United",
-                   "Programs for Parity","Volunteers of America Adaptive Sports",
-                   "History Makers Wheelchair Basketball"]) {
+  for (const n of ["Achilles International", "Adaptive Sports Ohio", "Move United",
+    "Programs for Parity", "Volunteers of America Adaptive Sports",
+    "History Makers Wheelchair Basketball"]) {
     assert.equal(looksLikeNavigationLabel(n), false, `should have passed: ${n}`);
   }
 });

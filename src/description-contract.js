@@ -85,9 +85,9 @@ const MEMO_PATTERNS = [
 // Split on sentence boundaries without breaking decimals, abbreviations that
 // matter here (St., Ste., Dr., Rd., Blvd., P.O.), or time ranges.
 const ABBREV = new Set([
-  "st","ste","dr","rd","blvd","ave","ct","ln","pkwy","hwy","mt","jr","sr","no",
-  "inc","co","corp","dept","univ","approx","vs","etc","apt","fl","rm","pl","ter",
-  "p.o","u.s","a.m","p.m","est","cst","mst","pst",
+  "st", "ste", "dr", "rd", "blvd", "ave", "ct", "ln", "pkwy", "hwy", "mt", "jr", "sr", "no",
+  "inc", "co", "corp", "dept", "univ", "approx", "vs", "etc", "apt", "fl", "rm", "pl", "ter",
+  "p.o", "u.s", "a.m", "p.m", "est", "cst", "mst", "pst",
 ]);
 
 // Split on sentence boundaries. Guards, in order of how they bit us in Aug 2026:

@@ -10,11 +10,11 @@ export async function cfSend(env, message) {
 
 // Called only after the form's primary save succeeds. One send attempt, with
 // no automatic retry: a lost provider response may still mean mail was sent.
-export async function queueFormConfirmation(env, ctx, {kind, email, program}) {
+export async function queueFormConfirmation(env, ctx, { kind, email, program }) {
   const job = (async () => {
     try {
       if (!mailConfigured(env)) {
-        console.error('Form confirmation unavailable', {kind, reason:'mail-not-configured'});
+        console.error('Form confirmation unavailable', { kind, reason: 'mail-not-configured' });
         return;
       }
       const subject = kind === 'program' ? 'We received your program submission'
@@ -25,13 +25,15 @@ export async function queueFormConfirmation(env, ctx, {kind, email, program}) {
           ? 'Your Adaptive Sports Near Me profile has been created. You can use it on the device where you signed up to save programs and manage your preferences. This email is not a sign-in or recovery link.'
           : 'Your Adaptive Sports Near Me profile changes have been saved. You can view your updated preferences on the device where you made the changes.';
       const closing = 'If you have questions or did not submit this form, reply to this email.';
-      const receipt = await sendMail(env, {from:HOUSE_FROM,to:email,replyTo:HOUSE_REPLY,subject,
-        text:body+'\n\n'+closing+'\n\nAdaptive Sports Near Me',
-        html:shell('<p>'+esc(body)+'</p><p>'+closing+'</p>')});
+      const receipt = await sendMail(env, {
+        from: HOUSE_FROM, to: email, replyTo: HOUSE_REPLY, subject,
+        text: body + '\n\n' + closing + '\n\nAdaptive Sports Near Me',
+        html: shell('<p>' + esc(body) + '</p><p>' + closing + '</p>')
+      });
       if (!receipt?.messageId && !receipt?.id) throw new Error('Missing send receipt');
     } catch {
       // Do not expose recipient addresses, message content, or credentials.
-      console.error('Form confirmation needs review', {kind, reason:'send-failed-or-unconfirmed'});
+      console.error('Form confirmation needs review', { kind, reason: 'send-failed-or-unconfirmed' });
     }
   })();
   if (ctx?.waitUntil) ctx.waitUntil(job);
@@ -67,14 +69,14 @@ export async function sendSignupWelcome(env, email, { name = "", beta = false } 
   const hi = name ? `You're in, ${name}.` : "You're in.";
   const betaText = beta
     ? "You asked for the first look, so that is what you get. Your link comes " +
-      "before we open. Tell us what is missing where you live and that is what " +
-      "we work on next, so the next person who searches your town finds " +
-      "something real.\n\n"
+    "before we open. Tell us what is missing where you live and that is what " +
+    "we work on next, so the next person who searches your town finds " +
+    "something real.\n\n"
     : "";
   const betaHtml = beta
     ? `<p style="margin:0 0 16px">You asked for the first look, so that is what you get. Your link ` +
-      `comes before we open. Tell us what is missing where you live and that is what we work on ` +
-      `next, so the next person who searches your town finds something real.</p>`
+    `comes before we open. Tell us what is missing where you live and that is what we work on ` +
+    `next, so the next person who searches your town finds something real.</p>`
     : "";
   const text =
     hi + "\n\n" +

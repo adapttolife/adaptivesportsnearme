@@ -6,6 +6,7 @@ import { queueFormConfirmation } from './email.js';
 //   POST /api/subscribe        -> beehiiv (email capture, tagged asnm-prelaunch)
 //   POST /api/submit-program   -> Airtable Agent Inbox + D1 submissions
 //   GET  /api/config           -> env name + prelaunch flag (front-end gate)
+//   GET  /api/directory        -> cached full public snapshot for client filters/maps
 //   GET  /api/programs         -> directory list (sport/state/q + zip/city/lat-lng nearby, paged)
 //   GET  /programs/:id         -> shareable program page (photo hero, name, city/state, website, source)
 //   GET  /api/grants           -> public grant list (athlete + program)
@@ -25,13 +26,14 @@ import { queueFormConfirmation } from './email.js';
 //   *    /api/admin/*          -> review queue + lane triggers (ADMIN_KEY bearer)
 // All secrets stay server-side (Worker secrets). Bot defence: honeypot + optional Turnstile.
 
-import { listPrograms, getOrg, stats, listSameSportNearby, listGrants, getGrant, listOtherGrants } from "./data.js";
+import { directorySnapshot, listPrograms, getOrg, stats, listSameSportNearby, listGrants, getGrant, listOtherGrants } from "./data.js";
 import { programPageTemplate, programNotFoundTemplate, PROGRAM_ID_RE } from "./program-page.js";
 import { grantPageTemplate, grantNotFoundTemplate, GRANT_ID_RE } from "./grant-page.js";
 import { listEvents, eventsToRss, eventsToIcs } from "./events.js";
 import { handleAdmin } from "./admin.js";
 import { runLane } from "./pipeline.js";
 import { json, text } from "./http.js";
+import { cachedDirectoryResponse } from "./read-cache.js";
 import {
   readProfileCookie, signProfileId, serializeProfileCookie, clearProfileCookie,
   getValidSportKeys, getProfileById, getProfileByEmail, createProfile, updateProfile,
@@ -53,25 +55,25 @@ const CRON_LANES = {
   "0 * * * *": "dispatch", // rotates enrich -> classify -> geocode -> resolve (pipeline.js)
 };
 
-export default {
+const application = {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
     // Versions uploaded with production config must not accept preview mutations.
     // Staging uploads use ENV_NAME=staging and the staging database bindings.
-    if (env.ENV_NAME === 'production' && !['GET','HEAD'].includes(request.method) &&
-        !['adaptivesportsnearme.com','www.adaptivesportsnearme.com'].includes(url.hostname)) {
-      return json({ok:false,error:'This preview is read-only. Use the isolated review environment.'},403);
+    if (env.ENV_NAME === 'production' && !['GET', 'HEAD'].includes(request.method) &&
+      !['adaptivesportsnearme.com', 'www.adaptivesportsnearme.com'].includes(url.hostname)) {
+      return json({ ok: false, error: 'This preview is read-only. Use the isolated review environment.' }, 403);
     }
 
     if (url.pathname === "/api/subscribe") {
       if (request.method !== "POST") return json({ ok: false, error: "Method not allowed" }, 405);
       if (env.FORM_LIMITER) {
         try {
-          const { success } = await env.FORM_LIMITER.limit({key: request.headers.get('CF-Connecting-IP') || 'unknown'});
-          if (!success) return json({ok:false,error:'Too many submissions. Please try again later.'},429);
-        } catch { return json({ok:false,error:'Sign-up is temporarily unavailable.'},503); }
+          const { success } = await env.FORM_LIMITER.limit({ key: request.headers.get('CF-Connecting-IP') || 'unknown' });
+          if (!success) return json({ ok: false, error: 'Too many submissions. Please try again later.' }, 429);
+        } catch { return json({ ok: false, error: 'Sign-up is temporarily unavailable.' }, 503); }
       } else if (env.REQUIRE_FORM_LIMITER === 'true') {
-        return json({ok:false,error:'Sign-up is temporarily unavailable.'},503);
+        return json({ ok: false, error: 'Sign-up is temporarily unavailable.' }, 503);
       }
       return handleSubscribe(request, env, ctx);
     }
@@ -94,13 +96,15 @@ export default {
     }
 
     if (url.pathname === "/api/location") {
-      if(request.method !== 'GET') return json({ok:false,error:'Method not allowed'},405);
-      const cf=request.cf || {};
-      const latitude=cf.latitude == null || cf.latitude === '' ? NaN : Number(cf.latitude);
-      const longitude=cf.longitude == null || cf.longitude === '' ? NaN : Number(cf.longitude);
-      const valid=Number.isFinite(latitude)&&Math.abs(latitude)<=90&&Number.isFinite(longitude)&&Math.abs(longitude)<=180;
-      return json({city:cf.city || null,region:cf.regionCode || cf.region || null,
-        lat:valid?latitude:null,lng:valid?longitude:null},200,'private, no-store');
+      if (request.method !== 'GET') return json({ ok: false, error: 'Method not allowed' }, 405);
+      const cf = request.cf || {};
+      const latitude = cf.latitude == null || cf.latitude === '' ? NaN : Number(cf.latitude);
+      const longitude = cf.longitude == null || cf.longitude === '' ? NaN : Number(cf.longitude);
+      const valid = Number.isFinite(latitude) && Math.abs(latitude) <= 90 && Number.isFinite(longitude) && Math.abs(longitude) <= 180;
+      return json({
+        city: cf.city || null, region: cf.regionCode || cf.region || null,
+        lat: valid ? latitude : null, lng: valid ? longitude : null
+      }, 200, 'private, no-store');
     }
     if (url.pathname === "/api/config") {
       return json({
@@ -112,6 +116,9 @@ export default {
     }
     if (env.DB && request.method === "GET") {
       try {
+        if (url.pathname === "/api/directory") {
+          return json({ ok: true, ...(await directorySnapshot(env.DB)) }, 200, API_CACHE);
+        }
         if (url.pathname === "/api/programs") {
           return json({ ok: true, ...(await listPrograms(env.DB, url.searchParams, { assets: env.ASSETS })) }, 200, API_CACHE);
         }
@@ -119,7 +126,7 @@ export default {
         if (org) {
           const record = await getOrg(env.DB, org[1]);
           return record ? json({ ok: true, org: record }, 200, API_CACHE)
-                        : json({ ok: false, error: "Not found" }, 404);
+            : json({ ok: false, error: "Not found" }, 404);
         }
         if (url.pathname === "/api/stats") {
           return json({ ok: true, ...(await stats(env.DB)) }, 200, API_CACHE);
@@ -131,7 +138,7 @@ export default {
         if (grantApi) {
           const record = await getGrant(env.DB, grantApi[1]);
           return record ? json({ ok: true, grant: record }, 200, API_CACHE)
-                        : json({ ok: false, error: "Not found" }, 404);
+            : json({ ok: false, error: "Not found" }, 404);
         }
         if (url.pathname === "/api/events") {
           return json({ ok: true, ...(await listEvents(env.DB, url.searchParams)) }, 200, API_CACHE);
@@ -204,8 +211,8 @@ export default {
     // /profile and /events are real URLs for their sections — same mechanism as
     // /maps. /events is also where the RSS feed's item links land.
     if (/^\/(profile|events|grants|sports|directory)\/?$/.test(url.pathname) ||
-        /^\/sports\/(basketball|tennis|pickleball|rugby|football|baseball|cycling|sledhockey|skiing|waterskiing|goalball)\/?$/.test(url.pathname) ||
-        /^\/directory\/(sports|programs|providers|events|equipment|grants|resources)\/?$/.test(url.pathname)) {
+      /^\/sports\/(basketball|tennis|pickleball|rugby|football|baseball|cycling|sledhockey|skiing|waterskiing|goalball)\/?$/.test(url.pathname) ||
+      /^\/directory\/(sports|programs|providers|events|equipment|grants|resources)\/?$/.test(url.pathname)) {
       return env.ASSETS.fetch(new Request(new URL("/", url), request));
     }
 
@@ -226,6 +233,13 @@ export default {
         (err) => console.error(`lane ${lane} failed:`, err)
       )
     );
+  },
+};
+
+export default {
+  ...application,
+  fetch(request, env, ctx) {
+    return cachedDirectoryResponse(request, env, () => application.fetch(request, env, ctx));
   },
 };
 
@@ -361,7 +375,7 @@ async function handleSubmitProgram(request, env, ctx) {
     return json({ ok: false, error: "Could not save right now. Please try again soon." }, 502);
   }
 
-  await queueFormConfirmation(env, ctx, {kind:'program',email,program});
+  await queueFormConfirmation(env, ctx, { kind: 'program', email, program });
 
   // Also record in D1 (the directory's own data plane) — Airtable stays the team surface.
   if (env.DB) {
@@ -447,14 +461,14 @@ async function handleProfileUpsert(request, env, ctx) {
   if (newsletter) {
     const result = await subscribeToBeehiiv(env, email, "asnm-profile");
     if (result.welcomeJob) {
-    if (ctx?.waitUntil) ctx.waitUntil(result.welcomeJob);
-    else await result.welcomeJob;
-  }
+      if (ctx?.waitUntil) ctx.waitUntil(result.welcomeJob);
+      else await result.welcomeJob;
+    }
     if (!result.ok) console.error("profile newsletter opt-in failed:", result.error); // profile save already succeeded
   }
 
   const sig = await signProfileId(id, env.PROFILE_SIGNING_KEY);
-  await queueFormConfirmation(env, ctx, {kind:isNew?'profile-created':'profile-updated',email});
+  await queueFormConfirmation(env, ctx, { kind: isNew ? 'profile-created' : 'profile-updated', email });
   return new Response(JSON.stringify({ ok: true, id, isNew }), {
     status: isNew ? 201 : 200,
     headers: { "Content-Type": "application/json", "Cache-Control": "no-store", "Set-Cookie": serializeProfileCookie(id, sig) },

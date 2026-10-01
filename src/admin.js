@@ -101,7 +101,7 @@ export async function handleAdmin(request, env, url) {
     // one instead of updating. Validate before touching the queue row so a bad
     // proposal fails loud (422) rather than silently resolving with no org created.
     if (action === "approve" && !item.organization_id
-        && (item.lane === "discover" || item.lane === "submission")) {
+      && (item.lane === "discover" || item.lane === "submission")) {
       const fields = {};
       for (const [field, d] of Object.entries(change)) {
         if (!NEW_ORG_WHITELIST.has(field)) continue;

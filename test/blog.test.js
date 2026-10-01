@@ -63,10 +63,12 @@ test("sanitizeHtml: non-string input returns empty string", () => {
 const NOW = Date.parse("2026-07-12T00:00:00Z");
 
 test("normalizePosts: keeps well-formed posts, newest-first order preserved", () => {
-  const data = { data: [
-    { id: 1, slug: "one", title: "One", subtitle: "s1", publish_date: 1700000000, thumbnail_url: "t1.jpg", web_url: "w1" },
-    { id: "2", slug: "two", title: "Two", publish_date: 1690000000 },
-  ] };
+  const data = {
+    data: [
+      { id: 1, slug: "one", title: "One", subtitle: "s1", publish_date: 1700000000, thumbnail_url: "t1.jpg", web_url: "w1" },
+      { id: "2", slug: "two", title: "Two", publish_date: 1690000000 },
+    ]
+  };
   const posts = normalizePosts(data, NOW);
   assert.equal(posts.length, 2);
   assert.equal(posts[0].slug, "one");
@@ -88,10 +90,12 @@ test("normalizePosts: drops posts with no id (can't fetch their content)", () =>
 test("normalizePosts: hides posts whose publish_date is in the future", () => {
   const futureSecs = NOW / 1000 + 3600;
   const pastSecs = NOW / 1000 - 3600;
-  const data = { data: [
-    { id: 1, slug: "future", publish_date: futureSecs },
-    { id: 2, slug: "past", publish_date: pastSecs },
-  ] };
+  const data = {
+    data: [
+      { id: 1, slug: "future", publish_date: futureSecs },
+      { id: 2, slug: "past", publish_date: pastSecs },
+    ]
+  };
   const posts = normalizePosts(data, NOW);
   assert.equal(posts.length, 1);
   assert.equal(posts[0].slug, "past");

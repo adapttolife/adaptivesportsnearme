@@ -15,6 +15,46 @@ No generation or sync command is needed when adding or changing an icon name.
 The full Lucide 1.49.0 JavaScript library and license are bundled in
 `public/assets/vendor`, so icons work without a CDN connection.
 
+## D1 read usage
+
+The homepage loads `/api/directory` once for its full public dataset instead of
+issuing a count and an offset scan for each 200 programs. All existing client
+filters, distance sorting and map markers use that same dataset. The paginated
+`/api/programs` endpoint remains available for other callers.
+
+Directory, program search, stats and grant-list responses use the Worker Cache
+API for five minutes, separated by host, environment and relevant parameters.
+Concurrent misses in one Worker isolate share a load. Paginated counts also
+reuse results for five minutes within each database binding. Public edits may
+take five minutes to appear (paginated totals can take up to ten); admin,
+profiles, location, form submissions and failed responses are never cached.
+
+Apply the index migration to each database, then deploy the matching Worker
+and frontend changes. Run staging first and verify before production:
+
+```sh
+npx wrangler d1 execute asnm-db-staging --config wrangler.preview.json --remote --file db/migrations/0006_read_indexes.sql
+npx wrangler d1 execute asnm-db --config wrangler.json --remote --file db/migrations/0006_read_indexes.sql
+```
+
+The migration is repeatable and changes no program content. It indexes public
+directory ordering, case-insensitive admin ordering, source linkage and pending
+review ordering. Building indexes consumes some reads/writes once; subsequent
+writes also maintain them.
+
+Cloudflare's free allowance is **5 million rows read per day per account**,
+shared across databases, not five million for each staging/production database.
+See [D1 pricing](https://developers.cloudflare.com/d1/platform/pricing/).
+Cache entries are local to Cloudflare data centers and may be evicted. These
+changes reduce reads but cannot guarantee a daily ceiling with arbitrary traffic
+or external query clients. After rollout, compare both databases' Metrics > Row
+Metrics over a full day, and review D1 query insights for remaining callers:
+
+```sh
+npx wrangler d1 insights asnm-db --config wrangler.json --sort-by=rows_read --sort-type=sum
+npx wrangler d1 insights asnm-db-staging --config wrangler.preview.json --sort-by=rows_read --sort-type=sum
+```
+
 ## Local staging preview
 
 From the repository root, run:
@@ -26,6 +66,10 @@ npm run dev
 Open http://127.0.0.1:8787. `npm run dev` and `npm run preview` use
 Wrangler's staging environment with local database storage. `npm run dev:local`
 explicitly forces local bindings. Fresh local databases use the sample listings.
+Map view is available at http://127.0.0.1:8787/maps, including with sample data.
+Map tiles need internet access and a browser with WebGL support. Sample listings
+without coordinates remain in the list but do not produce map pins; use the
+staging database below to preview real program locations.
 
 To run local code against the real staging database:
 
