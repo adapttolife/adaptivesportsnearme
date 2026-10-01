@@ -3171,16 +3171,18 @@
 				afterRender();
 			}
 			function updateHeaderSearch() {
-				const ae = document.activeElement,
-					aeId = ae ? ae.id : "";
-				const hide =
-					window.innerWidth > 720 &&
-					state.section === "discover" &&
-					window.scrollY < 240 &&
-					!state.q.trim() &&
-					aeId !== "q";
 				const h = document.querySelector(".hdr");
-				if (h) h.classList.toggle("hide-search", hide);
+				if (!h) return;
+				const heroSearch = document.querySelector(".hero .hsearch");
+				const bounds = heroSearch?.getBoundingClientRect();
+				// Wait until the entire hero bar clears the viewport. A hidden mobile
+				// hero bar has zero height; pages without one always retain header search.
+				const hide = !!bounds && bounds.height > 0 && bounds.bottom > 0;
+				if (hide && h.querySelector(".search")?.contains(document.activeElement)) {
+					const target = document.getElementById(document.activeElement.id === "locBtn" ? "hlocBtn" : "qHero");
+					target?.focus({ preventScroll: true });
+				}
+				h.classList.toggle("hide-search", hide);
 			}
 			function scrollToResults() {
 				const m =
@@ -5014,25 +5016,20 @@
 				const hq = document.getElementById("q");
 				if (hq) hq.value = state.q;
 				const needNear = noteZipFromQuery();
-				if (needNear) resolveNear().then(() => searchRender());
-				else searchRender();
-				if (
-					window.innerWidth > 720 &&
-					window.scrollY < 240 &&
-					!isFeedMode()
-				) {
-					const hdr = document.querySelector(".hdr");
-					if (hdr) hdr.classList.remove("hide-search");
-					const hq2 = document.getElementById("q");
-					if (hq2) {
-						hq2.focus();
-						const v = hq2.value;
-						try {
-							hq2.setSelectionRange(v.length, v.length);
-						} catch (_) {}
+				const refresh = () => {
+					const active = document.activeElement;
+					const editing = active?.id === "qHero";
+					const start = active?.selectionStart, end = active?.selectionEnd;
+					searchRender();
+					updateHeaderSearch();
+					if (editing) {
+						const input = document.getElementById("qHero");
+						input?.focus({ preventScroll: true });
+						if (input && start != null) input.setSelectionRange(start, end);
 					}
-					scrollToResults();
-				}
+				};
+				if (needNear) resolveNear().then(refresh);
+				else refresh();
 			});
 			document.addEventListener("keydown", (e) => {
 				if (e.target.id === "qHero" && e.key === "Enter") {
@@ -5088,6 +5085,12 @@
 			}
 			window.addEventListener("scroll", syncHeader, { passive: true });
 			window.addEventListener("resize", syncHeader, { passive: true });
+			// Fonts, wrapped sport titles and route changes can move the hero bar
+			// without a scroll event. Observe the stable view container for those changes.
+			if (typeof ResizeObserver !== "undefined") {
+				const headerSearchObserver = new ResizeObserver(updateHeaderSearch);
+				headerSearchObserver.observe(document.getElementById("view"));
+			}
 
 			/* ============================ EMAIL CTA (hero | bar | band) ============================ */
 			/* One delegated handler for every treatment's capture form. Mirrors the notifyForm
