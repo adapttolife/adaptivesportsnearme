@@ -13,15 +13,27 @@ From the repository root, run:
 npm run dev
 ```
 
-Open http://127.0.0.1:8787. `npm run dev:staging` and `npm run preview`
-are aliases for the same local server. All three use `wrangler.preview.json`
-(`ENV_NAME=staging`, `PRELAUNCH=false`) and Wrangler 4. On first use, `npx`
-may ask to download Wrangler. Stop the server with Ctrl+C.
+Open http://127.0.0.1:8787. `npm run dev` and `npm run preview` use
+Wrangler's staging environment with local database storage. `npm run dev:local`
+explicitly forces local bindings. Fresh local databases use the sample listings.
 
-Wrangler runs the Worker and D1 locally, with database state persisted in
-`.wrangler/state`. This does not download the hosted staging database or publish
-a Worker version. A fresh local database has no directory data; the frontend
-uses its sample listings when the directory API cannot load data.
+To run local code against the real staging database:
+
+```sh
+npx wrangler login
+npm run dev:staging
+```
+
+`dev:staging` uses `wrangler.dev.json`: the application and assets run locally,
+while `DB` and `INTAKE` connect to the existing `asnm-db-staging` database via
+remote bindings. No data copy or deployment is needed. This requires Cloudflare
+account access and internet connectivity. Database writes from forms, profiles,
+and admin actions also affect the shared staging database; this is not a read-only
+connection. Production databases are not selected.
+
+Do not add `--local` to `dev:staging`, since it disables remote bindings.
+Stop either server with Ctrl+C. `npx` may ask to download Wrangler on first use.
+See [Cloudflare D1 local development](https://developers.cloudflare.com/d1/best-practices/local-development/).
 
 For form integration testing, put the necessary runtime secrets in the ignored
 `.dev.vars` file. External Beehiiv, Gmail, and Airtable requests still use real
