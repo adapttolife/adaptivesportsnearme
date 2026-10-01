@@ -6,7 +6,7 @@ const html=readFileSync(new URL('../public/index.html',import.meta.url),'utf8');
 function source(name){const start=html.indexOf('function '+name+'(');return html.slice(start,html.indexOf('\n}',start)+2);}
 function setup(programs){
   const state={sport:'all',q:'',near:null,dist:'any',cost:'any',level:'any',sort:'rec',see:null,filtersOpen:true};
-  const context=vm.createContext({state,PROGRAMS:programs.map(p=>({name:'Program',sportLabel:'Sport',levels:[],...p})),DATA_LIVE:true,isZipQuery:()=>false});
+  const context=vm.createContext({state,PROGRAMS:programs.map(p=>({name:'Program',sportLabel:'Sport',levels:[],...p})),DATA_LIVE:true,visitorLocation:null,programDistance:p=>p.dist,isZipQuery:()=>false});
   vm.runInContext(['filtered','filtersPanel'].map(source).join('\n'),context);
   return {state,context,panel:()=>vm.runInContext('filtersPanel()',context)};
 }

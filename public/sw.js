@@ -35,6 +35,7 @@ self.addEventListener("fetch", (e) => {
   const req = e.request;
   if (req.method !== "GET") return;
   const url = new URL(req.url);
+  if (url.pathname === '/api/location') return; // visitor-specific, never cache
   if (url.origin !== self.location.origin) return;
   if (url.pathname.startsWith("/api/admin")) return;
 

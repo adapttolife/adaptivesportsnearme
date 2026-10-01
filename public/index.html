@@ -41,7 +41,7 @@
     <div class="search" role="search">
       <button class="loc" id="locBtn" aria-label="Change location">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s7-5.7 7-11a7 7 0 1 0-14 0c0 5.3 7 11 7 11Z"/><circle cx="12" cy="10" r="2.5"/></svg>
-        <span id="locTxt">Denver, CO</span>
+        <span id="locTxt">Finding location…</span>
       </button>
       <span class="sep"></span>
       <input id="q" type="text" placeholder="Search a sport, zip, or program" aria-label="Search programs">
@@ -162,6 +162,7 @@
 </div>
 
 <script src="/directory-routes.js"></script>
+<script src="/location.js"></script>
 <script src="/segmented-controls.js" defer></script>
 <script>
 /* ============================ DATA ============================ */
@@ -342,6 +343,7 @@ const US_STATES=["AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID","IL
 const BAND_STYLE = (new URLSearchParams(location.search).get('band')||'warm'); // warm (default) | soft — inbox-band skin
 const state = { section:"discover", layout:"grid", sport:"all", q:"", dist:"any", cost:"any", level:"any", filtersOpen:false, sort:"rec", db:"programs", dbView:"gallery", programId:null, grantId:null, grantAudience:"all", loc:"Denver, CO", see:null, profileNudge:false, nearZip:"", nearCity:"", near:null };
 const saved = new Set();
+let visitorLocation=null;
 // Keep directly linked fallback records available when live hydration replaces
 // the directory arrays. They are not appended to live search results.
 const FALLBACK_PROGRAMS = PROGRAMS.slice();
@@ -400,7 +402,14 @@ function media(p, kind){
   return '<div class="'+cls+' has-stamp">'+(v.src?'<img class="pcard-stamp" src="'+v.src+'" alt="" loading="lazy">':'')+overlay+'</div>';
 }
 // One line under the city, and only when it says something: how far away this is.
-function cardLine(p){ return p.dist!=null ? p.dist+' mi away' : ''; }
+function programDistance(p){
+  const origin=state.near || (!state.nearZip&&!state.nearCity?visitorLocation:null);
+  if(!origin || !Number.isFinite(origin.lat)||!Number.isFinite(origin.lng) ||
+    !Number.isFinite(p.lat)||!Number.isFinite(p.lng) ||
+    Math.abs(origin.lat)>90||Math.abs(origin.lng)>180||Math.abs(p.lat)>90||Math.abs(p.lng)>180) return null;
+  return Math.round(milesBetween(origin.lat,origin.lng,p.lat,p.lng)*10)/10;
+}
+function cardLine(p){ const dist=programDistance(p); return dist!=null ? dist+' mi away' : ''; }
 // The org type is a default, not a difference: 47 of 72 home cards read
 // "Adaptive club". It belongs in a labelled column and on the listing page,
 // not as an unlabelled fourth line under every card.
@@ -413,21 +422,18 @@ function milesBetween(aLat,aLng,bLat,bLng){
 }
 function isZipQuery(q){ return /^\d{5}$/.test((q||'').trim()); }
 function filtered({ignoreCostDistance=false}={}){
-  let list = PROGRAMS.slice();
+  let list = PROGRAMS.map(p=>({...p,dist:programDistance(p)}));
   if(state.sport!=='all') list = list.filter(p=>p.sport===state.sport);
   const qraw=state.q.trim();
   if(qraw && !isZipQuery(qraw)){ const q=qraw.toLowerCase(); list=list.filter(p=>(p.name+' '+p.sportLabel+' '+(p.provider||'')+' '+(p.city||'')+' '+(p.stateName||'')).toLowerCase().includes(q)); }
-  if(state.near && state.near.lat!=null){
-    const r=state.near.radius||100;
-    list=list.filter(p=>p.lat!=null&&p.lng!=null).map(p=>{
-      const dist=Math.round(milesBetween(state.near.lat,state.near.lng,p.lat,p.lng)*10)/10;
-      return Object.assign({},p,{dist});
-    }).filter(p=>p.dist<=r);
-  }
+  const explicitLocation=!!(state.nearZip||state.nearCity);
+  const origin=state.near || (!explicitLocation?visitorLocation:null);
+  // Location determines ordering; only an explicitly selected distance filter
+  // limits the result radius. Unknown distances stay visible at the end.
   if(!ignoreCostDistance && state.dist!=='any'){ const m={s:5,m:10,l:25}[state.dist]; list=list.filter(p=>p.dist!=null&&p.dist<=m); }
   if(!ignoreCostDistance && state.cost==='free') list=list.filter(p=>p.free);
   if(state.level!=='any') list=list.filter(p=>!p.levels.length||p.levels.map(l=>l.toLowerCase()).includes(state.level));
-  if(state.sort==='dist' || state.near) list.sort((a,b)=>(a.dist??1e9)-(b.dist??1e9)||(b.freshness??0)-(a.freshness??0));
+  if(state.sort==='dist' || origin) list.sort((a,b)=>(a.dist??1e9)-(b.dist??1e9)||(b.freshness??0)-(a.freshness??0));
   if(state.sort==='name') list.sort((a,b)=>a.name.localeCompare(b.name));
   return list;
 }
@@ -447,11 +453,13 @@ function locLabel(){
   if(state.nearCity) return state.nearCity;
   if(state.near && state.near.zip) return state.near.zip;
   if(state.near && state.near.city) return state.near.city;
-  return DATA_LIVE ? 'United States' : state.loc;
+  return visitorLocation ? visitorLocation.label : 'Finding location…';
 }
 function locPhrase(){
-  if(state.nearZip || state.nearCity || state.near) return 'near '+locLabel();
-  return DATA_LIVE ? 'across the U.S.' : 'near '+state.loc;
+  const origin=state.near || (!state.nearZip&&!state.nearCity?visitorLocation:null);
+  if(origin && Number.isFinite(origin.lat) && Number.isFinite(origin.lng) && state.sort!=='name')
+    return 'sorted by distance from '+locLabel();
+  return 'across the U.S.';
 }
 function syncLocLabel(){
   const t=locLabel();
@@ -461,7 +469,7 @@ function syncLocLabel(){
 function toolbar(list){
   const fc=activeFilterCount();
   return '<div class="toolbar">'
-    +'<div class="count"><b>'+list.length+'</b> '+(list.length===1?'program':'programs')+' '+locPhrase()+'</div>'
+    +'<div class="count"><b>'+list.length+'</b> '+(list.length===1?'program':'programs')+' '+esc(locPhrase())+'</div>'
     +'<div class="tools">'
       +'<button class="btn-pill" id="filtBtn" aria-expanded="'+state.filtersOpen+'">'+NAVICON.sliders+'Filters'+(fc?'<span class="badge">'+fc+'</span>':'')+'</button>'
       +'<select class="sortsel" id="sortSel" aria-label="Sort">'
@@ -535,10 +543,10 @@ function diversify(list, lead){
   return out;
 }
 function feedRows(){
-  const city=DATA_LIVE?'the U.S.':(state.loc.split(',')[0]||'').trim();
   // Feed rows lead with imagery — with live data, favour orgs in the photo set,
   // and cap each row so the rail stays a rail (See all opens the full directory).
-  const pool=DATA_LIVE?PROGRAMS.filter(p=>p.sport):PROGRAMS;
+  const pool=filtered().filter(p=>p.sport);
+  if(!pool.length) return '<div class="wrap feed">'+empty()+'</div>';
   const cap=l=>DATA_LIVE?l.slice(0,12):l;
   const beginner=cap(pool.filter(p=>p.levels.includes('Beginner')||(DATA_LIVE&&(p.free||/provided/i.test(p.equipment||'')))));
   const popular=cap(pool.slice().sort((a,b)=>(a.dist??1e9)-(b.dist??1e9)||(b.freshness??0)-(a.freshness??0)));
@@ -552,22 +560,23 @@ function feedRows(){
   // content rows, never before the first (an empty row must not float it to the top).
   const rows = [
     frow('New to adaptive sports?','Welcoming programs where first timers fit right in', diversify(beginner,'pickleball'), 'beginner'),
-    frow('Popular in '+city, '', diversify(popular,'tennis'), 'popular'),
+    frow('Closest programs', 'Programs with known distances appear first', diversify(popular,'tennis'), 'popular'),
     (DATA_LIVE
       ? frow('Recently verified','Websites confirmed active in recent checks', diversify(taking,'waterskiing'), 'fresh')
       : frow('Taking new players','Open and taking sign-ups', diversify(taking,'waterskiing'), 'open')),
     frow('Outdoor sports','Trails, slopes and open water', diversify(outdoor,'cycling'), 'sport:cycling'),
     frow('Free to play','No cost to get started', diversify(free,'goalball'), 'free'),
-    frow('Team sports to try','Find a squad in '+city, diversify(team,'rugby'), 'popular'),
+    frow('Team sports to try','Find your next team', diversify(team,'rugby'), 'popular'),
   ].filter(Boolean);
   if(rows.length>=2) rows.splice(2,0,ctaBand()); else rows.push(ctaBand());
   return '<div class="wrap feed">'+rows.join('')+'</div>';
 }
 function isFeedMode(){ return state.see===null && !state.q.trim() && !state.nearZip && !state.nearCity && !state.near && state.sport==='all' && state.dist==='any' && state.cost==='any' && state.level==='any'; }
 function seeList(){
-  if(state.see==='open') return PROGRAMS.filter(p=>p.status==='Open'||p.status==='Seasonal');
-  if(state.see==='fresh') return PROGRAMS.filter(p=>(p.freshness??0)>=50);
-  return PROGRAMS.slice().sort((a,b)=>(a.dist??1e9)-(b.dist??1e9)||(b.freshness??0)-(a.freshness??0));
+  const list=filtered();
+  if(state.see==='open') return list.filter(p=>p.status==='Open'||p.status==='Seasonal');
+  if(state.see==='fresh') return list.filter(p=>(p.freshness??0)>=50);
+  return list.sort((a,b)=>(a.dist??1e9)-(b.dist??1e9)||(b.freshness??0)-(a.freshness??0));
 }
 // Project real lat/lng onto the stylised map canvas (continental-US bounds).
 function geoPos(p){
@@ -1085,7 +1094,7 @@ function heroSection(){
     +'<h1>'+esc(heroTitle())+'</h1>'
     +'<p class="lede">'+esc(heroSubtitle())+'</p>'
     +'<div class="hsearch" role="search">'
-      +'<button class="loc" id="hlocBtn" type="button" aria-label="Change location"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s7-5.7 7-11a7 7 0 1 0-14 0c0 5.3 7 11 7 11Z"/><circle cx="12" cy="10" r="2.5"/></svg><span>'+locLabel()+'</span></button>'
+      +'<button class="loc" id="hlocBtn" type="button" aria-label="Change location"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s7-5.7 7-11a7 7 0 1 0-14 0c0 5.3 7 11 7 11Z"/><circle cx="12" cy="10" r="2.5"/></svg><span>'+esc(locLabel())+'</span></button>'
       +'<span class="sep"></span>'
       +'<input id="qHero" type="text" placeholder="Search a sport, zip, or program" aria-label="Search programs">'
     +'</div>'
@@ -1112,7 +1121,7 @@ function renderResults(){
   const r=document.getElementById('results');
   if(r) r.innerHTML = state.layout==='map'?mapLayout(list):state.layout==='list'?listLayout(list):cardGrid(list);
   const c=document.querySelector('#main .count');
-  if(c) c.innerHTML = '<b>'+list.length+'</b> '+(list.length===1?'program':'programs')+' '+locPhrase();
+  if(c) c.innerHTML = '<b>'+list.length+'</b> '+(list.length===1?'program':'programs')+' '+esc(locPhrase());
   afterRender();
 }
 function updateHeaderSearch(){
@@ -1383,7 +1392,7 @@ function database(){
   const side=tables.map(t=>'<div class="tbl'+(state.db===t.key?' on':'')+'" data-db="'+t.key+'">'+NAVICON[t.icon]+'<span>'+t.label+'</span><span class="ct">'+t.count+'</span></div>').join('');
   let body;
   if(state.db==='programs' && state.dbView==='gallery'){
-    body='<div class="gallery">'+PROGRAMS.map(p=>
+    body='<div class="gallery">'+PROGRAMS.map(p=>({...p,dist:programDistance(p)})).map(p=>
       '<div class="gcard" data-prog="'+p.id+'"><h3>'+p.name+'</h3>'
       +'<div class="field"><span class="gk">Sport</span><span class="gv"><span class="tag">'+p.sportLabel+'</span></span></div>'
       +'<div class="field"><span class="gk">Provider</span><span class="gv">'+(p.provider||'—')+'</span></div>'
@@ -1394,7 +1403,7 @@ function database(){
       +'</div>').join('')+'</div>';
   } else {
     let cols, rows;
-    if(state.db==='programs'){ cols=["Program","Sport","Provider","City","Distance","Cost","Status"]; rows=PROGRAMS.map(p=>[p.name,p.sportLabel,p.provider||'—',p.city||p.stateName||'—',p.dist!=null?p.dist+' mi':'—',p.cost||'—',p.status]); }
+    if(state.db==='programs'){ cols=["Program","Sport","Provider","City","Distance","Cost","Status"]; rows=PROGRAMS.map(p=>({...p,dist:programDistance(p)})).map(p=>[p.name,p.sportLabel,p.provider||'—',p.city||p.stateName||'—',p.dist!=null?p.dist+' mi':'—',p.cost||'—',p.status]); }
     else { const d=dbTableData(state.db); cols=d.cols; rows=d.rows; }
     if(state.db==='grants'){
       const shown=GRANTS.filter(g=>state.grantAudience==='all'||g.audience===state.grantAudience);
@@ -1611,18 +1620,19 @@ function filterChanged(){
 function goFeed(){ state.q=''; state.sport='all'; state.dist='any'; state.cost='any'; state.level='any'; state.see=null; state.filtersOpen=false; state.layout='grid'; state.nearZip=''; state.nearCity=''; state.near=null; }
 let nearToken=0;
 async function resolveNear(){
-  const zip=state.nearZip, city=state.nearCity;
-  if(!zip && !city){ state.near=null; return; }
   const t=++nearToken;
+  const zip=state.nearZip, city=state.nearCity;
+  state.near=null;
+  if(!zip && !city){ state.near=null; return; }
   const qs=new URLSearchParams();
   if(zip) qs.set('zip', zip);
   if(city) qs.set('city', city);
   qs.set('limit','1');
   try{
     const j=await fetch('/api/programs?'+qs).then(r=>r.json());
-    if(t!==nearToken) return;
+    if(t!==nearToken || zip!==state.nearZip || city!==state.nearCity) return;
     state.near=(j&&j.ok&&j.near)?j.near:null;
-  }catch(_){ if(t===nearToken) state.near=null; }
+  }catch(_){ if(t===nearToken && zip===state.nearZip && city===state.nearCity) state.near=null; }
 }
 function noteZipFromQuery(){
   if(isZipQuery(state.q)){ state.nearZip=state.q.trim(); return true; }
@@ -2036,6 +2046,11 @@ Object.assign(state,DirectoryRoutes.read(new URL(location.href),SPORTS.map(s=>s.
 if(isZipQuery(state.q)) state.nearZip=state.q.trim();
 render();
 routeReady=true;
+detectVisitorLocation(location=>{
+  visitorLocation=location;
+  syncLocLabel();
+  if(!viewFormBusy()) render(true);
+});
 if(state.section==='discover'&&state.sport!=='all') requestAnimationFrame(scrollToResults);
 if(BOOT_QP.get('add')==='program') openGate('program');
 /* Deep links for the About panel, so the server-rendered footers can point at the
@@ -2077,7 +2092,7 @@ function mapOrg(o){
       fetch('/api/programs?limit=200').then(r=>r.json()).catch(()=>null),
     ]);
     if(cfg&&cfg.ok) PRELAUNCH=!!cfg.prelaunch;
-    if(!cfg||!cfg.dataApi||!first||!first.ok||!first.items.length) return;
+    if(!cfg||!cfg.dataApi||!first||!first.ok||!Array.isArray(first.items)) return;
     PROGRAMS.length=0; Array.prototype.push.apply(PROGRAMS, first.items.map(mapOrg));
     DATA_LIVE=true;
     // landing on /maps boots straight into the explorer (live, ungated only)

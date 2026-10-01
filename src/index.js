@@ -93,6 +93,15 @@ export default {
       return handleProfileSignout();
     }
 
+    if (url.pathname === "/api/location") {
+      if(request.method !== 'GET') return json({ok:false,error:'Method not allowed'},405);
+      const cf=request.cf || {};
+      const latitude=cf.latitude == null || cf.latitude === '' ? NaN : Number(cf.latitude);
+      const longitude=cf.longitude == null || cf.longitude === '' ? NaN : Number(cf.longitude);
+      const valid=Number.isFinite(latitude)&&Math.abs(latitude)<=90&&Number.isFinite(longitude)&&Math.abs(longitude)<=180;
+      return json({city:cf.city || null,region:cf.regionCode || cf.region || null,
+        lat:valid?latitude:null,lng:valid?longitude:null},200,'private, no-store');
+    }
     if (url.pathname === "/api/config") {
       return json({
         ok: true,
