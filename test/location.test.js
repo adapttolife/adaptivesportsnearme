@@ -77,10 +77,47 @@ test('card distances follow location changes and never reuse sample distances', 
 test('IP location is applied before requesting precise location', async () => {
   const seen = [];
   const final = await detector()(value => seen.push(value), {
-    fetch: async (url, options) => { assert.equal(url, '/api/location'); assert.equal(options.cache, 'no-store'); return Response.json(ip); },
+    fetch: async (url, options) => { assert.equal(options.cache, 'no-store'); return Response.json(url === '/api/location' ? ip : { city: 'Troy', principalSubdivisionCode: 'US-NY' }); },
     geolocation: { getCurrentPosition(ok, _fail, options) { assert.equal(seen[0].label, 'Boston, MA'); assert.equal(options.enableHighAccuracy, true); ok({ coords: { latitude: 42.4, longitude: -71.1 } }); } },
   });
   assert.equal(seen.length, 2); assert.equal(final.source, 'browser'); assert.equal(final.lat, 42.4);
+  assert.equal(final.label, 'Troy, NY');
+});
+
+test('GPS city lookup uses consented coordinates and preserves them for distance calculations', async () => {
+  const requests = [];
+  const final = await detector()(() => {}, {
+    fetch: async (url, options) => {
+      requests.push(url);
+      if (url === '/api/location') return Response.json(ip);
+      const parsed = new URL(url);
+      assert.equal(parsed.hostname, 'api.bigdatacloud.net');
+      assert.equal(parsed.searchParams.get('latitude'), '42.7284');
+      assert.equal(parsed.searchParams.get('longitude'), '-73.6918');
+      assert.equal(options.credentials, 'omit'); assert.equal(options.referrerPolicy, 'no-referrer');
+      return Response.json({ city: 'Troy', principalSubdivisionCode: 'US-NY', principalSubdivision: 'New York', latitude: 42, longitude: -74 });
+    },
+    geolocation: { getCurrentPosition(ok) { ok({ coords: {latitude:42.7284, longitude:-73.6918} }); } },
+  });
+  assert.equal(requests.length,2); assert.equal(final.label,'Troy, NY');
+  assert.equal(final.lat,42.7284); assert.equal(final.lng,-73.6918);
+});
+
+test('city lookup supports locality and keeps a sensible label on failure', async () => {
+  for (const [place,label] of [
+    [{locality:'Village',principalSubdivision:'Ontario'},'Village, Ontario'],
+    [{},'Boston, MA'], [null,'Boston, MA'],
+  ]) {
+    const final = await detector()(() => {}, {
+      fetch: async url => {
+        if(url === '/api/location') return Response.json(ip);
+        if(place === null) throw Error('timeout');
+        return Response.json(place);
+      },
+      geolocation: {getCurrentPosition(ok) {ok({coords:{latitude:42,longitude:-73}});}},
+    });
+    assert.equal(final.label,label); assert.equal(final.source,'browser'); assert.equal(final.lat,42);
+  }
 });
 test('denied browser access retains IP location', async () => {
   const final = await detector()(() => { }, { fetch: async () => Response.json(ip), geolocation: { getCurrentPosition(_ok, fail) { fail({ code: 1 }); } } });
