@@ -138,7 +138,7 @@ export function trayPeekHtml(org) {
   const pills = trayPills(org);
   const pillRow = pills.map((a, i) => pillHtml(a, org, i === 0)).join("");
   return `<div class="tray-handle-hit"><div class="tray-handle" aria-hidden="true"></div>`
-    + `<button class="tray-x" type="button" aria-label="Close"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>`
+    + `<button class="tray-x" type="button" aria-label="Close"><i width="14" height="14" stroke-width="2.4" data-lucide="x" aria-hidden="true" focusable="false"></i></button></div>`
     + `<div class="tray-peek">`
     + `<div class="tray-name">${esc(org && org.name ? org.name : "")}</div>`
     + `<div class="tray-meta">${esc(trayMetaLine(org))}</div>`

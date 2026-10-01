@@ -5,6 +5,16 @@ Cloudflare Worker with a **D1 data plane** (1,544 real organizations), a cron ma
 pipeline, and an installable PWA. Production stays a gated pre-launch teaser; staging runs
 the full ungated directory on real data.
 
+## UI icons
+
+Use Lucide HTML tags, such as `<i data-lucide="map-pin" aria-hidden="true"></i>`.
+`public/icons.js` renders them on page load and whenever new UI is inserted.
+Add `width`, `height`, `stroke-width`, or a CSS class to customize the icon;
+colors inherit from the surrounding control. Keep accessible labels on buttons.
+No generation or sync command is needed when adding or changing an icon name.
+The full Lucide 1.49.0 JavaScript library and license are bundled in
+`public/assets/vendor`, so icons work without a CDN connection.
+
 ## Local staging preview
 
 From the repository root, run:
