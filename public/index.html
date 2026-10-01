@@ -35,19 +35,19 @@
 
 <header class="hdr">
   <div class="wrap hdr-in">
-    <button class="menu-btn" id="menuBtn" aria-label="Menu" aria-expanded="false" aria-controls="drawer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
-    <a class="brand" href="#" data-home aria-label="Adaptive Sports Near Me home"><b>Adaptive Sports Near Me</b></a>
+    <button class="menu-btn" id="menuBtn" aria-label="Menu" aria-expanded="false" aria-controls="drawer"><i stroke-width="2" data-lucide="menu" aria-hidden="true" focusable="false"></i></button>
+    <a class="brand" href="/" data-home aria-label="Adaptive Sports Near Me home"><b>Adaptive Sports Near Me</b></a>
 
     <div class="search" role="search">
       <button class="loc" id="locBtn" aria-label="Change location">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s7-5.7 7-11a7 7 0 1 0-14 0c0 5.3 7 11 7 11Z"/><circle cx="12" cy="10" r="2.5"/></svg>
-        <span id="locTxt">Denver, CO</span>
+        <i stroke-width="2" data-lucide="map-pin" aria-hidden="true" focusable="false"></i>
+        <span id="locTxt">Finding location…</span>
       </button>
       <span class="sep"></span>
       <input id="q" type="text" placeholder="Search a sport, zip, or program" aria-label="Search programs">
     </div>
     <div class="hdr-actions">
-      <button class="hdr-add" data-addprogram aria-label="Submit a program" title="Submit a program"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+      <button class="hdr-add" data-addprogram aria-label="Submit a program" title="Submit a program"><i stroke-width="2.2" data-lucide="plus" aria-hidden="true" focusable="false"></i></button>
     </div>
   </div>
 </header>
@@ -73,13 +73,13 @@
     </div>
     <div class="foot-in">
       <div>
-        <a class="brand" href="#" data-home><b>Adaptive Sports Near Me</b></a>
+        <a class="brand" href="/" data-home><b>Adaptive Sports Near Me</b></a>
         <p class="tagline">An open directory of adaptive sports programs across the country. No logins, no walls, because it is a free service of <a href="https://adapttolife.org" target="_blank" rel="noopener">Adapt To Life</a>, a recognized 501(c)(3) nonprofit.</p>
       </div>
       <div class="foot-links">
-        <div class="foot-col"><h2>Explore</h2><a href="#" data-home>Discover</a><a href="/maps" data-mapx>Map view</a><a href="#" data-section="database">Browse all</a><a href="#" data-section="events">Events</a><a href="#" data-browse-sport>Browse by sport</a><a href="#" data-db-link="grants">Funding</a><a href="/blog">Blog</a></div>
+        <div class="foot-col"><h2>Explore</h2><a href="/" data-home>Discover</a><a href="/maps" data-mapx>Map view</a><a href="/directory/programs" data-section="database">Browse all</a><a href="/events" data-section="events">Events</a><a href="#" data-browse-sport>Browse by sport</a><a href="/grants" data-db-link="grants">Funding</a><a href="/blog">Blog</a></div>
         <div class="foot-col"><h2>Programs</h2><a href="#" data-gate-open="program">Add a program</a><a href="#" data-gate-open="program">Update a listing</a></div>
-        <div class="foot-col"><h2>About</h2><a href="#" data-about="project">The project</a><a href="#" data-about="verify">How we verify</a><a href="#" data-about="a11y">Accessibility</a><a href="#" data-section="profile">Your profile</a><a href="https://adapttolife.org" target="_blank" rel="noopener">Adapt To Life</a><a href="https://sign.adapttolife.org/waiver?source=asnm">Sign waiver</a></div>
+        <div class="foot-col"><h2>About</h2><a href="#" data-about="project">The project</a><a href="#" data-about="verify">How we verify</a><a href="#" data-about="a11y">Accessibility</a><a href="/profile" data-section="profile">Your profile</a><a href="https://adapttolife.org" target="_blank" rel="noopener">Adapt To Life</a><a href="https://sign.adapttolife.org/waiver?source=asnm">Sign waiver</a></div>
       </div>
     </div>
   </div>
@@ -88,7 +88,7 @@
 <div class="gate-ov" id="about" role="dialog" aria-modal="true" aria-labelledby="aboutTitle">
   <div class="gate">
     <div class="gate-head">
-      <button class="gate-x" type="button" data-about-close aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+      <button class="gate-x" type="button" data-about-close aria-label="Close"><i stroke-width="2.4" data-lucide="x" aria-hidden="true" focusable="false"></i></button>
       <p class="gate-eyebrow">About</p>
       <h2 id="aboutTitle">Adaptive Sports Near Me</h2>
     </div>
@@ -112,7 +112,7 @@
 <div class="gate-ov" id="gate" role="dialog" aria-modal="true" aria-labelledby="gateTitle">
   <div class="gate">
     <div class="gate-head">
-      <button class="gate-x" type="button" data-gate-close aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+      <button class="gate-x" type="button" data-gate-close aria-label="Close"><i stroke-width="2.4" data-lucide="x" aria-hidden="true" focusable="false"></i></button>
       <p class="gate-eyebrow">Opening soon</p>
       <h2 id="gateTitle">Be first through the door.</h2>
       <p class="lede"><span id="gateCount">1,544</span> adaptive sports programs are in, and we are checking every one so what you find is real. You hear the day the doors open.</p>
@@ -126,10 +126,10 @@
         <form id="notifyForm" novalidate>
           <input class="hp" type="text" name="company" tabindex="-1" autocomplete="off" aria-hidden="true">
           <div class="gfield"><label for="ntfName">First name</label><input id="ntfName" type="text" name="nm" placeholder="Alex" autocomplete="given-name" maxlength="60"></div>
-          <div class="gfield"><label for="ntfEmail">Email</label><input id="ntfEmail" type="email" name="em" placeholder="you@email.com" autocomplete="email" required></div>
+          <div class="gfield"><label for="ntfEmail">Email <span class="required-mark" aria-hidden="true">*</span></label><input id="ntfEmail" type="email" name="em" placeholder="you@email.com" autocomplete="email" required></div>
           <label class="gcheck" for="ntfBeta">
             <input id="ntfBeta" type="checkbox" name="beta" value="1">
-            <span class="gcheck-box" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span>
+            <span class="gcheck-box" aria-hidden="true"><i stroke-width="3" data-lucide="check" aria-hidden="true" focusable="false"></i></span>
             <span class="gcheck-text"><strong>I want the first look</strong><span>A small group gets in before we open. Whatever is missing near you is what we work on next.</span></span>
           </label>
           <div class="cf-turnstile" data-sitekey="0x4AAAAAADr2WPepRgjp8g-R" data-appearance="interaction-only"></div>
@@ -142,14 +142,14 @@
         <p class="mb-15 lede">Run an adaptive sports program? Add it and we will feature it at launch.</p>
         <form id="programForm" novalidate>
           <input class="hp" type="text" name="company" tabindex="-1" autocomplete="off" aria-hidden="true">
-          <div class="gfield"><label for="pgName">Program name</label><input id="pgName" type="text" name="pn" required></div>
+          <div class="gfield"><label for="pgName">Program name <span class="required-mark" aria-hidden="true">*</span></label><input id="pgName" type="text" name="pn" required></div>
           <div class="gfield"><label for="pgOrg">Organization</label><input id="pgOrg" type="text" name="org"></div>
           <div class="gfield"><label for="pgSport">Sport</label><select id="pgSport" name="sport"><option value="">Choose a sport</option></select></div>
           <div class="grow2">
             <div class="gfield"><label for="pgCity">City</label><input id="pgCity" type="text" name="city"></div>
             <div class="gfield"><label for="pgState">State</label><input id="pgState" type="text" name="state"></div>
           </div>
-          <div class="gfield"><label for="pgEmail">Your email</label><input id="pgEmail" type="email" name="em" placeholder="you@email.com" autocomplete="email"></div>
+          <div class="gfield"><label for="pgEmail">Your email <span class="required-mark" aria-hidden="true">*</span></label><input id="pgEmail" type="email" name="em" placeholder="you@email.com" autocomplete="email" required></div>
           <div class="gfield"><label for="pgNotes">Anything else</label><textarea id="pgNotes" name="notes" rows="2"></textarea></div>
           <div class="cf-turnstile" data-sitekey="0x4AAAAAADr2WPepRgjp8g-R" data-appearance="interaction-only"></div>
           <button class="gate-cta" type="submit">Submit program</button>
@@ -161,6 +161,11 @@
   </div>
 </div>
 
+<script src="/directory-routes.js"></script>
+<script src="/location.js"></script>
+<script src="/segmented-controls.js" defer></script>
+<script src="/assets/vendor/lucide-1.49.0.min.js" defer></script>
+<script src="/icons.js" defer></script>
 <script>
 /* ============================ DATA ============================ */
 const SPORTS = [
@@ -248,7 +253,7 @@ const MAPPOS = {
   "waterski-clinic":{x:22,y:30},"goalball-club":{x:55,y:71},
 };
 const SPGRAD = {basketball:"g-warm",tennis:"g-sand",pickleball:"g-warm",rugby:"g-sand",football:"g-warm",baseball:"g-sand",cycling:"g-cool",sledhockey:"g-cool",skiing:"g-cool",waterskiing:"g-cool",goalball:"g-sand"};
-function iconSrc(key){ return "assets/sport-icons/"+key+".png"; }   // 3D transparent icons — category chips
+function iconSrc(key){ return "/assets/sport-icons/"+key+".png"; }   // 3D transparent icons — category chips
 function photoSrc(key){ return "/assets/sport-photos/"+key+".jpg"; } // square action photos — cards, hero, thumbs
 // The launch sports with a real action photo. Alec, 2026-09-15: cards show the
 // athlete, not the silhouette scene, so a photo wins and the scene is the fallback.
@@ -293,42 +298,27 @@ function coverStampAttr(item, role){
 function sportIcon(key, cls){ return '<img class="'+(cls||'')+'" src="'+iconSrc(key)+'" alt="" loading="lazy">'; }
 
 /* ============================ ICONS ============================ */
-function ring(){ return '<circle cx="50" cy="50" r="38" fill="none" stroke="currentColor" stroke-width="4"/><circle class="dot" cx="74" cy="21" r="6.5" fill="currentColor"/>'; }
-const GLYPH = {
-  basketball: '<g fill="none" stroke="currentColor" stroke-width="3.6" stroke-linecap="round"><circle cx="50" cy="50" r="15"/><line x1="50" y1="35" x2="50" y2="65"/><line x1="35" y1="50" x2="65" y2="50"/><path d="M38 39 Q50 50 38 61"/><path d="M62 39 Q50 50 62 61"/></g>',
-  cycling: '<g fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="37" cy="60" r="9"/><circle cx="63" cy="60" r="9"/><path d="M37 60 L48 60 L43 45 L60 45 L48 60 M60 45 L63 60 M40 44 L46 44 M57 43 L63 43"/></g>',
-  sledhockey: '<g fill="none" stroke="currentColor" stroke-width="3.6" stroke-linecap="round"><line x1="37" y1="37" x2="60" y2="59"/><line x1="63" y1="37" x2="40" y2="59"/><line x1="60" y1="59" x2="66" y2="61"/><line x1="40" y1="59" x2="34" y2="61"/></g><rect x="44" y="63" width="12" height="4" rx="2" fill="currentColor"/>',
-  swimming: '<g fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="43" cy="41" r="4.5" fill="currentColor" stroke="none"/><path d="M39 52 L52 47 L61 52"/><path d="M32 60 q5 -4 9 0 q4 4 9 0 q4 -4 9 0 q4 4 9 0"/><path d="M32 66 q5 -4 9 0 q4 4 9 0 q4 -4 9 0 q4 4 9 0"/></g>',
-  tennis: '<g fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round"><ellipse cx="46" cy="43" rx="11" ry="13"/><line x1="46" y1="56" x2="40" y2="67"/></g><circle cx="63" cy="61" r="5" fill="currentColor"/>',
-  pickleball: '<g stroke-linecap="round" stroke-linejoin="round"><rect x="34" y="32" width="22" height="26" rx="9" fill="none" stroke="currentColor" stroke-width="3.6"/><line x1="45" y1="58" x2="45" y2="68" stroke="currentColor" stroke-width="4.6"/><circle cx="64" cy="58" r="6" fill="var(--orange)" stroke="none"/><circle cx="62" cy="56" r="1" fill="#fff"/><circle cx="66" cy="57" r="1" fill="#fff"/><circle cx="63" cy="60" r="1" fill="#fff"/></g>',
-  climbing: '<g fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="50" cy="36" r="4.5" fill="currentColor" stroke="none"/><path d="M50 41 L47 54 M50 44 L59 39 M50 47 L42 50 M47 54 L53 63 M47 54 L41 60"/><line x1="66" y1="30" x2="66" y2="70" stroke-width="3"/></g>',
-  skiing: '<g fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="47" cy="35" r="4.5" fill="currentColor" stroke="none"/><path d="M47 40 L51 52 M47 43 L39 39 M51 46 L61 43 M51 52 L45 60 M51 52 L59 58 M37 65 L60 60 M40 39 L36 50"/></g>',
-  soccer: '<g fill="none" stroke="currentColor" stroke-width="3.2" stroke-linejoin="round"><circle cx="50" cy="50" r="16"/><polygon points="50,42 56,47 54,54 46,54 44,47" fill="currentColor" stroke="none"/><path d="M50 34 L50 42 M46 54 L43 62 M54 54 L62 56 M44 47 L36 44 M56 47 L63 50"/></g>',
-};
-function orbit(key, cls){ return '<svg class="'+(cls||'')+'" viewBox="0 0 100 100" aria-hidden="true">'+ring()+(GLYPH[key]||'')+'</svg>'; }
-function glyph(key, cls){ return '<svg class="'+(cls||'')+'" viewBox="0 0 100 100" aria-hidden="true">'+(GLYPH[key]||'')+'</svg>'; }
-function ringBg(cls){ return '<svg class="'+(cls||'')+'" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="40" fill="none" stroke="currentColor" stroke-width="2"/></svg>'; }
 const NAVICON = {
-  chair:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="4" r="1.6"/><path d="M10 7v5h6M10 9l-3 9M10 12l4 6h4"/><circle cx="10" cy="17" r="4.5"/></svg>',
-  people:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.2"/><path d="M3 20a6 6 0 0 1 12 0M15 20a5 5 0 0 1 6-3.5"/></svg>',
-  building:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="3" width="14" height="18" rx="1.5"/><path d="M9 7h2M13 7h2M9 11h2M13 11h2M9 15h2M13 15h2"/></svg>',
-  cal:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="5" width="16" height="16" rx="2"/><path d="M4 9h16M9 3v4M15 3v4"/></svg>',
-  dumb:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m7 7 10 10M4 8l-1 1 4 4-4 4 1 1M20 16l1-1-4-4 4-4-1-1"/></svg>',
-  price:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12V5a2 2 0 0 1 2-2h7l9 9-9 9-9-9Z"/><circle cx="8" cy="8" r="1.4"/></svg>',
-  book:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5a2 2 0 0 1 2-2h6v18H6a2 2 0 0 0-2 2V5ZM20 5a2 2 0 0 0-2-2h-6v18h6a2 2 0 0 1 2 2V5Z"/></svg>',
-  grid:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>',
-  map:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2Z"/><path d="M9 4v14M15 6v14"/></svg>',
-  rows:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>',
-  sliders:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 8h10M18 8h2M4 16h2M10 16h10"/><circle cx="16" cy="8" r="2"/><circle cx="8" cy="16" r="2"/></svg>',
-  compass:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="m15 9-2 5-4 2 2-5 4-2Z"/></svg>',
-  calsm:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="5" width="16" height="16" rx="2"/><path d="M4 9h16M9 3v4M15 3v4"/></svg>',
-  pin:'<svg viewBox="0 0 30 36"><path d="M15 0C7 0 1 6 1 14c0 9 14 22 14 22s14-13 14-22C29 6 23 0 15 0Z" fill="#1A1A1A"/><circle cx="15" cy="14" r="5" fill="#fff"/></svg>',
-  menu:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>',
-  x:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6 6 18"/></svg>',
+  chair:'<i stroke-width="2" data-lucide="accessibility" aria-hidden="true" focusable="false"></i>',
+  people:'<i stroke-width="2" data-lucide="users" aria-hidden="true" focusable="false"></i>',
+  building:'<i stroke-width="2" data-lucide="building" aria-hidden="true" focusable="false"></i>',
+  cal:'<i stroke-width="2" data-lucide="calendar-days" aria-hidden="true" focusable="false"></i>',
+  dumb:'<i stroke-width="2" data-lucide="dumbbell" aria-hidden="true" focusable="false"></i>',
+  price:'<i stroke-width="2" data-lucide="tag" aria-hidden="true" focusable="false"></i>',
+  book:'<i stroke-width="2" data-lucide="book-open" aria-hidden="true" focusable="false"></i>',
+  grid:'<i stroke-width="2" data-lucide="layout-grid" aria-hidden="true" focusable="false"></i>',
+  map:'<i stroke-width="2" data-lucide="map" aria-hidden="true" focusable="false"></i>',
+  rows:'<i stroke-width="2" data-lucide="list" aria-hidden="true" focusable="false"></i>',
+  sliders:'<i stroke-width="2" data-lucide="sliders-horizontal" aria-hidden="true" focusable="false"></i>',
+  compass:'<i stroke-width="2" data-lucide="compass" aria-hidden="true" focusable="false"></i>',
+  calsm:'<i stroke-width="2" data-lucide="calendar-days" aria-hidden="true" focusable="false"></i>',
+  pin:'<i stroke-width="2" data-lucide="map-pin" aria-hidden="true" focusable="false"></i>',
+  menu:'<i stroke-width="2" data-lucide="menu" aria-hidden="true" focusable="false"></i>',
+  x:'<i stroke-width="2" data-lucide="x" aria-hidden="true" focusable="false"></i>',
 };
-const HEART='<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20s-7-4.6-9.3-9C1 7.6 2.7 4.5 6 4.5c2 0 3.3 1.1 4 2.4.7-1.3 2-2.4 4-2.4 3.3 0 5 3.1 3.3 6.5C19 15.4 12 20 12 20Z"/></svg>';
+const HEART='<i width="16" height="16" stroke-width="2" data-lucide="heart" aria-hidden="true" focusable="false"></i>';
 /* shared inline icons */
-const CK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>';
+const CK='<i stroke-width="2.6" data-lucide="check" aria-hidden="true" focusable="false"></i>';
 /* escape untrusted (DB/scraped) strings before they hit innerHTML */
 function esc(s){ return s==null?s:String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
 
@@ -336,13 +326,41 @@ function esc(s){ return s==null?s:String(s).replace(/&/g,'&amp;').replace(/</g,'
 let DATA_LIVE=false; // flips true once /api/programs hydrates the real directory
 let SITE_EVENTS=[]; // upcoming public events, filled from /api/events (empty until hydrated)
 let PROFILE=null; // { id, email, name, state, sports, newsletter, favorites } once signed in, filled from /api/profile
-const BOOT_MAPX=location.pathname==='/maps'; // captured before any render can rewrite the URL
-const BOOT_PROFILE=location.pathname==='/profile'; // /profile is the profile section's real URL, same mechanism
-const BOOT_EVENTS=location.pathname==='/events'; // /events too — it's where the RSS feed's item links land
 const US_STATES=["AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID","IL","IN","IA","KS","KY","LA","ME","MD","MA","MI","MN","MS","MO","MT","NE","NV","NH","NJ","NM","NY","NC","ND","OH","OK","OR","PA","RI","SC","SD","TN","TX","UT","VT","VA","WA","WV","WI","WY","DC"];
 const BAND_STYLE = (new URLSearchParams(location.search).get('band')||'warm'); // warm (default) | soft — inbox-band skin
 const state = { section:"discover", layout:"grid", sport:"all", q:"", dist:"any", cost:"any", level:"any", filtersOpen:false, sort:"rec", db:"programs", dbView:"gallery", programId:null, grantId:null, grantAudience:"all", loc:"Denver, CO", see:null, profileNudge:false, nearZip:"", nearCity:"", near:null };
 const saved = new Set();
+let visitorLocation=null;
+// Keep directly linked fallback records available when live hydration replaces
+// the directory arrays. They are not appended to live search results.
+const FALLBACK_PROGRAMS = PROGRAMS.slice();
+const FALLBACK_GRANTS = GRANTS.slice();
+let routeReady=false, restoringRoute=false;
+function syncDirectoryUrl(replace=false){
+  if(!routeReady || restoringRoute) return;
+  const next=DirectoryRoutes.write(state);
+  if(next!==location.pathname+location.search) history[replace?'replaceState':'pushState']({},'',next);
+}
+function linkDirectoryControls(){
+  document.querySelectorAll('[data-home],[data-section],[data-sport],[data-sport-link],[data-db-link],[data-db],[data-mapx]').forEach(el=>{
+    let next={...state};
+    if(el.hasAttribute('data-home')) next=DirectoryRoutes.read(new URL('/',location.origin),[]);
+    else if(el.hasAttribute('data-sport')||el.hasAttribute('data-sport-link')) next={...next,section:'discover',sport:el.getAttribute('data-sport')||el.getAttribute('data-sport-link'),see:null};
+    else if(el.hasAttribute('data-db-link')||el.hasAttribute('data-db')) next={...next,section:'database',db:el.getAttribute('data-db-link')||el.getAttribute('data-db')};
+    else if(el.hasAttribute('data-section')) { next.section=el.getAttribute('data-section'); if(next.section==='discover') next=DirectoryRoutes.read(new URL('/',location.origin),[]); }
+    else next.section='mapx';
+    if(el.tagName==='BUTTON'){
+      const a=document.createElement('a');
+      for(const attr of el.attributes) if(attr.name!=='type') a.setAttribute(attr.name,attr.value);
+      a.innerHTML=el.innerHTML;el.replaceWith(a);el=a;
+    }
+    if(el.tagName==='A') el.href=DirectoryRoutes.write(next);
+  });
+}
+// Let the browser open real navigation links in a new tab/window.
+document.addEventListener('click',e=>{
+  if((e.metaKey||e.ctrlKey||e.shiftKey||e.altKey) && e.target.closest('a[href]')) e.stopImmediatePropagation();
+},true);
 function statusCls(s){ return s==='Open'?'st-open':s==='Waitlist'?'st-wait':'st-seas'; }
 function pill(s){ return '<span class="status '+statusCls(s)+'">'+s+'</span>'; }
 function heartBtn(id){ const on=saved.has(id)?' on':''; return '<button class="heart'+on+'" data-heart="'+id+'" aria-pressed="'+saved.has(id)+'" aria-label="Save program">'+HEART+'</button>'; }
@@ -357,7 +375,6 @@ function cardTagsHtml(p){
   const ts=cardTags(p); if(!ts.length) return '';
   return '<div class="cardtags">'+ts.map(x=>'<span class="cbadge '+x.c+'">'+x.t+'</span>').join('')+'</div>';
 }
-const CHAIR_GLY=NAVICON.chair.replace('<svg','<svg class="gly"'); // the brand wheelchair mark, one source
 function thumbHtml(p){
   const v=listingVisual(p,'program');
   if(isCoverVisual(v)) return '<img class="thumb-full" src="'+v.src+'" alt="" loading="lazy"'+coverStampAttr(p,'program')+'>';
@@ -371,7 +388,14 @@ function media(p, kind){
   return '<div class="'+cls+' has-stamp">'+(v.src?'<img class="pcard-stamp" src="'+v.src+'" alt="" loading="lazy">':'')+overlay+'</div>';
 }
 // One line under the city, and only when it says something: how far away this is.
-function cardLine(p){ return p.dist!=null ? p.dist+' mi away' : ''; }
+function programDistance(p){
+  const origin=state.near || (!state.nearZip&&!state.nearCity?visitorLocation:null);
+  if(!origin || !Number.isFinite(origin.lat)||!Number.isFinite(origin.lng) ||
+    !Number.isFinite(p.lat)||!Number.isFinite(p.lng) ||
+    Math.abs(origin.lat)>90||Math.abs(origin.lng)>180||Math.abs(p.lat)>90||Math.abs(p.lng)>180) return null;
+  return Math.round(milesBetween(origin.lat,origin.lng,p.lat,p.lng)*10)/10;
+}
+function cardLine(p){ const dist=programDistance(p); return dist!=null ? dist+' mi away' : ''; }
 // The org type is a default, not a difference: 47 of 72 home cards read
 // "Adaptive club". It belongs in a labelled column and on the listing page,
 // not as an unlabelled fourth line under every card.
@@ -383,31 +407,28 @@ function milesBetween(aLat,aLng,bLat,bLng){
   return 2*3958.8*Math.asin(Math.min(1,Math.sqrt(a)));
 }
 function isZipQuery(q){ return /^\d{5}$/.test((q||'').trim()); }
-function filtered(){
-  let list = PROGRAMS.slice();
+function filtered({ignoreCostDistance=false}={}){
+  let list = PROGRAMS.map(p=>({...p,dist:programDistance(p)}));
   if(state.sport!=='all') list = list.filter(p=>p.sport===state.sport);
   const qraw=state.q.trim();
   if(qraw && !isZipQuery(qraw)){ const q=qraw.toLowerCase(); list=list.filter(p=>(p.name+' '+p.sportLabel+' '+(p.provider||'')+' '+(p.city||'')+' '+(p.stateName||'')).toLowerCase().includes(q)); }
-  if(state.near && state.near.lat!=null){
-    const r=state.near.radius||100;
-    list=list.filter(p=>p.lat!=null&&p.lng!=null).map(p=>{
-      const dist=Math.round(milesBetween(state.near.lat,state.near.lng,p.lat,p.lng)*10)/10;
-      return Object.assign({},p,{dist});
-    }).filter(p=>p.dist<=r);
-  }
-  if(state.dist!=='any'){ const m={s:5,m:10,l:25}[state.dist]; list=list.filter(p=>p.dist==null||p.dist<=m); }
-  if(state.cost==='free') list=list.filter(p=>p.free);
+  const explicitLocation=!!(state.nearZip||state.nearCity);
+  const origin=state.near || (!explicitLocation?visitorLocation:null);
+  // Location determines ordering; only an explicitly selected distance filter
+  // limits the result radius. Unknown distances stay visible at the end.
+  if(!ignoreCostDistance && state.dist!=='any'){ const m={s:5,m:10,l:25}[state.dist]; list=list.filter(p=>p.dist!=null&&p.dist<=m); }
+  if(!ignoreCostDistance && state.cost==='free') list=list.filter(p=>p.free);
   if(state.level!=='any') list=list.filter(p=>!p.levels.length||p.levels.map(l=>l.toLowerCase()).includes(state.level));
-  if(state.sort==='dist' || state.near) list.sort((a,b)=>(a.dist??1e9)-(b.dist??1e9)||(b.freshness??0)-(a.freshness??0));
+  if(state.sort==='dist' || origin) list.sort((a,b)=>(a.dist??1e9)-(b.dist??1e9)||(b.freshness??0)-(a.freshness??0));
   if(state.sort==='name') list.sort((a,b)=>a.name.localeCompare(b.name));
   return list;
 }
-function activeFilterCount(){ let n=0; if(!DATA_LIVE&&state.dist!=='any')n++; if(state.cost!=='any')n++; if(!DATA_LIVE&&state.level!=='any')n++; return n; }
+function activeFilterCount(){ let n=0; if(state.dist!=='any')n++; if(state.cost!=='any')n++; if(!DATA_LIVE&&state.level!=='any')n++; return n; }
 
 /* ============================ RENDER: DISCOVER ============================ */
 function catBar(){
-  const all='<button class="cat'+(state.sport==='all'?' on':'')+'" data-sport="all">'+NAVICON.compass+'<span>All sports</span></button>';
-  const items=SPORTS.map(s=>'<button class="cat'+(state.sport===s.key?' on':'')+'" data-sport="'+s.key+'">'+sportIcon(s.key,'cat-img')+'<span>'+s.label+'</span></button>').join('');
+  const all='<a href="/" class="cat'+(state.sport==='all'?' on':'')+'" data-sport="all">'+NAVICON.compass+'<span>All sports</span></a>';
+  const items=SPORTS.map(s=>'<a href="/sports/'+s.key+'" class="cat'+(state.sport===s.key?' on':'')+'" data-sport="'+s.key+'">'+sportIcon(s.key,'cat-img')+'<span>'+s.label+'</span></a>').join('');
   const browse='<span class="cat-sep" aria-hidden="true"></span>'
     +(DATA_LIVE?'<button class="cat cat-browse'+(state.section==='mapx'?' on':'')+'" data-mapx>'+NAVICON.map+'<span>Map view</span></button>':'')
     +'<button class="cat cat-browse" data-section="database">'+NAVICON.grid+'<span>Browse all</span></button>';
@@ -418,11 +439,13 @@ function locLabel(){
   if(state.nearCity) return state.nearCity;
   if(state.near && state.near.zip) return state.near.zip;
   if(state.near && state.near.city) return state.near.city;
-  return DATA_LIVE ? 'United States' : state.loc;
+  return visitorLocation ? visitorLocation.label : 'Finding location…';
 }
 function locPhrase(){
-  if(state.nearZip || state.nearCity || state.near) return 'near '+locLabel();
-  return DATA_LIVE ? 'across the U.S.' : 'near '+state.loc;
+  const origin=state.near || (!state.nearZip&&!state.nearCity?visitorLocation:null);
+  if(origin && Number.isFinite(origin.lat) && Number.isFinite(origin.lng) && state.sort!=='name')
+    return 'sorted by distance from '+locLabel();
+  return 'across the U.S.';
 }
 function syncLocLabel(){
   const t=locLabel();
@@ -432,14 +455,14 @@ function syncLocLabel(){
 function toolbar(list){
   const fc=activeFilterCount();
   return '<div class="toolbar">'
-    +'<div class="count"><b>'+list.length+'</b> '+(list.length===1?'program':'programs')+' '+locPhrase()+'</div>'
+    +'<div class="count"><b>'+list.length+'</b> '+(list.length===1?'program':'programs')+' '+esc(locPhrase())+'</div>'
     +'<div class="tools">'
       +'<button class="btn-pill" id="filtBtn" aria-expanded="'+state.filtersOpen+'">'+NAVICON.sliders+'Filters'+(fc?'<span class="badge">'+fc+'</span>':'')+'</button>'
-      +'<select class="sortsel" id="sortSel" aria-label="Sort">'
+      +'<span class="sort-control"><select class="sortsel" id="sortSel" aria-label="Sort">'
         +'<option value="rec"'+(state.sort==='rec'?' selected':'')+'>Recommended</option>'
         +'<option value="dist"'+(state.sort==='dist'?' selected':'')+'>'+(DATA_LIVE?'Recently verified':'Closest first')+'</option>'
         +'<option value="name"'+(state.sort==='name'?' selected':'')+'>Name A to Z</option>'
-      +'</select>'
+      +'</select><i data-lucide="chevron-down" class="sort-chevron" width="12" height="12" aria-hidden="true"></i></span>'
       +'<div class="seg" role="tablist" aria-label="Layout">'
         +'<button class="'+(state.layout==='grid'?'on':'')+'" data-layout="grid">'+NAVICON.grid+'Grid</button>'
         +'<button class="'+(state.layout==='map'?'on':'')+'" data-layout="map">'+NAVICON.map+'Map</button>'
@@ -451,13 +474,18 @@ function filtersPanel(){
   const d=(v,l)=>'<button class="chip'+(state.dist===v?' on':'')+'" data-dist="'+v+'">'+l+'</button>';
   const c=(v,l)=>'<button class="chip'+(state.cost===v?' on':'')+'" data-cost="'+v+'">'+l+'</button>';
   const lv=(v,l)=>'<button class="chip'+(state.level===v?' on':'')+'" data-level="'+v+'">'+l+'</button>';
-  // Live data has no distance or skill-level fields yet — showing those filters
-  // would be showing controls that do nothing. They return when the data does.
-  const dist=DATA_LIVE?'':'<div class="frow"><span class="flabel">Distance</span>'+d('any','Any')+d('s','Within 5 mi')+d('m','Within 10 mi')+d('l','Within 25 mi')+'</div>';
+  // Use the current sport/search scope before cost and distance restrictions.
+  // Keep a selected option available so an empty result can always be cleared.
+  const candidates=state.see?seeList():filtered({ignoreCostDistance:true});
+  const distances=[['s',5],['m',10],['l',25]].filter(([value,miles])=>
+    state.dist===value || candidates.some(p=>Number.isFinite(p.dist)&&p.dist>=0&&p.dist<=miles));
+  const dist=distances.length?'<div class="frow"><span class="flabel">Distance</span>'+d('any','Any')+distances.map(([value,miles])=>d(value,'Within '+miles+' mi')).join('')+'</div>':'';
+  const cost=candidates.some(p=>p.free)||state.cost==='free'
+    ? '<div class="frow"><span class="flabel">Cost</span>'+c('any','Any')+c('free','Free only')+'</div>' : '';
   const level=DATA_LIVE?'':'<div class="frow"><span class="flabel">Level</span>'+lv('any','Any')+lv('beginner','Beginner')+lv('intermediate','Intermediate')+lv('competitive','Competitive')+'</div>';
   return '<div class="filters'+(state.filtersOpen?' open':'')+'" id="filtPanel">'
     +dist
-    +'<div class="frow"><span class="flabel">Cost</span>'+c('any','Any')+c('free','Free only')+'</div>'
+    +cost
     +level
     +'</div>';
 }
@@ -475,7 +503,7 @@ function cardGrid(list){
   if(!list.length) return empty();
   return '<div class="grid">'+list.map(cardItem).join('')+'</div>';
 }
-const FARROW='<svg class="fa-arrow" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>';
+const FARROW='<i class="fa-arrow" width="17" height="17" stroke-width="2" data-lucide="arrow-right" aria-hidden="true" focusable="false"></i>';
 function frow(title, sub, list, seeall){
   if(!list.length) return '';
   const head='<div class="frow-head"><div class="frow-titlerow"><h2>'+title+'</h2>'
@@ -501,10 +529,10 @@ function diversify(list, lead){
   return out;
 }
 function feedRows(){
-  const city=DATA_LIVE?'the U.S.':(state.loc.split(',')[0]||'').trim();
   // Feed rows lead with imagery — with live data, favour orgs in the photo set,
   // and cap each row so the rail stays a rail (See all opens the full directory).
-  const pool=DATA_LIVE?PROGRAMS.filter(p=>p.sport):PROGRAMS;
+  const pool=filtered().filter(p=>p.sport);
+  if(!pool.length) return '<div class="wrap feed">'+empty()+'</div>';
   const cap=l=>DATA_LIVE?l.slice(0,12):l;
   const beginner=cap(pool.filter(p=>p.levels.includes('Beginner')||(DATA_LIVE&&(p.free||/provided/i.test(p.equipment||'')))));
   const popular=cap(pool.slice().sort((a,b)=>(a.dist??1e9)-(b.dist??1e9)||(b.freshness??0)-(a.freshness??0)));
@@ -518,22 +546,24 @@ function feedRows(){
   // content rows, never before the first (an empty row must not float it to the top).
   const rows = [
     frow('New to adaptive sports?','Welcoming programs where first timers fit right in', diversify(beginner,'pickleball'), 'beginner'),
-    frow('Popular in '+city, '', diversify(popular,'tennis'), 'popular'),
+    // Closest programs must retain distance order, without mixing sports.
+    frow('Closest programs', 'Programs with known distances appear first', popular, 'popular'),
     (DATA_LIVE
       ? frow('Recently verified','Websites confirmed active in recent checks', diversify(taking,'waterskiing'), 'fresh')
       : frow('Taking new players','Open and taking sign-ups', diversify(taking,'waterskiing'), 'open')),
     frow('Outdoor sports','Trails, slopes and open water', diversify(outdoor,'cycling'), 'sport:cycling'),
     frow('Free to play','No cost to get started', diversify(free,'goalball'), 'free'),
-    frow('Team sports to try','Find a squad in '+city, diversify(team,'rugby'), 'popular'),
+    frow('Team sports to try','Find your next team', diversify(team,'rugby'), 'popular'),
   ].filter(Boolean);
   if(rows.length>=2) rows.splice(2,0,ctaBand()); else rows.push(ctaBand());
   return '<div class="wrap feed">'+rows.join('')+'</div>';
 }
 function isFeedMode(){ return state.see===null && !state.q.trim() && !state.nearZip && !state.nearCity && !state.near && state.sport==='all' && state.dist==='any' && state.cost==='any' && state.level==='any'; }
 function seeList(){
-  if(state.see==='open') return PROGRAMS.filter(p=>p.status==='Open'||p.status==='Seasonal');
-  if(state.see==='fresh') return PROGRAMS.filter(p=>(p.freshness??0)>=50);
-  return PROGRAMS.slice().sort((a,b)=>(a.dist??1e9)-(b.dist??1e9)||(b.freshness??0)-(a.freshness??0));
+  const list=filtered();
+  if(state.see==='open') return list.filter(p=>p.status==='Open'||p.status==='Seasonal');
+  if(state.see==='fresh') return list.filter(p=>(p.freshness??0)>=50);
+  return list.sort((a,b)=>(a.dist??1e9)-(b.dist??1e9)||(b.freshness??0)-(a.freshness??0));
 }
 // Project real lat/lng onto the stylised map canvas (continental-US bounds).
 function geoPos(p){
@@ -572,8 +602,8 @@ function loadMapLibre(){
   // vendored same-origin (assets/vendor/) so the service worker caches it and
   // the only third party involved is the tile server itself
   if(!MAPLIB) MAPLIB=new Promise((res,rej)=>{
-    const l=document.createElement('link'); l.rel='stylesheet'; l.href='assets/vendor/maplibre-gl.css'; document.head.appendChild(l);
-    const s=document.createElement('script'); s.src='assets/vendor/maplibre-gl.js';
+    const l=document.createElement('link'); l.rel='stylesheet'; l.href='/assets/vendor/maplibre-gl.css'; document.head.appendChild(l);
+    const s=document.createElement('script'); s.src='/assets/vendor/maplibre-gl.js';
     s.onload=()=>res(window.maplibregl); s.onerror=()=>rej(new Error('maplibre failed'));
     document.head.appendChild(s);
   });
@@ -715,7 +745,7 @@ function afterRender(){
 /* ---- full-screen map explorer: the whole database, browsed by place ---- */
 function mapExplorer(){
   const list=state.see?seeList():filtered();
-  const X='<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>';
+  const X='<i width="14" height="14" stroke-width="2.4" data-lucide="x" aria-hidden="true" focusable="false"></i>';
   return catBar()
     +'<h1 class="vh">Map of adaptive sports programs</h1>'
     +'<div class="mapx"><div id="livemap" role="region" aria-label="Map of all programs"></div>'
@@ -778,7 +808,7 @@ function mapTrayHtml(p){
     ? '<a class="cta" href="'+cta.href+'" target="_blank" rel="noopener">'+cta.label+'</a>'+(p.website?'<span class="host">'+hostFromUrl(p.website)+'</span>':'')
     : '';
   return '<div class="tray-handle-hit"><div class="tray-handle" aria-hidden="true"></div>'
-    +'<button class="tray-x" type="button" aria-label="Close"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>'
+    +'<button class="tray-x" type="button" aria-label="Close"><i width="14" height="14" stroke-width="2.4" data-lucide="x" aria-hidden="true" focusable="false"></i></button></div>'
     +'<div class="tray-peek">'
     +'<div class="tray-name">'+p.name+'</div>'
     +'<div class="tray-meta">'+meta+'</div>'
@@ -973,7 +1003,7 @@ function listLayout(list){
       +'<td><div class="tcell"><div class="tthumb'+(isCoverVisual(listingVisual(p,'program'))?'':' has-stamp')+'">'+thumbHtml(p)+'</div><div><div class="nm">'+p.name+'</div><div class="sub">'+p.sportLabel+'</div></div></div></td>'
       +'<td class="t-prov">'+locLine(p)+'</td>'
       +'<td>'+((DATA_LIVE?typeLine(p):cardLine(p))||'—')+'</td>'
-      +'<td class="text-right chev"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 6 6 6-6 6"/></svg></td>'
+      +'<td class="text-right chev"><i width="16" height="16" stroke-width="2" data-lucide="chevron-right" aria-hidden="true" focusable="false"></i></td>'
     +'</tr>').join('');
   // A labelled column is where a repeated value like the org type is still
   // useful — the header tells you what it is.
@@ -1037,13 +1067,21 @@ function ctaBand(){
   +'</div></section>';
 }
 
+function heroTitle(){
+  const sport=SPORTS.find(s=>s.key===state.sport);
+  return 'Your place in adaptive ' + (sport ? sport.label : 'sports') + '.';
+}
+function heroSubtitle(){
+  const sport=SPORTS.find(s=>s.key===state.sport);
+  return 'Adaptive ' + (sport ? sport.label : 'sports') + ' programs, events, equipment and funding across the country. Search by where you are and what you want to play.';
+}
 function heroSection(){
   return '<section class="hero"><div class="wrap hero-in">'
     +'<p class="eyebrow">Find adaptive sports near you</p>'
-    +'<h1>Your place in adaptive sports.</h1>'
-    +'<p class="lede">Adaptive sports programs, events, equipment and funding across the country. Search by where you are and what you want to play.</p>'
+    +'<h1>'+esc(heroTitle())+'</h1>'
+    +'<p class="lede">'+esc(heroSubtitle())+'</p>'
     +'<div class="hsearch" role="search">'
-      +'<button class="loc" id="hlocBtn" type="button" aria-label="Change location"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s7-5.7 7-11a7 7 0 1 0-14 0c0 5.3 7 11 7 11Z"/><circle cx="12" cy="10" r="2.5"/></svg><span>'+locLabel()+'</span></button>'
+      +'<button class="loc" id="hlocBtn" type="button" aria-label="Change location"><i stroke-width="2" data-lucide="map-pin" aria-hidden="true" focusable="false"></i><span>'+esc(locLabel())+'</span></button>'
       +'<span class="sep"></span>'
       +'<input id="qHero" type="text" placeholder="Search a sport, zip, or program" aria-label="Search programs">'
     +'</div>'
@@ -1052,19 +1090,25 @@ function heroSection(){
 }
 function discover(){
   if(isFeedMode()) return heroSection()+catBar()+feedRows();
-  // Filtered / search view: no hero — keep the directory in focus so changing a
-  // sport refreshes results under the pinned category bar (Airbnb-style).
+  // Keep the hero above every sport/search view. Navigation scrolls to the
+  // results, so visitors can always scroll back up to the hero and its search.
   const list = state.see ? seeList() : filtered();
   const results = state.layout==='map'?mapLayout(list):state.layout==='list'?listLayout(list):cardGrid(list);
-  return catBar()+'<div class="wrap" id="main">'+toolbar(list)+filtersPanel()+'<div id="results">'+results+'</div></div>';
+  return heroSection()+catBar()+'<div class="wrap" id="main">'+toolbar(list)+filtersPanel()+'<div id="results">'+results+'</div></div>';
 }
 function renderResults(){
   if(state.section!=='discover') return;
+  const panel=document.getElementById('filtPanel');
+  if(panel) panel.outerHTML=filtersPanel();
+  const title=document.querySelector('.hero h1');
+  if(title) title.textContent=heroTitle();
+  const subtitle=document.querySelector('.hero .lede');
+  if(subtitle) subtitle.textContent=heroSubtitle();
   const list = state.see ? seeList() : filtered();
   const r=document.getElementById('results');
   if(r) r.innerHTML = state.layout==='map'?mapLayout(list):state.layout==='list'?listLayout(list):cardGrid(list);
   const c=document.querySelector('#main .count');
-  if(c) c.innerHTML = '<b>'+list.length+'</b> '+(list.length===1?'program':'programs')+' '+locPhrase();
+  if(c) c.innerHTML = '<b>'+list.length+'</b> '+(list.length===1?'program':'programs')+' '+esc(locPhrase());
   afterRender();
 }
 function updateHeaderSearch(){
@@ -1073,7 +1117,7 @@ function updateHeaderSearch(){
   const h=document.querySelector('.hdr'); if(h) h.classList.toggle('hide-search', hide);
 }
 function scrollToResults(){
-  const m=document.getElementById('main'); if(!m) return;
+  const m=document.getElementById('main')||document.querySelector('.feed'); if(!m) return;
   const hdr=document.querySelector('.hdr'); const cb=document.querySelector('.catbar');
   const off=(hdr?hdr.offsetHeight:64)+(cb?cb.offsetHeight:0)+12;
   const top=m.getBoundingClientRect().top+window.scrollY-off;
@@ -1197,7 +1241,8 @@ function programReal(p){
 }
 
 function program(){
-  const p=PROGRAMS.find(x=>x.id===state.programId); if(!p) return discover();
+  const p=PROGRAMS.find(x=>x.id===state.programId)||FALLBACK_PROGRAMS.find(x=>x.id===state.programId);
+  if(!p) return '<div class="wrap"><h1>Program not found</h1><p>This listing is unavailable.</p><a href="/" data-home>Browse programs</a></div>';
   if(p.real) return programReal(p);
   return listingSheet(p, { save:saveButton(p), related:relatedRow(p) });
 }
@@ -1307,8 +1352,8 @@ async function loadGrantDetail(g){
   if(state.section==='grant'&&state.grantId===g.id) render(true);
 }
 function grantView(){
-  const g=GRANTS.find(x=>x.id===state.grantId);
-  if(!g){ state.section='database'; state.db='grants'; return database(); }
+  const g=GRANTS.find(x=>x.id===state.grantId)||FALLBACK_GRANTS.find(x=>x.id===state.grantId);
+  if(!g) return '<div class="wrap"><h1>Grant not found</h1><p>This listing is unavailable.</p><a href="/grants" data-db-link="grants">Browse grants</a></div>';
   loadGrantDetail(g);
   return grantSheet(g);
 }
@@ -1334,7 +1379,7 @@ function database(){
   const side=tables.map(t=>'<div class="tbl'+(state.db===t.key?' on':'')+'" data-db="'+t.key+'">'+NAVICON[t.icon]+'<span>'+t.label+'</span><span class="ct">'+t.count+'</span></div>').join('');
   let body;
   if(state.db==='programs' && state.dbView==='gallery'){
-    body='<div class="gallery">'+PROGRAMS.map(p=>
+    body='<div class="gallery">'+PROGRAMS.map(p=>({...p,dist:programDistance(p)})).map(p=>
       '<div class="gcard" data-prog="'+p.id+'"><h3>'+p.name+'</h3>'
       +'<div class="field"><span class="gk">Sport</span><span class="gv"><span class="tag">'+p.sportLabel+'</span></span></div>'
       +'<div class="field"><span class="gk">Provider</span><span class="gv">'+(p.provider||'—')+'</span></div>'
@@ -1345,7 +1390,7 @@ function database(){
       +'</div>').join('')+'</div>';
   } else {
     let cols, rows;
-    if(state.db==='programs'){ cols=["Program","Sport","Provider","City","Distance","Cost","Status"]; rows=PROGRAMS.map(p=>[p.name,p.sportLabel,p.provider||'—',p.city||p.stateName||'—',p.dist!=null?p.dist+' mi':'—',p.cost||'—',p.status]); }
+    if(state.db==='programs'){ cols=["Program","Sport","Provider","City","Distance","Cost","Status"]; rows=PROGRAMS.map(p=>({...p,dist:programDistance(p)})).map(p=>[p.name,p.sportLabel,p.provider||'—',p.city||p.stateName||'—',p.dist!=null?p.dist+' mi':'—',p.cost||'—',p.status]); }
     else { const d=dbTableData(state.db); cols=d.cols; rows=d.rows; }
     if(state.db==='grants'){
       const shown=GRANTS.filter(g=>state.grantAudience==='all'||g.audience===state.grantAudience);
@@ -1368,7 +1413,7 @@ function database(){
   }
   const galToggle = state.db==='programs' ? '<div class="seg"><button class="'+(state.dbView==='gallery'?'on':'')+'" data-dbview="gallery">'+NAVICON.grid+'Gallery</button><button class="'+(state.dbView==='table'?'on':'')+'" data-dbview="table">'+NAVICON.rows+'Table</button></div>'
     : state.db==='grants' ? '<div class="seg"><button class="'+(state.grantAudience==='all'?'on':'')+'" data-grant-aud="all">All</button><button class="'+(state.grantAudience==='athlete'?'on':'')+'" data-grant-aud="athlete">Athlete</button><button class="'+(state.grantAudience==='program'?'on':'')+'" data-grant-aud="program">Program</button></div>' : '';
-  return '<div class="wrap"><nav class="crumb"><a href="#" data-home>Home</a><span class="sl">/</span><b>Browse all</b></nav></div>'
+  return '<div class="wrap"><nav class="crumb"><a href="/" data-home>Home</a><span class="sl">/</span><b>Browse all</b></nav></div>'
     +'<div class="db"><aside class="db-side"><p class="eyebrow">Tables</p>'+side+'</aside>'
     +'<div class="db-main"><div class="db-head"><h1>'+meta.label+' <span class="rec">'+meta.count+' records</span></h1>'+galToggle+'</div>'+body+'</div></div>';
 }
@@ -1403,7 +1448,7 @@ function eventsView(){
   const body=SITE_EVENTS.length
     ? groups.map(g=>'<div class="evgroup"><h2 class="evmonth">'+g.label+'</h2><div class="evlist">'+g.items.map(eventCardHtml).join('')+'</div></div>').join('')
     : eventsEmpty();
-  return '<div class="wrap"><nav class="crumb"><a href="#" data-home>Home</a><span class="sl">/</span><b>Events</b></nav>'
+  return '<div class="wrap"><nav class="crumb"><a href="/" data-home>Home</a><span class="sl">/</span><b>Events</b></nav>'
     +'<div class="ev-head"><h1>Upcoming events</h1>'+(SITE_EVENTS.length?eventsSubLinks():'')+'</div>'
     +body+'</div>';
 }
@@ -1422,14 +1467,14 @@ function profileSportChips(selectedKeys){
 }
 function profileCreateForm(){
   const nudge=state.profileNudge?'<p class="pnudge">Create a free profile to save this program to your list.</p>':'';
-  return '<div class="wrap"><nav class="crumb"><a href="#" data-home>Home</a><span class="sl">/</span><b>Profile</b></nav>'
+  return '<div class="wrap"><nav class="crumb"><a href="/" data-home>Home</a><span class="sl">/</span><b>Profile</b></nav>'
     +'<div class="profile-view"><div class="pform">'
     +'<h1>Create your profile</h1><p class="lede">Save programs, set your sports and state, and hear about new ones. No password, ever.</p>'
     +nudge
     +'<form id="profileForm" novalidate>'
       +'<input class="hp" type="text" name="company" tabindex="-1" autocomplete="off" aria-hidden="true">'
       +'<div class="gfield"><label for="pfName">Name</label><input id="pfName" type="text" name="name" autocomplete="name"></div>'
-      +'<div class="gfield"><label for="pfEmail">Email</label><input id="pfEmail" type="email" name="em" placeholder="you@email.com" autocomplete="email" required></div>'
+      +'<div class="gfield"><label for="pfEmail">Email <span class="required-mark" aria-hidden="true">*</span></label><input id="pfEmail" type="email" name="em" placeholder="you@email.com" autocomplete="email" required></div>'
       +'<div class="gfield"><label for="pfState">State</label><select id="pfState" name="state">'+profileStateOptions('')+'</select></div>'
       +'<div class="gfield"><label>Sports you care about</label><div class="psports" id="pfSports">'+profileSportChips([])+'</div><input type="hidden" name="sports" value=""></div>'
       +'<div class="pcheck"><input id="pfNews" type="checkbox" name="newsletter"><label for="pfNews">Email me new programs and funding near me</label></div>'
@@ -1450,7 +1495,7 @@ function profileEditView(){
           +(loc?'<div class="pcard-loc">'+esc(loc)+'</div>':'')+'</div></div>';
       }).join('')
     : '<p class="lede">No saved programs yet. Open any program and tap "Save this program."</p>';
-  return '<div class="wrap"><nav class="crumb"><a href="#" data-home>Home</a><span class="sl">/</span><b>Profile</b></nav>'
+  return '<div class="wrap"><nav class="crumb"><a href="/" data-home>Home</a><span class="sl">/</span><b>Profile</b></nav>'
     +'<div class="profile-view">'
     +'<div class="profile-summary"><div><h1>'+(esc(PROFILE.name)||'Your profile')+'</h1><div class="muted">'+esc(PROFILE.email)+'</div></div>'
     +'<button class="profile-signout ghost" id="pfSignout" type="button">Sign out</button></div>'
@@ -1458,7 +1503,7 @@ function profileEditView(){
     +'<form id="profileEditForm" novalidate>'
       +'<input class="hp" type="text" name="company" tabindex="-1" autocomplete="off" aria-hidden="true">'
       +'<div class="gfield"><label for="peName">Name</label><input id="peName" type="text" name="name" value="'+esc(PROFILE.name)+'" autocomplete="name"></div>'
-      +'<div class="gfield"><label for="peEmail">Email</label><input id="peEmail" type="email" name="em" value="'+esc(PROFILE.email)+'" autocomplete="email" required></div>'
+      +'<div class="gfield"><label for="peEmail">Email <span class="required-mark" aria-hidden="true">*</span></label><input id="peEmail" type="email" name="em" value="'+esc(PROFILE.email)+'" autocomplete="email" required></div>'
       +'<div class="gfield"><label for="peState">State</label><select id="peState" name="state">'+profileStateOptions(PROFILE.state)+'</select></div>'
       +'<div class="gfield"><label>Sports you care about</label><div class="psports" id="peSports">'+profileSportChips(PROFILE.sports)+'</div><input type="hidden" name="sports" value="'+esc((PROFILE.sports||[]).join(','))+'"></div>'
       +'<div class="pcheck"><input id="peNews" type="checkbox" name="newsletter"'+(PROFILE.newsletter?' checked':'')+'><label for="peNews">Email me new programs and funding near me</label></div>'
@@ -1489,11 +1534,8 @@ function render(keepScroll){
   if(!keepScroll){ try{ window.scrollTo(0,0); }catch(e){} }
   const hq=document.getElementById('q'); if(hq) hq.value=state.q;
   const qh=document.getElementById('qHero'); if(qh) qh.value=state.q;
-  // keep the URL honest if a nav path (logo, footer) leaves the map view
-  try{
-    if(state.section==='mapx'&&location.pathname!=='/maps') history.replaceState({},'','/maps');
-    else if(state.section!=='mapx'&&location.pathname==='/maps') history.replaceState({},'','/');
-  }catch(_){ }
+  syncDirectoryUrl();
+  linkDirectoryControls();
   updateHeaderSearch();
   syncLocLabel();
   syncProfileBtn();
@@ -1526,7 +1568,8 @@ function viewFormBusy(){
 // Reflect state on the existing controls (active chip etc.) without rebuilding them,
 // so the sticky category bar and its 3D icons never reload — no flash.
 function syncControls(){
-  document.querySelectorAll('.catbar .cat').forEach(c=>c.classList.toggle('on', c.getAttribute('data-sport')===state.sport));
+  document.querySelectorAll('.catbar .cat[data-sport]').forEach(c=>c.classList.toggle('on', c.getAttribute('data-sport')===state.sport));
+  document.querySelectorAll('.catbar [data-mapx]').forEach(c=>c.classList.toggle('on',state.section==='mapx'));
   document.querySelectorAll('[data-dist]').forEach(c=>c.classList.toggle('on', c.getAttribute('data-dist')===state.dist));
   document.querySelectorAll('[data-cost]').forEach(c=>c.classList.toggle('on', c.getAttribute('data-cost')===state.cost));
   document.querySelectorAll('[data-level]').forEach(c=>c.classList.toggle('on', c.getAttribute('data-level')===state.level));
@@ -1537,6 +1580,8 @@ function syncControls(){
 // keeping the scroll exactly where it is. Coming from the feed → build the directory
 // once and snap the results up under the sticky bars.
 function filterChanged(){
+  syncDirectoryUrl();
+  linkDirectoryControls();
   if(state.section==='mapx'){
     // stay in the explorer: swap markers in place, no view rebuild
     syncControls();
@@ -1548,7 +1593,9 @@ function filterChanged(){
     updateHeaderSearch();
     return;
   }
-  if(document.getElementById('results')){
+  if(isFeedMode()){
+    render(true);
+  } else if(document.getElementById('results')){
     syncControls();
     renderResults();
     updateHeaderSearch();
@@ -1561,25 +1608,26 @@ function filterChanged(){
 function goFeed(){ state.q=''; state.sport='all'; state.dist='any'; state.cost='any'; state.level='any'; state.see=null; state.filtersOpen=false; state.layout='grid'; state.nearZip=''; state.nearCity=''; state.near=null; }
 let nearToken=0;
 async function resolveNear(){
-  const zip=state.nearZip, city=state.nearCity;
-  if(!zip && !city){ state.near=null; return; }
   const t=++nearToken;
+  const zip=state.nearZip, city=state.nearCity;
+  state.near=null;
+  if(!zip && !city){ state.near=null; return; }
   const qs=new URLSearchParams();
   if(zip) qs.set('zip', zip);
   if(city) qs.set('city', city);
   qs.set('limit','1');
   try{
     const j=await fetch('/api/programs?'+qs).then(r=>r.json());
-    if(t!==nearToken) return;
+    if(t!==nearToken || zip!==state.nearZip || city!==state.nearCity) return;
     state.near=(j&&j.ok&&j.near)?j.near:null;
-  }catch(_){ if(t===nearToken) state.near=null; }
+  }catch(_){ if(t===nearToken && zip===state.nearZip && city===state.nearCity) state.near=null; }
 }
 function noteZipFromQuery(){
   if(isZipQuery(state.q)){ state.nearZip=state.q.trim(); return true; }
   if(state.nearZip && !BOOT_QP.get('zip')){ state.nearZip=''; state.near=null; }
   return !!state.nearZip || !!state.nearCity;
 }
-function searchRender(){ if(isFeedMode()){ render(); return; } if(document.getElementById('results')){ renderResults(); return; } render(); }
+function searchRender(){ syncDirectoryUrl(true); if(isFeedMode()){ render(); return; } if(document.getElementById('results')){ renderResults(); return; } render(); }
 /* ============================ EVENTS ============================ */
 document.addEventListener('click',e=>{
   const h=e.target.closest('[data-heart]');
@@ -1604,7 +1652,7 @@ document.addEventListener('click',e=>{
     e.preventDefault(); state.section='grant'; state.grantId=t.getAttribute('data-grant'); state.programId=null; render(); return;
   }
   if(t.hasAttribute('data-seeall')){ e.preventDefault(); const v=t.getAttribute('data-seeall'); if(v==='beginner'){ state.see=null; if(DATA_LIVE){ state.cost='free'; } else { state.level='beginner'; } } else if(v==='free'){ state.see=null; state.cost='free'; } else if(v.indexOf('sport:')===0){ state.see=null; state.sport=v.slice(6); } else { state.see=v; } filterChanged(); return; }
-  if(t.hasAttribute('data-sport')){ e.preventDefault(); state.sport=t.getAttribute('data-sport'); state.see=null; filterChanged(); return; }
+  if(t.hasAttribute('data-sport')){ e.preventDefault(); if(state.section!=='mapx') state.section='discover'; state.sport=t.getAttribute('data-sport'); state.see=null; filterChanged(); if(state.section==='discover') scrollToResults(); return; }
   if(t.hasAttribute('data-layout')){ e.preventDefault(); state.layout=t.getAttribute('data-layout'); filterChanged(); return; }
   if(t.id==='filtBtn'){ e.preventDefault(); state.filtersOpen=!state.filtersOpen; const fp=document.querySelector('.filters'); if(fp){ fp.classList.toggle('open', state.filtersOpen); } else { render(true); } return; }
   if(t.hasAttribute('data-dist')){ state.dist=t.getAttribute('data-dist'); state.see=null; filterChanged(); return; }
@@ -1616,8 +1664,8 @@ document.addEventListener('click',e=>{
 /* ============================ LEFT DRAWER (menu) ============================ */
 // Follow / personalization is Phase 2 (a "For you" feed + newsletter-by-sport).
 // Until that payoff exists the drawer is a navigation hub — no Follow buttons.
-const DRAWER_PLUS='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>';
-const DRAWER_USER='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21a8 8 0 0 0-16 0"/><circle cx="12" cy="7" r="4"/></svg>';
+const DRAWER_PLUS='<i stroke-width="2" data-lucide="plus" aria-hidden="true" focusable="false"></i>';
+const DRAWER_USER='<i stroke-width="2" data-lucide="user-round" aria-hidden="true" focusable="false"></i>';
 function renderDrawer(){
   const d=document.getElementById('drawer'); if(!d) return;
   const head='<div class="drawer-head"><b>Adaptive Sports Near Me</b><button class="drawer-x" aria-label="Close menu">'+NAVICON.x+'</button></div>';
@@ -1654,6 +1702,7 @@ function renderDrawer(){
   // Profile block moves to the bottom (just above About), fronted by a divider.
   const profileBlock='<div class="drawer-div"></div>'+prof;
   d.innerHTML=head+news+dest+chips+contribute+profileBlock+about;
+  linkDirectoryControls();
 }
 let drawerOpener=null;
 function openDrawer(){
@@ -1690,19 +1739,20 @@ document.addEventListener('keydown',e=>{
 });
 renderDrawer();
 /* map explorer open/close + state drawer. /maps is its real URL. */
-function setMapxUrl(on){
-  try{
-    const here=location.pathname==='/maps';
-    if(on&&!here) history.pushState({mapx:true},'','/maps');
-    else if(!on&&here) history.pushState({},'','/');
-  }catch(_){ }
+function setMapxUrl(on){ /* render() commits the complete navigation state. */ }
+function toggleMapView(){
+  state.section=state.section==='mapx'?'discover':'mapx';
+  state.programId=null;
+  state.grantId=null;
+  render();
 }
 window.addEventListener('popstate',()=>{
-  const want=location.pathname==='/maps';
-  const inMapx=state.section==='mapx';
-  if(want&&!inMapx&&DATA_LIVE&&!PRELAUNCH){ state.section='mapx'; state.programId=null; render(); }
-  else if(!want&&inMapx){ state.section='discover'; render(); }
+  Object.assign(state,DirectoryRoutes.read(new URL(location.href),SPORTS.map(s=>s.key)));
+  restoringRoute=true;
+  try { render(); } finally { restoringRoute=false; }
+  if(state.nearZip||state.nearCity) resolveNear().then(()=>render(true));
 });
+
 document.addEventListener('click',e=>{
   if(e.target.closest('.tray-x')){ e.preventDefault(); closeMapTray(); return; }
   if(e.target.closest('[data-mapx-close]')){ e.preventDefault(); state.section='discover'; setMapxUrl(false); render(); return; }
@@ -1710,7 +1760,7 @@ document.addEventListener('click',e=>{
   const dir=e.target.closest('[data-mapx-dir]');
   if(dir){ e.preventDefault(); state.q=dir.getAttribute('data-mapx-dir')||''; state.section='discover'; state.layout='grid'; state.see=null; setMapxUrl(false); render(); return; }
   const mx=e.target.closest('[data-mapx]');
-  if(mx){ e.preventDefault(); state.section='mapx'; state.programId=null; setMapxUrl(true); render(); return; }
+  if(mx){ e.preventDefault(); toggleMapView(); return; }
 });
 /* footer: browse-by-sport lands on the category bar; funding jumps straight to grants */
 document.addEventListener('click',e=>{
@@ -1872,7 +1922,7 @@ async function postForm(url, form){
 }
 function paneDone(pane, title, msg){
   const el=gateEl.querySelector('.gate-pane[data-pane="'+pane+'"]');
-  if(el) el.innerHTML='<div class="gate-done"><div class="okmark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></div><h3>'+title+'</h3><p>'+msg+'</p></div>';
+  if(el) el.innerHTML='<div class="gate-done"><div class="okmark"><i stroke-width="2.6" data-lucide="check" aria-hidden="true" focusable="false"></i></div><h3>'+title+'</h3><p>'+msg+'</p></div>';
 }
 document.getElementById('notifyForm').addEventListener('submit',async function(e){
   e.preventDefault(); const btn=this.querySelector('.gate-cta'); const msg=document.getElementById('notifyMsg');
@@ -1895,6 +1945,7 @@ document.getElementById('programForm').addEventListener('submit',async function(
   e.preventDefault(); const btn=this.querySelector('.gate-cta'); const msg=document.getElementById('programMsg');
   msg.textContent=''; msg.className='gate-msg';
   if(!(this.pn.value||'').trim()){ msg.textContent='Please add the program name.'; msg.className='gate-msg err'; return; }
+  if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test((this.em.value||'').trim())){ msg.textContent='Please enter a valid email so we can confirm your submission.'; msg.className='gate-msg err'; return; }
   btn.disabled=true; const lbl=btn.textContent; btn.textContent='Submitting...';
   const res=await postForm('/api/submit-program',this);
   if(res.ok){ paneDone('program','Thank you','We received your program and will be in touch before launch.'); }
@@ -1984,20 +2035,17 @@ document.addEventListener('click', function(e){
 
 // /profile is a real feature (not gated behind live directory data like /maps), so
 // it boots directly into the profile section rather than waiting on hydrate().
-if(BOOT_PROFILE) state.section='profile';
-if(BOOT_EVENTS) state.section='events';
-// Deep-link params — the blog navbar (and any shared link) lands here: ?q=, ?add=program, ?sport=, ?profile=.
-// Additive only; render() reflects state.q into the search inputs and filters on it.
 const BOOT_QP=new URLSearchParams(location.search);
-if(BOOT_QP.get('q')) state.q=BOOT_QP.get('q');
-if(BOOT_QP.get('sport')&&SPORTS.some(s=>s.key===BOOT_QP.get('sport'))) state.sport=BOOT_QP.get('sport');
-if(BOOT_QP.get('profile')) state.section='profile';
-if(BOOT_QP.get('zip')) state.nearZip=BOOT_QP.get('zip').trim();
-if(BOOT_QP.get('city')) state.nearCity=BOOT_QP.get('city').trim();
+Object.assign(state,DirectoryRoutes.read(new URL(location.href),SPORTS.map(s=>s.key)));
 if(isZipQuery(state.q)) state.nearZip=state.q.trim();
-const BOOT_DB=BOOT_QP.get('db');
-if(BOOT_DB==='grants'||BOOT_DB==='programs'){ state.section='database'; state.db=BOOT_DB; }
 render();
+routeReady=true;
+detectVisitorLocation(location=>{
+  visitorLocation=location;
+  syncLocLabel();
+  if(!viewFormBusy()) render(true);
+});
+if(state.section==='discover'&&state.sport!=='all') requestAnimationFrame(scrollToResults);
 if(BOOT_QP.get('add')==='program') openGate('program');
 /* Deep links for the About panel, so the server-rendered footers can point at the
    same three sections the app's own footer opens. */
@@ -2038,11 +2086,11 @@ function mapOrg(o){
       fetch('/api/programs?limit=200').then(r=>r.json()).catch(()=>null),
     ]);
     if(cfg&&cfg.ok) PRELAUNCH=!!cfg.prelaunch;
-    if(!cfg||!cfg.dataApi||!first||!first.ok||!first.items.length) return;
+    if(!cfg||!cfg.dataApi||!first||!first.ok||!Array.isArray(first.items)) return;
     PROGRAMS.length=0; Array.prototype.push.apply(PROGRAMS, first.items.map(mapOrg));
     DATA_LIVE=true;
     // landing on /maps boots straight into the explorer (live, ungated only)
-    if(BOOT_MAPX&&!PRELAUNCH){ state.section='mapx'; }
+    // Hydration preserves the currently selected route, including Back/Forward.
     if(state.nearZip||state.nearCity) await resolveNear();
     if(!viewFormBusy()) render(true);
     const offs=[]; for(let o=200;o<Math.min(first.total,5000);o+=200) offs.push(o);

@@ -5,6 +5,51 @@ Cloudflare Worker with a **D1 data plane** (1,544 real organizations), a cron ma
 pipeline, and an installable PWA. Production stays a gated pre-launch teaser; staging runs
 the full ungated directory on real data.
 
+## UI icons
+
+Use Lucide HTML tags, such as `<i data-lucide="map-pin" aria-hidden="true"></i>`.
+`public/icons.js` renders them on page load and whenever new UI is inserted.
+Add `width`, `height`, `stroke-width`, or a CSS class to customize the icon;
+colors inherit from the surrounding control. Keep accessible labels on buttons.
+No generation or sync command is needed when adding or changing an icon name.
+The full Lucide 1.49.0 JavaScript library and license are bundled in
+`public/assets/vendor`, so icons work without a CDN connection.
+
+## Local staging preview
+
+From the repository root, run:
+
+```sh
+npm run dev
+```
+
+Open http://127.0.0.1:8787. `npm run dev` and `npm run preview` use
+Wrangler's staging environment with local database storage. `npm run dev:local`
+explicitly forces local bindings. Fresh local databases use the sample listings.
+
+To run local code against the real staging database:
+
+```sh
+npx wrangler login
+npm run dev:staging
+```
+
+`dev:staging` uses `wrangler.dev.json`: the application and assets run locally,
+while `DB` and `INTAKE` connect to the existing `asnm-db-staging` database via
+remote bindings. No data copy or deployment is needed. This requires Cloudflare
+account access and internet connectivity. Database writes from forms, profiles,
+and admin actions also affect the shared staging database; this is not a read-only
+connection. Production databases are not selected.
+
+Do not add `--local` to `dev:staging`, since it disables remote bindings.
+Stop either server with Ctrl+C. `npx` may ask to download Wrangler on first use.
+See [Cloudflare D1 local development](https://developers.cloudflare.com/d1/best-practices/local-development/).
+
+For form integration testing, put the necessary runtime secrets in the ignored
+`.dev.vars` file. External Beehiiv, Gmail, and Airtable requests still use real
+services when credentials are supplied; `--local` only keeps Cloudflare bindings
+local. See [Wrangler local development](https://developers.cloudflare.com/workers/local-development/).
+
 ## Architecture
 
 ```

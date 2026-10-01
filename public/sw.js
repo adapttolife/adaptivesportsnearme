@@ -3,10 +3,10 @@
 // returning visitors immediately and the last-seen page/directory still renders
 // offline. Immutable static assets (photos, icons, fonts): cache-first.
 // POST endpoints and /api/admin are never cached.
-const VERSION = "asnm-v8";
+const VERSION = "asnm-v9";
 
 self.addEventListener("install", (e) => {
-  e.waitUntil(caches.open(VERSION).then((c) => c.addAll(["/", "/styles.css", "/manifest.json", "/favicon.svg", "/icon-192.png"])).then(() => self.skipWaiting()));
+  e.waitUntil(caches.open(VERSION).then((c) => c.addAll(["/", "/styles.css", "/icons.js", "/assets/vendor/lucide-1.49.0.min.js", "/manifest.json", "/favicon.svg", "/icon-192.png"])).then(() => self.skipWaiting()));
 });
 
 self.addEventListener("activate", (e) => {
@@ -35,6 +35,7 @@ self.addEventListener("fetch", (e) => {
   const req = e.request;
   if (req.method !== "GET") return;
   const url = new URL(req.url);
+  if (url.pathname === '/api/location') return; // visitor-specific, never cache
   if (url.origin !== self.location.origin) return;
   if (url.pathname.startsWith("/api/admin")) return;
 

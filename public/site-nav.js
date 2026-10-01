@@ -28,16 +28,16 @@
     { key: "goalball", label: "Goalball" },
   ];
 
-  // Icons copied verbatim from public/index.html (NAVICON / DRAWER_* / x).
+  // Lucide placeholders are rendered automatically by /icons.js.
   var IC = {
-    compass: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="m15 9-2 5-4 2 2-5 4-2Z"/></svg>',
-    map: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2Z"/><path d="M9 4v14M15 6v14"/></svg>',
-    calsm: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="5" width="16" height="16" rx="2"/><path d="M4 9h16M9 3v4M15 3v4"/></svg>',
-    price: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12V5a2 2 0 0 1 2-2h7l9 9-9 9-9-9Z"/><circle cx="8" cy="8" r="1.4"/></svg>',
-    book: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5a2 2 0 0 1 2-2h6v18H6a2 2 0 0 0-2 2V5ZM20 5a2 2 0 0 0-2-2h-6v18h6a2 2 0 0 1 2 2V5Z"/></svg>',
-    plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
-    user: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21a8 8 0 0 0-16 0"/><circle cx="12" cy="7" r="4"/></svg>',
-    x: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6 6 18"/></svg>',
+    compass: '<i stroke-width="2" data-lucide="compass" aria-hidden="true" focusable="false"></i>',
+    map: '<i stroke-width="2" data-lucide="map" aria-hidden="true" focusable="false"></i>',
+    calsm: '<i stroke-width="2" data-lucide="calendar-days" aria-hidden="true" focusable="false"></i>',
+    price: '<i stroke-width="2" data-lucide="tag" aria-hidden="true" focusable="false"></i>',
+    book: '<i stroke-width="2" data-lucide="book-open" aria-hidden="true" focusable="false"></i>',
+    plus: '<i stroke-width="2" data-lucide="plus" aria-hidden="true" focusable="false"></i>',
+    user: '<i stroke-width="2" data-lucide="user-round" aria-hidden="true" focusable="false"></i>',
+    x: '<i stroke-width="2" data-lucide="x" aria-hidden="true" focusable="false"></i>',
   };
 
   // Presentation is shared through /styles.css.
@@ -177,7 +177,7 @@
         .then(function (res) {
           if (res && res.ok) {
             form.innerHTML =
-              '<div class="cta-done"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>' +
+              '<div class="cta-done"><i stroke-width="2.6" data-lucide="check" aria-hidden="true" focusable="false"></i>' +
               "<span>You’re in — look for a welcome email.</span></div>";
           } else {
             if (btn) { btn.disabled = false; btn.textContent = "Get updates"; }
