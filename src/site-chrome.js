@@ -8,7 +8,7 @@
 // that file, so bump it on any site-nav.js change (browser caches ignore CDN
 // purges, and that has bitten us three times).
 
-export const NAV_VERSION = "20260915a";
+export const NAV_VERSION = "20261001b";
 
 // Shared presentation lives in public/styles.css.
 
@@ -17,15 +17,15 @@ export const NAV_VERSION = "20260915a";
 export function headerHtml() {
   return `<header class="hdr">
   <div class="hdr-in wrap">
-    <button class="menu-btn" id="menuBtn" aria-label="Menu" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+    <button class="menu-btn" id="menuBtn" aria-label="Menu" aria-expanded="false"><i stroke-width="2" data-lucide="menu" aria-hidden="true" focusable="false"></i></button>
     <a class="brand" href="/" aria-label="Adaptive Sports Near Me home"><b>Adaptive Sports Near Me</b></a>
     <form class="search" role="search" action="/" method="get">
-      <span class="loc" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s7-5.7 7-11a7 7 0 1 0-14 0c0 5.3 7 11 7 11Z"/><circle cx="12" cy="10" r="2.5"/></svg><span>United States</span></span>
+      <span class="loc" aria-hidden="true"><i stroke-width="2" data-lucide="map-pin" aria-hidden="true" focusable="false"></i><span>United States</span></span>
       <span class="sep"></span>
       <input id="q" name="q" type="text" placeholder="Search a sport, zip, or program" aria-label="Search programs">
     </form>
     <div class="hdr-actions">
-      <a class="hdr-add" href="/?add=program" aria-label="Submit a program" title="Submit a program"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></a>
+      <a class="hdr-add" href="/?add=program" aria-label="Submit a program" title="Submit a program"><i stroke-width="2.2" data-lucide="plus" aria-hidden="true" focusable="false"></i></a>
     </div>
   </div>
 </header>`;
@@ -54,5 +54,7 @@ export function footerHtml() {
 
 export function navScriptHtml() {
   return `<!-- bump NAV_VERSION in src/site-chrome.js on any site-nav.js change (cache-bust) -->
+<script src="/assets/vendor/lucide-1.49.0.min.js" defer></script>
+<script src="/icons.js" defer></script>
 <script src="/site-nav.js?v=${NAV_VERSION}" defer></script>`;
 }

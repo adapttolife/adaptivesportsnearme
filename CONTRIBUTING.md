@@ -7,7 +7,7 @@ Students: start with [docs/STUDENTS.md](docs/STUDENTS.md). Short version:
 - Branch off `staging`.
 - Open a pull request **into `staging`**.
 - Feature/fix PRs never target `main`. Only the project lead opens a separately approved `staging` → `main` release PR after staging acceptance.
-- Never deploy production (`adaptivesportsnearme`) or write its D1 database from student branches. Approved owner-led imports can change the live record count; do not hard-code a historical count as an invariant. The Julia-owned operational Sheets sync is separate from website deployment; see [tools/sheets-sync/README.md](tools/sheets-sync/README.md).
+- Student and feature work must never deploy production (`asnm`) or write `asnm-db`. Owner-approved imports can change live counts; do not treat a historical count as an invariant. The separately owned operational Sheets sync follows `tools/sheets-sync/README.md` and is not a website deployment.
 - Tester: https://staging-adaptivesportsnearme.adapt-to-life.workers.dev
 - Live (locked): https://adaptivesportsnearme.com
 

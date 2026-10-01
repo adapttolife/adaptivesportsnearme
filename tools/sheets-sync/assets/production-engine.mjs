@@ -4575,7 +4575,7 @@ async function safeText2(res) {
 __name(safeText2, "safeText");
 // Sheets-only account cutover: retain the deployed intake/export implementation.
 // No website routes, assets, public admin API, or other pipeline lanes.
-import { runSheets as runStagingSheets } from "./staging-engine.js";
+import { runSheets as runStagingSheets } from "./staging-engine.mjs";
 const SYNC_CRON = "10,30,50 * * * *";
 export default {
   fetch() { return new Response("Not found", {status:404}); },
@@ -4597,3 +4597,5 @@ export default {
     }));
   }
 };
+
+export {runSheets};

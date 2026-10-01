@@ -1,40 +1,31 @@
-# ASNM Master Sheets operational sync
+# ASNM Master Sheets sync
 
-This directory is the recovery baseline for the existing **`asnm-sheets`** Worker, not the public website. The checked-in modules are the exact recovered, bundled modules identified in `baseline.json`. They are not presented as newly authored application source. This avoids another untracked dashboard-only runtime; unbundling can be a separately reviewed change.
+## Current execution contract
 
-## Ownership and boundaries
+The bulk sync runs on Julia's existing host, every 20 minutes at minutes 10, 30 and 50. It uses the same ATL D1 databases, separate production/staging Master Sheets, and existing Google service account. Cloudflare remains on Free; this adds no paid service. The public website Workers are unchanged.
 
-- One scheduled Worker in the Adapt To Life account runs both engines inside its scheduled execution context.
-- Production: `DB` and `ASNM_MASTER_SHEET_ID`.
-- Staging: `STAGING_DB`, `STAGING_MASTER_SHEET_ID`, and `STAGING_CRM_SHEET_ID`. The staging engine retains the existing staging CRM contact lane.
-- No routes, workers.dev, previews, or public administrative endpoints. Google credentials are an existing secret binding and are not in this repository.
-- No imports from, deployments of, or configuration changes to the website entrypoint. The root website Wrangler configuration is separate.
-- The old personal-account Sheets writers are retired. Do not reactivate them or bind this Worker to an old database because the database names match.
-- D1 is authoritative for exported Organizations and supporting tabs. Intake processing state is not verification status. A nonempty Intake Status skips normal ingestion. This is not general bidirectional spreadsheet editing.
+The old `asnm-sheets` Worker is retired. `retired-worker.mjs` does no data work; its live timer, bindings and Google secret were removed and read back. The configuration here must remain inert. Do not deploy the recovered engines as Workers or restore a second scheduled writer.
 
-## Reliability contract
+`assets/manifest.json` pins the recovered, query-optimized engine version and hashes. The only module changes for host execution are the local staging import extension and named production export. Existing Intake validation, exported tables and staging CRM logic are preserved. The host's `D1Rest` adapter implements the used binding methods against Cloudflare's native REST query API. Its batch rollback semantics were exercised in an isolated staging probe, followed by verified probe removal.
 
-1. Only `10,30,50 * * * *` is accepted by the handler. Stale minute-test events do not touch D1 or Sheets. Do not change a live cron to every minute for testing.
-2. Both engines run in the scheduled context. An HTTP Service-binding call put staging under the free-plan HTTP CPU limit and is deliberately not used.
-3. Source-link counts are aggregated once, then joined to sources. Do not restore a full link-table scan inside a correlated count for every source.
-4. Export run details record `rows_read` across the six export SELECTs. This excludes intake, CRM and pipeline bookkeeping reads; include those and website traffic in the account budget.
-5. Production and staging failures are independent and logged by environment. Caught intake/CRM failures are reported as partial failures, not a green full-sync result.
-6. Validate actual scheduled events, lane records, exact Sheet values, and account read usage. A configured cron, one successful export, HTTP 200, or a no-new-rows intake check is not complete release proof.
-7. On account-wide D1 exhaustion, retain last-good Sheets. Never replace source data with empties or copy from legacy D1 to manufacture success. An account quota reset is a dependency, not an application fix.
+D1 is authoritative for Organizations and related exported tabs. Intake admits new organizations; editing Organizations does not write changes back to D1. Production and staging are intentionally independent datasets, not replicas.
 
-## Local verification
+## Invocation and ownership
 
-```sh
-node --check tools/sheets-sync/index.js
-node --check tools/sheets-sync/staging-engine.js
-node --test tools/sheets-sync/sync.test.mjs
-python3 tools/sheets-sync/test_query.py
-```
+The portable engine entrypoint is `scripts/run.mjs`. It requires the existing `CLOUDFLARE_API_TOKEN` and `GOOGLE_SA_JSON` in process memory and an `ASNM_RESULT_PATH` for its private result. Never commit secrets or copy production receipts into this public repository.
 
-Tests have no provider access or production writes. SQL tests report SQLite execution work, **not Cloudflare billed rows**. Live `rows_read` evidence and a normal-cadence successful run remain required after a quota-blocked repair.
+**Do not schedule or run this entrypoint independently.** The installed profile launcher is the single operational entrypoint. It takes a nonblocking host lock, checks the exact retired Worker version and absence of schedules/secrets before any data write, acquires the existing vault credentials, enforces a bounded execution time and memory allowance, and preserves separate last-attempt and last-success receipts. Private profile paths and vault references are intentionally not part of this public source.
 
-## Release gate
+A no-agent scheduler job owns execution. Healthy receipts remain local; failures alert Alec. A partial environment failure must fail the overall run. A read-budget violation opens a persistent circuit that requires investigation before explicitly clearing it. No automatic write retry may turn an ambiguous mutation into a duplicate.
 
-A staging-targeted review is not approval to redeploy this or the website. Follow the repository's Faisal review gate. Use this directory's explicit Wrangler config only for an approved sync-Worker change; never the root website config. Preserve inherited secrets, upload an inactive version, compare its exact modules and bindings with the intended candidate, guard against a concurrent deployment, then promote only that reviewed version. Read back routes, previews, cron configuration and actual executions separately. Retain the previous version for rollback; rolling back to the known expensive query is not a safe long-term recovery.
+## Readback and cost
 
-The Cloudflare account has shared free-tier limits. A billing change requires explicit approval. Budget the recurring read load, import/audit work and visitor traffic together; do not rely only on individual query latency.
+Every successful run reads back the exact Google value ranges it wrote. Anchor ranges such as `Organizations!A1` are expanded to their full dimensions; empty trailing cells are normalized without discarding meaningful zero/false cells. Partial writes, absent ranges and mismatches fail the run. This is stronger than checking only a row count or a process exit code.
+
+Host execution removes the Worker CPU/memory constraint, **not** D1's shared daily read allowance. Workers Free allows only 10 ms CPU for both HTTP and cron invocations; the earlier claim that scheduled context supplied a larger Free allowance was incorrect. Grouped SQL remains essential. Measured initial host execution used 56,140 D1 reads across both environments, approximately 4.04 million per day at the regular cadence. Site traffic, separate CRM refreshes, audits and manual runs also consume the shared 5 million daily allowance. This estimate is not an account-wide usage measurement or an unlimited growth guarantee.
+
+## Tests and release boundaries
+
+Run `node --test tools/sheets-sync/scripts/*.test.mjs tools/sheets-sync/retired-worker.test.mjs`, then the repository's full test suite. Tests cover adapter failures, atomic batch response handling, target isolation, exact readback, missing writes and the retired Worker's inert behavior. A real staging batch-rollback probe, real host execution, actual scheduler fire, D1 import invariants and Google readbacks were checked separately from offline tests.
+
+Maintain one current source-review PR into `staging`. This source preservation is not approval to merge, deploy the public website, change billing, re-import organizations or restore a Cloudflare sync timer. Verify latest staging ancestry and preserve unrelated teammate changes. Reversal also requires a single-writer cutover: pause and fence the host before restoring any other execution owner.

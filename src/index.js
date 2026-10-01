@@ -1,4 +1,5 @@
 import { safeNewsletterSubscribe } from './newsletter.js';
+import { queueFormConfirmation } from './email.js';
 // Adaptive Sports Near Me — Worker entry.
 // Serves the static site (env.ASSETS), the D1-backed directory API, the admin
 // review surface, and the cron maintenance pipeline (validate + enrich lanes).
@@ -76,7 +77,7 @@ export default {
     }
     if (url.pathname === "/api/submit-program") {
       if (request.method !== "POST") return json({ ok: false, error: "Method not allowed" }, 405);
-      return handleSubmitProgram(request, env);
+      return handleSubmitProgram(request, env, ctx);
     }
     if (url.pathname === "/api/profile") {
       if (request.method === "POST") return handleProfileUpsert(request, env, ctx);
@@ -92,6 +93,15 @@ export default {
       return handleProfileSignout();
     }
 
+    if (url.pathname === "/api/location") {
+      if(request.method !== 'GET') return json({ok:false,error:'Method not allowed'},405);
+      const cf=request.cf || {};
+      const latitude=cf.latitude == null || cf.latitude === '' ? NaN : Number(cf.latitude);
+      const longitude=cf.longitude == null || cf.longitude === '' ? NaN : Number(cf.longitude);
+      const valid=Number.isFinite(latitude)&&Math.abs(latitude)<=90&&Number.isFinite(longitude)&&Math.abs(longitude)<=180;
+      return json({city:cf.city || null,region:cf.regionCode || cf.region || null,
+        lat:valid?latitude:null,lng:valid?longitude:null},200,'private, no-store');
+    }
     if (url.pathname === "/api/config") {
       return json({
         ok: true,
@@ -180,13 +190,22 @@ export default {
       }
     }
 
+    // Sample listings use slugs rather than D1 UUIDs. Load the shell so its
+    // route parser can select them on direct visits, just as it does on clicks.
+    // UUID requests with a DB have already used the server-rendered routes above.
+    if (/^\/(programs|grants)\/[a-z0-9]+(?:-[a-z0-9]+)*\/?$/i.test(url.pathname)) {
+      return env.ASSETS.fetch(new Request(new URL("/", url), request));
+    }
+
     // /maps is the map explorer's real URL — same app, booted into the map.
     if (url.pathname === "/maps" || url.pathname === "/maps/") {
       return env.ASSETS.fetch(new Request(new URL("/", url), request));
     }
     // /profile and /events are real URLs for their sections — same mechanism as
     // /maps. /events is also where the RSS feed's item links land.
-    if (/^\/(profile|events)\/?$/.test(url.pathname)) {
+    if (/^\/(profile|events|grants|sports|directory)\/?$/.test(url.pathname) ||
+        /^\/sports\/(basketball|tennis|pickleball|rugby|football|baseball|cycling|sledhockey|skiing|waterskiing|goalball)\/?$/.test(url.pathname) ||
+        /^\/directory\/(sports|programs|providers|events|equipment|grants|resources)\/?$/.test(url.pathname)) {
       return env.ASSETS.fetch(new Request(new URL("/", url), request));
     }
 
@@ -272,7 +291,7 @@ async function subscribeToBeehiiv(env, email, campaign, extra = {}) {
 }
 
 // ---- Program submission -> Airtable Agent Inbox ------------------------------
-async function handleSubmitProgram(request, env) {
+async function handleSubmitProgram(request, env, ctx) {
   const data = await readBody(request);
   if (data === null) return json({ ok: false, error: "Could not read your submission." }, 400);
 
@@ -291,8 +310,8 @@ async function handleSubmitProgram(request, env) {
   const notes = str(data.notes);
 
   if (!program) return json({ ok: false, error: "Please add the program name." }, 422);
-  if (email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
-    return json({ ok: false, error: "That email does not look right." }, 422);
+  if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+    return json({ ok: false, error: "Please enter a valid email so we can confirm your submission." }, 422);
   }
 
   if (!env.AIRTABLE_TOKEN || !env.AIRTABLE_BASE_ID || !env.AIRTABLE_INBOX_TABLE_ID) {
@@ -341,6 +360,8 @@ async function handleSubmitProgram(request, env) {
     console.error("Airtable error", res.status, await safeText(res));
     return json({ ok: false, error: "Could not save right now. Please try again soon." }, 502);
   }
+
+  await queueFormConfirmation(env, ctx, {kind:'program',email,program});
 
   // Also record in D1 (the directory's own data plane) — Airtable stays the team surface.
   if (env.DB) {
@@ -433,6 +454,7 @@ async function handleProfileUpsert(request, env, ctx) {
   }
 
   const sig = await signProfileId(id, env.PROFILE_SIGNING_KEY);
+  await queueFormConfirmation(env, ctx, {kind:isNew?'profile-created':'profile-updated',email});
   return new Response(JSON.stringify({ ok: true, id, isNew }), {
     status: isNew ? 201 : 200,
     headers: { "Content-Type": "application/json", "Cache-Control": "no-store", "Set-Cookie": serializeProfileCookie(id, sig) },

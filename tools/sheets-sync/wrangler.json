@@ -1,33 +1,10 @@
 {
   "name": "asnm-sheets",
-  "account_id": "1d08b2fb0d19775b304a616ab3d4a48f",
-  "main": "index.js",
-  "compatibility_date": "2026-09-15",
+  "main": "retired-worker.mjs",
+  "compatibility_date": "2026-06-26",
   "workers_dev": false,
   "preview_urls": false,
-  "routes": [],
   "triggers": {
-    "crons": [
-      "10,30,50 * * * *"
-    ]
-  },
-  "vars": {
-    "ASNM_MASTER_SHEET_ID": "1vI_080sDNd74g22uucvx2PmC7JSGb7Df-jHX_Vzeo-o",
-    "ENV_NAME": "sheets-prod",
-    "PRELAUNCH": "true",
-    "STAGING_CRM_SHEET_ID": "117MlqMNwak-sqH-k1O-xtAyu-WVo0b2oiQsvbqHkhss",
-    "STAGING_MASTER_SHEET_ID": "1AGsl9sF_EcsLJZUrFb6QZg2AXmW6SQ5hmJDTbE4rMs4"
-  },
-  "d1_databases": [
-    {
-      "binding": "DB",
-      "database_name": "asnm-db",
-      "database_id": "055916fd-3e58-4599-b11e-ffaedabe0f0b"
-    },
-    {
-      "binding": "STAGING_DB",
-      "database_name": "asnm-db-staging",
-      "database_id": "d3f67da7-60a3-44b6-9215-28665492d3f9"
-    }
-  ]
+    "crons": []
+  }
 }

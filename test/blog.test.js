@@ -232,7 +232,7 @@ test("the shared footer names the same three columns as the app's footer", () =>
     assert.ok(appIndex.includes(`>${label}</a>`), `app footer is missing ${label}`);
   }
   // No dead links: the app boots these query params (see BOOT_QP in index.html).
-  assert.ok(appIndex.includes("BOOT_DB==='programs'"));
+  assert.ok(appIndex.includes("DirectoryRoutes.read(new URL(location.href)"));
   assert.ok(appIndex.includes("BOOT_ABOUT"));
   assert.ok(!html.includes('href="#"'));
 });

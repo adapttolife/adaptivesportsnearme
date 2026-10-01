@@ -574,6 +574,7 @@ select {
   transition:
     color 0.15s,
     border-color 0.15s;
+  justify-content: flex-end;
 }
 
 .cat svg {
@@ -710,6 +711,29 @@ select {
   box-shadow: var(--shadow-sm);
 }
 
+.seg,
+.gate-tabs {
+  position: relative;
+  isolation: isolate;
+}
+
+.seg-indicator {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: -1;
+  pointer-events: none;
+  border-radius: var(--r-full);
+  background: var(--paper);
+  box-shadow: var(--shadow-sm);
+}
+
+.seg[data-sliding] > button.on,
+.gate-tabs[data-sliding] > button.on {
+  background: transparent;
+  box-shadow: none;
+}
+
 .sortsel {
   height: 38px;
   border: 1px solid var(--line);
@@ -720,13 +744,13 @@ select {
   font-weight: 600;
   color: var(--ink);
   appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%231A1A1A' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 13px center;
 }
 
 /* filters panel */
 .filters {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
   background: var(--paper);
   border: 1px solid var(--line);
   border-radius: var(--r-lg);
@@ -744,23 +768,25 @@ select {
 }
 
 .filters.open {
-  max-height: 260px;
+  max-height: min(90vh, 1000px);
   opacity: 1;
   border-width: 1px;
   padding: 16px 18px;
   margin-bottom: 14px;
+  overflow-y: scroll;
 }
 
 .frow {
   display: flex;
-  flex-direction: column;
   align-items: flex-start;
   gap: 12px;
-  padding: 8px 0;
+  padding: 0 0 5px 0;
+  flex-wrap: wrap;
 }
 
 .frow + .frow {
   border-top: 1px solid var(--line2);
+  padding: 15px 0 0 0;
 }
 
 .frow > .flabel {
@@ -769,7 +795,7 @@ select {
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--faint);
-  width: 84px;
+  width: 100%;
   flex: 0 0 auto;
 }
 
@@ -3592,6 +3618,9 @@ a.evrow:hover {
   margin-bottom: 12px;
 }
 
+.required-mark {
+  color: var(--orange, #b3261e);
+}
 .gfield label {
   display: block;
   font-size: 13px;
@@ -5837,3 +5866,8 @@ main.detail-page.wrap {
   color: var(--muted);
   margin-top: 2px;
 }
+
+/* Runtime Lucide placeholders reserve space until the icon is painted. */
+i[data-lucide] { display: inline-block; width: 24px; height: 24px; flex-shrink: 0; }
+.sort-control { position: relative; display: inline-flex; align-items: center; }
+.sort-control .sort-chevron { position: absolute; right: 13px; width: 12px; height: 12px; color: var(--ink); pointer-events: none; }

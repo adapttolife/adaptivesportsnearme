@@ -14,8 +14,8 @@ class Tests(unittest.TestCase):
    def tick():steps[0]+=1;return 0
    db.set_progress_handler(tick,1);rows=[dict(r) for r in db.execute(sql)];db.set_progress_handler(None,0);return rows,steps[0]
   expected,old_steps=run(OLD)
-  for name in ['index.js','staging-engine.js']:
-   text=(ROOT/name).read_text();matches=re.findall(r'`(SELECT d\.\*, COALESCE.*?ORDER BY d\.source_name COLLATE NOCASE)`',text,re.S)
+  for name in ['production-engine.mjs','staging-engine.mjs']:
+   text=(ROOT/'assets'/name).read_text();matches=re.findall(r'`(SELECT d\.\*, COALESCE.*?ORDER BY d\.source_name COLLATE NOCASE)`',text,re.S)
    self.assertEqual(len(matches),1);self.assertIn('rows_read: rowsRead',text)
    got,steps=run(matches[0]);self.assertEqual(got,expected);self.assertLess(steps,old_steps/8)
    self.assertEqual(next(r['orgs_linked'] for r in got if r['source_id']=='99'),0)
