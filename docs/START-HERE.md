@@ -7,6 +7,11 @@ sport they thought they'd lost. This hour gets you from clone to contribution.
 
 Open the tester: https://staging-adaptivesportsnearme.adapt-to-life.workers.dev/
 
+**RCOS students at RPI:** no Cloudflare account is required to view staging
+URLs while connected to RPI WiFi or the RPI VPN. Off campus, connect to the
+RPI VPN before opening the tester. This viewing access does not grant deployment
+or database permissions.
+
 Pick ten listings at random. For each one, ask a single question: *could a
 stranger act on this tonight?* (Is there a place? A website, phone, or email?)
 Write down what you notice. You have just performed this project's most
