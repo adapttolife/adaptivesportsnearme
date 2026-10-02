@@ -309,7 +309,8 @@ select {
 }
 
 .hdr.hide-search .search {
-	display: none;
+	visibility: hidden;
+	pointer-events: none;
 }
 
 .hsearch {

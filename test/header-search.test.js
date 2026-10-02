@@ -4,7 +4,7 @@ import vm from 'node:vm';
 import { readFileSync } from 'node:fs';
 
 const html = readFileSync(new URL('../public/index.html', import.meta.url), 'utf8');
-const start = html.indexOf('function updateHeaderSearch()');
+const start = html.indexOf('let observedHeroSearch = null;');
 const update = html.slice(start, html.indexOf('function scrollToResults()', start));
 
 function setup() {
@@ -63,4 +63,29 @@ test('typing in hero retains focus and selection after rendering without forcing
   handler({target:old});
   assert.equal(state.q,'cycling'); assert.equal(focused,true);
   assert.deepEqual(selection,[3,5]); assert.equal(updates,1);
+});
+
+test('hero observation follows replaced views and updates after position-only layout shifts',()=>{
+  let callback, hidden, tracked, disconnected=0;
+  let hero={getBoundingClientRect:()=>({height:54,bottom:-1})};
+  const header={classList:{toggle:(_,value)=>{hidden=value;}},querySelector:()=>null};
+  const context=vm.createContext({
+    document:{querySelector:selector=>selector==='.hdr'?header:hero},
+    IntersectionObserver:class {
+      constructor(fn){callback=fn;}
+      observe(element){tracked=element;}
+      disconnect(){disconnected++;tracked=null;}
+    },
+  });
+  vm.runInContext(update,context);
+  vm.runInContext('updateHeaderSearch()',context);
+  assert.equal(hidden,false); assert.equal(tracked,hero);
+  hero.getBoundingClientRect=()=>({height:54,bottom:20});
+  callback(); assert.equal(hidden,true);
+  hero={getBoundingClientRect:()=>({height:54,bottom:300})};
+  vm.runInContext('updateHeaderSearch()',context);
+  assert.equal(tracked,hero); assert.equal(hidden,true);
+  hero=null;
+  vm.runInContext('updateHeaderSearch()',context);
+  assert.equal(hidden,false); assert.equal(tracked,null); assert.equal(disconnected,3);
 });

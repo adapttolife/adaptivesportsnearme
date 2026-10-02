@@ -3170,10 +3170,20 @@
 						esc(locPhrase());
 				afterRender();
 			}
+			let observedHeroSearch = null;
+			const heroSearchObserver = typeof IntersectionObserver === "undefined" ? null :
+				new IntersectionObserver(() => updateHeaderSearch(), { threshold: [0, 1] });
 			function updateHeaderSearch() {
 				const h = document.querySelector(".hdr");
 				if (!h) return;
 				const heroSearch = document.querySelector(".hero .hsearch");
+				// Reconnect after view replacement; intersection changes also catch
+				// layout shifts that move the bar without resizing the view container.
+				if (heroSearch !== observedHeroSearch) {
+					heroSearchObserver?.disconnect();
+					observedHeroSearch = heroSearch;
+					if (heroSearch) heroSearchObserver?.observe(heroSearch);
+				}
 				const bounds = heroSearch?.getBoundingClientRect();
 				// Wait until the entire hero bar clears the viewport. A hidden mobile
 				// hero bar has zero height; pages without one always retain header search.
