@@ -67,7 +67,7 @@ test('new signup captures fields durably, suppresses beehiiv welcome and sends o
     const body = JSON.parse(x.posts()[0].init.body); assert.equal(body.reactivate_existing, false); assert.equal(body.send_welcome_email, false);
     assert.deepEqual(body.custom_fields, [{ name: 'First Name', value: 'Zoë' }, { name: 'Beta Tester', value: 'true' }]); assert.deepEqual(body.automation_ids, []);
     const rows = x.sqlite.prepare('SELECT * FROM intake').all(); assert.equal(rows.length, 1); assert.equal(rows[0].email, 'person@example.test'); assert.deepEqual(JSON.parse(rows[0].payload), { name: 'Zoë', beta: true });
-    assert.equal(x.mail.filter(m => m.to === 'person@example.test').length, 1); assert.equal(x.mail.filter(m => m.to === 'hello@adaptivesportsnearme.com').length, 1);
+    assert.equal(x.mail.filter(m => m.to === 'person@example.test').length, 1); assert.equal(x.mail.filter(m => m.to === 'hello@adapttolife.org').length, 1);
     assert.equal(x.state()[0].state, 'sent'); assert.equal(x.sqlite.prepare('SELECT count(*) AS n FROM newsletter_send_receipts').get().n, 1);
     const again = await safeNewsletterSubscribe(x.env, 'person@example.test', 'repeat', { beta: false }); assert.equal(again.existing, true); assert.equal(x.posts().length, 1); assert.equal(x.mail.length, 2);
 }));
