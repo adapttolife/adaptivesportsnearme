@@ -8,7 +8,7 @@
 // that file, so bump it on any site-nav.js change (browser caches ignore CDN
 // purges, and that has bitten us three times).
 
-export const NAV_VERSION = "20261001b";
+export const NAV_VERSION = "20261002a";
 
 // Shared presentation lives in public/styles.css.
 

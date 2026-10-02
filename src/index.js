@@ -24,7 +24,7 @@ import { queueFormConfirmation } from './email.js';
 //   GET  /blog                 -> beehiiv-backed blog index (server-rendered HTML, SEO)
 //   GET  /blog/:slug           -> beehiiv-backed blog post (server-rendered HTML, SEO)
 //   *    /api/admin/*          -> review queue + lane triggers (ADMIN_KEY bearer)
-// All secrets stay server-side (Worker secrets). Bot defence: honeypot + optional Turnstile.
+// All secrets stay server-side (Worker secrets). Bot defence: honeypot + required Turnstile.
 
 import { directorySnapshot, listPrograms, getOrg, stats, listSameSportNearby, listGrants, getGrant, listOtherGrants } from "./data.js";
 import { programPageTemplate, programNotFoundTemplate, PROGRAM_ID_RE } from "./program-page.js";
@@ -251,13 +251,11 @@ async function handleSubscribe(request, env, ctx) {
   // Honeypot — bots fill the hidden "company" field. Accept silently, do nothing.
   if (str(data.company)) return json({ ok: true });
 
-  // Newsletter subscribe is honeypot-only by design: it's a low-value target (Beehiiv
-  // dedupes/validates, nothing writes to our systems), so we don't tax the highest-
-  // conversion forms with a Turnstile widget. If a token IS sent (footer/gate forms
-  // include one) we still verify it; a missing token is fine here. Turnstile stays
-  // REQUIRED on handleSubmitProgram, which writes to the Airtable inbox.
-  const cfTok = str(data.cf_token);
-  if (cfTok && !(await verifyTurnstile(env, cfTok, request.headers.get("CF-Connecting-IP")))) {
+  // Turnstile is REQUIRED here (Alec, 2026-10-02). This was honeypot-only while
+  // signup only touched beehiiv; it now records intake, notifies hello@ and sends a
+  // welcome email from our own mailbox, so an unchecked endpoint would let anyone
+  // make us mail any address. Every form that posts here renders the widget.
+  if (!(await verifyTurnstile(env, str(data.cf_token), request.headers.get("CF-Connecting-IP")))) {
     return json({ ok: false, error: "Verification failed. Please reload the page and try again." }, 403);
   }
 
@@ -568,7 +566,9 @@ async function readBody(request) {
 }
 
 async function verifyTurnstile(env, token, ip) {
-  if (!env.TURNSTILE_SECRET_KEY) return true; // not configured yet -> honeypot only
+  // Unconfigured is tolerated only outside production. A production Worker that has
+  // lost its secret fails closed rather than silently becoming an open relay.
+  if (!env.TURNSTILE_SECRET_KEY) return env.ENV_NAME !== "production";
   if (!token) return false;
   try {
     const res = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {

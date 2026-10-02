@@ -28,8 +28,9 @@ async function run(options, fn) { const x = setup(options), old = globalThis.fet
 
 for (const ENV_NAME of ['staging', 'production']) test(`${ENV_NAME} signup response scopes safe diagnostics correctly`, async () => run({}, async x => {
     x.env.ENV_NAME = ENV_NAME;
-    globalThis.fetch = async (url, init) => url.includes(PUBLICATION) ? x.network(url, init) : new Response('private person@example.test test-key', { status: 403 });
-    const response = await worker.fetch(new Request('https://adaptivesportsnearme.com/api/subscribe', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ em: 'person@example.test' }) }), x.env, {});
+    x.env.TURNSTILE_SECRET_KEY = 'test-secret';
+    globalThis.fetch = async (url, init) => url.includes('challenges.cloudflare.com') ? Response.json({ success: true }) : url.includes(PUBLICATION) ? x.network(url, init) : new Response('private person@example.test test-key', { status: 403 });
+    const response = await worker.fetch(new Request('https://adaptivesportsnearme.com/api/subscribe', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ em: 'person@example.test', cf_token: 'verified' }) }), x.env, {});
     assert.equal(response.status, 502);
     const body = await response.json();
     const expected = { ok: false, error: 'Sign-up is temporarily unavailable. Please try again soon.' };
