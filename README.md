@@ -144,6 +144,11 @@ outside the 11-photo launch set, state-centroid map pins marked `state-level`.
 
 ## Deploy
 
+RCOS student developers at RPI can **view staging URLs without a Cloudflare
+account** while connected to RPI WiFi or the RPI VPN. Off campus, connect to
+the RPI VPN first. This viewing policy does not grant Cloudflare administration,
+deployment, or remote database access.
+
 One application Worker, `adaptivesportsnearme`, serves the deployed production version
 and an uploaded staging version. In its Cloudflare Settings > Builds configure:
 
@@ -175,6 +180,46 @@ Airtable, profile signing, and admin authentication. Build variables and local
 upload; newsletter capture requires `db/intake-schema.sql` in the staging database.
 The existing `asnm-gate` config is a separate production signup route and is not
 part of the staging preview setup.
+
+### Custom-domain staging previews
+
+The intended custom-domain tester is https://staging.adaptivesportsnearme.com.
+Enabling `adaptivesportsnearme.com` for Production and Preview configures its
+preview hostname support, but does not turn an uploaded Version URL alias into
+a Worker Preview. Our current `versions upload --preview-alias staging` command
+and `wrangler.preview.json` still use the former workflow. Re-running that
+command does not create the named Worker Preview required by the new hostname.
+See [Cloudflare's workflow comparison](https://developers.cloudflare.com/workers/previews/compare-workflows/).
+
+To migrate, a maintainer should:
+
+1. Use Wrangler **4.135.0 or later** and configure a `previews` block. Explicitly
+   include staging variables (`ENV_NAME=staging`, `PRELAUNCH=false`), the
+   `asnm-db-staging` bindings for `DB` and `INTAKE`, and required runtime
+   bindings. Configure Preview secrets as well; do not assume production
+   settings or secrets are inherited. Keep assets at the top level. Follow
+   [Preview configuration](https://developers.cloudflare.com/workers/previews/configuration/).
+2. Preserve the domain's Production and Preview setting in the configuration
+   that manages production routes: the existing `adaptivesportsnearme.com`
+   custom-domain entry should have `previews_enabled: true`. Do not add a
+   production route for `staging.adaptivesportsnearme.com` or deploy staging
+   configuration as production. See
+   [custom-domain Preview setup](https://developers.cloudflare.com/workers/previews/custom-domains/).
+3. After preparing that configuration, change the staging branch's build
+   command to `npx wrangler preview --config <prepared-config> --name staging`.
+   This creates a Preview under the same Worker; it does not require a second
+   application Worker. The current files have not yet been migrated.
+4. Confirm the named `staging` Preview exists, its custom-domain URL is listed,
+   wildcard DNS/certificate provisioning has completed, and no explicit DNS
+   record or route conflicts with `staging.adaptivesportsnearme.com`. Ensure
+   the RPI network viewing policy covers the custom hostname too.
+5. Check `/api/config` on the new hostname: expect `env: "staging"` and
+   `prelaunch: false`. Check directory and form bindings before adopting it as
+   the tester URL. Keep the current `workers.dev` link available during migration.
+
+This is deployment configuration, not an application path-routing change.
+The repository configuration explains a likely cause of a 404; live account
+settings, DNS, and certificate status must also be checked in Cloudflare.
 
 ## Secrets (per worker, via `wrangler secret put`)
 

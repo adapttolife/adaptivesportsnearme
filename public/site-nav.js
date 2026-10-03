@@ -154,7 +154,7 @@
       if (e.key === "Escape") closeDrawer();
     });
     // Newsletter subscribe — standalone (no shared ctaForm handler on the blog).
-    // Validate → POST /api/subscribe (honeypot-only endpoint) → success/inline-error.
+    // Validate → POST /api/subscribe (Turnstile required: the form must render the widget) → success/inline-error.
     document.addEventListener("submit", function (e) {
       var form = e.target.closest && e.target.closest("form.cta-sub");
       if (!form) return;
@@ -168,10 +168,13 @@
         return;
       }
       if (btn) { btn.disabled = true; btn.textContent = "Signing up..."; }
+      var body = new URLSearchParams(new FormData(form));
+      var tok = form.querySelector('[name="cf-turnstile-response"]');
+      if (tok && tok.value) body.set("cf_token", tok.value);
       fetch("/api/subscribe", {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: new URLSearchParams(new FormData(form)),
+        body: body,
       })
         .then(function (r) { return r.json().catch(function () { return {}; }); })
         .then(function (res) {

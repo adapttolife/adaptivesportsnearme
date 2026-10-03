@@ -13,6 +13,15 @@ Live stays locked. Do not deploy the production worker (`asnm`). Do not write th
 
 ## Two branches
 
+### Viewing staging from RPI
+
+RCOS student developers do **not** need a Cloudflare account to view staging
+URLs when using RPI WiFi or the RPI VPN. Connect to the RPI VPN when off campus.
+This is browser viewing access only; deploying code, using Wrangler with remote
+D1, and accessing Cloudflare administration still require authorized credentials.
+
+### Branch workflow
+
 - `main` is the production recipe. Do not push to it. Do not open a pull request into it. Do not merge into it.
 - `staging` is the student integration branch. This is the code closest to the tester.
 
