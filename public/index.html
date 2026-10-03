@@ -147,27 +147,21 @@
 						<p>We email when there is something worth sending.</p>
 					</div>
 					<div class="foot-sub-form">
-						<div class="fc-sub" id="subWrap">
-							<input
-								type="email"
-								id="subEmail"
-								placeholder="you@email.com"
-								aria-label="Email address"
-							/>
-							<button
-								type="button"
-								class="subbtn"
-								data-subscribe-go
-							>
-								Get updates
-							</button>
-						</div>
-						<div
-							class="mt-10 cf-turnstile"
-							id="footCf"
-							data-sitekey="0x4AAAAAADr2WPepRgjp8g-R"
-							data-appearance="interaction-only"
-						></div>
+						<!-- Same form as every other newsletter box (delegated form.cta-sub handler). -->
+						<form class="cta-sub" novalidate>
+							<input class="hp" type="text" name="company" tabindex="-1" autocomplete="off" aria-hidden="true" />
+							<input type="hidden" name="source" value="asnm-footer" />
+							<input name="em" type="email" autocomplete="email" placeholder="you@email.com" aria-label="Email address" />
+							<button class="cta-go" type="submit">Get updates</button>
+							<div
+								class="cf-turnstile"
+								data-sitekey="0x4AAAAAADr2WPepRgjp8g-R"
+								data-appearance="interaction-only"
+								data-execution="execute"
+								data-size="flexible"
+							></div>
+							<div class="cta-msg" aria-live="polite"></div>
+						</form>
 					</div>
 				</div>
 				<div class="foot-in">
@@ -3049,7 +3043,7 @@
 					'<button class="cta-go" type="submit">' +
 					CTA_BTN +
 					"</button>" +
-					'<div class="mt-10 cf-turnstile" data-sitekey="0x4AAAAAADr2WPepRgjp8g-R" data-appearance="interaction-only"></div>' +
+					'<div class="cf-turnstile" data-sitekey="0x4AAAAAADr2WPepRgjp8g-R" data-appearance="interaction-only" data-execution="execute"></div>' +
 					'<div class="cta-msg" aria-live="polite"></div>' +
 					"</form>"
 				);
@@ -4339,7 +4333,14 @@
 					.forEach((el) => {
 						if (el.childElementCount === 0) {
 							try {
-								turnstile.render(el);
+								// A newsletter widget only shows itself when Cloudflare wants a
+								// click; the full-size box is wider than the menu card.
+								turnstile.render(
+									el,
+									el.closest("form.cta-sub")
+										? { size: el.clientWidth < 300 ? "compact" : "flexible" }
+										: {},
+								);
 							} catch (_) {}
 						}
 					});
@@ -5117,7 +5118,8 @@
 					msg.textContent = "";
 					msg.className = "cta-msg";
 				}
-				const em = (form.em.value || "").trim();
+				const em = (form.em.value || "").trim().replace(/^mailto:/i, "");
+				form.em.value = em;
 				if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)) {
 					if (msg) {
 						msg.textContent = "Please enter a valid email.";
@@ -5261,7 +5263,7 @@
 					if (t.closest("[data-gate-open]")) return; // explicit openers handled below
 					if (
 						t.closest(
-							"[data-sport],[data-home],#locBtn,#hlocBtn,#q,#qHero,[data-subscribe-go]",
+							"[data-sport],[data-home],#locBtn,#hlocBtn,#q,#qHero,.cta-go",
 						)
 					)
 						return; // allowed
@@ -5316,10 +5318,39 @@
 			// Managed Turnstile usually finishes before anyone has typed an email, but a
 			// fast submit can beat it. Wait briefly for the token rather than failing.
 			async function turnstileToken(form, ms = 8000) {
-				if (!form.querySelector(".cf-turnstile")) return "";
-				for (let t = 0; t <= ms; t += 250) {
+				const el = form.querySelector(".cf-turnstile");
+				if (!el) return "";
+				// Newsletter widgets run only when the button is pressed, so browsing the
+				// menu never moves the layout and a token can't expire while someone types.
+				// Tokens are single-use: reset first so a retry after an error gets a new one.
+				if (el.dataset.execution === "execute" && window.turnstile) {
+					try {
+						turnstile.reset(el);
+					} catch (_) {}
+					try {
+						turnstile.execute(el);
+					} catch (_) {}
+				} else if (el.dataset.tsUsed && window.turnstile) {
+					// Auto-run widgets (the other forms) re-run themselves after a reset.
+					try {
+						turnstile.reset(el);
+					} catch (_) {}
+				}
+				let asked = false;
+				for (let t = 0; t <= (asked ? 120000 : ms); t += 250) {
+					// An interaction-only widget has no height until Cloudflare wants a tap;
+					// a person shown the box needs time to tap it, and a prompt.
+					if (!asked && el.offsetHeight > 0) {
+						asked = true;
+						el.style.marginTop = "0"; // give the shown box its row gap back
+						const m = form.querySelector(".cta-msg");
+						if (m) m.textContent = "Tap the box to finish signing up.";
+					}
 					const v = form.querySelector('[name="cf-turnstile-response"]');
-					if (v && v.value) return v.value;
+					if (v && v.value) {
+						el.dataset.tsUsed = "1";
+						return v.value;
+					}
 					await new Promise((r) => setTimeout(r, 250));
 				}
 				return "";
@@ -5329,6 +5360,11 @@
 				const body = new URLSearchParams();
 				fd.forEach((v, k) => body.append(k, v));
 				const tok = await turnstileToken(form);
+				if (form.querySelector(".cf-turnstile") && !tok)
+					return {
+						ok: false,
+						error: "We couldn’t confirm you’re human. Please try again.",
+					};
 				if (tok) body.set("cf_token", tok);
 				if (!body.has("source"))
 					body.append("source", "asnm-prelaunch");
@@ -5479,7 +5515,8 @@
 				);
 				msg.textContent = "";
 				msg.className = "gate-msg";
-				const em = (form.em.value || "").trim();
+				const em = (form.em.value || "").trim().replace(/^mailto:/i, "");
+				form.em.value = em;
 				if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)) {
 					msg.textContent = "Please enter a valid email.";
 					msg.className = "gate-msg err";
@@ -5566,51 +5603,6 @@
 					if (lbl)
 						lbl.textContent = on ? "Saved" : "Save this program";
 				}
-			});
-
-			/* footer subscribe -> real beehiiv */
-			document.addEventListener("click", function (e) {
-				const sb = e.target.closest("[data-subscribe-go]");
-				if (!sb) return;
-				const inp = document.getElementById("subEmail"),
-					wrap = document.getElementById("subWrap");
-				if (!inp) return;
-				const em = (inp.value || "").trim();
-				if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)) {
-					inp.focus();
-					return;
-				}
-				sb.disabled = true;
-				sb.textContent = "...";
-				const body = new URLSearchParams();
-				body.append("em", em);
-				body.append("source", "asnm-footer");
-				const fct = document.querySelector(
-					'#footCf [name="cf-turnstile-response"]',
-				);
-				if (fct && fct.value) body.append("cf_token", fct.value);
-				fetch("/api/subscribe", {
-					method: "POST",
-					headers: {
-						"Content-Type": "application/x-www-form-urlencoded",
-					},
-					body,
-				})
-					.then((r) => r.json().catch(() => ({})))
-					.then((j) => {
-						if (j && j.ok) {
-							if (wrap)
-								wrap.innerHTML =
-									'<span class="fc-thanks">Thanks, you are on the list.</span>';
-						} else {
-							sb.disabled = false;
-							sb.textContent = "Subscribe";
-						}
-					})
-					.catch(() => {
-						sb.disabled = false;
-						sb.textContent = "Subscribe";
-					});
 			});
 
 			// /profile is a real feature (not gated behind live directory data like /maps), so

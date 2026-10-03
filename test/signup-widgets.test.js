@@ -48,3 +48,48 @@ test('chrome pages load Turnstile on first drawer open and render it explicitly'
   assert.match(NAV, /d\.classList\.add\("open"\);\s*renderDrawerTurnstile\(\);/);
   assert.match(NAV, /waitForToken\(form, 8000\)/);
 });
+
+// 2026-10-03: Alec's phone signup worked but felt "glitchy". Each check below is one
+// cause found in a real iPhone WebKit run of the live menu.
+const CSS = read('public/styles.css');
+
+test('the newsletter email field is 16px, so iPhone browsers do not zoom the page on tap', () => {
+  const rule = CSS.match(/\n\.cta-sub input \{([^}]*)\}/);
+  assert.ok(rule, 'the shared .cta-sub input rule exists');
+  const px = Number((rule[1].match(/font-size:\s*(\d+(?:\.\d+)?)px/) || [])[1]);
+  assert.ok(px >= 16, `font-size ${px}px makes iOS zoom into the field`);
+});
+
+test('the footer signup is the shared form, not a second handler that failed silently', () => {
+  assert.doesNotMatch(INDEX, /data-subscribe-go|id="subEmail"|footCf/);
+  const footer = newsletterForms(INDEX).find((f) => f.includes('value="asnm-footer"'));
+  assert.ok(footer, 'the footer form keeps its own source tag');
+  assert.match(footer, /data-execution="execute"/);
+});
+
+test('newsletter Turnstile runs on submit, so opening the menu never moves the layout', () => {
+  assert.match(INDEX, /cf-turnstile" data-sitekey="[^"]+" data-appearance="interaction-only" data-execution="execute"/);
+  assert.match(NAV, /execution: "execute"/);
+  for (const form of [...newsletterForms(INDEX), ...newsletterForms(NAV)]) {
+    assert.doesNotMatch(form, /mt-\d+ cf-turnstile/, 'a margin on a hidden widget is dead space');
+  }
+});
+
+test('every submit resets the widget first, because a Turnstile token works only once', () => {
+  assert.match(INDEX, /turnstile\.reset\(el\);[\s\S]{0,80}turnstile\.execute\(el\);/);
+  assert.match(NAV, /turnstile\.reset\(el\);[\s\S]{0,80}turnstile\.execute\(el\);/);
+  assert.match(INDEX, /else if \(el\.dataset\.tsUsed && window\.turnstile\)/, 'the other forms reset a spent token too');
+});
+
+test('a person shown the check box gets time to tap it and is told to', () => {
+  for (const src of [INDEX, NAV]) {
+    assert.match(src, /el\.offsetHeight > 0/);
+    assert.match(src, /asked \? 120000 : ms/);
+    assert.match(src, /Tap the box to finish signing up\./);
+  }
+});
+
+test('a pasted "mailto:" prefix is removed before the email is checked', () => {
+  assert.match(INDEX, /\.trim\(\)\.replace\(\/\^mailto:\/i, ""\);\s*form\.em\.value = em;/);
+  assert.match(NAV, /\.trim\(\)\.replace\(\/\^mailto:\/i, ""\);\s*if \(form\.em\) form\.em\.value = em;/);
+});
