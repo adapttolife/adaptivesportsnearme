@@ -273,7 +273,7 @@ select {
 	background: transparent;
 	outline: none;
 	padding: 0 22px 0 16px;
-	font-size: 15px;
+	font-size: 16px; /* under 16px, iPhone browsers zoom on tap */
 	font-weight: 500;
 	color: var(--ink);
 }
@@ -3085,7 +3085,7 @@ a.evrow:hover {
 	border-radius: var(--r);
 	background: var(--paper);
 	color: var(--ink);
-	font-size: 15px;
+	font-size: 16px; /* under 16px, iPhone browsers zoom on tap */
 	font-family: inherit;
 }
 
@@ -3322,60 +3322,23 @@ a.evrow:hover {
 }
 
 .foot-sub-form {
-	flex: 0 0 auto;
-}
-
-.fc-sub {
-	display: flex;
-	gap: 8px;
-	max-width: 400px;
-}
-
-.fc-sub input {
-	flex: 1 1 auto;
-	height: 42px;
-	padding: 0 14px;
-	border: 1px solid var(--line);
-	border-radius: var(--r);
-	background: var(--paper);
-	color: var(--ink);
-	font-size: 14px;
+	/* Fills a phone's width, caps on desktop; min-width lets the form shrink. */
+	flex: 1 1 320px;
+	max-width: 420px;
 	min-width: 0;
 }
 
-.fc-sub input::placeholder {
-	color: var(--faint);
+/* Email and button share one row, as the footer always did. */
+.foot-sub-form .cta-sub input {
+	flex-basis: 0;
 }
 
-.fc-sub input:focus {
-	outline: none;
-	border-color: var(--ink);
-}
 
-.subbtn {
-	flex: 0 0 auto;
-	height: 42px;
-	padding: 0 20px;
-	border-radius: var(--r);
-	background: var(--orange);
-	color: #fff;
-	font-size: 14px;
-	font-weight: 600;
-	transition: background 0.15s;
-}
 
-.subbtn:hover {
-	background: var(--orange-ink);
-}
 
-.fc-thanks {
-	display: flex;
-	align-items: center;
-	height: 42px;
-	font-size: 14px;
-	font-weight: 600;
-	color: var(--ink);
-}
+
+
+
 
 /* ============================ TRUST PILL (floating) ============================ */
 .trustpill {
@@ -3640,7 +3603,7 @@ a.evrow:hover {
 	border-radius: var(--r);
 	background: var(--paper);
 	color: var(--ink);
-	font-size: 15px;
+	font-size: 16px; /* under 16px, iPhone browsers zoom on tap */
 	font-family: inherit;
 }
 
@@ -3766,7 +3729,8 @@ a.evrow:hover {
 	border-radius: var(--r-full);
 	background: var(--paper);
 	color: var(--ink);
-	font-size: 15px;
+	/* 16px or more: iPhone browsers zoom the page into any smaller field on tap. */
+	font-size: 16px;
 	box-shadow: var(--shadow-sm);
 }
 
@@ -3799,6 +3763,14 @@ a.evrow:hover {
 .cta-go:disabled {
 	opacity: 0.6;
 	cursor: default;
+}
+
+.cta-sub .cf-turnstile {
+	flex-basis: 100%;
+	display: flex;
+	justify-content: center;
+	/* Hidden until Cloudflare asks for a click; cancel the row gap so it takes no space. */
+	margin-top: -8px;
 }
 
 .cta-msg {

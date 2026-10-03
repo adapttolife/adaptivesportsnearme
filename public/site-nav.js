@@ -57,9 +57,9 @@
       '<p class="dn-head">Programs, events &amp; funding near you.</p>' +
       '<form class="cta-sub" novalidate>' +
       '<input class="hp" name="company" tabindex="-1" autocomplete="off" aria-hidden="true">' +
-      '<input name="em" type="email" placeholder="you@email.com" aria-label="Email address">' +
+      '<input name="em" type="email" autocomplete="email" placeholder="you@email.com" aria-label="Email address">' +
       '<button class="cta-go" type="submit">Get updates</button>' +
-      '<div class="mt-10 cf-turnstile" data-sitekey="0x4AAAAAADr2WPepRgjp8g-R" data-appearance="interaction-only"></div>' +
+      '<div class="cf-turnstile" data-sitekey="0x4AAAAAADr2WPepRgjp8g-R"></div>' +
       '<div class="cta-msg" aria-live="polite"></div>' +
       "</form>" +
       '<p class="dn-fine">Free. No spam.</p>' +
@@ -100,7 +100,13 @@
     var el = document.querySelector("#drawer form.cta-sub .cf-turnstile");
     if (!el || el.childElementCount) return;
     if (window.turnstile) {
-      try { window.turnstile.render(el, { sitekey: TS_SITEKEY, appearance: "interaction-only" }); } catch (_) { }
+      // Runs only when the button is pressed (see waitForToken); compact fits the card.
+      try {
+        window.turnstile.render(el, {
+          sitekey: TS_SITEKEY, appearance: "interaction-only", execution: "execute",
+          size: el.clientWidth < 300 ? "compact" : "flexible",
+        });
+      } catch (_) { }
       return;
     }
     if (document.getElementById("ts-api")) return;
@@ -112,14 +118,28 @@
   }
 
   // A fast submit can beat the managed check; wait briefly for the token.
+  // Tokens are single-use, so every submit resets and runs the widget again.
   function waitForToken(form, ms) {
     return new Promise(function (resolve) {
-      if (!form.querySelector(".cf-turnstile")) return resolve("");
-      var waited = 0;
+      var el = form.querySelector(".cf-turnstile");
+      if (!el) return resolve("");
+      if (window.turnstile) {
+        try { window.turnstile.reset(el); } catch (_) { }
+        try { window.turnstile.execute(el); } catch (_) { }
+      }
+      var waited = 0, asked = false;
       (function poll() {
+        // An interaction-only widget has no height until Cloudflare wants a tap;
+        // a person shown the box needs time to tap it, and a prompt.
+        if (!asked && el.offsetHeight > 0) {
+          asked = true;
+          el.style.marginTop = "0"; // give the shown box its row gap back
+          var m = form.querySelector(".cta-msg");
+          if (m) m.textContent = "Tap the box to finish signing up.";
+        }
         var v = form.querySelector('[name="cf-turnstile-response"]');
         if (v && v.value) return resolve(v.value);
-        if (waited >= ms) return resolve("");
+        if (waited >= (asked ? 120000 : ms)) return resolve("");
         waited += 250;
         setTimeout(poll, 250);
       })();
@@ -197,7 +217,8 @@
       var btn = form.querySelector(".cta-go");
       var msg = form.querySelector(".cta-msg");
       if (msg) { msg.textContent = ""; msg.className = "cta-msg"; }
-      var em = (form.em && form.em.value || "").trim();
+      var em = (form.em && form.em.value || "").trim().replace(/^mailto:/i, "");
+      if (form.em) form.em.value = em;
       if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)) {
         if (msg) { msg.textContent = "Please enter a valid email."; msg.className = "cta-msg err"; }
         return;
@@ -205,14 +226,15 @@
       if (btn) { btn.disabled = true; btn.textContent = "Signing up..."; }
       var body = new URLSearchParams(new FormData(form));
       waitForToken(form, 8000).then(function (tok) {
-        if (tok) body.set("cf_token", tok);
+        if (!tok) return { ok: false, error: "We couldn’t confirm you’re human. Please try again." };
+        body.set("cf_token", tok);
         return fetch("/api/subscribe", {
           method: "POST",
           headers: { "Content-Type": "application/x-www-form-urlencoded" },
           body: body,
         });
       })
-        .then(function (r) { return r.json().catch(function () { return {}; }); })
+        .then(function (r) { return r && r.json ? r.json().catch(function () { return {}; }) : r; })
         .then(function (res) {
           if (res && res.ok) {
             form.innerHTML =
