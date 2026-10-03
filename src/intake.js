@@ -17,11 +17,13 @@ import { mailConfigured, sendMail } from './mail-transport.js';
 // is deterministic code end to end. Something with judgement may READ this table
 // later; nothing with judgement stands between a person and their record.
 
-// Where notifications land. hello@adaptivesportsnearme.com is the answer for all three
-// properties (Alec, 2026-09-09). Overridable per environment so a review lane can
+// Where notifications land. hello@adapttolife.org is the answer for all three
+// properties (Alec, 2026-10-02, superseding the 2026-09-09 choice of
+// hello@adaptivesportsnearme.com; every live producer already sent there).
+// The sender stays this property's Gmail identity. Overridable per environment so a review lane can
 // prove delivery into an inbox that is actually readable from the box, which is
 // the only way this path gets verified rather than assumed.
-export const INTAKE_INBOX_DEFAULT = "hello@adaptivesportsnearme.com";
+export const INTAKE_INBOX_DEFAULT = "hello@adapttolife.org";
 export const INTAKE_FROM = "Adapt To Life Intake <hello@adaptivesportsnearme.com>";
 export const intakeInbox = (env) => (env && env.INTAKE_INBOX) || INTAKE_INBOX_DEFAULT;
 
