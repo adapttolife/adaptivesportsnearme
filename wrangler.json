@@ -21,8 +21,6 @@
 		"html_handling": "auto-trailing-slash"
 	},
 	"vars": {
-		"AIRTABLE_BASE_ID": "apphZsPGanzJ5xyl7",
-		"AIRTABLE_INBOX_TABLE_ID": "tblBcgV7oQ9Q3q34L",
 		"ENV_NAME": "production",
 		"PRELAUNCH": "true",
 		"BEEHIIV_PUBLICATION_ID": "pub_fb930d38-568a-4d98-b9d2-5f403d117a00",
@@ -67,8 +65,6 @@
 				"html_handling": "auto-trailing-slash"
 			},
 			"vars": {
-				"AIRTABLE_BASE_ID": "apphZsPGanzJ5xyl7",
-				"AIRTABLE_INBOX_TABLE_ID": "tblBcgV7oQ9Q3q34L",
 				"ENV_NAME": "staging",
 				"PRELAUNCH": "false",
 				"BEEHIIV_PUBLICATION_ID": "pub_fb930d38-568a-4d98-b9d2-5f403d117a00",

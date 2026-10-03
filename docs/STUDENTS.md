@@ -66,6 +66,6 @@ Only production runs scheduled maintenance. Staging and preview export HTTP only
 ## If you are unsure
 
 The staging website and directory tools use `asnm-db-staging`. Database changes
-stay there, but email, newsletter subscriptions, and Airtable actions use live
+stay there, but email and newsletter subscriptions use live
 production services and have real effects. Check the target before running a
 data-maintenance command.

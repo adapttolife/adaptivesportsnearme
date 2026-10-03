@@ -428,6 +428,7 @@
 							feature it at launch.
 						</p>
 						<form id="programForm" novalidate>
+							<input type="hidden" name="sid" value="" />
 							<input
 								class="hp"
 								type="text"
@@ -5466,6 +5467,14 @@
 					btn.disabled = true;
 					const lbl = btn.textContent;
 					btn.textContent = "Submitting...";
+					// One id per submission attempt, kept across a retry after an
+					// error so the server records it once.
+					if (!this.sid.value)
+						this.sid.value =
+							window.crypto && crypto.randomUUID
+								? crypto.randomUUID()
+								: Date.now().toString(36) +
+									Math.random().toString(36).slice(2);
 					const res = await postForm("/api/submit-program", this);
 					if (res.ok) {
 						paneDone(

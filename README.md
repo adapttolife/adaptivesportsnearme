@@ -90,7 +90,7 @@ Stop either server with Ctrl+C. `npx` may ask to download Wrangler on first use.
 See [Cloudflare D1 local development](https://developers.cloudflare.com/d1/best-practices/local-development/).
 
 For form integration testing, put the necessary runtime secrets in the ignored
-`.dev.vars` file. External Beehiiv, Gmail, and Airtable requests still use real
+`.dev.vars` file. External Beehiiv and Gmail requests still use real
 services when credentials are supplied; `--local` only keeps Cloudflare bindings
 local. See [Wrangler local development](https://developers.cloudflare.com/workers/local-development/).
 
@@ -100,7 +100,7 @@ local. See [Wrangler local development](https://developers.cloudflare.com/worker
 public/index.html      the site (self-contained design; hydrates real data from /api/*)
 public/manifest.json   PWA manifest (installable, mobile + desktop)
 public/sw.js           service worker (offline shell, network-first API)
-src/index.js           Worker: routing, forms (beehiiv/Airtable), config, cron entry
+src/index.js           Worker: routing, forms (beehiiv, shared intake), config, cron entry
 src/data.js            /api/programs /api/orgs/:id /api/stats (D1 reads + freshness decay)
 src/pipeline.js        cron lanes: validate (link liveness) + enrich (contact scrape)
 src/admin.js           /api/admin/* review queue (ADMIN_KEY bearer)
@@ -111,7 +111,7 @@ wrangler.json          production deployment plus named staging environment
 
 **Data plane:** staging and the dedicated preview retain `asnm-db-staging` for
 both `DB` and `INTAKE`. Production uses `asnm-db` and `atl-intake`. Staging and
-preview use live production email, newsletter, and Airtable services; external
+preview use live production email and newsletter services; external
 actions have real effects while directory, profile, and intake database writes
 stay in the staging database.
 
@@ -175,9 +175,9 @@ exports only `fetch`. Version uploads do not update the Worker's routes or cron
 triggers; those remain managed by the production deployment.
 
 Verify the uploaded version has the runtime secrets needed by Beehiiv, Gmail,
-Airtable, profile signing, and admin authentication. Build variables and local
+profile signing, and admin authentication. Build variables and local
 `.dev.vars` files are not runtime secrets. No database schema is applied by an
-upload; newsletter capture requires `db/intake-schema.sql` in the staging database.
+upload; newsletter and program-submission capture require `db/intake-schema.sql` in the staging database.
 The existing `asnm-gate` config is a separate production signup route and is not
 part of the staging preview setup.
 
@@ -223,7 +223,7 @@ settings, DNS, and certificate status must also be checked in Cloudflare.
 
 ## Secrets (per worker, via `wrangler secret put`)
 
-`BEEHIIV_API_KEY`, `BEEHIIV_PUBLICATION_ID`, `AIRTABLE_TOKEN`, `TURNSTILE_SECRET_KEY`,
+`BEEHIIV_API_KEY`, `BEEHIIV_PUBLICATION_ID`, `TURNSTILE_SECRET_KEY`,
 and `ADMIN_KEY` (enables `/api/admin/*`; unset = admin disabled, 401).
 
 ## Maintaining the data
