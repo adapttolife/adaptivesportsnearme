@@ -59,6 +59,7 @@
       '<input class="hp" name="company" tabindex="-1" autocomplete="off" aria-hidden="true">' +
       '<input name="em" type="email" placeholder="you@email.com" aria-label="Email address">' +
       '<button class="cta-go" type="submit">Get updates</button>' +
+      '<div class="mt-10 cf-turnstile" data-sitekey="0x4AAAAAADr2WPepRgjp8g-R" data-appearance="interaction-only"></div>' +
       '<div class="cta-msg" aria-live="polite"></div>' +
       "</form>" +
       '<p class="dn-fine">Free. No spam.</p>' +
@@ -92,6 +93,39 @@
     return head + news + dest + chips + contribute + profileBlock + about;
   }
 
+  // These pages do not load Turnstile up front and the drawer is injected after page
+  // load, so load the script on first open and render the drawer widget explicitly.
+  var TS_SITEKEY = "0x4AAAAAADr2WPepRgjp8g-R";
+  function renderDrawerTurnstile() {
+    var el = document.querySelector("#drawer form.cta-sub .cf-turnstile");
+    if (!el || el.childElementCount) return;
+    if (window.turnstile) {
+      try { window.turnstile.render(el, { sitekey: TS_SITEKEY, appearance: "interaction-only" }); } catch (_) { }
+      return;
+    }
+    if (document.getElementById("ts-api")) return;
+    window.__drawerTs = renderDrawerTurnstile;
+    var s = document.createElement("script");
+    s.id = "ts-api"; s.async = true; s.defer = true;
+    s.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit&onload=__drawerTs";
+    document.head.appendChild(s);
+  }
+
+  // A fast submit can beat the managed check; wait briefly for the token.
+  function waitForToken(form, ms) {
+    return new Promise(function (resolve) {
+      if (!form.querySelector(".cf-turnstile")) return resolve("");
+      var waited = 0;
+      (function poll() {
+        var v = form.querySelector('[name="cf-turnstile-response"]');
+        if (v && v.value) return resolve(v.value);
+        if (waited >= ms) return resolve("");
+        waited += 250;
+        setTimeout(poll, 250);
+      })();
+    });
+  }
+
   function injectDrawer() {
     if (document.getElementById("drawer")) return;
     var scrim = document.createElement("div");
@@ -119,6 +153,7 @@
     if (!d || !scrim) return;
     opener = document.activeElement;
     d.classList.add("open");
+    renderDrawerTurnstile();
     d.removeAttribute("inert");
     d.setAttribute("aria-hidden", "false");
     var mb = document.getElementById("menuBtn");
@@ -169,12 +204,13 @@
       }
       if (btn) { btn.disabled = true; btn.textContent = "Signing up..."; }
       var body = new URLSearchParams(new FormData(form));
-      var tok = form.querySelector('[name="cf-turnstile-response"]');
-      if (tok && tok.value) body.set("cf_token", tok.value);
-      fetch("/api/subscribe", {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: body,
+      waitForToken(form, 8000).then(function (tok) {
+        if (tok) body.set("cf_token", tok);
+        return fetch("/api/subscribe", {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: body,
+        });
       })
         .then(function (r) { return r.json().catch(function () { return {}; }); })
         .then(function (res) {

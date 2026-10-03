@@ -3049,6 +3049,7 @@
 					'<button class="cta-go" type="submit">' +
 					CTA_BTN +
 					"</button>" +
+					'<div class="mt-10 cf-turnstile" data-sitekey="0x4AAAAAADr2WPepRgjp8g-R" data-appearance="interaction-only"></div>' +
 					'<div class="cta-msg" aria-live="polite"></div>' +
 					"</form>"
 				);
@@ -4334,7 +4335,7 @@
 			function renderTurnstiles() {
 				if (!window.turnstile) return;
 				document
-					.querySelectorAll("#view .cf-turnstile")
+					.querySelectorAll("#view .cf-turnstile, #drawer .cf-turnstile")
 					.forEach((el) => {
 						if (el.childElementCount === 0) {
 							try {
@@ -4785,6 +4786,7 @@
 			let drawerOpener = null;
 			function openDrawer() {
 				renderDrawer();
+				renderTurnstiles();
 				drawerOpener = document.activeElement;
 				const d = document.getElementById("drawer");
 				d.classList.add("open");
@@ -5311,14 +5313,23 @@
 					closeGate();
 			});
 
+			// Managed Turnstile usually finishes before anyone has typed an email, but a
+			// fast submit can beat it. Wait briefly for the token rather than failing.
+			async function turnstileToken(form, ms = 8000) {
+				if (!form.querySelector(".cf-turnstile")) return "";
+				for (let t = 0; t <= ms; t += 250) {
+					const v = form.querySelector('[name="cf-turnstile-response"]');
+					if (v && v.value) return v.value;
+					await new Promise((r) => setTimeout(r, 250));
+				}
+				return "";
+			}
 			async function postForm(url, form) {
 				const fd = new FormData(form);
 				const body = new URLSearchParams();
 				fd.forEach((v, k) => body.append(k, v));
-				const tok = form.querySelector(
-					'[name="cf-turnstile-response"]',
-				);
-				if (tok && tok.value) body.set("cf_token", tok.value);
+				const tok = await turnstileToken(form);
+				if (tok) body.set("cf_token", tok);
 				if (!body.has("source"))
 					body.append("source", "asnm-prelaunch");
 				try {
