@@ -1,10 +1,11 @@
 import { safeNewsletterSubscribe } from './newsletter.js';
 import { queueFormConfirmation } from './email.js';
+import { notifyIntake } from './intake.js';
 // Adaptive Sports Near Me — Worker entry.
 // Serves the static site (env.ASSETS), the D1-backed directory API, the admin
 // review surface, and the cron maintenance pipeline (validate + enrich lanes).
 //   POST /api/subscribe        -> beehiiv (email capture, tagged asnm-prelaunch)
-//   POST /api/submit-program   -> Airtable Agent Inbox + D1 submissions
+//   POST /api/submit-program   -> shared intake (hello@ notice) + D1 submissions
 //   GET  /api/config           -> env name + prelaunch flag (front-end gate)
 //   GET  /api/directory        -> cached full public snapshot for client filters/maps
 //   GET  /api/programs         -> directory list (sport/state/q + zip/city/lat-lng nearby, paged)
@@ -67,18 +68,14 @@ const application = {
 
     if (url.pathname === "/api/subscribe") {
       if (request.method !== "POST") return json({ ok: false, error: "Method not allowed" }, 405);
-      if (env.FORM_LIMITER) {
-        try {
-          const { success } = await env.FORM_LIMITER.limit({ key: request.headers.get('CF-Connecting-IP') || 'unknown' });
-          if (!success) return json({ ok: false, error: 'Too many submissions. Please try again later.' }, 429);
-        } catch { return json({ ok: false, error: 'Sign-up is temporarily unavailable.' }, 503); }
-      } else if (env.REQUIRE_FORM_LIMITER === 'true') {
-        return json({ ok: false, error: 'Sign-up is temporarily unavailable.' }, 503);
-      }
+      const limited = await formLimited(request, env, 'Sign-up is temporarily unavailable.');
+      if (limited) return limited;
       return handleSubscribe(request, env, ctx);
     }
     if (url.pathname === "/api/submit-program") {
       if (request.method !== "POST") return json({ ok: false, error: "Method not allowed" }, 405);
+      const limited = await formLimited(request, env, 'Submissions are temporarily unavailable.');
+      if (limited) return limited;
       return handleSubmitProgram(request, env, ctx);
     }
     if (url.pathname === "/api/profile") {
@@ -302,7 +299,27 @@ async function subscribeToBeehiiv(env, email, campaign, extra = {}) {
   return safeNewsletterSubscribe(env, email, campaign, { ...extra, noWelcome: true });
 }
 
-// ---- Program submission -> Airtable Agent Inbox ------------------------------
+// ---- Program submission -> shared intake + D1 submissions -------------------
+// Capture first (the intake contract, src/intake.js): the submission is written
+// to the shared intake and the directory's submissions table BEFORE anything
+// that can fail quietly, and ok:true is returned only once both rows exist.
+// The intake row carries a pending delivery claim, so hello@ is notified by
+// this request (best-effort) or, failing that, by the scheduled sweepIntake.
+// Airtable is retired: nothing reads the old Agent Inbox base, so nothing writes it.
+export const PROGRAM_INTAKE_KIND = "program";
+const PROGRAM_SID_RE = /^[A-Za-z0-9-]{8,64}$/;
+const programUnavailable = { ok: false, error: "Could not save right now. Please try again soon." };
+
+// Stable id for one submission. The form sends a per-attempt `sid` that
+// survives a double-click or a retry after an error; the content is hashed in
+// as well, so a corrected resubmission is a new record while an identical
+// retry is the same one. Exported for test.
+export async function programSubmissionId(sid, email, payload) {
+  const material = ["program", PROGRAM_SID_RE.test(sid) ? sid : "", email.toLowerCase(), JSON.stringify(payload)].join("\n");
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(material));
+  return "program:" + Array.from(new Uint8Array(digest), (x) => x.toString(16).padStart(2, "0")).join("");
+}
+
 async function handleSubmitProgram(request, env, ctx) {
   const data = await readBody(request);
   if (data === null) return json({ ok: false, error: "Could not read your submission." }, 400);
@@ -326,70 +343,54 @@ async function handleSubmitProgram(request, env, ctx) {
     return json({ ok: false, error: "Please enter a valid email so we can confirm your submission." }, 422);
   }
 
-  if (!env.AIRTABLE_TOKEN || !env.AIRTABLE_BASE_ID || !env.AIRTABLE_INBOX_TABLE_ID) {
-    console.error("Airtable not configured");
+  if (!env.INTAKE || !env.DB) {
+    console.error("Program submission unavailable", { reason: "binding-missing", intake: !!env.INTAKE, db: !!env.DB });
     return json({ ok: false, error: "Submissions are temporarily unavailable. Please try again soon." }, 503);
   }
 
+  const answers = { program, org, sport, city, state: stateRegion, notes };
+  const intakeId = await programSubmissionId(str(data.sid), email, answers);
   const location = [city, stateRegion].filter(Boolean).join(", ");
-  const description = [
-    `Program: ${program}`,
-    org && `Organization: ${org}`,
-    sport && `Sport: ${sport}`,
-    location && `Location: ${location}`,
-    email && `Contact: ${email}`,
-    notes && `Notes: ${notes}`,
-    ``,
-    `Submitted via the adaptivesportsnearme.com pre-launch page.`,
-  ].filter((l) => l !== false && l !== undefined).join("\n");
+  // The summary is the notice's subject line: one line, bounded.
+  const summary = `New program submission: ${program.slice(0, 120)}${location ? ` (${location.slice(0, 80)})` : ""}`.replace(/[\r\n]+/g, " ");
+  const source = str(data.source).slice(0, 80) || "asnm-prelaunch";
+  const now = new Date().toISOString();
 
-  const fields = {
-    Title: program,
-    Type: "New program",
-    From: "Volunteer / Guest",
-    Status: "New",
-    Priority: "Medium",
-    Description: description,
-    Submitted: new Date().toISOString(),
-  };
-
-  let res;
+  let stage = "intake-capture";
+  let fresh;
   try {
-    res = await fetch(
-      `https://api.airtable.com/v0/${env.AIRTABLE_BASE_ID}/${env.AIRTABLE_INBOX_TABLE_ID}`,
-      {
-        method: "POST",
-        headers: { Authorization: `Bearer ${env.AIRTABLE_TOKEN}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ records: [{ fields }], typecast: true }),
-      }
-    );
-  } catch (err) {
-    console.error("Airtable request failed:", err);
-    return json({ ok: false, error: "Could not save right now. Please try again soon." }, 502);
+    // Intake row + its pending delivery claim are one transaction, the same
+    // shape the newsletter path writes. INSERT OR IGNORE makes a retry a no-op.
+    await env.INTAKE.batch([
+      env.INTAKE.prepare(`INSERT OR IGNORE INTO intake (id,received_at,site,kind,name,email,summary,payload,source,is_canary) VALUES (?,?,'adaptivesportsnearme.com',?,?,?,?,?,?,0)`)
+        .bind(intakeId, now, PROGRAM_INTAKE_KIND, null, email, summary, JSON.stringify(answers), source),
+      env.INTAKE.prepare("INSERT OR IGNORE INTO intake_delivery_claims (intake_id,state) VALUES (?,'pending')").bind(intakeId),
+    ]);
+    // In production DB (asnm-db) and INTAKE (atl-intake) are separate D1
+    // databases, so one batch cannot span them. The submissions write is
+    // idempotent on the same id, so a failure here is safe to retry.
+    stage = "submission-capture";
+    const result = await env.DB.prepare(
+      `INSERT INTO submissions (kind, payload, contact_email, status, created_at)
+       SELECT 'new_program', ?, ?, 'new', ?
+       WHERE NOT EXISTS (SELECT 1 FROM submissions WHERE kind = 'new_program' AND json_extract(payload, '$.intake_id') = ?)`
+    ).bind(JSON.stringify({ ...answers, intake_id: intakeId }), email, now, intakeId).run();
+    fresh = Number(result?.meta?.changes ?? result?.changes ?? 0) > 0;
+  } catch (error) {
+    const message = String(error?.message || "");
+    const reason = /no such table|no such column|has no column named/i.test(message) ? "database-schema-missing"
+      : /constraint failed/i.test(message) ? "database-constraint" : "operation-failed";
+    // Fixed categories only: raw errors can carry the bound email.
+    console.error("Program submission failed closed", { stage, reason });
+    return json(env.ENV_NAME === "staging" ? { ...programUnavailable, diagnostic: { stage, reason } } : programUnavailable, 502);
   }
 
-  if (!res.ok) {
-    console.error("Airtable error", res.status, await safeText(res));
-    return json({ ok: false, error: "Could not save right now. Please try again soon." }, 502);
-  }
-
-  await queueFormConfirmation(env, ctx, { kind: 'program', email, program });
-
-  // Also record in D1 (the directory's own data plane) — Airtable stays the team surface.
-  if (env.DB) {
-    try {
-      await env.DB.prepare(
-        `INSERT INTO submissions (kind, payload, contact_email, status, created_at)
-         VALUES ('new_program', ?, ?, 'new', ?)`
-      ).bind(
-        JSON.stringify({ program, org, sport, city, state: stateRegion, notes }),
-        email || null,
-        new Date().toISOString()
-      ).run();
-    } catch (err) {
-      console.error("D1 submission mirror failed:", err); // Airtable write already succeeded
-    }
-  }
+  // Captured. Correspondence never holds the response and never un-saves it.
+  // The house notice is claim-gated (at most once); the submitter receipt goes
+  // out only for the first capture of this id, so a retry does not mail twice.
+  const notice = notifyIntake(env, intakeId);
+  if (ctx?.waitUntil) ctx.waitUntil(notice); else await notice;
+  if (fresh) await queueFormConfirmation(env, ctx, { kind: 'program', email, program });
 
   return json({ ok: true });
 }
@@ -554,6 +555,20 @@ async function handleBlogPost(url, env, slug) {
 }
 
 // ---- helpers ----------------------------------------------------------------
+// One per-IP limiter for every public form. Fails closed: a limiter error, or
+// a missing limiter where one is required, refuses the submission.
+async function formLimited(request, env, unavailable) {
+  if (env.FORM_LIMITER) {
+    try {
+      const { success } = await env.FORM_LIMITER.limit({ key: request.headers.get('CF-Connecting-IP') || 'unknown' });
+      if (!success) return json({ ok: false, error: 'Too many submissions. Please try again later.' }, 429);
+    } catch { return json({ ok: false, error: unavailable }, 503); }
+  } else if (env.REQUIRE_FORM_LIMITER === 'true') {
+    return json({ ok: false, error: unavailable }, 503);
+  }
+  return null;
+}
+
 async function readBody(request) {
   try {
     const ct = request.headers.get("content-type") || "";
@@ -588,6 +603,3 @@ function str(v) {
   return (typeof v === "string" ? v : "").trim().slice(0, 5000);
 }
 
-async function safeText(res) {
-  try { return await res.text(); } catch { return "(no body)"; }
-}

@@ -4,7 +4,7 @@ CREATE TABLE IF NOT EXISTS intake (
   id              TEXT PRIMARY KEY,          -- uuid
   received_at     TEXT NOT NULL,             -- ISO8601 UTC, set by the Worker
   site            TEXT NOT NULL,             -- adapttolife.org | adaptivesportsnearme.com | adaptbodyshop.com
-  kind            TEXT NOT NULL,             -- newsletter | program | contact | application | volunteer | waiver | donation | shop-contact
+  kind            TEXT NOT NULL,             -- newsletter | program (ASNM add-a-program) | contact | application | volunteer | waiver | donation | shop-contact
   name            TEXT,
   email           TEXT,
   phone           TEXT,
