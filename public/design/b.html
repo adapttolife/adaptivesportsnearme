@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Direction B · Map · Adaptive Sports Near Me</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700;9..40,800&family=DM+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#151413;--ink2:#3f3d3a;--muted:#6d6a65;--line:#e8e5df;--bg:#fbfaf7;--paper:#fff;--a0:#f1eee8;--a1:#f9dcc7;--a2:#f2b48c;--a3:#e07f45;--a4:#c5430c;--a5:#8f2f07;--ok:#1d6a3a;--okbg:#e6f1e9;--r:14px;--max:1120px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:"DM Sans",system-ui,sans-serif;font-size:17px;line-height:1.55;color:var(--ink);background:var(--bg);-webkit-font-smoothing:antialiased}
+a{color:inherit}
+.wrap{max-width:var(--max);margin:0 auto;padding:0 20px}
+:focus-visible{outline:3px solid var(--a4);outline-offset:2px;border-radius:6px}
+.beta{background:var(--a1);color:var(--ink);font-size:14px}
+.beta .wrap{display:flex;gap:10px;align-items:center;min-height:38px}
+.beta b{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--a5);border:1.5px solid var(--a5);border-radius:99px;padding:0 7px}
+.beta a{font-weight:700;color:var(--a5)}
+header.top .wrap{display:flex;align-items:center;gap:14px;min-height:64px}
+.brand{display:flex;align-items:center;gap:9px;text-decoration:none;font-weight:800;letter-spacing:-.02em;font-size:18px}
+.brand img{width:28px;height:28px}
+header.top nav{margin-left:auto;display:flex;gap:4px}
+header.top nav a{text-decoration:none;font-weight:600;color:var(--ink2);padding:10px 12px;border-radius:10px;font-size:15.5px}
+header.top nav a.add{background:var(--a4);color:#fff}
+@media (max-width:700px){header.top nav .hs{display:none}.brand .long{display:none}}
+.hero{padding:34px 0 18px}
+.hero h1{font-size:clamp(34px,6.2vw,64px);line-height:1.02;letter-spacing:-.04em;font-weight:800;max-width:15ch}
+.hero p{font-size:clamp(17px,2vw,20px);color:var(--ink2);margin-top:12px;max-width:44ch}
+.mapcard{margin-top:26px;background:var(--paper);border:1px solid var(--line);border-radius:20px;padding:22px}
+.tiles{display:grid;grid-template-columns:repeat(11,1fr);gap:6px;max-width:760px;margin:0 auto}
+.tile{aspect-ratio:1;border-radius:9px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-decoration:none;font-weight:800;font-size:clamp(11px,1.6vw,17px);line-height:1;transition:transform .12s ease}
+.tile:hover{transform:translateY(-2px)}
+.tile small{font-family:"DM Mono",monospace;font-weight:500;font-size:clamp(9px,1.1vw,12px);margin-top:3px;opacity:.85}
+.b0{background:var(--a0);color:var(--muted)}.b1{background:var(--a1);color:var(--ink)}.b2{background:var(--a2);color:var(--ink)}.b3{background:var(--a3);color:#fff}.b4{background:var(--a4);color:#fff}.b5{background:var(--a5);color:#fff}
+.legend{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:8px 14px;margin-top:16px;font-size:13.5px;color:var(--muted)}
+.legend i{display:inline-block;width:14px;height:14px;border-radius:4px;vertical-align:-2px;margin-right:5px}
+.findrow{display:flex;flex-wrap:wrap;gap:10px;max-width:640px;margin:20px auto 0}
+.findrow input{flex:1 1 220px;min-width:0;height:52px;border:1.5px solid #d3cfc7;border-radius:12px;padding:0 16px;font:inherit;font-size:17px;background:#fff}
+.findrow button{height:52px;padding:0 22px;border:0;border-radius:12px;background:var(--ink);color:#fff;font:inherit;font-weight:700;cursor:pointer}
+@media (max-width:520px){.tiles{gap:3px}.tile{border-radius:5px}.mapcard{padding:14px 10px}.findrow button{flex:1 1 100%}.stats{grid-template-columns:1fr}.stat{display:flex;align-items:baseline;gap:10px}}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:22px 0 8px}
+.stat{background:var(--paper);border:1px solid var(--line);border-radius:var(--r);padding:16px 18px}
+.stat b{display:block;font-size:clamp(26px,3.6vw,36px);letter-spacing:-.03em;font-weight:800}
+.stat span{color:var(--ink2);font-size:15px}
+section.blk{padding:34px 0}
+section.blk h2{font-size:24px;letter-spacing:-.02em;font-weight:800}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+.chips a{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 15px;border-radius:99px;background:var(--paper);border:1px solid var(--line);text-decoration:none;font-weight:600;font-size:15.5px}
+.chips a.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.chips .n{font-family:"DM Mono",monospace;font-size:12.5px;color:var(--muted)}
+.chips a.on .n{color:#ddd}
+.dot{width:10px;height:10px;border-radius:50%;display:inline-block;flex:none}
+/* state page */
+.shead{padding:26px 0 8px}
+.shead .crumb{font-size:14px;color:var(--muted)}.shead .crumb a{color:var(--muted)}
+.shead h1{font-size:clamp(32px,5.4vw,54px);letter-spacing:-.04em;line-height:1.05;margin-top:6px;font-weight:800}
+.shead p{color:var(--ink2);margin-top:6px}
+.list{margin:10px 0 50px;background:var(--paper);border:1px solid var(--line);border-radius:18px;overflow:hidden}
+.list h3{font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:16px 20px 6px;background:var(--bg);border-top:1px solid var(--line)}
+.list h3:first-child{border-top:0}
+.item{display:flex;gap:14px;align-items:center;padding:16px 20px;border-top:1px solid var(--line);text-decoration:none}
+.item:hover{background:#fdfcfa}
+.item .nm{font-weight:700;font-size:17.5px;line-height:1.3}
+.item .mt{font-size:15px;color:var(--ink2);margin-top:2px}
+.item .tv{margin-left:auto;font-size:13.5px;font-weight:700;white-space:nowrap}
+.tv.ok{color:var(--ok)}.tv.no{color:var(--muted);font-weight:500}
+.item .ar{color:#b9b4ab;font-size:20px}
+/* listing */
+.band{border-radius:20px;padding:26px;margin-top:16px;display:flex;gap:18px;align-items:center}
+.band img{width:84px;height:84px;flex:none}
+.band h1{font-size:clamp(28px,4.8vw,44px);letter-spacing:-.035em;line-height:1.08;font-weight:800}
+.band p{margin-top:6px;color:var(--ink2)}
+.pill{display:inline-block;margin-top:10px;padding:5px 11px;border-radius:99px;font-size:14px;font-weight:700}
+.pill.ok{background:var(--okbg);color:var(--ok)}.pill.no{background:rgba(255,255,255,.7);color:var(--ink2)}
+.acts{display:flex;flex-wrap:wrap;gap:10px;margin:20px 0}
+.btn{display:inline-flex;align-items:center;min-height:52px;padding:0 22px;border-radius:12px;font-weight:700;text-decoration:none}
+.btn.pri{background:var(--a4);color:#fff}.btn.sec{background:var(--paper);border:1.5px solid var(--ink)}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:18px;padding:20px 22px;margin-top:14px}
+.card h2{font-size:19px}.card p{color:var(--ink2);margin-top:6px}
+.kv{display:grid;grid-template-columns:130px 1fr;gap:10px 16px;margin-top:10px}.kv dt{color:var(--muted)}.kv dd{font-weight:600;overflow-wrap:anywhere}
+footer{padding:30px 0 60px;color:var(--muted);font-size:15px}
+@media (max-width:520px){.stats{grid-template-columns:1fr;gap:8px}.stat{display:flex;align-items:baseline;gap:10px;padding:12px 16px}.stat b{font-size:26px}}
+</style>
+</head>
+<body>
+<div class="beta"><div class="wrap"><b>Beta</b><span>New and still growing. <a href="#">Help us build it</a></span></div></div>
+<header class="top"><div class="wrap"><a class="brand" href="#"><img src="/emblems/athlete.svg" alt=""><span><span class="long">Adaptive Sports </span>Near Me</span></a>
+<nav aria-label="Main"><a class="hs" href="#">States</a><a class="hs" href="#">Funding</a><a class="add" href="/?add=program">+ Add<span class="hs"> a program</span></a></nav></div></header>
+<main id="app" class="wrap"></main>
+<footer><div class="wrap">A free, open directory from Adapt To Life, a 501(c)(3) nonprofit. Never a money ask.</div></footer>
+<script src="/listing-art.js"></script>
+<script src="/design/core.js"></script>
+<script>
+const P = window.Proto, E = P.esc; let D;
+const GRID = {ME:[10,0],WI:[5,1],VT:[9,1],NH:[10,1],WA:[0,2],ID:[1,2],MT:[2,2],ND:[3,2],MN:[4,2],IL:[5,2],MI:[6,2],NY:[8,2],MA:[9,2],
+ OR:[0,3],NV:[1,3],WY:[2,3],SD:[3,3],IA:[4,3],IN:[5,3],OH:[6,3],PA:[7,3],NJ:[8,3],CT:[9,3],RI:[10,3],
+ CA:[0,4],UT:[1,4],CO:[2,4],NE:[3,4],MO:[4,4],KY:[5,4],WV:[6,4],VA:[7,4],MD:[8,4],DE:[9,4],
+ AZ:[1,5],NM:[2,5],KS:[3,5],AR:[4,5],TN:[5,5],NC:[6,5],SC:[7,5],DC:[8,5],OK:[3,6],LA:[4,6],MS:[5,6],AL:[6,6],GA:[7,6],HI:[0,7],AK:[1,7],TX:[3,7],FL:[8,7]};
+const bucket = n => n>=90?5:n>=55?4:n>=25?3:n>=10?2:n>=1?1:0;
+const FAMCOLOR = {basketball:"#e07f45",tennis:"#9cbf3b",pickleball:"#7aa63a",soccer:"#3f9a5d",baseball:"#3f8a7a",football:"#7a5a3a",rugby:"#6b4f8f",skiing:"#4f8fd0",sledhockey:"#3b6fb5",swimming:"#2aa3b8",rowing:"#2b8aa0",cycling:"#c9a227",golf:"#5f8f3a",climbing:"#a0703a","equine-therapy":"#9b6bb0",track:"#d0663a",multi:"#9a948a"};
+const params = () => Object.fromEntries(new URLSearchParams(location.hash.slice(1)));
+function tiles(){
+  const cells = [];
+  for (const [st,[c,r]] of Object.entries(GRID)) {
+    const n = (D.byState[st]||[]).length;
+    cells.push(`<a class="tile b${bucket(n)}" style="grid-column:${c+1};grid-row:${r+1}" href="#st=${st}" aria-label="${E(P.STATE_NAMES[st])}, ${n} programs">${st}<small>${n}</small></a>`);
+  }
+  return `<div class="tiles" style="grid-template-rows:repeat(8,auto)">${cells.join("")}</div>`;
+}
+function item(p){ return `<a class="item" href="#p=${p.id}"><span class="dot" style="background:${FAMCOLOR[p.family]||'#9a948a'}"></span><span><div class="nm">${E(p.name)}</div><div class="mt">${E(p.familyLabel)} · ${E(P.place(p))}</div></span><span class="tv ${p.verified?'ok':'no'}">${p.verified?'✓ Verified':'Not yet verified'}</span><span class="ar">›</span></a>`; }
+function home(){
+  const ver = D.items.filter(p=>p.verified).length;
+  const fams = Object.entries(D.families).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  return `<section class="hero"><h1>Adaptive sports in every state.</h1><p>Tap your state to see programs, teams and clinics for athletes with disabilities.</p>
+  <div class="mapcard">${tiles()}
+   <div class="legend"><span><i style="background:var(--a1)"></i>1 to 9</span><span><i style="background:var(--a2)"></i>10 to 24</span><span><i style="background:var(--a3)"></i>25 to 54</span><span><i style="background:var(--a4)"></i>55 to 89</span><span><i style="background:var(--a5)"></i>90+</span></div>
+   <form class="findrow" onsubmit="event.preventDefault();location.hash='near='+encodeURIComponent(this.w.value)"><input name="w" placeholder="Or type a ZIP code or city" aria-label="ZIP code or city"><button>Search</button></form></div>
+  <div class="stats"><div class="stat"><b>${D.items.length.toLocaleString()}</b><span>programs listed</span></div><div class="stat"><b>${ver}</b><span>checked by a person</span></div><div class="stat"><b>${D.grants.length}</b><span>grants to help pay</span></div></div></section>
+  <section class="blk"><h2>By sport</h2><div class="chips">${fams.map(([k,n])=>`<a href="#near=&s=${k}"><span class="dot" style="background:${FAMCOLOR[k]||'#9a948a'}"></span>${E(P.FAMILY_LABEL[k])} <span class="n">${n}</span></a>`).join("")}</div></section>`;
+}
+function statePage(st, fam){
+  const all = (D.byState[st]||[]);
+  const list = all.filter(p=>!fam||p.family===fam).sort(P.byTrust);
+  const famCounts = {}; for (const p of all) famCounts[p.family]=(famCounts[p.family]||0)+1;
+  const withCity = list.filter(p=>P.cleanCity(p.city)), statewide = list.filter(p=>!P.cleanCity(p.city));
+  return `<div class="shead"><div class="crumb"><a href="#">All states</a></div><h1>${E(P.STATE_NAMES[st])}</h1><p>${all.length} programs · ${all.filter(p=>p.verified).length} checked by a person</p>
+   <div class="chips"><a class="${fam?'':'on'}" href="#st=${st}">All <span class="n">${all.length}</span></a>${Object.entries(famCounts).sort((a,b)=>b[1]-a[1]).map(([k,n])=>`<a class="${k===fam?'on':''}" href="#st=${st}&s=${k}"><span class="dot" style="background:${FAMCOLOR[k]||'#9a948a'}"></span>${E(P.FAMILY_LABEL[k])} <span class="n">${n}</span></a>`).join("")}</div></div>
+   <div class="list">${withCity.length?`<h3>With a city · ${withCity.length}</h3>${withCity.map(item).join("")}`:''}${statewide.length?`<h3>Across the state · ${statewide.length}</h3>${statewide.map(item).join("")}`:''}</div>`;
+}
+function near(q){ const w = P.parsePlace(q.near, D.items);
+  if (w && w.city) { const g = P.groupFor(w, D.items, q.s||""); const st = P.STATE_NAMES[w.state];
+    const sec = (t,l)=>l.length?`<h3>${t} · ${l.length}</h3>${l.map(item).join("")}`:'';
+    return `<div class="shead"><div class="crumb"><a href="#">All states</a> / <a href="#st=${w.state}">${E(st)}</a></div><h1>Near ${E(w.label)}</h1><p>${g.total} programs in ${E(st)} · ${g.verified} checked by a person</p></div><div class="list">${sec('In '+E(w.city),g.inCity)}${sec('Elsewhere in '+E(st),g.rest)}${sec('Across '+E(st)+' · city not listed',g.noCity)}</div>`; }
+  if (w) return statePage(w.state, q.s||"");
+  const list = D.items.filter(p=>!q.s||p.family===q.s).sort(P.byTrust).slice(0,40);
+  return `<div class="shead"><div class="crumb"><a href="#">All states</a></div><h1>${E(P.FAMILY_LABEL[q.s]||'Programs')}</h1><p>Across the country. Tap a state on the map to narrow it down.</p></div><div class="list">${list.map(item).join("")}</div>`; }
+function listing(id){ const p=D.items.find(x=>x.id===id); if(!p) return '';
+  const tone = {court:"#f5e1d1",racquet:"#e6ebd2",field:"#dae6d5",snow:"#dbe6f0",water:"#d4e8e6",trail:"#efe4d1",calm:"#e6e0ee",house:"#ece8e1"};
+  const art = window.ListingArt.art(p);
+  return `<div class="shead"><div class="crumb"><a href="#">All states</a> / <a href="#st=${p.state}">${E(P.STATE_NAMES[p.state]||'')}</a></div></div>
+  <div class="band" style="background:${tone[art.tone]||tone.house}"><img src="${art.src}" alt=""><div><h1>${E(p.name)}</h1><p>${E(p.familyLabel)} · ${E(P.place(p))}</p><span class="pill ${p.verified?'ok':'no'}">${p.verified?'✓ Checked by a person':'Not yet verified'}</span></div></div>
+  <div class="acts">${p.website?`<a class="btn pri" href="${E(p.website)}" target="_blank" rel="noopener">Visit website</a>`:''}<a class="btn sec" href="/?update=${p.id}">Suggest an update</a></div>
+  ${p.desc?`<div class="card"><h2>What it is</h2><p>${E(p.desc)}</p></div>`:''}
+  <div class="card"><h2>About this listing</h2><p>${p.verified?'A person on our team checked this program against an official source. Schedules change, so check before you go.':'No one on our team has confirmed this listing yet. Check the website or call before you go.'}</p><dl class="kv"><dt>Sport</dt><dd>${E(p.sportLabel||p.familyLabel)}</dd><dt>Where</dt><dd>${E(P.place(p))}</dd></dl></div><div style="height:40px"></div>`; }
+function render(){ const q=params(); const el=document.getElementById("app");
+  el.innerHTML = q.p?listing(q.p):q.st?statePage(q.st,q.s||""):("near" in q)?near(q):home(); scrollTo(0,0); }
+P.load().then(d=>{D=d;render();addEventListener("hashchange",render);});
+</script>
+</body>
+</html>
