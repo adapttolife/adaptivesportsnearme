@@ -498,8 +498,8 @@
 					</div>
 					<div class="gate-pane" data-pane="program">
 						<p class="mb-15 lede">
-							Run an adaptive sports program? Add it and we will
-							feature it at launch.
+							Run an adaptive sports program? Add it so people near
+							you can find it.
 						</p>
 						<form id="programForm" novalidate>
 							<input type="hidden" name="sid" value="" />
@@ -5836,9 +5836,12 @@
 						paneDone(
 							"notify",
 							nm ? "You are in, " + esc(nm) : "You are in",
-							beta
-								? "Your link comes before the doors open. Anything you write back gets read by a person, not a form."
-								: "We will email you the day the doors open.",
+							// Before the flip the gate promises opening day; after it, updates.
+							!PRELAUNCH
+								? "We will email you when there is something worth sending: programs, events and funding near you."
+								: beta
+									? "Your link comes before the doors open. Anything you write back gets read by a person, not a form."
+									: "We will email you the day the doors open.",
 						);
 					} else {
 						btn.disabled = false;
@@ -5888,7 +5891,7 @@
 						paneDone(
 							"program",
 							"Thank you",
-							"We received your program and will be in touch before launch.",
+							"We received your program. A person reviews every one before it goes in the directory.",
 						);
 					} else {
 						btn.disabled = false;
