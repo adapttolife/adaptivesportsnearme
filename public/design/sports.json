@@ -1,0 +1,457 @@
+{
+ "generated": "2026-10-13",
+ "liveTotal": 1396,
+ "stagingTotal": 2398,
+ "sports": [
+  {
+   "key": "multi",
+   "name": "Multi-sport",
+   "note": "Programs that offer several sports. The biggest group on the site.",
+   "live": 529,
+   "staging": 617,
+   "old": false,
+   "group": "first",
+   "example": "f2e24bf1-7f07-5d26-a4aa-ae6891c0a55c"
+  },
+  {
+   "key": "tennis",
+   "name": "Tennis",
+   "note": "Wheelchair and adaptive tennis.",
+   "live": 341,
+   "staging": 345,
+   "old": true,
+   "group": "first",
+   "example": "e3b6cb84-6564-574a-be63-a276004fd143"
+  },
+  {
+   "key": "soccer",
+   "name": "Soccer",
+   "note": "Mostly TOPSoccer youth programs, some power soccer.",
+   "live": 134,
+   "staging": 162,
+   "old": true,
+   "group": "first",
+   "example": "0d638642-798c-5df3-8c2e-1da91f5b892a"
+  },
+  {
+   "key": "baseball",
+   "name": "Baseball",
+   "note": "Many are Miracle League fields.",
+   "live": 93,
+   "staging": 108,
+   "old": true,
+   "group": "first",
+   "example": "ca7b9f8b-4873-518d-a204-517509f8f3ba"
+  },
+  {
+   "key": "equestrian",
+   "name": "Horseback riding",
+   "note": "Adaptive and therapeutic riding.",
+   "live": 60,
+   "staging": 61,
+   "old": false,
+   "group": "first",
+   "example": "0bc552df-d3d4-53ff-896e-756e4ed18333"
+  },
+  {
+   "key": "basketball",
+   "name": "Basketball",
+   "note": "Wheelchair basketball.",
+   "live": 32,
+   "staging": 58,
+   "old": true,
+   "group": "first",
+   "example": "eefaef18-ff88-59a3-9564-d187aed8c155"
+  },
+  {
+   "key": "rowing",
+   "name": "Rowing and paddling",
+   "note": "Rowing, kayaking and canoeing.",
+   "live": 22,
+   "staging": 20,
+   "old": true,
+   "group": "next",
+   "example": "5b92b012-4075-5fa8-8fa2-56729b48a68f"
+  },
+  {
+   "key": "sledhockey",
+   "name": "Sled hockey",
+   "note": "",
+   "live": 19,
+   "staging": 25,
+   "old": true,
+   "group": "next",
+   "example": "6f0f97e7-3939-5a17-8c6b-d9ccfa597727"
+  },
+  {
+   "key": "skiing",
+   "name": "Skiing",
+   "note": "Sit-skiing, snowboarding and snow sports.",
+   "live": 17,
+   "staging": 17,
+   "old": true,
+   "group": "next",
+   "example": "9775718a-c302-5af7-975d-0e6fd087e9b9"
+  },
+  {
+   "key": "swimming",
+   "name": "Swimming",
+   "note": "Swim lessons and aquatics.",
+   "live": 14,
+   "staging": 13,
+   "old": true,
+   "group": "next",
+   "example": "350ca92f-12b0-57e7-828c-623845ac3dd8"
+  },
+  {
+   "key": "equine-therapy",
+   "name": "Equine therapy",
+   "note": "Working with horses, not riding.",
+   "live": 13,
+   "staging": 319,
+   "old": true,
+   "group": "next",
+   "example": "d4a0fbcb-f4d8-57d2-9084-205f1a337155"
+  },
+  {
+   "key": "golf",
+   "name": "Golf",
+   "note": "",
+   "live": 13,
+   "staging": 15,
+   "old": true,
+   "group": "next",
+   "example": "919bd682-bf6a-5efd-b767-4aa53d2beaab"
+  },
+  {
+   "key": "cycling",
+   "name": "Cycling",
+   "note": "Handcycles, adaptive bikes and mountain biking.",
+   "live": 12,
+   "staging": 21,
+   "old": true,
+   "group": "next",
+   "example": "d70e91a5-0281-52d7-92d7-67ee42f5fc30"
+  },
+  {
+   "key": "archery",
+   "name": "Archery",
+   "note": "",
+   "live": 11,
+   "staging": 6,
+   "old": false,
+   "group": "next",
+   "example": "e6f1d5a9-d657-5cce-9593-399711056696"
+  },
+  {
+   "key": "sailing",
+   "name": "Sailing",
+   "note": "",
+   "live": 10,
+   "staging": 11,
+   "old": false,
+   "group": "next",
+   "example": "97e2ba4b-3f63-50d5-a87b-43026e7e5abf"
+  },
+  {
+   "key": "blindsports",
+   "name": "Blind sports",
+   "note": "Sports for blind and low-vision athletes.",
+   "live": 9,
+   "staging": 11,
+   "old": false,
+   "group": "next",
+   "example": "85e860ec-acec-5483-b81a-c301069830cc"
+  },
+  {
+   "key": "trackfield",
+   "name": "Track and field",
+   "note": "",
+   "live": 8,
+   "staging": 11,
+   "old": false,
+   "group": "next",
+   "example": "e65f3b1e-d31b-5592-969a-b88877cf2907"
+  },
+  {
+   "key": "surfing",
+   "name": "Surfing",
+   "note": "",
+   "live": 7,
+   "staging": 12,
+   "old": false,
+   "group": "next",
+   "example": "7d935b46-39a5-5347-a054-377117d2a222"
+  },
+  {
+   "key": "fencing",
+   "name": "Fencing",
+   "note": "Wheelchair fencing.",
+   "live": 6,
+   "staging": 5,
+   "old": false,
+   "group": "next",
+   "example": "668559a2-3d87-5f0e-92df-f125a05b0518"
+  },
+  {
+   "key": "climbing",
+   "name": "Climbing",
+   "note": "",
+   "live": 5,
+   "staging": 10,
+   "old": true,
+   "group": "next",
+   "example": "ef3ce932-7778-5710-9f2f-59cd7fea2552"
+  },
+  {
+   "key": "rugby",
+   "name": "Rugby",
+   "note": "Wheelchair rugby.",
+   "live": 5,
+   "staging": 10,
+   "old": true,
+   "group": "next",
+   "example": "5535a631-c385-5d01-8e12-0f746987254a"
+  },
+  {
+   "key": "triathlon",
+   "name": "Triathlon",
+   "note": "Para triathlon.",
+   "live": 5,
+   "staging": 6,
+   "old": false,
+   "group": "next",
+   "example": "8e4c05a0-16b5-5da8-a30c-5d08f452fd6a"
+  },
+  {
+   "key": "martialarts",
+   "name": "Martial arts",
+   "note": "",
+   "live": 5,
+   "staging": 5,
+   "old": false,
+   "group": "next",
+   "example": "300dd5b7-3546-5399-a22a-e97c69ef6036"
+  },
+  {
+   "key": "running",
+   "name": "Running",
+   "note": "",
+   "live": 4,
+   "staging": 12,
+   "old": false,
+   "group": "next",
+   "example": "9678d925-2051-5a25-bf97-cb05389452da"
+  },
+  {
+   "key": "pickleball",
+   "name": "Pickleball",
+   "note": "",
+   "live": 4,
+   "staging": 10,
+   "old": true,
+   "group": "next",
+   "example": "ce0d0394-b36a-5da6-894b-2ec88ccd6d28"
+  },
+  {
+   "key": "amputeesports",
+   "name": "Amputee sports",
+   "note": "",
+   "live": 3,
+   "staging": 3,
+   "old": false,
+   "group": "next",
+   "example": "f1963571-1ec3-49f6-ab77-ddfd6c762d6f"
+  },
+  {
+   "key": "waterskiing",
+   "name": "Water skiing",
+   "note": "Water skiing and tubing.",
+   "live": 3,
+   "staging": 2,
+   "old": true,
+   "group": "next",
+   "example": "eddfb88e-1ec9-556f-a73d-fec8e0e4b91d"
+  },
+  {
+   "key": "goalball",
+   "name": "Goalball",
+   "note": "A team ball sport for blind players.",
+   "live": 2,
+   "staging": 7,
+   "old": true,
+   "group": "next",
+   "example": "3a14da30-fdb0-510f-a3df-aa1dd60bcb8b"
+  },
+  {
+   "key": "volleyball",
+   "name": "Volleyball",
+   "note": "Sitting volleyball.",
+   "live": 2,
+   "staging": 2,
+   "old": true,
+   "group": "next",
+   "example": "8ed51b0a-d7fe-5af6-b218-d96cacf2048a"
+  },
+  {
+   "key": "wheelchairracing",
+   "name": "Wheelchair racing",
+   "note": "",
+   "live": 2,
+   "staging": 1,
+   "old": false,
+   "group": "next",
+   "example": "71fcf31b-9d56-5353-8e16-86eb321615c1"
+  },
+  {
+   "key": "football",
+   "name": "Football",
+   "note": "Flag and wheelchair football.",
+   "live": 1,
+   "staging": 15,
+   "old": true,
+   "group": "next",
+   "example": "d5fccf04-fb78-5773-ba25-e6a2262f5479"
+  },
+  {
+   "key": "curling",
+   "name": "Curling",
+   "note": "Wheelchair curling.",
+   "live": 1,
+   "staging": 7,
+   "old": false,
+   "group": "next",
+   "example": "d8216745-d4d3-5e11-bb7a-3b4310d0acac"
+  },
+  {
+   "key": "beepbaseball",
+   "name": "Beep baseball",
+   "note": "Baseball for blind players.",
+   "live": 1,
+   "staging": 1,
+   "old": false,
+   "group": "next",
+   "example": "361d1c77-b82c-5580-9657-9d9665802101"
+  },
+  {
+   "key": "boccia",
+   "name": "Boccia",
+   "note": "",
+   "live": 1,
+   "staging": 1,
+   "old": true,
+   "group": "next",
+   "example": "19c7275a-11f3-5c0e-8c0d-c0e0fa97035f"
+  },
+  {
+   "key": "nordicskiing",
+   "name": "Nordic skiing",
+   "note": "Cross-country sit-skiing.",
+   "live": 1,
+   "staging": 1,
+   "old": false,
+   "group": "next",
+   "example": "facba626-fdbd-4bb0-b7f2-06f383fad46f"
+  },
+  {
+   "key": "shooting",
+   "name": "Shooting sports",
+   "note": "Includes adaptive hunting.",
+   "live": 1,
+   "staging": 0,
+   "old": false,
+   "group": "next",
+   "example": "95b1605f-be5b-5f4b-9689-385f31d1328a"
+  },
+  {
+   "key": "veteran-meetup",
+   "name": "Veteran meetups",
+   "note": "",
+   "live": 0,
+   "staging": 293,
+   "old": true,
+   "group": "staging",
+   "example": null
+  },
+  {
+   "key": "art-therapy",
+   "name": "Art therapy",
+   "note": "",
+   "live": 0,
+   "staging": 169,
+   "old": true,
+   "group": "staging",
+   "example": null
+  },
+  {
+   "key": "softball",
+   "name": "Softball",
+   "note": "Could share the baseball image.",
+   "live": 0,
+   "staging": 5,
+   "old": false,
+   "group": "staging",
+   "example": null
+  },
+  {
+   "key": "lacrosse",
+   "name": "Lacrosse",
+   "note": "",
+   "live": 0,
+   "staging": 1,
+   "old": false,
+   "group": "staging",
+   "example": null
+  },
+  {
+   "key": "equestrianvaulting",
+   "name": "Equestrian vaulting",
+   "note": "",
+   "live": 0,
+   "staging": 0,
+   "old": false,
+   "group": "later",
+   "example": null
+  },
+  {
+   "key": "handball",
+   "name": "Handball",
+   "note": "",
+   "live": 0,
+   "staging": 0,
+   "old": false,
+   "group": "later",
+   "example": null
+  },
+  {
+   "key": "handcycling",
+   "name": "Handcycling",
+   "note": "",
+   "live": 0,
+   "staging": 0,
+   "old": false,
+   "group": "later",
+   "example": null
+  },
+  {
+   "key": "powerlifting",
+   "name": "Powerlifting",
+   "note": "",
+   "live": 0,
+   "staging": 0,
+   "old": false,
+   "group": "later",
+   "example": null
+  },
+  {
+   "key": "dance",
+   "name": "Wheelchair dance",
+   "note": "",
+   "live": 0,
+   "staging": 0,
+   "old": false,
+   "group": "later",
+   "example": null
+  }
+ ]
+}

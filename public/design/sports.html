@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Sport images checklist · Adaptive Sports Near Me</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,600;9..40,700;9..40,800&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#121212;--ink2:#3c3b38;--muted:#6c6a66;--line:#e7e5e0;--bg:#faf9f6;--accent:#d9480f;--ok:#1a6b3c;--okbg:#e3f1e7}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:"DM Sans",system-ui,sans-serif;font-size:16px;line-height:1.5;color:var(--ink);background:var(--bg);-webkit-font-smoothing:antialiased}
+a{color:inherit}
+.wrap{max-width:760px;margin:0 auto;padding:28px 16px 80px}
+.back{font-size:14px;font-weight:600;color:var(--muted);text-decoration:none}
+h1{font-size:clamp(30px,7vw,42px);letter-spacing:-.03em;line-height:1.05;margin-top:10px}
+.lead{color:var(--ink2);margin-top:10px;max-width:60ch}
+.meter{margin-top:20px;background:#fff;border:1px solid var(--line);border-radius:16px;padding:16px 18px}
+.meter b{font-size:20px;letter-spacing:-.02em}
+.meter p{color:var(--ink2);font-size:15px;margin-top:2px}
+.bar{height:10px;border-radius:99px;background:#eeebe5;margin-top:12px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--ok);border-radius:99px;min-width:10px}
+.spec{margin-top:14px;background:#fff;border:1px solid var(--line);border-radius:16px;padding:16px 18px;display:grid;grid-template-columns:1fr auto;gap:8px 18px;align-items:start}
+.spec h2{font-size:18px;grid-column:1/-1}
+.spec ul{padding-left:18px;color:var(--ink2);font-size:15px}
+.spec li+li{margin-top:5px}
+.spec figure{display:flex;align-items:flex-end;gap:10px}
+.spec figure img{background:#fff}
+.spec figcaption{font-size:12px;color:var(--muted);text-align:center;grid-column:1/-1}
+@media (max-width:520px){.spec{grid-template-columns:1fr}.spec figure{justify-content:center}}
+h2.group{font-size:20px;letter-spacing:-.02em;margin-top:34px}
+p.gsub{color:var(--muted);font-size:15px;margin-top:2px}
+ol{list-style:none;margin-top:10px;display:grid;gap:8px}
+li.s{display:grid;grid-template-columns:28px 64px 1fr auto;gap:12px;align-items:center;background:#fff;border:1px solid var(--line);border-radius:14px;padding:10px 12px}
+li.s.done{border-color:#b9dcc4}
+.n{font-size:13px;font-weight:700;color:var(--muted);text-align:right}
+.th{width:64px;height:64px;border-radius:12px;display:grid;place-items:center;background:#f3f1ec}
+.th img{width:48px;height:48px}
+.th.stand img{opacity:.35}
+.th.none{border:2px dashed #d8d4cc;background:#fff}
+.done .th{background:#fff}
+.nm{font-weight:700;font-size:16.5px;line-height:1.25}
+.ct{font-size:14px;color:var(--ink2)}
+.note{font-size:14px;color:var(--muted)}
+.key{display:inline-block;font:600 12.5px ui-monospace,SFMono-Regular,Menlo,monospace;background:#f3f1ec;border-radius:6px;padding:1px 6px;margin-top:3px}
+.st{font-size:13px;font-weight:700;border-radius:99px;padding:4px 10px;white-space:nowrap;text-align:center}
+.st.need{background:#f3f1ec;color:var(--ink2)}
+.st.ok{background:var(--okbg);color:var(--ok);text-decoration:none}
+@media (max-width:520px){li.s{grid-template-columns:52px 1fr;grid-template-areas:"th body" "th st"}.n{display:none}.th{grid-area:th;width:52px;height:52px}.th img{width:40px;height:40px}.body{grid-area:body}.st{grid-area:st;justify-self:start}}
+.foot{font-size:14px;color:var(--muted);margin-top:30px}
+</style>
+</head>
+<body><div class="wrap">
+<a class="back" href="/design/">← All designs</a>
+<h1>Sport images</h1>
+<p class="lead">Every sport in the database, most listings first. One image per sport, like your basketball one. When an image lands here, the site uses it on every card, listing page and sport button for that sport.</p>
+<div class="meter" id="meter"></div>
+<div class="spec">
+  <h2>How to make each one</h2>
+  <ul>
+    <li>Square, at least 1000 by 1000 pixels. Basketball was 1254.</li>
+    <li>Black on a white or see-through background. One color, no gray.</li>
+    <li>Your logo athlete plus one clear thing from the sport, like the ball.</li>
+    <li>Bold shapes. It shows as small as a fingertip in the sport menu (the small one).</li>
+    <li>Send it in chat with the sport's name. If you save files, name them by the key, like <span class="key">tennis.png</span>.</li>
+  </ul>
+  <figure><img src="/emblems/sports/basketball.svg" width="96" height="96" alt="Basketball image at card size"><img src="/emblems/sports/basketball.svg" width="30" height="30" alt="Basketball image at menu size"></figure>
+</div>
+<div id="list"></div>
+<p class="foot">Counts are listings a person can act on, sorted into one sport each by their sport label. Live is today's public site. Staging is the bigger list being checked before it goes live.</p>
+</div>
+<script>
+const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const fmt = (n) => n.toLocaleString("en-US");
+const GROUPS = [
+  ["first", "Start here", (rows, t) => `These ${rows.length} cover ${Math.round(100 * rows.reduce((a, r) => a + r.live, 0) / t)}% of the live listings.`],
+  ["next", "Next", () => "Everything else on the live site."],
+  ["staging", "Not live yet", () => "Only in staging today. Veteran meetups and art therapy are big there."],
+  ["later", "No listings yet", () => "In our sports list, waiting for programs."],
+];
+Promise.all([
+  fetch("/design/sports.json").then((r) => r.json()),
+  fetch("/emblems/sports/index.json").then((r) => r.ok ? r.json() : []).catch(() => []),
+]).then(([d, art]) => {
+  const has = new Set(art);
+  const done = d.sports.filter((r) => has.has(r.key));
+  const covered = done.reduce((a, r) => a + r.live, 0);
+  const pct = Math.round(100 * covered / d.liveTotal);
+  document.getElementById("meter").innerHTML = `<b>${done.length} of ${d.sports.length} done</b><p>Your images cover ${fmt(covered)} of ${fmt(d.liveTotal)} live listings (${pct}%). Multi-sport alone is ${Math.round(100 * d.sports[0].live / d.liveTotal)}%.</p><div class="bar" role="img" aria-label="${pct}% of live listings covered"><i style="width:${pct}%"></i></div>`;
+  let i = 0;
+  document.getElementById("list").innerHTML = GROUPS.map(([g, title, sub]) => {
+    const rows = d.sports.filter((r) => r.group === g);
+    if (!rows.length) return "";
+    return `<h2 class="group">${title}</h2><p class="gsub">${sub(rows, d.liveTotal)}</p><ol>${rows.map((r) => {
+      i++;
+      const ok = has.has(r.key);
+      const src = ok ? `/emblems/sports/${r.key}.svg` : r.old ? `/emblems/athlete-${r.key}.svg` : "";
+      const th = ok ? `<div class="th"><img src="${src}" alt=""></div>` : src ? `<div class="th stand" title="Stand-in on the site today"><img src="${src}" alt=""></div>` : `<div class="th none"></div>`;
+      const count = r.live ? `${fmt(r.live)} live` + (r.staging > r.live * 3 ? ` · ${fmt(r.staging)} in staging` : "") : r.staging ? `${fmt(r.staging)} in staging` : "No listings yet";
+      const st = ok ? (r.example ? `<a class="st ok" href="/design/d.html#p=${r.example}">✓ Done · see it</a>` : `<span class="st ok">✓ Done</span>`) : `<span class="st need">Needed</span>`;
+      return `<li class="s${ok ? " done" : ""}"><span class="n">${i}</span>${th}<div class="body"><div class="nm">${esc(r.name)}</div><div class="ct">${count}${r.note ? ` · <span class="note">${esc(r.note)}</span>` : ""}</div><span class="key">${esc(r.key)}.png</span></div>${st}</li>`;
+    }).join("")}</ol>`;
+  }).join("");
+});
+</script>
+</body>
+</html>

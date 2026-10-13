@@ -252,10 +252,11 @@ footer.foot{border-top:1px solid var(--line);padding:24px 16px 120px;color:var(-
 <script src="/design/core.js"></script>
 <script>
 const P = window.Proto, E = P.esc, L = window.ListingArt;
-let D, SH, CENTERS, PLACES = null, ZCTA = null;
+let D, SH, CENTERS, PLACES = null, ZCTA = null, ART = new Set();
 const TONE = { court: "t-court", racquet: "t-racquet", field: "t-field", snow: "t-snow", water: "t-water", trail: "t-trail", calm: "t-calm", house: "t-house" };
 const RAIL = ["all", "tennis", "basketball", "soccer", "baseball", "skiing", "sledhockey", "swimming", "rowing", "cycling", "golf", "pickleball", "rugby", "football", "climbing", "equine-therapy", "veteran-meetup", "art-therapy", "multi"];
-const SYM = (k) => k === "all" || k === "multi" || !L.SYMBOLS.includes(k) ? "/emblems/athlete.svg" : `/emblems/athlete-${k}.svg`;
+// Alec's sport art (public/emblems/sports/<key>.svg) wins over the older athlete + prop set.
+const SYM = (k) => ART.has(k) ? `/emblems/sports/${k}.svg` : k === "all" || k === "multi" || !L.SYMBOLS.includes(k) ? "/emblems/athlete.svg" : `/emblems/athlete-${k}.svg`;
 const label = (k) => k === "all" ? "All" : (P.FAMILY_LABEL[k] || k).replace(" and recreation", "").replace(" and softball", "").replace(" and snow sports", "").replace(" and paddling", "");
 const qs = () => Object.fromEntries(new URLSearchParams(location.hash.slice(1)));
 const setq = (o) => { const p = new URLSearchParams(); for (const [k, v] of Object.entries(o)) if (v) p.set(k, v); location.hash = p.toString(); };
@@ -280,13 +281,14 @@ async function locate(where) {
 /* ---------- the poster: state outline, the program's dot, its sport ---------- */
 function poster(p, { tag = false, big = false } = {}) {
   const art = L.art(p);
+  const sym = ART.has(p.sportKey) ? `/emblems/sports/${p.sportKey}.svg` : art.src;
   const shape = SH[p.state] || SH.US;
   const dot = p.px != null;
   const statewide = !dot && p.state;
   const svg = `<svg class="pmap" viewBox="0 0 100 100" aria-hidden="true"><path class="${statewide ? "statewide" : ""}" d="${shape}"/>${dot ? `<circle class="halo" cx="${p.px}" cy="${p.py}" r="${big ? 7 : 8}"/><circle class="dot" cx="${p.px}" cy="${p.py}" r="${big ? 3 : 3.6}"/>` : ""}</svg>`;
   const t = tag ? `<span class="ptag">${statewide ? "Statewide" : !p.state ? "Nationwide" : E(P.cleanCity(p.city) || "")}</span>` : (statewide ? `<span class="ptag">Statewide</span>` : !p.state ? `<span class="ptag">Nationwide</span>` : "");
   let h = 0; for (const ch of String(p.id)) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
-  return `<div class="poster ${TONE[art.tone] || "t-house"} v${h % 3}">${svg}<img class="psym" src="${art.src}" alt="" decoding="async">${t}</div>`;
+  return `<div class="poster ${TONE[art.tone] || "t-house"} v${h % 3}">${svg}<img class="psym" src="${sym}" alt="" decoding="async">${t}</div>`;
 }
 const trust = (p) => p.verified ? `<span class="ok">✓ Verified</span>` : `Not yet verified`;
 function card(p) {
@@ -474,8 +476,8 @@ document.addEventListener("click", (e) => {
 });
 document.getElementById("where").addEventListener("keydown", (e) => { if (e.key === "Enter") document.getElementById("sheetGo").click(); });
 document.addEventListener("keydown", (e) => { if (e.key === "Escape") { closeSheet(); toggleDrawer(false); closeMap(); } });
-Promise.all([P.load(), fetch("/design/states.json").then((r) => r.json())]).then(([d, s]) => {
-  D = d; SH = s.shapes; CENTERS = s.centers;
+Promise.all([P.load(), fetch("/design/states.json").then((r) => r.json()), fetch("/emblems/sports/index.json").then((r) => r.ok ? r.json() : []).catch(() => [])]).then(([d, s, art]) => {
+  D = d; SH = s.shapes; CENTERS = s.centers; ART = new Set(art);
   document.getElementById("drawer").innerHTML = drawer();
   render(); window.addEventListener("hashchange", render);
 });
