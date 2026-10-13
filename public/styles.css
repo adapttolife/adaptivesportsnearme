@@ -6244,3 +6244,235 @@ i[data-lucide] {
 	padding: 0;
 	cursor: pointer;
 }
+
+/* ============================ RESOURCES ============================ */
+/* /resources and its lists (Karen, 2026-10-08: veteran-owned businesses by
+   state). Links to directories other people keep; same rhythm as a listing. */
+.resource-page.wrap {
+	max-width: 960px;
+	margin: 0 auto;
+	padding: var(--space-page) var(--space-page) var(--space-header);
+}
+
+.resource-page .bar {
+	min-height: var(--space-header);
+	display: flex;
+	align-items: center;
+}
+
+.resource-page .back {
+	display: inline-flex;
+	align-items: center;
+	min-height: var(--tap);
+	font-size: 16px;
+	font-weight: 600;
+	color: var(--ink);
+}
+
+.resource-page .back:hover {
+	color: var(--orange-ink);
+}
+
+.res-hero {
+	max-width: 68ch;
+	margin: 8px 0 var(--space-nearby);
+}
+
+.res-eyebrow {
+	font-size: 12px;
+	font-weight: 600;
+	letter-spacing: 0.1em;
+	text-transform: uppercase;
+	color: var(--orange-ink);
+	margin: 0 0 var(--space-title-gap);
+}
+
+.resource-page h1 {
+	font-size: clamp(28px, 4vw, 40px);
+	font-weight: 700;
+	letter-spacing: -0.02em;
+	line-height: 1.1;
+	margin: 0 0 var(--space-title-gap);
+}
+
+.res-kicker {
+	font-size: clamp(18px, 2.2vw, 21px);
+	font-weight: 500;
+	color: var(--ink2);
+	margin: 0 0 var(--space-row);
+}
+
+.res-lede {
+	font-size: 17px;
+	line-height: 1.6;
+	color: var(--ink2);
+	margin: 0 0 12px;
+}
+
+.res-note {
+	font-size: 14px;
+	line-height: 1.5;
+	color: var(--muted);
+	border-left: 3px solid var(--line);
+	padding: 2px 0 2px 12px;
+	margin: var(--space-row) 0 0;
+}
+
+.res-section {
+	margin: 0 0 var(--space-nearby);
+}
+
+.res-section h2 {
+	font-size: 22px;
+	font-weight: 700;
+	letter-spacing: -0.02em;
+	margin: 0 0 var(--space-row);
+}
+
+.res-scope {
+	font-size: 15px;
+	line-height: 1.55;
+	color: var(--ink2);
+	max-width: 68ch;
+	margin: 0 0 var(--space-row);
+}
+
+.res-cards {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+	gap: var(--space-row);
+}
+
+.res-card {
+	background: var(--paper);
+	border: 1px solid var(--line);
+	border-radius: var(--r-lg);
+	padding: 18px 18px 16px;
+}
+
+.res-card-name {
+	font-size: 16px;
+	font-weight: 700;
+	color: var(--ink);
+	text-decoration: underline;
+	text-underline-offset: 3px;
+	text-decoration-thickness: 1px;
+}
+
+.res-card-name:hover {
+	color: var(--orange-ink);
+}
+
+.res-card p {
+	font-size: 14.5px;
+	line-height: 1.5;
+	color: var(--ink2);
+	margin: 8px 0 0;
+}
+
+.state-chips {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+	margin: 0 0 var(--space-section);
+}
+
+.state-chips a {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 44px;
+	min-height: 36px;
+	padding: 0 8px;
+	border: 1px solid var(--line);
+	border-radius: var(--r-full);
+	background: var(--paper);
+	font-size: 13px;
+	font-weight: 600;
+	color: var(--ink2);
+}
+
+.state-chips a:hover {
+	border-color: var(--ink);
+	color: var(--ink);
+}
+
+.state-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+	gap: 12px;
+}
+
+.state-card {
+	background: var(--paper);
+	border: 1px solid var(--line);
+	border-radius: var(--r);
+	padding: 14px 16px;
+	scroll-margin-top: calc(var(--space-header) + 12px);
+}
+
+.state-card:target {
+	border-color: var(--orange);
+	box-shadow: 0 0 0 3px var(--orange-soft);
+}
+
+.state-card h3 {
+	font-size: 16px;
+	font-weight: 700;
+	margin: 0 0 8px;
+}
+
+.state-card ul {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: grid;
+	gap: 6px;
+}
+
+.state-card li {
+	font-size: 14.5px;
+	line-height: 1.45;
+}
+
+.state-card a {
+	color: var(--ink);
+	text-decoration: underline;
+	text-underline-offset: 2px;
+	overflow-wrap: anywhere;
+}
+
+.state-card a:hover {
+	color: var(--orange-ink);
+}
+
+.res-pending {
+	color: var(--muted);
+}
+
+.res-tag {
+	display: inline-block;
+	margin-left: 4px;
+	font-size: 11.5px;
+	font-weight: 600;
+	letter-spacing: 0.02em;
+	padding: 1px 7px;
+	border-radius: var(--r-full);
+	vertical-align: 1px;
+}
+
+.res-tag.is-official {
+	color: #1f6b3a;
+	background: #e3efe6;
+}
+
+.res-help p {
+	font-size: 15.5px;
+	line-height: 1.55;
+	color: var(--ink2);
+	max-width: 62ch;
+	margin: 0 0 12px;
+}

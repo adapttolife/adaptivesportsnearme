@@ -62,7 +62,7 @@ export function footerHtml() {
       <p class="tagline">An open directory of adaptive sports programs across the country. No logins, no walls, because it is a free service of <a href="https://adapttolife.org" target="_blank" rel="noopener">Adapt To Life</a>, a recognized 501(c)(3) nonprofit.</p>
     </div>
     <div class="foot-cols">
-      <div class="foot-col"><h2>Explore</h2><a href="/">Discover</a><a href="/maps">Map view</a><a href="/?db=programs">Browse all</a><a href="/events">Events</a><a href="/?db=grants">Funding</a><a href="/blog">Blog</a></div>
+      <div class="foot-col"><h2>Explore</h2><a href="/">Discover</a><a href="/maps">Map view</a><a href="/?db=programs">Browse all</a><a href="/events">Events</a><a href="/?db=grants">Funding</a><a href="/resources">Resources</a><a href="/blog">Blog</a></div>
       <div class="foot-col"><h2>Programs</h2><a href="/?add=program">Add a program</a><a href="/?add=program">Update a listing</a></div>
       <div class="foot-col"><h2>About</h2><a href="/?about=project">The project</a><a href="/?about=verify">How we verify</a><a href="/?about=help">Help build this</a><a href="/?about=a11y">Accessibility</a><a href="/?profile=1">Your profile</a><a href="https://adapttolife.org" target="_blank" rel="noopener">Adapt To Life</a><a href="https://sign.adapttolife.org/waiver?source=asnm">Sign waiver</a></div>
     </div>

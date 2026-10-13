@@ -30,6 +30,7 @@ import { notifyIntake } from './intake.js';
 import { directorySnapshot, listPrograms, getOrg, stats, listSameSportNearby, listGrants, getGrant, listOtherGrants } from "./data.js";
 import { programPageTemplate, programNotFoundTemplate, PROGRAM_ID_RE } from "./program-page.js";
 import { grantPageTemplate, grantNotFoundTemplate, GRANT_ID_RE } from "./grant-page.js";
+import { veteranBusinessPageTemplate, resourcesIndexTemplate, VETERAN_BUSINESS_PATH } from "./resource-page.js";
 import { listEvents, eventsToRss, eventsToIcs } from "./events.js";
 import { handleAdmin } from "./admin.js";
 import { runLane } from "./pipeline.js";
@@ -192,6 +193,15 @@ const application = {
         console.error("grant page error:", err);
         return text(grantNotFoundTemplate({ site: url.origin }), 500, "text/html; charset=utf-8");
       }
+    }
+
+    // Resources: static lists of directories other people keep (Karen,
+    // 2026-10-08: veteran-owned businesses by state). No database needed.
+    if (url.pathname === "/resources" || url.pathname === "/resources/") {
+      return text(resourcesIndexTemplate({ site: url.origin }), 200, "text/html; charset=utf-8", API_CACHE);
+    }
+    if (url.pathname === VETERAN_BUSINESS_PATH || url.pathname === VETERAN_BUSINESS_PATH + "/") {
+      return text(veteranBusinessPageTemplate({ site: url.origin }), 200, "text/html; charset=utf-8", API_CACHE);
     }
 
     // Sample listings use slugs rather than D1 UUIDs. Load the shell so its
