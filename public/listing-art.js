@@ -184,7 +184,9 @@ globalThis.ListingArt = (() => {
   function publicSource(src) {
     if (!src || !String(src.name || '').trim()) return null;
     if (INTERNAL_NAME.test(String(src.name))) return { name: RESEARCH, url: null };
-    const url = src.url && !INTERNAL_HOST.test(hostOf(src.url)) ? src.url : null;
+    // Only plain web links: never a javascript: or data: URL in an href.
+    const url = /^https?:\/\//i.test(String(src.url || '')) && !INTERNAL_HOST.test(hostOf(src.url))
+      ? src.url : null;
     return { name: String(src.name).trim(), url };
   }
 

@@ -114,6 +114,9 @@ test("our own research files never reach a visitor as a name or a link", () => {
   // A public directory hosted on Google keeps its name and loses the link.
   assert.deepEqual(L.publicSource({ name: "Move United Member Directory", url: "https://docs.google.com/x" }), { name: "Move United Member Directory", url: null });
   assert.equal(L.isInternalSource({ name: "US Paralympics Club Finder", url: "https://drive.google.com/x" }), true);
+  // Only plain web links ever reach an href.
+  assert.deepEqual(L.publicSource({ name: "Odd Directory", url: "javascript:alert(1)" }), { name: "Odd Directory", url: null });
+  assert.deepEqual(L.publicSource({ name: "Odd Directory", url: "data:text/html,hi" }), { name: "Odd Directory", url: null });
   assert.equal(L.publicSource(null), null);
 });
 
