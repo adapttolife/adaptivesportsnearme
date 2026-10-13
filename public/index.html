@@ -1587,7 +1587,7 @@
 				true,
 			);
 			function statusCls(s) {
-				return s === "Open"
+				return s === "Open" || s === "Verified"
 					? "st-open"
 					: s === "Waitlist"
 						? "st-wait"
@@ -1904,9 +1904,8 @@
 					">Recommended</option>" +
 					'<option value="dist"' +
 					(state.sort === "dist" ? " selected" : "") +
-					">" +
-					(DATA_LIVE ? "Recently verified" : "Closest first") +
-					"</option>" +
+					// Sorts by distance; the website check only breaks ties.
+					">Closest first</option>" +
 					'<option value="name"' +
 					(state.sort === "name" ? " selected" : "") +
 					">Name A to Z</option>" +
@@ -4631,10 +4630,15 @@
 					)
 				)
 					return true;
+				// The hero search box is not a form in progress: it mirrors state.q and a
+				// re-render puts the same words back. Counting it made every /?q= link
+				// (the header search on every listing page) skip the live-data render
+				// and stay on the built-in sample forever.
 				return Array.from(v.querySelectorAll("input,textarea")).some(
 					(el) =>
 						el.type !== "hidden" &&
 						el.type !== "checkbox" &&
+						el.id !== "qHero" &&
 						el.value !== "",
 				);
 			}
@@ -6092,7 +6096,7 @@
 					free: /free/i.test(o.cost || ""),
 					// no invented availability — status reflects what we actually know
 					status:
-						o.verification === "verified" ? "Verified" : "Listed",
+						ListingArt.trustLine(o).text, // "Verified" or "Not yet verified"
 					ages: esc(o.ages) || null,
 					season: null,
 					format: null,

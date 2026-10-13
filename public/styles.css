@@ -5899,8 +5899,13 @@ i[data-lucide] {
 	object-fit: contain;
 }
 
-.mthumb.has-symbol .art-symbol,
-.tthumb.has-symbol .art-symbol {
+/* Map-list and table thumbnails: the tile fills its frame. */
+.thumb-symbol {
+	position: absolute;
+	inset: 0;
+}
+
+.thumb-symbol .art-symbol {
 	width: 74%;
 	max-height: 80%;
 }
