@@ -138,22 +138,28 @@ globalThis.ListingArt = (() => {
     return i >= 0 && i < 12 ? MONTHS_LONG[i] + ' ' + m[1] : null;
   }
 
-  // The "not yet verified" sentence, given where the listing came from.
+  // The sentences under "Verified." / "Not yet verified." on a listing page.
+  // Only say where a listing came from when we know; the app draws the sheet
+  // before the record's sources arrive, so "unknown" must read true as well.
+  function verifiedText(monthText) {
+    return 'A person on our team checked this program against an official source' +
+      (monthText ? ' in ' + monthText : '') + '. Schedules change, so check the website before you go.';
+  }
   function unverifiedText(sourceHtml, isResearch) {
-    return isResearch
-      ? 'We found this program in our own research and no one on our team has confirmed it yet. Check the website or call before you go.'
-      : 'This listing comes from ' + (sourceHtml || 'a public directory') +
-        ' and no one on our team has confirmed it yet. Check the website or call before you go.';
+    if (isResearch) {
+      return 'We found this program in our own research, and no one on our team has confirmed it yet. Check the website or call before you go.';
+    }
+    if (sourceHtml) {
+      return 'This listing comes from ' + sourceHtml +
+        ', and no one on our team has confirmed it yet. Check the website or call before you go.';
+    }
+    return 'No one on our team has confirmed this listing yet. Check the website or call before you go.';
   }
 
   // Opening-day bar: a date on every listing, never a 0-100 score. last_ok_at is
   // the last time our automatic check reached the program's website; a listing
   // that has never been checked shows the day it entered the directory instead.
-  function checkedLine(item) {
-    const [label, value] = checkedRow(item);
-    return label === 'Last checked' ? 'Last checked ' + value : value === 'Not checked yet' ? value : 'Listed ' + value;
-  }
-  // The same fact as a labelled row for the listing page: [label, value].
+  // The date row for the listing page: [label, value].
   function checkedRow(item) {
     const checked = shortDate(item && item.lastChecked);
     if (checked) return ['Last checked', checked];
@@ -192,7 +198,7 @@ globalThis.ListingArt = (() => {
 
   return {
     SYMBOLS, FAMILY, symbolKey, art, isVerified, trustLine,
-    shortDate, monthLabel, checkedLine, checkedRow, unverifiedText, sourceLabel, isInternalSource, publicSource,
+    shortDate, monthLabel, checkedRow, verifiedText, unverifiedText, sourceLabel, isInternalSource, publicSource,
     RESEARCH
   };
 })();

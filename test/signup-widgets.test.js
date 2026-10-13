@@ -34,8 +34,10 @@ for (const [name, src] of [['public/index.html', INDEX], ['public/site-nav.js', 
   });
 }
 
-test('the homepage renders widgets in the drawer, not only in the main view', () => {
-  assert.match(INDEX, /querySelectorAll\("#view \.cf-turnstile, #drawer \.cf-turnstile"\)/);
+test('the homepage renders widgets in the drawer and the dialog, not only in the main view', () => {
+  // #gate: the suggest-an-update pane is rebuilt after a thank-you, and its
+  // widget must render again or a second suggestion cannot send (2026-10-13).
+  assert.match(INDEX, /querySelectorAll\("#view \.cf-turnstile, #drawer \.cf-turnstile, #gate \.cf-turnstile"\)/);
   assert.match(INDEX, /function openDrawer\(\) \{\s*renderDrawer\(\);\s*renderTurnstiles\(\);/);
 });
 

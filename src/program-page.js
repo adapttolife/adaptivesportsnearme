@@ -162,7 +162,7 @@ export function aboutListingHtml(org) {
       : esc(src.name))
     : null;
   const status = verified
-    ? `<p class="about-status is-verified"><b>Verified.</b> A person on our team checked this program against an official source${month ? ` in ${esc(month)}` : ""}.</p>`
+    ? `<p class="about-status is-verified"><b>Verified.</b> ${esc(ListingArt.verifiedText(month))}</p>`
     : `<p class="about-status is-unverified"><b>Not yet verified.</b> ${ListingArt.unverifiedText(srcHtml, !!src && src.name === ListingArt.RESEARCH)}</p>`;
   const id = esc(org.id || "");
   const rows = [

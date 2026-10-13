@@ -303,9 +303,9 @@
 							<b>Verified</b> means a person on our team checked
 							the program against an official source, like its own
 							website or a national directory.
-							<b>Not yet verified</b> means it came from a public
-							directory and no one has confirmed it yet, so check
-							before you go.
+							<b>Not yet verified</b> means no one on our team has
+							confirmed it yet, so check the website or call before
+							you go.
 						</p>
 						<p class="about-copy lede">
 							Separately, an automatic check visits each
@@ -389,7 +389,7 @@
 					<p class="gate-eyebrow">Opening soon</p>
 					<h2 id="gateTitle">Be first through the door.</h2>
 					<p class="lede">
-						<span id="gateCount">1,544</span> adaptive sports
+						<span id="gateCount">1,300+</span> adaptive sports
 						programs are in, and we are checking every one so what
 						you find is real. You hear the day the doors open.
 					</p>
@@ -3294,7 +3294,7 @@
 					'<input id="qHero" type="text" placeholder="Search a sport, zip, or program" aria-label="Search programs">' +
 					"</div>" +
 					'<div class="trust"><span><b>' +
-					(DATA_LIVE ? PROGRAMS.length.toLocaleString() : "2,095+") +
+					(DATA_LIVE ? PROGRAMS.length.toLocaleString() : "1,300+") +
 					'</b> programs</span><span class="tdot">\u00b7</span><span>nationwide</span><span class="tdot">\u00b7</span><span>free to use</span></div>' +
 					"</div></section>"
 				);
@@ -3632,9 +3632,9 @@
 						: src.name
 					: null;
 				const status = verified
-					? '<p class="about-status is-verified"><b>Verified.</b> A person on our team checked this program against an official source' +
-						(month ? " in " + month : "") +
-						".</p>"
+					? '<p class="about-status is-verified"><b>Verified.</b> ' +
+						ListingArt.verifiedText(month) +
+						"</p>"
 					: '<p class="about-status is-unverified"><b>Not yet verified.</b> ' +
 						ListingArt.unverifiedText(
 							srcHtml,
@@ -4597,7 +4597,9 @@
 			function renderTurnstiles() {
 				if (!window.turnstile) return;
 				document
-					.querySelectorAll("#view .cf-turnstile, #drawer .cf-turnstile")
+					// #gate too: the update pane is rebuilt after a thank-you and its
+					// widget has to render again, or a second suggestion cannot send.
+					.querySelectorAll("#view .cf-turnstile, #drawer .cf-turnstile, #gate .cf-turnstile")
 					.forEach((el) => {
 						if (el.childElementCount === 0) {
 							try {
@@ -5427,11 +5429,16 @@
    on first open. The HTML ships a real fallback, so a failed call shows a stale-but-true
    count rather than a hole. */
 			let gateCountDone = false;
+			// Fetched once, applied every time the dialog opens: the update pane swaps
+			// the intro out and back, which brings back the shipped fallback number.
+			let gateCountValue = null;
 			async function hydrateGateCount() {
-				if (gateCountDone) return;
+				const apply = () => {
+					const el = document.getElementById("gateCount");
+					if (el && gateCountValue) el.textContent = gateCountValue;
+				};
+				if (gateCountDone) return apply();
 				gateCountDone = true;
-				const el = document.getElementById("gateCount");
-				if (!el) return;
 				try {
 					const r = await fetch("/api/stats");
 					const j = await r.json();
@@ -5441,10 +5448,11 @@
 						typeof j.programs === "number" &&
 						j.programs > 0
 					)
-						el.textContent = j.programs.toLocaleString("en-US");
+						gateCountValue = j.programs.toLocaleString("en-US");
 				} catch (_) {
 					/* keep the shipped fallback */
 				}
+				apply();
 			}
 			const gateEl = document.getElementById("gate");
 			(function () {
@@ -5548,7 +5556,13 @@
 				hydrateGateCount();
 				gateEl.classList.add("open");
 				document.body.style.overflow = "hidden";
-				const f = gateEl.querySelector(".gate-pane.on input:not(.hp)");
+				// First field a person types in: never the hidden sid or the honeypot.
+				// An update starts at "What should change?".
+				const f = upd
+					? document.getElementById("upNotes")
+					: gateEl.querySelector(
+							'.gate-pane.on input:not(.hp):not([type="hidden"])',
+						);
 				if (f)
 					setTimeout(() => {
 						try {

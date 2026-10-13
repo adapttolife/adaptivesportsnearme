@@ -129,3 +129,11 @@ test("the app loads listing-art.js before its own script, and both beta bars say
   assert.ok(index.replace(/\s+/g, " ").includes(BETA_MESSAGE), "app beta bar matches src/site-chrome.js");
   assert.ok(index.includes('localStorage.getItem("asnm-beta-hidden")'));
 });
+
+test("listing sentences only name a source we know, and say schedules change", () => {
+  assert.equal(L.unverifiedText(null, false), "No one on our team has confirmed this listing yet. Check the website or call before you go.");
+  assert.match(L.unverifiedText("US Paralympics Club Finder", false), /^This listing comes from US Paralympics Club Finder, and no one/);
+  assert.match(L.unverifiedText(null, true), /^We found this program in our own research/);
+  assert.equal(L.verifiedText("September 2026"), "A person on our team checked this program against an official source in September 2026. Schedules change, so check the website before you go.");
+  assert.ok(!/public directory/.test(L.unverifiedText(null, false)), "never guess where a listing came from");
+});

@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { DatabaseSync } from 'node:sqlite';
 import { readFileSync } from 'node:fs';
-import { directorySnapshot, listPrograms } from '../src/data.js';
+import { directorySnapshot, listPrograms, getOrg } from '../src/data.js';
 import { cachedDirectoryResponse, cachedCount } from '../src/read-cache.js';
 import worker from '../src/index.js';
 
@@ -134,4 +134,30 @@ test('count cache expires, isolates databases and never retains failures',async(
     await assert.rejects(cachedCount(failing,'is_public = 1',[]));
     await cachedCount(failing,'is_public = 1',[]); assert.equal(attempts,2);
   } finally {Date.now=original;}
+});
+
+// /api/orgs/:id is public: the same rule as the directory, and never our own
+// research files (CSV names, Google Drive links, a teammate's name).
+test('getOrg follows the public rule and returns only public sources', async () => {
+  const {sql,db} = database();
+  try {
+    const org = sql.prepare("INSERT INTO organizations (id,name,is_public,status,created_at,updated_at,city,state,website_url,primary_data_source,verification_status,verification_method) VALUES (?,?,1,'active','2026-09-30T20:26:18Z','2026',?,?,?,?,?,?)");
+    org.run('11111111-1111-1111-1111-111111111111','Atlanta Wolfpack','Atlanta','GA','https://adaptedsports.org/','csv-verified-2026-09:1lLGFuCjzt','verified','{"verification_month":"2026-09"}');
+    org.run('22222222-2222-2222-2222-222222222222','Name Only',null,null,null,'US Paralympics Club Finder','unverified',null);
+    const src = sql.prepare("INSERT INTO data_sources (source_id,source_name,source_organization,source_url,status) VALUES (?,?,?,?,'active')");
+    src.run('s1','10_georgia_adaptive_sports_organizations.csv (verified September 2026)','Karen Atkinson','https://drive.google.com/file/d/1lLGFuCjzt/view');
+    src.run('s2','11_georgia_followup.csv','Karen Atkinson','https://drive.google.com/file/d/2x/view');
+    src.run('s3','US Paralympics Club Finder','U.S. Olympic & Paralympic Committee','https://www.teamusa.org');
+    const link = sql.prepare("INSERT INTO organization_data_sources (organization_id,source_id) VALUES (?,?)");
+    for (const s of ['s1','s2','s3']) link.run('11111111-1111-1111-1111-111111111111', s);
+    const o = await getOrg(db, '11111111-1111-1111-1111-111111111111');
+    assert.equal(o.primarySource, 'Adaptive Sports Near Me research');
+    assert.deepEqual(o.sources, [
+      { name: 'Adaptive Sports Near Me research', organization: null, url: null },
+      { name: 'US Paralympics Club Finder', organization: 'U.S. Olympic & Paralympic Committee', url: 'https://www.teamusa.org' },
+    ]);
+    assert.ok(!JSON.stringify(o).match(/drive\.google|Karen|\.csv|csv-verified/), 'no internal source in the public record');
+    assert.equal(o.verifiedMonth, '2026-09'); assert.equal(o.listedAt, '2026-09-30T20:26:18Z');
+    assert.equal(await getOrg(db, '22222222-2222-2222-2222-222222222222'), null, 'a name-only row is not public by direct link either');
+  } finally { sql.close(); }
 });

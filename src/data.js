@@ -4,6 +4,9 @@
 
 import { loadZcta, resolveOrigin, applyNearby, milesBetween } from "./geo.js";
 import { cachedCount } from "./read-cache.js";
+import "../public/listing-art.js";
+
+const ListingArt = globalThis.ListingArt;
 
 export function freshness(lastOkAt, now = Date.now()) {
   if (!lastOkAt) return null;
@@ -144,7 +147,7 @@ export async function listPrograms(db, params, opts = {}) {
 export async function getOrg(db, id) {
   const row = await db.prepare(
     `SELECT ${LIST_COLS}, email, phone, primary_data_source, verification_method, created_at, updated_at
-     FROM organizations WHERE id = ? AND is_public = 1`
+     FROM organizations WHERE id = ? AND ${PUBLIC}`
   ).bind(id).first();
   if (!row) return null;
   const sources = await db.prepare(
@@ -156,12 +159,29 @@ export async function getOrg(db, id) {
     ...rowToProgram(row),
     email: row.email,
     phone: row.phone,
-    primarySource: row.primary_data_source,
-    sources: sources.results,
+    // This is a public API: our own research files (CSV names, Drive links, a
+    // teammate's name) leave as "Adaptive Sports Near Me research", unlinked.
+    primarySource: ListingArt.sourceLabel(row.primary_data_source),
+    sources: publicSources(sources.results),
     listedAt: row.created_at,
     verifiedMonth: verifiedMonth(row),
     updatedAt: row.updated_at,
   };
+}
+
+// Sources as a visitor may see them, once each.
+export function publicSources(rows) {
+  const seen = new Set();
+  const out = [];
+  for (const s of rows || []) {
+    const p = ListingArt.publicSource(s);
+    if (!p) continue;
+    const key = p.name + "\n" + (p.url || "");
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push({ name: p.name, organization: ListingArt.isInternalSource(s) ? null : (s.organization || null), url: p.url });
+  }
+  return out;
 }
 
 // verification_method is a JSON note on rows a person verified
