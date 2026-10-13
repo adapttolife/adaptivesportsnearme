@@ -1,9 +1,13 @@
 // ASNM visual language.
-// Real listing photo → keep it.
-// Else the sport's photoreal action photo when we have one (Alec, 2026-09-15:
-//   the cards show athletes, not the silhouette-object scene).
-// Else a matching scene when we have one — that is now the no-photo fallback.
-// Else the black stamp on a quiet paper card. Not the old sand block.
+// Program listings: a real photo or logo of the program wins; otherwise the
+// listing wears its sport's symbol on a tinted ground (public/listing-art.js,
+// shared with the app so both renderers pick the same art). Alec, 2026-10-13:
+// launch on symbols and icons, never wait on images.
+// Grants and events keep their scenes and photos below.
+
+import "../public/listing-art.js";
+
+const ListingArt = globalThis.ListingArt;
 
 export const SPORT_SCENES = {
   basketball: "/scenes/basketball-gym.jpg",
@@ -76,11 +80,16 @@ export function listingVisual(item, role = "program") {
     if (scene) return { kind: "scene", src: scene };
     return { kind: "scene", src: EVENT_SCENE };
   }
-  const shot = sportPhotoPath(item && item.sport);
-  if (shot) return { kind: "photo", src: shot };
-  const scene = scenePath(item && item.sport);
-  if (scene) return { kind: "scene", src: scene };
-  return { kind: "stamp", src: emblemPath(item && item.sport) || GENERIC_STAMP };
+  return programArt(item);
+}
+
+// { kind: "photo", src } for a program's own photo, else
+// { kind: "symbol", src, key, tone }.
+export function programArt(item) {
+  const a = ListingArt.art(item || {});
+  return a.kind === "photo"
+    ? { kind: "photo", src: a.src }
+    : { kind: "symbol", src: a.src, key: a.key, tone: a.tone };
 }
 
 // Cover images carry the stamp they fall back to (index.html swaps it in on img error).
@@ -88,8 +97,16 @@ export function stampAttr(item, role = "program") {
   let key;
   if (role === "grant") key = item && item.audience === "program" ? "program-grant" : "athlete-grant";
   else if (role === "event") key = "event";
-  else key = item && item.sport;
+  else return ` data-stamp="${ListingArt.art({ ...(item || {}), photo: null }).src}"`;
   return ` data-stamp="${emblemPath(key) || GENERIC_STAMP}"`;
+}
+
+// The symbol tile markup both server renderers use. `cls` is the frame class
+// (pcard-media for cards, dhero for the listing hero).
+export function symbolTile(v, cls, inner = "") {
+  const tone = v && v.tone ? ` tone-${v.tone}` : "";
+  const img = v && v.src ? `<img class="art-symbol" src="${v.src}" alt="" decoding="async">` : "";
+  return `<div class="${cls} has-symbol${tone}">${img}${inner}</div>`;
 }
 
 export function isCoverVisual(v) {

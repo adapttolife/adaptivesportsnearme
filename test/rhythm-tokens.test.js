@@ -1,6 +1,8 @@
 import { compactCss } from './helpers/css.js';
 // Rhythm lock: listing HTML and shared tokens. Fail if someone tightens
-// 24/64 or brings back "Unverified" / "Last checked" as UI copy.
+// 24/64 or brings back the cold "Unverified" badge. "Last checked" came back on
+// purpose as a dated row (opening-day bar 5; Alec 2026-10-13: say whether a
+// listing is verified), inside About this listing, below the facts.
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
@@ -52,17 +54,18 @@ test("homepage and program-page :root keep the same 24px / 64px lock", () => {
   assert.ok(!blog.includes("clamp(20px"));
 });
 
-test("listing HTML fails if it contains Unverified or Last checked", () => {
+test("listing HTML never says Unverified; its date row sits in About this listing, after the facts", () => {
   const html = programPageTemplate(RENO);
   assert.ok(!html.includes("Unverified"));
-  assert.ok(!html.includes("Last checked"));
   assert.ok(!index.includes("Unverified"));
-  assert.ok(!index.includes("Last checked"));
   assert.ok(!programPage.includes("Unverified"));
-  assert.ok(!programPage.includes("Last checked"));
+  const about = html.indexOf('class="about-listing"');
+  const checked = html.indexOf(">Last checked</span>");
+  assert.ok(about > html.indexOf('class="cta"'), "About this listing follows the primary action");
+  assert.ok(checked > about, "the date row lives inside About this listing");
 });
 
-test("Unverified / Last checked stay out of site-wide UI copy", () => {
+test("The word Unverified stays out of site-wide UI copy", () => {
   const files = [
     "public/index.html",
     "public/site-nav.js",
@@ -76,9 +79,7 @@ test("Unverified / Last checked stay out of site-wide UI copy", () => {
   for (const rel of files) {
     const text = readFileSync(join(root, rel), "utf8");
     assert.ok(!text.includes("Unverified"), `${rel} contains Unverified`);
-    assert.ok(!text.includes("Last checked"), `${rel} contains Last checked`);
   }
   const blogHtml = blogIndexTemplate([], { site: "https://example.test" });
   assert.ok(!blogHtml.includes("Unverified"));
-  assert.ok(!blogHtml.includes("Last checked"));
 });

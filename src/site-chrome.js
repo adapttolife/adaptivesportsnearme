@@ -12,10 +12,28 @@ export const NAV_VERSION = "20261003b";
 
 // Shared presentation lives in public/styles.css.
 
+// The beta bar (Alec, 2026-10-13: launch before everything is complete and say
+// so at the top). Same words and script as the bar in public/index.html. It
+// paints without JS; the inline script only remembers a dismissal. The words
+// are true before and after the PRELAUNCH flip, so shipping this design never
+// waits on, or implies, the go-live decision.
+export const BETA_MESSAGE = "This directory is new and still growing";
+export function betaBarHtml() {
+  return `<div class="beta-bar" id="betaBar" role="region" aria-label="Beta notice">
+  <div class="wrap beta-in">
+    <span class="beta-tag">Beta</span>
+    <p class="beta-msg"><span class="beta-long">${BETA_MESSAGE}, so some listings are not verified yet.</span><span class="beta-short">New and still growing.</span> <a href="/?about=help">Help us build it</a></p>
+    <button class="beta-x" type="button" data-beta-close aria-label="Hide the beta notice">&times;</button>
+  </div>
+</div>
+<script>(function(){var b=document.getElementById("betaBar");try{if(localStorage.getItem("asnm-beta-hidden"))b.hidden=true}catch(_){}b.querySelector("[data-beta-close]").addEventListener("click",function(){b.hidden=true;try{localStorage.setItem("asnm-beta-hidden","1")}catch(_){}})})();</script>`;
+}
+
 // Hamburger · brand · search · orange "+". Every control is a plain link or a
 // real GET form, so the header works before (and without) site-nav.js.
 export function headerHtml() {
-  return `<header class="hdr">
+  return `${betaBarHtml()}
+<header class="hdr">
   <div class="hdr-in wrap">
     <button class="menu-btn" id="menuBtn" aria-label="Menu" aria-expanded="false"><i stroke-width="2" data-lucide="menu" aria-hidden="true" focusable="false"></i></button>
     <a class="brand" href="/" aria-label="Adaptive Sports Near Me home"><b>Adaptive Sports Near Me</b></a>
@@ -46,7 +64,7 @@ export function footerHtml() {
     <div class="foot-cols">
       <div class="foot-col"><h2>Explore</h2><a href="/">Discover</a><a href="/maps">Map view</a><a href="/?db=programs">Browse all</a><a href="/events">Events</a><a href="/?db=grants">Funding</a><a href="/blog">Blog</a></div>
       <div class="foot-col"><h2>Programs</h2><a href="/?add=program">Add a program</a><a href="/?add=program">Update a listing</a></div>
-      <div class="foot-col"><h2>About</h2><a href="/?about=project">The project</a><a href="/?about=verify">How we verify</a><a href="/?about=a11y">Accessibility</a><a href="/?profile=1">Your profile</a><a href="https://adapttolife.org" target="_blank" rel="noopener">Adapt To Life</a><a href="https://sign.adapttolife.org/waiver?source=asnm">Sign waiver</a></div>
+      <div class="foot-col"><h2>About</h2><a href="/?about=project">The project</a><a href="/?about=verify">How we verify</a><a href="/?about=help">Help build this</a><a href="/?about=a11y">Accessibility</a><a href="/?profile=1">Your profile</a><a href="https://adapttolife.org" target="_blank" rel="noopener">Adapt To Life</a><a href="https://sign.adapttolife.org/waiver?source=asnm">Sign waiver</a></div>
     </div>
   </div>
 </footer>`;

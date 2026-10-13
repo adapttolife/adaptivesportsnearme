@@ -167,10 +167,11 @@ test("peek HTML: title, city · sport, Visit/Call/Email pills, handle — no pho
   assert.deepEqual(trayPills(KANSAS).map((p) => p.label), ["Open listing"]);
 });
 
-test("expanded HTML reuses the listing sheet: photo, title, city, desc, facts, Visit, nearby rail", () => {
+test("expanded HTML reuses the listing sheet: symbol, title, city, desc, facts, Visit, about, nearby rail", () => {
   const html = trayExpandedHtml(RENO, NEARBY);
-  assert.ok(html.includes("/assets/sport-photos/pickleball.jpg"));
-  assert.ok(html.includes("has-dphoto"));
+  assert.ok(html.includes("/emblems/athlete-pickleball.svg"));
+  assert.ok(html.includes("has-symbol"));
+  assert.ok(html.includes("About this listing"));
   assert.ok(html.includes("<h1>3rd Shot Pickleball Reno Adaptive</h1>"));
   assert.ok(html.includes("Reno, NV"));
   assert.ok(html.includes("Sunday adaptive"));
@@ -183,7 +184,6 @@ test("expanded HTML reuses the listing sheet: photo, title, city, desc, facts, V
   assert.ok(html.includes("class=\"frow-scroll\""));
   assert.ok(html.includes("Sunflower Adaptive Cycling"));
   assert.ok(!html.includes("Unverified"));
-  assert.ok(!html.includes("Last checked"));
   assert.ok(!html.includes("Overview"));
   assert.ok(!html.includes(">Photos<"));
   assert.ok(!html.includes("← Directory"));

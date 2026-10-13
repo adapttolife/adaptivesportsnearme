@@ -95,15 +95,12 @@ test("typeLabel: the org type reads as a human fact, null when missing", () => {
   assert.equal(typeLabel({ type: "inclusive_club" }), "Inclusive club");
 });
 
-test("photoPath: the sport photo first, then a scene, else stamp (null cover)", () => {
-  assert.equal(photoPath("cycling"), "/assets/sport-photos/cycling.jpg");
-  assert.equal(photoPath("basketball"), "/assets/sport-photos/basketball.jpg");
-  assert.equal(photoPath("skiing"), "/assets/sport-photos/skiing.jpg");
-  assert.equal(photoPath("pickleball"), "/assets/sport-photos/pickleball.jpg");
-  assert.equal(photoPath("tennis"), "/assets/sport-photos/tennis.jpg");
-  // No action photo for rowing, so the scene is still the fallback.
-  assert.equal(photoPath(null), null);
-  assert.equal(photoPath("rowing"), "/scenes/rowing-lake.jpg");
+// Alec, 2026-10-13: launch on symbols and icons. A program's own photo is the
+// only cover; every sport, with or without a stock photo on disk, wears its symbol.
+test("photoPath: only the program's own photo is a cover; sports wear symbols", () => {
+  for (const sport of ["cycling", "basketball", "skiing", "pickleball", "tennis", "rowing", null]) {
+    assert.equal(photoPath(sport), null, String(sport));
+  }
   assert.equal(photoPath(null, { photo: "/photos/mine.jpg" }), "/photos/mine.jpg");
 });
 
@@ -118,16 +115,16 @@ test("primaryCta: website → tel → mailto → source. Never an empty-page stu
   assert.equal(primaryCta({}), null);
 });
 
-test("programPageTemplate: photo hero, name, city+state, website button — not four labeled cards", () => {
+test("programPageTemplate: symbol hero, name, city+state, website button — not four labeled cards", () => {
   const html = programPageTemplate(ORG, { site: "https://asnm-staging.adapt-to-life.workers.dev" });
   assert.ok(html.includes("Denver Rolling Nuggets"));
   assert.ok(html.includes("Wheelchair Basketball"));
   assert.ok(html.includes("Denver, CO"));
   assert.ok(html.includes("https://www.example.org/nuggets"));
   assert.ok(html.includes("<h1>Denver Rolling Nuggets</h1>"));
-  assert.ok(html.includes("/assets/sport-photos/basketball.jpg"));
-  assert.ok(html.includes("has-dphoto"));
-  assert.ok(html.includes("dhero-img"));
+  assert.ok(html.includes("/emblems/athlete-basketball.svg"));
+  assert.ok(html.includes('class="dhero has-symbol tone-court"'));
+  assert.ok(!html.includes("/assets/sport-photos/"));
   assert.ok(html.includes("Visit website"));
   assert.ok(html.includes("← Directory"));
   assert.ok(html.includes('class="bar"'));
@@ -138,7 +135,6 @@ test("programPageTemplate: photo hero, name, city+state, website button — not 
   assert.ok(html.includes("dov-sport") && html.includes("Wheelchair Basketball"));
   assert.ok(cssIncludes(styles, "clamp(180px,24vw,260px)"));
   assert.ok(!html.includes("Unverified"));
-  assert.ok(!html.includes("Last checked"));
 });
 
 test("programPageTemplate: Reno pickleball reads like a listing", () => {
@@ -159,9 +155,12 @@ test("programPageTemplate: Reno pickleball reads like a listing", () => {
   assert.ok(html.includes("775-467-2025"));
   assert.ok(html.includes("reno@3rdshotpickleball.com"));
   assert.ok(html.includes("Inclusive club"));
+  // Say whether a person verified it, in plain words (Alec, 2026-10-13), and
+  // put a date on the listing (opening-day bar 5) — never the cold "Unverified".
   assert.ok(!html.includes("Unverified"));
-  assert.ok(!html.includes("Last checked"));
-  assert.ok(!html.includes("Aug 21, 2026"));
+  assert.ok(html.includes('<p class="listing-trust is-unverified">Not yet verified</p>'));
+  assert.ok(html.includes(">Last checked</span>") && html.includes("Aug 21, 2026"));
+  assert.ok(html.indexOf("Not yet verified") > locAt && html.indexOf("Not yet verified") < ctaAt);
   assert.ok(!html.includes('class="listed"'));
   assert.ok(!html.includes("No website on file."));
   assert.ok(!html.includes("Before you go"));
@@ -186,7 +185,7 @@ test("programPageTemplate: Airbnb listing rhythm, no verification chrome", () =>
   assert.ok(cssIncludes(styles, ".nearby h2{font-size:22px;font-weight:700"));
   assert.ok(html.includes('href="/styles.css"'));
   assert.ok(!html.includes("Unverified"));
-  assert.ok(!html.includes("Last checked"));
+  // Internal research tags never reach a visitor.
   assert.ok(!html.includes("Builder web search"));
 });
 
@@ -217,14 +216,16 @@ test("programPageTemplate: Kansas Omnium still has an action + nearby strip", ()
   assert.ok(html.includes("Wichita, KS"));
   assert.equal(html.split("Sunflower Adaptive Cycling").length - 1, 1);
   assert.equal((html.match(/class="nearby"/g) || []).length, 1);
-  // One section heading in the listing itself. The sitemap footer's column
-  // headings are chrome, so count inside <main> only.
+  // Two section headings in the listing itself: About this listing, then the
+  // nearby rail. The sitemap footer's column headings are chrome, so count
+  // inside <main> only.
   const listing = html.slice(html.indexOf("<main"), html.indexOf("</main>"));
-  assert.equal((listing.match(/<h2>/g) || []).length, 1);
+  assert.equal((listing.match(/<h2[ >]/g) || []).length, 2);
   assert.ok(html.includes("Nearby adaptive cycling"));
   assert.ok(!html.includes("class=\"desc\""));
   assert.ok(!html.includes("Unverified"));
-  assert.ok(!html.includes("Last checked"));
+  // Never checked: say so, never invent a date.
+  assert.ok(html.includes("Not checked yet"));
 });
 
 test("programPageTemplate: nearby is one horizontal rail, not a wrapping grid or second dump", () => {
@@ -270,11 +271,12 @@ test("programPageTemplate: no website falls back — never 'No website on file.'
   assert.ok(html.includes("tel:3035550100"));
 });
 
-test("programPageTemplate: no photo key uses the stamp card, still has name + loc", () => {
-  const html = programPageTemplate({ ...ORG, sport: null, sportLabel: "Multi-Sport" });
+test("programPageTemplate: no sport we can name wears the plain athlete, still has name + loc", () => {
+  const html = programPageTemplate({ ...ORG, sport: null, sportLabel: "Multi-Sport", name: "Denver Rolling Nuggets" });
   assert.ok(!html.includes("sport-photos/"));
   assert.ok(!html.includes("g-sand"));
-  assert.ok(html.includes("has-stamp"));
+  assert.ok(html.includes('class="dhero has-symbol tone-house"'));
+  assert.ok(html.includes('src="/emblems/athlete.svg"'));
   assert.ok(html.includes("Denver Rolling Nuggets"));
   assert.ok(html.includes("Denver, CO"));
 });
@@ -291,7 +293,7 @@ test("programPageTemplate: state-only listing shows the state name, not a blank 
     website: "http://bicyclingblind.org",
   });
   assert.ok(html.includes("Bicycling Blind Los Angeles"));
-  assert.ok(html.includes("/assets/sport-photos/cycling.jpg"));
+  assert.ok(html.includes("/emblems/athlete-cycling.svg"));
   assert.ok(html.includes("California"));
   assert.ok(!html.includes("null"));
   assert.ok(html.includes("Visit website"));

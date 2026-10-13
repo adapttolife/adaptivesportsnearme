@@ -63,6 +63,35 @@
 	<body>
 		<a class="skip" href="#view">Skip to results</a>
 
+		<!-- Beta bar: same words as betaBarHtml() in src/site-chrome.js. -->
+		<div class="beta-bar" id="betaBar" role="region" aria-label="Beta notice">
+			<div class="wrap beta-in">
+				<span class="beta-tag">Beta</span>
+				<p class="beta-msg">
+					<span class="beta-long"
+						>This directory is new and still growing, so some
+						listings are not verified yet.</span
+					><span class="beta-short">New and still growing.</span>
+					<a href="/?about=help" data-about="help">Help us build it</a>
+				</p>
+				<button class="beta-x" type="button" data-beta-close aria-label="Hide the beta notice">&times;</button>
+			</div>
+		</div>
+		<script>
+			(function () {
+				var bar = document.getElementById("betaBar");
+				try {
+					if (localStorage.getItem("asnm-beta-hidden")) bar.hidden = true;
+				} catch (_) {}
+				bar.querySelector("[data-beta-close]").addEventListener("click", function () {
+					bar.hidden = true;
+					try {
+						localStorage.setItem("asnm-beta-hidden", "1");
+					} catch (_) {}
+				});
+			})();
+		</script>
+
 		<header class="hdr">
 			<div class="wrap hdr-in">
 				<button
@@ -207,6 +236,7 @@
 							<h2>About</h2>
 							<a href="#" data-about="project">The project</a
 							><a href="#" data-about="verify">How we verify</a
+							><a href="#" data-about="help">Help build this</a
 							><a href="#" data-about="a11y">Accessibility</a
 							><a href="/profile" data-section="profile"
 								>Your profile</a
@@ -269,13 +299,56 @@
 					<div class="about-divider" id="ab-verify">
 						<h3 class="about-heading">How we verify listings</h3>
 						<p class="about-copy lede">
-							Listings come from public directories and community
-							submissions. Automated checks re-visit each
-							program's website on a schedule, and every proposed
-							change is reviewed by a person before it goes live.
-							Badges on a listing tell you exactly what has and
-							hasn't been confirmed.
+							Every listing says one of two things.
+							<b>Verified</b> means a person on our team checked
+							the program against an official source, like its own
+							website or a national directory.
+							<b>Not yet verified</b> means it came from a public
+							directory and no one has confirmed it yet, so check
+							before you go.
 						</p>
+						<p class="about-copy lede">
+							Separately, an automatic check visits each
+							program's website on a schedule. Every listing shows
+							the last date that check reached the site. When
+							someone suggests a change, a person reads it before
+							anything on the listing changes.
+						</p>
+					</div>
+					<div class="about-divider" id="ab-help">
+						<h3 class="about-heading">Help build this</h3>
+						<p class="about-copy lede">
+							The directory is still growing, and it gets better
+							fastest with help from people who know adaptive sports
+							where they live.
+						</p>
+						<ul class="help-list">
+							<li>
+								<b>Know a program we are missing?</b>
+								<button type="button" data-about-close data-gate-open="program">Add it</button>
+							</li>
+							<li>
+								<b>See something wrong?</b> Open the listing and
+								choose Suggest an update.
+							</li>
+							<li>
+								<b>Run a program?</b> Find your listing and
+								confirm it, so people see it as Verified.
+							</li>
+							<li>
+								<b>Want to find and check programs?</b>
+								<a href="https://adapttolife.org/volunteer" target="_blank" rel="noopener">Volunteer as a program scout</a>
+								with Adapt To Life.
+							</li>
+							<li>
+								<b>Write code or design?</b> The site is open on
+								<a href="https://github.com/adapttolife/adaptivesportsnearme" target="_blank" rel="noopener">GitHub</a>.
+							</li>
+							<li>
+								<b>Want to hear when your area grows?</b>
+								<button type="button" data-about-close data-gate-open="notify">Get updates</button>
+							</li>
+						</ul>
 					</div>
 					<div class="about-last" id="ab-a11y">
 						<h3 class="about-heading">Accessibility</h3>
@@ -524,11 +597,92 @@
 							directory.
 						</p>
 					</div>
+					<!-- Suggest an update: opened from a listing (data-update="<id>"),
+					     posts to /api/submit-program with lid, so it is captured exactly
+					     like a new program and a person reads it before anything changes. -->
+					<div class="gate-pane" data-pane="update">
+						<form id="updateForm" novalidate>
+							<input type="hidden" name="sid" value="" />
+							<input type="hidden" name="lid" value="" />
+							<input type="hidden" name="source" value="asnm-listing-update" />
+							<input
+								class="hp"
+								type="text"
+								name="company"
+								tabindex="-1"
+								autocomplete="off"
+								aria-hidden="true"
+							/>
+							<div class="gfield">
+								<label for="upName">Listing</label
+								><input id="upName" type="text" name="pn" readonly />
+							</div>
+							<div class="gfield">
+								<label for="upRel">You are</label
+								><select id="upRel" name="rel">
+									<option value="">Choose one</option>
+									<option value="run">I run or work for this program</option>
+									<option value="attend">I go there, or my family does</option>
+									<option value="other">I spotted something</option>
+								</select>
+							</div>
+							<div class="gfield">
+								<label for="upNotes"
+									>What should change?
+									<span
+										class="required-mark"
+										aria-hidden="true"
+										>*</span
+									></label
+								><textarea
+									id="upNotes"
+									name="notes"
+									rows="3"
+									required
+									placeholder="A new website, a different city, a sport we missed, or that it has closed"
+								></textarea>
+							</div>
+							<div class="gfield">
+								<label for="upEmail"
+									>Your email
+									<span
+										class="required-mark"
+										aria-hidden="true"
+										>*</span
+									></label
+								><input
+									id="upEmail"
+									type="email"
+									name="em"
+									placeholder="you@email.com"
+									autocomplete="email"
+									required
+								/>
+							</div>
+							<div
+								class="cf-turnstile"
+								data-sitekey="0x4AAAAAADr2WPepRgjp8g-R"
+								data-appearance="interaction-only"
+							></div>
+							<button class="gate-cta" type="submit">
+								Send suggestion
+							</button>
+							<div
+								class="gate-msg"
+								id="updateMsg"
+								aria-live="polite"
+							></div>
+						</form>
+						<p class="gate-fine">
+							We only use your email to ask a follow-up question.
+						</p>
+					</div>
 				</div>
 			</div>
 		</div>
 
 		<script src="/directory-routes.js"></script>
+		<script src="/listing-art.js"></script>
 		<script src="/location.js"></script>
 		<script src="/segmented-controls.js" defer></script>
 		<script src="/assets/vendor/lucide-1.49.0.min.js" defer></script>
@@ -1174,14 +1328,26 @@
 					if (sc) return { kind: "scene", src: sc };
 					return { kind: "scene", src: EVENT_SCENE };
 				}
-				const ph = sportPhotoSrc(item && item.sport);
-				if (ph) return { kind: "photo", src: ph };
-				const sc = sceneSrc(item && item.sport);
-				if (sc) return { kind: "scene", src: sc };
-				return {
-					kind: "stamp",
-					src: emblemSrc(item && item.sport) || GENERIC_STAMP,
-				};
+				// Program listings: their own photo, else their sport's symbol
+				// (public/listing-art.js, the same pick the Worker makes).
+				return ListingArt.art(item || {});
+			}
+			// The symbol tile for a listing that has no photo of its own.
+			function symbolTile(v, cls, inner) {
+				return (
+					'<div class="' +
+					cls +
+					" has-symbol" +
+					(v && v.tone ? " tone-" + v.tone : "") +
+					'">' +
+					(v && v.src
+						? '<img class="art-symbol" src="' +
+							v.src +
+							'" alt="" decoding="async">'
+						: "") +
+					(inner || "") +
+					"</div>"
+				);
 			}
 			function isCoverVisual(v) {
 				return !!(
@@ -1198,7 +1364,7 @@
 							: "athlete-grant",
 					);
 				if (role === "event") return emblemSrc("event");
-				return emblemSrc(item && item.sport) || GENERIC_STAMP;
+				return ListingArt.art(Object.assign({}, item, { photo: null })).src;
 			}
 			function coverStampAttr(item, role) {
 				const st = stampSrc(item, role);
@@ -1483,6 +1649,8 @@
 						coverStampAttr(p, "program") +
 						">"
 					);
+				if (v && v.kind === "symbol")
+					return symbolTile(v, "thumb-symbol");
 				return v.src
 					? '<img class="thumb-stamp" src="' +
 							v.src +
@@ -1506,6 +1674,7 @@
 						overlay +
 						"</div>"
 					);
+				if (v && v.kind === "symbol") return symbolTile(v, cls, overlay);
 				return (
 					'<div class="' +
 					cls +
@@ -1861,8 +2030,14 @@
 					locLine(p) +
 					"</div>" +
 					(line ? '<div class="pcard-line">' + line + "</div>" : "") +
+					trustHtml(p) +
 					"</div></a>"
 				);
+			}
+			// The one trust line a card carries (same words as the Worker's cards).
+			function trustHtml(p) {
+				const t = ListingArt.trustLine(p);
+				return '<div class="pcard-trust ' + t.cls + '">' + t.text + "</div>";
 			}
 			function cardGrid(list) {
 				if (!list.length) return empty();
@@ -1905,8 +2080,9 @@
 			function diversify(list, lead) {
 				const buckets = new Map();
 				list.forEach((p) => {
-					if (!buckets.has(p.sport)) buckets.set(p.sport, []);
-					buckets.get(p.sport).push(p);
+					const k = p.art || p.sport;
+					if (!buckets.has(k)) buckets.set(k, []);
+					buckets.get(k).push(p);
 				});
 				let order = [...buckets.keys()];
 				if (lead && buckets.has(lead))
@@ -1926,9 +2102,12 @@
 				return out;
 			}
 			function feedRows() {
-				// Feed rows lead with imagery — with live data, favour orgs in the photo set,
-				// and cap each row so the rail stays a rail (See all opens the full directory).
-				const pool = filtered().filter((p) => p.sport);
+				// Every listing has art now (its sport's symbol), so the feed draws on the
+				// whole directory; listings whose sport we can name still lead the rows.
+				// Cap each row so the rail stays a rail (See all opens the full directory).
+				const all = filtered();
+				const named = all.filter((p) => p.art || p.sport);
+				const pool = named.length >= 24 ? named : all;
 				if (!pool.length)
 					return '<div class="wrap feed">' + empty() + "</div>";
 				const cap = (l) => (DATA_LIVE ? l.slice(0, 12) : l);
@@ -1949,6 +2128,9 @@
 								(a.dist ?? 1e9) - (b.dist ?? 1e9) ||
 								(b.freshness ?? 0) - (a.freshness ?? 0),
 						),
+				);
+				const verifiedList = cap(
+					pool.filter((p) => ListingArt.isVerified(p)),
 				);
 				const taking = cap(
 					DATA_LIVE
@@ -1984,10 +2166,10 @@
 					),
 					DATA_LIVE
 						? frow(
-								"Recently verified",
-								"Websites confirmed active in recent checks",
-								diversify(taking, "waterskiing"),
-								"fresh",
+								"Verified by our team",
+								"Checked by a person against an official source",
+								diversify(verifiedList, "tennis"),
+								"verified",
 							)
 						: frow(
 								"Taking new players",
@@ -2039,6 +2221,8 @@
 					);
 				if (state.see === "fresh")
 					return list.filter((p) => (p.freshness ?? 0) >= 50);
+				if (state.see === "verified")
+					return list.filter((p) => ListingArt.isVerified(p));
 				return list.sort(
 					(a, b) =>
 						(a.dist ?? 1e9) - (b.dist ?? 1e9) ||
@@ -3258,6 +3442,8 @@
 							type: o.type || p.type,
 							geoPrecision: o.geoPrecision || p.geoPrecision,
 							website: esc(o.website) || p.website,
+							listedAt: o.listedAt || null,
+							verifiedMonth: o.verifiedMonth || null,
 						});
 					}
 				} catch (_) {}
@@ -3285,6 +3471,7 @@
 						ov +
 						"</div>"
 					);
+				if (v && v.kind === "symbol") return symbolTile(v, "dhero", ov);
 				return (
 					'<div class="dhero has-stamp">' +
 					(v.src
@@ -3321,7 +3508,12 @@
 									},
 								]
 							: [];
-				return srcs.find((s) => s && s.url) || null;
+				// Our own research files (Drive links, CSV names) are never a destination.
+				return (
+					srcs.find(
+						(s) => s && s.url && !ListingArt.isInternalSource(s),
+					) || null
+				);
 			}
 			function primaryCta(p) {
 				if (p.website)
@@ -3399,6 +3591,7 @@
 					'</h1><p class="loc">' +
 					loc +
 					"</p>" +
+					(p.real ? trustPara(p) : "") +
 					descBlock(p.desc) +
 					"</div>" +
 					'<div class="act">' +
@@ -3406,15 +3599,85 @@
 					(o.save || "") +
 					"</div>" +
 					denseRows(p) +
+					(p.real ? aboutListing(p) : "") +
 					(o.related || "") +
 					"</div></div>"
 				);
 			}
+			function trustPara(p) {
+				const t = ListingArt.trustLine(p);
+				return '<p class="listing-trust ' + t.cls + '">' + t.text + "</p>";
+			}
+			// Same block as aboutListingHtml() in src/program-page.js: whether a person
+			// verified it, when it was last checked, where it came from, how to fix it.
+			// Every value here was escaped in mapOrg/loadOrgDetail.
+			function aboutListing(p) {
+				const verified = ListingArt.isVerified(p);
+				const month = ListingArt.monthLabel(p.verifiedMonth);
+				const srcs =
+					p.sources && p.sources.length
+						? p.sources
+						: p.primarySource
+							? [{ name: p.primarySource, url: null }]
+							: [];
+				const src = ListingArt.publicSource(
+					srcs.find((x) => x && x.name) || null,
+				);
+				const srcHtml = src
+					? src.url
+						? '<a href="' +
+							src.url +
+							'" rel="noopener" target="_blank">' +
+							src.name +
+							"</a>"
+						: src.name
+					: null;
+				const status = verified
+					? '<p class="about-status is-verified"><b>Verified.</b> A person on our team checked this program against an official source' +
+						(month ? " in " + month : "") +
+						".</p>"
+					: '<p class="about-status is-unverified"><b>Not yet verified.</b> ' +
+						ListingArt.unverifiedText(
+							srcHtml,
+							!!src && src.name === ListingArt.RESEARCH,
+						) +
+						"</p>";
+				const rows = [
+					ListingArt.checkedRow(p),
+					verified && srcHtml ? ["Source", srcHtml] : null,
+				].filter(Boolean);
+				return (
+					'<section class="about-listing" aria-labelledby="about-listing-h"><h2 id="about-listing-h">About this listing</h2>' +
+					status +
+					'<div class="rows">' +
+					rows
+						.map(
+							(r) =>
+								'<div class="row"><span class="k">' +
+								r[0] +
+								'</span><span class="v">' +
+								r[1] +
+								"</span></div>",
+						)
+						.join("") +
+					"</div>" +
+					'<div class="fix-links"><button type="button" class="fix-btn" data-update="' +
+					p.id +
+					'">Suggest an update</button><button type="button" class="fix-link" data-update="' +
+					p.id +
+					'" data-rel="run">Run this program? Confirm your listing</button></div></section>'
+				);
+			}
 			function relatedRow(p) {
+				// Same sport by symbol (Adaptive tennis and Wheelchair Tennis are one
+				// sport), else the same label. Two sportless listings are not a match.
+				const k = ListingArt.symbolKey(p);
 				let list = PROGRAMS.filter(
 					(x) =>
 						x.id !== p.id &&
-						(x.sport === p.sport || x.sportLabel === p.sportLabel),
+						(k
+							? (x.art || ListingArt.symbolKey(x)) === k
+							: !!p.sportLabel && x.sportLabel === p.sportLabel),
 				);
 				if (p.lat != null && p.lng != null) {
 					list = list
@@ -3436,8 +3699,13 @@
 				}
 				list = list.slice(0, 6);
 				if (!list.length) return "";
+				// "Nearby" only when the closest one is within 100 miles (NEARBY_MILES
+				// in src/program-page.js); 600 miles away is "More", not nearby.
+				const near =
+					list[0].dist != null && list[0].dist <= 100 ? "Nearby " : "More ";
 				return (
-					'<div class="nearby"><h2>Nearby ' +
+					'<div class="nearby"><h2>' +
+					near +
 					(p.sportLabel || "programs").toLowerCase() +
 					'</h2><div class="frow-scroll">' +
 					list.map(cardItem).join("") +
@@ -4771,7 +5039,7 @@
 					"</div></div>";
 				const about =
 					'<div class="drawer-div"></div><div class="drawer-sec drawer-about">' +
-					'<button type="button" data-about="project">The project</button><button type="button" data-about="verify">How we verify</button>' +
+					'<button type="button" data-about="project">The project</button><button type="button" data-about="verify">How we verify</button><button type="button" data-about="help">Help build this</button>' +
 					"</div>";
 				// Profile block moves to the bottom (just above About), fronted by a divider.
 				const profileBlock = '<div class="drawer-div"></div>' + prof;
@@ -5191,6 +5459,22 @@
 				}
 			})();
 			let gateLastFocus = null;
+			// The dialog's own head copy, kept so a gated (prelaunch) site can return
+			// to it after the dialog has been used to suggest an update.
+			const GATE_HEAD = (() => {
+				const ey = gateEl.querySelector(".gate-eyebrow"),
+					ti = document.getElementById("gateTitle"),
+					le = gateEl.querySelector(".gate-head .lede");
+				return {
+					ey: ey ? ey.textContent : "",
+					ti: ti ? ti.textContent : "",
+					le: le ? le.innerHTML : "",
+				};
+			})();
+			let updateRel = ""; // "run" when a program is confirming its own listing
+			const UPDATE_PANE_HTML = (
+				gateEl.querySelector('.gate-pane[data-pane="update"]') || {}
+			).innerHTML;
 			function setGateTab(name) {
 				gateEl
 					.querySelectorAll(".gate-tab")
@@ -5232,6 +5516,30 @@
 						bt.style.display = "none";
 					}
 				}
+				const upd = tab === "update";
+				const tabsEl = gateEl.querySelector(".gate-tabs");
+				// display, not [hidden]: the tab row's own display rule would win.
+				if (tabsEl) tabsEl.style.display = upd ? "none" : "";
+				{
+					const ey = gateEl.querySelector(".gate-eyebrow"),
+						ti = document.getElementById("gateTitle"),
+						le = gateEl.querySelector(".gate-head .lede");
+					if (upd) {
+						if (ey) ey.textContent = "Help us get it right";
+						if (ti)
+							ti.textContent =
+								updateRel === "run" ? "Confirm your listing" : "Suggest an update";
+						if (le)
+							le.textContent =
+								updateRel === "run"
+									? "Confirm the details or tell us what changed. A person on our team follows up, and listings the program confirms show as Verified."
+									: "Spotted something out of date or missing? A person reads every suggestion before anything on the listing changes.";
+					} else if (PRELAUNCH) {
+						if (ey) ey.textContent = GATE_HEAD.ey;
+						if (ti) ti.textContent = GATE_HEAD.ti;
+						if (le) le.innerHTML = GATE_HEAD.le;
+					}
+				}
 				setGateTab(tab || "notify");
 				hydrateGateCount();
 				gateEl.classList.add("open");
@@ -5253,6 +5561,87 @@
 					} catch (_) {}
 				}
 			}
+			// mapOrg escapes names for innerHTML; an input's value wants the plain text.
+			function plainText(html) {
+				const t = document.createElement("textarea");
+				t.innerHTML = html == null ? "" : String(html);
+				return t.value;
+			}
+			// Suggest an update to one listing. rel=run is the program itself
+			// confirming its listing (Karen's bar for Verified: the program says yes).
+			async function openUpdate(id, rel) {
+				const pane = gateEl.querySelector('.gate-pane[data-pane="update"]');
+				if (!pane) return;
+				if (!document.getElementById("updateForm") && UPDATE_PANE_HTML) {
+					pane.innerHTML = UPDATE_PANE_HTML; // a second suggestion after a thank-you
+					renderTurnstiles();
+				}
+				const f = document.getElementById("updateForm");
+				if (!f) return;
+				f.reset();
+				f.sid.value = "";
+				f.lid.value = id;
+				f.rel.value = rel === "run" ? "run" : "";
+				updateRel = rel === "run" ? "run" : "";
+				const p = PROGRAMS.find((x) => x.id === id);
+				f.pn.value = p ? plainText(p.name) : "";
+				openGate("update");
+				if (!p) {
+					try {
+						const j = await fetch("/api/orgs/" + id).then((r) => r.json());
+						if (j && j.ok && j.org && f.lid.value === id)
+							f.pn.value = j.org.name || "";
+					} catch (_) {}
+				}
+			}
+			document.addEventListener("click", function (e) {
+				const u = e.target.closest("[data-update]");
+				if (!u) return;
+				e.preventDefault();
+				openUpdate(u.getAttribute("data-update"), u.getAttribute("data-rel"));
+			});
+			document.addEventListener("submit", async function (e) {
+				const form = e.target;
+				if (form.id !== "updateForm") return;
+				e.preventDefault();
+				const btn = form.querySelector(".gate-cta");
+				const msg = document.getElementById("updateMsg");
+				msg.textContent = "";
+				msg.className = "gate-msg";
+				if (!(form.notes.value || "").trim()) {
+					msg.textContent = "Please tell us what should change.";
+					msg.className = "gate-msg err";
+					return;
+				}
+				const em = (form.em.value || "").trim().replace(/^mailto:/i, "");
+				form.em.value = em;
+				if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)) {
+					msg.textContent = "Please enter a valid email so we can ask a follow-up question.";
+					msg.className = "gate-msg err";
+					return;
+				}
+				btn.disabled = true;
+				const lbl = btn.textContent;
+				btn.textContent = "Sending...";
+				if (!form.sid.value)
+					form.sid.value =
+						window.crypto && crypto.randomUUID
+							? crypto.randomUUID()
+							: Date.now().toString(36) + Math.random().toString(36).slice(2);
+				const res = await postForm("/api/submit-program", form);
+				if (res.ok) {
+					paneDone(
+						"update",
+						"Thank you",
+						"A person will read your suggestion before anything on the listing changes. If we have a question, we will email you.",
+					);
+				} else {
+					btn.disabled = false;
+					btn.textContent = lbl;
+					msg.textContent = res.error || "Something went wrong. Please try again.";
+					msg.className = "gate-msg err";
+				}
+			});
 
 			/* Gate "go deeper" clicks (capture phase). Scroll, search, and category filters stay free. */
 			document.addEventListener(
@@ -5635,6 +6024,11 @@
 			if (state.section === "discover" && state.sport !== "all")
 				requestAnimationFrame(scrollToResults);
 			if (BOOT_QP.get("add") === "program") openGate("program");
+			// Server-rendered listing pages link here: /?update=<id>[&rel=run]
+			{
+				const up = BOOT_QP.get("update");
+				if (up && /^[0-9a-f-]{36}$/i.test(up)) openUpdate(up, BOOT_QP.get("rel"));
+			}
 			/* Deep links for the About panel, so the server-rendered footers can point at the
    same three sections the app's own footer opens. */
 			const BOOT_ABOUT = BOOT_QP.get("about");
@@ -5662,25 +6056,33 @@
 				cycling: "Endurance",
 				skiing: "Endurance",
 				waterskiing: "Endurance",
+				rowing: "Endurance",
+				swimming: "Endurance",
+				climbing: "Endurance",
+				golf: "Endurance",
 				basketball: "Team",
 				rugby: "Team",
 				football: "Team",
 				baseball: "Team",
 				sledhockey: "Team",
 				goalball: "Team",
+				soccer: "Team",
+				volleyball: "Team",
 				tennis: "Racquet",
 				pickleball: "Racquet",
 			};
 			function mapOrg(o) {
 				// esc(): D1 fields originate in third-party directories and scraped pages —
 				// everything rendered via innerHTML must be escaped at this boundary.
+				const art = ListingArt.symbolKey(o);
 				return {
 					id: o.id,
 					real: true,
 					name: esc(o.name),
 					sport: o.sport || null,
+					art: art,
 					sportLabel: esc(o.sportLabel) || "Multi-Sport",
-					category: CAT_BY_KEY[o.sport] || "Community",
+					category: CAT_BY_KEY[art] || CAT_BY_KEY[o.sport] || "Community",
 					provider: TYPE_LABEL[o.type] || "Adaptive sports program",
 					city: esc(o.city) || null, // real city name only — never the state code standing in for one
 					state: esc(o.state),
