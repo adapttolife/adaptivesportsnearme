@@ -16,6 +16,18 @@ const LIST_COLS = `id, name, org_type, sport, sport_key, website_url, city,
   state, state_name, zip, lat, lng, geo_precision, description, cost_note,
   equipment_provided, ages, data_quality_rating, verification_status, last_ok_at`;
 
+// A listing is public only when a person could act on it: a website to visit,
+// a city and state to find, or a way to reach someone. Alec ruled on 2026-09-01
+// that name-only rows stay hidden; production lost that state in the account
+// move (1,069 of 2,465 live rows were name-only on 2026-10-13), so the rule
+// lives here in code, where no data copy can drop it. The row stays in D1 for
+// enrichment and reappears the moment it gains any of these.
+export const ACTIONABLE = `((website_url IS NOT NULL AND website_url <> '')
+  OR (city IS NOT NULL AND city <> '' AND state IS NOT NULL AND state <> '')
+  OR (email IS NOT NULL AND email <> '')
+  OR (phone IS NOT NULL AND phone <> ''))`;
+const PUBLIC = `is_public = 1 AND status = 'active' AND ${ACTIONABLE}`;
+
 function rowToProgram(r, dist) {
   return {
     id: r.id,
@@ -59,14 +71,14 @@ function nearPayload(origin) {
 // Read it once rather than repeating COUNT + OFFSET scans for every 200 rows.
 export async function directorySnapshot(db) {
   const rows = await db.prepare(`SELECT ${LIST_COLS} FROM organizations
-    WHERE is_public = 1 AND status = 'active'
+    WHERE ${PUBLIC}
     ORDER BY (sport_key IS NULL), (state IS NULL), name`).all();
   const items = rows.results.map(row => rowToProgram(row));
   return { total: items.length, items };
 }
 
 export async function listPrograms(db, params, opts = {}) {
-  const where = ["is_public = 1", "status = 'active'"];
+  const where = [PUBLIC];
   const binds = [];
   const sport = (params.get("sport") || "").trim();
   if (sport) {
@@ -131,7 +143,7 @@ export async function listPrograms(db, params, opts = {}) {
 
 export async function getOrg(db, id) {
   const row = await db.prepare(
-    `SELECT ${LIST_COLS}, email, phone, primary_data_source, created_at, updated_at
+    `SELECT ${LIST_COLS}, email, phone, primary_data_source, verification_method, created_at, updated_at
      FROM organizations WHERE id = ? AND is_public = 1`
   ).bind(id).first();
   if (!row) return null;
@@ -146,17 +158,33 @@ export async function getOrg(db, id) {
     phone: row.phone,
     primarySource: row.primary_data_source,
     sources: sources.results,
+    listedAt: row.created_at,
+    verifiedMonth: verifiedMonth(row),
     updatedAt: row.updated_at,
   };
 }
 
+// verification_method is a JSON note on rows a person verified
+// ({"status":"verified","verification_month":"2026-09",...}); the month is the
+// only part a visitor needs. Anything else (plain words, broken JSON) gives null.
+export function verifiedMonth(row) {
+  if (!row || row.verification_status !== "verified" || !row.verification_method) return null;
+  try {
+    const m = JSON.parse(row.verification_method);
+    const ym = m && typeof m.verification_month === "string" ? m.verification_month : "";
+    return /^\d{4}-\d{2}$/.test(ym) ? ym : null;
+  } catch {
+    return null;
+  }
+}
+
 export async function stats(db) {
   const [total, bySport, byState, sources, lastRun] = await Promise.all([
-    db.prepare(`SELECT COUNT(*) AS n FROM organizations WHERE is_public = 1 AND status = 'active'`).first(),
+    db.prepare(`SELECT COUNT(*) AS n FROM organizations WHERE ${PUBLIC}`).first(),
     db.prepare(`SELECT sport AS label, sport_key AS key, COUNT(*) AS n FROM organizations
-                WHERE is_public = 1 AND status = 'active' GROUP BY sport ORDER BY n DESC`).all(),
+                WHERE ${PUBLIC} GROUP BY sport ORDER BY n DESC`).all(),
     db.prepare(`SELECT state, state_name AS name, COUNT(*) AS n FROM organizations
-                WHERE is_public = 1 AND status = 'active' AND state IS NOT NULL
+                WHERE ${PUBLIC} AND state IS NOT NULL
                 GROUP BY state ORDER BY n DESC`).all(),
     db.prepare(`SELECT COUNT(*) AS n FROM data_sources WHERE status = 'active'`).first(),
     db.prepare(`SELECT lane, finished_at FROM pipeline_runs ORDER BY run_id DESC LIMIT 1`).first(),
@@ -177,7 +205,7 @@ export async function listSameSportNearby(db, org, limit = 6) {
   const sportKey = org.sport;
   const sportLabel = org.sportLabel;
   if (!org.id || (!sportKey && !sportLabel)) return [];
-  const where = ["is_public = 1", "status = 'active'", "id != ?"];
+  const where = [PUBLIC, "id != ?"];
   const binds = [org.id];
   if (sportKey) {
     where.push("(sport_key = ? OR sport = ?)");

@@ -25,13 +25,18 @@ function database() {
 test('homepage snapshot reads the directory once without losing fields or private filtering', async () => {
   const {sql,db,queries} = database();
   try {
-    const insert = sql.prepare("INSERT INTO organizations (id,name,is_public,status,created_at,updated_at,lat,lng,sport_key) VALUES (?,?,?,?, '2026','2026',40,-74,'cycling')");
-    for (let i=0;i<450;i++) insert.run(String(i), `Program ${i}`,1,'active');
-    insert.run('hidden','Hidden',0,'active'); insert.run('inactive','Inactive',1,'inactive');
+    const insert = sql.prepare("INSERT INTO organizations (id,name,is_public,status,created_at,updated_at,lat,lng,sport_key,website_url) VALUES (?,?,?,?, '2026','2026',40,-74,'cycling',?)");
+    for (let i=0;i<450;i++) insert.run(String(i), `Program ${i}`,1,'active','https://example.org/'+i);
+    insert.run('hidden','Hidden',0,'active','https://example.org/h'); insert.run('inactive','Inactive',1,'inactive','https://example.org/i');
+    // Name only: nothing a person could act on, so it stays out (Alec, 2026-09-01).
+    insert.run('nameonly','Name Only',1,'active',null);
     const result = await directorySnapshot(db);
     assert.equal(result.total,450); assert.equal(queries.length,1);
     assert.equal(result.items[0].lat,40); assert.equal(result.items[0].sport,'cycling');
-    assert.ok(result.items.every(p => !['hidden','inactive'].includes(p.id)));
+    assert.ok(result.items.every(p => !['hidden','inactive','nameonly'].includes(p.id)));
+    // The real snapshot query still walks the public-order index, no sort.
+    const plan = sql.prepare('EXPLAIN QUERY PLAN '+queries[0]).all().map(r=>r.detail).join('\n');
+    assert.doesNotMatch(plan,/USE TEMP B-TREE/); assert.match(plan,/INDEX/);
     const pages = await Promise.all([0,200,400].map(offset => listPrograms(db,new URLSearchParams({limit:'200',offset:String(offset)}),{zcta:null})));
     assert.equal(pages.flatMap(p=>p.items).length,450);
     assert.equal(queries.filter(q=>q.includes('COUNT(*)')).length,1);

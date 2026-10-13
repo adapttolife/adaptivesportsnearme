@@ -163,3 +163,45 @@ test('a notice that could not go out on the request is sent by the scheduled swe
   assert.deepEqual(swept, { swept: 1, sent: 1, failed: 0 });
   assert.equal(x.notices().length, 1); assert.match(x.notices()[0].text, /Form: program/);
 });
+
+// Suggest an update (Alec, 2026-10-13: invite people to suggest updates to
+// listings). Same capture path; lid names the listing, a person reads it, and
+// nothing here touches the organizations table.
+const LISTING = 'c76e8bad-5df9-5a4f-a526-1324f99877e1';
+const update = { pn: 'Atlanta Wolfpack', lid: LISTING, rel: 'run', notes: 'We moved practice to Decatur.', em: 'person@example.test', sid: '9c2e8b1a-1d4f-4b7e-8a00-abcdefabcdef' };
+
+test('a suggested update is captured like a submission and changes no listing', async t => {
+  const x = setup(t); verified(x);
+  x.directory.exec("INSERT INTO organizations (id,name,created_at,updated_at,city,state) VALUES ('" + LISTING + "','Atlanta Wolfpack','2026','2026','Atlanta','GA')");
+  const response = await x.post({ ...update, cf_token: 'ok' });
+  assert.equal(response.status, 200); assert.deepEqual(await response.json(), { ok: true });
+  const [row] = x.intakeRows();
+  assert.equal(row.kind, 'program');
+  assert.equal(row.summary, 'Program confirming its listing: Atlanta Wolfpack');
+  assert.deepEqual(JSON.parse(row.payload), { program: 'Atlanta Wolfpack', update_of: LISTING, relation: 'run', notes: 'We moved practice to Decatur.' });
+  const sub = x.directory.prepare('SELECT * FROM submissions').get();
+  assert.equal(sub.kind, 'listing_update'); assert.equal(JSON.parse(sub.payload).update_of, LISTING);
+  await Promise.all(x.jobs);
+  assert.equal(x.notices().length, 1);
+  assert.equal(x.receipts().length, 1); assert.equal(x.receipts()[0].subject, 'We received your suggested update');
+  const org = x.directory.prepare('SELECT city, updated_at FROM organizations WHERE id = ?').get(LISTING);
+  assert.deepEqual({ ...org }, { city: 'Atlanta', updated_at: '2026' });
+});
+
+test('an update with nothing to change is refused before anything is saved', async t => {
+  const x = setup(t); verified(x);
+  const response = await x.post({ ...update, notes: '  ', cf_token: 'ok' });
+  assert.equal(response.status, 422);
+  assert.equal((await response.json()).error, 'Please tell us what should change.');
+  assert.equal(x.intakeRows().length, 0); assert.equal(x.submissions(), 0); assert.equal(x.sent.length, 0);
+});
+
+test('a plain suggestion reads as a listing update; a malformed listing id is ignored', async t => {
+  const x = setup(t); verified(x);
+  await x.post({ ...update, rel: 'other', cf_token: 'ok' });
+  assert.equal(x.intakeRows()[0].summary, 'Listing update: Atlanta Wolfpack');
+  const y = setup(t); verified(y);
+  await y.post({ ...body, lid: 'not-a-listing', cf_token: 'ok' });
+  assert.match(y.intakeRows()[0].summary, /^New program submission: /);
+  assert.equal(y.directory.prepare('SELECT kind FROM submissions').get().kind, 'new_program');
+});

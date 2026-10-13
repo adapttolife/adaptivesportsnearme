@@ -307,6 +307,8 @@ async function subscribeToBeehiiv(env, email, campaign, extra = {}) {
 // this request (best-effort) or, failing that, by the scheduled sweepIntake.
 // Airtable is retired: nothing reads the old Agent Inbox base, so nothing writes it.
 export const PROGRAM_INTAKE_KIND = "program";
+const LISTING_ID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const LISTING_RELATIONS = new Set(["run", "attend", "other"]);
 const PROGRAM_SID_RE = /^[A-Za-z0-9-]{8,64}$/;
 const programUnavailable = { ok: false, error: "Could not save right now. Please try again soon." };
 
@@ -330,15 +332,22 @@ async function handleSubmitProgram(request, env, ctx) {
     return json({ ok: false, error: "Verification failed. Please reload the page and try again." }, 403);
   }
 
-  const program = str(data.pn);
+  // A suggested update to an existing listing rides the same capture path as a
+  // new program: lid names the listing, rel says who is asking (rel=run is the
+  // program itself, the route to Verified). A person reads both before anything
+  // in the directory changes; nothing here writes organizations.
+  const listingId = LISTING_ID_RE.test(str(data.lid)) ? str(data.lid).toLowerCase() : "";
+  const relation = LISTING_RELATIONS.has(str(data.rel)) ? str(data.rel) : "";
+  const program = str(data.pn) || (listingId ? `listing ${listingId}` : "");
   const org = str(data.org);
   const sport = str(data.sport);
   const city = str(data.city);
   const stateRegion = str(data.state);
-  const email = str(data.em);
+  const email = str(data.em).replace(/^mailto:/i, "");
   const notes = str(data.notes);
 
   if (!program) return json({ ok: false, error: "Please add the program name." }, 422);
+  if (listingId && !notes) return json({ ok: false, error: "Please tell us what should change." }, 422);
   if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
     return json({ ok: false, error: "Please enter a valid email so we can confirm your submission." }, 422);
   }
@@ -348,11 +357,16 @@ async function handleSubmitProgram(request, env, ctx) {
     return json({ ok: false, error: "Submissions are temporarily unavailable. Please try again soon." }, 503);
   }
 
-  const answers = { program, org, sport, city, state: stateRegion, notes };
+  const answers = listingId
+    ? { program, update_of: listingId, relation, notes }
+    : { program, org, sport, city, state: stateRegion, notes };
   const intakeId = await programSubmissionId(str(data.sid), email, answers);
   const location = [city, stateRegion].filter(Boolean).join(", ");
   // The summary is the notice's subject line: one line, bounded.
-  const summary = `New program submission: ${program.slice(0, 120)}${location ? ` (${location.slice(0, 80)})` : ""}`.replace(/[\r\n]+/g, " ");
+  const summary = (listingId
+    ? `${relation === "run" ? "Program confirming its listing" : "Listing update"}: ${program.slice(0, 120)}`
+    : `New program submission: ${program.slice(0, 120)}${location ? ` (${location.slice(0, 80)})` : ""}`).replace(/[\r\n]+/g, " ");
+  const submissionKind = listingId ? "listing_update" : "new_program";
   const source = str(data.source).slice(0, 80) || "asnm-prelaunch";
   const now = new Date().toISOString();
 
@@ -372,9 +386,9 @@ async function handleSubmitProgram(request, env, ctx) {
     stage = "submission-capture";
     const result = await env.DB.prepare(
       `INSERT INTO submissions (kind, payload, contact_email, status, created_at)
-       SELECT 'new_program', ?, ?, 'new', ?
-       WHERE NOT EXISTS (SELECT 1 FROM submissions WHERE kind = 'new_program' AND json_extract(payload, '$.intake_id') = ?)`
-    ).bind(JSON.stringify({ ...answers, intake_id: intakeId }), email, now, intakeId).run();
+       SELECT ?, ?, ?, 'new', ?
+       WHERE NOT EXISTS (SELECT 1 FROM submissions WHERE kind = ? AND json_extract(payload, '$.intake_id') = ?)`
+    ).bind(submissionKind, JSON.stringify({ ...answers, intake_id: intakeId }), email, now, submissionKind, intakeId).run();
     fresh = Number(result?.meta?.changes ?? result?.changes ?? 0) > 0;
   } catch (error) {
     const message = String(error?.message || "");
@@ -390,7 +404,7 @@ async function handleSubmitProgram(request, env, ctx) {
   // out only for the first capture of this id, so a retry does not mail twice.
   const notice = notifyIntake(env, intakeId);
   if (ctx?.waitUntil) ctx.waitUntil(notice); else await notice;
-  if (fresh) await queueFormConfirmation(env, ctx, { kind: 'program', email, program });
+  if (fresh) await queueFormConfirmation(env, ctx, { kind: listingId ? 'listing-update' : 'program', email, program });
 
   return json({ ok: true });
 }
