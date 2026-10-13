@@ -98,7 +98,7 @@
     if (zip) {
       const n = Number(zip[0].slice(0, 3));
       const hit = ZIP3.find(([a, b]) => n >= a && n <= b);
-      return hit ? { state: hit[2], city: null, label: zip[0] + " · " + STATE_NAMES[hit[2]] } : null;
+      return hit ? { state: hit[2], city: null, label: zip[0] } : null;
     }
     const parts = raw.split(",").map((s) => s.trim()).filter(Boolean);
     const up = raw.toUpperCase();
