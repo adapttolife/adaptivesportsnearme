@@ -38,7 +38,7 @@ test('homepage snapshot reads the directory once without losing fields or privat
   } finally { sql.close(); }
 });
 
-test('public organization details omit contacts and precise locations while retaining city and state', async () => {
+test('public organization details expose contacts and precise locations only with publicity consent', async () => {
   const {sql,db} = database();
   try {
     sql.exec(`INSERT INTO organizations
@@ -49,9 +49,31 @@ test('public organization details omit contacts and precise locations while reta
     assert.equal(org.state, 'CO');
     for (const key of ['lat','lng','zip','dist']) assert.equal(org[key], null);
     for (const key of ['email','phone']) assert.equal(Object.hasOwn(org, key), false);
+    sql.exec(`INSERT INTO organizations
+      (id,name,is_public,status,created_at,updated_at,city,state,zip,lat,lng,email,phone,publicity_consent)
+      VALUES ('consented','Program',1,'active','2026','2026','Denver','CO','80202',39.75,-104.99,'public@example.test','555-0101',1)`);
+    const consented = await getOrg(db, 'consented');
+    assert.equal(consented.zip, '80202');
+    assert.equal(consented.lat, 39.75);
+    assert.equal(consented.lng, -104.99);
+    assert.equal(consented.email, 'public@example.test');
+    assert.equal(consented.phone, '555-0101');
     const result = await listPrograms(db, new URLSearchParams({lat:'42.7',lng:'-73.7'}), {zcta:null});
-    assert.equal(result.items.length, 1);
-    assert.equal(result.items[0].dist, null);
+    assert.equal(result.items.length, 2);
+    assert.ok(result.items.every(item => item.dist === null));
+  } finally { sql.close(); }
+});
+
+test('publicity consent migration defaults to zero and accepts only zero or one', () => {
+  const sql = new DatabaseSync(':memory:');
+  try {
+    sql.exec('CREATE TABLE organizations (id TEXT PRIMARY KEY, [publicity-consent] INTEGER NOT NULL DEFAULT 0 CHECK ([publicity-consent] IN (0, 1)))');
+    sql.exec(read('db/migrations/0007_publicity_consent.sql'));
+    sql.prepare("INSERT INTO organizations (id) VALUES ('default')").run();
+    sql.prepare("INSERT INTO organizations (id, publicity_consent) VALUES ('consented', 1)").run();
+    assert.equal(sql.prepare("SELECT publicity_consent AS consent FROM organizations WHERE id = 'default'").get().consent, 0);
+    assert.equal(sql.prepare("SELECT publicity_consent AS consent FROM organizations WHERE id = 'consented'").get().consent, 1);
+    assert.throws(() => sql.prepare("INSERT INTO organizations (id, publicity_consent) VALUES ('invalid', 2)").run());
   } finally { sql.close(); }
 });
 

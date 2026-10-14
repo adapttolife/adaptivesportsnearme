@@ -1521,8 +1521,7 @@
 			}
 			// One line under the city, and only when it says something: how far away this is.
 			function programDistance(p) {
-				return null;
-/*
+				if (!p.publicityConsent) return null;
 				const origin =
 					state.near ||
 					(!state.nearZip && !state.nearCity
@@ -1545,7 +1544,6 @@
 						milesBetween(origin.lat, origin.lng, p.lat, p.lng) * 10,
 					) / 10
 				);
-*/
 			}
 			function cardLine(p) {
 				const dist = programDistance(p);
@@ -1606,12 +1604,10 @@
 					state.near || (!explicitLocation ? visitorLocation : null);
 				// Location determines ordering; only an explicitly selected distance filter
 				// limits the result radius. Unknown distances stay visible at the end.
-				/*
 				if (!ignoreCostDistance && state.dist !== "any") {
 					const m = { s: 5, m: 10, l: 25 }[state.dist];
 					list = list.filter((p) => p.dist != null && p.dist <= m);
 				}
-				*/
 				if (!ignoreCostDistance && state.cost === "free")
 					list = list.filter((p) => p.free);
 				if (state.level !== "any")
@@ -2224,8 +2220,7 @@
 				} // stylised canvas stays as the fallback
 				const el = document.getElementById("livemap");
 				if (!el || token !== mapToken) return;
-				// const geo = list.filter((p) => p.lat != null && p.lng != null);
-				const geo = [];
+				const geo = list.filter((p) => p.publicityConsent && p.lat != null && p.lng != null);
 				// Convergence path: orgs with better-than-state geo become individual pins
 				// automatically as the enrich pipeline fills addresses in — no rework.
 				const precise = [],
@@ -2611,20 +2606,18 @@
 							p.id +
 							'">Open listing</a>',
 					);
-/*
-				if (p.phone)
+				if (p.publicityConsent && p.phone)
 					pills.push(
 						'<a class="tray-pill" href="tel:' +
 							String(p.phone).replace(/[^\d+]/g, "") +
 							'">Call</a>',
 					);
-				if (p.email)
+				if (p.publicityConsent && p.email)
 					pills.push(
 						'<a class="tray-pill" href="mailto:' +
 							p.email +
 							'">Email</a>',
 					);
-*/
 				return pills.join("");
 			}
 			function mapTrayHtml(p) {
@@ -3254,8 +3247,9 @@
 					if (j && j.ok && j.org) {
 						const o = j.org;
 						Object.assign(p, {
-							// email: esc(o.email),
-							// phone: esc(o.phone),
+							email: esc(o.email),
+							phone: esc(o.phone),
+							publicityConsent: o.publicityConsent === true,
 							sources: (o.sources || []).map((s) => ({
 								name: esc(s.name),
 								organization: esc(s.organization),
@@ -3269,7 +3263,7 @@
 							ages: esc(o.ages) || p.ages,
 							equipment: esc(o.equipment) || p.equipment,
 							type: o.type || p.type,
-							// geoPrecision: o.geoPrecision || p.geoPrecision,
+							geoPrecision: o.geoPrecision || p.geoPrecision,
 							website: esc(o.website) || p.website,
 						});
 					}
@@ -3339,15 +3333,13 @@
 			function primaryCta(p) {
 				if (p.website)
 					return { href: p.website, label: "Visit website" };
-/*
-				if (p.phone)
+				if (p.publicityConsent && p.phone)
 					return {
 						href: "tel:" + String(p.phone).replace(/[^\d+]/g, ""),
 						label: "Call",
 					};
-				if (p.email)
+				if (p.publicityConsent && p.email)
 					return { href: "mailto:" + p.email, label: "Email" };
-*/
 				const src = sourceWithUrl(p);
 				if (src) return { href: src.url, label: "View source" };
 				return null;
@@ -3358,8 +3350,8 @@
 					["Cost", p.cost],
 					["Ages", p.ages],
 					["Equipment", p.equipment],
-					// ["Phone", p.phone],
-					// ["Email", p.email],
+					["Phone", p.publicityConsent ? p.phone : null],
+					["Email", p.publicityConsent ? p.email : null],
 					["Type", type],
 				].filter((x) => x[1]);
 				if (!pairs.length) return "";
@@ -5722,9 +5714,10 @@
 									o.quality.slice(1),
 							)
 						: null,
-					// lat: o.lat,
-					// lng: o.lng,
-					// geoPrecision: o.geoPrecision,
+					publicityConsent: o.publicityConsent === true,
+					lat: o.lat,
+					lng: o.lng,
+					geoPrecision: o.geoPrecision,
 					type: o.type || null,
 					lastChecked: o.lastChecked || null,
 					photo: o.photo || null,
