@@ -106,8 +106,8 @@ test("photoPath: only the program's own photo is a cover; sports wear symbols", 
 
 test("primaryCta: website → tel → mailto → source. Never an empty-page stub", () => {
   assert.deepEqual(primaryCta(ORG), { href: ORG.website, label: "Visit website" });
-  assert.deepEqual(primaryCta({ phone: "775-467-2025" }), { href: "tel:7754672025", label: "Call" });
-  assert.deepEqual(primaryCta({ email: "hi@example.org" }), { href: "mailto:hi@example.org", label: "Email" });
+  assert.equal(primaryCta({ phone: "775-467-2025" }), null);
+  assert.equal(primaryCta({ email: "hi@example.org" }), null);
   assert.deepEqual(primaryCta(KANSAS), {
     href: "https://www.usopc.org/paralympic-sport-development",
     label: "View source",
@@ -152,8 +152,8 @@ test("programPageTemplate: Reno pickleball reads like a listing", () => {
   assert.ok(locAt > 0 && descAt > locAt && ctaAt > descAt);
   assert.ok(html.includes(">Cost</span>") && html.includes("$5 adaptive session"));
   assert.ok(html.includes(">Ages</span>") && html.includes("Adult"));
-  assert.ok(html.includes("775-467-2025"));
-  assert.ok(html.includes("reno@3rdshotpickleball.com"));
+  assert.ok(!html.includes("775-467-2025"));
+  assert.ok(!html.includes("reno@3rdshotpickleball.com"));
   assert.ok(html.includes("Inclusive club"));
   // Say whether a person verified it, in plain words (Alec, 2026-10-13), and
   // put a date on the listing (opening-day bar 5) — never the cold "Unverified".
@@ -212,7 +212,7 @@ test("programPageTemplate: Kansas Omnium still has an action + nearby strip", ()
   assert.ok(cssIncludes(styles, "78vw"));
   assert.ok(html.includes("Sunflower Adaptive Cycling"));
   assert.ok(html.includes("Prairie Handcycle"));
-  assert.ok(html.includes("42 mi away"));
+  assert.ok(!html.includes("42 mi away"));
   assert.ok(html.includes("Wichita, KS"));
   assert.equal(html.split("Sunflower Adaptive Cycling").length - 1, 1);
   assert.equal((html.match(/class="nearby"/g) || []).length, 1);
@@ -243,7 +243,7 @@ test("programPageTemplate: nearby is one horizontal rail, not a wrapping grid or
   assert.ok(nearbyHtml.includes("pcard-sport") && nearbyHtml.includes("Adaptive Cycling"));
   assert.ok(nearbyHtml.includes("pcard-name") && nearbyHtml.includes("Sunflower Adaptive Cycling"));
   assert.ok(nearbyHtml.includes("pcard-loc") && nearbyHtml.includes("Wichita, KS"));
-  assert.ok(nearbyHtml.includes("pcard-line") && nearbyHtml.includes("42 mi away"));
+  assert.ok(!nearbyHtml.includes("42 mi away"));
   assert.ok(!html.includes("See all"));
   assert.ok(!html.includes("frow-sub"));
   const empty = programPageTemplate(KANSAS, { nearby: [] });
@@ -259,16 +259,16 @@ test("programPageTemplate: dense rows only when present; desc only when present"
   assert.ok(!bare.includes(">Phone</span>"));
   const full = programPageTemplate({ ...ORG, desc: "Two divisions, chairs provided.", email: "hi@example.org", phone: "(303) 555-0148", cost: "Free" });
   assert.ok(full.includes("Two divisions, chairs provided."));
-  assert.ok(full.includes('href="mailto:hi@example.org"'));
-  assert.ok(full.includes("555-0148"));
+  assert.ok(!full.includes('href="mailto:hi@example.org"'));
+  assert.ok(!full.includes("555-0148"));
   assert.ok(full.includes(">Cost</span>") && full.includes("Free"));
 });
 
 test("programPageTemplate: no website falls back — never 'No website on file.'", () => {
   const html = programPageTemplate({ ...ORG, website: null, phone: "303-555-0100" });
   assert.ok(!html.includes("No website on file."));
-  assert.ok(html.includes("Call"));
-  assert.ok(html.includes("tel:3035550100"));
+  assert.ok(!html.includes("Call"));
+  assert.ok(!html.includes("tel:3035550100"));
 });
 
 test("programPageTemplate: no sport we can name wears the multi-sport image, still has name + loc", () => {

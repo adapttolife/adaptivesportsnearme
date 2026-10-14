@@ -115,6 +115,7 @@ export function trayAction(org) {
 // 1–3 action pills: Visit (or Open listing) + Call + Email when we have them.
 export function trayPills(org) {
   const pills = [trayAction(org)];
+/*
   const phone = org && org.phone && String(org.phone).trim();
   if (phone) {
     pills.push({ href: `tel:${phone.replace(/[^\d+]/g, "")}`, label: "Call", external: false });
@@ -122,6 +123,7 @@ export function trayPills(org) {
   if (org && org.email) {
     pills.push({ href: `mailto:${org.email}`, label: "Email", external: false });
   }
+*/
   return pills;
 }
 
