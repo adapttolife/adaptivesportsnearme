@@ -3046,6 +3046,25 @@ body.has-sticky .ft {
 	color: var(--graphite);
 }
 
+/* The site name in the footer is the brand, not a page heading (one h1 per page);
+   it keeps the h1 look, including the sharp display face. */
+.ft-brand .ft-name {
+	font-size: var(--fs-h1);
+	font-weight: 900;
+	letter-spacing: -0.03em;
+	line-height: 1.02;
+	color: var(--ink);
+	text-wrap: balance;
+}
+
+[data-look="sharp"] .ft-brand .ft-name {
+	font-family: "Sofia Sans Extra Condensed", "Sofia Sans", Arial, sans-serif;
+	text-transform: uppercase;
+	letter-spacing: -0.01em;
+	line-height: 0.92;
+	font-size: calc(var(--fs-h1) * 1.25);
+}
+
 .ft-cols {
 	display: grid;
 	grid-template-columns: minmax(0, 1fr);

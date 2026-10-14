@@ -985,7 +985,7 @@ export function drawerList(active = "") {
 export function footer() {
   const near = nearHref();
   const li = (label, href) => `<li><a href="${esc(href)}">${esc(label)}</a></li>`;
-  return `<div class="ft"><div class="ft-brand"><img src="/app/logo.svg" alt="" width="40" height="40"><div class="ft-brand-text"><h1>Adaptive Sports Near Me</h1><p>A free directory of adaptive sports programs, grants and events. We list programs; we don't run them.</p></div></div>
+  return `<div class="ft"><div class="ft-brand"><img src="/app/logo.svg" alt="" width="40" height="40"><div class="ft-brand-text"><p class="ft-name">Adaptive Sports Near Me</p><p>A free directory of adaptive sports programs, grants and events. We list programs; we don't run them.</p></div></div>
 <div class="ft-cols"><div><h2 class="ft-h">Find</h2><ul>${near ? li("Programs near you", near) : `<li><button type="button" data-open="search">Programs near you</button></li>`}${li("Sports", "/sports")}${li("States", "/states")}${li("Grants", "/grants")}${li("Events", "/events")}</ul></div>
 <div><h2 class="ft-h">Help build this</h2><ul>${li("Add a program", "/add/program")}${li("Add an event", "/add/event")}${li("Claim your program", "/help")}${li("How we check listings", "/about")}</ul></div>
 <div><h2 class="ft-h">More</h2><ul>${li("Get the letter", "/letter")}${li("Resources", "/resources")}${li("Accessibility", "/about")}</ul></div></div>
@@ -1051,10 +1051,23 @@ export function announce(text) {
   setTimeout(() => { el.textContent = text; }, 40);
 }
 
-let OV = null; // { name, el, release, onClose }
+let OV = null; // { name, el, release, onClose, pushed }
+/* Phone Back closes a sheet. A sheet opened by a tap (search, sports, menu, the
+   Verified story) gets its own history entry at the same address (pushSheet), so
+   Back closes it instead of leaving the page. Closing it by hand steps that entry
+   back off; following a link from inside it reuses the entry, so Back from the next
+   page lands on this page in one press. Sheets that live in the address (?map=1,
+   ?share=1, ?open=) keep their own handling. */
+let SHEET_ENTRY = false, SKIP_POP = false;
+/** Give the open sheet its own Back step (once per entry; a sheet opened from a sheet shares it). */
+export function pushSheet() {
+  if (!OV) return;
+  OV.pushed = true;
+  if (!SHEET_ENTRY) { history.pushState({ asnmSheet: OV.name }, "", location.href); SHEET_ENTRY = true; }
+}
 /** Generic dialog in #overlay. Escape and [data-close] close it. Returns the dialog element. */
 export function showOverlay({ name = "dialog", html = "", cls = "", labelledby, label, onClose, scrim = true } = {}) {
-  closeOverlay({ restore: false });
+  closeOverlay({ restore: false, mode: "swap" });
   const host = $("#overlay");
   host.innerHTML = `${scrim ? '<div class="ov-scrim" data-close></div>' : ""}<div class="ov ${esc(cls)}" role="dialog" aria-modal="true"${labelledby ? ` aria-labelledby="${esc(labelledby)}"` : ""}${label ? ` aria-label="${esc(label)}"` : ""}>${html}</div>`;
   const el = $(".ov", host);
@@ -1063,10 +1076,13 @@ export function showOverlay({ name = "dialog", html = "", cls = "", labelledby, 
   OV = { name, el, release, onClose };
   return el;
 }
-/** Closes whichever overlay is open (search, sports sheet, drawer or a view's dialog). */
-export function closeOverlay({ restore = true } = {}) {
+/** Closes whichever overlay is open (search, sports sheet, drawer or a view's dialog).
+    mode: "dismiss" (closed by hand: its Back step goes too), "nav" (a page change follows
+    and reuses the step), "swap" (another sheet takes its place), "pop" (Back already left it). */
+export function closeOverlay({ restore = true, mode = "dismiss" } = {}) {
   if (!OV) return;
   const o = OV; OV = null;
+  if (o.pushed && SHEET_ENTRY && mode === "dismiss") { SHEET_ENTRY = false; SKIP_POP = true; history.back(); }
   if (o.name === "menu") {
     const d = $("#drawer"), s = $("#drawer-scrim");
     d.classList.remove("is-on"); s.classList.remove("is-on");
@@ -1081,7 +1097,7 @@ export function closeOverlay({ restore = true } = {}) {
 }
 
 export function openDrawer() {
-  closeOverlay({ restore: false });
+  closeOverlay({ restore: false, mode: "swap" });
   const d = $("#drawer"), s = $("#drawer-scrim");
   $(".dr-list", d).innerHTML = drawerList(ACTIVE);
   d.hidden = false; d.inert = false;
@@ -1194,6 +1210,15 @@ const qsKey = (q, skip) => Object.keys(q).filter((k) => !skip.has(k)).sort().map
 export function nav(href, { replace = false } = {}) {
   const to = appHref(href);
   if (!to) { if (href) location.href = href; return; }
+  // A link followed from a sheet takes over the sheet's Back step instead of adding one.
+  if (SHEET_ENTRY) {
+    SHEET_ENTRY = false;
+    if (here() === to && !replace) { SKIP_POP = true; history.back(); if (OV) closeOverlay({ restore: false, mode: "nav" }); return; }
+    PENDING = true;
+    if (replace) REPLACING = true;
+    history.replaceState(null, "", to); render();
+    return;
+  }
   PENDING = true;
   if (replace) { REPLACING = true; history.replaceState(history.state, "", to); render(); }
   else if (here() === to) { REPLACING = true; render({ force: true }); }
@@ -1313,7 +1338,7 @@ async function render({ force = false } = {}) {
 
   if (CUR) { try { sessionStorage.setItem("asnm.scroll." + CUR.hash, String(Math.round(scrollY))); } catch (_) {} }
   if (CLEANUP) { try { CLEANUP(); } catch (e) { console.error(e); } CLEANUP = null; }
-  if (OV) closeOverlay({ restore: false });
+  if (OV) closeOverlay({ restore: false, mode: "nav" });
 
   BAR_HREF = null; // only a bar rendered on this page may hand its links to the sports sheet
   const ctx = { name: name || "notFound", path, params: m ? m.params : {}, query, data, isBack, isFirst: FIRST };
@@ -1629,7 +1654,7 @@ async function submitWhere(form, input, sport) {
   const dym = $(".dym", form); if (dym) { dym.hidden = true; dym.innerHTML = ""; }
   const text = input.value.trim();
   if (!text && !sport) { say("Enter a city, state, or ZIP code."); return; }
-  if (!text && sport) { closeOverlay({ restore: false }); nav("/sports/" + sport); return; }
+  if (!text && sport) { closeOverlay({ restore: false, mode: "nav" }); nav("/sports/" + sport); return; }
   const w = await resolvePlace(text);
   if (w.kind === "none") {
     say(`We couldn't find "${text}". Try a city and state, like Springfield, IL, or a 5-digit ZIP code.`);
@@ -1638,7 +1663,7 @@ async function submitWhere(form, input, sport) {
     return;
   }
   say(null);
-  closeOverlay({ restore: false });
+  closeOverlay({ restore: false, mode: "nav" });
   if (w.kind === "state") nav("/states/" + w.state + (sport ? "?s=" + encodeURIComponent(sport) : ""));
   else nav("/near/" + encodeURIComponent(w.label) + (sport ? "?s=" + encodeURIComponent(sport) : ""));
 }
@@ -1679,9 +1704,10 @@ function boot() {
     if (op) {
       e.preventDefault();
       const w = op.getAttribute("data-open");
-      if (w === "search") openSearch(op.hasAttribute("data-place") ? { place: op.getAttribute("data-place") || "", sport: op.getAttribute("data-sport") || "" } : await pagePreset());
-      else if (w === "sports") openSportsSheet(op.hasAttribute("data-sheet-bar") ? BAR_HREF : null);
+      if (w === "search") await openSearch(op.hasAttribute("data-place") ? { place: op.getAttribute("data-place") || "", sport: op.getAttribute("data-sport") || "" } : await pagePreset());
+      else if (w === "sports") await openSportsSheet(op.hasAttribute("data-sheet-bar") ? BAR_HREF : null);
       else if (w === "menu") openDrawer();
+      pushSheet();
       return;
     }
     if (t.closest("[data-close]")) { e.preventDefault(); closeOverlay(); return; }
@@ -1725,7 +1751,7 @@ function boot() {
       try {
         const w = await locateMe();
         if (status) status.textContent = "";
-        closeOverlay({ restore: false });
+        closeOverlay({ restore: false, mode: "nav" });
         nav("/near/" + encodeURIComponent(w.label) + (sport ? "?s=" + encodeURIComponent(sport) : ""));
       } catch (_) {
         if (status) { status.classList.add("is-err"); status.innerHTML = icon("circle-alert", 18) + "<span>We couldn't get your location. Type your city instead.</span>"; }
@@ -1766,8 +1792,8 @@ function boot() {
       const to = !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && !a.target && !a.hasAttribute("download") ? appHref(href) : null;
       if (to) {
         e.preventDefault();
-        if (a.hasAttribute("data-replace")) { if (closeAfter) closeOverlay({ restore: false }); nav(to, { replace: true }); return; }
-        if (closeAfter || (OV && OV.name === "menu")) closeOverlay({ restore: false });
+        if (a.hasAttribute("data-replace")) { if (closeAfter) closeOverlay({ restore: false, mode: "nav" }); nav(to, { replace: true }); return; }
+        if (closeAfter || (OV && OV.name === "menu")) closeOverlay({ restore: false, mode: "nav" });
         if (a.closest("#main")) { try { sessionStorage.setItem("asnm.last." + here(), href); } catch (_) {} }
         // A map opened from a page is a pushed entry, so closing it can step Back (views/map.js).
         if (/[?&]map=1(&|$)/.test(to)) window.__asnmMapFrom = here();
@@ -1811,7 +1837,14 @@ function boot() {
     if (e.key === "Escape" && OV) { e.preventDefault(); closeOverlay(); }
   });
 
-  window.addEventListener("popstate", () => render());
+  window.addEventListener("popstate", () => {
+    if (SKIP_POP) { SKIP_POP = false; return; }          // our own step back after a sheet closed
+    if (SHEET_ENTRY) {
+      SHEET_ENTRY = false;
+      if (OV && OV.pushed) { closeOverlay({ mode: "pop" }); return; }   // Back closes the sheet; the page stays
+    }
+    render();
+  });
   // Links from the prototype used #/ addresses; they open the same page at its real address.
   if (location.hash.startsWith("#/")) history.replaceState(null, "", location.hash.slice(1));
   render();

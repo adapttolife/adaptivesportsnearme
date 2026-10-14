@@ -348,6 +348,7 @@ export function mount(root, ctx) {
     if (e.target.closest("[data-verify]")) {
       e.preventDefault();
       const el = A.showOverlay({ name: "verify", cls: "ov--sheet v-program-verify", labelledby: "vx-h", html: verifyHtml(p) });
+      A.pushSheet();   // phone Back closes the story instead of leaving the listing
       const h = el.querySelector("#vx-h"); if (h) h.focus();
       return;
     }
