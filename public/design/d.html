@@ -1,0 +1,486 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#ffffff">
+<title>Adaptive Sports Near Me · Direction D</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700;9..40,800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#121212;--ink2:#3c3b38;--muted:#6c6a66;--line:#ebe8e3;--bg:#ffffff;--soft:#f7f6f3;
+  --accent:#d9480f;--accent-ink:#b83c0b;--ok:#1a6b3c;
+  --court:#f6dcc8;--racquet:#e3eccb;--field:#d3e6cf;--snow:#d4e3f2;--water:#cde8e5;--trail:#f0e2c8;--calm:#e4dcf0;--house:#ebe6de;
+  --r:18px;--sb:280px;--max:1240px;--tap:44px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{font-family:"DM Sans",system-ui,sans-serif;font-size:16px;line-height:1.5;color:var(--ink);background:var(--bg);-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px;border-radius:8px}
+img{display:block;max-width:100%}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+
+/* ---------- top: beta, header, search pill ---------- */
+.beta{background:var(--ink);color:#fff;font-size:13.5px;text-align:center;padding:8px 14px}
+.beta a{font-weight:700;text-decoration:underline;text-underline-offset:2px}
+header.top{position:sticky;top:0;z-index:30;background:rgba(255,255,255,.96);backdrop-filter:saturate(160%) blur(10px);border-bottom:1px solid var(--line)}
+.hrow{display:flex;align-items:center;gap:6px;height:60px;padding:0 10px;max-width:var(--max);margin:0 auto}
+.iconbtn{width:var(--tap);height:var(--tap);display:grid;place-items:center;border-radius:12px}
+.iconbtn:hover{background:var(--soft)}
+.brand{display:flex;align-items:center;gap:8px;font-weight:800;letter-spacing:-.02em;font-size:17px;margin-right:auto;white-space:nowrap;min-width:0}
+@media (max-width:420px){.brand{font-size:15px;gap:6px}.brand img{width:24px;height:24px}.addbtn{padding:0 12px}}
+.brand img{width:28px;height:28px}
+.addbtn{display:flex;align-items:center;gap:6px;height:40px;padding:0 14px;border-radius:99px;background:var(--accent);color:#fff;font-weight:700;font-size:15px}
+.searchpill{display:flex;align-items:center;gap:12px;width:calc(100% - 20px);max-width:720px;margin:4px auto 10px;padding:10px 16px;border:1px solid var(--line);border-radius:99px;box-shadow:0 3px 14px rgba(0,0,0,.08);background:#fff;text-align:left}
+.searchpill svg{flex:none}
+.searchpill b{display:block;font-size:15px}
+.searchpill span{display:block;font-size:13px;color:var(--muted)}
+/* sport rail */
+.rail{display:flex;gap:4px;overflow-x:auto;padding:4px 10px 0;scrollbar-width:none;max-width:var(--max);margin:0 auto}
+.rail::-webkit-scrollbar{display:none}
+.rail a{flex:none;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:68px;padding:6px 6px 10px;color:var(--muted);font-size:12.5px;font-weight:600;border-bottom:2px solid transparent;opacity:.75}
+.rail a img{width:30px;height:30px}
+.rail a.on,.rail a:hover{color:var(--ink);border-bottom-color:var(--ink);opacity:1}
+
+/* ---------- layout ---------- */
+.shell{max-width:var(--max);margin:0 auto}
+main{padding:16px 16px 120px;min-width:0}
+@media (min-width:1100px){
+  .shell{display:grid;grid-template-columns:var(--sb) 1fr}
+  aside.drawer{position:sticky !important;top:61px;transform:none !important;height:calc(100vh - 61px);box-shadow:none !important;border-right:1px solid var(--line);visibility:visible !important;z-index:1 !important;width:auto !important}
+  .scrim,.drawer .close{display:none !important}
+  .menubtn{display:none}
+  main{padding:20px 28px 120px}
+}
+h2.sec{font-size:22px;letter-spacing:-.02em;font-weight:800;margin:30px 0 4px}
+p.secsub{color:var(--muted);font-size:15px;margin-bottom:12px}
+.sechead{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+.sechead a{font-weight:700;font-size:15px;text-decoration:underline;text-underline-offset:3px;white-space:nowrap}
+
+/* ---------- poster: the picture every listing gets ---------- */
+.poster{position:relative;aspect-ratio:16/10;border-radius:var(--r);overflow:hidden;background:var(--house)}
+.poster::before{content:"";position:absolute;inset:0;background:radial-gradient(120% 100% at 15% 0%,rgba(255,255,255,.55),rgba(255,255,255,0) 60%)}
+.poster .pmap{position:absolute;right:3%;top:5%;height:90%;width:auto;aspect-ratio:1;overflow:visible}
+.poster .pmap path{fill:#fff;stroke:#1d1d1b;stroke-width:.7;stroke-linejoin:round}
+.poster .pmap path.statewide{fill:#fff6ef}
+.poster .pmap .halo{fill:var(--accent);opacity:.2;transform-box:fill-box;transform-origin:center;animation:breathe 2.8s ease-out infinite}
+@keyframes breathe{0%{transform:scale(.55);opacity:.38}70%{transform:scale(1.5);opacity:0}100%{transform:scale(1.5);opacity:0}}
+@media (prefers-reduced-motion:reduce){.poster .pmap .halo{animation:none}}
+.poster .pmap .dot{fill:var(--accent);stroke:#fff;stroke-width:1.1}
+.poster .psym{position:absolute;left:5%;bottom:7%;width:34%;max-width:120px}
+.poster .ptag{position:absolute;left:12px;top:12px;font-size:12px;font-weight:700;letter-spacing:.02em;background:rgba(255,255,255,.92);border-radius:99px;padding:4px 10px}
+.v1{filter:saturate(1.08) brightness(.985)}.v2{filter:saturate(.92) brightness(1.015)}
+.t-court{background:var(--court)}.t-racquet{background:var(--racquet)}.t-field{background:var(--field)}.t-snow{background:var(--snow)}.t-water{background:var(--water)}.t-trail{background:var(--trail)}.t-calm{background:var(--calm)}.t-house{background:var(--house)}
+
+/* ---------- cards ---------- */
+.feed{display:grid;grid-template-columns:1fr;gap:26px}
+@media (min-width:640px){.feed{grid-template-columns:repeat(2,1fr);gap:28px 20px}}
+@media (min-width:1000px){.feed{grid-template-columns:repeat(3,1fr)}}
+@media (min-width:1400px){.feed{grid-template-columns:repeat(4,1fr)}}
+.card{display:block}
+.card .ct{margin-top:10px}
+.card .nm{font-weight:700;font-size:16.5px;line-height:1.3}
+.card:hover .nm{text-decoration:underline;text-underline-offset:2px}
+.card .mt{color:var(--ink2);font-size:15px;margin-top:2px}
+.card .tr{font-size:14px;margin-top:2px;color:var(--muted)}
+.card .tr .ok{color:var(--ok);font-weight:700}
+.hrail{display:flex;gap:14px;overflow-x:auto;scroll-snap-type:x mandatory;scroll-padding:0 16px;margin:0 -16px;padding:2px 16px 6px;scrollbar-width:none}
+.hrail::-webkit-scrollbar{display:none}
+.hrail>*{flex:0 0 78%;max-width:300px;scroll-snap-align:start}
+@media (min-width:640px){.hrail>*{flex-basis:44%}}
+@media (min-width:1100px){.hrail{margin:0;padding:2px 0 6px}.hrail>*{flex-basis:calc((100% - 42px)/4)}}
+/* grant poster */
+.gposter{aspect-ratio:16/10;border-radius:var(--r);padding:16px 18px;display:flex;flex-direction:column;justify-content:space-between;position:relative;overflow:hidden}
+.gposter.ath{background:#ffe3c2}.gposter.prog{background:#dfe9d6}
+.gposter .who{font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:rgba(0,0,0,.55)}
+.gposter .amt{font-size:clamp(24px,6vw,30px);font-weight:800;letter-spacing:-.03em;line-height:1.05}
+.gposter .ring{position:absolute;right:-18px;bottom:-18px;width:110px;height:110px;border-radius:50%;border:16px solid rgba(255,255,255,.55)}
+
+/* ---------- home blocks ---------- */
+.hero h1{font-size:clamp(30px,7.4vw,52px);line-height:1.05;letter-spacing:-.04em;font-weight:800;max-width:16ch}
+.hero p{color:var(--ink2);font-size:clamp(16.5px,2vw,19px);margin-top:10px;max-width:46ch}
+.locbtns{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:var(--tap);padding:0 18px;border-radius:12px;font-weight:700;font-size:15.5px}
+.btn.dark{background:var(--ink);color:#fff}.btn.line{border:1.5px solid var(--ink)}.btn.acc{background:var(--accent);color:#fff}
+.stats{display:flex;gap:18px;flex-wrap:wrap;margin-top:16px;color:var(--ink2);font-size:14.5px}
+.stats b{color:var(--ink)}
+.tilecard{border:1px solid var(--line);border-radius:22px;padding:16px;background:var(--soft)}
+.tiles{display:grid;grid-template-columns:repeat(11,1fr);gap:4px;max-width:640px;margin:0 auto}
+.tile{aspect-ratio:1;border-radius:7px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:800;font-size:clamp(10px,2.6vw,15px);line-height:1}
+.tile small{font-weight:600;font-size:clamp(8px,1.9vw,11px);margin-top:2px;opacity:.85}
+.b0{background:#efece6;color:#8a867f}.b1{background:#fbe0cc;color:#2b2b2b}.b2{background:#f5b98f;color:#1d1d1d}.b3{background:#e98551;color:#fff}.b4{background:#d9480f;color:#fff}.b5{background:#9a3209;color:#fff}
+
+/* ---------- results / state ---------- */
+.phead h1{font-size:clamp(28px,6vw,44px);letter-spacing:-.035em;line-height:1.08;font-weight:800}
+.phead p{color:var(--ink2);margin-top:6px}
+.crumb{font-size:14px;color:var(--muted);margin-bottom:6px}.crumb a{text-decoration:underline;text-underline-offset:2px}
+.chips{display:flex;gap:8px;overflow-x:auto;margin:14px -16px 6px;padding:0 16px 4px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chips a,.chips button{flex:none;display:inline-flex;align-items:center;gap:6px;height:40px;padding:0 14px;border:1px solid var(--line);border-radius:99px;font-size:14.5px;font-weight:600;white-space:nowrap;background:#fff}
+.chips .on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.statehero{display:grid;grid-template-columns:1fr;gap:16px;align-items:center}
+.statehero .big{aspect-ratio:1;max-width:340px;width:100%;justify-self:center;background:var(--soft);border-radius:24px;padding:10px}
+.statehero .big svg{width:100%;height:100%}
+.statehero .big path{fill:#fff;stroke:#1d1d1b;stroke-width:.6}
+.statehero .big .dot{fill:var(--accent);stroke:#fff;stroke-width:.9}
+@media (min-width:760px){.statehero{grid-template-columns:1.2fr 1fr}}
+.group-h{font-size:13px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:30px 0 12px}
+.empty{border:1.5px dashed #d8d4cd;border-radius:var(--r);padding:20px;color:var(--ink2)}
+
+/* ---------- listing ---------- */
+.lhero{margin:-16px -16px 0;position:relative}
+.lhero .poster{border-radius:0;aspect-ratio:16/11}
+@media (min-width:760px){.lhero{margin:0}.lhero .poster{border-radius:24px;aspect-ratio:21/9}}
+.lhero .float{position:absolute;top:12px;display:flex;gap:8px}
+.lhero .ptag{left:auto;right:12px;top:auto;bottom:12px}
+.lhero .float.l{left:12px}.lhero .float.r{right:12px}
+.lhero .float a,.lhero .float button{width:40px;height:40px;border-radius:50%;background:#fff;display:grid;place-items:center;box-shadow:0 2px 8px rgba(0,0,0,.14)}
+.lbody{max-width:760px}
+.lbody h1{font-size:clamp(26px,6vw,40px);letter-spacing:-.03em;line-height:1.1;font-weight:800;margin-top:18px}
+.lbody .sub{color:var(--ink2);font-size:17px;margin-top:4px}
+.hl{margin-top:18px;border-top:1px solid var(--line)}
+.hl div{display:flex;gap:14px;align-items:flex-start;padding:16px 0;border-bottom:1px solid var(--line)}
+.hl svg{flex:none;margin-top:2px}
+.hl b{display:block}.hl span{color:var(--ink2);font-size:15px}
+.desc{margin-top:18px;font-size:17px;color:var(--ink2)}
+.lsec{margin-top:28px}
+.lsec h2{font-size:20px;font-weight:800;letter-spacing:-.02em;margin-bottom:10px}
+.where{display:grid;grid-template-columns:120px 1fr;gap:16px;align-items:center;background:var(--soft);border-radius:var(--r);padding:12px}
+.where svg{width:120px;height:120px}
+.where path{fill:#fff;stroke:#1d1d1b;stroke-width:.7}.where .dot{fill:var(--accent);stroke:#fff;stroke-width:1.2}
+.about{background:var(--soft);border-radius:var(--r);padding:18px}
+.about p{color:var(--ink2);margin-top:4px}
+.about .fix{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
+.actionbar{position:fixed;left:0;right:0;bottom:0;z-index:40;background:#fff;border-top:1px solid var(--line);padding:10px 16px calc(10px + env(safe-area-inset-bottom));display:flex;align-items:center;gap:12px}
+.actionbar .info{margin-right:auto;line-height:1.25}
+.actionbar .info b{display:block;font-size:15px}
+.actionbar .info span{font-size:13px;color:var(--muted)}
+.actionbar .btn{min-height:50px;padding:0 22px;font-size:16px}
+@media (min-width:1100px){.actionbar{left:var(--sb)}}
+
+/* ---------- floating map button + map view ---------- */
+.fab{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(22px + env(safe-area-inset-bottom));z-index:35;display:flex;align-items:center;gap:8px;height:50px;padding:0 20px;border-radius:99px;background:var(--ink);color:#fff;font-weight:700;box-shadow:0 6px 20px rgba(0,0,0,.22)}
+@media (min-width:1100px){.fab{left:calc(50% + var(--sb)/2)}}
+.mapview{position:fixed;inset:0;z-index:50;background:#e9eef2;display:none}
+.mapview.open{display:block}
+#map{position:absolute;inset:0}
+.mapbar{position:absolute;top:calc(12px + env(safe-area-inset-top));left:12px;right:12px;display:flex;gap:8px;z-index:2}
+.mapbar .pill{flex:1;display:flex;align-items:center;gap:10px;height:48px;padding:0 16px;background:#fff;border-radius:99px;box-shadow:0 3px 12px rgba(0,0,0,.15);font-weight:700}
+.mapbar .round{width:48px;height:48px;border-radius:50%;background:#fff;display:grid;place-items:center;box-shadow:0 3px 12px rgba(0,0,0,.15)}
+.mapcard{position:absolute;left:12px;right:12px;bottom:calc(84px + env(safe-area-inset-bottom));z-index:2;background:#fff;border-radius:20px;box-shadow:0 8px 28px rgba(0,0,0,.2);display:none;grid-template-columns:120px 1fr;gap:12px;padding:10px;max-width:520px;margin:0 auto}
+.mapcard.on{display:grid}
+.mapcard .poster{aspect-ratio:1;border-radius:14px}
+.mapcard .nm{font-weight:800;font-size:16px;line-height:1.25}
+.mapcard .mt{color:var(--ink2);font-size:14px;margin-top:2px}
+.mapcard a.go{display:inline-block;margin-top:8px;font-weight:700;text-decoration:underline}
+.mapfab{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(22px + env(safe-area-inset-bottom));z-index:2;height:50px;padding:0 20px;border-radius:99px;background:var(--ink);color:#fff;font-weight:700;display:flex;align-items:center;gap:8px;box-shadow:0 6px 20px rgba(0,0,0,.22)}
+.maplegend{position:absolute;right:12px;top:calc(72px + env(safe-area-inset-top));z-index:2;background:#fff;border-radius:12px;padding:8px 10px;font-size:12.5px;color:var(--ink2);box-shadow:0 2px 8px rgba(0,0,0,.12)}
+
+/* ---------- drawer (Reddit-style left panel) ---------- */
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:59;opacity:0;pointer-events:none;transition:opacity .2s}
+.scrim.on{opacity:1;pointer-events:auto}
+aside.drawer{position:fixed;top:0;bottom:0;left:0;width:min(86vw,320px);background:#fff;z-index:60;transform:translateX(-102%);transition:transform .22s ease;overflow-y:auto;padding:10px 10px 40px;box-shadow:6px 0 24px rgba(0,0,0,.12);visibility:hidden}
+aside.drawer.on{transform:none;visibility:visible}
+.drawer .dhead{display:flex;align-items:center;justify-content:space-between;padding:4px 4px 10px}
+.drawer h3{font-size:12px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin:16px 10px 6px}
+.drawer a.di{display:flex;align-items:center;gap:12px;min-height:var(--tap);padding:0 10px;border-radius:12px;font-weight:600;font-size:15.5px}
+.drawer a.di:hover,.drawer a.di.on{background:var(--soft)}
+.drawer a.di img{width:24px;height:24px}
+.drawer a.di .n{margin-left:auto;font-size:13px;color:var(--muted);font-weight:600}
+.drawer details summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;min-height:var(--tap);padding:0 10px;border-radius:12px;font-weight:700}
+.drawer details summary::-webkit-details-marker{display:none}
+.drawer details[open] summary .chev{transform:rotate(180deg)}
+.drawer .states a{font-weight:500}
+/* search sheet */
+.sheet{position:fixed;inset:0;z-index:70;background:#fff;display:none;flex-direction:column}
+.sheet.on{display:flex}
+.sheet .shead{display:flex;align-items:center;gap:8px;padding:10px;border-bottom:1px solid var(--line)}
+.sheet .sbody{padding:18px 16px;overflow-y:auto;flex:1;max-width:720px;width:100%;margin:0 auto}
+.sheet label{display:block;font-size:13px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:6px 0 8px}
+.sheet input{width:100%;height:56px;border:1.5px solid #d4d0c9;border-radius:14px;padding:0 16px;font:inherit;font-size:18px}
+.sheet input:focus{outline:none;border-color:var(--ink)}
+.sportgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:4px}
+.sportgrid button{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 4px;border:1.5px solid var(--line);border-radius:14px;font-size:13px;font-weight:600}
+.sportgrid button img{width:34px;height:34px}
+.sportgrid button.on{border-color:var(--ink);background:var(--soft)}
+.sheet .sfoot{padding:12px 16px calc(12px + env(safe-area-inset-bottom));border-top:1px solid var(--line);display:flex;gap:10px;justify-content:space-between;align-items:center}
+footer.foot{border-top:1px solid var(--line);padding:24px 16px 120px;color:var(--muted);font-size:14px;max-width:var(--max);margin:0 auto}
+</style>
+</head>
+<body>
+<div class="beta">New and still growing. <a href="#help">Help us build it</a></div>
+<header class="top">
+  <div class="hrow">
+    <button class="iconbtn menubtn" id="menuBtn" aria-label="Open menu" aria-expanded="false"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+    <a class="brand" href="#"><img src="/emblems/athlete.svg" alt=""><span>Adaptive Sports Near Me</span></a>
+    <a class="addbtn" href="/?add=program" aria-label="Add a program"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg><span class="lg">Add</span></a>
+  </div>
+  <button class="searchpill" id="searchPill" aria-label="Search programs"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><span><b id="pillTitle">Where do you want to play?</b><span id="pillSub">Any sport · ZIP, city or state</span></span></button>
+  <nav class="rail" id="rail" aria-label="Sports"></nav>
+</header>
+<div class="shell">
+  <aside class="drawer" id="drawer" aria-label="Menu"></aside>
+  <main id="app" tabindex="-1"></main>
+</div>
+<div class="scrim" id="scrim"></div>
+<button class="fab" id="fab"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2-6-2zM9 4v14M15 6v14"/></svg>Map</button>
+<section class="mapview" id="mapview" aria-label="Map">
+  <div id="map"></div>
+  <div class="mapbar"><button class="round" id="mapBack" aria-label="Back to the list"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg></button><div class="pill" id="mapTitle">All programs</div></div>
+  <div class="maplegend"><span style="color:var(--accent)">●</span> a program in a city &nbsp;·&nbsp; <b>IL 19</b> programs across a state</div>
+  <div class="mapcard" id="mapCard"></div>
+  <button class="mapfab" id="mapList"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>List</button>
+</section>
+<div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-label="Search">
+  <div class="shead"><button class="iconbtn" id="sheetClose" aria-label="Close search"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button><b>Search</b></div>
+  <div class="sbody">
+    <label for="where">Where</label>
+    <input id="where" placeholder="ZIP code, city or state" autocomplete="postal-code">
+    <div class="locbtns"><button class="btn line" id="useLoc"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>Use my location</button></div>
+    <label style="margin-top:22px">Sport</label>
+    <div class="sportgrid" id="sportGrid"></div>
+  </div>
+  <div class="sfoot"><button id="sheetClear" style="text-decoration:underline;font-weight:700">Clear</button><button class="btn acc" id="sheetGo" style="min-height:52px;padding:0 28px">Search</button></div>
+</div>
+<footer class="foot">A free, open directory from Adapt To Life, a 501(c)(3) nonprofit. Every listing says whether a person has verified it. No logins, no fees, never a money ask.</footer>
+
+<script src="/listing-art.js"></script>
+<script src="/design/core.js"></script>
+<script>
+const P = window.Proto, E = P.esc, L = window.ListingArt;
+let D, SH, CENTERS, PLACES = null, ZCTA = null, ART = new Set();
+const TONE = { court: "t-court", racquet: "t-racquet", field: "t-field", snow: "t-snow", water: "t-water", trail: "t-trail", calm: "t-calm", house: "t-house" };
+const RAIL = ["all", "tennis", "basketball", "soccer", "baseball", "skiing", "sledhockey", "swimming", "rowing", "cycling", "golf", "pickleball", "rugby", "football", "climbing", "equine-therapy", "veteran-meetup", "art-therapy", "multi"];
+// Alec's sport art (public/emblems/sports/<key>.svg) wins over the older athlete + prop set.
+const SYM = (k) => ART.has(k) ? `/emblems/sports/${k}.svg` : k === "all" || k === "multi" || !L.SYMBOLS.includes(k) ? "/emblems/athlete.svg" : `/emblems/athlete-${k}.svg`;
+const label = (k) => k === "all" ? "All" : (P.FAMILY_LABEL[k] || k).replace(" and recreation", "").replace(" and softball", "").replace(" and snow sports", "").replace(" and paddling", "");
+const qs = () => Object.fromEntries(new URLSearchParams(location.hash.slice(1)));
+const setq = (o) => { const p = new URLSearchParams(); for (const [k, v] of Object.entries(o)) if (v) p.set(k, v); location.hash = p.toString(); };
+
+/* ---------- geography ---------- */
+const R = 3958.8, rad = (d) => d * Math.PI / 180;
+function miles(a, b) { const dLat = rad(b[0] - a[0]), dLng = rad(b[1] - a[1]); const h = Math.sin(dLat / 2) ** 2 + Math.cos(rad(a[0])) * Math.cos(rad(b[0])) * Math.sin(dLng / 2) ** 2; return 2 * R * Math.asin(Math.sqrt(h)); }
+const normName = (s) => String(s || "").toLowerCase().replace(/\./g, "").replace(/\bsaint\b/g, "st").replace(/\bfort\b/g, "ft").replace(/\s+/g, " ").trim();
+async function locate(where) {
+  if (!where) return null;
+  if (where.coords) return where;
+  const raw = String(where.q || "").trim();
+  const zip = raw.match(/^\d{5}/);
+  if (zip) { ZCTA = ZCTA || await fetch("/design/zcta.json").then((r) => r.json()); const c = ZCTA[zip[0]]; if (c) where.coords = c; return where; }
+  if (where.city) {
+    PLACES = PLACES || await fetch("/design/places.json").then((r) => r.json());
+    const c = PLACES[where.state + "|" + normName(where.city)]; if (c) where.coords = c;
+  }
+  return where;
+}
+
+/* ---------- the poster: state outline, the program's dot, its sport ---------- */
+function poster(p, { tag = false, big = false } = {}) {
+  const art = L.art(p);
+  const sym = ART.has(p.sportKey) ? `/emblems/sports/${p.sportKey}.svg` : art.src;
+  const shape = SH[p.state] || SH.US;
+  const dot = p.px != null;
+  const statewide = !dot && p.state;
+  const svg = `<svg class="pmap" viewBox="0 0 100 100" aria-hidden="true"><path class="${statewide ? "statewide" : ""}" d="${shape}"/>${dot ? `<circle class="halo" cx="${p.px}" cy="${p.py}" r="${big ? 7 : 8}"/><circle class="dot" cx="${p.px}" cy="${p.py}" r="${big ? 3 : 3.6}"/>` : ""}</svg>`;
+  const t = tag ? `<span class="ptag">${statewide ? "Statewide" : !p.state ? "Nationwide" : E(P.cleanCity(p.city) || "")}</span>` : (statewide ? `<span class="ptag">Statewide</span>` : !p.state ? `<span class="ptag">Nationwide</span>` : "");
+  let h = 0; for (const ch of String(p.id)) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  return `<div class="poster ${TONE[art.tone] || "t-house"} v${h % 3}">${svg}<img class="psym" src="${sym}" alt="" decoding="async">${t}</div>`;
+}
+const trust = (p) => p.verified ? `<span class="ok">✓ Verified</span>` : `Not yet verified`;
+function card(p) {
+  const d = p.dist != null ? `About ${p.dist < 1 ? "1" : Math.round(p.dist)} mi · ` : "";
+  return `<a class="card" href="#p=${p.id}">${poster(p)}<div class="ct"><div class="nm">${E(p.name)}</div><div class="mt">${E(p.familyLabel)} · ${E(P.place(p))}</div><div class="tr">${d}${trust(p)}</div></div></a>`;
+}
+function grantCard(g) {
+  return `<a class="card" href="/grants/${g.id}"><div class="gposter ${g.audience === "program" ? "prog" : "ath"}"><span class="who">${g.audience === "program" ? "For programs" : "For athletes"}</span><span class="amt">${E(g.amount && !/^varies$/i.test(g.amount) ? g.amount : (g.source || "Grant"))}</span><span class="ring"></span></div><div class="ct"><div class="nm">${E(g.name)}</div><div class="mt">${E(g.deadline || (g.open ? "Open now" : ""))}</div></div></a>`;
+}
+function tileMap() {
+  const GRID = {ME:[10,0],WI:[5,1],VT:[9,1],NH:[10,1],WA:[0,2],ID:[1,2],MT:[2,2],ND:[3,2],MN:[4,2],IL:[5,2],MI:[6,2],NY:[8,2],MA:[9,2],OR:[0,3],NV:[1,3],WY:[2,3],SD:[3,3],IA:[4,3],IN:[5,3],OH:[6,3],PA:[7,3],NJ:[8,3],CT:[9,3],RI:[10,3],CA:[0,4],UT:[1,4],CO:[2,4],NE:[3,4],MO:[4,4],KY:[5,4],WV:[6,4],VA:[7,4],MD:[8,4],DE:[9,4],AZ:[1,5],NM:[2,5],KS:[3,5],AR:[4,5],TN:[5,5],NC:[6,5],SC:[7,5],DC:[8,5],OK:[3,6],LA:[4,6],MS:[5,6],AL:[6,6],GA:[7,6],HI:[0,7],AK:[1,7],TX:[3,7],FL:[8,7]};
+  const b = (n) => n >= 90 ? 5 : n >= 55 ? 4 : n >= 25 ? 3 : n >= 10 ? 2 : n >= 1 ? 1 : 0;
+  return `<div class="tiles">${Object.entries(GRID).map(([st, [c, r]]) => { const n = (D.byState[st] || []).length; return `<a class="tile b${b(n)}" style="grid-column:${c + 1};grid-row:${r + 1}" href="#st=${st}" aria-label="${E(P.STATE_NAMES[st])}: ${n} programs">${st}<small>${n}</small></a>`; }).join("")}</div>`;
+}
+
+/* ---------- views ---------- */
+function home() {
+  const ver = D.items.filter((p) => p.verified).length;
+  const recent = D.items.filter((p) => p.verified && p.px != null).sort((a, b) => String(b.lastChecked || "").localeCompare(String(a.lastChecked || ""))).slice(0, 10);
+  const grants = D.grants.filter((g) => g.open).slice(0, 8);
+  const statewide = D.items.filter((p) => p.geo === "state" && p.verified).slice(0, 8);
+  return `<section class="hero"><h1>Adaptive sports, near you.</h1><p>Programs, teams and clinics for athletes with disabilities in every state. Free, no account.</p>
+    <div class="locbtns"><button class="btn dark" data-loc>Use my location</button><button class="btn line" data-search>Search a ZIP or city</button></div>
+    <div class="stats"><span><b>${D.items.length.toLocaleString()}</b> programs</span><span><b>${ver}</b> verified by a person</span><span><b>50</b> states and DC</span></div></section>
+  <div class="sechead"><h2 class="sec">Tap your state</h2></div><p class="secsub">Darker means more programs. Every state is still growing.</p>
+  <div class="tilecard">${tileMap()}</div>
+  <div class="sechead"><h2 class="sec">Recently verified</h2><a href="#near=&v=1">See all</a></div><p class="secsub">A person on our team checked these against an official source.</p>
+  <div class="hrail">${recent.map(card).join("")}</div>
+  <div class="sechead"><h2 class="sec">Help paying for it</h2><a href="/grants">All ${D.grants.length}</a></div><p class="secsub">Grants for equipment, training and travel.</p>
+  <div class="hrail">${grants.map(grantCard).join("")}</div>
+  <div class="sechead"><h2 class="sec">Programs that serve a whole state</h2></div><p class="secsub">No single address: they work across their state.</p>
+  <div class="hrail">${statewide.map(card).join("")}</div>
+  <section id="help"><h2 class="sec">Help build this</h2><p class="secsub">Know a program we are missing, or see something wrong? Every listing takes a suggestion, and a person reads it.</p><div class="locbtns"><a class="btn acc" href="/?add=program">Add a program</a><a class="btn line" href="/resources">Resources</a></div></section>`;
+}
+async function results(q) {
+  const fam = q.s || "";
+  const where = q.near ? P.parsePlace(q.near, D.items) : null;
+  if (where) { where.q = q.near; await locate(where); }
+  let pool = D.items.filter((p) => (!fam || p.family === fam) && (!q.v || p.verified));
+  let title = fam ? label(fam) : "All programs", sub = "", body = "";
+  if (where) {
+    const st = P.STATE_NAMES[where.state];
+    title = `${fam ? label(fam) + " near " : "Near "}${E(where.label)}`;
+    const inState = pool.filter((p) => p.state === where.state);
+    if (where.coords) {
+      const placed = pool.filter((p) => p.lat != null).map((p) => ({ ...p, dist: miles(where.coords, [p.lat, p.lng]) })).filter((p) => p.dist <= 60).sort((a, b) => a.dist - b.dist);
+      const sw = inState.filter((p) => p.lat == null);
+      sub = `${placed.length} within about 60 miles · ${sw.length} more that serve ${E(st)}`;
+      body = (placed.length ? `<div class="feed">${placed.map(card).join("")}</div>` : `<div class="empty">Nothing we can place within 60 miles yet. The programs below serve all of ${E(st)}.</div>`)
+        + (sw.length ? `<div class="group-h">Across ${E(st)} · ${sw.length}</div><div class="feed">${sw.sort(P.byTrust).map(card).join("")}</div>` : "");
+    } else {
+      sub = `${inState.length} programs in ${E(st)}`;
+      body = `<div class="feed">${inState.sort(P.byTrust).map(card).join("")}</div>`;
+    }
+    state.mapFocus = { coords: where.coords, state: where.state };
+  } else {
+    sub = `${pool.length.toLocaleString()} programs across the country`;
+    body = `<div class="feed">${pool.sort(P.byTrust).slice(0, 48).map(card).join("")}</div>`;
+    state.mapFocus = null;
+  }
+  return `<div class="phead"><div class="crumb"><a href="#">Home</a></div><h1>${title}</h1><p>${sub}</p></div>
+   <div class="chips"><button class="${q.v ? "" : "on"}" data-set="v=">All</button><button class="${q.v ? "on" : ""}" data-set="v=1">✓ Verified only</button><button data-search>${fam ? E(label(fam)) : "Any sport"} ▾</button></div>${body}`;
+}
+function statePage(st, fam) {
+  const all = D.byState[st] || [];
+  const list = all.filter((p) => !fam || p.family === fam);
+  const counts = {}; for (const p of all) counts[p.family] = (counts[p.family] || 0) + 1;
+  const dots = all.filter((p) => p.px != null);
+  state.mapFocus = { state: st };
+  const placed = list.filter((p) => p.px != null).sort(P.byTrust), rest = list.filter((p) => p.px == null).sort(P.byTrust);
+  return `<div class="statehero"><div class="phead"><div class="crumb"><a href="#">Home</a> / States</div><h1>${E(P.STATE_NAMES[st])}</h1><p>${all.length} programs · ${all.filter((p) => p.verified).length} verified by a person · ${dots.length} on the map</p>
+     <div class="chips"><a class="${fam ? "" : "on"}" href="#st=${st}">All ${all.length}</a>${Object.entries(counts).sort((a, b) => b[1] - a[1]).map(([k, n]) => `<a class="${k === fam ? "on" : ""}" href="#st=${st}&s=${k}">${E(label(k))} ${n}</a>`).join("")}</div></div>
+    <div class="big"><svg viewBox="0 0 100 100" aria-label="Map of ${E(P.STATE_NAMES[st])} with ${dots.length} programs"><path d="${SH[st]}"/>${dots.map((p) => `<circle class="dot" cx="${p.px}" cy="${p.py}" r="2.2"/>`).join("")}</svg></div></div>
+   ${placed.length ? `<div class="group-h">In a city · ${placed.length}</div><div class="feed">${placed.map(card).join("")}</div>` : ""}
+   ${rest.length ? `<div class="group-h">Across ${E(P.STATE_NAMES[st])} · ${rest.length}</div><div class="feed">${rest.map(card).join("")}</div>` : ""}
+   ${!list.length ? `<div class="empty">Nothing here yet. <a href="/?add=program"><b>Add a program you know.</b></a></div>` : ""}`;
+}
+function listing(id) {
+  const p = D.items.find((x) => x.id === id); if (!p) return "<h1>Not found</h1>";
+  state.mapFocus = p.lat != null ? { coords: [p.lat, p.lng], state: p.state } : { state: p.state };
+  const near = p.lat != null ? D.items.filter((x) => x.id !== p.id && x.lat != null).map((x) => ({ ...x, dist: miles([p.lat, p.lng], [x.lat, x.lng]) })).filter((x) => x.dist < 80).sort((a, b) => a.dist - b.dist).slice(0, 8)
+    : (D.byState[p.state] || []).filter((x) => x.id !== p.id && x.family === p.family).slice(0, 8);
+  const ico = (d) => `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
+  const hl = [
+    p.verified ? [ico('<path d="M20 6L9 17l-5-5"/>'), "Verified by our team", "A person checked it against an official source. Schedules change, so check before you go."] : [ico('<circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/>'), "Not yet verified", "No one on our team has confirmed it yet. Check the website or call first."],
+    p.cost ? [ico('<path d="M12 2v20M17 6H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>'), "Cost", E(p.cost)] : null,
+    p.ages ? [ico('<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>'), "Ages", E(p.ages)] : null,
+    p.equipment ? [ico('<path d="M14 7l-5 5 5 5"/>'), "Equipment", E(p.equipment)] : null,
+  ].filter(Boolean);
+  const wsvg = `<svg viewBox="0 0 100 100" aria-hidden="true"><path d="${SH[p.state] || SH.US}"/>${p.px != null ? `<circle class="dot" cx="${p.px}" cy="${p.py}" r="4"/>` : ""}</svg>`;
+  return `<div class="lhero">${poster(p, { tag: true, big: true })}<div class="float l"><a href="javascript:history.back()" aria-label="Back"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg></a></div><div class="float r"><button aria-label="Share" onclick="navigator.share&&navigator.share({title:document.title,url:location.href})"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 3v13M7 8l5-5 5 5M5 14v6h14v-6"/></svg></button></div></div>
+  <div class="lbody"><h1>${E(p.name)}</h1><p class="sub">${E(p.familyLabel)} · ${E(P.place(p))}</p>
+   <div class="hl">${hl.map(([i, b, s]) => `<div>${i}<span><b>${b}</b><span>${s}</span></span></div>`).join("")}</div>
+   ${p.desc ? `<p class="desc">${E(p.desc)}</p>` : ""}
+   <div class="lsec"><h2>Where you'll play</h2><div class="where">${wsvg}<div><b>${E(P.place(p))}</b><p style="color:var(--ink2);font-size:15px;margin-top:4px">${p.px != null ? "Shown at the city. Check the website for the exact place." : p.state ? "This program serves the whole state." : "This program works nationwide."}</p></div></div></div>
+   <div class="lsec about"><h2>About this listing</h2><p>Spotted something out of date? A person reads every suggestion before anything changes.</p><div class="fix"><a class="btn line" href="/?update=${p.id}">Suggest an update</a><a class="btn line" href="/?update=${p.id}&rel=run">I run this program</a></div></div>
+   ${near.length ? `<div class="lsec"><h2>${p.lat != null ? "More near " + E(P.cleanCity(p.city) || P.STATE_NAMES[p.state]) : "More in " + E(P.STATE_NAMES[p.state] || "")}</h2><div class="hrail">${near.map(card).join("")}</div></div>` : ""}</div>
+  <div class="actionbar"><div class="info"><b>${E(p.familyLabel)}</b><span>${p.verified ? "✓ Verified by our team" : "Not yet verified"}</span></div>${p.website ? `<a class="btn acc" href="${E(p.website)}" target="_blank" rel="noopener">Visit website</a>` : `<a class="btn acc" href="/?update=${p.id}">Suggest a website</a>`}</div>`;
+}
+
+/* ---------- drawer, rail, sheet ---------- */
+function drawer() {
+  const fams = Object.entries(D.families).sort((a, b) => b[1] - a[1]);
+  const st = Object.entries(D.byState).sort((a, b) => P.STATE_NAMES[a[0]].localeCompare(P.STATE_NAMES[b[0]]));
+  return `<div class="dhead"><a class="brand" href="#"><img src="/emblems/athlete.svg" alt=""><span>Near Me</span></a><button class="iconbtn close" data-close aria-label="Close menu"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+   <a class="di" href="#">🏠 Home</a><a class="di" href="#" data-map>🗺️ Map</a><a class="di" href="/grants">💵 Funding <span class="n">${D.grants.length}</span></a><a class="di" href="/events">📅 Events</a><a class="di" href="/resources">📚 Resources</a>
+   <h3>Sports</h3>${fams.slice(0, 10).map(([k, n]) => `<a class="di" href="#near=&s=${k}"><img src="${SYM(k)}" alt="">${E(label(k))}<span class="n">${n}</span></a>`).join("")}
+   <details><summary>More sports <span class="chev">⌄</span></summary>${fams.slice(10).map(([k, n]) => `<a class="di" href="#near=&s=${k}"><img src="${SYM(k)}" alt="">${E(label(k))}<span class="n">${n}</span></a>`).join("")}</details>
+   <h3>States</h3><details class="states"><summary>All 50 states and DC <span class="chev">⌄</span></summary>${st.map(([c, l]) => `<a class="di" href="#st=${c}">${E(P.STATE_NAMES[c])}<span class="n">${l.length}</span></a>`).join("")}</details>
+   <h3>Get involved</h3><a class="di" href="/?add=program">➕ Add a program</a><a class="di" href="#help">🤝 Help build this</a><a class="di" href="/?about=verify">✓ How we verify</a>`;
+}
+function rail(active) { return RAIL.filter((k) => k === "all" || D.families[k]).map((k) => `<a class="${(active || "all") === k ? "on" : ""}" href="${k === "all" ? "#" : "#near=" + encodeURIComponent(qs().near || "") + "&s=" + k}"><img src="${SYM(k)}" alt="">${E(label(k))}</a>`).join(""); }
+let sheetSport = "";
+function openSheet() {
+  const q = qs(); sheetSport = q.s || "";
+  document.getElementById("where").value = q.near || "";
+  document.getElementById("sportGrid").innerHTML = ["", ...RAIL.filter((k) => k !== "all" && D.families[k])].map((k) => `<button data-sport="${k}" class="${k === sheetSport ? "on" : ""}"><img src="${SYM(k || "all")}" alt="">${k ? E(label(k)) : "Any sport"}</button>`).join("");
+  document.getElementById("sheet").classList.add("on"); setTimeout(() => document.getElementById("where").focus(), 50);
+}
+const closeSheet = () => document.getElementById("sheet").classList.remove("on");
+function toggleDrawer(on) { document.getElementById("drawer").classList.toggle("on", on); document.getElementById("scrim").classList.toggle("on", on); document.getElementById("menuBtn").setAttribute("aria-expanded", on); }
+
+/* ---------- map ---------- */
+const state = { mapFocus: null, map: null };
+function loadMapLibre() { return window.maplibregl ? Promise.resolve() : new Promise((ok) => { const l = document.createElement("link"); l.rel = "stylesheet"; l.href = "/assets/vendor/maplibre-gl.css"; document.head.appendChild(l); const s = document.createElement("script"); s.src = "/assets/vendor/maplibre-gl.js"; s.onload = ok; document.head.appendChild(s); }); }
+async function openMap() {
+  document.getElementById("mapview").classList.add("open");
+  const q = qs(); const fam = q.s || "";
+  document.getElementById("mapTitle").textContent = (fam ? label(fam) : "All programs") + (state.mapFocus && state.mapFocus.state ? " · " + P.STATE_NAMES[state.mapFocus.state] : "");
+  await loadMapLibre();
+  const pts = D.items.filter((p) => p.lat != null && (!fam || p.family === fam));
+  const sw = {}; for (const p of D.items) if (p.lat == null && p.state && (!fam || p.family === fam)) sw[p.state] = (sw[p.state] || 0) + 1;
+  const fc = { type: "FeatureCollection", features: pts.map((p) => ({ type: "Feature", properties: { id: p.id }, geometry: { type: "Point", coordinates: [p.lng, p.lat] } })) };
+  const swfc = { type: "FeatureCollection", features: Object.entries(sw).map(([st, n]) => ({ type: "Feature", properties: { label: st + " " + n, st }, geometry: { type: "Point", coordinates: [CENTERS[st][1], CENTERS[st][0]] } })) };
+  if (!state.map) {
+    state.map = new maplibregl.Map({ container: "map", style: "https://tiles.openfreemap.org/styles/positron", center: [-96, 38.5], zoom: 3.1, attributionControl: { compact: true } });
+    await new Promise((ok) => state.map.on("load", ok));
+    state.map.addSource("sw", { type: "geojson", data: swfc });
+    state.map.addLayer({ id: "sw", type: "symbol", source: "sw", layout: { "text-field": ["get", "label"], "text-font": ["Noto Sans Bold"], "text-size": 12, "text-allow-overlap": false }, paint: { "text-color": "#121212", "text-halo-color": "#fff", "text-halo-width": 6 } });
+    state.map.addSource("pts", { type: "geojson", data: fc, cluster: true, clusterRadius: 44, clusterMaxZoom: 11 });
+    state.map.addLayer({ id: "cl", type: "circle", source: "pts", filter: ["has", "point_count"], paint: { "circle-color": "#d9480f", "circle-radius": ["step", ["get", "point_count"], 15, 10, 19, 30, 24], "circle-stroke-color": "#fff", "circle-stroke-width": 3 } });
+    state.map.addLayer({ id: "cln", type: "symbol", source: "pts", filter: ["has", "point_count"], layout: { "text-field": ["get", "point_count_abbreviated"], "text-font": ["Noto Sans Bold"], "text-size": 13 }, paint: { "text-color": "#fff" } });
+    state.map.addLayer({ id: "pt", type: "circle", source: "pts", filter: ["!", ["has", "point_count"]], paint: { "circle-color": "#d9480f", "circle-radius": 8, "circle-stroke-color": "#fff", "circle-stroke-width": 2.5 } });
+    state.map.on("click", "cl", (e) => { const f = e.features[0]; state.map.getSource("pts").getClusterExpansionZoom(f.properties.cluster_id).then((z) => state.map.easeTo({ center: f.geometry.coordinates, zoom: z })); });
+    state.map.on("click", "pt", (e) => showMapCard(e.features[0].properties.id));
+    state.map.on("click", "sw", (e) => { location.hash = "st=" + e.features[0].properties.st; closeMap(); });
+    for (const id of ["cl", "pt", "sw"]) { state.map.on("mouseenter", id, () => state.map.getCanvas().style.cursor = "pointer"); state.map.on("mouseleave", id, () => state.map.getCanvas().style.cursor = ""); }
+  } else { state.map.getSource("pts").setData(fc); state.map.getSource("sw").setData(swfc); state.map.resize(); }
+  const f = state.mapFocus;
+  if (f && f.coords) state.map.jumpTo({ center: [f.coords[1], f.coords[0]], zoom: 8.5 });
+  else if (f && f.state && CENTERS[f.state]) state.map.jumpTo({ center: [CENTERS[f.state][1], CENTERS[f.state][0]], zoom: 5.4 });
+}
+function showMapCard(id) { const p = D.items.find((x) => x.id === id); const el = document.getElementById("mapCard"); el.innerHTML = `${poster(p)}<div><div class="nm">${E(p.name)}</div><div class="mt">${E(p.familyLabel)} · ${E(P.place(p))}</div><div class="mt">${trust(p)}</div><a class="go" href="#p=${p.id}" data-closemap>Open listing</a></div>`; el.classList.add("on"); }
+function closeMap() { document.getElementById("mapview").classList.remove("open"); document.getElementById("mapCard").classList.remove("on"); }
+
+/* ---------- render + wiring ---------- */
+async function render() {
+  const q = qs(), el = document.getElementById("app");
+  const isListing = !!q.p;
+  el.innerHTML = q.p ? listing(q.p) : q.st ? statePage(q.st, q.s || "") : ("near" in q || q.s || q.v) ? await results(q) : home();
+  document.getElementById("rail").innerHTML = rail(q.s);
+  document.getElementById("rail").style.display = isListing ? "none" : "";
+  document.getElementById("searchPill").style.display = isListing ? "none" : "";
+  document.getElementById("fab").style.display = isListing ? "none" : "";
+  const w = q.near ? P.parsePlace(q.near, D.items) : null;
+  document.getElementById("pillTitle").textContent = w ? w.label : q.st ? P.STATE_NAMES[q.st] : "Where do you want to play?";
+  document.getElementById("pillSub").textContent = (q.s ? label(q.s) : "Any sport") + (w || q.st ? "" : " · ZIP, city or state");
+  toggleDrawer(false); closeMap(); window.scrollTo(0, 0);
+}
+document.addEventListener("click", (e) => {
+  const t = e.target.closest("[data-search],#searchPill,[data-close],#menuBtn,#scrim,[data-map],#fab,#mapBack,#mapList,[data-sport],#sheetClose,#sheetGo,#sheetClear,[data-loc],#useLoc,[data-set],[data-closemap]");
+  if (!t) return;
+  if (t.matches("[data-search],#searchPill")) { e.preventDefault(); openSheet(); }
+  else if (t.id === "menuBtn") toggleDrawer(true);
+  else if (t.matches("[data-close],#scrim")) toggleDrawer(false);
+  else if (t.matches("[data-map],#fab")) { e.preventDefault(); toggleDrawer(false); openMap(); }
+  else if (t.matches("#mapBack,#mapList")) closeMap();
+  else if (t.matches("[data-closemap]")) closeMap();
+  else if (t.matches("[data-sport]")) { sheetSport = t.dataset.sport; document.querySelectorAll("#sportGrid button").forEach((b) => b.classList.toggle("on", b === t)); }
+  else if (t.id === "sheetClose") closeSheet();
+  else if (t.id === "sheetClear") { document.getElementById("where").value = ""; sheetSport = ""; document.querySelectorAll("#sportGrid button").forEach((b) => b.classList.remove("on")); }
+  else if (t.id === "sheetGo") { closeSheet(); setq({ near: document.getElementById("where").value.trim(), s: sheetSport }); if (!document.getElementById("where").value.trim() && !sheetSport) location.hash = "near="; }
+  else if (t.matches("[data-loc],#useLoc")) { closeSheet(); navigator.geolocation ? navigator.geolocation.getCurrentPosition(async (pos) => { const c = [pos.coords.latitude, pos.coords.longitude]; let best = null, bd = 1e9; for (const [st, cc] of Object.entries(CENTERS)) { const d = miles(c, cc); if (d < bd) { bd = d; best = st; } } location.hash = "st=" + best; }, () => openSheet()) : openSheet(); }
+  else if (t.matches("[data-set]")) { const q = qs(); const [k, v] = t.dataset.set.split("="); q[k] = v; setq(q); if (!q.near && !q.s && !q.v) location.hash = "near="; }
+});
+document.getElementById("where").addEventListener("keydown", (e) => { if (e.key === "Enter") document.getElementById("sheetGo").click(); });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") { closeSheet(); toggleDrawer(false); closeMap(); } });
+Promise.all([P.load(), fetch("/design/states.json").then((r) => r.json()), fetch("/emblems/sports/index.json").then((r) => r.ok ? r.json() : []).catch(() => [])]).then(([d, s, art]) => {
+  D = d; SH = s.shapes; CENTERS = s.centers; ART = new Set(art);
+  document.getElementById("drawer").innerHTML = drawer();
+  render(); window.addEventListener("hashchange", render);
+});
+</script>
+</body>
+</html>

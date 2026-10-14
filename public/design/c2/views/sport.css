@@ -1,0 +1,56 @@
+/* Sport community page (6.5). Scoped under .v-sport. WP-D. */
+
+/* Community header: on tablet and up the name sits beside the avatar */
+@media (min-width: 768px) {
+  .v-sport .ch-body { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: 20px; }
+  .v-sport .ch-av { grid-column: 1; grid-row: 1; }
+  .v-sport .ch-body h1 { grid-column: 2; grid-row: 1; align-self: end; margin: 0 0 2px; }
+  .v-sport .ch-line, .v-sport .ch-count, .v-sport .ch-acts { grid-column: 1 / -1; }
+  .v-sport .ch-line { margin-top: 14px; }
+}
+
+.v-sport .sec--first { margin-top: 32px; }
+
+/* Place tools: chips, select fallback, small tile map */
+.v-sport .sp-where { margin-top: 24px; }
+.v-sport .pchips { position: relative; margin-inline: calc(-1 * var(--gut)); overflow-x: auto; scrollbar-width: none; scroll-snap-type: x proximity; scroll-padding-inline: var(--gut);
+  -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 32px), transparent); mask-image: linear-gradient(90deg, #000 calc(100% - 32px), transparent); }
+.v-sport .pchips::-webkit-scrollbar { display: none; }
+.v-sport .pchips-in { display: flex; gap: 8px; width: max-content; padding: 4px var(--gut) 6px; }
+.v-sport .pchips .chip { scroll-snap-align: start; }
+.v-sport .pchips .chip-n { color: var(--graphite); font-weight: 500; }
+.v-sport .pchips .chip.is-cur .chip-n { color: var(--ink); font-weight: 700; }
+@media (min-width: 768px) { .v-sport .pchips { margin-inline: 0; } .v-sport .pchips-in { padding-inline: 2px 32px; } }
+
+.v-sport .stsel { margin-top: 16px; max-width: 440px; }
+.v-sport .stsel label { display: block; font-size: 16px; font-weight: 600; color: var(--graphite); margin-bottom: 6px; }
+.v-sport .stsel-row { display: flex; gap: 8px; }
+.v-sport .stsel select { min-height: 48px; flex: 1; min-width: 0; }
+.v-sport .stsel .btn { flex: none; }
+
+.v-sport .sp-map { display: none; }
+@media (min-width: 600px) {
+  .v-sport .sp-map { display: block; margin-top: 24px; padding: 20px; background: var(--mist); border-radius: var(--r-l); }
+  .v-sport .sp-map-h { font-size: 18px; margin-bottom: 14px; }
+  .v-sport .sp-map .tmap { max-width: none; }
+}
+
+/* Groups: the shared .grp (app.css), then "See all N in X". */
+.v-sport .grp-all { display: inline-flex; align-items: center; gap: 6px; min-height: 48px; margin-top: 4px; font-size: 16px; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; color: var(--ink); }
+.v-sport .grp-all .ic { flex: none; }
+.v-sport .grp-all:hover { text-decoration-thickness: 2px; }
+@media (min-width: 768px) { .v-sport .grp-all { grid-column: 2; margin: 0 0 12px; justify-self: start; } }
+
+/* Grants tab */
+.v-sport .grp-h--g { display: flex; margin-top: 8px; padding: 0 0 8px; font-size: var(--fs-h4); flex-direction: row; border: 0; }
+.v-sport .glist + .grp-h--g { margin-top: 32px; }
+.v-sport .grp-sub { font-size: 17px; color: var(--graphite); margin: -2px 0 12px; }
+
+/* Header count link (remembered place) */
+.v-sport .ch-count .sp-count { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding-block: 0; }
+.v-sport .ch-count .sp-count .ic { flex: none; }
+/* Veterans: a black link band to the veteran-owned business directories. */
+.v-sport .vet-res { display: grid; grid-template-columns: 1fr auto; grid-template-rows: auto auto; align-items: center; gap: 2px 12px; margin-top: 20px; padding: 16px 18px; background: #1A1A1A; color: #fff; text-decoration: none; border-radius: var(--r-l); }
+.v-sport .vet-res b { font-size: 19px; font-weight: 900; }
+.v-sport .vet-res span { grid-column: 1; font-size: 15px; color: #E7E3DA; }
+.v-sport .vet-res .ic { grid-column: 2; grid-row: 1 / span 2; color: #F6B700; }

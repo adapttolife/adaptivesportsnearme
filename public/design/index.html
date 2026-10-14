@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Redesign · Adaptive Sports Near Me</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,600;9..40,700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:"DM Sans",system-ui,sans-serif;font-size:17px;line-height:1.55;color:#141414;background:#faf9f6;-webkit-font-smoothing:antialiased}
+.wrap{max-width:980px;margin:0 auto;padding:44px 20px 70px}
+h1{font-size:clamp(30px,5vw,46px);letter-spacing:-.03em;line-height:1.08}
+p.lead{color:#3d3c39;margin-top:12px;max-width:60ch}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:30px}
+.card{background:#fff;border:1px solid #e7e5e0;border-radius:18px;padding:22px;display:flex;flex-direction:column;gap:10px}
+.card.rec{border:2px solid #c5430c}
+.tag{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#6b6a66}
+.card.rec .tag{color:#c5430c}
+.card h2{font-size:24px;letter-spacing:-.02em}
+.card p{color:#3d3c39;font-size:16px}
+.card .links{margin-top:auto;display:flex;flex-direction:column;gap:6px;padding-top:6px}
+.card a{font-weight:600;color:#141414}
+.card a.open{display:inline-flex;justify-content:center;align-items:center;min-height:48px;border-radius:12px;background:#141414;color:#fff;text-decoration:none;margin-bottom:4px}
+.card.rec a.open{background:#c5430c}
+@media (max-width:820px){.grid{grid-template-columns:1fr}}
+.why{margin-top:34px;background:#fff;border:1px solid #e7e5e0;border-radius:18px;padding:24px}
+.why h2{font-size:21px}
+.why p,.why li{color:#3d3c39;margin-top:8px}
+.why ul{padding-left:20px}
+.small{font-size:14px;color:#6b6a66;margin-top:24px}
+</style>
+</head>
+<body><div class="wrap">
+<h1>The new Adaptive Sports Near Me</h1>
+<p class="lead">Round three is built around your sport images. Round two, from your notes: Airbnb's cards, Reddit's pull-out menu, phone first, and the map as the thing that makes it ours. Real data throughout: 1,396 listings, 921 verified by a person, 45 grants. No photos anywhere.</p>
+<div class="card rec" style="margin-top:26px"><span class="tag">Round three · built around your sport images · recommended</span><h2>Near You</h2>
+<p>Your athletes lead every screen, each in its sport's color. The first question is where you play, and every answer is honest: in your city, about 25 miles, the rest of your state, then statewide. Every sport and every state gets its own page, every listing has a share card sized for Instagram, and every page works on a phone first.</p>
+<div class="links" style="flex-direction:row;flex-wrap:wrap;gap:10px 18px;align-items:center"><a class="open" href="/design/r3/index.html" style="padding:0 22px">Open the new site</a><a href="/design/r3/index.html#/near/Tampa%2C%20FL">Near Tampa</a><a href="/design/r3/index.html#/sports/tennis">Tennis</a><a href="/design/r3/index.html#/states/FL">Florida</a><a href="/design/r3/index.html#/programs/e29002d5-c892-5753-a6bd-d381220d9d51">A listing</a></div></div>
+<p class="small" style="margin-top:14px">The three concepts it was built from: <a href="/design/r3-nearyou.html">Near You</a> · <a href="/design/r3-gallery.html">Gallery</a> · <a href="/design/r3-clubhouse.html">Clubhouse</a></p>
+<div class="card" style="margin-top:26px"><span class="tag">Round two · D</span><h2>Places</h2>
+<p>Every card's picture is made from the listing itself: its state, a dot where the program is, and its sport. Search a ZIP or city and you get real distances. Tap Map for every program on a real map. The menu slides out from the left.</p>
+<div class="links" style="flex-direction:row;flex-wrap:wrap;gap:10px 18px;align-items:center"><a class="open" href="/design/d.html" style="padding:0 22px">Open D</a><a href="/design/d.html#near=Tampa">Near Tampa</a><a href="/design/d.html#near=Chicago">Near Chicago</a><a href="/design/d.html#st=WI">Wisconsin</a></div></div>
+<div class="card" style="margin-top:14px"><span class="tag">For Alec · sport images</span><h2>The image checklist</h2>
+<p>All 45 sports in the database, most listings first, with the file name for each. Basketball is done and already on the cards in D.</p>
+<div class="links" style="flex-direction:row;flex-wrap:wrap;gap:10px 18px;align-items:center"><a class="open" href="/design/sports.html" style="padding:0 22px">Open the checklist</a></div></div>
+<h2 style="font-size:20px;margin-top:40px">Round one, for comparison</h2>
+<div class="grid">
+  <div class="card"><span class="tag">Direction A</span><h2>Clear</h2><p>Search first. One box asks where you are, and the answer is a clean list. Feels like a well-run public service: familiar, fast and calm.</p>
+    <div class="links"><a class="open" href="/design/a.html">Open A</a><a href="/design/a.html#near=Chicago">Search Chicago</a></div></div>
+  <div class="card"><span class="tag">Direction B</span><h2>Map</h2><p>Tap your state. A tile map of all 50 states is the picture, and it shows where programs are and where we still need help. Search is right under it.</p>
+    <div class="links"><a class="open" href="/design/b.html">Open B</a><a href="/design/b.html#near=Chicago">Search Chicago</a><a href="/design/b.html#st=WI">Wisconsin</a></div></div>
+  <div class="card"><span class="tag">Direction C</span><h2>Index</h2><p>Editorial. Serif type, a one-sentence search, and A to Z indexes of sports and states, like a good reference book. Quiet and distinctive.</p>
+    <div class="links"><a class="open" href="/design/c.html">Open C</a><a href="/design/c.html#near=Chicago">Search Chicago</a></div></div>
+</div>
+<div class="why"><h2>Why D</h2><ul><li>It keeps what you liked: Airbnb cards and a Reddit menu, built for the phone first.</li><li>Every listing gets a picture the day it is added, and the picture tells you something true: where it is and what sport.</li><li>Distances are real now: 836 listings are placed at their city, so "about 6 miles" means something.</li><li>The map is a real map you can pan and zoom, with every program on it.</li></ul></div>
+<div class="why" style="margin-top:14px"><h2>Round one notes: why B led</h2>
+<ul>
+<li>For most people today, "near me" means their state: almost no listing has an exact location yet. The map gets them there in one tap.</li>
+<li>The map is the one picture we will never be waiting on, and it gets better on its own as listings fill in.</li>
+<li>It is honest about coverage, which turns gaps into an invitation: "help us fill in your state."</li>
+<li>I would keep A's search box and its "in your city, then elsewhere in your state" list on B's state pages.</li>
+</ul>
+<p>Whichever you pick, the real build will be pages the server renders, one for every state, sport and listing, so Google can find "adaptive sports near me" in each state. Everything from the last round stays underneath: verified labels, suggest an update, grants, and Karen's veteran business page.</p></div>
+<p class="small">Prototypes for review, not the live site. Data is today's public directory.</p>
+</div></body></html>
