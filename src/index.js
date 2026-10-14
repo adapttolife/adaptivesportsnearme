@@ -1,3 +1,4 @@
+import { servePage, robotsTxt, sitemapXml } from "./pages.js";
 import { safeNewsletterSubscribe } from './newsletter.js';
 import { queueFormConfirmation } from './email.js';
 import { notifyIntake } from './intake.js';
@@ -36,6 +37,7 @@ import { handleAdmin } from "./admin.js";
 import { runLane } from "./pipeline.js";
 import { json, text } from "./http.js";
 import { cachedDirectoryResponse } from "./read-cache.js";
+import { loadPlaces } from "./geo.js";
 import {
   readProfileCookie, signProfileId, serializeProfileCookie, clearProfileCookie,
   getValidSportKeys, getProfileById, getProfileByEmail, createProfile, updateProfile,
@@ -73,11 +75,11 @@ const application = {
       if (limited) return limited;
       return handleSubscribe(request, env, ctx);
     }
-    if (url.pathname === "/api/submit-program") {
+    if (url.pathname === "/api/submit-program" || url.pathname === "/api/submit-event") {
       if (request.method !== "POST") return json({ ok: false, error: "Method not allowed" }, 405);
       const limited = await formLimited(request, env, 'Submissions are temporarily unavailable.');
       if (limited) return limited;
-      return handleSubmitProgram(request, env, ctx);
+      return handleSubmitProgram(request, env, ctx, { event: url.pathname === "/api/submit-event" });
     }
     if (url.pathname === "/api/profile") {
       if (request.method === "POST") return handleProfileUpsert(request, env, ctx);
@@ -115,7 +117,8 @@ const application = {
     if (env.DB && request.method === "GET") {
       try {
         if (url.pathname === "/api/directory") {
-          return json({ ok: true, ...(await directorySnapshot(env.DB)) }, 200, API_CACHE);
+          const places = await loadPlaces(env.ASSETS);
+          return json({ ok: true, ...(await directorySnapshot(env.DB, { places })) }, 200, API_CACHE);
         }
         if (url.pathname === "/api/programs") {
           return json({ ok: true, ...(await listPrograms(env.DB, url.searchParams, { assets: env.ASSETS })) }, 200, API_CACHE);
@@ -167,61 +170,22 @@ const application = {
       return handleBlogPost(url, env, decodeURIComponent(blogSlug[1]));
     }
 
-    // Shareable program page — server-rendered so a curl / a pasted link shows
-    // the same photo-hero sheet as the in-app detail (name, city/state, website, source).
-    const programPath = url.pathname.match(PROGRAM_ID_RE);
-    if (programPath && env.DB) {
+    // The site's pages (the 2026-10 design): one app shell, a real URL per page,
+    // the page's own title, description and canonical, a 404 for a listing that
+    // does not exist. See src/pages.js.
+    if (url.pathname === "/robots.txt") {
+      return text(robotsTxt(env), 200, "text/plain; charset=utf-8", "public, max-age=3600");
+    }
+    if (url.pathname === "/sitemap.xml") {
       try {
-        const record = await getOrg(env.DB, programPath[1]);
-        if (!record) return text(programNotFoundTemplate({ site: url.origin }), 404, "text/html; charset=utf-8");
-        const nearby = await listSameSportNearby(env.DB, record, 6);
-        return text(programPageTemplate(record, { site: url.origin, nearby }), 200, "text/html; charset=utf-8", API_CACHE);
+        return text(await sitemapXml(env), 200, "application/xml; charset=utf-8", "public, max-age=3600");
       } catch (err) {
-        console.error("program page error:", err);
-        return text(programNotFoundTemplate({ site: url.origin }), 500, "text/html; charset=utf-8");
+        console.error("sitemap error:", err);
+        return text("", 503, "application/xml; charset=utf-8");
       }
     }
-
-    const grantPath = url.pathname.match(GRANT_ID_RE);
-    if (grantPath && env.DB) {
-      try {
-        const record = await getGrant(env.DB, grantPath[1]);
-        if (!record) return text(grantNotFoundTemplate({ site: url.origin }), 404, "text/html; charset=utf-8");
-        const nearby = await listOtherGrants(env.DB, record, 6);
-        return text(grantPageTemplate(record, { site: url.origin, nearby }), 200, "text/html; charset=utf-8", API_CACHE);
-      } catch (err) {
-        console.error("grant page error:", err);
-        return text(grantNotFoundTemplate({ site: url.origin }), 500, "text/html; charset=utf-8");
-      }
-    }
-
-    // Resources: static lists of directories other people keep (Karen,
-    // 2026-10-08: veteran-owned businesses by state). No database needed.
-    if (url.pathname === "/resources" || url.pathname === "/resources/") {
-      return text(resourcesIndexTemplate({ site: url.origin }), 200, "text/html; charset=utf-8", API_CACHE);
-    }
-    if (url.pathname === VETERAN_BUSINESS_PATH || url.pathname === VETERAN_BUSINESS_PATH + "/") {
-      return text(veteranBusinessPageTemplate({ site: url.origin }), 200, "text/html; charset=utf-8", API_CACHE);
-    }
-
-    // Sample listings use slugs rather than D1 UUIDs. Load the shell so its
-    // route parser can select them on direct visits, just as it does on clicks.
-    // UUID requests with a DB have already used the server-rendered routes above.
-    if (/^\/(programs|grants)\/[a-z0-9]+(?:-[a-z0-9]+)*\/?$/i.test(url.pathname)) {
-      return env.ASSETS.fetch(new Request(new URL("/", url), request));
-    }
-
-    // /maps is the map explorer's real URL — same app, booted into the map.
-    if (url.pathname === "/maps" || url.pathname === "/maps/") {
-      return env.ASSETS.fetch(new Request(new URL("/", url), request));
-    }
-    // /profile and /events are real URLs for their sections — same mechanism as
-    // /maps. /events is also where the RSS feed's item links land.
-    if (/^\/(profile|events|grants|sports|directory)\/?$/.test(url.pathname) ||
-      /^\/sports\/(basketball|tennis|pickleball|rugby|football|baseball|cycling|sledhockey|skiing|waterskiing|goalball)\/?$/.test(url.pathname) ||
-      /^\/directory\/(sports|programs|providers|events|equipment|grants|resources)\/?$/.test(url.pathname)) {
-      return env.ASSETS.fetch(new Request(new URL("/", url), request));
-    }
+    const page = await servePage(request, env, url);
+    if (page) return page;
 
     // Everything else: the static site.
     return env.ASSETS.fetch(request);
@@ -317,6 +281,7 @@ async function subscribeToBeehiiv(env, email, campaign, extra = {}) {
 // this request (best-effort) or, failing that, by the scheduled sweepIntake.
 // Airtable is retired: nothing reads the old Agent Inbox base, so nothing writes it.
 export const PROGRAM_INTAKE_KIND = "program";
+export const EVENT_INTAKE_KIND = "event";
 const LISTING_ID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const LISTING_RELATIONS = new Set(["run", "attend", "other"]);
 const PROGRAM_SID_RE = /^[A-Za-z0-9-]{8,64}$/;
@@ -332,7 +297,7 @@ export async function programSubmissionId(sid, email, payload) {
   return "program:" + Array.from(new Uint8Array(digest), (x) => x.toString(16).padStart(2, "0")).join("");
 }
 
-async function handleSubmitProgram(request, env, ctx) {
+async function handleSubmitProgram(request, env, ctx, opts = {}) {
   const data = await readBody(request);
   if (data === null) return json({ ok: false, error: "Could not read your submission." }, 400);
 
@@ -346,19 +311,32 @@ async function handleSubmitProgram(request, env, ctx) {
   // new program: lid names the listing, rel says who is asking (rel=run is the
   // program itself, the route to Verified). A person reads both before anything
   // in the directory changes; nothing here writes organizations.
-  const listingId = LISTING_ID_RE.test(str(data.lid)) ? str(data.lid).toLowerCase() : "";
+  // A suggested event (kind=event) rides the same path too (opening-day bar:
+  // add-an-event works); a person checks it before it is listed.
+  const isEvent = !!opts.event || str(data.kind) === "event";
+  const listingId = !isEvent && LISTING_ID_RE.test(str(data.lid)) ? str(data.lid).toLowerCase() : "";
   const relation = LISTING_RELATIONS.has(str(data.rel)) ? str(data.rel) : "";
-  const program = str(data.pn) || (listingId ? `listing ${listingId}` : "");
+  const program = isEvent ? str(data.en) : (str(data.pn) || (listingId ? `listing ${listingId}` : ""));
   const org = str(data.org);
   const sport = str(data.sport);
   const city = str(data.city);
   const stateRegion = str(data.state);
   const email = str(data.em).replace(/^mailto:/i, "");
   const notes = str(data.notes);
+  const eventDate = str(data.ed);
+  const eventTime = str(data.et).slice(0, 40);
+  const eventUrl = str(data.url).slice(0, 300);
 
-  if (!program) return json({ ok: false, error: "Please add the program name." }, 422);
+  if (!program) return json({ ok: false, error: isEvent ? "Please add the event name." : "Please add the program name." }, 422);
   if (listingId && !notes) return json({ ok: false, error: "Please tell us what should change." }, 422);
-  if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+  if (isEvent && !/^\d{4}-\d{2}-\d{2}$/.test(eventDate)) return json({ ok: false, error: "Please add the date of the event." }, 422);
+  // Email: a fix to a listing or a suggested event may come without one (Alec,
+  // 2026-10-14: "No email required"); a person reviews every one either way.
+  // A program owner confirming its listing (rel=run) and a new program need one,
+  // because we write back to confirm, and that reply is what earns Verified.
+  const emailOptional = isEvent || (listingId && relation !== "run");
+  const emailValid = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email);
+  if (email ? !emailValid : !emailOptional) {
     return json({ ok: false, error: "Please enter a valid email so we can confirm your submission." }, 422);
   }
 
@@ -367,16 +345,20 @@ async function handleSubmitProgram(request, env, ctx) {
     return json({ ok: false, error: "Submissions are temporarily unavailable. Please try again soon." }, 503);
   }
 
-  const answers = listingId
-    ? { program, update_of: listingId, relation, notes }
-    : { program, org, sport, city, state: stateRegion, notes };
+  const answers = isEvent
+    ? { event: program, date: eventDate, time: eventTime, city, state: stateRegion, url: eventUrl, org, sport, notes }
+    : listingId
+      ? { program, update_of: listingId, relation, notes }
+      : { program, org, sport, city, state: stateRegion, notes };
   const intakeId = await programSubmissionId(str(data.sid), email, answers);
   const location = [city, stateRegion].filter(Boolean).join(", ");
   // The summary is the notice's subject line: one line, bounded.
-  const summary = (listingId
-    ? `${relation === "run" ? "Program confirming its listing" : "Listing update"}: ${program.slice(0, 120)}`
-    : `New program submission: ${program.slice(0, 120)}${location ? ` (${location.slice(0, 80)})` : ""}`).replace(/[\r\n]+/g, " ");
-  const submissionKind = listingId ? "listing_update" : "new_program";
+  const summary = (isEvent
+    ? `New event submission: ${program.slice(0, 120)} (${eventDate}${location ? `, ${location.slice(0, 80)}` : ""})`
+    : listingId
+      ? `${relation === "run" ? "Program confirming its listing" : "Listing update"}: ${program.slice(0, 120)}`
+      : `New program submission: ${program.slice(0, 120)}${location ? ` (${location.slice(0, 80)})` : ""}`).replace(/[\r\n]+/g, " ");
+  const submissionKind = isEvent ? "new_event" : listingId ? "listing_update" : "new_program";
   const source = str(data.source).slice(0, 80) || "asnm-prelaunch";
   const now = new Date().toISOString();
 
@@ -387,7 +369,7 @@ async function handleSubmitProgram(request, env, ctx) {
     // shape the newsletter path writes. INSERT OR IGNORE makes a retry a no-op.
     await env.INTAKE.batch([
       env.INTAKE.prepare(`INSERT OR IGNORE INTO intake (id,received_at,site,kind,name,email,summary,payload,source,is_canary) VALUES (?,?,'adaptivesportsnearme.com',?,?,?,?,?,?,0)`)
-        .bind(intakeId, now, PROGRAM_INTAKE_KIND, null, email, summary, JSON.stringify(answers), source),
+        .bind(intakeId, now, isEvent ? EVENT_INTAKE_KIND : PROGRAM_INTAKE_KIND, null, email || null, summary, JSON.stringify(answers), source),
       env.INTAKE.prepare("INSERT OR IGNORE INTO intake_delivery_claims (intake_id,state) VALUES (?,'pending')").bind(intakeId),
     ]);
     // In production DB (asnm-db) and INTAKE (atl-intake) are separate D1
@@ -398,7 +380,7 @@ async function handleSubmitProgram(request, env, ctx) {
       `INSERT INTO submissions (kind, payload, contact_email, status, created_at)
        SELECT ?, ?, ?, 'new', ?
        WHERE NOT EXISTS (SELECT 1 FROM submissions WHERE kind = ? AND json_extract(payload, '$.intake_id') = ?)`
-    ).bind(submissionKind, JSON.stringify({ ...answers, intake_id: intakeId }), email, now, submissionKind, intakeId).run();
+    ).bind(submissionKind, JSON.stringify({ ...answers, intake_id: intakeId }), email || null, now, submissionKind, intakeId).run();
     fresh = Number(result?.meta?.changes ?? result?.changes ?? 0) > 0;
   } catch (error) {
     const message = String(error?.message || "");
@@ -414,7 +396,7 @@ async function handleSubmitProgram(request, env, ctx) {
   // out only for the first capture of this id, so a retry does not mail twice.
   const notice = notifyIntake(env, intakeId);
   if (ctx?.waitUntil) ctx.waitUntil(notice); else await notice;
-  if (fresh) await queueFormConfirmation(env, ctx, { kind: listingId ? 'listing-update' : 'program', email, program });
+  if (fresh && email) await queueFormConfirmation(env, ctx, { kind: isEvent ? 'event' : listingId ? 'listing-update' : 'program', email, program });
 
   return json({ ok: true });
 }

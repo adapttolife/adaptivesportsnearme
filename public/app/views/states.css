@@ -1,0 +1,16 @@
+/* States index (6.6, WP-B). Scoped under .v-states. */
+.v-states .st-head { padding-top: 24px; }
+.v-states .st-sub { margin-top: 8px; font-size: 17px; color: var(--graphite); max-width: 52ch; text-wrap: pretty; }
+@media (min-width: 768px) { .v-states .st-head { padding-top: 40px; } .v-states .st-sub { font-size: 18px; } }
+
+.v-states .st-map { margin-top: 24px; }
+.v-states .st-map .tmap { max-width: 760px; }
+@media (min-width: 768px) {
+  .v-states .st-map { margin-top: 32px; }
+  .v-states .st-map .tm-grid { gap: 5px; }
+}
+.v-states .slist { margin-top: 32px; }
+.v-states .slist-title { font-size: var(--fs-h2); }
+@media (min-width: 1100px) {
+  .v-states .slist-ul { grid-template-columns: repeat(4, minmax(0, 1fr)); column-gap: 24px; }
+}

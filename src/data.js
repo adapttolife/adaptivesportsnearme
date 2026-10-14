@@ -2,7 +2,7 @@
 // null if never checked) is computed here rather than in SQL — D1 lacks pow().
 // listPrograms filters: sport, state, q (text), plus nearby via zip / city / lat-lng.
 
-import { loadZcta, resolveOrigin, applyNearby, milesBetween } from "./geo.js";
+import { loadZcta, resolveOrigin, applyNearby, milesBetween, cityCenter } from "./geo.js";
 import { cachedCount } from "./read-cache.js";
 import "../public/listing-art.js";
 
@@ -17,7 +17,8 @@ export function freshness(lastOkAt, now = Date.now()) {
 
 const LIST_COLS = `id, name, org_type, sport, sport_key, website_url, city,
   state, state_name, zip, publicity_consent, lat, lng, geo_precision, description, cost_note,
-  equipment_provided, ages, data_quality_rating, verification_status, last_ok_at`;
+  equipment_provided, ages, data_quality_rating, verification_status, verification_method,
+  last_ok_at, created_at`;
 
 // A listing is public only when a person could act on it: a website to visit,
 // a city and state to find, or a way to reach someone. Alec ruled on 2026-09-01
@@ -54,6 +55,15 @@ function rowToProgram(r, dist) {
     ages: r.ages,
     quality: r.data_quality_rating,
     verification: r.verification_status,
+    // Two separate signals (Alec, 2026-10-14). confirmed: the program itself gave
+    // permission, which is the Verified check on the site (publicity_consent, the
+    // same flag that lets its contact details show). teamChecked: a person on our
+    // team checked the listing (verification_status 'verified', checkedMonth when).
+    // Neither is a score, and only confirmed earns the word Verified.
+    confirmed: publicityConsent,
+    teamChecked: r.verification_status === "verified",
+    checkedMonth: verifiedMonth(r),
+    listedAt: r.created_at || null,
     freshness: freshness(r.last_ok_at),
     lastChecked: r.last_ok_at,
     dist: publicityConsent && dist != null ? Math.round(dist * 10) / 10 : null,
@@ -74,11 +84,17 @@ function nearPayload(origin) {
 
 // The homepage already needs the whole directory for local filters and maps.
 // Read it once rather than repeating COUNT + OFFSET scans for every 200 rows.
-export async function directorySnapshot(db) {
+// places (optional): the city table from loadPlaces(), so each item carries the
+// center of its listed city for maps and "near you".
+export async function directorySnapshot(db, { places = null } = {}) {
   const rows = await db.prepare(`SELECT ${LIST_COLS} FROM organizations
     WHERE ${PUBLIC}
     ORDER BY (sport_key IS NULL), (state IS NULL), name`).all();
-  const items = rows.results.map(row => rowToProgram(row));
+  const items = rows.results.map(row => {
+    const p = rowToProgram(row);
+    if (places) p.cityCenter = cityCenter(row.city, row.state, places);
+    return p;
+  });
   return { total: items.length, items };
 }
 
