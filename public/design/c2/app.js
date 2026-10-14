@@ -91,7 +91,7 @@ export function displayName(s) {
    ====================================================================== */
 
 // [bbox w, bbox h, sqrt(w*h), ink density, x offset] per file, measured (r3 image lab).
-const OPTICAL = {"amputeesports":[0.922,0.883,0.902,0.242,0.019],"archery":[0.82,0.921,0.869,0.275,-0.063],"art-therapy":[0.923,0.844,0.883,0.344,-0.009],"baseball":[0.75,0.921,0.831,0.32,-0.037],"basketball":[0.822,0.921,0.87,0.341,-0.027],"beepbaseball":[0.814,0.921,0.866,0.246,-0.081],"blindsports":[0.923,0.35,0.569,0.307,0.034],"boccia":[0.921,0.707,0.807,0.319,-0.101],"climbing":[0.669,0.924,0.787,0.306,0.005],"curling":[0.921,0.622,0.757,0.305,-0.096],"cycling":[0.921,0.432,0.631,0.341,-0.02],"dance":[0.858,0.921,0.889,0.241,0.009],"equestrian":[0.922,0.754,0.834,0.347,-0.031],"equestrianvaulting":[0.922,0.754,0.834,0.347,-0.031],"equine-therapy":[0.922,0.754,0.834,0.347,-0.031],"event":[0.922,0.794,0.856,0.413,0.036],"fencing":[0.921,0.587,0.735,0.255,-0.16],"football":[0.909,0.922,0.915,0.433,0.012],"goalball":[0.923,0.35,0.569,0.307,0.034],"golf":[0.767,0.921,0.84,0.3,-0.067],"grant":[0.773,0.921,0.844,0.262,-0.065],"handball":[0.866,0.921,0.893,0.318,-0.079],"handcycling":[0.921,0.432,0.631,0.341,-0.02],"lacrosse":[0.861,0.921,0.89,0.319,0.102],"martialarts":[0.921,0.913,0.917,0.349,-0.082],"multi":[0.922,0.763,0.839,0.215,0.0],"nordicskiing":[0.923,0.723,0.817,0.23,0.015],"pickleball":[0.919,0.803,0.859,0.323,-0.083],"powerlifting":[0.921,0.65,0.773,0.338,0.005],"rowing":[0.921,0.667,0.783,0.305,0.018],"rugby":[0.923,0.714,0.812,0.381,-0.046],"running":[0.882,0.921,0.901,0.259,0.041],"sailing":[0.918,0.922,0.92,0.287,0.063],"shooting":[0.922,0.779,0.847,0.3,-0.125],"skiing":[0.922,0.703,0.805,0.25,0.004],"sledhockey":[0.922,0.582,0.733,0.298,-0.009],"soccer":[0.922,0.706,0.807,0.324,-0.107],"softball":[0.923,0.805,0.862,0.28,0.004],"surfing":[0.922,0.763,0.839,0.215,0.0],"swimming":[0.923,0.457,0.65,0.35,0.039],"tennis":[0.921,0.898,0.909,0.26,-0.101],"trackfield":[0.922,0.565,0.722,0.28,-0.093],"triathlon":[0.923,0.576,0.729,0.3,0.016],"veteran-meetup":[0.922,0.566,0.723,0.451,0.008],"volleyball":[0.921,0.742,0.827,0.3,0.062],"waterskiing":[0.922,0.587,0.736,0.253,-0.079],"wheelchairracing":[0.922,0.565,0.722,0.28,-0.093]};
+const OPTICAL = {"amputeesports":[0.881,0.844,0.862,0.241,0.02],"archery":[0.783,0.881,0.831,0.275,-0.06],"art-therapy":[0.88,0.805,0.841,0.344,-0.009],"baseball":[0.717,0.881,0.795,0.32,-0.036],"basketball":[0.785,0.881,0.832,0.34,-0.026],"beepbaseball":[0.775,0.881,0.826,0.246,-0.076],"blindsports":[0.88,0.334,0.542,0.306,0.033],"boccia":[0.881,0.677,0.772,0.317,-0.096],"climbing":[0.637,0.881,0.749,0.305,0.006],"curling":[0.881,0.594,0.723,0.304,-0.092],"cycling":[0.88,0.413,0.603,0.339,-0.018],"dance":[0.818,0.881,0.849,0.241,0.008],"equestrian":[0.88,0.719,0.795,0.347,-0.029],"equestrianvaulting":[0.88,0.719,0.795,0.347,-0.029],"equine-therapy":[0.88,0.719,0.795,0.347,-0.029],"event":[0.881,0.758,0.817,0.413,0.034],"fencing":[0.881,0.561,0.703,0.254,-0.153],"football":[0.869,0.879,0.874,0.432,0.012],"goalball":[0.88,0.334,0.542,0.306,0.033],"golf":[0.732,0.88,0.803,0.3,-0.063],"grant":[0.74,0.88,0.807,0.261,-0.062],"handball":[0.826,0.881,0.853,0.317,-0.075],"handcycling":[0.88,0.413,0.603,0.339,-0.018],"lacrosse":[0.822,0.88,0.851,0.318,0.097],"martialarts":[0.881,0.875,0.878,0.348,-0.079],"multi":[0.881,0.729,0.801,0.214,-0.0],"nordicskiing":[0.88,0.689,0.779,0.23,0.014],"pickleball":[0.881,0.77,0.823,0.322,-0.077],"powerlifting":[0.881,0.621,0.74,0.338,0.005],"rowing":[0.88,0.639,0.75,0.304,0.018],"rugby":[0.88,0.682,0.774,0.379,-0.043],"running":[0.843,0.88,0.861,0.258,0.039],"sailing":[0.875,0.88,0.877,0.287,0.06],"shooting":[0.88,0.744,0.809,0.3,-0.118],"skiing":[0.88,0.672,0.769,0.249,0.004],"sledhockey":[0.881,0.555,0.699,0.298,-0.009],"soccer":[0.879,0.672,0.768,0.324,-0.102],"softball":[0.88,0.768,0.822,0.28,0.004],"surfing":[0.881,0.729,0.801,0.214,-0.0],"swimming":[0.879,0.437,0.619,0.352,0.038],"tennis":[0.88,0.859,0.87,0.259,-0.096],"trackfield":[0.881,0.539,0.689,0.279,-0.088],"triathlon":[0.879,0.549,0.695,0.302,0.015],"veteran-meetup":[0.881,0.541,0.69,0.448,0.008],"volleyball":[0.881,0.708,0.79,0.299,0.058],"waterskiing":[0.88,0.561,0.702,0.253,-0.076],"wheelchairracing":[0.881,0.539,0.689,0.279,-0.088]};
 const FLOOR_PROP = new Set(["soccer", "sledhockey", "golf", "boccia", "curling", "goalball", "blindsports"]);
 const GROUP_SCENE = new Set(["event", "veteran-meetup", "art-therapy", "grant", "multi", "soccer", "football", "lacrosse", "handball", "softball", "volleyball", "triathlon", "nordicskiing"]);
 // Laura Lian's Adapt To Life palette (brand identity, July 29, 2026): four colours,
@@ -105,7 +105,7 @@ const TONES = {
 // Look switch: sharp is the standard; ?look=today and ?look=hues stay for comparison.
 export const LOOK = new URLSearchParams(location.search).get("look") || "sharp"; // Alec, 2026-10-14: "I love the sharper version the best... This is the way"
 document.documentElement.dataset.look = LOOK;
-document.documentElement.dataset.band = new URLSearchParams(location.search).get("band") || "left";
+document.documentElement.dataset.band = new URLSearchParams(location.search).get("band") || "right";   // Alec, 2026-10-14: right-aligned
 if (LOOK === "hues") Object.assign(TONES, {
   field: ["#2DBE6C", INK], snow: ["#3D7BFF", INK], trail: [ORANGE, INK],
   calm: ["#8B5CF6", INK], house: ["#FF4FA0", INK], event: ["#3D7BFF", INK],
@@ -639,13 +639,15 @@ export function grantInfo(g) {
    Components (section 4). Every one returns an HTML string.
    ====================================================================== */
 
-/** The sport figure: Alec's own drawing (Drive "<Name> Transparent.png"), used as a
-    mask so it takes the plate's figure colour. Every key has its own file. */
+/** The sport figure: Alec's own drawing (Drive, ASNM Flat Vector Logo / SVGs, synced to
+    /emblems/sports/<key>.svg by scripts/sport-icons-sync.py), used as a mask so it takes
+    the plate's figure colour. Vectors, so one file serves every size. Every key has its
+    own file. OPTICAL is measured from those files (each drawing's share of its square). */
 export function fig(key, { color, cls = "", big = false } = {}) {
   const k = key && OPTICAL[key] ? key : "multi";
   const o = OPTICAL[k];
   const dk = Math.min(1.04, Math.max(0.90, Math.pow(0.31 / o[3], 0.3)));
-  return `<i class="fig${cls ? " " + cls : ""}" aria-hidden="true" style="--src:url(/design/c2/icons/${k}-${big ? 768 : 256}.webp);--w:${o[0]};--h:${o[1]};--g:${o[2]};--diag:${Math.hypot(o[0], o[1]).toFixed(3)};--dk:${dk.toFixed(3)};--cx:${o[4]}${color ? ";color:" + color : ""}"></i>`;
+  return `<i class="fig${cls ? " " + cls : ""}" aria-hidden="true" style="--src:url(/emblems/sports/${k}.svg);--w:${o[0]};--h:${o[1]};--g:${o[2]};--diag:${Math.hypot(o[0], o[1]).toFixed(3)};--dk:${dk.toFixed(3)};--cx:${o[4]}${color ? ";color:" + color : ""}"></i>`;
 }
 
 if (typeof window !== "undefined") { window.ASNM_FIG = fig; window.ASNM_ICON_KEYS = Object.keys(OPTICAL); window.ASNM_PLATE = (...a) => plate(...a); }
