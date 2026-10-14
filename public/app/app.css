@@ -141,7 +141,8 @@ h2,
 h3 {
 	text-wrap: balance;
 }
-p {
+
+body > *:not(footer) p {
 	max-width: 68ch;
 }
 :focus {
@@ -3026,6 +3027,13 @@ body.has-sticky .ft {
 .ft-brand {
 	display: flex;
 	gap: 14px;
+	align-items: center;
+	flex-wrap: wrap;
+}
+
+.ft-brand .ft-brand-text {
+	display: flex;
+	flex-direction: column;
 	align-items: flex-start;
 }
 
@@ -3082,14 +3090,17 @@ body.has-sticky .ft {
 	}
 }
 
+.ft-fine:has(.ft-fine) {
+	display: flex;
+	justify-content: space-between;
+	gap: 0 6px;
+	flex-wrap: wrap;
+}
+
 .ft-fine {
 	margin-top: 24px;
 	font-size: 15px;
 	color: var(--muted);
-}
-
-.ft-fine + .ft-fine {
-	margin-top: 6px;
 }
 
 /* ================= Motion ================= */

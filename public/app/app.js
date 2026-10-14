@@ -985,11 +985,11 @@ export function drawerList(active = "") {
 export function footer() {
   const near = nearHref();
   const li = (label, href) => `<li><a href="${esc(href)}">${esc(label)}</a></li>`;
-  return `<div class="ft"><div class="ft-brand"><img src="/app/logo.svg" alt="" width="40" height="40"><p>A free directory of adaptive sports programs, grants and events. We list programs; we don't run them.</p></div>
+  return `<div class="ft"><div class="ft-brand"><img src="/app/logo.svg" alt="" width="40" height="40"><div class="ft-brand-text"><h1>Adaptive Sports Near Me</h1><p>A free directory of adaptive sports programs, grants and events. We list programs; we don't run them.</p></div></div>
 <div class="ft-cols"><div><h2 class="ft-h">Find</h2><ul>${near ? li("Programs near you", near) : `<li><button type="button" data-open="search">Programs near you</button></li>`}${li("Sports", "/sports")}${li("States", "/states")}${li("Grants", "/grants")}${li("Events", "/events")}</ul></div>
 <div><h2 class="ft-h">Help build this</h2><ul>${li("Add a program", "/add/program")}${li("Add an event", "/add/event")}${li("Claim your program", "/help")}${li("How we check listings", "/about")}</ul></div>
 <div><h2 class="ft-h">More</h2><ul>${li("Get the letter", "/letter")}${li("Resources", "/resources")}${li("Accessibility", "/about")}</ul></div></div>
-<p class="ft-fine">Adaptive Sports Near Me is a project of Adapt To Life. Check with each program before you go.</p><p class="ft-fine">© 2026 Adapt To Life</p></div>`;
+<div class="ft-fine"><p class="ft-fine">Adaptive Sports Near Me is a project of <a href="https://adapttolife.org">Adapt To Life</a>. Check with each program before you go.</p><p class="ft-fine">© 2026 <a href="https://adapttolife.org">Adapt To Life</a></p></div></div>`;
 }
 
 /** Render output for any unknown route, id or key. */
