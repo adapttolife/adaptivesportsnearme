@@ -168,7 +168,7 @@ export async function render(ctx) {
   const title = st ? `${name} in ${A.stateName(st)}: adaptive programs, grants and events` : `${name}: adaptive programs, grants and events`;
   return {
     title,
-    description: `Adaptive ${low} programs, grants and events${st ? " in " + A.stateName(st) : ""}. Every listing shows whether a person checked it, and when.`,
+    description: `Adaptive ${low} programs, grants and events${st ? " in " + A.stateName(st) : ""}. Every listing shows when we last checked it.`,
     html: `<div class="sp sp--${A.esc(t)}">${head}${body}${A.letterBlock({ source: "sport" })}</div>`,
     aside: A.aboutBox(),
     railActive: "sport:" + key,

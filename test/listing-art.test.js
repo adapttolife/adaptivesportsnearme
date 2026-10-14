@@ -140,12 +140,17 @@ test("our own research files never reach a visitor as a name or a link", () => {
 
 test("the app loads listing-art.js before its own script, and both beta bars say the same thing", () => {
   const index = read("public/index.html");
+  // app.js reads window.ListingArt and window.Proto when it loads, so both are
+  // plain (blocking) scripts ahead of the app module.
   const art = index.indexOf('<script src="/listing-art.js"></script>');
-  const main = index.indexOf("/* ============================ DATA ============================ */");
-  assert.ok(art > 0 && art < main, "listing-art.js must load before the inline app script");
-  assert.ok(index.includes('id="betaBar"'));
-  assert.ok(index.replace(/\s+/g, " ").includes(BETA_MESSAGE), "app beta bar matches src/site-chrome.js");
-  assert.ok(index.includes('localStorage.getItem("asnm-beta-hidden")'));
+  const core = index.indexOf('<script src="/app/core.js"></script>');
+  const main = index.indexOf('<script type="module" src="/app/app.js"></script>');
+  assert.ok(main > 0, "the shell loads the app module");
+  assert.ok(art > 0 && art < main, "listing-art.js must load before the app module");
+  assert.ok(core > 0 && core < main, "core.js must load before the app module");
+  const app = read("public/app/app.js");
+  assert.match(app, /const L = window\.ListingArt/);
+  assert.ok(app.includes(BETA_MESSAGE), "app beta bar matches src/site-chrome.js");
 });
 
 test("listing sentences only name a source we know, and say schedules change", () => {

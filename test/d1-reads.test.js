@@ -5,6 +5,7 @@ import { readFileSync } from 'node:fs';
 import { directorySnapshot, listPrograms, getOrg } from '../src/data.js';
 import { cachedDirectoryResponse, cachedCount } from '../src/read-cache.js';
 import worker from '../src/index.js';
+import { _resetPlacesCache } from '../src/geo.js';
 
 const read = path => readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');
 function database() {
@@ -69,16 +70,22 @@ test('public organization details expose contacts and precise locations only wit
   } finally { sql.close(); }
 });
 
+// 0007 gives a new database the column with production's definition (staging
+// and production already have it; see the migration's comment).
 test('publicity consent migration defaults to zero and accepts only zero or one', () => {
   const sql = new DatabaseSync(':memory:');
   try {
-    sql.exec('CREATE TABLE organizations (id TEXT PRIMARY KEY, [publicity-consent] INTEGER NOT NULL DEFAULT 0 CHECK ([publicity-consent] IN (0, 1)))');
+    sql.exec('CREATE TABLE organizations (id TEXT PRIMARY KEY)');
+    sql.prepare("INSERT INTO organizations (id) VALUES ('existing')").run();
     sql.exec(read('db/migrations/0007_publicity_consent.sql'));
     sql.prepare("INSERT INTO organizations (id) VALUES ('default')").run();
     sql.prepare("INSERT INTO organizations (id, publicity_consent) VALUES ('consented', 1)").run();
-    assert.equal(sql.prepare("SELECT publicity_consent AS consent FROM organizations WHERE id = 'default'").get().consent, 0);
-    assert.equal(sql.prepare("SELECT publicity_consent AS consent FROM organizations WHERE id = 'consented'").get().consent, 1);
+    const consent = id => sql.prepare('SELECT publicity_consent AS consent FROM organizations WHERE id = ?').get(id).consent;
+    assert.equal(consent('existing'), 0, 'rows from before the migration start without consent');
+    assert.equal(consent('default'), 0);
+    assert.equal(consent('consented'), 1);
     assert.throws(() => sql.prepare("INSERT INTO organizations (id, publicity_consent) VALUES ('invalid', 2)").run());
+    assert.throws(() => sql.prepare("INSERT INTO organizations (id, publicity_consent) VALUES ('unknown', NULL)").run());
   } finally { sql.close(); }
 });
 
@@ -106,9 +113,10 @@ test('Worker serves the complete snapshot contract used by homepage hydration',a
     assert.equal(response.status,200);
     assert.deepEqual(await response.json(),{ok:true,total:0,items:[]});
     assert.equal(queries.length,1);
-    const html=read('public/index.html');
-    assert.match(html,/fetch\("\/api\/directory"\)/);
-    assert.doesNotMatch(html,/fetch\("\/api\/programs\?limit=200/);
+    // The app (public/app/app.js) loads the whole directory once, from the snapshot.
+    const app=read('public/app/app.js');
+    assert.match(app,/"\/api\/directory"/);
+    assert.doesNotMatch(app,/\/api\/programs/);
   } finally {sql.close();}
 });
 
@@ -199,4 +207,62 @@ test('getOrg follows the public rule and returns only public sources', async () 
     assert.equal(o.verifiedMonth, '2026-09'); assert.equal(o.listedAt, '2026-09-30T20:26:18Z');
     assert.equal(await getOrg(db, '22222222-2222-2222-2222-222222222222'), null, 'a name-only row is not public by direct link either');
   } finally { sql.close(); }
+});
+
+// City centers (src/geo.js cityCenter over public/data/places.json): a listing's
+// city is public text, so the center of that city is public too, and maps and
+// "near you" use it. The listing's own lat/lng/zip stay behind publicity_consent.
+const PLACES = { 'CO|denver': [39.762, -104.881], 'TN|franklin': [35.914, -86.852] };
+function seedCities(sql) {
+  const insert = sql.prepare(`INSERT INTO organizations
+    (id,name,is_public,status,created_at,updated_at,city,state,zip,lat,lng,website_url,publicity_consent)
+    VALUES (?,?,1,'active','2026','2026',?,?,?,?,?,?,?)`);
+  insert.run('private','Denver Program','Denver','CO','80202',39.75,-104.99,'https://a.example',0);
+  insert.run('consented','Franklin Program','Franklin / Middle Tennessee','TN','37064',35.92,-86.86,'https://b.example',1);
+  insert.run('statewide','Statewide Program','Statewide','CO',null,null,null,'https://c.example',0);
+}
+
+test('the snapshot carries each listing\'s city center only when given the places table', async () => {
+  const {sql,db} = database();
+  try {
+    seedCities(sql);
+    const by = Object.fromEntries((await directorySnapshot(db, { places: PLACES })).items.map(p => [p.id, p]));
+    assert.deepEqual(by.private.cityCenter, [39.762, -104.881]);
+    assert.deepEqual(by.consented.cityCenter, [35.914, -86.852]);
+    assert.equal(by.statewide.cityCenter, null, 'no city, no center; never a guess');
+    // The center is the city's; the listing's own point needs consent.
+    for (const key of ['lat','lng','zip','geoPrecision']) assert.equal(by.private[key], null, key);
+    assert.equal(by.consented.lat, 35.92); assert.equal(by.consented.lng, -86.86); assert.equal(by.consented.zip, '37064');
+    const plain = await directorySnapshot(db);
+    assert.equal(plain.total, 3);
+    assert.ok(plain.items.every(p => !Object.hasOwn(p, 'cityCenter')), 'no places table, no cityCenter field');
+    assert.equal(plain.items.find(p => p.id === 'private').lat, null);
+  } finally { sql.close(); }
+});
+
+test('/api/directory adds city centers from the places table it reads once through ASSETS', async () => {
+  const {sql,db} = database();
+  const fetched = [];
+  let available = false;
+  const ASSETS = { fetch: async (input) => {
+    const url = typeof input === 'string' ? input : input.url;
+    fetched.push(url);
+    return available && url === 'https://assets.local/data/places.json' ? Response.json(PLACES) : new Response('missing', { status: 404 });
+  } };
+  _resetPlacesCache();
+  try {
+    seedCities(sql);
+    const get = async () => (await worker.fetch(new Request('https://example.test/api/directory'), { DB: db, ASSETS }, {})).json();
+    // A missing places table never breaks the directory, and is not remembered.
+    const without = await get();
+    assert.equal(without.ok, true); assert.equal(without.total, 3);
+    assert.ok(without.items.every(p => !Object.hasOwn(p, 'cityCenter')));
+    available = true;
+    const first = await get();
+    const denver = first.items.find(p => p.id === 'private');
+    assert.deepEqual(denver.cityCenter, [39.762, -104.881]);
+    assert.equal(denver.lat, null);
+    await get();
+    assert.deepEqual(fetched, Array(2).fill('https://assets.local/data/places.json'), 'loaded once, then reused');
+  } finally { sql.close(); _resetPlacesCache(); }
 });

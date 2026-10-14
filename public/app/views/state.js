@@ -110,7 +110,7 @@ export async function render(ctx) {
 
   return {
     title: s ? `Adaptive ${sLow} in ${stName}` : `Adaptive sports in ${stName}`,
-    description: `Adaptive ${s ? sLow : "sports"} programs in ${stName}, by city. Every listing shows whether a person checked it, and when.`,
+    description: `Adaptive ${s ? sLow : "sports"} programs in ${stName}, by city. Every listing shows when we last checked it.`,
     html: `<div class="st">${head}${bar}${body}${A.letterBlock({ source: "state" })}</div>`,
     aside: A.aboutBox(),
     railActive: "states",

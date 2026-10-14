@@ -39,7 +39,9 @@ const REDIRECTS = [
 ];
 
 // pattern, builder(match, env, url) -> { title, description, noindex?, status?, jsonld?, canonical? }
+// ("/" is usually served straight from the assets; the Worker answers it the same way.)
 const ROUTES = [
+  [/^\/$/, () => ({})],
   [/^\/near\/([^/]+)\/?$/, (m) => {
     const place = safeDecode(m[1]).slice(0, 80);
     return { title: `Adaptive sports near ${place}`, description: `Adaptive sports programs near ${place}: in town first, then about 25 miles, then the rest of the state.`, noindex: true };
@@ -134,9 +136,10 @@ export function injectMeta(html, meta, { url, production }) {
     meta.jsonld ? `<script type="application/ld+json">${JSON.stringify(meta.jsonld).replace(/</g, "\\u003c")}</script>` : "",
   ].filter(Boolean).join("\n");
   return html
-    .replace(/<title>[^<]*<\/title>/, `<title>${esc(title)}</title>`)
-    .replace(/<meta name="description" content="[^"]*">/, `<meta name="description" content="${esc(description)}">`)
-    .replace(/<!--asnm:meta-->[\s\S]*?<!--\/asnm:meta-->/, tags);
+    // Functions, not strings: page text can hold "$&" or "$'", which String.replace would expand.
+    .replace(/<title>[^<]*<\/title>/, () => `<title>${esc(title)}</title>`)
+    .replace(/<meta name="description" content="[^"]*">/, () => `<meta name="description" content="${esc(description)}">`)
+    .replace(/<!--asnm:meta-->[\s\S]*?<!--\/asnm:meta-->/, () => tags);
 }
 
 export function redirectFor(pathname) {
@@ -154,6 +157,10 @@ export function matchPage(pathname) {
 
 // The page response, or null when the path is not a page (assets, APIs, feeds).
 export async function servePage(request, env, url) {
+  if (/^\/near\/?$/.test(url.pathname)) {
+    const q = (url.searchParams.get("q") || "").trim();
+    return Response.redirect(new URL(q ? `/near/${encodeURIComponent(q)}` : "/", url).toString(), 302);
+  }
   const to = redirectFor(url.pathname);
   if (to) return Response.redirect(new URL(to, url).toString(), 301);
   const hit = matchPage(url.pathname);
@@ -185,7 +192,7 @@ export async function sitemapXml(env) {
     const snap = await directorySnapshot(env.DB);
     for (const p of snap.items) if (isListable(p)) urls.push(`/programs/${p.id}`);
     try {
-      const g = await env.DB.prepare("SELECT id FROM grants").all();
+      const g = await env.DB.prepare("SELECT id FROM grants WHERE is_public = 1").all();
       for (const r of g.results || []) urls.push(`/grants/${r.id}`);
     } catch (_) { /* no grants table yet */ }
   }

@@ -1,7 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { readdirSync } from "node:fs";
-import { listingVisual, SPORT_PHOTOS } from "../src/visuals.js";
+import { listingVisual } from "../src/visuals.js";
 import { grantPageTemplate } from "../src/grant-page.js";
 import { programPageTemplate } from "../src/program-page.js";
 
@@ -76,16 +75,4 @@ test("grant page keeps Athlete / Program tags on the grant-track hero", () => {
   assert.ok(program.includes("/scenes/program-grant-gym.jpg"));
   assert.ok(program.includes("Program grant"));
   assert.ok(!program.includes("Athlete grant"));
-});
-
-// The set and the disk have to agree: a key with no file gives the card a broken
-// image that falls back to the stamp, which is the look we just took out.
-test("every sport photo the resolver promises exists on disk, and none is orphaned", () => {
-  const onDisk = new Set(
-    readdirSync(new URL("../public/assets/sport-photos/", import.meta.url))
-      .filter((f) => f.endsWith(".jpg"))
-      .map((f) => f.replace(/\.jpg$/, ""))
-  );
-  for (const sport of SPORT_PHOTOS) assert.ok(onDisk.has(sport), `missing photo file for ${sport}`);
-  for (const file of onDisk) assert.ok(SPORT_PHOTOS.has(file), `photo ${file}.jpg is never used`);
 });

@@ -6,7 +6,7 @@
      known. Programs with no city are never pinned and never get a distance.
    - Trust is never a score. Verified (a check) means the program itself confirmed
      its listing with us; lists show the check only then and never say
-     "unverified". The listing page says when a person last checked it.
+     "unverified". The listing page says when we last checked it.
    - Forms validate in place, then post to the site's API with a Turnstile token. */
 
 import { isMenuRow, isDonationRow } from "./listable.js";
@@ -733,7 +733,6 @@ export function trust(p, mode = "short") {
   return rest ? `<span class="trust num">${esc(rest)}</span>` : "";
 }
 
-const vpill = () => `<span class="vpill">${icon("badge-check", 18)}Verified</span>`;
 function pstamp(p) {
   if (!p.state || !D.shapes[p.state]) return "";
   return `<span class="pstamp" aria-hidden="true">${stateOutline(p.state, { size: 32, dots: p.placed ? [p] : [], fill: !p.placed })}</span>`;

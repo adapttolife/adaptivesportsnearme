@@ -3,6 +3,7 @@
 // wherever no official state directory has been found and checked.
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import worker from "../src/index.js";
 import { veteranBusinessPageTemplate, resourcesIndexTemplate, VETERAN_BUSINESS_PATH } from "../src/resource-page.js";
 import { VETERAN_BUSINESS_COPY as COPY, NATIONWIDE, STATES } from "../src/resources/veteran-businesses.js";
@@ -56,11 +57,29 @@ test("links are plain https and open in a new tab; no dashes or money asks in th
   assert.ok(!/donat|give money|sponsor/i.test(words), "Near Me never asks for money");
 });
 
+// The site's page is the app's /resources/veteran-owned-businesses view
+// (public/app/views/vob.js), drawn from public/data/veteran-businesses.json.
+// That file is an export of src/resources/veteran-businesses.js, so Karen's
+// words, links and "not yet verified" notes have to survive the export unchanged.
+test("the app's copy of the page data is Karen's, word for word", () => {
+  const exported = JSON.parse(readFileSync(new URL("../public/data/veteran-businesses.json", import.meta.url), "utf8"));
+  assert.deepEqual(exported, { copy: COPY, nationwide: NATIONWIDE, states: STATES });
+  const view = readFileSync(new URL("../public/app/views/vob.js", import.meta.url), "utf8");
+  assert.match(view, /fetch\("\/data\/veteran-businesses\.json"\)/);
+  assert.match(view, /c\.notVerified/);
+  assert.match(view, /c\.disclaimer/);
+});
+
 test("the Worker serves the page and the resources door without a database", async () => {
-  for (const path of [VETERAN_BUSINESS_PATH, VETERAN_BUSINESS_PATH + "/", "/resources", "/resources/"]) {
-    const response = await worker.fetch(new Request("https://adaptivesportsnearme.com" + path), {}, {});
+  const shell = readFileSync(new URL("../public/index.html", import.meta.url), "utf8");
+  const ASSETS = { fetch: async (request) => new URL(request.url).pathname === "/" ? new Response(shell) : new Response("missing", { status: 404 }) };
+  for (const [path, title] of [[VETERAN_BUSINESS_PATH, COPY.title], [VETERAN_BUSINESS_PATH + "/", COPY.title], ["/resources", "Resources"], ["/resources/", "Resources"]]) {
+    const response = await worker.fetch(new Request("https://adaptivesportsnearme.com" + path), { ASSETS }, {});
     assert.equal(response.status, 200, path);
     assert.match(response.headers.get("content-type"), /text\/html/);
+    const html = await response.text();
+    assert.ok(html.includes(`<title>${title} · Adaptive Sports Near Me</title>`), path);
+    assert.ok(html.includes('<script type="module" src="/app/app.js"></script>'), `${path} is the app shell`);
   }
   assert.ok(resourcesIndexTemplate().includes(`href="${VETERAN_BUSINESS_PATH}"`));
 });

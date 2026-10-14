@@ -229,7 +229,8 @@ async function handleSubscribe(request, env, ctx) {
     return json({ ok: false, error: "Verification failed. Please reload the page and try again." }, 403);
   }
 
-  const email = str(data.em);
+  // A pasted "mailto:" prefix is not part of the address (same as the program form).
+  const email = str(data.em).replace(/^mailto:/i, "");
   if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
     return json({ ok: false, error: "Please enter a valid email." }, 422);
   }

@@ -338,8 +338,8 @@ test("programPageTemplate: the standalone page wears the app header and footer",
   assert.ok(cssIncludes(styles, ".hdr-in{height:var(--space-header)"));
   assert.ok(cssIncludes(styles, "--space-header: 64px"));
   assert.ok(cssIncludes(styles, "--tap: 44px"));
-  // The search field goes somewhere real: GET /?q=, which index.html boots on.
-  assert.ok(html.includes('<form class="search" role="search" action="/" method="get">'));
+  // The search field goes somewhere real: GET /near?q=, which the Worker sends to /near/<q>.
+  assert.ok(html.includes('<form class="search" role="search" action="/near" method="get">'));
   assert.ok(html.includes('name="q"'));
 });
 

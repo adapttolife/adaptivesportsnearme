@@ -89,10 +89,10 @@ export async function sendSignupWelcome(env, email, { name = "", beta = false } 
     "programs: one place to find a program near you, an event to show up to, " +
     "and grants that help pay for it. No account, no fee, and nobody here " +
     "will ever ask you for money.\n\n" +
-    "The directory is new and still growing. Every listing says whether a " +
-    "person on our team has verified it, and we add and check more every " +
-    "week. We will email you when there is something worth sending: new " +
-    "programs, events and funding near you.\n\n" +
+    "The directory is new and still growing. Every listing shows when we " +
+    "last checked it, and we add and check more every week. We will email " +
+    "you when there is something worth sending: new programs, events and " +
+    "funding near you.\n\n" +
     betaText +
     "If you run a program, or know one we should list, just reply to this " +
     "email. A person reads it.\n\n" +
@@ -104,9 +104,9 @@ export async function sendSignupWelcome(env, email, { name = "", beta = false } 
     `<p style="margin:0 0 16px">Adaptive Sports Near Me is a free national directory of adaptive sports ` +
     `programs: one place to find a program near you, an event to show up to, and grants that help pay ` +
     `for it. No account, no fee, and nobody here will ever ask you for money.</p>` +
-    `<p style="margin:0 0 16px">The directory is new and still growing. Every listing says whether a ` +
-    `person on our team has verified it, and we add and check more every week. We will email you ` +
-    `when there is something worth sending: new programs, events and funding near you.</p>` +
+    `<p style="margin:0 0 16px">The directory is new and still growing. Every listing shows when we ` +
+    `last checked it, and we add and check more every week. We will email you when there is ` +
+    `something worth sending: new programs, events and funding near you.</p>` +
     betaHtml +
     `<p style="margin:0 0 16px">If you run a program, or know one we should list, just reply to this ` +
     `email. A person reads it.</p>` +

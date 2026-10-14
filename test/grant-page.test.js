@@ -3,15 +3,10 @@ const styles = readFileSync(new URL("../public/styles.css", import.meta.url), "u
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { fileURLToPath } from "node:url";
-import { dirname, join } from "node:path";
 import {
   grantPageTemplate, grantNotFoundTemplate, GRANT_ID_RE,
   grantLocLine, grantAudienceLabel, primaryCta, listingInnerHtml,
 } from "../src/grant-page.js";
-
-const root = join(dirname(fileURLToPath(import.meta.url)), "..");
-const index = readFileSync(join(root, "public/index.html"), "utf8");
 
 const HUSTLE = {
   id: "b0298125-6d6a-4114-b0a2-5275750c09ae",
@@ -160,29 +155,6 @@ test("grantNotFoundTemplate: no launch modal, says not found", () => {
   assert.ok(!html.includes("Unverified"));
 });
 
-test("SPA: route parser restores navigation; rows use data-grant; count is not hardcoded 6", () => {
-  assert.ok(index.includes("DirectoryRoutes.read(new URL(location.href)"));
-  assert.ok(index.includes("data-grant"));
-  assert.ok(index.includes("grantAudience"));
-  assert.ok(index.includes("Athlete grant"));
-  assert.ok(index.includes("Program grant"));
-  assert.match(index, /\{key:"grants", label:"Grants", count:GRANTS\.length/);
-  assert.ok(!index.includes('{key:"grants", label:"Grants", count:6'));
-});
-
-test("SPA grant sheet reuses listing classes and has no Unverified", () => {
-  const fnAt = index.indexOf("function grantSheet(");
-  assert.ok(fnAt > 0);
-  const chunk = index.slice(fnAt, fnAt + 900);
-  assert.ok(chunk.includes('class="sheet"'));
-  assert.ok(index.includes("function grantRelatedRow("));
-  assert.ok(index.includes("Other grants"));
-  assert.ok(index.includes("frow-scroll"));
-  assert.ok(index.includes("data-db-link=\"grants\"") || index.includes("/?db=grants"));
-  assert.ok(!index.includes("Unverified"));
-  assert.ok(!index.includes("Last checked"));
-});
-
 // Same split as /programs/:id: the standalone grant page wears the site chrome,
 // the shared inner renderer stays bare for the in-app sheet.
 test("grantPageTemplate: the standalone grant page wears the app header and footer", () => {
@@ -190,7 +162,7 @@ test("grantPageTemplate: the standalone grant page wears the app header and foot
   assert.ok(html.includes('<header class="hdr">'));
   assert.ok(html.includes('<footer class="foot">'));
   assert.ok(html.includes('/site-nav.js?v='));
-  assert.ok(html.includes('<form class="search" role="search" action="/" method="get">'));
+  assert.ok(html.includes('<form class="search" role="search" action="/near" method="get">'));
 });
 
 test("grant listingInnerHtml: the in-app sheet stays bare", () => {
