@@ -1,0 +1,76 @@
+/* Map overlay (spec 6.3, WP-C). The dialog itself carries .v-map, so every rule is
+   scoped to it. Full screen on every size; the list is always one tap away. */
+
+.v-map { inset: 0; display: flex; flex-direction: column; background: var(--paper); }
+
+/* top bar */
+.v-map .mp-top { flex: none; display: flex; align-items: center; gap: 12px; min-height: 60px; padding: 8px 16px 8px 8px; border-bottom: 1px solid var(--line); background: var(--paper); }
+.v-map .mp-top h2 { font-size: var(--fs-h4); line-height: 1.25; min-width: 0; overflow-wrap: break-word; }
+@media (min-width: 768px) { .v-map .mp-top { padding-left: 16px; } .v-map .mp-top h2 { font-size: 24px; } }
+
+/* statewide strip */
+.v-map .mp-strip { flex: none; padding: 8px 12px; background: var(--sand); border-bottom: 1px solid var(--line); }
+.v-map .mp-sw { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 48px; padding: 4px 12px 4px 8px; border-radius: var(--r); background: var(--paper); border: 1px solid var(--line); text-align: left; font-size: 16px; font-weight: 600; line-height: 1.3; color: var(--ink); }
+.v-map .mp-sw:hover { border-color: var(--ink); }
+.v-map .mp-sw .so { flex: none; width: 32px; height: 32px; }
+/* One line: the words truncate, the count never wraps onto its own line. */
+.v-map .mp-swt { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.v-map .mp-sw-short { display: none; }
+@media (max-width: 599px) { .v-map .mp-sw-long { display: none; } .v-map .mp-sw-short { display: inline; } }
+.v-map .mp-swn { flex: none; display: inline-grid; place-items: center; min-width: 32px; height: 28px; padding: 0 8px; border-radius: 999px; background: var(--mist); border: 1px solid var(--line); font-size: 15px; font-weight: 700; }
+.v-map .mp-sw > .ic { flex: none; color: var(--graphite); }
+@media (min-width: 768px) { .v-map .mp-strip { padding: 10px 16px; } .v-map .mp-sw { width: auto; max-width: 100%; } }
+
+/* stage */
+.v-map .mp-stage { position: relative; flex: 1; min-height: 0; background: #EEF0F0; overflow: hidden; }
+.v-map .mp-canvas { position: absolute; inset: 0; }
+.v-map .mp-canvas:focus-visible { box-shadow: inset 0 0 0 3px var(--orange); border-radius: 0; }
+.v-map .mp-status { position: absolute; left: 50%; top: 40%; translate: -50% -50%; z-index: 2; width: min(360px, calc(100% - 32px)); text-align: center; font-size: 17px; color: var(--graphite); background: var(--paper); border-radius: var(--r-l); padding: 16px 20px; box-shadow: var(--sh-2); }
+.v-map .mp-status:empty { display: none; }
+.v-map .is-failed .mp-status { display: grid; gap: 14px; justify-items: center; }
+.v-map .mp-fail-t { color: var(--ink); font-weight: 500; }
+.v-map .is-failed .mp-list, .v-map .is-failed .mp-legend { display: none; }
+
+/* legend */
+.v-map .mp-legend { position: absolute; left: 12px; top: 12px; z-index: 2; display: grid; gap: 6px; padding: 10px 14px; background: var(--paper); border-radius: var(--r); box-shadow: var(--sh-1), 0 0 0 1px var(--line); font-size: 15px; font-weight: 500; color: var(--graphite); max-width: calc(100% - 84px); }
+.v-map .mp-legend li { display: flex; align-items: center; gap: 10px; line-height: 1.3; }
+.v-map .mp-k { flex: none; display: inline-block; border-radius: 50%; }
+.v-map .mp-k--you { width: 16px; height: 16px; background: #fff; border: 4px solid var(--orange); }
+.v-map .mp-k--pin { width: 18px; height: 18px; background: #fff; border: 2px solid var(--ink); }
+.v-map .mp-stage:not(.is-ready) .mp-legend { visibility: hidden; }
+
+/* List button: ink pill, bottom center, inside the map only */
+/* lifted above the map credit line (OpenFreeMap / OpenStreetMap attribution must stay readable) */
+.v-map .mp-list { position: absolute; z-index: 3; left: 50%; bottom: calc(44px + env(safe-area-inset-bottom)); translate: -50% 0; display: inline-flex; align-items: center; gap: 8px; min-height: 48px; padding: 0 24px 0 20px; border-radius: 999px; background: var(--ink); color: #fff; font-size: 16px; font-weight: 700; box-shadow: 0 6px 20px rgba(26,26,26,.24); }
+.v-map .mp-list:hover { background: #333331; }
+.v-map .mp-list:focus-visible { box-shadow: var(--focus); }
+.v-map .has-card .mp-list { display: none; }
+/* Narrow phones: the credit line wraps to two lines, so the pill rises above it,
+   and the strip drops its state outline so the words fit beside the count. */
+@media (max-width: 379px) { .v-map .mp-list { bottom: calc(68px + env(safe-area-inset-bottom)); } }
+@media (max-width: 359px) { .v-map .mp-sw .so { display: none; } .v-map .mp-sw { padding-left: 12px; } }
+
+/* bottom card for a tapped city */
+.v-map .mp-card { position: absolute; z-index: 4; left: 0; right: 0; bottom: 0; max-height: 60%; overflow-y: auto; overscroll-behavior: contain; background: var(--paper); border-radius: var(--r-xl) var(--r-xl) 0 0; box-shadow: var(--sh-2); padding: 8px 16px calc(16px + env(safe-area-inset-bottom)); }
+.v-map .mp-card::before { content: ""; display: block; width: 40px; height: 4px; border-radius: 2px; background: var(--line-strong); margin: 0 auto 4px; }
+.v-map .mp-card-h { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.v-map .mp-card-h h2 { font-size: 24px; line-height: 1.2; }
+.v-map .mp-card-sub { font-size: 16px; color: var(--graphite); margin-top: 0; }
+.v-map .mp-card .rows { margin-top: 10px; container-type: normal; grid-template-columns: minmax(0, 1fr); }
+.v-map .mp-card .prow { min-height: 88px; }
+.v-map .mp-all { position: sticky; bottom: calc(-16px - env(safe-area-inset-bottom)); display: flex; width: calc(100% + 32px); margin: 0 -16px calc(-16px - env(safe-area-inset-bottom)); padding: 10px 16px calc(10px + env(safe-area-inset-bottom)); background: var(--paper); border-top: 1px solid var(--line); font-size: 16px; text-align: left; }
+@media (min-width: 768px) { .v-map .mp-all { bottom: -16px; width: calc(100% + 40px); margin: 0 -20px -16px; padding: 10px 20px; } }
+.v-map .mp-card .prow:last-child { border-bottom: 0; }
+@media (min-width: 768px) {
+  .v-map .mp-card { left: 16px; right: auto; bottom: 16px; top: auto; width: min(440px, 38vw); min-width: 360px; max-height: calc(100% - 32px); border-radius: var(--r-xl); padding: 16px 20px 16px; }
+  .v-map .mp-card::before { display: none; }
+  .v-map .has-card .mp-list { display: inline-flex; left: auto; right: 16px; translate: none; }
+}
+
+/* MapLibre chrome on our type */
+.v-map .maplibregl-ctrl-group { border-radius: var(--r); box-shadow: var(--sh-1), 0 0 0 1px var(--line); }
+.v-map .maplibregl-ctrl-group button { width: 44px; height: 44px; }
+.v-map .maplibregl-ctrl-top-right { top: 4px; right: 4px; }
+.v-map .maplibregl-ctrl-attrib { font-family: var(--font); }
+@media (max-width: 767px) { .v-map .maplibregl-ctrl-top-right { display: none; } }
+.v-map, .v-map * { -webkit-tap-highlight-color: transparent; }

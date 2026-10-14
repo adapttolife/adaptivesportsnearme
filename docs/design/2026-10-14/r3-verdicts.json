@@ -1,0 +1,303 @@
+[
+ {
+  "scores": [
+   {
+    "concept": "Near You (place + sport)",
+    "score": 8,
+    "strengths": [
+     "Best first 3 seconds on a phone: big 'Find adaptive sports near you.' headline, then a poster mosaic led by a large basketball tile (the exact image Alec praised), in full colour, with running, swimming, goalball and climbing so it is not all wheelchair figures. This screen could go straight to Instagram.",
+     "On desktop the hero splits into headline plus search on the left and the colour mosaic on the right. It reads as a designed brand page, not a template.",
+     "Place is a visual idea, not just text. The results header draws Florida with every program as a dot and you as a ring, and the state page draws the outline with city dots. This is the 'map' wow Alec said we were onto, and it does not bury the sport art the way D did.",
+     "It is the only concept with a real MapLibre map: city pins with counts, a ring for you, a 'Statewide in Florida 30' strip, and a black List pill. That is Airbnb done honestly.",
+     "The listing hero is a white athlete on the deep colour with a 'Tampa, FL' outline-and-dot stamp overlapping the hero edge. It looks premium and adds place without covering the athlete.",
+     "Its card logic is the most sensible: mixed-sport lists get 2-up Airbnb plates, one-sport lists get compact rows. On the Florida state page the cards take turns by sport (tennis, swimming, water skiing, soccer, sled hockey, sailing, basketball), so the grid looks varied, not like wallpaper.",
+     "The grants list is a calm text list with one grant image in the header band instead of 45 repeats. That is the most premium grants screen of the three.",
+     "Sport rail uses coloured round avatars at about 48px with labels, so it reads at a glance."
+    ],
+    "weaknesses": [
+     "The floating black Map pill covers content on almost every phone screen: it sits over the home mosaic (Sailing/Goalball), over the tile map, and over card text in Tampa results ('Tennis \u00b7 Tampa, Fl[pill]', 'checked [pill]'). It looks like a bug on exactly the screens Alec will screenshot.",
+     "The small state stamp ('FL' with an outline) sits on every card, including on a Florida page and under a 'Near Tampa' header where the state is already obvious. It is clutter in the corner of every plate and makes the athlete smaller (54% of the plate height against the lab's 62%).",
+     "On 2-up phone cards, long official names cut off with an ellipsis after 2 lines ('City of Tampa Parks and...', 'Memorial Rehabilitation...'). On the result Karen cares about most, the name is the content.",
+     "The black beta bar plus black Map pill plus black letter block make the page heavier than 'white paper, black type, calm'.",
+     "The '+ Add' header button touches the right edge on a 390px phone.",
+     "Program names keep the en dash from the data ('City of Tampa Parks and Recreation \u2013 Wheelchair Tennis'), which reads as a dash on our page.",
+     "Rows with no date say 'no date yet', so the 'date on every listing' bar is still unmet.",
+     "Desktop below the fold (the large tile map and the empty right column on listings) is decent, not designed."
+    ],
+    "mustFix": [
+     "Move the Map pill so it never covers content: show it only on results and state pages, add bottom padding equal to the pill height plus the safe area, and hide it on home, sport and listing pages.",
+     "Remove the per-card state stamp wherever the page already names the state (results within a state, state pages, sport pages filtered to a state). Keep it only on mixed-state rails and on the listing hero. Return the athlete to about 62% of the plate.",
+     "Fix name truncation: allow 3 lines on cards, or make the 'In <city>' group a single column on phones so full names show.",
+     "Make the beta bar Sand or Mist with ink text, not a black slab. Keep black for the one primary action ('Visit website').",
+     "Decide on dashes in data names and apply one rule everywhere (a colon in display, as Gallery did, if Alec approves).",
+     "Add a fallback date to every card and listing ('Listed <date>'): that needs listedAt in /api/directory, and until then the wording must still meet the bar."
+    ]
+   },
+   {
+    "concept": "Clubhouse (Reddit-first)",
+    "score": 6.5,
+    "strengths": [
+     "The coloured round sport avatars on home (4-column grid: Multi-sport, Tennis, Soccer, Baseball, Horseback riding, Basketball, and so on) are the most delightful way Alec's set appears in any concept. They are playful, tidy and very Instagram-friendly.",
+     "The sport page as a Reddit community is the most premium single screen in this round: a deep-colour banner with the white athlete, an overlapping two-tone avatar, 'Get the letter' in place of Join, a share button, and Programs / Grants / Events tabs. On desktop, the left rail, centre column and right 'About' / 'Help build this' sidebar feel like a real product.",
+     "The drawer is exactly Reddit: recently viewed, every sport with its round avatar, 48px rows.",
+     "Results rows near Tampa are clean and fast to scan: an 84px tinted tile, the name, 'Tennis \u00b7 Tampa, FL', 'Verified \u00b7 checked Oct 8'."
+    ],
+    "weaknesses": [
+     "On a phone the first screen has no image at all, just a 'Free. No account needed.' chip, the headline and a pill. The avatar grid starts below the fold, so there is no wow in the first 3 seconds.",
+     "Counting is everywhere: '521 listed', '347 listed so far \u00b7 345 checked by a person', 'Grants 45', drawer counts. That breaks the voice rule (no national totals, never count the mission) and makes the page feel like a stats dashboard.",
+     "The multi-sport listing hero is near-black with three mismatched white athletes (a detailed softball scene next to bold basketball and boccia figures). It reads as dark mode and looks unfinished: the opposite of white paper.",
+     "A faint oversized copy of the athlete behind the banner adds visual noise, worst for detailed scenes.",
+     "The drawer header is cut off to 'Near Me' next to the logo.",
+     "Heavy black blocks (beta bar, letter section) make the page feel dark.",
+     "Rows on one-sport pages still repeat the same tile down the page, and grants repeat the grant tile on every row.",
+     "No real map."
+    ],
+    "mustFix": [
+     "Remove national counts from home, sport pages, tabs and the drawer. Show counts only for the visitor's area.",
+     "Never put an inverted hero on the house tone: use the light two-tone plate for multi-sport, and keep sizes matched in trio plates.",
+     "Put the avatar grid, or a hero image, in the first phone screen.",
+     "Remove the ghost athlete from banners.",
+     "Fix the cut-off drawer title."
+    ]
+   },
+   {
+    "concept": "Gallery (Airbnb-first)",
+    "score": 5,
+    "strengths": [
+     "The listing hero is the most dramatic of the three: an edge-to-edge sport colour with a huge white athlete bleeding off the bottom, round back and share buttons, and the Verified pill.",
+     "The share card (4:5 white athlete on the sport colour, program name, city, the URL, the official logo in a white disc) is the only built Instagram artifact. It is exactly what Alec would post.",
+     "The desktop listing page with an Airbnb-style booking box is close to Airbnb's own pattern."
+    ],
+    "weaknesses": [
+     "The sport bar is grey at reduced opacity: Alec's athletes look disabled and dull, the opposite of 'front and center'.",
+     "The home hero card has an odd grey floor stripe with tiny captions (Swimming, Basketball, Skiing) and three small athletes. It feels like a placeholder, not a wow.",
+     "Repetition, the known risk, is not solved. 'Tennis near Tampa' is 16 identical olive tennis plates in a row. Grants is 45 identical gold grant-athlete cards. That looks like wallpaper and reads as vibe-coded.",
+     "On a phone the first Tampa result is one card filling the whole screen, and its plate headline 'Tampa / FL' repeats the 'In Tampa' section header just above it. It is redundant and wastes the screen.",
+     "The home page is about 10,400px of near-identical rails. It feels generic and long.",
+     "Dark house-tone plates for multi-sport (38% of listings) bring dark mode onto the feed.",
+     "No map view, and the state tiles are under 44px."
+    ],
+    "mustFix": [
+     "Show rail athletes in full colour (the coloured round avatars) and never greyed out.",
+     "Use compact rows, or a text list for grants, wherever a list is one sport or one kind.",
+     "Drop the place headline from plates when the section header already names the place.",
+     "Cut the home page to 3 or 4 rails."
+    ]
+   }
+  ],
+  "winner": "Near You (place + sport)",
+  "grafts": [
+   "From Gallery: the 4:5 Instagram share card (white athlete on the sport colour, program name, City, ST, adaptivesportsnearme.com, the official logo bottom-right), opened from the listing's share button. This is the 'post it tomorrow' moment Near You lacks.",
+   "From Gallery: the bleed crop on the listing hero (a larger athlete running off the bottom edge of the deep plate), skipped for the 7 sports with props on the floor. Keep Near You's 'Tampa, FL' stamp overlapping the hero edge.",
+   "From Clubhouse: the sport page as a Reddit community: deep banner with the white athlete, an overlapping two-tone round avatar, 'Get the letter' as the Join button, a share button, and Programs / Grants / Events tabs. Use it to replace Near You's flatter sport banner card, but without the ghost athlete behind it and without national counts.",
+   "From Clubhouse: the coloured round-avatar sport grid as the 'All sports' sheet and the drawer list, and its desktop right sidebar ('About' / 'Help build this') to fill Near You's empty desktop right column.",
+   "From Clubhouse: the 'Free. No account needed.' line near the search, worded as a fact.",
+   "From Gallery: a display rule for dashes in data names (show a colon) if Alec approves, applied consistently.",
+   "From Gallery: when a multi-sport listing names its sports, show up to 3 deduped athletes on the LIGHT tint, never on the dark house tone."
+  ],
+  "reasoning": "I judged on one lens only: would Alec be proud to post this on Instagram tomorrow? Near You wins clearly. Its first phone screen leads with a colour poster mosaic headed by the basketball image Alec himself praised. Its 'place' moments (a state outline with program dots in the results header, a real city-pin map, the location stamp on the hero) give the map wow he asked for without burying the sport art the way D did. Its grants screen is calm text, not repeated pictures. What holds it back is execution polish, not the concept: the floating Map pill covers content in nearly every screenshot, a state stamp clutters every card, names cut off on 2-up cards, and the heavy black bars pull away from white paper. All of these are fixable in one pass.\n\nClubhouse has the single most beautiful screen of the round, the sport community page with banner and avatar, plus the delightful coloured avatar grid. But its phone first screen is text only, it counts nationally everywhere (a voice violation), and its multi-sport hero is near-black.\n\nGallery's listing hero and share card are excellent and should be grafted onto Near You. Its feed fails the taste test: grey disabled sport bar, 16 identical tennis plates, 45 identical grant cards, and a place headline repeated under the same header. That is the vibe-coded repetition Alec will spot at once.\n\nI did not average the scores: Near You 8, Clubhouse 6.5, Gallery 5. Screenshots read: /tmp/asnm-r3/{gallery,clubhouse,nearyou}/final-*.png."
+ },
+ {
+  "scores": [
+   {
+    "concept": "Gallery (Airbnb-first)",
+    "score": 7,
+    "strengths": [
+     "Best at grants for Karen: Menu > Grants opens on athlete grants, so a grant page is 3 taps away. Each card shows the amount up top, deadlines read plainly ('Deadline: May 1 or Nov 1', 'Closed for now'), and the grant page has a sticky 'Apply on their site' button plus a Back button that returns to the athlete list.",
+     "Best listing page on a phone: on the first screen you see the name, 'Verified', 'A person on our team checked this program against an official source', 'Last checked October 8, 2026', and a sticky black 'Visit website' button. The round Back button uses history.back after in-app navigation.",
+     "A ZIP becomes a city Karen recognizes: '33602' gives 'Programs near Tampa, FL' with an 'In Tampa' group. Clubhouse and Near You show 'Near ZIP 33602'.",
+     "Basketball in Illinois is the only flow that tells the truth and still gives her somewhere to go: 'Nothing for basketball in Illinois yet. Here are the closest we have in other states... Add a program.' It takes 4 taps (pill, type, Basketball, Search).",
+     "After 'Use my location', distances work (Tampa programs show 'about 4 mi'), unlike Near You.",
+     "The closed drawer is not in the DOM, so screen readers and keyboards don't wander through hidden links. The empty Events page offers both 'Add an event' and 'Get the letter' buttons."
+    ],
+    "weaknesses": [
+     "Typing 'Tampa FL' (no comma, the most natural thing on an iPhone) shows 'We could not find \"Tampa FL\"'. 'St Pete', 'Saint Petersburg' and 'Brandon FL' fail the same way. All three concepts share this.",
+     "The Illinois basketball fallback says 'closest' but lists Little River SC, then Atlanta, Greenville and Metairie, apparently sorted by check date. Wisconsin's 2 basketball programs never appear. That breaks the honesty rule.",
+     "'More tennis near Tampa' on the listing includes Palm Beach Gardens (161 mi), Jupiter (162 mi) and West Palm Beach (167 mi). Calling those 'near' is not true.",
+     "Very long scroll: the Tampa results page is 9,883px because each phone card is about one screen tall (a huge plate with only 'Tampa / FL' on it). Karen sees about 1.3 programs per screen; Clubhouse's rows show about 4.",
+     "Back to results drops her at the top (the page was at scrollY 1996, then 0 after Back). The same happens in all three.",
+     "Tap target and text size: the beta bar's 'Help us build it' link is 109x20px. Sport rail labels are 13px; grant and trust tags are 13-14px.",
+     "'Use my location' fills 'Egypt Lake-Leto, FL', a census place name Karen won't recognize, and she still has to tap Search.",
+     "Copy: 'Basketball near Illinois' and 'Programs near Florida' read wrong. 'Everything listed in Illinois' sits directly above 'Nothing for basketball in Illinois'. Miracle League reads 'Verified \u00b7 No check date yet'. The letter confirmation says 'a person reads every one of these', which is wrong for a newsletter. A grant name keeps its em dash ('Triumph Foundation \u2014 Keep Moving Forward').",
+     "There is no map view, and the state tiles are 29px."
+    ],
+    "mustFix": [
+     "Make the place parser accept 'City ST' with no comma, the full state name, and common short forms ('St Pete', 'Saint Petersburg'). Add type-ahead city suggestions under the Where field.",
+     "'Use my location': snap to a city she'll recognize (the nearest city with listings, e.g. 'near Tampa, FL') and run the search right away.",
+     "Sort the empty-state fallback by real distance from the state or city (Wisconsin first for Illinois), or drop the word 'closest'.",
+     "Cap 'More <sport> near <city>' at about 25 mi plus the same state, show 'about N mi' on each, and rename it when the results are far away.",
+     "Restore the list's scroll position when she comes back from a listing.",
+     "On phones, switch results groups past the first 2 cards to compact rows. The Tampa page should be closer to 4,000px than 10,000px.",
+     "Make the beta link at least 44px tall. Raise rail labels and card tags to 15px or larger.",
+     "Change headings to 'Basketball in Illinois' and 'Programs in Florida'. Remove the contradictory 'Everything listed in Illinois' line in the empty state.",
+     "Fix the letter confirmation copy and the leftover em dash in grant names."
+    ]
+   },
+   {
+    "concept": "Clubhouse (Reddit-first)",
+    "score": 6,
+    "strengths": [
+     "Fastest list to scan near Tampa: compact rows with a 72px plate show about 4 programs per screen, and the whole Tampa page is 3,934px. Every row shows name, sport, city, Verified and the date.",
+     "Jump chips at the top of the results (In Tampa 4 / Within about 25 mi 6 / Elsewhere in Florida 69 / Florida, no city 30), plus a 'Verified only' chip and sport chips with counts. Karen can see the near ladder at a glance and jump to any rung.",
+     "The home page's 'Grants open now' rail drops past deadlines, and the grant list writes them as 'Last deadline was March 12, 2026'. Karen can't click into a dead grant by accident.",
+     "'Use my location' works end to end: one tap gives results with Tampa programs at 'about 4 mi' (the place name is still odd).",
+     "The Events page has a calendar subscribe and 'Hear when events are posted'. Every sport page has Programs / Grants / Events tabs.",
+     "The letter is easy to find: 'Get the letter' sits on every sport and state page header, and the drawer has 'The letter'."
+    ],
+    "weaknesses": [
+     "Basketball in Illinois is broken. The sheet path (Illinois + Basketball > Show programs) lands on the Illinois state page, which reads '31 listed so far \u00b7 12 checked by a person \u00b7 0 cities' (with 6 orange city dots on the map) directly above 'Nothing listed in Illinois yet'. No chip shows Basketball as selected, and there is no fallback to Wisconsin. Karen would conclude Illinois has nothing at all.",
+     "The other route (the Basketball avatar) makes Karen notice that Illinois is missing from the state chips. The rows are sorted 'Verified first' then A to Z, not by place.",
+     "The listing page has no in-page Back button, only the browser gesture. The 'Tennis in Florida' breadcrumb links are 47x20px and go to the sport page, not back to her results. Scroll is lost on return.",
+     "The closed drawer stays in the tab and screen-reader order (25 off-screen links with no inert or aria-hidden).",
+     "Inconsistent: 'Tennis Starts With Love' sits under 'In Tampa' on results, but the listing page says 'about 1 mi'.",
+     "'Tampa FL' (no comma), 'St Pete' and 'Brandon FL' fail with 'We could not find that place'.",
+     "The first phone screen on home is headline plus pill; no programs show until she searches. The drawer title reads 'Near Me'. Sport avatars show national counts ('521 listed'), which leans against the voice rule on counts.",
+     "Program names keep their en dashes ('Parks and Recreation \u2013 Wheelchair Tennis')."
+    ],
+    "mustFix": [
+     "Typing a state plus a sport must keep the sport filter visible and selected. Show 'No basketball in Illinois yet', list the nearest same-sport programs in other states (Wisconsin first), and fix the '0 cities' count.",
+     "Add an in-page Back button that returns to her results with scroll kept. Make the breadcrumbs 44px tall.",
+     "Make the closed drawer inert.",
+     "Accept 'Tampa FL' and short forms of city names. Snap 'Use my location' to a city she'll recognize."
+    ]
+   },
+   {
+    "concept": "Near You (place + sport)",
+    "score": 5,
+    "strengths": [
+     "Simplest start for Karen: a real 'City, state or ZIP' box and a Search button sit right on the home page with no sheet in between, plus 'Use my location' and example chips. Tampa is 2 taps plus typing.",
+     "Basketball in Illinois gives a clear, consistent empty state: the Basketball tab is selected and the page reads 'Basketball in Illinois \u00b7 0 listings' and 'No basketball listed in Illinois yet. See every sport in Illinois, or tell us about one.'",
+     "'More tennis near Tampa' on the listing is honest: 'Same city', then 'About 44 mi away', 'About 80 mi away'. It is the only concept that labels how far away 'near' really is.",
+     "The only working map: tapping Map gives city pins with counts, a 'You' ring, a 'Statewide in Florida \u00b7 30' strip and a List pill.",
+     "The listing has a clear trust box with 'Last checked Oct 8, 2026' and a sticky 'Visit website'. The drawer has 'Recently viewed' sports."
+    ],
+    "weaknesses": [
+     "'Use my location' breaks the core promise. With a Tampa GPS fix it picks 'Egypt Lake-Leto, FL', then says 'We could not place Egypt Lake-Leto, FL on our city list, so there are no distances. Here is everything in Florida.' Tampa programs lose their near ranking entirely.",
+     "Grants mislead: past deadlines show as live. 'Deadline: March 12, 2026', 'June 10, 2026' and 'June 15, 2026' sit at the top of the All grants list, and the home page's 'Help paying for it' leads with the expired Reeve program grant. Karen could easily open a dead grant.",
+     "2-column cards cut names off: 'City of Tampa Parks and...' hides 'Wheelchair Tennis'.",
+     "The floating Map pill covers card text on results and on home (it hid 'checked Oct 8' and 'Baseball' in the first screen).",
+     "Back uses javascript:history.back(), so on a shared deep link it leaves the site. Scroll is lost on return.",
+     "The closed drawer leaves 99 links in the tab and screen-reader order. The header '+ Add' button is 40px tall. Rail labels are 13px.",
+     "'Tampa FL' (no comma), 'St Pete' and 'Brandon FL' fail. There is no fallback to nearby states for an empty sport.",
+     "The 'Tampa' example chip on home leans Florida-first. Grant names keep em dashes."
+    ],
+    "mustFix": [
+     "Fix 'Use my location' so the snapped city resolves. Use a city she'll recognize with listings nearby.",
+     "Mark past grant deadlines as past ('Last deadline was...'), sort open grants first, and never lead the home grants rail with an expired or program-only grant.",
+     "Stop cutting names off on cards; let them wrap to 3 lines or use full-width rows. Move the Map pill so it never covers the trust line.",
+     "Use a safe in-app Back with a fallback route, make the drawer inert, and make '+ Add' at least 44px tall."
+    ]
+   }
+  ],
+  "winner": "Gallery (Airbnb-first)",
+  "grafts": [
+   "From Clubhouse: compact rows with a 72px plate for result groups on phones, replacing one huge card per screen. Clubhouse's Tampa page is 3,934px; Gallery's is 9,883px.",
+   "From Clubhouse: jump chips at the top of the results ('In Tampa 4 / Within about 25 mi 6 / Elsewhere in Florida 69 / Florida, no city 30'), plus the 'Verified only' chip and sport chips with counts for that place.",
+   "From Clubhouse: a home 'Grants open now' rail that drops past deadlines, so Karen reaches an athlete grant in 1 tap from home.",
+   "From Clubhouse: a 'Get the letter' button in sport and state page headers, and on Events, 'Subscribe to the calendar' plus 'Hear when events are posted'.",
+   "From Near You: a real 'City, state or ZIP' input and Search button on the home page itself (no sheet in between), with 'Use my location' beside it.",
+   "From Near You: label every nearby suggestion with its distance ('Same city', 'About 44 mi away') and cap 'More <sport> near <city>' so 160-mile results are never called near.",
+   "From Near You: the coherent empty state ('No basketball listed in Illinois yet. See every sport in Illinois, or tell us about one') with the sport still selected. Add Gallery's fallback to other states only after it truly sorts by distance (Wisconsin first).",
+   "From Near You: the MapLibre map behind a floating Map/List pill, with city pins, a 'You' ring and a 'Statewide in <state>' strip, placed so it never covers card text.",
+   "From Near You: 'Recently viewed' sports at the top of the drawer.",
+   "For all three: accept 'Tampa FL' with no comma and short forms like 'St Pete'; snap 'Use my location' to a city she'll recognize; keep her scroll position when she comes back from a listing."
+  ],
+  "reasoning": "I ran all three as Karen on a 390x844 phone in Playwright (ports 8811/8812/8813, all servers stopped by PID). Each prototype was tested with a fake Tampa GPS location, 9 typed variations of the place, a check of returning to results, and a tap-target and text-size audit. No concept passes every task, and each has at least one Karen-breaking defect.\n\nWhat all three get wrong:\n- Typing 'Tampa FL' with no comma fails everywhere ('We could not find'). So do 'St Pete', 'Saint Petersburg' and 'Brandon FL'.\n- 'Use my location' snaps to 'Egypt Lake-Leto, FL', a name Karen won't recognize.\n- Coming back from a listing drops her at the top of the list.\n- Events is 2 taps to an honest empty page with Add an event, and the letter is about 2 taps plus typing. These are equal in all three.\n\nTask by task:\n- **Program near Tampa (3 taps in all three).** All show the same honest near ladder (4 in Tampa, 6 within about 25 mi). Clubhouse's compact rows and jump chips scan best. Gallery's cards are one per screen, so the page runs 9,883px. Near You cuts card names off and its Map pill covers text.\n- **Basketball in Illinois (no data; Wisconsin has 2).** Clubhouse is broken: '31 listed so far / 0 cities / Nothing listed in Illinois yet', with no visible basketball filter. Near You is honest but stops there. Gallery is honest and offers somewhere to go, but its 'closest' list is really sorted by check date and leaves out Wisconsin.\n- **Listing contact and trust.** All put Verified, 'Last checked' and a sticky Visit website on the first screen. Gallery's Back button works best. Clubhouse has no in-page Back. Near You's Back is javascript:history.back().\n- **Grant for an athlete.** Gallery opens on athlete grants (3 taps). Clubhouse handles past deadlines best. Near You shows expired deadlines as live at the top of its list, an honesty failure against the opening-day grant bar.\n- **'Use my location'.** It breaks Near You outright ('could not place'). It works in Clubhouse, and in Gallery after one extra tap.\n\nWhy Gallery wins: it has no dead end on any of the 6 tasks, the best grant and listing flows, a ZIP that resolves to a city name, and correct 'Use my location' distances. Its defects (the false 'closest' label, 'near' for 160 miles, long scroll, the 20px beta link) are fixable. Clubhouse's Illinois contradiction and Near You's broken 'Use my location' and live-looking expired grants hit Karen's core tasks directly.\n\nGraft onto Gallery: Clubhouse's compact rows, jump chips and 'Grants open now' rail, and Near You's input on the home page, labeled 'near' distances and map."
+ },
+ {
+  "winner": "Clubhouse (Reddit-first)",
+  "scores": [
+   {
+    "concept": "Clubhouse (Reddit-first)",
+    "score": 7.5,
+    "strengths": [
+     "Best fit for production. Hash routes already copy the real paths (#/sports/tennis, #/states/FL, #/programs/<id>, #/grants/<id>), so each one becomes a Worker route with its own meta. One 'community' template covers sport, state, grants and events, so the Worker needs one renderer for all four page types.",
+     "Most coherent design system. It has a real token set (--r-s/--r/--r-l/--r-xl = 8/12/16/20, which is the manual's radius scale exactly), a --font token with the manual's fallbacks, brand Ink, Graphite, Mist, Sand and Orange #C5430C, Teal for Verified, and few one-off sizes.",
+     "Compact 72px-plate rows keep pages short (Tampa phone page 3,934px, against D's 34,330), which suits server-rendered pages of 20 results. The big image appears once, in the banner and avatar, as the pattern brief asked.",
+     "Accessibility basics are in place: a skip link, a focus trap in the sheet and drawer with Escape and focus return, prefers-reduced-motion and forced-colors. Body text is 17px, the 44px tap targets were checked by script, and nothing scrolls sideways at 390px.",
+     "Honest near logic. All four groups are present (In Tampa 4 / within about 25 mi 6 / Elsewhere in Florida 69 / Florida, no city 30), and the empty states fall back to the whole state. The grant page handles a past deadline ('Last deadline June 15, 2026') and drops it from 'open now'. No email, phone, score or type field, and no money ask (grep and rendered text both clean). The official mark sits top-left, apart from the sport art."
+    ],
+    "weaknesses": [
+     "axe found 4 violation types: (1) state tile map uses white on #8f8b83 at 3.39:1 with 10-12px text (6 nodes on phone, 12 on desktop); (2) aria-pressed on an <a> in the 'Verified only' chip (critical); (3) .banner has role=img with no accessible name; (4) .chiprow on /grants has a list role with <a> children (critical).",
+     "Counts the whole directory, which breaks voice.md and the pattern brief's 'counts only for the person's area' rule: '521 listed', '347 listed' and '134 listed' on the home avatar grid, and '347 listed so far \u00b7 345 checked by a person' on sport pages.",
+     "The letter copy promises emails the backend cannot send: 'We email when new tennis programs... show up near you', and 'Get the letter for Florida'. /api/subscribe stores no sport or place.",
+     "In-city matching is a word match, so 'Tennis Starts With Love \u00b7 Tampa area, FL' counts as In Tampa. isPlaced only rejects 'statewide', so 'Raleigh / statewide, NC' still shows as a city on sport pages.",
+     "A sport page's Grants tab shows all 45 grants ('Grants 45' on Tennis), which suggests 45 tennis grants.",
+     "Program names keep en dashes ('City of Tampa Parks and Recreation \u2013 Wheelchair Tennis'), while grant names are rewritten to a colon. Pick one rule.",
+     "The home hero is type plus a search pill: the first phone screen shows no listing. The multi-sport house tone turns near-black on the listing hero, close to dark mode, and the faint second athlete behind the banner is busy for event, grant and multi."
+    ],
+    "mustFix": [
+     "Fix the 4 axe failures: darken or label the tile-map low tier (or put ink text on a pale tile), replace aria-pressed on links with real buttons or aria-current, give the banner aria-hidden (the h1 already names the sport), and drop role=list from .chiprow or wrap each chip in an li.",
+     "Remove national totals from home and sport headers. Show counts only for the visitor's place or the state being viewed.",
+     "Make letter copy match /api/subscribe ('Get the letter'), or add sport and state fields to the subscribe schema first.",
+     "Use first-city parsing, as Near You's cityShort does, instead of a word match for 'In <city>'. Treat 'X / statewide' as statewide.",
+     "Filter the Grants tab by grant.sports when it is set, or label it 'Grants for any sport'.",
+     "Raise the tile map to 44px tiles or a list on phones."
+    ]
+   },
+   {
+    "concept": "Gallery (Airbnb-first)",
+    "score": 7,
+    "strengths": [
+     "Cleanest accessibility result: 0 axe WCAG 2.0/2.1/2.2 A and AA violations on all 22 routes scanned, phone and desktop. Sheet and overlay keep focus inside, return it on close, and close on Escape. reduced-motion and forced-colors are handled, and there is a real error message ('Enter an email address, like name@example.com.').",
+     "Strongest brand discipline. Orange #C5430C is kept to signals (the search button, the help link), Teal marks Verified, white paper with a Sand hero, DM Sans, and the official mark top-left and separate. It uses T8 two-tone plates and T3 inverted heroes exactly as the image lab specified, with OPT sizing.",
+     "Strictest placement rule: an UNPLACED regex (statewide, multiple, various, county, region) plus geoPrecision!=='state'. A ZIP resolves to its nearest gazetteer city, and in-city rows show no distance.",
+     "Best wow and share artifact: the 4:5 poster (white athlete on the sport's deep colour, name, City, ST, the domain, and the official logo in a white disc) maps directly to a server og:image built from <key>.png. The grant page leads with the amount and has a sticky 'Apply on their site' bar.",
+     "Grants list on a phone shows amount, audience and deadline on every card, which fixes the current spreadsheet view."
+    ],
+    "weaknesses": [
+     "No skip link anywhere. The sport (#s=tennis), state (#st=FL) and grants (#v=grants) views render with no <h1>, which hurts both accessibility and SEO on exactly the pages that need to rank.",
+     "Routes are query-style hashes (#q=, #s=, #st=, #p=, #v=grants), not path mirrors. Each one needs remapping to /sports/:key, /states/:st and so on.",
+     "Text on the page claims more than it can show. 'Every listing says who checked it and when' is not true: no name is shown, and 236 rows have no date. Unverified pages say 'Not yet verified' next to 'Last checked October 9, 2026', which reads as a person checking and rejecting it. lastChecked is the automatic website check.",
+     "Dash handling is half done. Program names get ' \u2013 ' changed to ': ' (an official name altered), while grant names still show em dashes ('Triumph Foundation \u2014 Keep Moving Forward', 'Semper Fi / The Americas Fund \u2014 ...'). Its own QA claim 'dashes in names fixed' is false for grants.",
+     "The over-strict regex also unplaces 'Athens / Clarke County' and similar rows (77 placed rows with a county or region suffix), which loses real city distances.",
+     "The design system is thinner: tokens are colour plus one radius; radii vary (4/7/9/12/14/16/20/24); there are cqw-based type sizes; and card meta and trust text at 14-16px sit under the 17px body floor. The 29px tile-map tiles have 12px labels on phones.",
+     "The beta bar wraps to 2 lines on phones and the hero is about 310px, so no card shows on the first home screen. The desktop listing hero at 21:9 is heavy for pages that hold only trust and a description."
+    ],
+    "mustFix": [
+     "Add a skip link and one h1 per view (sport, state, grants).",
+     "Replace 'who checked it' with 'Every listing says whether a person has checked it, and when'. Reword the unverified line to 'Listed <date>, not checked yet' (needs listedAt in /api/directory).",
+     "Pick one rule for dashes in names and apply it to programs and grants alike. Leaving data names verbatim is the more honest choice.",
+     "Parse the first city ('Athens / Clarke County' to Athens) before deciding a row is unplaced."
+    ]
+   },
+   {
+    "concept": "Near You (place + sport)",
+    "score": 6,
+    "strengths": [
+     "Most complete honest place logic and the only real map. In-city / about 25 mi / elsewhere in state by distance / statewide groups, with a state-outline results header (dots plus 'you' ring). MapLibre shows one pin per city with a count, and a 'Statewide in Florida \u00b7 30' strip that is never pinned. Wording is honest: 'Distances are city to city, so they are close, not exact'; 'Serves Florida, no single city listed'; 'Programs, placed at their city'.",
+     "cityShort reads the first city out of a list, which is better than either other concept's regex. State pages mix sports by turns (tennis, swimming, water skiing, soccer...), which cuts repeated pictures. ZIP search starts at about 25 mi.",
+     "Brand-correct colours (it uses --flame only as a token, never for text), Teal for Verified, the official mark top-left, a skip link, and counts only per place or state ('109 listings \u00b7 94 verified' in Florida)."
+    ],
+    "weaknesses": [
+     "Worst axe result: 16 color-contrast nodes on the home tile map (white on #E38A57 at 2.61:1, with 9-11px count text) and 9 on the sport tile map (#9a9792 on white at 2.91:1). Many sub-13px labels: tile counts at 9px, the 'Verified' card pill at 12.5px, the 'FL' stamp at 12px.",
+     "The floating Map pill sits over the card trust line (the date) on phone results and state pages. In the Tampa and Florida screenshots it hides 'checked Oct \u2026'. The date is the opening-day bar, and the pill covers it.",
+     "Two-column phone cards cut off the city ('Atlantic Beac\u2026', 'Palm Be\u2026', 'Winter \u2026') and the name after 2 lines ('City of Tampa Parks and\u2026'). City and state are the only location we are allowed to show, and the layout drops them.",
+     "No focus trap in the sheet or drawer (Tab escapes, self-admitted). Uses alert() when location is missing. 200% zoom not tested.",
+     "The stamp on every card means inline state SVG paths per card. That adds server-rendered weight and repeats 'FL' on a page that is already about Florida. It also pushes the athlete down to about 54%, under the lab's 62%.",
+     "Routes are #near=, #s=, #st= hashes, not path mirrors. The design system is the loosest of the three: 15.5px, 12.5px and clamp(9px\u2026) sizes, and radii of 4/7/10/12/14/18/20/22/24.",
+     "Grant names keep em dashes, and a deadline range shows 'Oct\u2013Nov'."
+    ],
+    "mustFix": [
+     "Fix tile-map contrast (ink on pale tiles, or darken to 4.5:1) and raise tile labels to 13px or more and tiles to 44px.",
+     "Move the Map pill so it never covers content (reserve bottom padding equal to the pill height plus safe area, or dock it in the results header). Never let it cover a date.",
+     "Use single-column cards or compact rows on phones so City, ST is never cut off.",
+     "Add a focus trap and replace alert() with an inline message.",
+     "Drop the per-card stamp on state and sport pages where the place is already the page subject."
+    ]
+   }
+  ],
+  "grafts": [
+   "From Near You: the MapLibre map (one pin per city with a count, a 'you' ring, a 'Statewide in <State> \u00b7 N' strip that is never pinned) behind a 48px Map/List toggle. Clubhouse has no real map. Put it at /states/:st and on near results, with the pill docked so it never covers a date.",
+   "From Near You: the cityShort first-city parser ('Athens / Clarke County' to Athens; 'X / statewide' to statewide). It replaces Clubhouse's word-match in-city test and its statewide-only placement regex.",
+   "From Near You: the results header with the state outline, the visitor's ring and city dots, the summary line '4 in Tampa \u00b7 6 within about 25 miles \u00b7 99 more in Florida', and its honesty wording ('Serves Florida, no single city listed'; 'Distances are city to city, so they are close, not exact').",
+   "From Near You: state pages that take turns by sport, verified first, so a state's first rows are not all tennis.",
+   "From Gallery: the 4:5 share poster (white athlete on the deep colour, name, City, ST, domain, the official logo in a white disc). Make it the server-rendered og:image (1200x630) and the Instagram export (1080x1350) for every /programs/:id and /sports/:key page, with og:image:alt such as 'Wheelchair tennis, Adaptive Sports Near Me'.",
+   "From Gallery: the place-as-headline T8 plate for the mixed-sport rails on the home page only. It gives the Clubhouse home the wow and a listing on the first phone screen; one-sport pages keep compact rows.",
+   "From Gallery: its accessibility hygiene (0 axe violations): the overlay focus pattern, the inline email error copy, and the grant card layout showing amount, audience and deadline on phones, plus the grant page's sticky 'Apply on their site' bar with the amount on the left.",
+   "From Gallery: ZIP to nearest-city labelling ('60614, Chicago, IL'), so the searched place reads as a city, not a code.",
+   "For all concepts, before opening day: add listedAt (and verifiedMonth) to /api/directory so unverified rows read 'Listed <date>, not checked yet' and Verified rows show the person's verification month, not the automatic lastChecked crawl date. Today all three print 'Last checked <date>' beside 'Not yet verified', and 'no date yet' on 236 rows."
+  ],
+  "reasoning": "My lens: brand, honesty, accessibility and buildability. I scanned all three with axe-core through Playwright (WCAG 2A/2AA/2.1AA/2.2AA, 31 routes at 390px and 1440px), checked the rendered text for dashes, phone numbers, email addresses, money asks, missing-date wording and national counts, read the near/placement code, and looked at the screenshots.\n\nNo concept breaks the hard privacy or money rules. All three are clean on email, phone, score, type field and donate. All three also share the same date gap: 'Not yet verified' next to 'Last checked <date>' (which is the automatic crawl date), and 'no date yet' on rows without lastChecked. That needs listedAt added to /api/directory and is not a design difference.\n\nGallery has the best accessibility (0 axe violations) and the tightest brand use. But it has no skip link, no h1 on the sport, state and grants views (the SEO pages), and query-style hash routes. Its copy says 'who checked it', it rewrites program names while leaving em dashes in grant names, and its placement regex is so strict it discards real cities.\n\nNear You has the most complete honest place logic and the only real map. But it fails contrast badly on its tile maps (2.61:1 and 2.91:1, with 9-12px text). Its floating Map pill hides the date on phone cards, two-column cards cut off the city we are only allowed to show, it has no focus trap, and it has the loosest type and radius system.\n\nClubhouse wins on my lens because it is closest to production. Its routes already copy the real paths, and one community template renders sport, state, grants and events, which matches the Worker's server-rendered model and gives one page per sport and per state. Its tokens follow the manual's radius scale and font stack, its compact rows keep pages light, and it has a skip link and a focus trap. Its 4 axe failures are mechanical one-line fixes. Its real faults are voice and copy: national counts, letter promises the backend cannot keep, a word-match 'In Tampa', and an unfiltered Grants tab. All are cheap to fix.\n\nThe winner should take Near You's map, city parser and state header, and Gallery's share poster (as og:image), its home-page place plates and its accessibility patterns. Nothing was committed, pushed or deployed. The preview server on 8851 (PID 153947) was stopped by its PID. Scan scripts and output are in /tmp/axe-judge/ (scan.mjs, text.mjs, out.txt)."
+ }
+]

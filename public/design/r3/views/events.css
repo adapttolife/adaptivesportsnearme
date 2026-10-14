@@ -1,0 +1,29 @@
+/* Events (6.11). Scoped under .v-events. */
+
+/* Header: h1 and sub on white, so the empty state below is the one panel on the page
+   (a Sand band, a Mist panel and the Sand letter in a row read as three grey boxes). */
+.v-events .ehead { padding-top: 32px; }
+.v-events .ehead p { margin-top: 8px; font-size: 17px; color: var(--graphite); }
+@media (min-width: 768px) {
+  .v-events .ehead { padding-top: 48px; }
+  .v-events .ehead p { font-size: 18px; }
+}
+
+/* Empty state: the event tile on the left from 600px, buttons in a row. */
+.v-events .ev-empty { margin-top: 24px; }
+.v-events .empty { padding: 24px; gap: 20px; }
+.v-events .empty .plate--row { border-radius: var(--r); }
+.v-events .empty .btns { margin-top: 20px; }
+@media (min-width: 768px) {
+  .v-events .empty { padding: 32px; }
+  .v-events .empty .plate--row { width: 84px; height: 84px; }
+}
+@media (max-width: 599px) { .v-events .empty .btns { flex-direction: column; } }
+
+/* Month groups (when events exist) */
+.v-events .ev-month { margin-top: 32px; }
+.v-events .ev-month h2 { padding-bottom: 8px; border-bottom: 1px solid var(--line); }
+.v-events .ecard .meta { margin-top: 2px; }
+.v-events .ev-list .ecard:last-child { border-bottom: 0; }
+.v-events .ecard .tlink { font-size: 16px; }
+.v-events .ev-add { margin-top: 24px; }
