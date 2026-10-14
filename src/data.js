@@ -16,7 +16,7 @@ export function freshness(lastOkAt, now = Date.now()) {
 }
 
 const LIST_COLS = `id, name, org_type, sport, sport_key, website_url, city,
-  state, state_name, zip, lat, lng, geo_precision, description, cost_note,
+  state, state_name, zip, publicity_consent, lat, lng, geo_precision, description, cost_note,
   equipment_provided, ages, data_quality_rating, verification_status, last_ok_at`;
 
 // A listing is public only when a person could act on it: a website to visit,
@@ -32,6 +32,7 @@ export const ACTIONABLE = `((website_url IS NOT NULL AND website_url <> '')
 const PUBLIC = `is_public = 1 AND status = 'active' AND ${ACTIONABLE}`;
 
 function rowToProgram(r, dist) {
+  const publicityConsent = r.publicity_consent === 1;
   return {
     id: r.id,
     name: r.name,
@@ -42,14 +43,11 @@ function rowToProgram(r, dist) {
     city: r.city,
     state: r.state,
     stateName: r.state_name,
-    // zip: r.zip,
-    zip: null,
-    // lat: r.lat,
-    lat: null,
-    // lng: r.lng,
-    lng: null,
-    // geoPrecision: r.geo_precision,
-    geoPrecision: null,
+    zip: publicityConsent ? r.zip : null,
+    lat: publicityConsent ? r.lat : null,
+    lng: publicityConsent ? r.lng : null,
+    geoPrecision: publicityConsent ? r.geo_precision : null,
+    publicityConsent,
     desc: r.description,
     cost: r.cost_note,
     equipment: r.equipment_provided === 1 ? "Provided" : r.equipment_provided === 0 ? "Bring your own" : null,
@@ -58,8 +56,7 @@ function rowToProgram(r, dist) {
     verification: r.verification_status,
     freshness: freshness(r.last_ok_at),
     lastChecked: r.last_ok_at,
-    // dist: dist == null ? null : Math.round(dist * 10) / 10,
-    dist: null,
+    dist: publicityConsent && dist != null ? Math.round(dist * 10) / 10 : null,
   };
 }
 
@@ -132,15 +129,15 @@ export async function listPrograms(db, params, opts = {}) {
 /*
   if (origin && !origin.missing) {
     const rows = await db.prepare(
-      `SELECT ${LIST_COLS} FROM organizations WHERE ${cond} AND lat IS NOT NULL AND lng IS NOT NULL`
+      `SELECT ${LIST_COLS} FROM organizations WHERE ${cond} AND publicity_consent = 1 AND lat IS NOT NULL AND lng IS NOT NULL`
     ).bind(...binds).all();
     const ranked = applyNearby(rows.results, origin);
     const total = ranked.length;
     const items = ranked.slice(offset, offset + limit).map(({ row, dist }) => rowToProgram(row, dist));
     return { total, limit, offset, items, near: nearPayload(origin) };
   }
-
 */
+
   const [count, rows] = await Promise.all([
     cachedCount(db, cond, binds),
     db.prepare(
@@ -164,8 +161,8 @@ export async function getOrg(db, id) {
   ).bind(id).all();
   return {
     ...rowToProgram(row),
-    // email: row.email,
-    // phone: row.phone,
+    // Contact details show only when the program gave permission (publicity_consent, Faisal 2026-10-14).
+    ...(row.publicity_consent === 1 ? { email: row.email, phone: row.phone } : {}),
     // This is a public API: our own research files (CSV names, Drive links, a
     // teammate's name) leave as "Adaptive Sports Near Me research", unlinked.
     primarySource: ListingArt.sourceLabel(row.primary_data_source),
@@ -245,7 +242,6 @@ export async function listSameSportNearby(db, org, limit = 6) {
     `SELECT ${LIST_COLS} FROM organizations WHERE ${where.join(" AND ")} LIMIT 80`
   ).bind(...binds).all();
   let items = (rows.results || []).map((r) => rowToProgram(r));
-/*
   if (org.lat != null && org.lng != null) {
     items = items.map((p) => {
       const dist = (p.lat != null && p.lng != null)
@@ -254,7 +250,6 @@ export async function listSameSportNearby(db, org, limit = 6) {
       return { ...p, dist };
     }).sort((a, b) => (a.dist ?? 1e9) - (b.dist ?? 1e9));
   }
-*/
   return items.slice(0, n);
 }
 

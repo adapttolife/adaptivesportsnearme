@@ -73,11 +73,9 @@ function sourceWithUrl(org) {
 // website → tel → mailto → primary source link. Never an empty-page stub.
 export function primaryCta(org) {
   if (org.website) return { href: org.website, label: "Visit website" };
-/*
-  const phone = org.phone && String(org.phone).trim();
+  const phone = org.publicityConsent && org.phone && String(org.phone).trim();
   if (phone) return { href: `tel:${phone.replace(/[^\d+]/g, "")}`, label: "Call" };
-  if (org.email) return { href: `mailto:${org.email}`, label: "Email" };
-*/
+  if (org.publicityConsent && org.email) return { href: `mailto:${org.email}`, label: "Email" };
   const src = sourceWithUrl(org);
   if (src) return { href: src.url, label: "View source" };
   return null;
@@ -89,8 +87,8 @@ function denseRows(org) {
     ["Cost", org.cost],
     ["Ages", org.ages],
     ["Equipment", org.equipment],
-    // ["Phone", org.phone],
-    // ["Email", org.email],
+    ["Phone", org.publicityConsent ? org.phone : null],
+    ["Email", org.publicityConsent ? org.email : null],
     ["Type", type],
   ].filter(([, v]) => v);
   if (!pairs.length) return "";
@@ -126,8 +124,7 @@ export function trustHtml(p) {
 function nearbyCard(p) {
   const loc = locLine(p);
   // Distance or nothing. The org type is a default, not a difference (see cardLine in index.html).
-  // const line = p.dist != null ? `${p.dist} mi away` : "";
-  const line = "";
+  const line = p.dist != null ? `${p.dist} mi away` : "";
   const v = listingVisual(p, "program");
   const media = isCoverVisual(v)
     ? `<div class="pcard-media has-photo"><img class="pcard-img" src="${esc(v.src)}" alt=""${stampAttr(p, "program")}></div>`

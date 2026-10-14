@@ -31,6 +31,7 @@ CREATE TABLE IF NOT EXISTS organizations (
   state                TEXT,                    -- USPS 2-letter code
   state_name           TEXT,                    -- display name
   zip                  TEXT,
+  publicity_consent    INTEGER NOT NULL DEFAULT 0 CHECK (publicity_consent IN (0, 1)),
   country              TEXT DEFAULT 'United States',
   lat                  REAL,
   lng                  REAL,

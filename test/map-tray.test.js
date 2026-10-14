@@ -31,6 +31,7 @@ const RENO = {
   ages: "Adult",
   phone: "775-467-2025",
   email: "reno@3rdshotpickleball.com",
+  publicityConsent: true,
   verification: "unverified",
   lastChecked: "2026-08-21T19:55:06Z",
 };
@@ -135,11 +136,11 @@ test("peek HTML: title, city · sport, Visit/Call/Email pills, handle — no pho
   assert.ok(reno.includes("3rd Shot Pickleball Reno Adaptive"));
   assert.ok(reno.includes("Reno, NV · Adaptive Pickleball"));
   assert.ok(reno.includes(">Visit<"));
-  assert.ok(!reno.includes(">Call<"));
-  assert.ok(!reno.includes(">Email<"));
+  assert.ok(reno.includes(">Call<"));
+  assert.ok(reno.includes(">Email<"));
   assert.ok(reno.includes("3rdshotpickleball.com"));
-  assert.ok(!reno.includes("tel:7754672025"));
-  assert.ok(!reno.includes("mailto:reno@3rdshotpickleball.com"));
+  assert.ok(reno.includes("tel:7754672025"));
+  assert.ok(reno.includes("mailto:reno@3rdshotpickleball.com"));
   assert.ok(reno.includes("tray-handle"));
   assert.ok(reno.includes("tray-x"));
   assert.ok(reno.includes("tray-pills"));
@@ -163,7 +164,7 @@ test("peek HTML: title, city · sport, Visit/Call/Email pills, handle — no pho
   assert.equal(trayMetaLine(RENO), "Reno, NV · Adaptive Pickleball");
   assert.equal(trayAction(RENO).label, "Visit");
   assert.equal(trayAction(KANSAS).label, "Open listing");
-  assert.deepEqual(trayPills(RENO).map((p) => p.label), ["Visit"]);
+  assert.deepEqual(trayPills(RENO).map((p) => p.label), ["Visit", "Call", "Email"]);
   assert.deepEqual(trayPills(KANSAS).map((p) => p.label), ["Open listing"]);
 });
 
@@ -177,8 +178,8 @@ test("expanded HTML reuses the listing sheet: symbol, title, city, desc, facts, 
   assert.ok(html.includes("Sunday adaptive"));
   assert.ok(html.includes(">Cost</span>"));
   assert.ok(html.includes(">Ages</span>"));
-  assert.ok(!html.includes("775-467-2025"));
-  assert.ok(!html.includes("reno@3rdshotpickleball.com"));
+  assert.ok(html.includes("775-467-2025"));
+  assert.ok(html.includes("reno@3rdshotpickleball.com"));
   assert.ok(html.includes("Visit website"));
   assert.ok(html.includes("class=\"nearby\""));
   assert.ok(html.includes("class=\"frow-scroll\""));
