@@ -7,6 +7,8 @@
 <title>Adaptive Sports Near Me: find adaptive sports programs near you</title>
 <meta name="description" content="Find adaptive sports programs, grants and events near you, each with the date we last checked it. Free, no account needed.">
 <!--asnm:meta-->
+<link rel="modulepreload" href="/app/views/home.js">
+<link rel="preload" href="/app/views/home.css" as="style">
 <link rel="canonical" href="https://adaptivesportsnearme.com/">
 <meta property="og:title" content="Adaptive Sports Near Me">
 <meta property="og:description" content="Find adaptive sports programs, grants and events near you, each with the date we last checked it. Free, no account needed.">
@@ -23,13 +25,20 @@
 <meta name="theme-color" content="#121212">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sofia+Sans:wght@400..900&family=Sofia+Sans+Extra+Condensed:wght@700..900&display=swap" rel="stylesheet">
+<!-- Every page draws from the listings, so their download starts now, with the page's
+     own code, instead of after the scripts run. -->
+<link rel="preload" href="/api/listings" as="fetch" crossorigin>
+<link rel="preload" href="/data/states.json" as="fetch" crossorigin>
+<link rel="preload" href="/data/sports.json" as="fetch" crossorigin>
+<link rel="modulepreload" href="/app/app.js">
+<link rel="modulepreload" href="/app/icons.js">
+<link rel="modulepreload" href="/app/listing-sport.js">
 <link rel="stylesheet" href="/app/app.css">
-<script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
-<script src="/listing-art.js"></script>
-<script src="/app/core.js"></script>
-<script src="/assets/vendor/lucide-1.49.0.min.js"></script>
+<script src="/listing-art.js" defer></script>
+<script src="/app/core.js" defer></script>
 <script type="module" src="/app/app.js"></script>
-<script src="https://cdn.userway.org/widget.js" data-account="sFogOSJsXe" async></script>
+<!-- The accessibility widget (UserWay) and the spam check (Turnstile) load from app.js
+     once the page has drawn, so a slow phone spends its first bandwidth on the page. -->
 </head>
 <body>
 <a class="skip" href="#main" data-skip>Skip to content</a>

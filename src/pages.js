@@ -121,7 +121,27 @@ const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "
 
 // Put one page's tags into the shell. The shell carries the home page's title,
 // description and canonical; everything else goes in at <!--asnm:meta-->.
-export function injectMeta(html, meta, { url, production }) {
+// The page's own code (public/app/views/<view>.js and .css) for an address: the same
+// table as ROUTES in public/app/app.js. A listing page also starts its details
+// (/api/orgs/<id>) with the page, so nothing waits for anything else.
+const VIEWS = [
+  [/^\/$/, "home"], [/^\/near\/[^/]+$/, "near"], [/^\/sports$/, "sports"], [/^\/sports\/[^/]+$/, "sport"],
+  [/^\/states$/, "states"], [/^\/states\/[^/]+$/, "state"], [/^\/programs\/[^/]+$/, "program"],
+  [/^\/grants$/, "grants"], [/^\/grants\/[^/]+$/, "grant"], [/^\/events$/, "events"],
+  [/^\/(add\/program|add\/event|update\/[^/]+)$/, "forms"], [/^\/resources\/veteran-owned-businesses$/, "vob"],
+  [/^\/(help|about|resources|letter)$/, "help"],
+];
+export function preloadHints(pathname) {
+  const path = pathname.length > 1 ? pathname.replace(/\/+$/, "") : "/";
+  const hit = VIEWS.find(([re]) => re.test(path));
+  if (!hit) return [];
+  const tags = [`<link rel="modulepreload" href="/app/views/${hit[1]}.js">`, `<link rel="preload" href="/app/views/${hit[1]}.css" as="style">`];
+  const id = path.match(new RegExp(`^/programs/(${UUID})$`, "i"));
+  if (id) tags.push(`<link rel="preload" href="/api/orgs/${id[1].toLowerCase()}" as="fetch" crossorigin>`);
+  return tags;
+}
+
+export function injectMeta(html, meta, { url, production, hints = [] }) {
   const title = meta.title ? `${meta.title} · ${SITE_NAME}` : `${SITE_NAME}: find adaptive sports programs near you`;
   const description = meta.description || HOME_DESCRIPTION;
   const canonical = meta.canonical || ORIGIN + (url.pathname.replace(/\/+$/, "") || "/");
@@ -137,6 +157,7 @@ export function injectMeta(html, meta, { url, production }) {
     `<meta name="twitter:card" content="summary_large_image">`,
     noindex ? `<meta name="robots" content="noindex">` : "",
     meta.jsonld ? `<script type="application/ld+json">${JSON.stringify(meta.jsonld).replace(/</g, "\\u003c")}</script>` : "",
+    ...hints,
   ].filter(Boolean).join("\n");
   return html
     // Functions, not strings: page text can hold "$&" or "$'", which String.replace would expand.
@@ -181,7 +202,8 @@ export async function servePage(request, env, url) {
     meta = { title: SITE_NAME, description: HOME_DESCRIPTION };
   }
   const shell = await env.ASSETS.fetch(new Request(new URL("/", url), { method: "GET" }));
-  const html = injectMeta(await shell.text(), meta, { url, production: env.ENV_NAME === "production" });
+  const hints = meta.status === 404 ? [] : preloadHints(url.pathname);
+  const html = injectMeta(await shell.text(), meta, { url, production: env.ENV_NAME === "production", hints });
   const headers = { "content-type": "text/html; charset=utf-8", "cache-control": "public, max-age=60, stale-while-revalidate=300" };
   if (meta.noindex || env.ENV_NAME !== "production") headers["x-robots-tag"] = "noindex";
   return new Response(html, { status: meta.status || 200, headers });

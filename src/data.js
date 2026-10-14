@@ -5,6 +5,8 @@
 import { loadZcta, resolveOrigin, applyNearby, milesBetween, cityCenter } from "./geo.js";
 import { cachedCount } from "./read-cache.js";
 import "../public/listing-art.js";
+import { listingSport } from "../public/app/listing-sport.js";
+import { isListable } from "../public/app/listable.js";
 
 const ListingArt = globalThis.ListingArt;
 
@@ -98,6 +100,31 @@ export async function directorySnapshot(db, { places = null } = {}) {
     return p;
   });
   return { total: items.length, items };
+}
+
+// The slim directory the site's lists and maps load first (/api/listings): what a
+// card, a row, a map dot and a sport page need, nothing a listing's own page adds.
+// That page loads the rest from /api/orgs/:id. Rows that are not programs
+// (public/app/listable.js) never ship. Dates are days ("2026-10-08").
+export async function listingsSnapshot(db, { places = null } = {}) {
+  const { items } = await directorySnapshot(db, { places });
+  const day = (s) => (s ? String(s).slice(0, 10) : null);
+  const out = [];
+  for (const p of items) {
+    if (!isListable(p)) continue;
+    const { key, trio } = listingSport(p);
+    const o = { id: p.id, name: p.name, key };
+    if (trio) o.trio = trio;
+    if (p.city) o.city = p.city;
+    if (p.state) o.state = p.state;
+    if (p.cityCenter) o.center = p.cityCenter;
+    if (p.lastChecked) o.checked = day(p.lastChecked);
+    else if (p.listedAt) o.listed = day(p.listedAt);
+    if (p.confirmed) o.verified = 1;
+    if (p.teamChecked) o.team = 1;
+    out.push(o);
+  }
+  return { total: out.length, items: out };
 }
 
 export async function listPrograms(db, params, opts = {}) {

@@ -113,9 +113,11 @@ test('Worker serves the complete snapshot contract used by homepage hydration',a
     assert.equal(response.status,200);
     assert.deepEqual(await response.json(),{ok:true,total:0,items:[]});
     assert.equal(queries.length,1);
-    // The app (public/app/app.js) loads the whole directory once, from the snapshot.
+    // The app (public/app/app.js) loads the slim directory once (/api/listings) and a
+    // listing's details only on its own page (/api/orgs/:id); never the paged API.
     const app=read('public/app/app.js');
-    assert.match(app,/"\/api\/directory"/);
+    assert.match(app,/"\/api\/listings"/);
+    assert.match(app,/"\/api\/orgs\/"/);
     assert.doesNotMatch(app,/\/api\/programs/);
   } finally {sql.close();}
 });
@@ -278,4 +280,28 @@ test('/api/directory adds city centers from the places table it reads once throu
     await get();
     assert.deepEqual(fetched, Array(2).fill('https://assets.local/data/places.json'), 'loaded once, then reused');
   } finally { sql.close(); _resetPlacesCache(); }
+});
+
+// The slim directory (/api/listings): what lists, maps and sport pages need, nothing
+// a listing's own page adds, and nothing private.
+test('/api/listings carries only what lists need, works out each sport, and leaves out non-programs', async () => {
+  const {sql,db} = database();
+  try {
+    const org = sql.prepare("INSERT INTO organizations (id,name,is_public,status,created_at,updated_at,city,state,website_url,sport,sport_key,description,email,phone,zip,lat,lng,publicity_consent,verification_status,verification_method,last_ok_at,cost_note) VALUES (?,?,1,'active','2026-10-14T14:32:17.000Z','2026',?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
+    org.run('11111111-1111-1111-1111-111111111111','Tampa Tennis','Tampa','FL','https://tennis.example','Wheelchair Tennis','tennis','Sports and activities: tennis.','a@b.test','555-0100','33602',27.9,-82.4,0,'verified','{"verification_month":"2026-09"}','2026-10-08T16:01:20.494Z','Free');
+    org.run('22222222-2222-2222-2222-222222222222','Many Sports Club','Denver','CO','https://many.example','Multi-sport',null,'Sports and activities: wheelchair basketball; sled hockey; swimming. Athletes served: all.',null,null,null,null,null,1,'unverified',null,null,null);
+    org.run('33333333-3333-3333-3333-333333333333','Donate','','','',null,null,null,null,null,null,null,null,0,'unverified',null,null,null);
+    const places = { 'FL|tampa': [27.95, -82.46], 'CO|denver': [39.76, -104.88] };
+    const { listingsSnapshot } = await import('../src/data.js');
+    const snap = await listingsSnapshot(db, { places });
+    assert.equal(snap.total, 2, 'the scraped menu row never ships');
+    const by = Object.fromEntries(snap.items.map(p => [p.name, p]));
+    assert.deepEqual(by['Tampa Tennis'], { id: '11111111-1111-1111-1111-111111111111', name: 'Tampa Tennis', key: 'tennis', city: 'Tampa', state: 'FL', center: [27.95, -82.46], checked: '2026-10-08', team: 1 });
+    assert.deepEqual(by['Many Sports Club'].trio, ['basketball', 'sledhockey', 'swimming']);
+    assert.equal(by['Many Sports Club'].key, 'multi');
+    assert.equal(by['Many Sports Club'].listed, '2026-10-14', 'no check date yet: the day it was listed');
+    assert.equal(by['Many Sports Club'].verified, 1, 'the program confirmed its listing');
+    const text = JSON.stringify(snap);
+    for (const leak of ['tennis.example', 'Sports and activities', 'a@b.test', '555-0100', '33602', 'Free', '27.9,', 'verification_month']) assert.ok(!text.includes(leak), `no ${leak} in the slim directory`);
+  } finally { sql.close(); }
 });

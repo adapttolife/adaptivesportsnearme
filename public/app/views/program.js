@@ -266,16 +266,20 @@ function shareHtml(p) {
 }
 
 /* ---------- render ---------- */
+const listingNotFound = () => ({
+  title: "Listing not found · Adaptive Sports Near Me",
+  description: "It may have been removed or merged with another listing.",
+  html: `<section class="pg-nf"><h1 tabindex="-1">We couldn't find that listing</h1><p>It may have been removed or merged with another listing.</p><div class="btns">${A.btn("Find a program", "/", "ink")}${A.btn("Browse sports", "/sports", "line")}</div></section>`,
+});
+
 export async function render(ctx) {
   const D = ctx.data;
-  const p = D.byId.get(String(ctx.params.id || "").toLowerCase());
-  if (!p) {
-    return {
-      title: "Listing not found · Adaptive Sports Near Me",
-      description: "It may have been removed or merged with another listing.",
-      html: `<section class="pg-nf"><h1 tabindex="-1">We couldn't find that listing</h1><p>It may have been removed or merged with another listing.</p><div class="btns">${A.btn("Find a program", "/", "ink")}${A.btn("Browse sports", "/sports", "line")}</div></section>`,
-    };
-  }
+  const listed = D.byId.get(String(ctx.params.id || "").toLowerCase());
+  if (!listed) return listingNotFound();
+  // The website, description, cost and the rest load with the listing itself (the
+  // lists leave them out). A listing gone since the list loaded is not found.
+  const p = await A.loadDetail(listed.id);
+  if (!p || !p.detail) return listingNotFound();
 
   if (p.meet === undefined) { const m = meetFrom(p); p.meet = m ? m.meet : null; p.also = m ? m.also : []; }
 

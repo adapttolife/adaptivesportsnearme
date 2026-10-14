@@ -324,3 +324,20 @@ test("the Worker serves the sitemap as XML, and a failing database is a 503, not
   } finally { console.error = log; }
   assert.ok(errors.length, "the failure is logged");
 });
+
+// Every page starts its own code (and a listing its details) with the page, so a
+// slow phone never waits for one download to start the next.
+test("each page names its own code, and a listing page its details, for the browser to start early", async () => {
+  const { preloadHints } = await import("../src/pages.js");
+  const hrefs = (path) => preloadHints(path).map((t) => t.match(/href="([^"]+)"/)[1]);
+  assert.deepEqual(hrefs("/"), ["/app/views/home.js", "/app/views/home.css"]);
+  assert.deepEqual(hrefs("/sports/tennis/"), ["/app/views/sport.js", "/app/views/sport.css"]);
+  assert.deepEqual(hrefs("/update/" + PROGRAM), ["/app/views/forms.js", "/app/views/forms.css"]);
+  assert.deepEqual(hrefs("/programs/" + PROGRAM.toUpperCase()), ["/app/views/program.js", "/app/views/program.css", "/api/orgs/" + PROGRAM]);
+  assert.deepEqual(hrefs("/nope"), []);
+  // The shell starts the listings for every page, and a missing page names no code.
+  assert.ok(SHELL.includes('<link rel="preload" href="/api/listings" as="fetch" crossorigin>'));
+  const env = { ASSETS: assets(), DB: undefined, ENV_NAME: "production" };
+  const missing = await (await serve("/nope", env)).text();
+  assert.ok(!missing.includes("/app/views/"), "a 404 names no page code");
+});

@@ -112,8 +112,12 @@ test("the shell has what the Worker and the app rely on", () => {
   assert.ok(head.indexOf("<!--asnm:meta-->") > 0 && head.indexOf("<!--asnm:meta-->") < head.indexOf("<!--/asnm:meta-->"), "the block is in <head>, open then close");
   assert.equal((SHELL.match(/<title>[^<]*<\/title>/g) || []).length, 1);
   assert.equal((SHELL.match(/<meta name="description" content="[^"]*">/g) || []).length, 1);
-  // Turnstile renders only where the app asks (forms render their own widget).
-  assert.match(head, /<script src="https:\/\/challenges\.cloudflare\.com\/turnstile\/v0\/api\.js\?render=explicit"[^>]*><\/script>/);
+  // Turnstile (explicit render, forms draw their own widget) and the UserWay widget load
+  // from app.js after the page has drawn, never from the shell ahead of the page's data.
+  assert.ok(!SHELL.includes("challenges.cloudflare.com") && !SHELL.includes("cdn.userway.org"));
+  assert.match(APP, /const TURNSTILE_SRC = "https:\/\/challenges\.cloudflare\.com\/turnstile\/v0\/api\.js\?render=explicit";/);
+  assert.match(between(APP, "function turnstileApi() {", "\n}\n"), /ensureTurnstile\(\);/);
+  assert.match(APP, /loadScript\(USERWAY_SRC, \{ "data-account": "sFogOSJsXe" \}\)/);
   assert.ok(head.includes('<script type="module" src="/app/app.js"></script>'));
 });
 

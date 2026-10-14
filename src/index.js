@@ -9,6 +9,7 @@ import { notifyIntake } from './intake.js';
 //   POST /api/submit-program   -> shared intake (hello@ notice) + D1 submissions (new program or a fix to a listing)
 //   POST /api/submit-event     -> the same path for a suggested event
 //   GET  /api/config           -> env name + prelaunch flag (front-end gate)
+//   GET  /api/listings         -> cached slim snapshot the site's lists and maps load first
 //   GET  /api/directory        -> cached full public snapshot for client filters/maps
 //   GET  /api/programs         -> directory list (sport/state/q + zip/city/lat-lng nearby, paged)
 //   GET  /, /programs/:id, /sports/:key, /states/:st, /grants, /events, ... -> the site's
@@ -30,7 +31,7 @@ import { notifyIntake } from './intake.js';
 //   *    /api/admin/*          -> review queue + lane triggers (ADMIN_KEY bearer)
 // All secrets stay server-side (Worker secrets). Bot defence: honeypot + required Turnstile.
 
-import { directorySnapshot, listPrograms, getOrg, stats, listGrants, getGrant } from "./data.js";
+import { directorySnapshot, listingsSnapshot, listPrograms, getOrg, stats, listGrants, getGrant } from "./data.js";
 import { listEvents, eventsToRss, eventsToIcs } from "./events.js";
 import { handleAdmin } from "./admin.js";
 import { runLane } from "./pipeline.js";
@@ -115,6 +116,10 @@ const application = {
     }
     if (env.DB && request.method === "GET") {
       try {
+        if (url.pathname === "/api/listings") {
+          const places = await loadPlaces(env.ASSETS);
+          return json({ ok: true, ...(await listingsSnapshot(env.DB, { places })) }, 200, API_CACHE);
+        }
         if (url.pathname === "/api/directory") {
           const places = await loadPlaces(env.ASSETS);
           return json({ ok: true, ...(await directorySnapshot(env.DB, { places })) }, 200, API_CACHE);
