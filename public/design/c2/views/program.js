@@ -90,14 +90,21 @@ function about(p) {
   if (!inner) inner = `<p class="pg-quiet">We don't have a description for this program yet.${p.website ? " The program's website has the details." : ""}</p>`;
   return `<section class="pg-sec" aria-labelledby="pg-about"><h2 id="pg-about">About this program</h2>${inner}</section>`;
 }
-/* Veteran meetups carry what happens, when, where and for whom (Karen's research). */
+/* Karen's veteran research (meetups, equine therapy, art therapy) carries what
+   happens, the approach, when, where (a venue name only), format, cost and who. */
+const KIND = { "veteran-meetup": "Veteran meetup", "equine-therapy": "Equine therapy", "art-therapy": "Art therapy" };
+function meetDl(m) {
+  const row = (k, v) => v ? `<div><dt>${k}</dt><dd>${A.esc(v)}</dd></div>` : "";
+  return `<dl class="pg-facts">${row("Approach", m.how)}${row("When", m.when)}${row("Where", m.where)}${row("Format", m.format)}${row("Cost", m.cost)}${row("Who it's for", m.who)}</dl>`;
+}
 function meetup(p) {
   const m = p.meet;
   if (!m) return "";
-  const row = (k, v) => v ? `<div><dt>${k}</dt><dd>${A.esc(v)}</dd></div>` : "";
   const prog = m.program && m.program.toLowerCase() !== String(p.name).toLowerCase() ? m.program : "";
-  return `<section class="pg-sec pg-meet" aria-labelledby="pg-meet"><h2 id="pg-meet">The meetup</h2>${prog ? `<p class="pg-meet-prog">${A.esc(prog)}</p>` : ""}${m.what ? `<p>${A.esc(m.what)}</p>` : ""}
-<dl class="pg-facts">${row("When", m.when)}${row("Where", m.where)}${row("Format", m.format)}${row("Cost", m.cost)}${row("Who it's for", m.who)}</dl>
+  const title = p.key === "veteran-meetup" ? "The meetup" : "The program";
+  const also = (p.also || []).map((x) => `<h3 class="pg-h3">Also here: ${A.esc(KIND[x.kind] || "Another program")}</h3>${x.program ? `<p class="pg-meet-prog">${A.esc(x.program)}</p>` : ""}${x.what ? `<p>${A.esc(x.what)}</p>` : ""}${meetDl(x)}`).join("");
+  return `<section class="pg-sec pg-meet" aria-labelledby="pg-meet"><h2 id="pg-meet">${title}</h2>${prog ? `<p class="pg-meet-prog">${A.esc(prog)}</p>` : ""}${m.what ? `<p>${A.esc(m.what)}</p>` : ""}
+${meetDl(m)}${also}
 <p class="pg-quiet">Times change, so confirm the next date with them before you go.</p></section>`;
 }
 function facts(p) {

@@ -110,9 +110,10 @@ if (LOOK === "hues") Object.assign(TONES, {
   calm: ["#8B5CF6", INK], house: ["#FF4FA0", INK], event: ["#3D7BFF", INK],
 });
 const INVERTS = new Set(); // colour plates never invert; black plates carry white athletes via TONES
-const PIC = { equestrianvaulting: "equestrian", "equine-therapy": "equestrian", blindsports: "goalball", handcycling: "cycling", wheelchairracing: "trackfield", surfing: "multi" };
+// Every sport stands alone with its own image and tile (Alec, 2026-10-14: one dedicated file per sport).
+const PIC = {};
 // Grids of sports group siblings under one tile; surfing reads under sailing there (3.5).
-const GRID_HEAD = { ...PIC, surfing: "sailing" };
+const GRID_HEAD = {};
 
 const EXTRA_SPORTS = {
   equestrianvaulting: ["Equestrian vaulting", "Gymnastics and dance on horseback."],
@@ -283,7 +284,7 @@ export function loadData() {
     for (const p of items) count[p.key] = (count[p.key] || 0) + 1;
     // Global popularity: sports.json order (its live counts), the six extras slotted in by their own counts.
     const jsonOrder = sp.sports.map((s) => s.key);
-    for (const k of Object.keys(EXTRA_SPORTS)) live[k] = count[k] || 0;
+    for (const k of L.SPORTS) live[k] = count[k] || 0;   // order every sport by what is listed now (Karen's veteran data included)
     SPORT_ORDER = L.SPORTS.slice().sort((a, b) => (live[b] || 0) - (live[a] || 0) ||
       ((jsonOrder.indexOf(a) + 1 || 99) - (jsonOrder.indexOf(b) + 1 || 99)) || a.localeCompare(b));
     const sports = SPORT_ORDER.map((k) => ({ key: k, name: NAMES[k], note: NOTES[k], count: count[k] || 0, family: familyOf(k), pic: picGroup(k) }));
