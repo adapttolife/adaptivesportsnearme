@@ -293,7 +293,7 @@ test("programPageTemplate: state-only listing shows the state name, not a blank 
     website: "http://bicyclingblind.org",
   });
   assert.ok(html.includes("Bicycling Blind Los Angeles"));
-  assert.ok(html.includes("/emblems/athlete-cycling.svg"));
+  assert.ok(html.includes("/emblems/sports/cycling.svg"));
   assert.ok(html.includes("California"));
   assert.ok(!html.includes("null"));
   assert.ok(html.includes("Visit website"));

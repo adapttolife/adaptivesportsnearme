@@ -31,6 +31,7 @@ Do not add a second copy of these images anywhere else in `public/`.
 | `boccia` | Boccia.png |
 | `climbing` | Climbing.png |
 | `curling` | Curling.png |
+| `cycling` | Cycling.png |
 | `dance` | Wheelchair Dance.png |
 | `equestrian` | Horseback Riding.png |
 | `event` | Events.png |
@@ -40,7 +41,6 @@ Do not add a second copy of these images anywhere else in `public/`.
 | `golf` | Golfing.png |
 | `grant` | Grants.png |
 | `handball` | Handball.png |
-| `handcycling` | Handcycle.png |
 | `lacrosse` | Lacrosse.png |
 | `martialarts` | Martial Arts.png |
 | `multi` | Multi Sport.png |
@@ -52,7 +52,9 @@ Do not add a second copy of these images anywhere else in `public/`.
 | `running` | Racing.png |
 | `sailing` | Sailing.png |
 | `shooting` | Shooting Sports.png |
+| `skiing` | Snow Skiing.png |
 | `sledhockey` | Sled Hockey.png |
+| `soccer` | Soccer.png |
 | `softball` | Softball.png |
 | `swimming` | Swimming.png |
 | `tennis` | Tennis.png |
@@ -62,7 +64,6 @@ Do not add a second copy of these images anywhere else in `public/`.
 | `volleyball` | Sitting Volleyball.png |
 | `waterskiing` | Water Skiing.png |
 
-Not drawn yet, so they borrow: `wheelchairracing` uses trackfield,
-`equestrianvaulting` (no image planned) and `equine-therapy` use equestrian, `blindsports`
-uses goalball. `soccer`, `skiing` and `cycling` keep the older athlete symbol
-(`../athlete-<key>.svg`), and `surfing` shows multi, until their images exist.
+Borrowed on purpose: `handcycling` uses cycling (Alec, 2026-10-14: the same image),
+`wheelchairracing` uses trackfield, `equestrianvaulting` (skipped) and `equine-therapy`
+use equestrian, `blindsports` uses goalball. `surfing` is skipped and shows multi.

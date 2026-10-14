@@ -35,21 +35,22 @@ globalThis.ListingArt = (() => {
   // and 'event' are in the same folder for grant and event cards.
   const ART = [
     'amputeesports', 'archery', 'art-therapy', 'baseball', 'basketball', 'beepbaseball',
-    'boccia', 'climbing', 'curling', 'dance', 'equestrian', 'fencing', 'football',
-    'goalball', 'golf', 'handball', 'handcycling', 'lacrosse', 'martialarts', 'multi',
-    'nordicskiing', 'pickleball', 'powerlifting', 'rowing', 'rugby', 'running', 'sailing',
-    'shooting', 'sledhockey', 'softball', 'swimming', 'tennis', 'trackfield', 'triathlon',
-    'veteran-meetup', 'volleyball', 'waterskiing'
+    'boccia', 'climbing', 'curling', 'cycling', 'dance', 'equestrian', 'fencing', 'football',
+    'goalball', 'golf', 'handball', 'lacrosse', 'martialarts', 'multi', 'nordicskiing',
+    'pickleball', 'powerlifting', 'rowing', 'rugby', 'running', 'sailing', 'shooting',
+    'skiing', 'sledhockey', 'soccer', 'softball', 'swimming', 'tennis', 'trackfield',
+    'triathlon', 'veteran-meetup', 'volleyball', 'waterskiing'
   ];
   const HAS_ART = new Set(ART);
-  // A sport without its own image yet borrows the closest one.
+  // A sport without its own image borrows the closest one (Alec, 2026-10-14:
+  // handcycling and cycling share one; vaulting and surfing get none of their own).
   const ART_ALIAS = {
-    wheelchairracing: 'trackfield', equestrianvaulting: 'equestrian',
+    handcycling: 'cycling', wheelchairracing: 'trackfield', equestrianvaulting: 'equestrian',
     'equine-therapy': 'equestrian', blindsports: 'goalball'
   };
-  // Older athlete + prop symbols (scripts/emblem-series.py), kept only for
-  // sports the flat set does not cover yet: public/emblems/athlete-<key>.svg.
-  const SYMBOLS = ['cycling', 'skiing', 'soccer'];
+  // Older athlete + prop symbols (scripts/emblem-series.py) for any sport the
+  // flat set does not cover: public/emblems/athlete-<key>.svg. None needed now.
+  const SYMBOLS = [];
   const HAS_OLD = new Set(SYMBOLS);
   const artSrc = (k) => '/emblems/sports/' + k + '.svg';
 

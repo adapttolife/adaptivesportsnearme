@@ -21,8 +21,8 @@ test("listingVisual: program sports wear their flat image, not a stock photo or 
     assert.equal(v.kind, "symbol", sport);
     assert.equal(v.src, `/emblems/sports/${sport}.svg`, sport);
   }
-  // Not drawn yet: the older symbol stays until Alec's image lands.
-  for (const sport of ["soccer", "skiing", "cycling"]) assert.equal(listingVisual({ sport }, "program").src, `/emblems/athlete-${sport}.svg`, sport);
+  for (const sport of ["soccer", "skiing", "cycling"]) assert.equal(listingVisual({ sport }, "program").src, `/emblems/sports/${sport}.svg`, sport);
+  assert.equal(listingVisual({ sport: "handcycling" }, "program").src, "/emblems/sports/cycling.svg");
 });
 
 test("listingVisual: a listing with no sport we can name wears the multi-sport image", () => {
