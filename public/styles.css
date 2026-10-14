@@ -2526,6 +2526,7 @@ a.cta {
 	color: var(--ink);
 	font-weight: 500;
 	min-width: 0;
+	overflow-wrap: anywhere;
 }
 
 .sheet .empty {
@@ -4995,6 +4996,7 @@ body.content-page > main {
 	color: var(--ink);
 	font-weight: 500;
 	min-width: 0;
+	overflow-wrap: anywhere;
 }
 
 .detail-page .empty {
@@ -5859,4 +5861,618 @@ i[data-lucide] {
 	height: 12px;
 	color: var(--ink);
 	pointer-events: none;
+}
+
+
+/* ============================ LISTING SYMBOLS ============================ */
+/* Every listing wears its sport's athlete symbol on a ground tinted by sport
+   family; public/listing-art.js picks both, for the app and the Worker alike.
+   Nothing waits on a photo. A real photo of the program still wins. */
+.has-symbol {
+	position: relative;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	overflow: hidden;
+	background: var(--tone, #efebe5);
+}
+
+/* Soft light from the top left, so a tile reads as a surface, not a swatch. */
+.has-symbol::before {
+	content: "";
+	position: absolute;
+	inset: 0;
+	pointer-events: none;
+	background: radial-gradient(
+		120% 90% at 18% 12%,
+		rgba(255, 255, 255, 0.6),
+		rgba(255, 255, 255, 0) 62%
+	);
+}
+
+.art-symbol {
+	position: relative;
+	z-index: 1;
+	width: 50%;
+	max-height: 74%;
+	height: auto;
+	object-fit: contain;
+}
+
+/* Map-list and table thumbnails: the tile fills its frame. */
+.thumb-symbol {
+	position: absolute;
+	inset: 0;
+}
+
+.thumb-symbol .art-symbol {
+	width: 74%;
+	max-height: 80%;
+}
+
+/* The sport and place sit bottom left on the hero, so the symbol takes the
+   right side instead of the middle, where a long sport name would run into it. */
+.dhero.has-symbol {
+	justify-content: flex-end;
+	padding-right: clamp(20px, 9%, 140px);
+}
+
+.dhero.has-symbol .art-symbol {
+	width: min(38%, 210px);
+	max-height: 78%;
+}
+
+@media (max-width: 720px) {
+	.dhero.has-symbol .art-symbol {
+		width: 30%;
+	}
+}
+
+.sheet .dhero.has-symbol::after,
+.detail-page .dhero.has-symbol::after {
+	background: none;
+}
+
+.dhero.has-symbol .dov {
+	color: var(--ink);
+}
+
+.tone-court {
+	--tone: #f5e1d1;
+}
+
+.tone-racquet {
+	--tone: #e6ebd2;
+}
+
+.tone-field {
+	--tone: #dae6d5;
+}
+
+.tone-snow {
+	--tone: #dbe6f0;
+}
+
+.tone-water {
+	--tone: #d4e8e6;
+}
+
+.tone-trail {
+	--tone: #efe4d1;
+}
+
+.tone-calm {
+	--tone: #e6e0ee;
+}
+
+.tone-house {
+	--tone: #ece8e1;
+}
+
+/* ============================ TRUST LINES ============================ */
+/* Verified means a person checked the listing against an official source.
+   Cards carry that one line; dates live on the listing page. */
+.pcard-trust,
+.listing-trust {
+	display: flex;
+	align-items: center;
+	gap: 5px;
+	color: var(--muted);
+}
+
+.pcard-trust {
+	font-size: 12.5px;
+	margin-top: 4px;
+	line-height: 1.3;
+}
+
+.listing-trust {
+	font-size: 14px;
+	margin: 2px 0 var(--space-section);
+}
+
+.pcard-trust.is-verified,
+.listing-trust.is-verified {
+	color: #1f6b3a;
+	font-weight: 600;
+}
+
+.pcard-trust.is-verified::before,
+.listing-trust.is-verified::before {
+	content: "";
+	flex: none;
+	width: 14px;
+	height: 14px;
+	background: currentColor;
+	-webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm-1.3 14.3-4.1-4.1 1.4-1.4 2.7 2.7 5.6-5.6 1.4 1.4-7 7Z'/%3E%3C/svg%3E")
+		center / contain no-repeat;
+	mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm-1.3 14.3-4.1-4.1 1.4-1.4 2.7 2.7 5.6-5.6 1.4 1.4-7 7Z'/%3E%3C/svg%3E")
+		center / contain no-repeat;
+}
+
+.listing-trust.is-verified::before {
+	width: 16px;
+	height: 16px;
+}
+
+/* ============================ ABOUT THIS LISTING ============================ */
+.about-listing {
+	margin-top: var(--space-nearby);
+}
+
+.about-listing h2 {
+	font-size: 22px;
+	font-weight: 700;
+	letter-spacing: -0.02em;
+	margin: 0 0 var(--space-row);
+}
+
+.about-status {
+	font-size: 16px;
+	line-height: 1.55;
+	color: var(--ink2);
+	max-width: 62ch;
+	margin: 0 0 var(--space-row);
+}
+
+.about-status b {
+	color: var(--ink);
+}
+
+.about-status.is-verified b {
+	color: #1f6b3a;
+}
+
+.about-listing .rows {
+	margin: 0;
+	border-top: 1px solid var(--line);
+}
+
+.about-listing .row {
+	display: flex;
+	gap: var(--space-row);
+	padding: var(--space-row) 0;
+	border-bottom: 1px solid var(--line);
+	font-size: 16px;
+}
+
+.about-listing .row .k {
+	color: var(--muted);
+	width: 112px;
+	flex: 0 0 auto;
+}
+
+.about-listing .row .v {
+	color: var(--ink);
+	font-weight: 500;
+	min-width: 0;
+	overflow-wrap: anywhere;
+}
+
+.about-listing .row .v a {
+	text-decoration: underline;
+	text-underline-offset: 2px;
+}
+
+.fix-links {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 12px 20px;
+	margin-top: var(--space-row);
+}
+
+.fix-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-height: var(--tap);
+	padding: 0 18px;
+	border: 1.5px solid var(--ink);
+	border-radius: var(--r);
+	font-size: 15px;
+	font-weight: 600;
+	color: var(--ink);
+	background: var(--paper);
+	cursor: pointer;
+	font-family: inherit;
+}
+
+.fix-btn:hover {
+	background: var(--sand);
+}
+
+.fix-link {
+	display: inline-flex;
+	align-items: center;
+	min-height: var(--tap);
+	font-size: 15px;
+	color: var(--ink2);
+	text-decoration: underline;
+	text-underline-offset: 3px;
+	background: none;
+	border: 0;
+	padding: 0;
+	cursor: pointer;
+	font-family: inherit;
+}
+
+.fix-link:hover {
+	color: var(--orange-ink);
+}
+
+/* ============================ BETA BAR ============================ */
+/* Alec, 2026-10-13: launch before everything is complete and say so at the
+   top. One line, a way to help, and it stays out of the way once dismissed. */
+.beta-bar {
+	background: var(--orange-soft);
+	color: var(--ink);
+	border-bottom: 1px solid #f1d6bf;
+	font-size: 14px;
+	line-height: 1.4;
+}
+
+.beta-bar[hidden] {
+	display: none;
+}
+
+.beta-in {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	min-height: 44px;
+	padding-top: 6px;
+	padding-bottom: 6px;
+}
+
+.beta-tag {
+	flex: none;
+	font-size: 11px;
+	font-weight: 700;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: var(--orange-ink);
+	border: 1.5px solid currentColor;
+	border-radius: var(--r-full);
+	padding: 1px 8px;
+}
+
+.beta-msg {
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
+.beta-msg a,
+.beta-msg button {
+	font: inherit;
+	font-weight: 600;
+	color: var(--orange-ink);
+	text-decoration: underline;
+	text-underline-offset: 2px;
+	background: none;
+	border: 0;
+	padding: 0;
+	cursor: pointer;
+	white-space: nowrap;
+}
+
+.beta-x {
+	flex: none;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: var(--tap);
+	height: var(--tap);
+	margin: -6px -12px -6px 0;
+	border: 0;
+	background: none;
+	color: var(--ink2);
+	font-size: 22px;
+	line-height: 1;
+	cursor: pointer;
+	border-radius: var(--r-full);
+}
+
+.beta-x:hover {
+	background: rgba(26, 26, 26, 0.06);
+}
+
+.beta-short {
+	display: none;
+}
+
+@media (max-width: 720px) {
+	.beta-bar {
+		font-size: 13.5px;
+	}
+	.beta-long {
+		display: none;
+	}
+	.beta-short {
+		display: inline;
+	}
+}
+
+/* ============================ HELP BUILD THIS ============================ */
+.help-list {
+	list-style: none;
+	margin: 12px 0 0;
+	padding: 0;
+	display: grid;
+	gap: 10px;
+}
+
+.help-list li {
+	font-size: 15px;
+	line-height: 1.5;
+	color: var(--ink2);
+}
+
+.help-list b {
+	color: var(--ink);
+}
+
+.help-list a,
+.help-list button {
+	font: inherit;
+	color: var(--orange-ink);
+	font-weight: 600;
+	text-decoration: underline;
+	text-underline-offset: 2px;
+	background: none;
+	border: 0;
+	padding: 0;
+	cursor: pointer;
+}
+
+/* ============================ RESOURCES ============================ */
+/* /resources and its lists (Karen, 2026-10-08: veteran-owned businesses by
+   state). Links to directories other people keep; same rhythm as a listing. */
+.resource-page.wrap {
+	max-width: 960px;
+	margin: 0 auto;
+	padding: var(--space-page) var(--space-page) var(--space-header);
+}
+
+.resource-page .bar {
+	min-height: var(--space-header);
+	display: flex;
+	align-items: center;
+}
+
+.resource-page .back {
+	display: inline-flex;
+	align-items: center;
+	min-height: var(--tap);
+	font-size: 16px;
+	font-weight: 600;
+	color: var(--ink);
+}
+
+.resource-page .back:hover {
+	color: var(--orange-ink);
+}
+
+.res-hero {
+	max-width: 68ch;
+	margin: 8px 0 var(--space-nearby);
+}
+
+.res-eyebrow {
+	font-size: 12px;
+	font-weight: 600;
+	letter-spacing: 0.1em;
+	text-transform: uppercase;
+	color: var(--orange-ink);
+	margin: 0 0 var(--space-title-gap);
+}
+
+.resource-page h1 {
+	font-size: clamp(28px, 4vw, 40px);
+	font-weight: 700;
+	letter-spacing: -0.02em;
+	line-height: 1.1;
+	margin: 0 0 var(--space-title-gap);
+}
+
+.res-kicker {
+	font-size: clamp(18px, 2.2vw, 21px);
+	font-weight: 500;
+	color: var(--ink2);
+	margin: 0 0 var(--space-row);
+}
+
+.res-lede {
+	font-size: 17px;
+	line-height: 1.6;
+	color: var(--ink2);
+	margin: 0 0 12px;
+}
+
+.res-note {
+	font-size: 14px;
+	line-height: 1.5;
+	color: var(--muted);
+	border-left: 3px solid var(--line);
+	padding: 2px 0 2px 12px;
+	margin: var(--space-row) 0 0;
+}
+
+.res-section {
+	margin: 0 0 var(--space-nearby);
+}
+
+.res-section h2 {
+	font-size: 22px;
+	font-weight: 700;
+	letter-spacing: -0.02em;
+	margin: 0 0 var(--space-row);
+}
+
+.res-scope {
+	font-size: 15px;
+	line-height: 1.55;
+	color: var(--ink2);
+	max-width: 68ch;
+	margin: 0 0 var(--space-row);
+}
+
+.res-cards {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+	gap: var(--space-row);
+}
+
+.res-card {
+	background: var(--paper);
+	border: 1px solid var(--line);
+	border-radius: var(--r-lg);
+	padding: 18px 18px 16px;
+}
+
+.res-card-name {
+	font-size: 16px;
+	font-weight: 700;
+	color: var(--ink);
+	text-decoration: underline;
+	text-underline-offset: 3px;
+	text-decoration-thickness: 1px;
+}
+
+.res-card-name:hover {
+	color: var(--orange-ink);
+}
+
+.res-card p {
+	font-size: 14.5px;
+	line-height: 1.5;
+	color: var(--ink2);
+	margin: 8px 0 0;
+}
+
+.state-chips {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+	margin: 0 0 var(--space-section);
+}
+
+.state-chips a {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 44px;
+	min-height: 36px;
+	padding: 0 8px;
+	border: 1px solid var(--line);
+	border-radius: var(--r-full);
+	background: var(--paper);
+	font-size: 13px;
+	font-weight: 600;
+	color: var(--ink2);
+}
+
+.state-chips a:hover {
+	border-color: var(--ink);
+	color: var(--ink);
+}
+
+.state-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+	gap: 12px;
+}
+
+.state-card {
+	background: var(--paper);
+	border: 1px solid var(--line);
+	border-radius: var(--r);
+	padding: 14px 16px;
+	scroll-margin-top: calc(var(--space-header) + 12px);
+}
+
+.state-card:target {
+	border-color: var(--orange);
+	box-shadow: 0 0 0 3px var(--orange-soft);
+}
+
+.state-card h3 {
+	font-size: 16px;
+	font-weight: 700;
+	margin: 0 0 8px;
+}
+
+.state-card ul {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: grid;
+	gap: 6px;
+}
+
+.state-card li {
+	font-size: 14.5px;
+	line-height: 1.45;
+}
+
+.state-card a {
+	color: var(--ink);
+	text-decoration: underline;
+	text-underline-offset: 2px;
+	overflow-wrap: anywhere;
+}
+
+.state-card a:hover {
+	color: var(--orange-ink);
+}
+
+.res-pending {
+	color: var(--muted);
+}
+
+.res-tag {
+	display: inline-block;
+	margin-left: 4px;
+	font-size: 11.5px;
+	font-weight: 600;
+	letter-spacing: 0.02em;
+	padding: 1px 7px;
+	border-radius: var(--r-full);
+	vertical-align: 1px;
+}
+
+.res-tag.is-official {
+	color: #1f6b3a;
+	background: #e3efe6;
+}
+
+.res-help p {
+	font-size: 15.5px;
+	line-height: 1.55;
+	color: var(--ink2);
+	max-width: 62ch;
+	margin: 0 0 12px;
 }

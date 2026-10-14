@@ -2,8 +2,11 @@
 // null if never checked) is computed here rather than in SQL — D1 lacks pow().
 // listPrograms filters: sport, state, q (text), plus nearby via zip / city / lat-lng.
 
-import { loadZcta, resolveOrigin, applyNearby, milesBetween } from "./geo.js";
+import { loadZcta, resolveOrigin, applyNearby, milesBetween, cityCenter } from "./geo.js";
 import { cachedCount } from "./read-cache.js";
+import "../public/listing-art.js";
+
+const ListingArt = globalThis.ListingArt;
 
 export function freshness(lastOkAt, now = Date.now()) {
   if (!lastOkAt) return null;
@@ -14,7 +17,22 @@ export function freshness(lastOkAt, now = Date.now()) {
 
 const LIST_COLS = `id, name, org_type, sport, sport_key, website_url, city,
   state, state_name, zip, publicity_consent, lat, lng, geo_precision, description, cost_note,
-  equipment_provided, ages, data_quality_rating, verification_status, last_ok_at`;
+  equipment_provided, ages, data_quality_rating, verification_status, verification_method,
+  last_ok_at, created_at`;
+
+// A listing is public only when a person could act on it: a website to visit,
+// a city and state to find, or a way to reach someone. Alec ruled on 2026-09-01
+// that name-only rows stay hidden; production lost that state in the account
+// move (1,069 of 2,465 live rows were name-only on 2026-10-13), so the rule
+// lives here in code, where no data copy can drop it. The row stays in D1 for
+// enrichment and reappears the moment it gains any of these.
+// Email and phone count only when the program said yes to showing them
+// (publicity_consent); a contact nobody can see is nothing to act on.
+export const ACTIONABLE = `((website_url IS NOT NULL AND website_url <> '')
+  OR (city IS NOT NULL AND city <> '' AND state IS NOT NULL AND state <> '')
+  OR (publicity_consent = 1 AND email IS NOT NULL AND email <> '')
+  OR (publicity_consent = 1 AND phone IS NOT NULL AND phone <> ''))`;
+const PUBLIC = `is_public = 1 AND status = 'active' AND ${ACTIONABLE}`;
 
 function rowToProgram(r, dist) {
   const publicityConsent = r.publicity_consent === 1;
@@ -39,6 +57,15 @@ function rowToProgram(r, dist) {
     ages: r.ages,
     quality: r.data_quality_rating,
     verification: r.verification_status,
+    // Two separate signals (Alec, 2026-10-14). confirmed: the program itself gave
+    // permission, which is the Verified check on the site (publicity_consent, the
+    // same flag that lets its contact details show). teamChecked: a person on our
+    // team checked the listing (verification_status 'verified', checkedMonth when).
+    // Neither is a score, and only confirmed earns the word Verified.
+    confirmed: publicityConsent,
+    teamChecked: r.verification_status === "verified",
+    checkedMonth: verifiedMonth(r),
+    listedAt: r.created_at || null,
     freshness: freshness(r.last_ok_at),
     lastChecked: r.last_ok_at,
     dist: publicityConsent && dist != null ? Math.round(dist * 10) / 10 : null,
@@ -59,16 +86,22 @@ function nearPayload(origin) {
 
 // The homepage already needs the whole directory for local filters and maps.
 // Read it once rather than repeating COUNT + OFFSET scans for every 200 rows.
-export async function directorySnapshot(db) {
+// places (optional): the city table from loadPlaces(), so each item carries the
+// center of its listed city for maps and "near you".
+export async function directorySnapshot(db, { places = null } = {}) {
   const rows = await db.prepare(`SELECT ${LIST_COLS} FROM organizations
-    WHERE is_public = 1 AND status = 'active'
+    WHERE ${PUBLIC}
     ORDER BY (sport_key IS NULL), (state IS NULL), name`).all();
-  const items = rows.results.map(row => rowToProgram(row));
+  const items = rows.results.map(row => {
+    const p = rowToProgram(row);
+    if (places) p.cityCenter = cityCenter(row.city, row.state, places);
+    return p;
+  });
   return { total: items.length, items };
 }
 
 export async function listPrograms(db, params, opts = {}) {
-  const where = ["is_public = 1", "status = 'active'"];
+  const where = [PUBLIC];
   const binds = [];
   const sport = (params.get("sport") || "").trim();
   if (sport) {
@@ -135,8 +168,8 @@ export async function listPrograms(db, params, opts = {}) {
 
 export async function getOrg(db, id) {
   const row = await db.prepare(
-    `SELECT ${LIST_COLS}, email, phone, primary_data_source, created_at, updated_at
-     FROM organizations WHERE id = ? AND is_public = 1`
+    `SELECT ${LIST_COLS}, email, phone, primary_data_source, verification_method, created_at, updated_at
+     FROM organizations WHERE id = ? AND ${PUBLIC}`
   ).bind(id).first();
   if (!row) return null;
   const sources = await db.prepare(
@@ -146,20 +179,54 @@ export async function getOrg(db, id) {
   ).bind(id).all();
   return {
     ...rowToProgram(row),
+    // Contact details show only when the program gave permission (publicity_consent, Faisal 2026-10-14).
     ...(row.publicity_consent === 1 ? { email: row.email, phone: row.phone } : {}),
-    primarySource: row.primary_data_source,
-    sources: sources.results,
+    // This is a public API: our own research files (CSV names, Drive links, a
+    // teammate's name) leave as "Adaptive Sports Near Me research", unlinked.
+    primarySource: ListingArt.sourceLabel(row.primary_data_source),
+    sources: publicSources(sources.results),
+    listedAt: row.created_at,
+    verifiedMonth: verifiedMonth(row),
     updatedAt: row.updated_at,
   };
 }
 
+// Sources as a visitor may see them, once each.
+export function publicSources(rows) {
+  const seen = new Set();
+  const out = [];
+  for (const s of rows || []) {
+    const p = ListingArt.publicSource(s);
+    if (!p) continue;
+    const key = p.name + "\n" + (p.url || "");
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push({ name: p.name, organization: ListingArt.isInternalSource(s) ? null : (s.organization || null), url: p.url });
+  }
+  return out;
+}
+
+// verification_method is a JSON note on rows a person verified
+// ({"status":"verified","verification_month":"2026-09",...}); the month is the
+// only part a visitor needs. Anything else (plain words, broken JSON) gives null.
+export function verifiedMonth(row) {
+  if (!row || row.verification_status !== "verified" || !row.verification_method) return null;
+  try {
+    const m = JSON.parse(row.verification_method);
+    const ym = m && typeof m.verification_month === "string" ? m.verification_month : "";
+    return /^\d{4}-\d{2}$/.test(ym) ? ym : null;
+  } catch {
+    return null;
+  }
+}
+
 export async function stats(db) {
   const [total, bySport, byState, sources, lastRun] = await Promise.all([
-    db.prepare(`SELECT COUNT(*) AS n FROM organizations WHERE is_public = 1 AND status = 'active'`).first(),
+    db.prepare(`SELECT COUNT(*) AS n FROM organizations WHERE ${PUBLIC}`).first(),
     db.prepare(`SELECT sport AS label, sport_key AS key, COUNT(*) AS n FROM organizations
-                WHERE is_public = 1 AND status = 'active' GROUP BY sport ORDER BY n DESC`).all(),
+                WHERE ${PUBLIC} GROUP BY sport ORDER BY n DESC`).all(),
     db.prepare(`SELECT state, state_name AS name, COUNT(*) AS n FROM organizations
-                WHERE is_public = 1 AND status = 'active' AND state IS NOT NULL
+                WHERE ${PUBLIC} AND state IS NOT NULL
                 GROUP BY state ORDER BY n DESC`).all(),
     db.prepare(`SELECT COUNT(*) AS n FROM data_sources WHERE status = 'active'`).first(),
     db.prepare(`SELECT lane, finished_at FROM pipeline_runs ORDER BY run_id DESC LIMIT 1`).first(),
@@ -180,7 +247,7 @@ export async function listSameSportNearby(db, org, limit = 6) {
   const sportKey = org.sport;
   const sportLabel = org.sportLabel;
   if (!org.id || (!sportKey && !sportLabel)) return [];
-  const where = ["is_public = 1", "status = 'active'", "id != ?"];
+  const where = [PUBLIC, "id != ?"];
   const binds = [org.id];
   if (sportKey) {
     where.push("(sport_key = ? OR sport = ?)");

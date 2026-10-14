@@ -8,6 +8,7 @@ import {
   sanitizeHtml, normalizePosts, normalizePostDetail, findPostBySlug, formatPostDate,
   blogIndexTemplate, blogPostTemplate, blogFallbackTemplate, blogNotFoundTemplate,
 } from "../src/blog.js";
+import { matchPage, redirectFor } from "../src/pages.js";
 
 const SITE = "https://adaptivesportsnearme.com";
 
@@ -212,33 +213,44 @@ test("blogNotFoundTemplate: friendly 404 copy, links back to /blog", () => {
   assert.ok(html.includes('href="/blog"'));
 });
 
-// ---- footer IA parity ----------------------------------------------------------
+// ---- footer IA ------------------------------------------------------------------
 // The server-rendered footer used to be a two-column subset of the app's three,
-// so /blog and / disagreed about what the site contains. Lock the columns and
-// the destinations together, and keep every href a real URL the app boots on.
+// so /blog and / disagreed about what the site contains. The old app's footer
+// (public/index.html) left with the old site; the blog's own columns and links
+// stay locked here.
 
-test("the shared footer names the same three columns as the app's footer", () => {
-  const root = join(dirname(fileURLToPath(import.meta.url)), "..");
-  const appIndex = readFileSync(join(root, "public/index.html"), "utf8");
+test("the shared footer keeps its three columns and every destination", () => {
   const html = blogIndexTemplate([], { site: SITE });
-
-  for (const col of ["Explore", "Programs", "About"]) {
+  // The same three columns as the app's footer (footer() in public/app/app.js).
+  for (const col of ["Find", "Help build this", "More"]) {
     assert.ok(html.includes(`<h2>${col}</h2>`), `footer is missing the ${col} column`);
-    assert.ok(appIndex.includes(`<h2>${col}</h2>`), `app footer is missing the ${col} column`);
   }
   for (const label of [
-    "Discover", "Map view", "Browse all", "Events", "Funding", "Blog",
-    "Add a program", "Update a listing",
-    "The project", "How we verify", "Accessibility", "Your profile",
-    "Adapt To Life", "Sign waiver",
+    "Programs near you", "Sports", "States", "Grants", "Events",
+    "Add a program", "Add an event", "Claim your program", "How we check listings",
+    "Get the letter", "Resources", "Blog", "Accessibility", "Adapt To Life",
   ]) {
     assert.ok(html.includes(`>${label}</a>`), `footer is missing ${label}`);
-    assert.ok(appIndex.includes(`>${label}</a>`), `app footer is missing ${label}`);
   }
-  // No dead links: the app boots these query params (see BOOT_QP in index.html).
-  assert.ok(appIndex.includes("DirectoryRoutes.read(new URL(location.href)"));
-  assert.ok(appIndex.includes("BOOT_ABOUT"));
   assert.ok(!html.includes('href="#"'));
+});
+
+// No dead links: every same-site link in the blog chrome (header, beta bar,
+// footer) has to land on a page the app draws (src/pages.js routes, which are
+// the app's routes), not on a query the app no longer reads or a redirect.
+// TODO: src/site-chrome.js still links the old single-page app's query routes
+// (/?add=program, /?db=programs, /?db=grants, /?about=..., /?profile=1) and
+// /maps; the new app ignores those queries, so each lands on the home page.
+test("every link in the server chrome lands on a page the app draws", () => {
+  const html = blogIndexTemplate([], { site: SITE });
+  const hrefs = [...html.matchAll(/<a\b[^>]*\bhref="(\/[^"]*)"/g)].map((m) => m[1]).filter((h) => !h.startsWith("/blog"));
+  assert.ok(hrefs.length > 5);
+  const dead = hrefs.filter((href) => {
+    const u = new URL(href, SITE);
+    if (u.pathname === "/") return u.search !== "";
+    return !matchPage(u.pathname) || !!redirectFor(u.pathname);
+  });
+  assert.deepEqual([...new Set(dead)], []);
 });
 
 // Browser caches ignore CDN purges, so /site-nav.js is only ever referenced

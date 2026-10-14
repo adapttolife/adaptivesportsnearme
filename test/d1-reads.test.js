@@ -5,6 +5,7 @@ import { readFileSync } from 'node:fs';
 import { directorySnapshot, listPrograms, getOrg } from '../src/data.js';
 import { cachedDirectoryResponse, cachedCount } from '../src/read-cache.js';
 import worker from '../src/index.js';
+import { _resetPlacesCache } from '../src/geo.js';
 
 const read = path => readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');
 function database() {
@@ -25,13 +26,18 @@ function database() {
 test('homepage snapshot reads the directory once without losing fields or private filtering', async () => {
   const {sql,db,queries} = database();
   try {
-    const insert = sql.prepare("INSERT INTO organizations (id,name,is_public,status,created_at,updated_at,lat,lng,sport_key) VALUES (?,?,?,?, '2026','2026',40,-74,'cycling')");
-    for (let i=0;i<450;i++) insert.run(String(i), `Program ${i}`,1,'active');
-    insert.run('hidden','Hidden',0,'active'); insert.run('inactive','Inactive',1,'inactive');
+    const insert = sql.prepare("INSERT INTO organizations (id,name,is_public,status,created_at,updated_at,lat,lng,sport_key,website_url) VALUES (?,?,?,?, '2026','2026',40,-74,'cycling',?)");
+    for (let i=0;i<450;i++) insert.run(String(i), `Program ${i}`,1,'active','https://example.org/'+i);
+    insert.run('hidden','Hidden',0,'active','https://example.org/h'); insert.run('inactive','Inactive',1,'inactive','https://example.org/i');
+    // Name only: nothing a person could act on, so it stays out (Alec, 2026-09-01).
+    insert.run('nameonly','Name Only',1,'active',null);
     const result = await directorySnapshot(db);
     assert.equal(result.total,450); assert.equal(queries.length,1);
     assert.equal(result.items[0].lat,null); assert.equal(result.items[0].lng,null); assert.equal(result.items[0].sport,'cycling');
-    assert.ok(result.items.every(p => !['hidden','inactive'].includes(p.id)));
+    assert.ok(result.items.every(p => !['hidden','inactive','nameonly'].includes(p.id)));
+    // The real snapshot query still walks the public-order index, no sort.
+    const plan = sql.prepare('EXPLAIN QUERY PLAN '+queries[0]).all().map(r=>r.detail).join('\n');
+    assert.doesNotMatch(plan,/USE TEMP B-TREE/); assert.match(plan,/INDEX/);
     const pages = await Promise.all([0,200,400].map(offset => listPrograms(db,new URLSearchParams({limit:'200',offset:String(offset)}),{zcta:null})));
     assert.equal(pages.flatMap(p=>p.items).length,450);
     assert.equal(queries.filter(q=>q.includes('COUNT(*)')).length,1);
@@ -64,16 +70,22 @@ test('public organization details expose contacts and precise locations only wit
   } finally { sql.close(); }
 });
 
+// 0007 gives a new database the column with production's definition (staging
+// and production already have it; see the migration's comment).
 test('publicity consent migration defaults to zero and accepts only zero or one', () => {
   const sql = new DatabaseSync(':memory:');
   try {
-    sql.exec('CREATE TABLE organizations (id TEXT PRIMARY KEY, [publicity-consent] INTEGER NOT NULL DEFAULT 0 CHECK ([publicity-consent] IN (0, 1)))');
+    sql.exec('CREATE TABLE organizations (id TEXT PRIMARY KEY)');
+    sql.prepare("INSERT INTO organizations (id) VALUES ('existing')").run();
     sql.exec(read('db/migrations/0007_publicity_consent.sql'));
     sql.prepare("INSERT INTO organizations (id) VALUES ('default')").run();
     sql.prepare("INSERT INTO organizations (id, publicity_consent) VALUES ('consented', 1)").run();
-    assert.equal(sql.prepare("SELECT publicity_consent AS consent FROM organizations WHERE id = 'default'").get().consent, 0);
-    assert.equal(sql.prepare("SELECT publicity_consent AS consent FROM organizations WHERE id = 'consented'").get().consent, 1);
+    const consent = id => sql.prepare('SELECT publicity_consent AS consent FROM organizations WHERE id = ?').get(id).consent;
+    assert.equal(consent('existing'), 0, 'rows from before the migration start without consent');
+    assert.equal(consent('default'), 0);
+    assert.equal(consent('consented'), 1);
     assert.throws(() => sql.prepare("INSERT INTO organizations (id, publicity_consent) VALUES ('invalid', 2)").run());
+    assert.throws(() => sql.prepare("INSERT INTO organizations (id, publicity_consent) VALUES ('unknown', NULL)").run());
   } finally { sql.close(); }
 });
 
@@ -101,9 +113,10 @@ test('Worker serves the complete snapshot contract used by homepage hydration',a
     assert.equal(response.status,200);
     assert.deepEqual(await response.json(),{ok:true,total:0,items:[]});
     assert.equal(queries.length,1);
-    const html=read('public/index.html');
-    assert.match(html,/fetch\("\/api\/directory"\)/);
-    assert.doesNotMatch(html,/fetch\("\/api\/programs\?limit=200/);
+    // The app (public/app/app.js) loads the whole directory once, from the snapshot.
+    const app=read('public/app/app.js');
+    assert.match(app,/"\/api\/directory"/);
+    assert.doesNotMatch(app,/\/api\/programs/);
   } finally {sql.close();}
 });
 
@@ -168,4 +181,101 @@ test('count cache expires, isolates databases and never retains failures',async(
     await assert.rejects(cachedCount(failing,'is_public = 1',[]));
     await cachedCount(failing,'is_public = 1',[]); assert.equal(attempts,2);
   } finally {Date.now=original;}
+});
+
+// /api/orgs/:id is public: the same rule as the directory, and never our own
+// research files (CSV names, Google Drive links, a teammate's name).
+test('a contact nobody can see does not make a listing public', async () => {
+  const {sql,db} = database();
+  try {
+    const org = sql.prepare("INSERT INTO organizations (id,name,is_public,status,created_at,updated_at,state,email,phone,publicity_consent) VALUES (?,?,1,'active','2026','2026','GA',?,?,?)");
+    org.run('33333333-3333-3333-3333-333333333333','Hidden Contact Club','coach@example.test','555-0100',0);
+    org.run('44444444-4444-4444-4444-444444444444','Consenting Contact Club','coach@example.test','555-0100',1);
+    const snap = await directorySnapshot(db);
+    assert.deepEqual(snap.items.map(p => p.name), ['Consenting Contact Club']);
+    assert.equal(await getOrg(db, '33333333-3333-3333-3333-333333333333'), null, 'not public by direct link either');
+    assert.equal((await getOrg(db, '44444444-4444-4444-4444-444444444444')).email, 'coach@example.test');
+  } finally { sql.close(); }
+});
+
+test('getOrg follows the public rule and returns only public sources', async () => {
+  const {sql,db} = database();
+  try {
+    const org = sql.prepare("INSERT INTO organizations (id,name,is_public,status,created_at,updated_at,city,state,website_url,primary_data_source,verification_status,verification_method) VALUES (?,?,1,'active','2026-09-30T20:26:18Z','2026',?,?,?,?,?,?)");
+    org.run('11111111-1111-1111-1111-111111111111','Atlanta Wolfpack','Atlanta','GA','https://adaptedsports.org/','csv-verified-2026-09:1lLGFuCjzt','verified','{"verification_month":"2026-09"}');
+    org.run('22222222-2222-2222-2222-222222222222','Name Only',null,null,null,'US Paralympics Club Finder','unverified',null);
+    const src = sql.prepare("INSERT INTO data_sources (source_id,source_name,source_organization,source_url,status) VALUES (?,?,?,?,'active')");
+    src.run('s1','10_georgia_adaptive_sports_organizations.csv (verified September 2026)','Karen Atkinson','https://drive.google.com/file/d/1lLGFuCjzt/view');
+    src.run('s2','11_georgia_followup.csv','Karen Atkinson','https://drive.google.com/file/d/2x/view');
+    src.run('s3','US Paralympics Club Finder','U.S. Olympic & Paralympic Committee','https://www.teamusa.org');
+    const link = sql.prepare("INSERT INTO organization_data_sources (organization_id,source_id) VALUES (?,?)");
+    for (const s of ['s1','s2','s3']) link.run('11111111-1111-1111-1111-111111111111', s);
+    const o = await getOrg(db, '11111111-1111-1111-1111-111111111111');
+    assert.equal(o.primarySource, 'Adaptive Sports Near Me research');
+    assert.deepEqual(o.sources, [
+      { name: 'Adaptive Sports Near Me research', organization: null, url: null },
+      { name: 'US Paralympics Club Finder', organization: 'U.S. Olympic & Paralympic Committee', url: 'https://www.teamusa.org' },
+    ]);
+    assert.ok(!JSON.stringify(o).match(/drive\.google|Karen|\.csv|csv-verified/), 'no internal source in the public record');
+    assert.equal(o.verifiedMonth, '2026-09'); assert.equal(o.listedAt, '2026-09-30T20:26:18Z');
+    assert.equal(await getOrg(db, '22222222-2222-2222-2222-222222222222'), null, 'a name-only row is not public by direct link either');
+  } finally { sql.close(); }
+});
+
+// City centers (src/geo.js cityCenter over public/data/places.json): a listing's
+// city is public text, so the center of that city is public too, and maps and
+// "near you" use it. The listing's own lat/lng/zip stay behind publicity_consent.
+const PLACES = { 'CO|denver': [39.762, -104.881], 'TN|franklin': [35.914, -86.852] };
+function seedCities(sql) {
+  const insert = sql.prepare(`INSERT INTO organizations
+    (id,name,is_public,status,created_at,updated_at,city,state,zip,lat,lng,website_url,publicity_consent)
+    VALUES (?,?,1,'active','2026','2026',?,?,?,?,?,?,?)`);
+  insert.run('private','Denver Program','Denver','CO','80202',39.75,-104.99,'https://a.example',0);
+  insert.run('consented','Franklin Program','Franklin / Middle Tennessee','TN','37064',35.92,-86.86,'https://b.example',1);
+  insert.run('statewide','Statewide Program','Statewide','CO',null,null,null,'https://c.example',0);
+}
+
+test('the snapshot carries each listing\'s city center only when given the places table', async () => {
+  const {sql,db} = database();
+  try {
+    seedCities(sql);
+    const by = Object.fromEntries((await directorySnapshot(db, { places: PLACES })).items.map(p => [p.id, p]));
+    assert.deepEqual(by.private.cityCenter, [39.762, -104.881]);
+    assert.deepEqual(by.consented.cityCenter, [35.914, -86.852]);
+    assert.equal(by.statewide.cityCenter, null, 'no city, no center; never a guess');
+    // The center is the city's; the listing's own point needs consent.
+    for (const key of ['lat','lng','zip','geoPrecision']) assert.equal(by.private[key], null, key);
+    assert.equal(by.consented.lat, 35.92); assert.equal(by.consented.lng, -86.86); assert.equal(by.consented.zip, '37064');
+    const plain = await directorySnapshot(db);
+    assert.equal(plain.total, 3);
+    assert.ok(plain.items.every(p => !Object.hasOwn(p, 'cityCenter')), 'no places table, no cityCenter field');
+    assert.equal(plain.items.find(p => p.id === 'private').lat, null);
+  } finally { sql.close(); }
+});
+
+test('/api/directory adds city centers from the places table it reads once through ASSETS', async () => {
+  const {sql,db} = database();
+  const fetched = [];
+  let available = false;
+  const ASSETS = { fetch: async (input) => {
+    const url = typeof input === 'string' ? input : input.url;
+    fetched.push(url);
+    return available && url === 'https://assets.local/data/places.json' ? Response.json(PLACES) : new Response('missing', { status: 404 });
+  } };
+  _resetPlacesCache();
+  try {
+    seedCities(sql);
+    const get = async () => (await worker.fetch(new Request('https://example.test/api/directory'), { DB: db, ASSETS }, {})).json();
+    // A missing places table never breaks the directory, and is not remembered.
+    const without = await get();
+    assert.equal(without.ok, true); assert.equal(without.total, 3);
+    assert.ok(without.items.every(p => !Object.hasOwn(p, 'cityCenter')));
+    available = true;
+    const first = await get();
+    const denver = first.items.find(p => p.id === 'private');
+    assert.deepEqual(denver.cityCenter, [39.762, -104.881]);
+    assert.equal(denver.lat, null);
+    await get();
+    assert.deepEqual(fetched, Array(2).fill('https://assets.local/data/places.json'), 'loaded once, then reused');
+  } finally { sql.close(); _resetPlacesCache(); }
 });

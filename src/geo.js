@@ -175,6 +175,52 @@ export function _resetZctaCache() {
   zctaCache = null;
 }
 
+// City centers for listings. A listing's city is public text, so the center of
+// that city is public too; the listing's own lat/lng stays behind
+// publicity_consent. The table is the Census places gazetteer the site already
+// ships for typed searches (public/data/places.json, "ST|city" -> [lat, lng],
+// keys normalized the same way as cityKey below).
+let placesCache = null;
+export async function loadPlaces(assets) {
+  if (placesCache) return placesCache;
+  if (!assets) return null;
+  try {
+    const res = await assets.fetch("https://assets.local/data/places.json");
+    if (!res.ok) return null;
+    placesCache = await res.json();
+    return placesCache;
+  } catch {
+    return null;
+  }
+}
+
+// Test hook — do not call from production code.
+export function _resetPlacesCache() {
+  placesCache = null;
+}
+
+const cityKey = (s) => String(s || "").toLowerCase().replace(/\./g, "").replace(/\bsaint\b/g, "st")
+  .replace(/\bfort\b/g, "ft").replace(/\s+/g, " ").trim();
+const REGION_WORDS = /\b(statewide|area|metro|region|regional|county|counties|greater|downtown|suburbs?|and surrounding|surrounding)\b/g;
+
+// "Franklin / Middle Tennessee", TN -> Franklin's center. Tries each place named
+// in the text, then each side of a hyphen ("Raleigh-Durham"), then the words after
+// a dash label ("Community Connections - Fort Smith"). Never guesses past the table.
+export function cityCenter(city, state, places) {
+  if (!city || !state || !places) return null;
+  const st = String(state).toUpperCase();
+  const tokens = String(city).split(/[,/;\u2013\u2014|()&]| and | or /i)
+    .map((t) => cityKey(t).replace(REGION_WORDS, "").replace(/\s+/g, " ").trim())
+    .filter((t) => t.length > 1);
+  for (const t of tokens) {
+    for (const c of [t, ...t.split(/-| - /).map((x) => x.trim()), t.split(" - ").pop()]) {
+      const hit = c && places[st + "|" + c];
+      if (hit) return [hit[0], hit[1]];
+    }
+  }
+  return null;
+}
+
 export function applyNearby(rows, origin) {
   const out = [];
   for (const r of rows) {

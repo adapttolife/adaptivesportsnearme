@@ -2,12 +2,16 @@
 // The standalone page wears the site header and the sitemap footer (shared with
 // /blog via site-chrome.js); the in-app sheet reuses listingInnerHtml only.
 // Same sheet as the in-app detail (public/index.html): Directory header,
-// photo hero, name, city+state (or statewide), primary action, fact rows
-// only when present. A listing, not a marketing page — no invented copy,
-// no verification/trust line. Nearby is a horizontal shelf, not a stack.
+// symbol hero, name, city+state (or statewide), whether a person has verified
+// it, primary action, fact rows only when present, then "About this listing":
+// last checked date, source, and the two ways to fix it (Alec, 2026-10-13: say
+// whether a listing is verified, and invite people to suggest updates).
+// A listing, not a marketing page — no invented copy. Nearby is a shelf.
 
-import { listingVisual, isCoverVisual, stampAttr } from "./visuals.js";
+import { listingVisual, isCoverVisual, stampAttr, symbolTile } from "./visuals.js";
 import { headerHtml, footerHtml, navScriptHtml } from "./site-chrome.js";
+
+const ListingArt = globalThis.ListingArt;
 
 const SITE = "https://adaptivesportsnearme.com";
 
@@ -57,11 +61,13 @@ function hostFromUrl(u) {
   try { return new URL(u).hostname.replace(/^www\./, ""); } catch { return u; }
 }
 
+// A public source with a link, for the "View source" fallback. Our own research
+// files (Drive links, CSV names) are never a destination for a visitor.
 function sourceWithUrl(org) {
   const list = (org.sources && org.sources.length)
     ? org.sources
     : (org.primarySource ? [{ name: org.primarySource, url: org.primarySourceUrl || null }] : []);
-  return list.find((s) => s && s.url) || null;
+  return list.find((s) => s && s.url && !ListingArt.isInternalSource(s)) || null;
 }
 
 // website → tel → mailto → primary source link. Never an empty-page stub.
@@ -109,6 +115,12 @@ function descBlock(desc) {
     + `<label class="desc-btn" for="descmore"><span class="dm-more">More</span><span class="dm-less">Less</span></label>`;
 }
 
+// The card's one trust line: Verified, or Not yet verified. Same words as the app.
+export function trustHtml(p) {
+  const t = ListingArt.trustLine(p);
+  return `<div class="pcard-trust ${t.cls}">${t.text}</div>`;
+}
+
 function nearbyCard(p) {
   const loc = locLine(p);
   // Distance or nothing. The org type is a default, not a difference (see cardLine in index.html).
@@ -116,14 +128,56 @@ function nearbyCard(p) {
   const v = listingVisual(p, "program");
   const media = isCoverVisual(v)
     ? `<div class="pcard-media has-photo"><img class="pcard-img" src="${esc(v.src)}" alt=""${stampAttr(p, "program")}></div>`
-    : `<div class="pcard-media has-stamp">${v.src ? `<img class="pcard-stamp" src="${esc(v.src)}" alt="">` : ""}</div>`;
-  return `<a class="pcard" href="/programs/${esc(p.id)}">${media}<div class="pcard-body"><div class="pcard-sport">${esc(p.sportLabel || "Multi-Sport")}</div><div class="pcard-name">${esc(p.name)}</div><div class="pcard-loc">${esc(loc)}</div>${line ? `<div class="pcard-line">${esc(line)}</div>` : ""}</div></a>`;
+    : symbolTile(v, "pcard-media");
+  return `<a class="pcard" href="/programs/${esc(p.id)}">${media}<div class="pcard-body"><div class="pcard-sport">${esc(p.sportLabel || "Multi-Sport")}</div><div class="pcard-name">${esc(p.name)}</div><div class="pcard-loc">${esc(loc)}</div>${line ? `<div class="pcard-line">${esc(line)}</div>` : ""}${trustHtml(p)}</div></a>`;
+}
+
+// "Nearby" only when the closest one is within reach; 600 miles is not nearby.
+export const NEARBY_MILES = 100;
+export function nearbyHeading(items, sportLabel) {
+  const label = (sportLabel || "adaptive sports").toLowerCase();
+  const first = items && items[0];
+  return first && first.dist != null && first.dist <= NEARBY_MILES ? `Nearby ${label}` : `More ${label}`;
 }
 
 function nearbyStrip(items, sportLabel) {
   if (!items || !items.length) return "";
   const list = items.slice(0, 6);
-  return `<div class="nearby"><h2>Nearby ${esc((sportLabel || "adaptive sport").toLowerCase())}</h2><div class="frow-scroll">${list.map(nearbyCard).join("")}</div></div>`;
+  return `<div class="nearby"><h2>${esc(nearbyHeading(list, sportLabel))}</h2><div class="frow-scroll">${list.map(nearbyCard).join("")}</div></div>`;
+}
+
+// What a visitor should know before they rely on a listing, and how to fix it.
+// Verified means a person checked it against an official source; nothing
+// automatic earns the word. The checked date is the automatic website check.
+export function aboutListingHtml(org) {
+  const verified = ListingArt.isVerified(org);
+  const month = ListingArt.monthLabel(org.verifiedMonth);
+  const sources = (org.sources && org.sources.length)
+    ? org.sources
+    : (org.primarySource ? [{ name: org.primarySource, url: null }] : []);
+  const src = ListingArt.publicSource(sources.find((x) => x && x.name) || null);
+  const srcHtml = src
+    ? (src.url
+      ? `<a href="${esc(src.url)}" rel="noopener" target="_blank">${esc(src.name)}</a>`
+      : esc(src.name))
+    : null;
+  const status = verified
+    ? `<p class="about-status is-verified"><b>Verified.</b> ${esc(ListingArt.verifiedText(month))}</p>`
+    : `<p class="about-status is-unverified"><b>Not yet verified.</b> ${ListingArt.unverifiedText(srcHtml, !!src && src.name === ListingArt.RESEARCH)}</p>`;
+  const id = esc(org.id || "");
+  const rows = [
+    ListingArt.checkedRow(org).map(esc),
+    verified && srcHtml ? ["Source", srcHtml] : null,
+  ].filter(Boolean);
+  return `<section class="about-listing" aria-labelledby="about-listing-h">
+<h2 id="about-listing-h">About this listing</h2>
+${status}
+<div class="rows">${rows.map(([k, v]) => `<div class="row"><span class="k">${k}</span><span class="v">${v}</span></div>`).join("")}</div>
+<div class="fix-links">
+<a class="fix-btn" href="/?update=${id}" data-update="${id}">Suggest an update</a>
+<a class="fix-link" href="/?update=${id}&amp;rel=run" data-update="${id}" data-rel="run">Run this program? Confirm your listing</a>
+</div>
+</section>`;
 }
 
 
@@ -175,7 +229,8 @@ export function listingInnerHtml(org, { nearby = [] } = {}) {
   const overlay = `<div class="dov"><span class="dov-sport">${esc(sport)}</span><span class="dov-loc">${esc(loc)}</span></div>`;
   const hero = isCoverVisual(v)
     ? `<div class="dhero has-dphoto"><img class="dhero-img" src="${esc(v.src)}" alt=""${stampAttr(org, "program")}>${overlay}</div>`
-    : `<div class="dhero has-stamp">${v.src ? `<img class="dhero-stamp" src="${esc(v.src)}" alt="">` : ""}${overlay}</div>`;
+    : symbolTile(v, "dhero", overlay);
+  const trust = ListingArt.trustLine(org);
   const cta = primaryCta(org);
   const action = cta
     ? `<div class="act"><a class="cta" href="${esc(cta.href)}" rel="noopener">${esc(cta.label)}</a>${org.website ? `<span class="host">${esc(hostFromUrl(org.website))}</span>` : ""}</div>`
@@ -185,10 +240,12 @@ export function listingInnerHtml(org, { nearby = [] } = {}) {
 <div class="titleb">
 <h1>${esc(name)}</h1>
 <p class="loc">${esc(loc)}</p>
+<p class="listing-trust ${trust.cls}">${trust.text}</p>
 ${desc}
 </div>
 ${action}
 ${denseRows(org)}
+${aboutListingHtml(org)}
 ${nearbyStrip(nearby, sport)}`;
 }
 
@@ -204,7 +261,7 @@ ${listingInnerHtml(org, { nearby })}`;
     title: `${name} · Adaptive Sports Near Me`,
     description: `${sport} in ${loc}.`,
     canonical,
-    image: photo ? `${site}${photo}` : undefined,
+    image: `${site}${photo || "/og-image.jpg"}`,
     body,
   });
 }

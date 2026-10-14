@@ -20,3 +20,6 @@ tools/directory/twin-review.json
 
 tmp
 .vscode/
+
+# Python bytecode (scripts/icons)
+__pycache__/
