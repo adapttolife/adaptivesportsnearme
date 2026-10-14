@@ -122,7 +122,7 @@ test("programPageTemplate: symbol hero, name, city+state, website button — not
   assert.ok(html.includes("Denver, CO"));
   assert.ok(html.includes("https://www.example.org/nuggets"));
   assert.ok(html.includes("<h1>Denver Rolling Nuggets</h1>"));
-  assert.ok(html.includes("/emblems/athlete-basketball.svg"));
+  assert.ok(html.includes("/emblems/sports/basketball.svg"));
   assert.ok(html.includes('class="dhero has-symbol tone-court"'));
   assert.ok(!html.includes("/assets/sport-photos/"));
   assert.ok(html.includes("Visit website"));
@@ -271,12 +271,12 @@ test("programPageTemplate: no website falls back — never 'No website on file.'
   assert.ok(html.includes("tel:3035550100"));
 });
 
-test("programPageTemplate: no sport we can name wears the plain athlete, still has name + loc", () => {
+test("programPageTemplate: no sport we can name wears the multi-sport image, still has name + loc", () => {
   const html = programPageTemplate({ ...ORG, sport: null, sportLabel: "Multi-Sport", name: "Denver Rolling Nuggets" });
   assert.ok(!html.includes("sport-photos/"));
   assert.ok(!html.includes("g-sand"));
   assert.ok(html.includes('class="dhero has-symbol tone-house"'));
-  assert.ok(html.includes('src="/emblems/athlete.svg"'));
+  assert.ok(html.includes('src="/emblems/sports/multi.svg"'));
   assert.ok(html.includes("Denver Rolling Nuggets"));
   assert.ok(html.includes("Denver, CO"));
 });

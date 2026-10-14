@@ -1358,13 +1358,8 @@
 				);
 			}
 			function stampSrc(item, role) {
-				if (role === "grant")
-					return emblemSrc(
-						item && item.audience === "program"
-							? "program-grant"
-							: "athlete-grant",
-					);
-				if (role === "event") return emblemSrc("event");
+				if (role === "grant") return ListingArt.GRANT_ART;
+				if (role === "event") return ListingArt.EVENT_ART;
 				return ListingArt.art(Object.assign({}, item, { photo: null })).src;
 			}
 			function coverStampAttr(item, role) {
@@ -4328,7 +4323,8 @@
 			function eventCardHtml(e) {
 				const chip = dayChip(e.startsAt);
 				const loc = [e.city, e.state].filter(Boolean).join(", ");
-				const evStamp = emblemSrc(e.sport) || emblemSrc("event");
+				const evKey = ListingArt.symbolKey({ sport: e.sport });
+				const evStamp = evKey ? ListingArt.symbolSrc(evKey) : ListingArt.EVENT_ART;
 				const icon = evStamp
 					? '<img class="ev-stamp" src="' + evStamp + '" alt="">'
 					: NAVICON.cal;

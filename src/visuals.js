@@ -94,11 +94,9 @@ export function programArt(item) {
 
 // Cover images carry the stamp they fall back to (index.html swaps it in on img error).
 export function stampAttr(item, role = "program") {
-  let key;
-  if (role === "grant") key = item && item.audience === "program" ? "program-grant" : "athlete-grant";
-  else if (role === "event") key = "event";
-  else return ` data-stamp="${ListingArt.art({ ...(item || {}), photo: null }).src}"`;
-  return ` data-stamp="${emblemPath(key) || GENERIC_STAMP}"`;
+  if (role === "grant") return ` data-stamp="${ListingArt.GRANT_ART}"`;
+  if (role === "event") return ` data-stamp="${ListingArt.EVENT_ART}"`;
+  return ` data-stamp="${ListingArt.art({ ...(item || {}), photo: null }).src}"`;
 }
 
 // The symbol tile markup both server renderers use. `cls` is the frame class

@@ -169,7 +169,7 @@ test("peek HTML: title, city · sport, Visit/Call/Email pills, handle — no pho
 
 test("expanded HTML reuses the listing sheet: symbol, title, city, desc, facts, Visit, about, nearby rail", () => {
   const html = trayExpandedHtml(RENO, NEARBY);
-  assert.ok(html.includes("/emblems/athlete-pickleball.svg"));
+  assert.ok(html.includes("/emblems/sports/pickleball.svg"));
   assert.ok(html.includes("has-symbol"));
   assert.ok(html.includes("About this listing"));
   assert.ok(html.includes("<h1>3rd Shot Pickleball Reno Adaptive</h1>"));
