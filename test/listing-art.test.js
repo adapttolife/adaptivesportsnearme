@@ -72,15 +72,15 @@ test("a Multi-Sport listing falls back to its name, label first", () => {
   assert.equal(L.symbolKey({ sportLabel: "Multi-Sport", name: "Clay County Adaptive Sports" }), null);
 });
 
-test("Alec's flat set: every image has an SVG and a PNG, no orphan files, every sport has a tone", () => {
+test("sport icons: every image has an SVG and a PNG, no orphan files, every sport has a tone", () => {
   const dir = new URL("../public/emblems/sports/", import.meta.url);
   const files = readdirSync(dir);
   const keys = [...L.ART, "grant", "event"].sort();
   assert.deepEqual(files.filter((f) => f.endsWith(".svg")).map((f) => f.slice(0, -4)).sort(), keys);
   assert.deepEqual(files.filter((f) => f.endsWith(".png")).map((f) => f.slice(0, -4)).sort(), keys);
-  // Every borrowed image and every older symbol still exists.
-  const old = readdirSync(new URL("../public/emblems/", import.meta.url));
-  for (const k of L.SYMBOLS) assert.ok(old.includes(`athlete-${k}.svg`), k);
+  // The retired logo's athlete series is gone: nothing may draw from the old mark.
+  const emblems = readdirSync(new URL("../public/emblems/", import.meta.url));
+  assert.deepEqual(emblems.filter((f) => /^athlete(-[\w-]+)?\.svg$|^atl-logo/.test(f)), []);
   const css = read("public/styles.css");
   for (const key of L.SPORTS.filter((k) => k !== "multi")) {
     const family = L.FAMILY[key];
