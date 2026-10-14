@@ -31,10 +31,12 @@ const sportNoun = (p) => (p.key === "multi" ? "multi-sport programs" : lowerFirs
 const statewideText = (p) => /no single city listed$/.test(A.placeText(p));
 
 /** Short place for the stamp and the poster: "Tampa, FL", "Florida, statewide", "Escambia County, FL". */
+// The stamp is one short line ("Tampa, FL" or "Mississippi"): the full place
+// ("Mississippi, no single city listed") is in the line under the name.
 function stampLabel(p) {
   if (!p.state) return null;
   if (p.placed) return A.placeText(p);
-  return statewideText(p) ? `${A.stateName(p.state)}, statewide` : A.placeText(p);
+  return A.stateName(p.state);
 }
 /** Place words for the title: "Tampa, FL" or "Florida". */
 function titlePlace(p) {

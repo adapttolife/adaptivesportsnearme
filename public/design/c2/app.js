@@ -105,6 +105,7 @@ const TONES = {
 // Look switch: sharp is the standard; ?look=today and ?look=hues stay for comparison.
 export const LOOK = new URLSearchParams(location.search).get("look") || "sharp"; // Alec, 2026-10-14: "I love the sharper version the best... This is the way"
 document.documentElement.dataset.look = LOOK;
+document.documentElement.dataset.band = new URLSearchParams(location.search).get("band") || "left";
 if (LOOK === "hues") Object.assign(TONES, {
   field: ["#2DBE6C", INK], snow: ["#3D7BFF", INK], trail: [ORANGE, INK],
   calm: ["#8B5CF6", INK], house: ["#FF4FA0", INK], event: ["#3D7BFF", INK],
@@ -644,8 +645,10 @@ export function fig(key, { color, cls = "", big = false } = {}) {
   const k = key && OPTICAL[key] ? key : "multi";
   const o = OPTICAL[k];
   const dk = Math.min(1.04, Math.max(0.90, Math.pow(0.31 / o[3], 0.3)));
-  return `<i class="fig${cls ? " " + cls : ""}" aria-hidden="true" style="--src:url(/design/c2/icons/${k}-${big ? 768 : 256}.webp);--w:${o[0]};--h:${o[1]};--g:${o[2]};--dk:${dk.toFixed(3)};--cx:${o[4]}${color ? ";color:" + color : ""}"></i>`;
+  return `<i class="fig${cls ? " " + cls : ""}" aria-hidden="true" style="--src:url(/design/c2/icons/${k}-${big ? 768 : 256}.webp);--w:${o[0]};--h:${o[1]};--g:${o[2]};--diag:${Math.hypot(o[0], o[1]).toFixed(3)};--dk:${dk.toFixed(3)};--cx:${o[4]}${color ? ";color:" + color : ""}"></i>`;
 }
+
+if (typeof window !== "undefined") { window.ASNM_FIG = fig; window.ASNM_ICON_KEYS = Object.keys(OPTICAL); window.ASNM_PLATE = (...a) => plate(...a); }
 
 /* Trio sizes per use: [first, others] for A (optical size) and Hm (height cap). */
 const TRIO_SIZE = { card: { A: [.46, .36], Hm: [.64, .52], room: "84cqw" }, hero: { A: [.58, .46], Hm: [.72, .60], room: "80cqw" }, poster: { A: [.74, .56], Hm: [.86, .66], room: "94cqw" } };
@@ -666,7 +669,9 @@ export function trioFigs(keys, kind = "card") {
     return { k: k0, kk };
   });
   const html = figs.map((f, i) => fig(f.k, { color: INK, big: kind !== "card", cls: i ? "" : "is-first" }).replace('style="', `style="--k:${f.kk.toFixed(3)};`)).join("");
-  return `<span class="trio" style="--sum:${sum.toFixed(3)};--room:${z.room}">${html}</span>`;
+  // --kh: the tallest drawing's height per unit of --u, so CSS can cap the row's height (--Hx).
+  const kh = Math.max(...figs.map((f) => f.kk * (OPTICAL[f.k] || OPTICAL.multi)[1]));
+  return `<span class="trio" style="--sum:${sum.toFixed(3)};--room:${z.room};--kh:${kh.toFixed(3)}">${html}</span>`;
 }
 
 /** A tinted plate. plate(key | program, { kind, trio, inv, inner, cls, wide }). */
@@ -746,7 +751,8 @@ const metaText = (p, ctx) => (ctx && ctx.single) ? placeFor(p, ctx) : `${sportNa
 
 /** Card for lists that mix sports. ctx: { where, stamp, wide, sameCity } */
 export function programCard(p, ctx = {}) {
-  const inner = (p.verified ? vpill() : "") + (ctx.stamp === true ? pstamp(p) : "");
+  // One badge at most on the art (the place is in the line under the name).
+  const inner = p.verified ? vpill() : "";
   const d = distText(p, ctx);
   return `<a class="pcard${ctx.wide ? " is-wide" : ""}" href="#/programs/${esc(p.id)}">${plate(p, { kind: "card", inner, wide: ctx.wide })}<h3 class="pc-name" title="${esc(p.name)}">${esc(p.name)}</h3><p class="meta">${esc(metaText(p, { single: false }))}</p>${d ? `<p class="dist">${esc(d)}</p>` : ""}<p class="pc-trust">${trust(p, "short")}</p></a>`;
 }
@@ -1137,7 +1143,7 @@ const ROUTES = [
   ["/states", "states"], ["/states/:st", "state"], ["/programs/:id", "program"],
   ["/grants", "grants"], ["/grants/:id", "grant"], ["/events", "events"],
   ["/add/program", "forms"], ["/add/event", "forms"], ["/update/:id", "forms"],
-  ["/help", "help"], ["/about", "help"], ["/resources/veteran-owned-businesses", "vob"], ["/resources", "help"], ["/letter", "help"],
+  ["/help", "help"], ["/about", "help"], ["/resources/veteran-owned-businesses", "vob"], ["/lab", "lab"], ["/resources", "help"], ["/letter", "help"],
 ];
 const OVERLAY_KEYS = new Set(["map", "open"]);
 const MODS = {}, CSS_DONE = {};

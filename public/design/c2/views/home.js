@@ -30,7 +30,7 @@ function checkedMix(items) {
 function hero() {
   const last = A.recall("place");
   const chip = last ? `<a class="chip hb-last" href="#/near/${encodeURIComponent(last)}">${A.icon("history", 18)}<span>Last search: ${A.esc(last)}</span></a>` : "";
-  const figs = HERO.map(([k], i) => `<span class="hb-fig${i === 0 ? " is-on" : ""}" data-i="${i}">${A.fig(k, { color: "#1A1A1A", big: true })}</span>`).join("");
+  const figs = HERO.map(([k], i) => `<span class="hb-fig${i === 0 ? " is-on" : ""}" data-i="${i}">${A.fig(k, { color: "#1A1A1A", big: true, cls: "fig--pin fig--mid" })}</span>`).join("");
   return `<section class="hb" data-hero style="--hb:${HERO[0][1]}"><div class="hb-art" aria-hidden="true">${figs}</div>
 <div class="hb-text"><h1 class="display" tabindex="-1">Find your place in adaptive sports.</h1><p class="hb-lede">Programs, grants and events near you. Every listing says whether a person checked it, and when.</p>${A.whereForm({ id: "home-where", after: chip })}</div></section>`;
 }
