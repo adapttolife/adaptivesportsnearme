@@ -3,9 +3,9 @@
 
    Why symbols (Alec, 2026-10-13: "How can we just launch and not get bottlenecked
    by images. Just use symbols and icons?"): a listing should never wait on a
-   photo. Every program wears its sport's image from Alec's flat vector set
-   (public/emblems/sports, one file per sport key; see the README there), on a
-   ground tinted by sport family. A real photo or logo of the program itself,
+   photo. Every program wears its sport's icon (public/emblems/sports, one
+   animated SVG per sport key, built by scripts/icons; see the README there), on
+   a ground tinted by sport family. A real photo or logo of the program itself,
    once we have one, still wins.
 
    Stock action photos stay off listings by default: the same photo on every
@@ -31,17 +31,12 @@ globalThis.ListingArt = (() => {
   ];
   const IS_SPORT = new Set(SPORTS);
 
-  // Alec's flat vector set: public/emblems/sports/<key>.svg (+ .png), one
-  // dedicated file for every sport key (Alec, 2026-10-14: "extreme clarity").
-  // Some files are copies of another sport's image on purpose; the README in
-  // that folder says which. 'grant' and 'event' sit in the same folder.
+  // The sport icons: public/emblems/sports/<key>.svg (+ .png), one dedicated
+  // icon for every sport key (Alec, 2026-10-14: "extreme clarity"), generated
+  // by scripts/icons. 'grant' and 'event' sit in the same folder.
   const ART = SPORTS;
   const HAS_ART = new Set(ART);
   const ART_ALIAS = {};
-  // Older athlete + prop symbols (scripts/emblem-series.py) for any sport the
-  // flat set does not cover: public/emblems/athlete-<key>.svg. None needed now.
-  const SYMBOLS = [];
-  const HAS_OLD = new Set(SYMBOLS);
   const artSrc = (k) => '/emblems/sports/' + k + '.svg';
 
   // Older or narrower sport keys in the data.
@@ -134,11 +129,10 @@ globalThis.ListingArt = (() => {
     return fromWords(item.sportLabel) || fromWords(item.name);
   }
 
-  // The image file for a sport key: its own dedicated file, an older symbol,
-  // else the multi-sport image. Never an empty tile.
+  // The image file for a sport key: its own dedicated icon, else the
+  // multi-sport icon. Never an empty tile.
   function symbolSrc(key) {
     if (key && HAS_ART.has(key)) return artSrc(key);
-    if (key && HAS_OLD.has(key)) return '/emblems/athlete-' + key + '.svg';
     return artSrc('multi');
   }
 
@@ -250,7 +244,7 @@ globalThis.ListingArt = (() => {
   }
 
   return {
-    SPORTS, ART, ART_ALIAS, SYMBOLS, FAMILY, symbolKey, symbolSrc, art, GRANT_ART, EVENT_ART, isVerified, trustLine,
+    SPORTS, ART, ART_ALIAS, FAMILY, symbolKey, symbolSrc, art, GRANT_ART, EVENT_ART, isVerified, trustLine,
     shortDate, monthLabel, checkedRow, verifiedText, unverifiedText, sourceLabel, isInternalSource, publicSource,
     RESEARCH
   };
