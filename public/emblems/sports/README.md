@@ -7,9 +7,10 @@ through `public/listing-art.js`, so nothing else should point at images by name.
 - Master files: Google Drive, Website / ASNM Flat Vector Logo (Alec's drawings,
   1254 px PNGs, each with a `<Name> Transparent.png`). The SVG of every icon is
   in that folder's `SVGs` subfolder as `<Name>.svg`, identical to the file here.
-- `<key>.svg` is what the site shows: Alec's drawing as a clean vector (one
-  path on a 512 grid, the drawing centred with a 6% margin, filled with
-  `currentColor`), traced by `scripts/icons/trace.py`.
+- `<key>.svg` is what the site shows: Alec's drawing rebuilt as a clean vector
+  by `scripts/icons/trace.py` (perfect circles, straight lines, true arcs and
+  smooth curves; one path on a 512 grid, the drawing centred with a 6% margin,
+  filled with `currentColor`).
 - `<key>.png` is the same icon at 512 px with a transparent background, for
   email and social cards.
 - `<key>` is the sport's key in the D1 `sports` table, plus `multi`, `grant` and `event`.
@@ -22,7 +23,7 @@ These files are generated; do not edit them by hand.
 2. New key only: add a row to the table below and the key to `SPORTS` in
    `public/listing-art.js` and `TITLES` in `scripts/icons/trace.py`.
 3. `python3 scripts/icons/trace.py <png directory> <key>` writes the SVG and PNG
-   here, and stops if the trace does not match the drawing.
+   here, and stops if the result does not match the drawing.
 4. `npm test` (every key has an SVG and a PNG, nothing orphaned, every SVG keeps
    the contract in `test/sport-icons.test.js`), then open a PR.
 

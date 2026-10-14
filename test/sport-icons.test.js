@@ -1,5 +1,5 @@
-// The sport icons (public/emblems/sports/<key>.svg) are Alec's drawings traced by
-// scripts/icons/trace.py. These checks hold every file to the shape the tracer
+// The sport icons (public/emblems/sports/<key>.svg) are Alec's drawings rebuilt as
+// clean vectors by scripts/icons/trace.py. These checks hold every file to the shape the tracer
 // writes, so a hand edit or a bad export fails here, not on a page.
 import { test } from "node:test";
 import assert from "node:assert/strict";
@@ -11,7 +11,7 @@ const icons = readdirSync(dir).filter((f) => f.endsWith(".svg")).map((f) => [f.s
 test("every sport icon is one clean path on the 512 grid", () => {
   assert.ok(icons.length >= 47, `only ${icons.length} icons`);
   for (const [key, svg] of icons) {
-    assert.match(svg, /^<svg xmlns="http:\/\/www\.w3\.org\/2000\/svg" viewBox="0 0 512 512" role="img"><title>[^<]+<\/title><path fill="currentColor" d="M[^"]+"\/><\/svg>\n$/, key);
+    assert.match(svg, /^<svg xmlns="http:\/\/www\.w3\.org\/2000\/svg" viewBox="0 0 512 512" role="img"><title>[^<]+<\/title><path fill="currentColor" fill-rule="evenodd" d="M[^"]+"\/><\/svg>\n$/, key);
     assert.ok(svg.length < 40 * 1024, `${key}: ${svg.length} bytes`);
   }
 });
