@@ -200,3 +200,19 @@ test("a pasted mailto: prefix never reaches the letter list", async () => {
   const clientStrips = /\^mailto:/.test(scan(between(APP, "async function sendForm(", "\n}\n")).code);
   assert.ok(clientStrips || lookup.includes("/by_email/person%40example.test"), `looked up ${lookup}`);
 });
+
+// One h1 per page: the page's own title. The footer's site name is the brand,
+// styled like a title but not a heading (2026-10-14).
+test("the footer never adds a second h1 to the page", () => {
+  const footer = between(APP, "function footer(", "\n}\n");
+  assert.ok(footer.includes('class="ft-name"'), "the site name is in the footer");
+  assert.ok(!/<h1[\s>]/.test(footer), "no h1 in the footer");
+});
+
+// Phone Back closes a sheet opened by a tap instead of leaving the page.
+test("sheets opened by a tap get their own Back step", () => {
+  assert.match(APP, /export function pushSheet\(\)/);
+  assert.match(between(APP, 'const op = t.closest("[data-open]");', "return;\n    }"), /pushSheet\(\);/);
+  assert.match(read("public/app/views/program.js"), /A\.pushSheet\(\);/);
+  assert.match(between(APP, 'window.addEventListener("popstate"', "render();\n  });"), /closeOverlay\(\{ mode: "pop" \}\)/);
+});
