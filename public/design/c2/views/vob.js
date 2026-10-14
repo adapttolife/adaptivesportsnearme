@@ -26,7 +26,7 @@ ${ext(s.national.url, s.national.name)}</li>`).join("");
 <header class="vb-hero">${A.fig("veteran-meetup", { color: "#FFFFFF", big: true, cls: "vb-fig" })}<h1 tabindex="-1">${A.esc(c.title)}</h1><p class="vb-kicker">${A.esc(c.kicker)}</p></header>
 <div class="vb-intro">${c.intro.map((t) => `<p>${A.esc(t)}</p>`).join("")}<p class="vb-note">${A.esc(c.disclaimer)}</p></div>
 <section class="sec" aria-labelledby="vb-n">${A.sectionHead({ title: "Nationwide", id: "vb-n" })}<ul class="vb-cards">${nation}</ul></section>
-<section class="sec" aria-labelledby="vb-s">${A.sectionHead({ title: "By state", id: "vb-s", sub: c.stateLead })}
+<section class="sec" aria-labelledby="vb-s">${A.sectionHead({ title: c.stateLead, id: "vb-s" })}
 <p class="vb-scope">${A.esc(c.scope)}</p><form class="vb-pick" data-vb-pick><label for="vb-sel">Choose your state</label><div class="vb-row"><select id="vb-sel" class="input">${opts}</select><button class="btn btn--ink" type="submit">Go</button></div></form>
 <ul class="vb-states">${states}</ul></section>
 <p class="vb-back"><a class="tlink" href="#/sports/veteran-meetup">${A.icon("arrow-left", 18)}Veteran meetups near you</a></p>
