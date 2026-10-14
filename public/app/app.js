@@ -9,7 +9,8 @@
      "unverified". The listing page says when we last checked it.
    - Forms validate in place, then post to the site's API with a Turnstile token. */
 
-import { isMenuRow, isDonationRow } from "./listable.js";
+import { parseDesc as parseDescText } from "./listing-sport.js";
+import { ICONS } from "./icons.js";
 
 const L = window.ListingArt, P = window.Proto;
 const $ = (s, r = document) => r.querySelector(s);
@@ -31,14 +32,18 @@ export const STATE_CODES = Object.keys(STATE_NAMES).sort((a, b) => STATE_NAMES[a
 /** "FL" -> "Florida". */
 export const stateName = (st) => STATE_NAMES[st] || st || "";
 
-/** Lucide icon as an inline SVG string (decorative). */
-const ICON_CACHE = {};
+/** Lucide icon as an inline SVG string (decorative). Icons come from ./icons.js, the
+    few the site uses (scripts/build-app-icons.mjs), not the whole library. */
+const ICON_CACHE = {}, ICON_MISSING = new Set();
 export function icon(name, size = 20) {
   const k = name + "@" + size;
   if (ICON_CACHE[k]) return ICON_CACHE[k];
   const pas = String(name).split("-").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join("");
-  const node = window.lucide && window.lucide.icons && window.lucide.icons[pas];
-  if (!node) return "";
+  const node = ICONS[pas];
+  if (!node) {
+    if (!ICON_MISSING.has(name)) { ICON_MISSING.add(name); console.error("ASNM: icon not in public/app/icons.js (run scripts/build-app-icons.mjs):", name); }
+    return "";
+  }
   const kids = node.map(([tag, attrs]) => "<" + tag + Object.entries(attrs).map(([a, v]) => ` ${a}="${esc(v)}"`).join("") + "/>").join("");
   return (ICON_CACHE[k] = `<svg class="ic" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">${kids}</svg>`);
 }
@@ -199,26 +204,8 @@ export function placeText(p) {
   return "Place not listed yet";
 }
 
-/** { sports, served } from "Sports and activities: ...; Athletes served: ..." */
-export function parseDesc(p) {
-  const d = String((p && p.desc) || "");
-  const m1 = /Sports and activities:\s*([\s\S]*?)(?:[.;]\s*Athletes served:|$)/i.exec(d);
-  const m2 = /Athletes served:\s*([\s\S]*)$/i.exec(d);
-  const sports = m1 && m1[1].trim() ? m1[1].trim().replace(/[.;]\s*$/, "") : null;
-  const served = m2 && m2[1].trim() ? m2[1].trim() : null;
-  return { sports, served };
-}
-function sportsInDesc(p) {
-  const s = parseDesc(p).sports;
-  if (!s) return [];
-  const out = [];
-  for (const part of s.split(/[;,]/)) {
-    const k = L.symbolKey({ sportLabel: part.trim() });
-    const g = k ? picGroup(k) : null;
-    if (g && g !== "multi" && !out.includes(g)) out.push(g);
-  }
-  return out;
-}
+/** { sports, served } from "Sports and activities: ...; Athletes served: ..." (a listing's own page). */
+export function parseDesc(p) { return parseDescText(p && p.desc); }
 
 const goodUrl = (u) => /^https?:\/\/\S+$/i.test(String(u || "").trim()) ? String(u).trim() : null;
 
@@ -226,12 +213,10 @@ function normalize(raw) {
   const p = { ...raw };
   p.rawName = raw.name;
   p.name = displayName(raw.name);
-  p.key = p.sportKey && NAMES[p.sportKey] && p.sportKey !== "grant" && p.sportKey !== "event" ? p.sportKey : "multi";
-  if (p.key === "multi") {
-    const ks = sportsInDesc(p);
-    if (ks.length === 1) { p.key = ks[0]; p.retagged = true; }
-    else if (ks.length >= 2) p.trio = [...ks.filter((k) => !GROUP_SCENE.has(k)), ...ks.filter((k) => GROUP_SCENE.has(k))].slice(0, 3);
-  }
+  // The sport (and the trio for a multi-sport listing) comes worked out from the
+  // server (public/app/listing-sport.js), so the lists need no descriptions.
+  p.key = raw.key && NAMES[raw.key] && raw.key !== "grant" && raw.key !== "event" ? raw.key : "multi";
+  if (Array.isArray(raw.trio) && raw.trio.length >= 2) p.trio = raw.trio;
   p.family = familyOf(p.key);
   p.tone = toneOf(p.key);
   // Verified (the check) means the program itself confirmed its listing with us
@@ -247,11 +232,40 @@ function normalize(raw) {
 }
 
 /* The live API rows, in the shape the views read. */
+// /api/listings is the slim directory: enough for cards, rows, maps and sport pages.
 // A listing's own lat/lng stay private until the program says yes (publicity_consent),
-// so maps and distances use the center of its listed city (cityCenter, from the server).
+// so maps and distances use the center of its listed city (center, from the server).
 function fromApi(r) {
-  const c = Array.isArray(r.cityCenter) ? r.cityCenter : null;
-  return { ...r, sportKey: L.symbolKey(r) || null, lat: c ? c[0] : null, lng: c ? c[1] : null, geo: c ? "city" : (r.state ? "state" : null) };
+  const c = Array.isArray(r.center) ? r.center : null;
+  return {
+    id: r.id, name: r.name, key: r.key, trio: r.trio || null, city: r.city || null, state: r.state || null,
+    lastChecked: r.checked || null, listedAt: r.listed || null, confirmed: !!r.verified, teamChecked: !!r.team,
+    lat: c ? c[0] : null, lng: c ? c[1] : null, geo: c ? "city" : (r.state ? "state" : null),
+  };
+}
+/* A listing's own page adds what the lists leave out: website, description, cost, ages,
+   equipment, the month our team checked it. Loaded once per listing. */
+const DETAIL = new Map();
+export function loadDetail(id) {
+  if (!DETAIL.has(id)) {
+    const p = fetch("/api/orgs/" + encodeURIComponent(id)).then(async (r) => {
+      if (r.status === 404) return null;
+      if (!r.ok) throw new Error("/api/orgs " + r.status);
+      return (await r.json()).org || null;
+    });
+    DETAIL.set(id, p);
+    p.catch(() => DETAIL.delete(id));   // a failed load is asked again next time
+  }
+  return DETAIL.get(id).then((o) => {
+    const item = D && D.byId.get(id);
+    if (o && item && !item.detail) {
+      Object.assign(item, {
+        website: goodUrl(o.website), desc: o.desc || null, cost: o.cost || null, ages: o.ages || null, equipment: o.equipment || null,
+        checkedMonth: o.checkedMonth || null, type: o.type || null, detail: true,
+      });
+    }
+    return item || null;
+  }, (e) => { const err = new Error(String(e && e.message || e)); err.loadFailed = true; throw err; });
 }
 function grantFromApi(g) {
   return { ...g, amount: g.amountDisplay || null, deadline: g.deadlineDisplay || null, url: g.applicationUrl || g.sourceUrl || null, open: g.isOpen ? 1 : 0 };
@@ -267,7 +281,7 @@ export function loadData() {
     const get = (u) => fetch(u).then((r) => { if (!r.ok) throw new Error(u + " " + r.status); return r.json(); });
     // Grants and events are extra: if either is down, the directory still works.
     const soft = (u) => get(u).catch((e) => { console.error(e); return { items: [] }; });
-    const [prog, gr, ev, st, sp] = await Promise.all([get("/api/directory"), soft("/api/grants"), soft("/api/events"), get("/data/states.json"), get("/data/sports.json")]);
+    const [prog, gr, ev, st, sp] = await Promise.all([get("/api/listings"), soft("/api/grants"), soft("/api/events"), get("/data/states.json"), get("/data/sports.json")]);
     prog.items = (prog.items || []).map(fromApi);
     const live = {};
     for (const s of sp.sports) {
@@ -281,14 +295,9 @@ export function loadData() {
     for (const [k, note] of Object.entries(NOTE_FILL)) if (!NOTES[k]) NOTES[k] = note;
     NAMES.grant = "Grants"; NAMES.event = "Events";
 
-    // Rows that are not programs never list: a grant maker's site menu scraped as listings
-    // (Blog, History, Our Board, Idaho, NorCal...: no state, no city, and no website or one on
-    // challengedathletes.org), and donation pages (no money ask). Logged once, so QA can count them.
-    // Production follow-up: drop these at the source and guard the directory API the same way.
-    const menu = prog.items.filter(isMenuRow);
-    const donation = prog.items.filter((x) => !isMenuRow(x) && isDonationRow(x));
-    if (menu.length || donation.length) console.info(`ASNM: hiding ${menu.length + donation.length} rows that are not programs (${menu.length} site menu, ${donation.length} donation): ${[...menu, ...donation].map((x) => x.id).join(", ")}`);
-    const items = prog.items.filter((x) => !isMenuRow(x) && !isDonationRow(x)).map(normalize);
+    // Rows that are not programs (a scraped site menu, donation pages) never reach
+    // the browser: /api/listings leaves them out (public/app/listable.js).
+    const items = prog.items.map(normalize);
     const count = {};
     for (const p of items) count[p.key] = (count[p.key] || 0) + 1;
     // Global popularity: sports.json order (its live counts), the six extras slotted in by their own counts.
@@ -1332,8 +1341,11 @@ async function render({ force = false } = {}) {
   const m = matchRoute(path);
   const name = m ? m.name : null;
   let data = null, mod = null, failed = false;
+  // The page's own code loads alongside the data, not after it.
+  const viewP = name ? loadView(name).catch((e) => { console.error(e); return null; }) : Promise.resolve(null);
   try { data = await loadData(); } catch (e) { console.error(e); failed = true; }
-  if (name && !failed) { try { mod = await loadView(name); } catch (e) { console.error(e); failed = true; } }
+  mod = await viewP;
+  if (name && !mod) failed = true;
   if (seq !== SEQ) return;
 
   if (CUR) { try { sessionStorage.setItem("asnm.scroll." + CUR.hash, String(Math.round(scrollY))); } catch (_) {} }
@@ -1346,7 +1358,7 @@ async function render({ force = false } = {}) {
   if (failed) { out = loadError(); mod = null; }
   else {
     try { out = mod ? await mod.render(ctx) : notFound(); }
-    catch (e) { console.error(e); out = notFound(); }
+    catch (e) { console.error(e); out = e && e.loadFailed ? loadError() : notFound(); }
   }
   if (seq !== SEQ) return;
   out = out || notFound();
@@ -1414,6 +1426,10 @@ async function render({ force = false } = {}) {
     sessionStorage.setItem("asnm.navs", String(n));
   }
   REPLACING = false;
+  if (FIRST) {
+    const later = window.requestIdleCallback || ((f) => setTimeout(f, 1200));
+    later(() => loadScript(USERWAY_SRC, { "data-account": "sFogOSJsXe" }), { timeout: 4000 });
+  }
   FIRST = false;
   await handleOverlays(ctx);
 }
@@ -1586,7 +1602,21 @@ function formDone(form) {
 }
 
 const TS_KEY = "0x4AAAAAADr2WPepRgjp8g-R";
+/* Third-party scripts wait their turn, so a slow phone spends its first bandwidth on
+   the page itself: the accessibility widget loads once the first page has drawn, the
+   spam check (Turnstile) when someone starts a form, or at the latest on send. */
+const TURNSTILE_SRC = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
+const USERWAY_SRC = "https://cdn.userway.org/widget.js";
+function loadScript(src, attrs = {}) {
+  if (document.querySelector(`script[src="${src}"]`)) return;
+  const s = document.createElement("script");
+  s.src = src; s.async = true;
+  for (const [k, v] of Object.entries(attrs)) s.setAttribute(k, v);
+  document.head.appendChild(s);
+}
+const ensureTurnstile = () => loadScript(TURNSTILE_SRC);
 function turnstileApi() {
+  ensureTurnstile();
   return new Promise((res) => {
     const t0 = Date.now();
     (function wait() { if (window.turnstile) return res(window.turnstile); if (Date.now() - t0 > 8000) return res(null); setTimeout(wait, 100); })();
@@ -1801,6 +1831,11 @@ function boot() {
       }
     }
   });
+
+  // Starting a form loads the spam check, so it is ready by the time someone presses send.
+  const formStart = (e) => { if (e.target.closest && e.target.closest("form[data-send]")) ensureTurnstile(); };
+  document.addEventListener("focusin", formStart);
+  document.addEventListener("pointerdown", formStart, true);
 
   // Capture phase: note which control in the page was tapped before any view handler navigates.
   document.addEventListener("click", (e) => { LAST_CTRL = ctrlOf(e.target); }, true);

@@ -140,10 +140,12 @@ test("our own research files never reach a visitor as a name or a link", () => {
 
 test("the app loads listing-art.js before its own script, and both beta bars say the same thing", () => {
   const index = read("public/index.html");
-  // app.js reads window.ListingArt and window.Proto when it loads, so both are
-  // plain (blocking) scripts ahead of the app module.
-  const art = index.indexOf('<script src="/listing-art.js"></script>');
-  const core = index.indexOf('<script src="/app/core.js"></script>');
+  // app.js reads window.ListingArt and window.Proto when it runs. Both are deferred
+  // classic scripts ahead of the app module: deferred scripts and modules run in
+  // document order once the page is parsed, so they still run first, without
+  // holding up the page.
+  const art = index.indexOf('<script src="/listing-art.js" defer></script>');
+  const core = index.indexOf('<script src="/app/core.js" defer></script>');
   const main = index.indexOf('<script type="module" src="/app/app.js"></script>');
   assert.ok(main > 0, "the shell loads the app module");
   assert.ok(art > 0 && art < main, "listing-art.js must load before the app module");

@@ -2,6 +2,7 @@
 // location, authentication, or errors. Entries expire within five minutes.
 const PUBLIC_PARAMS = {
   '/api/directory': [],
+  '/api/listings': [],
   '/api/programs': ['sport', 'state', 'q', 'zip', 'city', 'lat', 'lng', 'radius', 'limit', 'offset'],
   '/api/stats': [],
   '/api/grants': ['audience'],

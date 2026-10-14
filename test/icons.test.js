@@ -79,17 +79,23 @@ function appIconNames(source) {
 }
 const pascal = (name) => String(name).split('-').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join('');
 
-test('every icon the app names exists in the vendored Lucide library, which loads before the app', () => {
+test('every icon the app names is in public/app/icons.js, built unchanged from the vendored Lucide library', async () => {
   const { context } = setup();
   const files = ['public/app/app.js', ...readdirSync(new URL('../public/app/views/', import.meta.url)).filter((f) => f.endsWith('.js')).map((f) => `public/app/views/${f}`)];
   const names = new Set(files.flatMap((file) => [...appIconNames(read(file))]));
   assert.ok(names.size >= 25, `found only ${names.size} icon names; the patterns no longer match the app`);
-  for (const name of names) assert.ok(context.lucide.icons[pascal(name)], `public/app names a missing Lucide icon: ${name}`);
+  const { ICONS } = await import('../public/app/icons.js');
+  for (const name of names) {
+    assert.ok(ICONS[pascal(name)], `public/app names an icon missing from icons.js (run node scripts/build-app-icons.mjs): ${name}`);
+    assert.deepEqual(ICONS[pascal(name)], JSON.parse(JSON.stringify(context.lucide.icons[pascal(name)])), `${name} is the library's own drawing`);
+  }
   assert.deepEqual([...appIconNames('icon("not-a-real-icon", 20)')], ['not-a-real-icon']);
-  assert.equal(context.lucide.icons[pascal('not-a-real-icon')], undefined);
-  const shell = read('public/index.html');
-  const library = shell.indexOf('<script src="/assets/vendor/lucide-1.49.0.min.js"></script>');
-  assert.ok(library > 0 && library < shell.indexOf('<script type="module" src="/app/app.js"></script>'));
+  assert.equal(ICONS[pascal('not-a-real-icon')], undefined);
+  // icons.js is exactly what the build script makes from today's app.
+  const { buildIconsModule } = await import('../scripts/build-app-icons.mjs');
+  assert.equal(read('public/app/icons.js'), buildIconsModule(), 'icons.js is stale: run node scripts/build-app-icons.mjs');
+  // The app's pages never load the whole library (109 KB) before drawing.
+  assert.ok(!read('public/index.html').includes('lucide-1.49.0.min.js'));
 });
 
 test('runtime renders initial icons with dimensions, weight, color and classes intact', () => {
