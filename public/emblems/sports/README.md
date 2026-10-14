@@ -8,6 +8,7 @@ nothing else points at images by name.
   drawings as vectors, one file per sport, 512 x 512, one colour (`currentColor`), each
   drawing centered with its long side at 88% of the square.
 - `<key>.svg` is copied from Drive unchanged (`SOURCES.tsv` holds each file's sha256).
+  The Drive SVGs were made from Alec's PNGs by `scripts/icons/trace.py` (see `scripts/icons/README.md`).
 - `<key>.png` is rendered from the SVG: 512 px, transparent, for email and social cards.
 - `<key>` is the sport's key in the D1 `sports` table, plus `multi`, `grant` and `event`.
 - Every sport has its own file, even when two sports use the same drawing (Alec,

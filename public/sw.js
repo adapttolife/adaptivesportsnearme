@@ -3,7 +3,7 @@
 // returning visitors immediately and the last-seen page/directory still renders
 // offline. Immutable static assets (photos, icons, fonts): cache-first.
 // POST endpoints and /api/admin are never cached.
-const VERSION = "asnm-v12"; // bump whenever artwork changes (2026-10-14: Alec's sport drawings as vectors)
+const VERSION = "asnm-v13"; // bump whenever artwork changes (2026-10-14: sport vectors + official logo and app icons)
 
 self.addEventListener("install", (e) => {
   e.waitUntil(caches.open(VERSION).then((c) => c.addAll(["/", "/styles.css", "/icons.js", "/assets/vendor/lucide-1.49.0.min.js", "/manifest.json", "/favicon.svg", "/icon-192.png"])).then(() => self.skipWaiting()));

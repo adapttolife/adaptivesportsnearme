@@ -39,10 +39,6 @@ globalThis.ListingArt = (() => {
   const ART = SPORTS;
   const HAS_ART = new Set(ART);
   const ART_ALIAS = {};
-  // Older athlete + prop symbols (scripts/emblem-series.py) for any sport the
-  // flat set does not cover: public/emblems/athlete-<key>.svg. None needed now.
-  const SYMBOLS = [];
-  const HAS_OLD = new Set(SYMBOLS);
   const artSrc = (k) => '/emblems/sports/' + k + '.svg';
 
   // Older or narrower sport keys in the data.
@@ -135,11 +131,10 @@ globalThis.ListingArt = (() => {
     return fromWords(item.sportLabel) || fromWords(item.name);
   }
 
-  // The image file for a sport key: its own dedicated file, an older symbol,
-  // else the multi-sport image. Never an empty tile.
+  // The image file for a sport key: its own dedicated icon, else the
+  // multi-sport icon. Never an empty tile.
   function symbolSrc(key) {
     if (key && HAS_ART.has(key)) return artSrc(key);
-    if (key && HAS_OLD.has(key)) return '/emblems/athlete-' + key + '.svg';
     return artSrc('multi');
   }
 
@@ -251,7 +246,7 @@ globalThis.ListingArt = (() => {
   }
 
   return {
-    SPORTS, ART, ART_ALIAS, SYMBOLS, FAMILY, symbolKey, symbolSrc, art, GRANT_ART, EVENT_ART, isVerified, trustLine,
+    SPORTS, ART, ART_ALIAS, FAMILY, symbolKey, symbolSrc, art, GRANT_ART, EVENT_ART, isVerified, trustLine,
     shortDate, monthLabel, checkedRow, verifiedText, unverifiedText, sourceLabel, isInternalSource, publicSource,
     RESEARCH
   };
