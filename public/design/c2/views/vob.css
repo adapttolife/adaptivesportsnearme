@@ -23,3 +23,6 @@
 .v-vob .vb-nv { color: var(--muted); font-size: 15px; margin-top: 4px; }
 .v-vob .vb-fine { margin-top: 18px; font-size: 15px; color: var(--muted); }
 .v-vob .vb-back { margin-top: 18px; }
+/* Karen: "If we don't verify the biz lists... say at the top." */
+.v-vob .vb-note { margin-top: 12px; padding: 12px 14px; border-left: 4px solid #F6B700; background: #FFF8E1; font-size: 16px; }
+.v-vob .vb-scope { color: var(--graphite); font-size: 16px; margin-bottom: 12px; }
