@@ -36,7 +36,7 @@
 .v-program .pg-hero.has-stamp .plate--hero.is-trio .trio { bottom: max(16cqh, 44px); }
 
 /* Verified pill: bottom-left, sitting just above the place stamp */
-.v-program .pg-vpill { left: var(--gut); top: auto; bottom: 16px; z-index: 2; }
+.v-program .pg-vpill { left: var(--gut); top: auto; bottom: 6px; z-index: 2; }
 .v-program .pg-hero.has-stamp .pg-vpill { bottom: 44px; }
 @media (min-width: 768px) { .v-program .pg-vpill { left: 20px; } .v-program .pg-hero.has-stamp .pg-vpill { bottom: 48px; } }
 
@@ -50,6 +50,9 @@
 .v-program .pg-stamp-map { display: grid; place-items: center; width: 40px; height: 40px; flex: none; }
 .v-program .pg-stamp-map .so { width: 40px; height: 40px; }
 .v-program .pg-stamp-text { display: flex; flex-direction: column; font-size: 17px; font-weight: 700; line-height: 1.25; min-width: 0; }
+/* One line, always: the hero's athlete stands on a line just above the stamp's top. */
+.v-program .pg-stamp-text > span:first-child { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.v-program .pg-stamp { height: 56px; }
 .v-program .pg-stamp-v { display: inline-flex; align-items: center; gap: 5px; margin-top: 2px; font-size: 15px; font-weight: 700; color: var(--ink); }
 .v-program .pg-stamp-v .ic { color: var(--teal); flex: none; }
 
@@ -153,7 +156,6 @@
   --A: .88; --Hm: .96; --Wm: .86;
 }
 .pg-poster.is-inv .pp-art { color: #fff; }
-.pg-poster .pp-art > .fig { translate: clamp(-5%, calc(var(--cx, 0) * -50%), 5%) 0; }
 /* Trio poster: trioFigs() sizes the row to fit the art box, so nothing crosses the poster edge */
 .pg-poster .pp-trio { position: absolute; left: 0; right: 0; top: 50%; translate: 0 -50%; }
 .pg-poster .pp-name {

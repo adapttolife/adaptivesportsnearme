@@ -1,0 +1,32 @@
+/* Icon lab. Scoped under .v-lab. Each stage is a true phone-size spot (real CSS),
+   scaled to its cell by mount() (--s = cell width / spot width). */
+.v-lab .lab h1 { margin-top: 20px; }
+.v-lab .lab-lede { margin-top: 10px; color: var(--graphite); max-width: 60ch; }
+.v-lab .lab-grid { display: grid; gap: 16px 10px; }
+.v-lab .lab-grid.is-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (min-width: 900px) { .v-lab .lab-grid.is-2 { grid-template-columns: repeat(4, minmax(0, 1fr)); } .v-lab .lab-grid.is-1 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.v-lab .lab-cell { margin: 0; min-width: 0; }
+.v-lab .lab-cell figcaption { margin-top: 4px; font-size: 15px; font-weight: 700; }
+.v-lab .lab-stage { position: relative; overflow: hidden; }
+.v-lab .lab-stage > * { position: absolute; left: 0; top: 0; transform-origin: 0 0; transform: scale(var(--s, .5)); }
+.v-lab .is-band .lab-stage > * { width: 390px; }
+.v-lab .is-hero .lab-stage > * { width: 390px; }
+.v-lab .is-card .lab-stage > * { width: 300px; }
+.v-lab .is-small .lab-stage { overflow: visible; }
+.v-lab .is-small .lab-stage > * { position: static; transform: none; }
+/* Home hero band, mirroring views/home.css on a 390px phone: a 195px band (50% of
+   the width), the athlete on its bottom line at the left, then the headline. */
+.v-lab .lab-band { position: relative; height: 262px; background: var(--t); }
+.v-lab .lab-art { position: absolute; left: 16px; top: 0; width: 358px; height: 195px; container-type: size; --A: .9; --Hm: .96; --Wm: .9; }
+.v-lab .lab-art .fig { position: absolute; translate: none; left: calc(0px - (1 - var(--w)) * var(--B) / 2); bottom: calc(0px - (1 - var(--h)) * var(--B) / 2); }
+.v-lab .lab-lines { position: absolute; left: 16px; right: 16px; top: 211px; display: grid; gap: 8px; }
+.v-lab .lab-lines i { display: block; height: 18px; width: 70%; background: rgba(26,26,26,.85); }
+.v-lab .lab-lines i + i { width: 52%; }
+/* Listing hero, mirroring the real one on a 390px phone: 4:3 hero, stand-ins for
+   the back and share buttons, and the one-line place stamp hanging 24px below. */
+.v-lab .lab-hero { position: relative; padding-bottom: 24px; }
+.v-lab .lab-btn { position: absolute; top: 12px; width: 44px; height: 44px; border-radius: 50%; background: #fff; }
+.v-lab .lab-btn--l { left: 12px; } .v-lab .lab-btn--r { right: 12px; }
+.v-lab .lab-stamp { position: absolute; left: 16px; bottom: 0; width: 148px; height: 56px; border-radius: 10px; background: #fff; box-shadow: var(--sh-1); display: grid; place-items: center; font-weight: 800; }
+.v-lab .lab-small { display: flex; align-items: center; gap: 12px; }
+.v-lab .lab-small .lab-tile { width: 96px; flex: none; }

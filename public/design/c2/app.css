@@ -255,54 +255,80 @@ select { appearance: none; -webkit-appearance: none; padding-right: 44px; backgr
 .done-title { display: flex; gap: 10px; align-items: flex-start; font-weight: 700; font-size: 17px; line-height: 1.4; }
 .done-title .ic { color: var(--teal); flex: none; margin-top: 1px; }
 
-/* ================= 3. Images: the figure, plates, avatars ================= */
+/* ================= 3. Images: the figure, plates, avatars =================
+   Alec's drawings sit centered in square files. fig() passes each drawing's
+   share of its square: --w and --h (width, height), --g (their geometric mean),
+   --diag (the diagonal), --dk (ink-density correction) and --cx (centroid
+   offset). --B is the square's size. Every limit is on the DRAWING, never the
+   square, so nothing is cut off:
+     A   optical size: the drawing's g * B is A of the host's height (same visual weight)
+     Hm  the drawing's height is at most Hm of the host's height
+     Wm  the drawing's width is at most Wm of the host's width
+     Wx  the drawing's width is at most Wx (a length, for room left beside a fixed element)
+     Hx  the drawing's height is at most Hx (a length, for room left below a fixed element)
+     Cm  the drawing's box fits a circle Cm of the host (round avatars)
+   Hosts are size containers (container-type: size), so 100cqw x 100cqh is the host.
+   Centered by default. The centroid nudge is clamped to the slack around the
+   drawing, so it can never push ink past an edge. .fig--pin places the
+   drawing's own right edge and bottom edge (or vertical centre, .fig--mid) on
+   the host's padding lines --pr and --pb. */
 .fig {
-  display: block; aspect-ratio: 1; width: 62%;
-  width: min(calc(var(--A, .62) * 100cqh / var(--g) * var(--dk)), calc(var(--Hm, .8) * 100cqh / var(--h)), calc(var(--Wm, .84) * 100cqw / var(--w)));
-  background: currentColor; flex: none;
+  --B: min(calc(var(--A, .62) * 100cqh / var(--g) * var(--dk)), calc(var(--Hm, .8) * 100cqh / var(--h)), calc(var(--Wm, .84) * 100cqw / var(--w)), calc(var(--Wx, 100000px) / var(--w)), calc(var(--Hx, 100000px) / var(--h)), calc(var(--Cm, 9) * 100cqw / var(--diag, 1.4)));
+  --slack: max(0px, calc((100cqw - var(--w) * var(--B)) / 2 - 2px));
+  display: block; aspect-ratio: 1; flex: none; width: var(--B);
+  background: currentColor;
   -webkit-mask: var(--src) center / contain no-repeat; mask: var(--src) center / contain no-repeat;
-  translate: clamp(-5%, calc(var(--cx, 0) * -50%), 5%) 0;
+  translate: clamp(calc(-1 * var(--slack)), calc(var(--cx, 0) * -1 * var(--B)), var(--slack)) 0;
   transition: scale var(--ease);
 }
+.fig--pin { position: absolute; translate: none; right: calc(var(--pr, 0px) - (1 - var(--w)) * var(--B) / 2); bottom: calc(var(--pb, 0px) - (1 - var(--h)) * var(--B) / 2); }
+.fig--pin.fig--mid { bottom: auto; top: calc(50% - var(--B) / 2); }
 @media (forced-colors: active) { .fig { forced-color-adjust: none; background: CanvasText; } }
 
 .plate { position: relative; container-type: size; display: grid; place-items: center; width: 100%; overflow: hidden; background: var(--t); color: var(--d); border-radius: var(--r-l); --A: .62; --Hm: .80; --Wm: .84; }
 .plate.is-inv { background: var(--d); color: #fff; }
-.plate--card { aspect-ratio: 4 / 3; }
+/* Cards: the drawing is centered in the area under the badge band (48px holds the
+   Verified pill, 10px under it), so the pill never sits on an athlete. */
+.plate--card { aspect-ratio: 4 / 3; padding: 48px 0 10px; --A: .80; --Hm: .96; --Wm: .84; }
 @media (max-width: 599px) { .plate--card.is-wide, .cards:not(.is-rail) .pcard .plate--card { aspect-ratio: 16 / 9; } }
 .plate--row { width: 72px; height: 72px; aspect-ratio: 1; border-radius: var(--r); flex: none; --A: .66; --Hm: .84; --Wm: .88; }
 @media (min-width: 768px) { .plate--row { width: 84px; height: 84px; } }
 .plate--tile { aspect-ratio: 1; --A: .64; --Hm: .78; --Wm: .80; }
 .plate--plain { aspect-ratio: 4 / 3; }
 
-/* trio (3.4): house tint, each figure in its family's deep colour. trioFigs() sets
-   --k (box width per unit of plate height) on each figure and --sum (the row's ink
-   width) on the row; --u shrinks the whole row together when it would not fit.
+/* trio: up to three athletes in a row, bottom-aligned. trioFigs() sets --k (box
+   width per unit of plate height) on each figure and --sum (the row's ink width)
+   on the row; --u shrinks the whole row together when it would not fit.
    Negative margins trim each square box to its ink, so gaps and the shared
    bottom line are measured on the athletes, not on empty box. */
 .trio { display: flex; justify-content: center; align-items: flex-end; gap: 4cqw; }
 .trio .fig {
-  --u: min(100cqh, calc(var(--room, 84cqw) / var(--sum, 1)));
+  --u: min(100cqh, calc(var(--room, 84cqw) / var(--sum, 1)), calc(var(--Hx, 100000px) / var(--kh, 1)));
   width: calc(var(--k) * var(--u)); flex: none; translate: none;
   margin-inline: calc(var(--k) * var(--u) * (var(--w) - 1) / 2);
   margin-block: calc(var(--k) * var(--u) * (var(--h) - 1) / 2);
 }
 .plate.is-trio .trio { position: absolute; left: 0; right: 0; bottom: 12cqh; }
 
-/* hero (3.2, 3.3): 16:10 full bleed on phones, 16:9 at 768+ (max 440px) */
-.plate--hero { aspect-ratio: 16 / 10; border-radius: 0; --A: .80; --Hm: 1.0; --Wm: .70; }
-.plate--hero:not(.is-floor):not(.is-trio) > .fig { position: absolute; right: 6cqw; bottom: 0; translate: 0 14%; }
-.plate--hero.is-floor { --A: .62; --Hm: .78; --Wm: .84; }
-.plate--hero.is-trio .trio { bottom: 12cqh; }
-@media (min-width: 768px) { .plate--hero { aspect-ratio: 16 / 9; max-height: 440px; border-radius: var(--r-xl); } }
+/* Listing hero: 4:3 on phones, 16:9 at 768+ (max 440px). The whole athlete shows.
+   It stands on a line 42px above the hero's bottom edge, so it clears the place
+   stamp (one line, 56px tall, hanging 24px below the edge: 32px inside) whatever
+   the stamp says, and its top stays 64px below the hero's top, clear of the back
+   and share buttons. Right-aligned, so the stamp (bottom left) and the athlete
+   (upper right) balance. */
+.plate--hero { aspect-ratio: 4 / 3; border-radius: 0; --A: .62; --Hm: .72; --Wm: .86; --pr: 7cqw; --pb: 42px; --Hx: calc(100cqh - var(--pb) - 64px); }
+.plate--hero:not(.is-trio) > .fig { position: absolute; translate: none; right: calc(var(--pr) - (1 - var(--w)) * var(--B) / 2); bottom: calc(var(--pb) - (1 - var(--h)) * var(--B) / 2); }
+.plate--hero.is-trio .trio { bottom: var(--pb); }
+@media (min-width: 768px) { .plate--hero { aspect-ratio: 16 / 9; max-height: 440px; border-radius: var(--r-xl); --pb: 48px; --Hx: calc(100cqh - var(--pb) - 72px); } }
 
-/* poster (3.2): 4:5, the figure centered in the upper half */
-.plate--poster { aspect-ratio: 4 / 5; width: 320px; max-width: 100%; border-radius: var(--r-xl); place-items: start center; --A: .58; --Hm: .66; --Wm: .80; }
-.plate--poster > .fig { position: absolute; left: 50%; top: 10cqh; translate: -50% 0; }
+/* poster: 4:5, the drawing centered in the upper part */
+.plate--poster { aspect-ratio: 4 / 5; width: 320px; max-width: 100%; border-radius: var(--r-xl); place-items: start center; --A: .58; --Hm: .62; --Wm: .80; }
+.plate--poster > .fig { position: absolute; translate: none; left: calc(50% - var(--B) / 2); top: calc(10cqh - (1 - var(--h)) * var(--B) / 2); }
 .plate--poster.is-trio .trio { top: 18cqh; bottom: auto; }
 
 /* avatars */
-.av { position: relative; container-type: size; display: grid; place-items: center; flex: none; width: 56px; height: 56px; border-radius: 50%; background: var(--t); color: var(--d); --A: .72; --Hm: .80; --Wm: .80; transition: scale var(--ease), background-color var(--ease); }
+.av { position: relative; container-type: size; display: grid; place-items: center; flex: none; width: 56px; height: 56px; border-radius: 50%; background: var(--t); color: var(--d); --A: .64; --Hm: .80; --Wm: .80; --Cm: .92; transition: scale var(--ease), background-color var(--ease); }
+.av .fig { --slack: max(0px, calc((100cqw - var(--diag) * var(--B)) / 2)); }
 .av--40 { width: 40px; height: 40px; --A: .74; --Hm: .82; --Wm: .82; }
 .av--56 { width: 56px; height: 56px; }
 .av--64 { width: 64px; height: 64px; }
@@ -548,7 +574,8 @@ body.stk-away .stk { translate: 0 110%; }
 .ch { margin-bottom: 8px; }
 .ch-banner { position: relative; container-type: size; height: 160px; overflow: hidden; margin-inline: calc(-1 * var(--gut)); background: var(--t); color: var(--d); }
 .ch-banner--sport.is-inv { background: var(--d); color: #fff; }
-.ch-banner--sport > .fig { position: absolute; right: 6cqw; top: 50%; translate: 0 -50%; width: min(calc(.86 * 100cqh / var(--h)), calc(.5 * 100cqw / var(--w))); }
+.ch-banner--sport { --A: .78; --Hm: .82; --Wm: .46; }
+.ch-banner--sport > .fig { position: absolute; translate: none; right: calc(6cqw - (1 - var(--w)) * var(--B) / 2); top: calc(50% - var(--B) / 2); }
 .ch-banner--state { background: var(--sand); display: flex; align-items: center; justify-content: space-between; gap: 16px; height: auto; min-height: 160px; padding: 12px var(--gut); container-type: normal; }
 .ch-btext { min-width: 0; flex: 1; }
 .ch-btext h1 { margin: 0; overflow-wrap: normal; }
@@ -691,6 +718,7 @@ h3, .pc-name { font-weight: 800; letter-spacing: -0.01em; }
 [data-look="sharp"] .display, [data-look="sharp"] h1, [data-look="sharp"] .v-home .door b, [data-look="sharp"] .v-home .band h2, [data-look="sharp"] .letter h2 {
   font-family: "Sofia Sans Extra Condensed", "Sofia Sans", Arial, sans-serif; text-transform: uppercase; font-weight: 900; letter-spacing: -0.01em; }
 [data-look="sharp"] .v-home .hb h1 { font-size: clamp(60px, 17cqw, 120px); line-height: .86; max-width: 8.4ch; }
+@media (min-width: 768px) { [data-look="sharp"] .v-home .hb h1 { font-size: clamp(64px, 10.5cqw, 128px); } }
 [data-look="sharp"] h1 { line-height: .92; font-size: calc(var(--fs-h1) * 1.25); }
 [data-look="sharp"] .sh { border-top: 4px solid #121212; padding-top: 10px; }
 [data-look="sharp"] .sh-title { text-transform: uppercase; font-family: "Sofia Sans Extra Condensed", "Sofia Sans", sans-serif; font-size: 34px; line-height: .95; letter-spacing: 0; }

@@ -2,7 +2,9 @@
 .v-vob .vb-hero { position: relative; overflow: hidden; container-type: inline-size; margin-inline: calc(-1 * var(--gut)); padding: 28px var(--gut) 26px; background: #1A1A1A; color: #fff; }
 .v-vob .vb-hero h1 { position: relative; max-width: 9ch; color: #fff; }
 .v-vob .vb-kicker { position: relative; margin-top: 12px; font-size: 18px; color: #E7E3DA; max-width: 26ch; }
-.v-vob .vb-fig { position: absolute; right: -4cqw; top: 18px; width: 40cqw; max-width: 220px; aspect-ratio: 1; --A: .9; --Hm: .9; --Wm: .9; container-type: size; }
+/* The athletes' box: inside the margins, beside the title; drawings pinned to its right edge. */
+.v-vob .vb-art { position: absolute; right: var(--gut); top: 28px; width: 38cqw; max-width: 260px; height: 150px; container-type: size; pointer-events: none; --A: .86; --Hm: .9; --Wm: .98; --pr: 0px; }
+@media (min-width: 768px) { .v-vob .vb-art { top: 50%; translate: 0 -50%; height: 200px; } }
 .v-vob .vb-intro { margin-top: 18px; }
 .v-vob .vb-intro p + p { margin-top: 8px; }
 .v-vob .vb-cards { display: grid; gap: 10px; }
