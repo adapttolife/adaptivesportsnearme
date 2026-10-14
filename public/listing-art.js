@@ -43,7 +43,8 @@ globalThis.ListingArt = (() => {
   ];
   const HAS_ART = new Set(ART);
   // A sport without its own image borrows the closest one (Alec, 2026-10-14:
-  // handcycling and cycling share one; vaulting and surfing get none of their own).
+  // handcycling shares cycling, wheelchair racing shares track and field; vaulting
+  // and surfing get none of their own).
   const ART_ALIAS = {
     handcycling: 'cycling', wheelchairracing: 'trackfield', equestrianvaulting: 'equestrian',
     'equine-therapy': 'equestrian', blindsports: 'goalball'

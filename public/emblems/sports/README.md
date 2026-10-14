@@ -65,5 +65,5 @@ Do not add a second copy of these images anywhere else in `public/`.
 | `waterskiing` | Water Skiing.png |
 
 Borrowed on purpose: `handcycling` uses cycling (Alec, 2026-10-14: the same image),
-`wheelchairracing` uses trackfield, `equestrianvaulting` (skipped) and `equine-therapy`
+`wheelchairracing` uses trackfield (Alec: the same image), `equestrianvaulting` (skipped) and `equine-therapy`
 use equestrian, `blindsports` uses goalball. `surfing` is skipped and shows multi.
