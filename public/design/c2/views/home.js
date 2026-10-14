@@ -8,7 +8,9 @@
 import * as A from "../app.js";
 
 // The hero athlete cycles through these, and the block takes each one's colour.
-const HERO = [["basketball", "#FF5C39"], ["swimming", "#00C7B1"], ["cycling", "#F6B700"], ["soccer", "#F96C03"]];
+const HERO = A.LOOK === "hues"
+  ? [["basketball", "#FF4FA0"], ["swimming", "#3D7BFF"], ["cycling", "#2DBE6C"], ["soccer", "#8B5CF6"]]
+  : [["basketball", "#FF5C39"], ["swimming", "#00C7B1"], ["cycling", "#F6B700"], ["soccer", "#F96C03"]];
 const GRID = ["tennis", "basketball", "soccer", "baseball", "equestrian", "swimming", "skiing", "sledhockey"];
 const CHECKED_ORDER = ["tennis", "basketball", "equestrian", "soccer", "swimming", "baseball", "sledhockey", "golf", "rowing", "archery", "cycling", "sailing"];
 

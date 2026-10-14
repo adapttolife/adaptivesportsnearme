@@ -102,6 +102,13 @@ const TONES = {
   snow: [TEAL, INK], water: [TEAL, INK], trail: [YELLOW, INK],
   calm: [INK, "#FFFFFF"], house: [CORAL, INK], grant: [YELLOW, INK], event: [TEAL, INK],
 };
+// Review switch (?look=hues | ?look=sharp) so Alec can compare colour strategies on the same pages.
+export const LOOK = new URLSearchParams(location.search).get("look") || "";
+document.documentElement.dataset.look = LOOK;
+if (LOOK === "hues") Object.assign(TONES, {
+  field: ["#2DBE6C", INK], snow: ["#3D7BFF", INK], trail: [ORANGE, INK],
+  calm: ["#8B5CF6", INK], house: ["#FF4FA0", INK], event: ["#3D7BFF", INK],
+});
 const INVERTS = new Set(); // colour plates never invert; black plates carry white athletes via TONES
 const PIC = { equestrianvaulting: "equestrian", "equine-therapy": "equestrian", blindsports: "goalball", handcycling: "cycling", wheelchairracing: "trackfield", surfing: "multi" };
 // Grids of sports group siblings under one tile; surfing reads under sailing there (3.5).
