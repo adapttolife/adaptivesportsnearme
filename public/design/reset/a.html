@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#0C0C0E">
+<title>A · Night Session · Adaptive Sports Near Me</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sofia+Sans:wght@400..900&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0C0C0E;--panel:#17171A;--panel2:#202024;--line:#2C2C31;--cream:#F9F7F2;--mute:#A8A397;--coral:#FF5C39;--coral-hot:#FF765B}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--cream);font-family:"Sofia Sans",system-ui,sans-serif;font-size:17px;line-height:1.5;-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}
+[data-icon]{display:block;--asnm-ink:var(--cream);--asnm-accent:var(--coral)}
+[data-icon] svg{display:block;width:100%;height:100%}
+.beta{font-size:14px;color:var(--mute);text-align:center;padding:9px 16px;border-bottom:1px solid var(--line)}
+.beta a{color:var(--cream);text-decoration:underline;text-underline-offset:3px}
+.hd{display:flex;align-items:center;gap:10px;height:60px;padding:0 16px}
+.hd img{width:30px;height:30px}
+.hd b{font-weight:800;font-size:17px;letter-spacing:-.01em;margin-right:auto}
+.ib{width:44px;height:44px;display:grid;place-items:center;border-radius:12px}
+.ib svg{width:24px;height:24px;stroke:var(--cream);fill:none;stroke-width:2;stroke-linecap:round}
+.hero{padding:26px 20px 8px}
+.eyebrow{font-size:14px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--coral)}
+h1{font-size:50px;line-height:.98;font-weight:900;letter-spacing:-.035em;margin-top:12px}
+h1 em{font-style:normal;color:var(--coral)}
+.lede{color:var(--mute);margin-top:14px;font-size:18px}
+.search{margin:22px 20px 0;display:flex;align-items:center;gap:10px;background:var(--cream);color:#1A1A1A;border-radius:18px;padding:8px 8px 8px 18px}
+.search span{flex:1;font-size:18px;color:#5D5A52}
+.search i{width:52px;height:52px;border-radius:14px;background:var(--coral);display:grid;place-items:center}
+.search i svg{width:24px;height:24px;stroke:#0C0C0E;stroke-width:2.6;fill:none;stroke-linecap:round}
+.loc{display:inline-flex;align-items:center;gap:8px;margin:14px 20px 0;font-weight:700;color:var(--coral);min-height:44px}
+.sec{padding:26px 0 0}
+.sec h2{font-size:22px;font-weight:800;letter-spacing:-.02em;padding:0 20px}
+.sec p.sub{color:var(--mute);font-size:15px;padding:2px 20px 0}
+.strip{display:flex;gap:10px;overflow-x:auto;padding:14px 20px 4px;scrollbar-width:none}
+.strip a{flex:none;width:104px;background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:12px 10px 12px;text-align:center}
+.strip [data-icon]{width:72px;height:72px;margin:0 auto}
+.strip b{display:block;font-size:15px;font-weight:700;margin-top:6px}
+.strip small{display:block;color:var(--mute);font-size:13px;font-variant-numeric:tabular-nums}
+/* near */
+.pill{margin:6px 16px 0;display:flex;align-items:center;gap:12px;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:10px 16px}
+.pill b{display:block;font-size:16px}.pill small{color:var(--mute);font-size:14px}
+.pill svg{width:22px;height:22px;stroke:var(--coral);stroke-width:2.2;fill:none}
+.nh{padding:22px 20px 0}
+.nh h1{font-size:40px}
+.counts{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.counts span{border:1px solid var(--line);border-radius:999px;padding:7px 13px;font-size:15px;font-weight:600;color:var(--mute)}
+.counts span.on{background:var(--coral);border-color:var(--coral);color:#0C0C0E}
+.counts b{font-variant-numeric:tabular-nums}
+.lbl{font-size:13px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--mute);padding:24px 20px 10px}
+.card{display:flex;gap:14px;align-items:center;margin:0 16px 10px;padding:12px;background:var(--panel);border:1px solid var(--line);border-radius:20px}
+.card [data-icon]{flex:none;width:76px;height:76px;background:var(--panel2);border-radius:16px;padding:6px}
+.card h3{font-size:17px;line-height:1.25;font-weight:700}
+.card .m{color:var(--mute);font-size:15px;margin-top:2px}
+.card .t{font-size:14px;margin-top:6px;color:var(--mute)}
+.card .t b{color:var(--coral);font-weight:800}
+/* listing */
+.lh{position:relative;height:330px;background:radial-gradient(120% 90% at 70% 20%,#26262B 0%,#0C0C0E 70%);display:grid;place-items:center;border-bottom:1px solid var(--line)}
+.lh [data-icon]{width:236px;height:236px}
+.lh .back{position:absolute;left:14px;top:14px;width:44px;height:44px;border-radius:50%;background:rgba(249,247,242,.1);display:grid;place-items:center}
+.lh .back svg{width:22px;height:22px;stroke:var(--cream);stroke-width:2.4;fill:none}
+.lh .place{position:absolute;left:20px;bottom:18px;font-size:14px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--coral)}
+.lb{padding:20px 20px 120px}
+.lb h1{font-size:32px;line-height:1.08;letter-spacing:-.025em;font-weight:900}
+.lb .m{color:var(--mute);margin-top:8px}
+.trust{margin-top:20px;border:1px solid var(--line);border-radius:20px;padding:16px 18px;background:var(--panel)}
+.trust b{display:flex;align-items:center;gap:8px;font-size:18px}
+.trust b svg{width:22px;height:22px;stroke:var(--coral);stroke-width:2.6;fill:none}
+.trust p{color:var(--mute);font-size:16px;margin-top:6px}
+.trust .d{color:var(--cream);font-weight:700;margin-top:10px;font-size:15px}
+.about{margin-top:22px}
+.about h2{font-size:14px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--mute)}
+.about p{margin-top:6px;font-size:17px}
+.sticky{position:fixed;left:0;right:0;bottom:0;padding:12px 16px calc(12px + env(safe-area-inset-bottom));background:rgba(12,12,14,.92);backdrop-filter:blur(10px);border-top:1px solid var(--line);display:flex;gap:12px;align-items:center}
+.sticky small{flex:1;color:var(--mute);font-size:14px;line-height:1.3}.sticky small b{color:var(--cream);display:block;font-size:15px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:52px;padding:0 22px;border-radius:14px;background:var(--coral);color:#0C0C0E;font-weight:800;font-size:17px}
+</style>
+</head>
+<body>
+<section data-screen="home">
+  <div class="beta">New and still growing. <a href="#">Help us build it</a></div>
+  <div class="hd"><img src="logo-cream.svg" alt=""><b>Adaptive Sports Near Me</b>
+    <a class="ib" href="#near" aria-label="Search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></a>
+    <a class="ib" href="#" aria-label="Menu"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg></a></div>
+  <div class="hero">
+    <div class="eyebrow">Programs · Grants · Events</div>
+    <h1>Find your place in <em>adaptive sports.</em></h1>
+    <p class="lede">Every listing says whether a person checked it, and when.</p>
+  </div>
+  <a class="search" href="#near"><span>City, state or ZIP</span><i><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></i></a>
+  <a class="loc" href="#near"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>Use my location</a>
+  <div class="sec"><h2>Pick a sport</h2>
+    <div class="strip">
+      <a href="#near"><span data-icon="tennis"></span><b>Tennis</b><small>341</small></a>
+      <a href="#near"><span data-icon="basketball"></span><b>Basketball</b><small>32</small></a>
+      <a href="#near"><span data-icon="soccer"></span><b>Soccer</b><small>134</small></a>
+      <a href="#near"><span data-icon="baseball"></span><b>Baseball</b><small>93</small></a>
+      <a href="#near"><span data-icon="swimming"></span><b>Swimming</b><small>14</small></a>
+    </div>
+  </div>
+  <div class="sec"><h2>Checked near Tampa</h2><p class="sub">A person on our team confirmed these.</p></div>
+  <a class="card" href="#listing" style="margin-top:12px"><span data-icon="tennis"></span><div><h3>City of Tampa Parks and Recreation: Wheelchair Tennis</h3><div class="m">Tennis · Tampa</div><div class="t"><b>✓ Verified</b> · Checked Oct 8</div></div></a>
+</section>
+
+<section data-screen="near" hidden>
+  <div class="hd"><img src="logo-cream.svg" alt=""><b>Adaptive Sports Near Me</b><a class="ib" href="#" aria-label="Menu"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg></a></div>
+  <div class="pill"><svg viewBox="0 0 24 24"><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg><div><b>Tampa, FL</b><small>Any sport</small></div></div>
+  <div class="nh"><h1>Near Tampa</h1>
+    <div class="counts"><span class="on"><b>4</b> in Tampa</span><span><b>6</b> within 25 mi</span><span><b>99</b> in Florida</span></div></div>
+  <div class="lbl">In Tampa</div>
+  <a class="card" href="#listing"><span data-icon="tennis"></span><div><h3>City of Tampa Parks and Recreation: Wheelchair Tennis</h3><div class="m">Tennis · Tampa</div><div class="t"><b>✓ Verified</b> · Checked Oct 8</div></div></a>
+  <a class="card" href="#listing"><span data-icon="baseball"></span><div><h3>Miracle League at Town 'N Country</h3><div class="m">Baseball · Tampa</div><div class="t"><b>✓ Verified</b> · Listed, no check date yet</div></div></a>
+  <a class="card" href="#listing"><span data-icon="tennis"></span><div><h3>Tennis Starts With Love</h3><div class="m">Tennis · Tampa</div><div class="t"><b>✓ Verified</b> · Checked Oct 3</div></div></a>
+  <a class="card" href="#listing"><span data-icon="cycling"></span><div><h3>The Mobility Foundation</h3><div class="m">Cycling · Tampa</div><div class="t"><b>✓ Verified</b> · Checked Oct 7</div></div></a>
+</section>
+
+<section data-screen="listing" hidden>
+  <div class="lh"><a class="back" href="#near" aria-label="Back"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></a><span data-icon="tennis"></span><span class="place">Tampa, Florida</span></div>
+  <div class="lb">
+    <h1>City of Tampa Parks and Recreation: Wheelchair Tennis</h1>
+    <div class="m">Tennis · Tampa, FL</div>
+    <div class="trust"><b><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7"/></svg>Verified</b><p>A person on our team checked this program against an official source.</p><div class="d">Last checked October 8, 2026</div></div>
+    <div class="about"><h2>About</h2><p>Wheelchair tennis for wheelchair users and people with mobility disabilities.</p></div>
+  </div>
+  <div class="sticky"><small><b>Verified</b>Checked Oct 8</small><a class="btn" href="#">Visit website</a></div>
+</section>
+<script src="kit.js"></script>
+</body>
+</html>
