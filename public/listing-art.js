@@ -134,7 +134,7 @@ globalThis.ListingArt = (() => {
     return fromWords(item.sportLabel) || fromWords(item.name);
   }
 
-  // The image file for a sport key: its own flat image, a borrowed one, an
+  // The image file for a sport key: its own dedicated file, an older symbol,
   // older symbol, else the multi-sport image. Never an empty tile.
   function symbolSrc(key) {
     if (key && HAS_ART.has(key)) return artSrc(key);
