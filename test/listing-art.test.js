@@ -16,9 +16,10 @@ test("a sport key picks its sport; older keys map onto the sports table", () => 
   assert.equal(L.symbolKey({ sport: "wheelchair_basketball" }), "basketball");
   assert.equal(L.symbolKey({ sport: "beepbaseball" }), "beepbaseball");
   assert.equal(L.symbolKey({ sport: "softball" }), "softball");
-  // A sport without its own image borrows the closest one.
-  assert.equal(L.symbolSrc("wheelchairracing"), "/emblems/sports/trackfield.svg");
-  assert.equal(L.symbolSrc("equine-therapy"), "/emblems/sports/equestrian.svg");
+  // Every sport has its own dedicated file, even when the picture is shared.
+  assert.equal(L.symbolSrc("wheelchairracing"), "/emblems/sports/wheelchairracing.svg");
+  assert.equal(L.symbolSrc("equine-therapy"), "/emblems/sports/equine-therapy.svg");
+  assert.deepEqual([...L.ART].sort(), [...L.SPORTS].sort());
 });
 
 test("most listings have only a label, and the label picks the symbol", () => {
@@ -78,7 +79,6 @@ test("Alec's flat set: every image has an SVG and a PNG, no orphan files, every 
   assert.deepEqual(files.filter((f) => f.endsWith(".svg")).map((f) => f.slice(0, -4)).sort(), keys);
   assert.deepEqual(files.filter((f) => f.endsWith(".png")).map((f) => f.slice(0, -4)).sort(), keys);
   // Every borrowed image and every older symbol still exists.
-  for (const k of Object.values(L.ART_ALIAS)) assert.ok(L.ART.includes(k), k);
   const old = readdirSync(new URL("../public/emblems/", import.meta.url));
   for (const k of L.SYMBOLS) assert.ok(old.includes(`athlete-${k}.svg`), k);
   const css = read("public/styles.css");

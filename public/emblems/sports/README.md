@@ -20,50 +20,56 @@ Do not add a second copy of these images anywhere else in `public/`.
 
 ## Which Drive file is which key
 
-| Key | Drive file |
-|---|---|
-| `amputeesports` | Amputee Sports.png |
-| `archery` | Archery.png |
-| `art-therapy` | Art Therapy.png |
-| `baseball` | Baseball.png |
-| `basketball` | Basketball.png |
-| `beepbaseball` | Beep Baseball.png |
-| `boccia` | Boccia.png |
-| `climbing` | Climbing.png |
-| `curling` | Curling.png |
-| `cycling` | Cycling.png |
-| `dance` | Wheelchair Dance.png |
-| `equestrian` | Horseback Riding.png |
-| `event` | Events.png |
-| `fencing` | Fencing.png |
-| `football` | Wheelchair Football.png |
-| `goalball` | Goalball.png |
-| `golf` | Golfing.png |
-| `grant` | Grants.png |
-| `handball` | Handball.png |
-| `lacrosse` | Lacrosse.png |
-| `martialarts` | Martial Arts.png |
-| `multi` | Multi Sport.png |
-| `nordicskiing` | Nordic Skiing.png |
-| `pickleball` | Pickleball.png |
-| `powerlifting` | Weightlifting.png |
-| `rowing` | Rowing and paddle.png |
-| `rugby` | Rugby.png |
-| `running` | Racing.png |
-| `sailing` | Sailing.png |
-| `shooting` | Shooting Sports.png |
-| `skiing` | Snow Skiing.png |
-| `sledhockey` | Sled Hockey.png |
-| `soccer` | Soccer.png |
-| `softball` | Softball.png |
-| `swimming` | Swimming.png |
-| `tennis` | Tennis.png |
-| `trackfield` | Track and Field.png |
-| `triathlon` | Triathlon.png |
-| `veteran-meetup` | Veteran Meetup.png |
-| `volleyball` | Sitting Volleyball.png |
-| `waterskiing` | Water Skiing.png |
+Every sport key has its own file, here and in Drive, even when two sports share
+a picture (Alec, 2026-10-14). To give a sport its own drawing later, replace its
+file; nothing else changes.
 
-Borrowed on purpose: `handcycling` uses cycling (Alec, 2026-10-14: the same image),
-`wheelchairracing` uses trackfield (Alec: the same image), `equestrianvaulting` (skipped) and `equine-therapy` (Alec: keep it)
-use equestrian, `blindsports` uses goalball (Alec: keep it). The set is complete as of 2026-10-14. `surfing` is skipped and shows multi.
+| Key | Drive file | Note |
+|---|---|---|
+| `amputeesports` | Amputee Sports.png |  |
+| `archery` | Archery.png |  |
+| `art-therapy` | Art Therapy.png |  |
+| `baseball` | Baseball.png |  |
+| `basketball` | Basketball.png |  |
+| `beepbaseball` | Beep Baseball.png |  |
+| `blindsports` | Blind Sports.png | same picture as goalball |
+| `boccia` | Boccia.png |  |
+| `climbing` | Climbing.png |  |
+| `curling` | Curling.png |  |
+| `cycling` | Cycling.png |  |
+| `dance` | Wheelchair Dance.png |  |
+| `equestrian` | Horseback Riding.png |  |
+| `equestrianvaulting` | Equestrian Vaulting.png | same picture as horseback riding |
+| `equine-therapy` | Equine Therapy.png | same picture as horseback riding |
+| `event` | Events.png |  |
+| `fencing` | Fencing.png |  |
+| `football` | Wheelchair Football.png |  |
+| `goalball` | Goalball.png |  |
+| `golf` | Golfing.png |  |
+| `grant` | Grants.png |  |
+| `handball` | Handball.png |  |
+| `handcycling` | Handcycling.png | same picture as cycling |
+| `lacrosse` | Lacrosse.png |  |
+| `martialarts` | Martial Arts.png |  |
+| `multi` | Multi Sport.png |  |
+| `nordicskiing` | Nordic Skiing.png |  |
+| `pickleball` | Pickleball.png |  |
+| `powerlifting` | Weightlifting.png |  |
+| `rowing` | Rowing and paddle.png |  |
+| `rugby` | Rugby.png |  |
+| `running` | Racing.png |  |
+| `sailing` | Sailing.png |  |
+| `shooting` | Shooting Sports.png |  |
+| `skiing` | Snow Skiing.png |  |
+| `sledhockey` | Sled Hockey.png |  |
+| `soccer` | Soccer.png |  |
+| `softball` | Softball.png |  |
+| `surfing` | Surfing.png | same picture as multi-sport (no surfing image yet) |
+| `swimming` | Swimming.png |  |
+| `tennis` | Tennis.png |  |
+| `trackfield` | Track and Field.png |  |
+| `triathlon` | Triathlon.png |  |
+| `veteran-meetup` | Veteran Meetup.png |  |
+| `volleyball` | Sitting Volleyball.png |  |
+| `waterskiing` | Water Skiing.png |  |
+| `wheelchairracing` | Wheelchair Racing.png | same picture as track and field |

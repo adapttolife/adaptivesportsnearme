@@ -31,24 +31,13 @@ globalThis.ListingArt = (() => {
   ];
   const IS_SPORT = new Set(SPORTS);
 
-  // Alec's flat vector set: public/emblems/sports/<key>.svg (+ .png). 'grant'
-  // and 'event' are in the same folder for grant and event cards.
-  const ART = [
-    'amputeesports', 'archery', 'art-therapy', 'baseball', 'basketball', 'beepbaseball',
-    'boccia', 'climbing', 'curling', 'cycling', 'dance', 'equestrian', 'fencing', 'football',
-    'goalball', 'golf', 'handball', 'lacrosse', 'martialarts', 'multi', 'nordicskiing',
-    'pickleball', 'powerlifting', 'rowing', 'rugby', 'running', 'sailing', 'shooting',
-    'skiing', 'sledhockey', 'soccer', 'softball', 'swimming', 'tennis', 'trackfield',
-    'triathlon', 'veteran-meetup', 'volleyball', 'waterskiing'
-  ];
+  // Alec's flat vector set: public/emblems/sports/<key>.svg (+ .png), one
+  // dedicated file for every sport key (Alec, 2026-10-14: "extreme clarity").
+  // Some files are copies of another sport's image on purpose; the README in
+  // that folder says which. 'grant' and 'event' sit in the same folder.
+  const ART = SPORTS;
   const HAS_ART = new Set(ART);
-  // A sport without its own image borrows the closest one (Alec, 2026-10-14:
-  // handcycling shares cycling, wheelchair racing shares track and field; vaulting
-  // and surfing get none of their own).
-  const ART_ALIAS = {
-    handcycling: 'cycling', wheelchairracing: 'trackfield', equestrianvaulting: 'equestrian',
-    'equine-therapy': 'equestrian', blindsports: 'goalball'
-  };
+  const ART_ALIAS = {};
   // Older athlete + prop symbols (scripts/emblem-series.py) for any sport the
   // flat set does not cover: public/emblems/athlete-<key>.svg. None needed now.
   const SYMBOLS = [];
@@ -149,7 +138,6 @@ globalThis.ListingArt = (() => {
   // older symbol, else the multi-sport image. Never an empty tile.
   function symbolSrc(key) {
     if (key && HAS_ART.has(key)) return artSrc(key);
-    if (key && ART_ALIAS[key]) return artSrc(ART_ALIAS[key]);
     if (key && HAS_OLD.has(key)) return '/emblems/athlete-' + key + '.svg';
     return artSrc('multi');
   }
