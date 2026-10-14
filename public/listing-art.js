@@ -135,7 +135,7 @@ globalThis.ListingArt = (() => {
   }
 
   // The image file for a sport key: its own dedicated file, an older symbol,
-  // older symbol, else the multi-sport image. Never an empty tile.
+  // else the multi-sport image. Never an empty tile.
   function symbolSrc(key) {
     if (key && HAS_ART.has(key)) return artSrc(key);
     if (key && HAS_OLD.has(key)) return '/emblems/athlete-' + key + '.svg';
