@@ -668,3 +668,47 @@ h3, .pc-name { font-weight: 800; letter-spacing: -0.01em; }
 .trustbox.is-u .tb-title .ic { color: #fff; }
 .trustbox .tb-body { color: #E7E3DA; }
 .trustbox .tb-row { color: #fff; }
+
+/* ================= Review looks =================
+   ?look=hues  : four more hues added (purple, blue, green, pink), to test the "more colour" question.
+   ?look=sharp : the same four guide colours and black, made sharper: black header, square corners,
+                 condensed uppercase display type (Sofia Sans Extra Condensed, same family), black cards
+                 on colour bands, thick black rules. */
+[data-look="hues"] .v-home .door--sea { background: #3D7BFF; }
+[data-look="hues"] .v-home .door--ink { background: #8B5CF6; color: #1A1A1A; }
+[data-look="hues"] .v-home .door--coral { background: #FF4FA0; }
+[data-look="hues"] .v-home .band--sea { background: #2DBE6C; }
+[data-look="hues"] .v-home .st-allbox { background: #8B5CF6; color: #1A1A1A; }
+[data-look="hues"] .trustbox { background: #8B5CF6 !important; color: #1A1A1A; }
+[data-look="hues"] .trustbox .tb-title, [data-look="hues"] .trustbox .tb-body, [data-look="hues"] .trustbox .tb-row { color: #1A1A1A; }
+
+[data-look="sharp"] { --r-s: 2px; --r: 4px; --r-l: 6px; --r-xl: 8px; }
+[data-look="sharp"] #beta, [data-look="sharp"] #top { background: #121212; border-bottom: 0; }
+[data-look="sharp"] #top { border-bottom: 1px solid #2A2A2A; }
+[data-look="sharp"] .hd, [data-look="sharp"] .hd .iconbtn { color: #fff; }
+[data-look="sharp"] .hd-brand img { content: url(/design/reset/logo-cream.svg); }
+[data-look="sharp"] .hd-add { border-radius: 4px; }
+[data-look="sharp"] .display, [data-look="sharp"] h1, [data-look="sharp"] .v-home .door b, [data-look="sharp"] .v-home .band h2, [data-look="sharp"] .letter h2 {
+  font-family: "Sofia Sans Extra Condensed", "Sofia Sans", Arial, sans-serif; text-transform: uppercase; font-weight: 900; letter-spacing: -0.01em; }
+[data-look="sharp"] .v-home .hb h1 { font-size: clamp(60px, 17cqw, 120px); line-height: .86; max-width: 8.4ch; }
+[data-look="sharp"] h1 { line-height: .92; font-size: calc(var(--fs-h1) * 1.25); }
+[data-look="sharp"] .sh { border-top: 4px solid #121212; padding-top: 10px; }
+[data-look="sharp"] .sh-title { text-transform: uppercase; font-family: "Sofia Sans Extra Condensed", "Sofia Sans", sans-serif; font-size: 34px; line-height: .95; letter-spacing: 0; }
+[data-look="sharp"] .plate, [data-look="sharp"] .v-home .st .plate, [data-look="sharp"] .v-home .st-allbox { border-radius: 4px; }
+[data-look="sharp"] .plate--hero { border-radius: 0; }
+[data-look="sharp"] .v-home .hb { border-radius: 0; }
+[data-look="sharp"] .v-home .hb .wf-row .input, [data-look="sharp"] .v-home .hb .wf-row .btn { border-radius: 4px; }
+[data-look="sharp"] .v-home .door { border-radius: 0; }
+[data-look="sharp"] .v-home .door b { font-size: 38px; line-height: .86; }
+[data-look="sharp"] .v-home .st-name { text-transform: uppercase; font-family: "Sofia Sans Extra Condensed", "Sofia Sans", sans-serif; font-size: 21px; font-weight: 900; letter-spacing: .01em; }
+[data-look="sharp"] .v-home .band { border-radius: 0; }
+[data-look="sharp"] .v-home .band h2 { font-size: 44px; line-height: .9; }
+[data-look="sharp"] .v-home .band .grow { background: #121212; color: #fff; border-radius: 4px; }
+[data-look="sharp"] .v-home .band .grow .g-from, [data-look="sharp"] .v-home .band .grow .g-line { color: #E7E3DA; }
+[data-look="sharp"] .v-home .band .grow .tag { background: transparent; color: #fff; border: 1px solid #555; }
+[data-look="sharp"] .btn, [data-look="sharp"] .chip, [data-look="sharp"] .input, [data-look="sharp"] .vpill { border-radius: 4px; }
+[data-look="sharp"] .letter, [data-look="sharp"] .trustbox { border-radius: 6px; }
+[data-look="sharp"] .letter h2 { font-size: 46px; line-height: .9; }
+[data-look="sharp"] .pc-name { text-transform: none; }
+/* Program names are data: sentence case keeps long names readable. */
+[data-look="sharp"] .v-program h1 { text-transform: none; font-family: "Sofia Sans", Arial, sans-serif; letter-spacing: -0.03em; line-height: 1.02; font-size: var(--fs-h1); }
