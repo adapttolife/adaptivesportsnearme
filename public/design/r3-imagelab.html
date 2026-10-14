@@ -1,0 +1,430 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Adaptive Sports Near Me · Image lab (round 3)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700;9..40,800&display=swap" rel="stylesheet">
+<style>
+/* ---------------------------------------------------------------------------
+   Image lab, round 3. A static test bench for Alec's flat vector sport set
+   (public/emblems/sports). Not a page design: it compares how the same eight
+   listings read under different image treatments, grounds and sizes.
+   --------------------------------------------------------------------------- */
+:root{
+  --ink:#121212;--ink2:#3c3b38;--muted:#5f5d59;--line:#e7e4df;--bg:#fff;--soft:#f7f6f3;
+  --ok:#1a6b3c;--brand:#FF5C39;--brand-ink:#C63F22;
+  /* soft tints: ground for the black image (ink on tint >= 13.5:1) */
+  --t-court:#F7E1CF;--t-racquet:#EAF0CF;--t-field:#D9EBD5;--t-snow:#DAE7F4;--t-water:#D3ECE8;
+  --t-trail:#F2E5CC;--t-calm:#E7E0F2;--t-house:#EDE8E0;--t-grant:#F5EBC9;--t-event:#FBE2D8;
+  /* deep: ground for the white image, and the colour rule (white on deep >= 5:1) */
+  --d-court:#B4461C;--d-racquet:#5A6F10;--d-field:#2F7043;--d-snow:#2B62A0;--d-water:#0C716F;
+  --d-trail:#925F17;--d-calm:#5E4A9C;--d-house:#262523;--d-grant:#8A6300;--d-event:#C63F22;
+  /* round-two (D) tints, for the grounds comparison */
+  --o-court:#f6dcc8;--o-racquet:#e3eccb;--o-field:#d3e6cf;--o-snow:#d4e3f2;--o-water:#cde8e5;
+  --o-trail:#f0e2c8;--o-calm:#e4dcf0;--o-house:#ebe6de;--o-grant:#ebe6de;--o-event:#ebe6de;
+}
+.tone-court{--tint:var(--t-court);--deep:var(--d-court);--old:var(--o-court)}
+.tone-racquet{--tint:var(--t-racquet);--deep:var(--d-racquet);--old:var(--o-racquet)}
+.tone-field{--tint:var(--t-field);--deep:var(--d-field);--old:var(--o-field)}
+.tone-snow{--tint:var(--t-snow);--deep:var(--d-snow);--old:var(--o-snow)}
+.tone-water{--tint:var(--t-water);--deep:var(--d-water);--old:var(--o-water)}
+.tone-trail{--tint:var(--t-trail);--deep:var(--d-trail);--old:var(--o-trail)}
+.tone-calm{--tint:var(--t-calm);--deep:var(--d-calm);--old:var(--o-calm)}
+.tone-house{--tint:var(--t-house);--deep:var(--d-house);--old:var(--o-house)}
+.tone-grant{--tint:var(--t-grant);--deep:var(--d-grant);--old:var(--o-grant)}
+.tone-event{--tint:var(--t-event);--deep:var(--d-event);--old:var(--o-event)}
+
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{font-family:"DM Sans",system-ui,sans-serif;font-size:17px;line-height:1.5;color:var(--ink);background:var(--bg);-webkit-font-smoothing:antialiased}
+img{display:block}
+.wrap{max-width:1240px;margin:0 auto;padding:0 16px}
+header.lab{padding:28px 0 8px}
+.eyebrow{font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+h1{font-size:30px;line-height:1.15;letter-spacing:-.025em;font-weight:800;margin:6px 0 8px}
+header.lab p{max-width:62ch;color:var(--ink2)}
+nav.jump{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0 0}
+nav.jump a{display:inline-flex;align-items:center;min-height:44px;padding:0 14px;border:1px solid var(--line);border-radius:99px;font-weight:600;font-size:15px;color:var(--ink);text-decoration:none}
+section.t{padding:30px 0 6px;border-top:1px solid var(--line);margin-top:26px}
+h2{font-size:22px;letter-spacing:-.02em;font-weight:800}
+h2 small{font-size:14px;font-weight:700;color:var(--muted);letter-spacing:0;margin-left:6px}
+p.why{color:var(--ink2);font-size:16px;margin:4px 0 14px;max-width:70ch}
+code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13.5px;background:var(--soft);padding:1px 5px;border-radius:5px}
+pre{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;line-height:1.45;background:var(--soft);padding:10px 12px;border-radius:10px;overflow-x:auto;white-space:pre}
+
+/* ============ THE IMAGE: optical size, any slot ============================
+   Every file is fitted by its longest side, so a wide picture (goalball,
+   cycling, swimming) draws less than half the ink of a tall one (football).
+   Each figure carries its own bbox as a fraction of the canvas:
+     --w, --h  bbox width and height (0..1)
+     --g       sqrt(w*h), the bbox's geometric-mean side
+     --dk      density trim (dense group scenes draw a touch smaller)
+   The slot is a size container, so the figure's side is the smallest of:
+     A  * slot height / g    (same optical area for everyone)
+     Hm * slot height / h    (never taller than Hm of the slot)
+     Wm * slot width  / w    (never wider than Wm of the slot)            */
+.plate{position:relative;container-type:size;aspect-ratio:4/3;border-radius:16px;overflow:hidden;display:grid;place-items:center;background:var(--tint)}
+.fig{display:block;aspect-ratio:1;height:auto;flex:none;
+  width:62%;
+  width:min(calc(var(--A,.6) * 100cqh / var(--g) * var(--dk,1)),
+            calc(var(--Hm,.8) * 100cqh / var(--h)),
+            calc(var(--Wm,.84) * 100cqw / var(--w)))}
+/* mask figure: the SVG's alpha, painted in any colour */
+.m{display:block;background:currentColor;
+  -webkit-mask:var(--src) center/contain no-repeat;mask:var(--src) center/contain no-repeat}
+.fig.raw{width:80cqh}
+
+/* ============ CARD BASE ================================================= */
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px 14px}
+@media (min-width:900px){.grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:30px 22px}}
+.card{display:block;color:inherit;text-decoration:none;min-width:0}
+.card .txt{padding:10px 2px 0}
+.card .nm{font-size:16.5px;font-weight:700;line-height:1.3;letter-spacing:-.01em;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.card .sub{font-size:15px;color:var(--muted);margin-top:2px;line-height:1.35}
+.trust{display:flex;align-items:center;gap:5px;font-size:14px;margin-top:4px;color:var(--muted);line-height:1.3}
+.trust.ok{color:var(--ok)}
+.trust svg{flex:none}
+.trust b{font-weight:700}
+@media (min-width:900px){.card .nm{font-size:17px}}
+
+/* T1 tint plate (Airbnb photo slot) */
+.t1 .plate{background:var(--tint)}
+.t1 .fig{color:#1A1A1A}
+
+/* T2 white plate + colour rule */
+.t2 .plate{background:#fff;border:1px solid var(--line);border-bottom:5px solid var(--deep);border-radius:16px}
+.t2 .fig{color:#1A1A1A}
+
+/* T3 inverted: white athlete on the family's deep colour */
+.t3 .plate{background:var(--deep)}
+.t3 .fig{color:#fff}
+
+/* T4 tint plate + state badge */
+.t4 .plate{background:var(--tint)}
+.badge{position:absolute;left:10px;top:10px;display:flex;align-items:center;gap:5px;background:#fff;border-radius:99px;padding:4px 10px 4px 6px;font-size:13px;font-weight:700;letter-spacing:.02em;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.badge svg{width:20px;height:20px}
+.badge svg path{fill:var(--ink)}
+
+/* T5 text card with a corner image (Reddit-like list row) */
+.list{display:grid;grid-template-columns:1fr;gap:12px}
+@media (min-width:900px){.list{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.row{display:grid;grid-template-columns:minmax(0,1fr) 84px;gap:14px;align-items:start;border:1px solid var(--line);border-radius:16px;padding:14px 14px 14px 16px;color:inherit;text-decoration:none}
+.row .plate{aspect-ratio:1;border-radius:14px;--A:.66;--Hm:.84;--Wm:.88}
+.row .meta{font-size:14px;color:var(--muted);font-weight:600}
+.row .nm{font-size:17px;font-weight:700;line-height:1.3;margin:2px 0 2px}
+.row .desc{font-size:15px;color:var(--ink2);line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+
+/* T6 big crop: the athlete bleeds off the corner of a deep plate */
+.t6 .plate{background:var(--deep);place-items:end}
+.t6 .fig{position:absolute;right:0;bottom:0;color:#fff;--A:.88;--Hm:1.08;--Wm:.9;
+  /* bbox right edge 5% in from the plate edge (the prop stays whole);
+     bbox bottom 7% below the plate edge (only the floor line bleeds) */
+  translate:calc((1 - var(--w)) * 50% - 5cqw) calc((1 - var(--h)) * 50% + var(--bleed, 7) * 1cqh)}
+.t6 .lbl{position:absolute;left:12px;top:10px;color:#fff;font-weight:800;font-size:15px;letter-spacing:-.01em;line-height:1.15;max-width:55%}
+@media (min-width:900px){.t6 .lbl{font-size:18px;left:16px;top:14px}}
+
+/* T7 ink plate, athlete in the family tint */
+.t7 .plate{background:#141414}
+.t7 .fig{color:var(--tint)}
+
+/* T8 two-tone: the athlete in the family's deep colour on its soft tint */
+.t8 .plate{background:var(--tint)}
+.t8 .fig{color:var(--deep)}
+
+/* ============ SHARE CARD (4:5, Instagram) ================================ */
+.shares{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+@media (min-width:900px){.shares{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.share{position:relative;container-type:size;aspect-ratio:4/5;border-radius:14px;overflow:hidden;background:var(--tint);color:var(--deep)}
+.share .fig{position:absolute;left:50%;top:40%;translate:-50% -50%;--A:.42;--Hm:.5;--Wm:.8}
+.share .cap{position:absolute;left:7%;right:7%;bottom:6%;font-size:5.2cqw;line-height:1.25;color:var(--ink)}
+.share .cap b{display:block;font-size:7.4cqw;line-height:1.1;letter-spacing:-.02em;margin-bottom:1.5cqw}
+.share .mark{position:absolute;left:7%;top:5.5%;font-size:4.2cqw;font-weight:800;letter-spacing:-.01em;color:var(--ink)}
+.share.inv{background:var(--deep);color:#fff}
+.share.inv .cap,.share.inv .mark{color:#fff}
+.share.crop .fig{left:auto;top:auto;right:0;bottom:0;--A:.62;--Hm:.7;--Wm:.92;
+  translate:calc((1 - var(--w)) * 50% - 5cqw) calc((1 - var(--h)) * 50% + var(--bleed, 4) * 1cqh)}
+.share.crop .cap{bottom:auto;top:13%;right:30%}
+
+/* ============ GROUNDS ==================================================== */
+.gstrip{margin:0 0 18px}
+.gstrip h3{font-size:15px;font-weight:700;margin:0 0 8px}
+.gstrip h3 span{font-weight:500;color:var(--muted)}
+.gcells{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+@media (min-width:900px){.gcells{grid-template-columns:repeat(9,minmax(0,1fr))}}
+.gcells .plate{aspect-ratio:1;border-radius:12px;--A:.62}
+.gcells .cap{font-size:12px;color:var(--muted);text-align:center;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.g-white .plate{background:#fff;border:1px solid var(--line)} .g-white .fig{color:#1A1A1A}
+.g-old .plate{background:var(--old)} .g-old .fig{color:#1A1A1A}
+.g-soft .plate{background:var(--tint)} .g-soft .fig{color:#1A1A1A}
+.g-pale .plate{background:color-mix(in srgb,var(--tint) 50%,#fff)} .g-pale .fig{color:#1A1A1A}
+.g-brand .plate{background:var(--brand)} .g-brand .fig{color:#1A1A1A}
+.g-brandw .plate{background:var(--brand)} .g-brandw .fig{color:#fff}
+.g-deep .plate{background:var(--deep)} .g-deep .fig{color:#fff}
+.g-ink .plate{background:#141414} .g-ink .fig{color:#fff}
+.g-deepink .plate{background:var(--tint)} .g-deepink .fig{color:var(--deep)}
+
+/* ============ SIZES ====================================================== */
+.sizes{display:grid;gap:10px}
+.srow{display:flex;align-items:flex-end;gap:18px;flex-wrap:wrap;padding:10px 0;border-bottom:1px solid var(--line)}
+.srow .k{width:100%;font-size:13px;font-weight:700;color:var(--muted)}
+.scell{display:flex;flex-direction:column;align-items:center;gap:4px}
+.scell span{font-size:11.5px;color:var(--muted)}
+.sbox{display:grid;place-items:center;overflow:visible}
+.sbox .m{width:100%;height:100%;color:#1A1A1A}
+.sbox.trim .m{transform:scale(1.12)}
+.sbox.chip{background:var(--tint);border-radius:28%}
+.sbox.chip .m{width:82%;height:82%}
+
+/* ============ OPTICAL ==================================================== */
+.ogrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+@media (min-width:900px){.ogrid{grid-template-columns:repeat(8,minmax(0,1fr));gap:12px}}
+.ogrid .plate{border-radius:12px}
+.ogrid .cap{font-size:12px;color:var(--muted);margin-top:3px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ogrid .fig{color:#1A1A1A}
+.ogrid.base .fig{translate:0 calc(38cqh - var(--h) * 50%)}
+
+/* ============ HERO ======================================================= */
+.heroes{display:grid;gap:18px}
+@media (min-width:900px){.heroes{grid-template-columns:1fr 1fr}}
+.hero .plate{aspect-ratio:16/10;border-radius:20px;--A:.62;--Hm:.78}
+.hero.inv .plate{background:var(--deep)} .hero.inv .fig{color:#fff}
+.hero.duo .fig{color:var(--deep)}
+.hero .fig{color:#1A1A1A}
+.hero h3{font-size:24px;letter-spacing:-.02em;font-weight:800;margin:12px 0 2px;line-height:1.2}
+.hero .sub{color:var(--muted);font-size:16px}
+
+/* ============ RECOLOUR =================================================== */
+.rgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+@media (min-width:900px){.rgrid{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.rbox .plate{aspect-ratio:1;border-radius:14px;--A:.62}
+.rbox h3{font-size:15px;margin:8px 0 2px}
+.rbox p{font-size:14px;color:var(--ink2);line-height:1.4}
+.r-img .plate{background:var(--t-racquet)}
+.r-filter .plate{background:var(--d-racquet)}
+.r-filter img{filter:brightness(0) invert(1)}
+.r-mask .plate{background:#fff;border:1px solid var(--line)}
+.r-mask .fig{color:var(--brand-ink);transition:color .2s}
+.r-mask .plate:hover .fig{color:var(--d-snow)}
+.r-inline .plate{background:#141414;color:var(--t-court)}
+.r-inline svg{width:100%;height:100%}
+.r-inline svg g{fill:currentColor}
+footer{padding:40px 0 80px;color:var(--muted);font-size:14px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="lab">
+  <p class="eyebrow">Image lab · round 3</p>
+  <h1>How the sport images present best</h1>
+  <p>The same eight listings in seven treatments, then the images on different grounds, at every size we would use, with and without optical sizing, and four ways to colour them. Real listings from the directory.</p>
+  <nav class="jump" aria-label="Sections">
+    <a href="#t1">Tint plate</a><a href="#t2">White + rule</a><a href="#t3">Inverted</a><a href="#t4">State badge</a><a href="#t5">List row</a><a href="#t6">Big crop</a><a href="#t7">Ink</a><a href="#t8">Two-tone</a><a href="#share">Share card</a><a href="#hero">Listing hero</a><a href="#grounds">Grounds</a><a href="#sizes">Sizes</a><a href="#optical">Optical size</a><a href="#recolor">Recolour</a>
+  </nav>
+</header>
+
+<section class="t" id="t1"><h2>T1 · Tint plate <small>Airbnb photo slot</small></h2>
+<p class="why">The image fills a 4:3 slot on a soft ground picked by sport family. Optical sizing on.</p>
+<div class="grid t1" data-render="t1"></div></section>
+
+<section class="t" id="t2"><h2>T2 · White plate and colour rule</h2>
+<p class="why">The image on white with a thin border and a family-coloured rule under it. Calmer; colour becomes an accent.</p>
+<div class="grid t2" data-render="t2"></div></section>
+
+<section class="t" id="t3"><h2>T3 · Inverted</h2>
+<p class="why">White athlete on the family's deep colour. Recoloured with a CSS mask, one file per sport.</p>
+<div class="grid t3" data-render="t3"></div></section>
+
+<section class="t" id="t4"><h2>T4 · Tint plate and state badge</h2>
+<p class="why">T1 plus a small white chip with the state outline. State only, no dot: we do not store a precise location.</p>
+<div class="grid t4" data-render="t4"></div></section>
+
+<section class="t" id="t5"><h2>T5 · List row with corner image</h2>
+<p class="why">Text first, image as an 84px badge on the right. Dense and open, like a Reddit feed.</p>
+<div class="list" data-render="t5"></div></section>
+
+<section class="t" id="t6"><h2>T6 · Big crop</h2>
+<p class="why">The athlete is drawn larger than the slot and bleeds off the bottom right corner of a deep plate, with the sport named in the corner. The poster look.</p>
+<div class="grid t6" data-render="t6"></div></section>
+
+<section class="t" id="t7"><h2>T7 · Ink plate</h2>
+<p class="why">Near-black slot with the athlete in the family tint.</p>
+<div class="grid t7" data-render="t7"></div></section>
+
+<section class="t" id="t8"><h2>T8 · Two-tone</h2>
+<p class="why">The athlete in the family's deep colour on its own soft tint. One hue per card, like a printed two-colour poster.</p>
+<div class="grid t8" data-render="t8"></div></section>
+
+<section class="t" id="hero"><h2>Listing page hero <small>image at about 240px</small></h2>
+<p class="why">The top of one listing page: tint plate, two-tone, inverted.</p>
+<div class="heroes" data-render="hero"></div></section>
+
+<section class="t" id="share"><h2>Share card <small>4:5, for Instagram</small></h2>
+<p class="why">The same image system at post size: two-tone, inverted, and the big crop.</p>
+<div class="shares" data-render="share"></div></section>
+
+<section class="t" id="grounds"><h2>Grounds</h2>
+<p class="why">The same nine images on each ground. Optical sizing on.</p>
+<div data-render="grounds"></div></section>
+
+<section class="t" id="sizes"><h2>Sizes <small>24 · 32 · 48 · 96 · 240</small></h2>
+<p class="why">Each image as drawn, then trimmed (scaled 1.12 so the built-in margin goes away), then in a tinted chip. Bold single athletes hold up small; group scenes need 48px or more.</p>
+<div class="sizes" data-render="sizes"></div></section>
+
+<section class="t" id="optical"><h2>Optical size <small>all 47</small></h2>
+<p class="why">Top: as the files come (every file fills the slot by its longest side). Middle: optical sizing. Bottom: optical sizing with a shared floor line.</p>
+<h3 style="font-size:16px;margin:8px 0">As drawn</h3><div class="ogrid raw" data-render="opt-raw"></div>
+<h3 style="font-size:16px;margin:22px 0 8px">Optical size</h3><div class="ogrid" data-render="opt"></div>
+<h3 style="font-size:16px;margin:22px 0 8px">Optical size, shared floor</h3><div class="ogrid base" data-render="opt-base"></div>
+</section>
+
+<section class="t" id="recolor"><h2>Recolour</h2>
+<p class="why">The files are black (<code>fill="#1A1A1A"</code> on one group) on transparent. Four ways to show them in another colour.</p>
+<div class="rgrid" data-render="recolor"></div>
+<pre style="margin-top:14px">/* the one we recommend: mask, colour from currentColor */
+.fig{display:block;aspect-ratio:1;background:currentColor;
+  -webkit-mask:var(--src) center/contain no-repeat;
+          mask:var(--src) center/contain no-repeat}
+&lt;i class="fig" style="--src:url(/emblems/sports/tennis.svg)" aria-hidden="true"&gt;&lt;/i&gt;</pre>
+</section>
+<footer>Prototype test bench, not a page design. Listings and grants from the directory export in public/design.</footer>
+</div>
+
+<script src="/listing-art.js"></script>
+<script src="/design/core.js"></script>
+<script>
+(async () => {
+  const P = window.Proto, LA = window.ListingArt, esc = P.esc;
+
+  // bbox width, height, sqrt(w*h), ink density in bbox, centroid x offset:
+  // measured from 512px renders of each SVG (ImageMagick, alpha > 50%).
+  const OPT = {"amputeesports":[0.893,0.855,0.874,0.242,0.019],"archery":[0.795,0.893,0.842,0.276,-0.061],"art-therapy":[0.893,0.816,0.854,0.344,-0.009],"baseball":[0.727,0.893,0.805,0.321,-0.037],"basketball":[0.797,0.893,0.843,0.342,-0.027],"beepbaseball":[0.787,0.891,0.837,0.245,-0.079],"blindsports":[0.893,0.34,0.551,0.307,0.034],"boccia":[0.891,0.686,0.781,0.319,-0.099],"climbing":[0.645,0.893,0.758,0.308,0.005],"curling":[0.893,0.602,0.733,0.305,-0.093],"cycling":[0.893,0.418,0.611,0.34,-0.019],"dance":[0.83,0.893,0.861,0.242,0.007],"equestrian":[0.893,0.73,0.807,0.347,-0.03],"equestrianvaulting":[0.893,0.73,0.807,0.347,-0.03],"equine-therapy":[0.893,0.73,0.807,0.347,-0.03],"event":[0.891,0.77,0.828,0.413,0.034],"fencing":[0.891,0.568,0.711,0.255,-0.156],"football":[0.879,0.895,0.887,0.434,0.011],"goalball":[0.893,0.34,0.551,0.307,0.034],"golf":[0.742,0.891,0.813,0.301,-0.064],"grant":[0.75,0.891,0.817,0.262,-0.064],"handball":[0.84,0.893,0.866,0.317,-0.077],"handcycling":[0.893,0.418,0.611,0.34,-0.019],"lacrosse":[0.834,0.891,0.862,0.319,0.098],"martialarts":[0.891,0.885,0.888,0.35,-0.08],"multi":[0.893,0.738,0.812,0.215,-0.001],"nordicskiing":[0.891,0.697,0.788,0.23,0.015],"pickleball":[0.893,0.781,0.835,0.321,-0.08],"powerlifting":[0.893,0.629,0.749,0.338,0.005],"rowing":[0.891,0.648,0.76,0.303,0.018],"rugby":[0.893,0.691,0.786,0.381,-0.044],"running":[0.855,0.891,0.873,0.259,0.038],"sailing":[0.891,0.895,0.893,0.286,0.061],"shooting":[0.895,0.754,0.821,0.3,-0.12],"skiing":[0.891,0.68,0.778,0.251,0.003],"sledhockey":[0.891,0.562,0.708,0.299,-0.01],"soccer":[0.895,0.684,0.782,0.322,-0.104],"softball":[0.891,0.777,0.832,0.282,0.003],"surfing":[0.893,0.738,0.812,0.215,-0.001],"swimming":[0.891,0.441,0.627,0.351,0.038],"tennis":[0.895,0.871,0.883,0.259,-0.098],"trackfield":[0.891,0.547,0.698,0.279,-0.09],"triathlon":[0.891,0.555,0.703,0.302,0.015],"veteran-meetup":[0.893,0.547,0.699,0.451,0.008],"volleyball":[0.893,0.719,0.801,0.301,0.059],"waterskiing":[0.891,0.566,0.71,0.254,-0.076],"wheelchairracing":[0.891,0.547,0.698,0.279,-0.09]};
+
+  // Density trim: group scenes (football, veteran-meetup, event) carry a lot
+  // more ink per square inch, so they draw a little smaller; thin line art
+  // (multi, surfing) a little bigger. Clamped to 0.90..1.04.
+  const dk = (d) => Math.min(1.04, Math.max(0.9, Math.pow(0.31 / d, 0.3)));
+  const vars = (key) => {
+    const o = OPT[key] || OPT.multi;
+    return `--w:${o[0]};--h:${o[1]};--g:${o[2]};--dk:${dk(o[3]).toFixed(3)}`;
+  };
+  // symbolSrc only knows the 45 sport keys: 'grant' and 'event' fall back to
+  // multi.svg there, so they go through GRANT_ART / EVENT_ART.
+  const src = (key) => key === "grant" ? LA.GRANT_ART : key === "event" ? LA.EVENT_ART : LA.symbolSrc(key);
+  // A figure: mask (any colour) by default, <img> when asked.
+  // Sports whose prop sits on the floor line (ball, puck, tee, stone): a crop
+  // that bleeds off the bottom would cut the thing that says what the sport is.
+  const FLOOR_PROP = new Set(["soccer", "sledhockey", "golf", "boccia", "curling", "goalball", "blindsports"]);
+  const fig = (key, cls = "", mode = "mask") => {
+    const v = vars(key) + (FLOOR_PROP.has(key) ? ";--bleed:-4" : "");
+    return mode === "img"
+      ? `<img class="fig ${cls}" style="${v}" src="${src(key)}" alt="" decoding="async">`
+      : `<i class="fig m ${cls}" style="${v};--src:url(${src(key)})" aria-hidden="true"></i>`;
+  };
+
+  const [{ items, grants }, states] = await Promise.all([
+    P.load(), fetch("/design/states.json").then((r) => r.json()),
+  ]);
+
+  const MON = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  const day = (iso) => { const t = Date.parse(iso || ""); if (!isFinite(t)) return null; const d = new Date(t); return `${MON[d.getUTCMonth()]} ${d.getUTCDate()}, ${d.getUTCFullYear()}`; };
+  const city = (p) => { const c = P.cleanCity(p.city); return c ? c.split(/[\/;(]/)[0].trim().replace(/\b([A-Z])([A-Z]+)\b/g, (m, a, b) => a + b.toLowerCase()) : null; };
+  const where = (p) => city(p) ? `${city(p)}, ${p.state}` : `${P.STATE_NAMES[p.state] || p.state}, statewide`;
+  const sportName = (p) => (p.sportLabel || "").replace(/\s+/g, " ").trim() || "Multi-sport";
+  const check = `<svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7.2" fill="currentColor"/><path d="M4.6 8.3l2.2 2.2 4.6-4.8" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  const trust = (p) => p.verified
+    ? `<p class="trust ok">${check}<span><b>Verified</b>${day(p.lastChecked) ? " · checked " + day(p.lastChecked) : ""}</span></p>`
+    : `<p class="trust"><span><b>Not yet verified</b>${day(p.lastChecked) ? " · listed " + day(p.lastChecked) : ""}</span></p>`;
+
+  // The eight: seven programs across weights and shapes, plus one grant.
+  const PICK = ["e29002d5", "eefaef18", "75cfc6bf", "0cac7f81", "0bc552df", "350ca92f", "26513a7f"];
+  const progs = PICK.map((id) => items.find((p) => p.id.startsWith(id))).filter(Boolean);
+  const gr = grants.find((g) => g.id.startsWith("07cd3de4"));
+  const cards = progs.map((p) => {
+    const key = LA.symbolKey(p) || "multi";
+    return { key, tone: LA.FAMILY[key] || "house", name: p.name, sport: sportName(p), where: where(p), st: p.state,
+      trust: trust(p), desc: (p.desc || "").replace(/^Sports and activities:\s*/i, ""), tag: sportName(p) };
+  });
+  if (gr) cards.push({ key: "grant", tone: "grant", name: gr.name, sport: "Grant for athletes", where: gr.amount || "Amount varies", st: null,
+    trust: `<p class="trust"><span>From ${esc(gr.source)}</span></p>`, desc: "Money toward adaptive sports equipment and programs for athletes.", tag: "Grant" });
+
+  const stateSvg = (st) => st && states.shapes[st]
+    ? `<svg viewBox="0 0 100 100" aria-hidden="true"><path d="${states.shapes[st]}"/></svg>` : "";
+  const NAMES = { equestrian: "Horseback riding", sledhockey: "Sled hockey", multi: "Multi-sport", grant: "Grant", event: "Event" };
+  const label = (c) => NAMES[c.key] || (P.FAMILY_LABEL[c.key] || c.tag).replace(/ and .*/, "");
+  const card = (c, t) => {
+    let inside = fig(c.key);
+    if (t === "t4" && c.st) inside += `<span class="badge">${stateSvg(c.st)}${esc(c.st)}</span>`;
+    if (t === "t6") inside += `<span class="lbl">${esc(label(c))}</span>`;
+    return `<a class="card tone-${c.tone}" href="#"><div class="plate">${inside}</div>
+      <div class="txt"><p class="nm">${esc(c.name)}</p><p class="sub">${esc(c.sport)} · ${esc(c.where)}</p>${c.trust}</div></a>`;
+  };
+  for (const t of ["t1", "t2", "t3", "t4", "t6", "t7", "t8"]) {
+    document.querySelector(`[data-render="${t}"]`).innerHTML = cards.map((c) => card(c, t)).join("");
+  }
+  document.querySelector('[data-render="t5"]').innerHTML = cards.map((c) => `
+    <a class="row tone-${c.tone}" href="#"><div><p class="meta">${esc(c.sport)} · ${esc(c.where)}</p>
+      <p class="nm">${esc(c.name)}</p><p class="desc">${esc(c.desc)}</p>${c.trust}</div>
+      <div class="plate">${fig(c.key)}</div></a>`).join("");
+
+  // Listing hero
+  const h = cards[0];
+  document.querySelector('[data-render="hero"]').innerHTML = ["", "duo", "inv"].map((v) => `
+    <div class="hero ${v} tone-${h.tone}"><div class="plate">${fig(h.key)}</div>
+      <h3>${esc(h.name)}</h3><p class="sub">${esc(h.sport)} · ${esc(h.where)}</p>${h.trust}</div>`).join("");
+
+  // Share cards: tennis two-tone, basketball inverted, sled hockey big crop, grant two-tone
+  const sc = (c, v) => `<div class="share ${v} tone-${c.tone}"><span class="mark">Adaptive Sports Near Me</span>${fig(c.key)}
+    <p class="cap"><b>${esc(c.name.replace(/ – .*/, ""))}</b>${esc(c.sport)} · ${esc(c.where)}</p></div>`;
+  document.querySelector('[data-render="share"]').innerHTML =
+    sc(cards[0], "") + sc(cards[1], "inv") + sc(cards[6], "inv crop") + sc(cards[7], "");
+
+  // Grounds
+  const GK = ["basketball", "tennis", "multi", "soccer", "equestrian", "swimming", "veteran-meetup", "grant", "event"];
+  const toneOf = (k) => k === "grant" ? "grant" : k === "event" ? "event" : (LA.FAMILY[k] || "house");
+  const GROUNDS = [
+    ["g-white", "White", "ink #1A1A1A on #FFFFFF, 1px border"],
+    ["g-pale", "Pale tint", "family tint mixed 50% with white"],
+    ["g-soft", "Soft tint (proposed)", "family tint, ink 13.5:1 or better"],
+    ["g-old", "Round-two tint", "the D prototype tints"],
+    ["g-brand", "Brand orange, ink", "#FF5C39, ink 5.7:1"],
+    ["g-brandw", "Brand orange, white", "#FF5C39, white only 3.1:1"],
+    ["g-deep", "Deep family, white", "white 5:1 or better"],
+    ["g-deepink", "Tint, deep athlete", "athlete in the family deep colour"],
+    ["g-ink", "Ink, white", "#141414"],
+  ];
+  document.querySelector('[data-render="grounds"]').innerHTML = GROUNDS.map(([cls, name, note]) => `
+    <div class="gstrip ${cls}"><h3>${name} <span>· ${note}</span></h3><div class="gcells">
+    ${GK.map((k) => `<div class="tone-${toneOf(k)}"><div class="plate">${fig(k)}</div><p class="cap">${k}</p></div>`).join("")}
+    </div></div>`).join("");
+
+  // Sizes
+  const SK = ["basketball", "tennis", "equestrian", "swimming", "multi", "soccer", "grant", "event", "veteran-meetup"];
+  const SZ = [24, 32, 48, 96, 240];
+  document.querySelector('[data-render="sizes"]').innerHTML = SK.map((k) => `
+    <div class="srow tone-${toneOf(k)}"><p class="k">${k}</p>
+      ${SZ.map((s) => `<div class="scell"><div class="sbox" style="width:${s}px;height:${s}px"><i class="m" style="--src:url(${src(k)})"></i></div><span>${s}</span></div>`).join("")}
+      ${[24, 32].map((s) => `<div class="scell"><div class="sbox trim" style="width:${s}px;height:${s}px"><i class="m" style="--src:url(${src(k)})"></i></div><span>${s} trim</span></div>`).join("")}
+      ${[40, 56].map((s) => `<div class="scell"><div class="sbox chip" style="width:${s}px;height:${s}px"><i class="m" style="--src:url(${src(k)})"></i></div><span>${s} chip</span></div>`).join("")}
+    </div>`).join("");
+
+  // Optical
+  const ALL = Object.keys(OPT);
+  const ocell = (k, cls) => `<div class="tone-${toneOf(k)}"><div class="plate">${fig(k, cls)}</div><p class="cap">${k}</p></div>`;
+  document.querySelector('[data-render="opt-raw"]').innerHTML = ALL.map((k) => ocell(k, "raw")).join("");
+  document.querySelector('[data-render="opt"]').innerHTML = ALL.map((k) => ocell(k, "")).join("");
+  document.querySelector('[data-render="opt-base"]').innerHTML = ALL.map((k) => ocell(k, "")).join("");
+
+  // Recolour
+  const inline = await fetch(src("tennis")).then((r) => r.text());
+  document.querySelector('[data-render="recolor"]').innerHTML = `
+    <div class="rbox r-img"><div class="plate">${fig("tennis", "", "img")}</div><h3>1 · &lt;img&gt;</h3><p>Black only. Cached, lazy-loadable, alt text. Cannot change colour.</p></div>
+    <div class="rbox r-filter"><div class="plate">${fig("tennis", "", "img")}</div><h3>2 · &lt;img&gt; + filter</h3><p><code>brightness(0) invert(1)</code> gives pure white. Black or white only.</p></div>
+    <div class="rbox r-mask"><div class="plate">${fig("tennis")}</div><h3>3 · CSS mask</h3><p>Any colour from <code>color</code>. One cached file. Hover to see it change.</p></div>
+    <div class="rbox r-inline"><div class="plate"><span class="fig" style="${vars("tennis")}">${inline}</span></div><h3>4 · Inline SVG</h3><p>CSS <code>g{fill:currentColor}</code> beats the fill attribute. Heaviest page; best for one hero.</p></div>`;
+})();
+</script>
+</body>
+</html>

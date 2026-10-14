@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#ffffff">
+<title>Adaptive Sports Near Me · Near You (round 3 prototype)</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/design/r3-nearyou.css">
+</head>
+<body>
+<a class="sr" href="#app">Skip to content</a>
+<div class="beta">This directory is new and still growing. <a href="#help">Help us build it</a></div>
+<header class="top">
+  <div class="hrow">
+    <button class="iconbtn" id="menuBtn" aria-label="Open menu" aria-expanded="false" aria-controls="drawer"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+    <a class="brand" href="#"><img src="/favicon.svg" alt=""><span>Adaptive Sports Near Me</span></a>
+    <a class="ghost" href="#help" aria-label="Add a program"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>Add</a>
+  </div>
+</header>
+<div class="shell">
+  <aside class="drawer" id="drawer" aria-label="Menu"></aside>
+  <div class="col">
+  <div class="subhead" id="subhead">
+  <button class="pill" id="searchPill" aria-label="Change place or sport"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg><span><span class="pt" id="pillTitle">Where do you want to play?</span><span class="ps" id="pillSub">Any sport</span></span><span class="go" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg></span></button>
+  <nav class="rail" id="rail" aria-label="Sports"></nav>
+  </div>
+  <main id="app" tabindex="-1"><p style="padding:40px 0;color:#5f5d59">Loading programs…</p></main>
+  </div>
+</div>
+<div class="scrim" id="scrim"></div>
+<button class="fab" id="fab"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2-6-2zM9 4v14M15 6v14"/></svg>Map</button>
+
+<section class="mapview" id="mapview" aria-label="Map" role="dialog" aria-modal="true">
+  <div id="map"></div>
+  <div class="mapbar"><button class="round" id="mapBack" aria-label="Back to the list"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg></button><div class="mt" id="mapTitle"><span>All programs</span></div></div>
+  <div class="maplegend"><i></i>Programs, placed at their city <span style="display:inline-block;width:14px;height:14px;border:3px solid #1A1A1A;border-radius:50%;vertical-align:-2px;margin:0 4px 0 10px"></span>You</div>
+  <div class="swstrip" id="swStrip" aria-label="Programs that serve a whole state"></div>
+  <div class="mapcard" id="mapCard" role="region" aria-live="polite"></div>
+  <button class="mapfab" id="mapList"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>List</button>
+</section>
+
+<div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+  <div class="shead"><button class="iconbtn" id="sheetClose" aria-label="Close search"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button><b id="sheetTitle">Search</b></div>
+  <div class="sbody">
+    <h2><label for="whereIn">Where?</label></h2>
+    <input id="whereIn" placeholder="City, state or ZIP code" autocomplete="off" enterkeyhint="search">
+    <p class="err" id="whereErr" hidden></p>
+    <div class="tries"><button class="chip" id="useLoc"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>Use my location</button></div>
+    <h2 style="margin-top:28px">Which sport? <small>You can skip this</small></h2>
+    <div class="sportgrid" id="sportGrid"></div>
+  </div>
+  <div class="sfoot"><button class="clear" id="sheetClear">Clear</button><button class="btn acc" id="sheetGo" style="min-height:52px;padding:0 30px">Show programs</button></div>
+</div>
+
+<script src="/listing-art.js"></script>
+<script src="/design/core.js"></script>
+<script src="/design/r3-nearyou.js"></script>
+</body>
+</html>

@@ -1,0 +1,81 @@
+/* Home (6.1, WP-B). Scoped under .v-home.
+   PROMOTE: .v-home .mz poster mosaic. */
+
+/* ---------- 1. Hero ---------- */
+.v-home .hero { padding-top: 12px; }
+.v-home .hero-text { min-width: 0; }
+.v-home .hero h1 { max-width: 12ch; text-wrap: balance; }
+.v-home .hero-lede { margin-top: 8px; font-size: 17px; line-height: 1.45; color: var(--graphite); max-width: 44ch; text-wrap: pretty; }
+.v-home .wf { position: relative; margin-top: 16px; max-width: 560px; }
+/* The visible label lives inside the field (a floating label): centered like a
+   prompt when the field is empty, 15px at the top once it has focus or text.
+   It keeps the mosaic inside the 420px first-screen budget on a 390px phone. */
+.v-home .wf-label { position: absolute; z-index: 1; left: 17px; top: 0; height: 56px; display: flex; align-items: center; margin: 0; font-size: 17px; font-weight: 500; line-height: 1.2; color: var(--muted); pointer-events: none; transition: font-size var(--ease), height var(--ease); max-width: calc(100% - 170px); white-space: nowrap; }
+.v-home .wf:has(.input:focus) .wf-label, .v-home .wf:has(.input:not(:placeholder-shown)) .wf-label { height: 26px; align-items: flex-end; font-size: 15px; font-weight: 600; color: var(--graphite); }
+.v-home .wf-row .input { height: 56px; padding: 22px 16px 4px; line-height: 1.2; box-shadow: var(--sh-pill); border-color: var(--line-strong); }
+.v-home .wf-row .input:focus { box-shadow: var(--focus); }
+.v-home .wf-row { flex-wrap: wrap; }
+.v-home .wf-row .btn { padding: 0 18px; }
+.v-home .wf-loc { margin-top: 2px; font-weight: 600; }
+.v-home .wf-loc .ic { color: var(--orange-ink); }
+.v-home .wf-after { gap: 4px 4px; }
+.v-home .hero-last { max-width: 100%; white-space: normal; text-align: left; line-height: 1.25; padding: 6px 12px; gap: 6px; }
+.v-home .hero-last .ic { color: var(--graphite); }
+
+/* ---------- 2. Poster mosaic ---------- */
+.v-home .mz { margin-top: 8px; }
+.v-home .mz-h { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.v-home .mz-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.v-home .mz-item.is-big { grid-column: span 2; grid-row: span 2; }
+.v-home .mz-item { min-width: 0; }
+/* A square tile in two parts: the figure's plate on top, the label on its own band below,
+   so a long label ("Horseback riding") never sits on the figure at any width. */
+.v-home .mz-tile { position: relative; display: flex; flex-direction: column; aspect-ratio: 1; border-radius: var(--r-l); overflow: hidden; background: var(--t); text-decoration: none; color: var(--ink); }
+.v-home .mz-item.is-big .mz-tile { aspect-ratio: auto; height: 100%; }
+.v-home .mz-tile:focus-visible { box-shadow: var(--focus); }
+.v-home .mz-plate { flex: 1 1 0; min-height: 0; aspect-ratio: auto; border-radius: 0; background: transparent; place-items: center; --A: .74; --Hm: .80; --Wm: .76; }
+.v-home .mz-plate > .fig { margin: 6cqh 0 0; }
+.v-home .mz-item.is-long .mz-plate { --A: .70; --Hm: .76; --Wm: .72; }
+.v-home .is-big .mz-plate { --A: .74; --Hm: .82; --Wm: .80; }
+.v-home .mz-label { flex: none; display: block; padding: 2px 10px 9px; font-size: 15px; font-weight: 700; line-height: 1.15; color: var(--ink); overflow-wrap: break-word; }
+.v-home .is-big .mz-label { padding: 2px 16px 14px; font-size: 20px; }
+@media (hover: hover) {
+  .v-home .mz-tile:hover .fig { scale: 1.03; }
+  .v-home .mz-tile:hover { background: color-mix(in srgb, var(--t) 82%, var(--d)); }
+}
+/* 320px and 200% zoom: two columns, so no label has to break inside a word. */
+@media (max-width: 359px) {
+  .v-home .mz-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .v-home .mz-item.is-big { grid-row: span 1; }
+  .v-home .mz-item.is-big .mz-tile { aspect-ratio: 16 / 10; height: auto; }
+}
+.v-home .mz-all { margin-top: 4px; display: flex; justify-content: flex-end; max-width: none; }
+.v-home .mz-all .tlink { font-size: 16px; }
+
+@media (min-width: 600px) {
+  .v-home .mz-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .v-home .mz { max-width: 640px; }
+}
+
+@media (min-width: 1100px) {
+  /* The headline gets the wider column, so it sets in two lines. */
+  .v-home .hero { display: grid; grid-template-columns: minmax(0, 6fr) minmax(0, 5fr); gap: 40px; align-items: center; padding-top: 40px; }
+  .v-home .hero h1 { max-width: none; text-wrap: balance; }
+  .v-home .mz { margin-top: 0; max-width: none; }
+  .v-home .mz-h { position: static; width: auto; height: auto; overflow: visible; clip-path: none; white-space: normal; font-size: 17px; font-weight: 700; color: var(--graphite); margin-bottom: 10px; }
+}
+@media (min-width: 1280px) {
+  .v-home .hero { gap: 48px; }
+}
+
+/* ---------- 3 to 7. Rails and sections ---------- */
+.v-home .home-checked .sh-title, .v-home .home-near .sh-title { display: flex; align-items: center; gap: 8px; }
+/* In the athletes section the "For athletes" pill would repeat the heading; "Closed for now" stays. */
+.v-home .glist.is-one .tag:not(.tag--muted), .v-home .glist.is-one .tags:not(:has(.tag--muted)) { display: none; }
+.v-home .home-states .tmap { max-width: 720px; }
+@media (min-width: 1100px) {
+  .v-home .home-states .slist-ul { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+.v-home .letter { max-width: none; }
+/* Narrow phones: the last-search chip drops its icon so it fits beside "Use my location". */
+@media (max-width: 399px) { .v-home .hero-last .ic { display: none; } .v-home .hero-last { padding-inline: 12px; } }
