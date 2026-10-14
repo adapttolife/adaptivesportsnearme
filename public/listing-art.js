@@ -3,10 +3,10 @@
 
    Why symbols (Alec, 2026-10-13: "How can we just launch and not get bottlenecked
    by images. Just use symbols and icons?"): a listing should never wait on a
-   photo. Every program wears its sport's icon (public/emblems/sports, one
-   animated SVG per sport key, built by scripts/icons; see the README there), on
-   a ground tinted by sport family. A real photo or logo of the program itself,
-   once we have one, still wins.
+   photo. Every program wears its sport's image from Alec's drawings
+   (public/emblems/sports, one SVG per sport key traced by scripts/icons/trace.py;
+   see the README there), on a ground tinted by sport family. A real photo or
+   logo of the program itself, once we have one, still wins.
 
    Stock action photos stay off listings by default: the same photo on every
    basketball card reads as a picture of each program. USE_SPORT_PHOTOS = true
@@ -31,9 +31,10 @@ globalThis.ListingArt = (() => {
   ];
   const IS_SPORT = new Set(SPORTS);
 
-  // The sport icons: public/emblems/sports/<key>.svg (+ .png), one dedicated
-  // icon for every sport key (Alec, 2026-10-14: "extreme clarity"), generated
-  // by scripts/icons. 'grant' and 'event' sit in the same folder.
+  // Alec's drawings: public/emblems/sports/<key>.svg (+ .png), one dedicated
+  // file for every sport key (Alec, 2026-10-14: "extreme clarity"). Some files
+  // are copies of another sport's image on purpose; the README in that folder
+  // says which. 'grant' and 'event' sit in the same folder.
   const ART = SPORTS;
   const HAS_ART = new Set(ART);
   const ART_ALIAS = {};

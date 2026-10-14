@@ -1,7 +1,6 @@
 """Everything on the site that shows the Adapt To Life mark, built from the official file.
 
-  /tmp/pv/bin/python scripts/icons/brand.py            # write the files below
-  /tmp/pv/bin/python scripts/icons/brand.py --figure   # print figure.OFFICIAL from the same file
+  python3 scripts/icons/brand.py          # write the files below (needs rsvg-convert)
 
 Source: brand/090226_AdaptToLife_Icon.svg (brand identity of 2 Sep 2026; Drive:
 Logos / FINAL Logo). Charcoal #3B3B46, coral #FF5C39 (the athlete's leg). Writes:
@@ -15,7 +14,7 @@ Logos / FINAL Logo). Charcoal #3B3B46, coral #FF5C39 (the athlete's leg). Writes
 
 The old drawing (atl-logo-2026, Jul 31) is retired: nothing here may use it.
 """
-import os, re, subprocess, sys, tempfile
+import os, re, subprocess, tempfile
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(os.path.join(HERE, "..", ".."))
 SRC = os.path.join(HERE, "brand", "090226_AdaptToLife_Icon.svg")
@@ -70,24 +69,5 @@ def write():
     print("wrote favicon.svg, favicon-32.png, apple-touch-icon.png, icon-192.png, icon-512.png, emblems/adaptive.svg")
 
 
-def figure_parts():
-    """The athlete's parts in figure space (wheel outer circle r 20.4 at (0, -0.4)), for figure.OFFICIAL."""
-    sys.path.insert(0, HERE)
-    import kit
-    paths, w, h = mark()
-    P = [kit.svg(d) for _, d in paths]
-    A, LEG, HEAD, TORSO, WHEEL = P
-    x0, y0, x1, y1 = WHEEL.bounds
-    R = (x1 - x0) / 2
-    cx, cy = (x0 + x1) / 2, y1 - R          # outer circle from its left, right and bottom extremes
-    sc = 20.4 / R
-    tof = lambda p: kit.xf(p, sc, 0, 0, sc, -cx * sc, -cy * sc - 0.4)
-    parts = dict(head=tof(HEAD), torso=tof(TORSO), leg=tof(LEG), wheel=tof(WHEEL))
-    print("OFFICIAL = {")
-    for k in ("head", "torso", "leg", "wheel"):
-        print(f'    "{k}": "{kit._d(parts[k], 3)}",')
-    print("}")
-
-
 if __name__ == "__main__":
-    figure_parts() if "--figure" in sys.argv else write()
+    write()
