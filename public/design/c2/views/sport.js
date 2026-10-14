@@ -148,10 +148,11 @@ export async function render(ctx) {
   const head = A.communityHeader({ kind: "sport", key, title: name, line: A.sportNote(key), count, tabs });
 
   let body = "";
-  if (t === "programs") body = programsTab(key, st, pool);
-  // Veterans: the meetups, plus Karen's state-by-state veteran-owned business directories.
-  if (key === "veteran-meetup") body = `<a class="vet-res" href="#/resources/veteran-owned-businesses"><b>Veteran-owned businesses</b><span>Directories for all 50 states</span>${A.icon("arrow-right", 22)}</a>` + body;
-  else if (t === "grants") {
+  if (t === "programs") {
+    body = programsTab(key, st, pool);
+    // Veterans: the meetups, plus Karen's state-by-state veteran-owned business directories.
+    if (key === "veteran-meetup") body = `<a class="vet-res" href="#/resources/veteran-owned-businesses"><b>Veteran-owned businesses</b><span>Directories for all 50 states</span>${A.icon("arrow-right", 22)}</a>` + body;
+  } else if (t === "grants") {
     const gs = D.grants.map((g) => [g, A.grantInfo(g)]);
     const sorter = (a, b) => (!!b[1].amount - !!a[1].amount) || a[0].name.localeCompare(b[0].name);
     const open = gs.filter(([, i]) => i.open).sort(sorter), shut = gs.filter(([, i]) => !i.open).sort(sorter);
