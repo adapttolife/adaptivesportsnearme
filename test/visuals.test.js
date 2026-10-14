@@ -11,24 +11,26 @@ test("listingVisual: real photo wins", () => {
 });
 
 // Alec, 2026-10-13: launch on symbols and icons, never wait on images. Program
-// listings wear their sport's athlete symbol; the stock action photos and the
-// silhouette scenes stay off listings (events and grants keep theirs).
-test("listingVisual: program sports wear their symbol, not a stock photo or scene", () => {
-  assert.deepEqual(listingVisual({ sport: "basketball" }, "program"), { kind: "symbol", src: "/emblems/athlete-basketball.svg", key: "basketball", tone: "court" });
-  assert.deepEqual(listingVisual({ sport: "rowing" }, "program"), { kind: "symbol", src: "/emblems/athlete-rowing.svg", key: "rowing", tone: "water" });
-  for (const sport of ["basketball", "tennis", "pickleball", "rugby", "football", "baseball", "cycling", "sledhockey", "skiing", "waterskiing", "goalball", "swimming", "climbing"]) {
+// listings wear their sport's image from Alec's flat set (2026-10-14); the stock
+// action photos and the silhouette scenes stay off listings.
+test("listingVisual: program sports wear their flat image, not a stock photo or scene", () => {
+  assert.deepEqual(listingVisual({ sport: "basketball" }, "program"), { kind: "symbol", src: "/emblems/sports/basketball.svg", key: "basketball", tone: "court" });
+  assert.deepEqual(listingVisual({ sport: "rowing" }, "program"), { kind: "symbol", src: "/emblems/sports/rowing.svg", key: "rowing", tone: "water" });
+  for (const sport of ["basketball", "tennis", "pickleball", "rugby", "football", "baseball", "sledhockey", "waterskiing", "goalball", "swimming", "climbing", "curling", "sailing"]) {
     const v = listingVisual({ sport }, "program");
     assert.equal(v.kind, "symbol", sport);
-    assert.equal(v.src, `/emblems/athlete-${sport}.svg`, sport);
+    assert.equal(v.src, `/emblems/sports/${sport}.svg`, sport);
   }
+  for (const sport of ["soccer", "skiing", "cycling"]) assert.equal(listingVisual({ sport }, "program").src, `/emblems/sports/${sport}.svg`, sport);
+  assert.equal(listingVisual({ sport: "handcycling" }, "program").src, "/emblems/sports/handcycling.svg");
 });
 
-test("listingVisual: a listing with no sport we can name still gets the plain athlete", () => {
-  for (const item of [{}, { sport: null }, { sport: "surfing" }, { sport: "curling" }, { sportLabel: "Multi-Sport" }]) {
-    assert.deepEqual(listingVisual(item, "program"), { kind: "symbol", src: "/emblems/athlete.svg", key: null, tone: "house" });
+test("listingVisual: a listing with no sport we can name wears the multi-sport image", () => {
+  for (const item of [{}, { sport: null }, { sport: "frisbee" }, { sportLabel: "Multi-Sport" }]) {
+    assert.deepEqual(listingVisual(item, "program"), { kind: "symbol", src: "/emblems/sports/multi.svg", key: null, tone: "house" });
   }
-  // Legacy keys share a symbol.
-  assert.equal(listingVisual({ sport: "beepbaseball" }, "program").src, "/emblems/athlete-baseball.svg");
+  assert.equal(listingVisual({ sport: "beepbaseball" }, "program").src, "/emblems/sports/beepbaseball.svg");
+  assert.equal(listingVisual({ sport: "softball" }, "program").src, "/emblems/sports/softball.svg");
 });
 
 test("listingVisual: athlete grants use grant-track; program grants use program-grant-gym", () => {

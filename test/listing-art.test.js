@@ -10,12 +10,16 @@ import { BETA_MESSAGE } from "../src/site-chrome.js";
 const L = globalThis.ListingArt;
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), "utf8");
 
-test("a sport key picks its symbol; older keys share one", () => {
+test("a sport key picks its sport; older keys map onto the sports table", () => {
   assert.equal(L.symbolKey({ sport: "tennis" }), "tennis");
   assert.equal(L.symbolKey({ sport: "equine-therapy" }), "equine-therapy");
   assert.equal(L.symbolKey({ sport: "wheelchair_basketball" }), "basketball");
-  assert.equal(L.symbolKey({ sport: "beepbaseball" }), "baseball");
-  assert.equal(L.symbolKey({ sport: "softball" }), "baseball");
+  assert.equal(L.symbolKey({ sport: "beepbaseball" }), "beepbaseball");
+  assert.equal(L.symbolKey({ sport: "softball" }), "softball");
+  // Every sport has its own dedicated file, even when the picture is shared.
+  assert.equal(L.symbolSrc("wheelchairracing"), "/emblems/sports/wheelchairracing.svg");
+  assert.equal(L.symbolSrc("equine-therapy"), "/emblems/sports/equine-therapy.svg");
+  assert.deepEqual([...L.ART].sort(), [...L.SPORTS].sort());
 });
 
 test("most listings have only a label, and the label picks the symbol", () => {
@@ -31,7 +35,11 @@ test("most listings have only a label, and the label picks the symbol", () => {
     "Miracle League Baseball": "baseball",
     "Adaptive baseball using accessible fields and a buddy system": "baseball",
     "Equine therapy": "equine-therapy",
-    "Therapeutic riding": "equine-therapy",
+    "Therapeutic riding": "equestrian",
+    "Adaptive martial arts": "martialarts",
+    "Track & Field": "trackfield",
+    "Beep Baseball": "beepbaseball",
+    "Wheelchair Fencing": "fencing",
     "Art therapy": "art-therapy",
     "Veteran meetup": "veteran-meetup",
     "Adaptive Cycling": "cycling",
@@ -48,9 +56,7 @@ test("most listings have only a label, and the label picks the symbol", () => {
 test("words that only look like a sport do not pick one", () => {
   for (const label of [
     "Life skills and recreation", // skills is not skiing
-    "Adaptive martial arts",       // martial arts is not art therapy
     "Grow with us",                // grow is not rowing
-    "Track & Field",
     "Adaptive sports and recreation",
     "Multi-Sport",
   ]) {
@@ -61,17 +67,22 @@ test("words that only look like a sport do not pick one", () => {
 test("a Multi-Sport listing falls back to its name, label first", () => {
   assert.equal(L.symbolKey({ sportLabel: "Multi-Sport", name: "Lake Tahoe Adaptive Ski Club" }), "skiing");
   assert.equal(L.symbolKey({ sportLabel: "Adaptive Tennis", name: "Ski and Tennis Club" }), "tennis");
-  assert.equal(L.symbolKey({ sportLabel: "Multi-Sport", name: "Achilles Chicago" }), null);
+  assert.equal(L.symbolKey({ sportLabel: "Multi-Sport", name: "Achilles Chicago" }), "running"); // Achilles is a running club
+  assert.equal(L.symbolKey({ sportLabel: "Multi-Sport", name: "Tri-County Adaptive Sports" }), null);
+  assert.equal(L.symbolKey({ sportLabel: "Multi-Sport", name: "Clay County Adaptive Sports" }), null);
 });
 
-test("every symbol has a file, a ground colour, and a CSS tone; no orphan files", () => {
-  const files = readdirSync(new URL("../public/emblems/", import.meta.url))
-    .filter((f) => /^athlete-.+\.svg$/.test(f))
-    .map((f) => f.replace(/^athlete-|\.svg$/g, ""));
-  assert.deepEqual([...files].sort(), [...L.SYMBOLS].sort());
-  assert.ok(readdirSync(new URL("../public/emblems/", import.meta.url)).includes("athlete.svg"));
+test("Alec's flat set: every image has an SVG and a PNG, no orphan files, every sport has a tone", () => {
+  const dir = new URL("../public/emblems/sports/", import.meta.url);
+  const files = readdirSync(dir);
+  const keys = [...L.ART, "grant", "event"].sort();
+  assert.deepEqual(files.filter((f) => f.endsWith(".svg")).map((f) => f.slice(0, -4)).sort(), keys);
+  assert.deepEqual(files.filter((f) => f.endsWith(".png")).map((f) => f.slice(0, -4)).sort(), keys);
+  // Every borrowed image and every older symbol still exists.
+  const old = readdirSync(new URL("../public/emblems/", import.meta.url));
+  for (const k of L.SYMBOLS) assert.ok(old.includes(`athlete-${k}.svg`), k);
   const css = read("public/styles.css");
-  for (const key of L.SYMBOLS) {
+  for (const key of L.SPORTS.filter((k) => k !== "multi")) {
     const family = L.FAMILY[key];
     assert.ok(family, `no family for ${key}`);
     assert.ok(css.includes(`.tone-${family} {`), `no .tone-${family} rule`);
@@ -79,10 +90,17 @@ test("every symbol has a file, a ground colour, and a CSS tone; no orphan files"
   assert.ok(css.includes(".tone-house {"));
 });
 
+test("every sport in the sports table resolves to an image file on disk", () => {
+  const dir = new URL("../public/", import.meta.url);
+  const exists = (src) => readdirSync(new URL("." + src.slice(0, src.lastIndexOf("/") + 1), dir)).includes(src.slice(src.lastIndexOf("/") + 1));
+  for (const k of [...L.SPORTS, null]) assert.ok(exists(L.symbolSrc(k)), `${k} -> ${L.symbolSrc(k)}`);
+  assert.ok(exists(L.GRANT_ART) && exists(L.EVENT_ART));
+});
+
 test("art: the program's own photo wins; otherwise a symbol, never an empty tile", () => {
   assert.deepEqual(L.art({ photo: "/p/x.jpg", sport: "tennis" }), { kind: "photo", src: "/p/x.jpg", key: null, tone: null });
-  assert.deepEqual(L.art({ sportLabel: "Adaptive tennis" }), { kind: "symbol", src: "/emblems/athlete-tennis.svg", key: "tennis", tone: "racquet" });
-  assert.deepEqual(L.art({}), { kind: "symbol", src: "/emblems/athlete.svg", key: null, tone: "house" });
+  assert.deepEqual(L.art({ sportLabel: "Adaptive tennis" }), { kind: "symbol", src: "/emblems/sports/tennis.svg", key: "tennis", tone: "racquet" });
+  assert.deepEqual(L.art({}), { kind: "symbol", src: "/emblems/sports/multi.svg", key: null, tone: "house" });
 });
 
 test("Verified means verification_status = verified, and nothing else earns the word", () => {

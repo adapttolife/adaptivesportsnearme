@@ -104,16 +104,6 @@
    "example": "350ca92f-12b0-57e7-828c-623845ac3dd8"
   },
   {
-   "key": "equine-therapy",
-   "name": "Equine therapy",
-   "note": "Working with horses, not riding.",
-   "live": 13,
-   "staging": 319,
-   "old": true,
-   "group": "next",
-   "example": "d4a0fbcb-f4d8-57d2-9084-205f1a337155"
-  },
-  {
    "key": "golf",
    "name": "Golf",
    "note": "",
@@ -154,16 +144,6 @@
    "example": "97e2ba4b-3f63-50d5-a87b-43026e7e5abf"
   },
   {
-   "key": "blindsports",
-   "name": "Blind sports",
-   "note": "Sports for blind and low-vision athletes.",
-   "live": 9,
-   "staging": 11,
-   "old": false,
-   "group": "next",
-   "example": "85e860ec-acec-5483-b81a-c301069830cc"
-  },
-  {
    "key": "trackfield",
    "name": "Track and field",
    "note": "",
@@ -172,16 +152,6 @@
    "old": false,
    "group": "next",
    "example": "e65f3b1e-d31b-5592-969a-b88877cf2907"
-  },
-  {
-   "key": "surfing",
-   "name": "Surfing",
-   "note": "",
-   "live": 7,
-   "staging": 12,
-   "old": false,
-   "group": "next",
-   "example": "7d935b46-39a5-5347-a054-377117d2a222"
   },
   {
    "key": "fencing",
@@ -294,16 +264,6 @@
    "example": "8ed51b0a-d7fe-5af6-b218-d96cacf2048a"
   },
   {
-   "key": "wheelchairracing",
-   "name": "Wheelchair racing",
-   "note": "",
-   "live": 2,
-   "staging": 1,
-   "old": false,
-   "group": "next",
-   "example": "71fcf31b-9d56-5353-8e16-86eb321615c1"
-  },
-  {
    "key": "football",
    "name": "Football",
    "note": "Flag and wheelchair football.",
@@ -404,28 +364,8 @@
    "example": null
   },
   {
-   "key": "equestrianvaulting",
-   "name": "Equestrian vaulting",
-   "note": "",
-   "live": 0,
-   "staging": 0,
-   "old": false,
-   "group": "later",
-   "example": null
-  },
-  {
    "key": "handball",
    "name": "Handball",
-   "note": "",
-   "live": 0,
-   "staging": 0,
-   "old": false,
-   "group": "later",
-   "example": null
-  },
-  {
-   "key": "handcycling",
-   "name": "Handcycling",
    "note": "",
    "live": 0,
    "staging": 0,

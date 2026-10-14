@@ -32,7 +32,7 @@ test('homepage snapshot reads the directory once without losing fields or privat
     insert.run('nameonly','Name Only',1,'active',null);
     const result = await directorySnapshot(db);
     assert.equal(result.total,450); assert.equal(queries.length,1);
-    assert.equal(result.items[0].lat,40); assert.equal(result.items[0].sport,'cycling');
+    assert.equal(result.items[0].lat,null); assert.equal(result.items[0].lng,null); assert.equal(result.items[0].sport,'cycling');
     assert.ok(result.items.every(p => !['hidden','inactive','nameonly'].includes(p.id)));
     // The real snapshot query still walks the public-order index, no sort.
     const plan = sql.prepare('EXPLAIN QUERY PLAN '+queries[0]).all().map(r=>r.detail).join('\n');
@@ -40,6 +40,23 @@ test('homepage snapshot reads the directory once without losing fields or privat
     const pages = await Promise.all([0,200,400].map(offset => listPrograms(db,new URLSearchParams({limit:'200',offset:String(offset)}),{zcta:null})));
     assert.equal(pages.flatMap(p=>p.items).length,450);
     assert.equal(queries.filter(q=>q.includes('COUNT(*)')).length,1);
+  } finally { sql.close(); }
+});
+
+test('public organization details omit contacts and precise locations while retaining city and state', async () => {
+  const {sql,db} = database();
+  try {
+    sql.exec(`INSERT INTO organizations
+      (id,name,is_public,status,created_at,updated_at,city,state,zip,lat,lng,email,phone)
+      VALUES ('org','Program',1,'active','2026','2026','Denver','CO','80202',39.75,-104.99,'private@example.test','555-0100')`);
+    const org = await getOrg(db, 'org');
+    assert.equal(org.city, 'Denver');
+    assert.equal(org.state, 'CO');
+    for (const key of ['lat','lng','zip','dist']) assert.equal(org[key], null);
+    for (const key of ['email','phone']) assert.equal(Object.hasOwn(org, key), false);
+    const result = await listPrograms(db, new URLSearchParams({lat:'42.7',lng:'-73.7'}), {zcta:null});
+    assert.equal(result.items.length, 1);
+    assert.equal(result.items[0].dist, null);
   } finally { sql.close(); }
 });
 

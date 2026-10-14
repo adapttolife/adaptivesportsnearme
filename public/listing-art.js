@@ -3,9 +3,10 @@
 
    Why symbols (Alec, 2026-10-13: "How can we just launch and not get bottlenecked
    by images. Just use symbols and icons?"): a listing should never wait on a
-   photo. Every program wears the 2026 Adapt To Life athlete holding its sport's
-   prop (scripts/emblem-series.py), on a ground tinted by sport family. A real
-   photo or logo of the program itself, once we have one, still wins.
+   photo. Every program wears its sport's image from Alec's flat vector set
+   (public/emblems/sports, one file per sport key; see the README there), on a
+   ground tinted by sport family. A real photo or logo of the program itself,
+   once we have one, still wins.
 
    Stock action photos stay off listings by default: the same photo on every
    basketball card reads as a picture of each program. USE_SPORT_PHOTOS = true
@@ -17,57 +18,101 @@ globalThis.ListingArt = (() => {
     'rugby', 'skiing', 'sledhockey', 'tennis', 'waterskiing'
   ]);
 
-  // One file per symbol in public/emblems/athlete-<key>.svg.
-  const SYMBOLS = [
-    'art-therapy', 'baseball', 'basketball', 'boccia', 'climbing', 'cycling',
-    'equine-therapy', 'football', 'goalball', 'golf', 'pickleball', 'rowing',
-    'rugby', 'skiing', 'sledhockey', 'soccer', 'swimming', 'tennis',
-    'veteran-meetup', 'volleyball', 'waterskiing'
+  // The sport keys in the D1 sports table (44) plus 'multi'.
+  const SPORTS = [
+    'amputeesports', 'archery', 'art-therapy', 'baseball', 'basketball', 'beepbaseball',
+    'blindsports', 'boccia', 'climbing', 'curling', 'cycling', 'dance', 'equestrian',
+    'equestrianvaulting', 'equine-therapy', 'fencing', 'football', 'goalball', 'golf',
+    'handball', 'handcycling', 'lacrosse', 'martialarts', 'multi', 'nordicskiing',
+    'pickleball', 'powerlifting', 'rowing', 'rugby', 'running', 'sailing', 'shooting',
+    'skiing', 'sledhockey', 'soccer', 'softball', 'surfing', 'swimming', 'tennis',
+    'trackfield', 'triathlon', 'veteran-meetup', 'volleyball', 'waterskiing',
+    'wheelchairracing'
   ];
-  const HAS = new Set(SYMBOLS);
+  const IS_SPORT = new Set(SPORTS);
 
-  // Older or narrower sport keys in the data that share a symbol.
+  // Alec's flat vector set: public/emblems/sports/<key>.svg (+ .png), one
+  // dedicated file for every sport key (Alec, 2026-10-14: "extreme clarity").
+  // Some files are copies of another sport's image on purpose; the README in
+  // that folder says which. 'grant' and 'event' sit in the same folder.
+  const ART = SPORTS;
+  const HAS_ART = new Set(ART);
+  const ART_ALIAS = {};
+  // Older athlete + prop symbols (scripts/emblem-series.py) for any sport the
+  // flat set does not cover: public/emblems/athlete-<key>.svg. None needed now.
+  const SYMBOLS = [];
+  const HAS_OLD = new Set(SYMBOLS);
+  const artSrc = (k) => '/emblems/sports/' + k + '.svg';
+
+  // Older or narrower sport keys in the data.
   const KEY_ALIAS = {
-    wheelchair_basketball: 'basketball', wheelchair_rugby: 'rugby',
-    softball: 'baseball', kickball: 'baseball', beepbaseball: 'baseball',
-    topsoccer: 'soccer', sled_hockey: 'sledhockey', water_skiing: 'waterskiing'
+    wheelchair_basketball: 'basketball', wheelchair_rugby: 'rugby', kickball: 'baseball',
+    topsoccer: 'soccer', sled_hockey: 'sledhockey', water_skiing: 'waterskiing',
+    track_and_field: 'trackfield', martial_arts: 'martialarts'
   };
 
-  // Most listings carry a sport label but no key, so the label picks the symbol.
+  // Most listings carry a sport label but no key, so the label picks the sport.
   // First match wins, so the order matters: sled hockey before hockey, water
-  // ski before ski, baseball before ball games.
+  // ski before ski, beep baseball before baseball, softball before baseball.
   const WORDS = [
-    [/sled\s*hockey|para\s*ice\s*hockey|ice\s*sledge/i, 'sledhockey'],
-    [/water\s*ski|wakeboard/i, 'waterskiing'],
+    [/sled\s*hockey|sledge|para\s*ice\s*hockey|ice\s*sled/i, 'sledhockey'],
+    [/water\s*-?\s*ski|wakeboard/i, 'waterskiing'],
+    [/wheelchair\s*racing|racing\s*chair/i, 'wheelchairracing'],
+    [/hand\s*cycl/i, 'handcycling'],
+    [/nordic|cross[- ]country\s*ski|biathlon/i, 'nordicskiing'],
+    [/\bski(?:ing|ers?|s)?\b|snowboard|snow\s*sports?|alpine/i, 'skiing'],
+    [/beep\s*-?\s*baseball/i, 'beepbaseball'],
     [/basketball/i, 'basketball'],
     [/pickleball/i, 'pickleball'],
     [/tennis/i, 'tennis'],
     [/rugby/i, 'rugby'],
     [/goalball/i, 'goalball'],
-    [/baseball|softball|miracle\s*league|kickball|\bt-?ball\b/i, 'baseball'],
+    [/softball/i, 'softball'],
+    [/baseball|miracle\s*league|\bt-?ball\b|kickball/i, 'baseball'],
     [/soccer|futsal/i, 'soccer'],
     [/football/i, 'football'],
     [/volleyball/i, 'volleyball'],
     [/boccia|bocce/i, 'boccia'],
-    [/\bski(?:ing|ers?|s)?\b|snowboard|snow\s*sports?|nordic|alpine/i, 'skiing'],
+    [/handball/i, 'handball'],
+    [/lacrosse/i, 'lacrosse'],
+    [/curling/i, 'curling'],
+    [/\bfenc/i, 'fencing'],
+    [/archery/i, 'archery'],
+    [/shooting|\brifle|\bpistol|trap\s*shoot/i, 'shooting'],
+    [/powerlift|weight\s*-?\s*lift/i, 'powerlifting'],
+    [/triathlon|paratri|duathlon/i, 'triathlon'],
+    [/track|field\s*events|javelin|discus|shot\s*put/i, 'trackfield'],
+    [/running|marathon|\brun\b|\b5k\b|road\s*race|\bachilles\b/i, 'running'],
     [/cycl|\bbik(?:e|es|ing)\b|tandem/i, 'cycling'],
     [/\brow(?:ing|ers?)?\b|kayak|canoe|paddl|dragon\s*boat/i, 'rowing'],
+    [/\bsail/i, 'sailing'],
+    [/surf/i, 'surfing'],
     [/swim|aquatic/i, 'swimming'],
     [/\bgolf/i, 'golf'],
     [/climb/i, 'climbing'],
-    [/equine|equestrian|horse|hippotherapy|therapeutic\s*riding/i, 'equine-therapy'],
+    [/equine\s*therap|equine[- ]assisted/i, 'equine-therapy'],
+    [/equestrian|therapeutic\s*riding|\briding\b|horse|hippotherapy/i, 'equestrian'],
     [/art\s*therap|creative\s*arts?/i, 'art-therapy'],
-    [/meet\s*-?up|peer\s*support/i, 'veteran-meetup']
+    [/meet\s*-?up|peer\s*support/i, 'veteran-meetup'],
+    [/martial|karate|judo|taekwondo|jiu[- ]?jitsu|self[- ]defen|boxing/i, 'martialarts'],
+    [/\bdanc/i, 'dance'],
+    [/amputee/i, 'amputeesports'],
+    [/\bblind|visually\s*impaired/i, 'blindsports']
   ];
 
   // Ground colour by sport family (classes in public/styles.css).
   const FAMILY = {
     basketball: 'court', volleyball: 'court', boccia: 'court', goalball: 'court',
+    handball: 'court', curling: 'court', fencing: 'court', martialarts: 'court',
+    dance: 'court', powerlifting: 'court', blindsports: 'court',
     tennis: 'racquet', pickleball: 'racquet',
-    football: 'field', rugby: 'field', soccer: 'field', baseball: 'field',
-    skiing: 'snow', sledhockey: 'snow',
-    swimming: 'water', rowing: 'water', waterskiing: 'water',
-    cycling: 'trail', climbing: 'trail', golf: 'trail',
+    football: 'field', rugby: 'field', soccer: 'field', baseball: 'field', softball: 'field',
+    beepbaseball: 'field', lacrosse: 'field', archery: 'field', shooting: 'field',
+    trackfield: 'field', running: 'field', wheelchairracing: 'field', amputeesports: 'field',
+    skiing: 'snow', sledhockey: 'snow', nordicskiing: 'snow',
+    swimming: 'water', rowing: 'water', waterskiing: 'water', sailing: 'water', surfing: 'water',
+    cycling: 'trail', handcycling: 'trail', triathlon: 'trail', climbing: 'trail', golf: 'trail',
+    equestrian: 'calm', equestrianvaulting: 'calm',
     'equine-therapy': 'calm', 'art-therapy': 'calm', 'veteran-meetup': 'calm'
   };
 
@@ -78,14 +123,23 @@ globalThis.ListingArt = (() => {
     return null;
   }
 
-  // The symbol a listing wears: its sport key, else its sport label, else its
-  // name ("Lake Tahoe Adaptive Ski Club" filed as Multi-Sport), else none.
+  // The sport a listing is filed under: its sport key, else its sport label,
+  // else its name ("Lake Tahoe Adaptive Ski Club" filed as Multi-Sport), else
+  // null (a multi-sport program).
   function symbolKey(item) {
     if (!item) return null;
     const raw = item.sport ? String(item.sport).toLowerCase() : '';
     const key = KEY_ALIAS[raw] || raw;
-    if (HAS.has(key)) return key;
+    if (IS_SPORT.has(key) && key !== 'multi') return key;
     return fromWords(item.sportLabel) || fromWords(item.name);
+  }
+
+  // The image file for a sport key: its own dedicated file, an older symbol,
+  // else the multi-sport image. Never an empty tile.
+  function symbolSrc(key) {
+    if (key && HAS_ART.has(key)) return artSrc(key);
+    if (key && HAS_OLD.has(key)) return '/emblems/athlete-' + key + '.svg';
+    return artSrc('multi');
   }
 
   // { kind: 'photo' | 'symbol', src, key, tone } for a program listing.
@@ -95,13 +149,12 @@ globalThis.ListingArt = (() => {
     if (USE_SPORT_PHOTOS && key && SPORT_PHOTOS.has(key)) {
       return { kind: 'photo', src: '/assets/sport-photos/' + key + '.jpg', key, tone: null };
     }
-    return {
-      kind: 'symbol',
-      src: '/emblems/athlete' + (key ? '-' + key : '') + '.svg',
-      key,
-      tone: key ? FAMILY[key] : 'house'
-    };
+    return { kind: 'symbol', src: symbolSrc(key), key, tone: (key && FAMILY[key]) || 'house' };
   }
+
+  // Grant and event cards.
+  const GRANT_ART = artSrc('grant');
+  const EVENT_ART = artSrc('event');
 
   // ---- Trust: what a person has and has not confirmed ----------------------
   // "Verified" means a person checked the listing against an official source
@@ -197,7 +250,7 @@ globalThis.ListingArt = (() => {
   }
 
   return {
-    SYMBOLS, FAMILY, symbolKey, art, isVerified, trustLine,
+    SPORTS, ART, ART_ALIAS, SYMBOLS, FAMILY, symbolKey, symbolSrc, art, GRANT_ART, EVENT_ART, isVerified, trustLine,
     shortDate, monthLabel, checkedRow, verifiedText, unverifiedText, sourceLabel, isInternalSource, publicSource,
     RESEARCH
   };
