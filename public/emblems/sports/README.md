@@ -53,6 +53,7 @@ Do not add a second copy of these images anywhere else in `public/`.
 | `sailing` | Sailing.png |
 | `shooting` | Shooting Sports.png |
 | `sledhockey` | Sled Hockey.png |
+| `softball` | Softball.png |
 | `swimming` | Swimming.png |
 | `tennis` | Tennis.png |
 | `trackfield` | Track and Field.png |
@@ -61,7 +62,7 @@ Do not add a second copy of these images anywhere else in `public/`.
 | `volleyball` | Sitting Volleyball.png |
 | `waterskiing` | Water Skiing.png |
 
-Not drawn yet, so they borrow: `softball` uses baseball, `wheelchairracing` uses
-trackfield, `equestrianvaulting` and `equine-therapy` use equestrian, `blindsports`
+Not drawn yet, so they borrow: `wheelchairracing` uses trackfield,
+`equestrianvaulting` (no image planned) and `equine-therapy` use equestrian, `blindsports`
 uses goalball. `soccer`, `skiing` and `cycling` keep the older athlete symbol
 (`../athlete-<key>.svg`), and `surfing` shows multi, until their images exist.

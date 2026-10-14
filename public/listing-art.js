@@ -38,13 +38,13 @@ globalThis.ListingArt = (() => {
     'boccia', 'climbing', 'curling', 'dance', 'equestrian', 'fencing', 'football',
     'goalball', 'golf', 'handball', 'handcycling', 'lacrosse', 'martialarts', 'multi',
     'nordicskiing', 'pickleball', 'powerlifting', 'rowing', 'rugby', 'running', 'sailing',
-    'shooting', 'sledhockey', 'swimming', 'tennis', 'trackfield', 'triathlon',
+    'shooting', 'sledhockey', 'softball', 'swimming', 'tennis', 'trackfield', 'triathlon',
     'veteran-meetup', 'volleyball', 'waterskiing'
   ];
   const HAS_ART = new Set(ART);
   // A sport without its own image yet borrows the closest one.
   const ART_ALIAS = {
-    softball: 'baseball', wheelchairracing: 'trackfield', equestrianvaulting: 'equestrian',
+    wheelchairracing: 'trackfield', equestrianvaulting: 'equestrian',
     'equine-therapy': 'equestrian', blindsports: 'goalball'
   };
   // Older athlete + prop symbols (scripts/emblem-series.py), kept only for

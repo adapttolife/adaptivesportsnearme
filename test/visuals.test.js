@@ -30,7 +30,7 @@ test("listingVisual: a listing with no sport we can name wears the multi-sport i
     assert.deepEqual(listingVisual(item, "program"), { kind: "symbol", src: "/emblems/sports/multi.svg", key: null, tone: "house" });
   }
   assert.equal(listingVisual({ sport: "beepbaseball" }, "program").src, "/emblems/sports/beepbaseball.svg");
-  assert.equal(listingVisual({ sport: "softball" }, "program").src, "/emblems/sports/baseball.svg");
+  assert.equal(listingVisual({ sport: "softball" }, "program").src, "/emblems/sports/softball.svg");
 });
 
 test("listingVisual: athlete grants use grant-track; program grants use program-grant-gym", () => {

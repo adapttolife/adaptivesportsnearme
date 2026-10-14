@@ -17,7 +17,7 @@ test("a sport key picks its sport; older keys map onto the sports table", () => 
   assert.equal(L.symbolKey({ sport: "beepbaseball" }), "beepbaseball");
   assert.equal(L.symbolKey({ sport: "softball" }), "softball");
   // A sport without its own image borrows the closest one.
-  assert.equal(L.symbolSrc("softball"), "/emblems/sports/baseball.svg");
+  assert.equal(L.symbolSrc("wheelchairracing"), "/emblems/sports/trackfield.svg");
   assert.equal(L.symbolSrc("equine-therapy"), "/emblems/sports/equestrian.svg");
 });
 
