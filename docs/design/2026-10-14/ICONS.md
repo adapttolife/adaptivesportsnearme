@@ -2,6 +2,12 @@
 
 Alec: "The icons all get cutoff in some way, especially on mobile - let's take the time to get this right."
 
+## The source
+Alec's drawings as vectors, from Google Drive, Website / ASNM Flat Vector Logo / SVGs (47 files,
+one per sport, 512 x 512, `currentColor`), synced unchanged into `public/emblems/sports` by
+`scripts/sport-icons-sync.py` (see the README there). The new design masks them in their
+plate's figure colour, so one vector file serves every size.
+
 ## The rule
 Each of Alec's 47 drawings sits centered in a square file. `fig()` passes the drawing's
 share of its square (`--w`, `--h`, their geometric mean `--g`, diagonal `--diag`, ink density
@@ -18,7 +24,7 @@ meets every limit of the spot it is in:
 Placement uses the drawing's own edges (`.fig--pin`), and the centroid nudge can never push ink
 past an edge. Spots: home hero (a band above the headline on phones, beside it on desktop),
 home doors and bands, sport tiles, cards (centered under the badge band), rows, avatars, the
-listing hero (the athlete stands above the place stamp and below the back and share buttons),
+listing hero (the athlete stands above the place stamp and below the back and share buttons), the home hero on phones right-aligned (Alec's pick),
 sport banners, the share poster, three-athlete groups, and the veteran pages.
 
 ## The checks

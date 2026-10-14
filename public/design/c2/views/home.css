@@ -32,7 +32,7 @@
 /* Phones and small tablets: the athlete gets a full-width band above the headline, so a
    wide drawing (swimmer, handcycle) is as big as a tall one (basketball, climbing). The
    band is 46% of the hero's width, never more than 22% of the screen height, and
-   every drawing stands on its bottom line. ?band=right puts it on the right edge instead. */
+   every drawing stands on its bottom line, on the right edge (Alec's pick); ?band=left for the left. */
 @media (max-width: 767px) {
   .v-home .hb-art { position: relative; right: auto; top: auto; width: 100%; height: min(46cqw, 22svh); margin-bottom: 16px; }
   .v-home .hb-fig { --A: .9; --Hm: .96; --Wm: .9; --pb: 0px; }

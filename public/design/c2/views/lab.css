@@ -14,11 +14,11 @@
 .v-lab .is-card .lab-stage > * { width: 300px; }
 .v-lab .is-small .lab-stage { overflow: visible; }
 .v-lab .is-small .lab-stage > * { position: static; transform: none; }
-/* Home hero band, mirroring views/home.css on a 390px phone: a 195px band (50% of
-   the width), the athlete on its bottom line at the left, then the headline. */
+/* Home hero band, mirroring views/home.css on a 390px phone: the athlete on the
+   band's bottom line at the right edge, then the headline. */
 .v-lab .lab-band { position: relative; height: 262px; background: var(--t); }
 .v-lab .lab-art { position: absolute; left: 16px; top: 0; width: 358px; height: 195px; container-type: size; --A: .9; --Hm: .96; --Wm: .9; }
-.v-lab .lab-art .fig { position: absolute; translate: none; left: calc(0px - (1 - var(--w)) * var(--B) / 2); bottom: calc(0px - (1 - var(--h)) * var(--B) / 2); }
+.v-lab .lab-art .fig { position: absolute; translate: none; right: calc(0px - (1 - var(--w)) * var(--B) / 2); bottom: calc(0px - (1 - var(--h)) * var(--B) / 2); }
 .v-lab .lab-lines { position: absolute; left: 16px; right: 16px; top: 211px; display: grid; gap: 8px; }
 .v-lab .lab-lines i { display: block; height: 18px; width: 70%; background: rgba(26,26,26,.85); }
 .v-lab .lab-lines i + i { width: 52%; }
