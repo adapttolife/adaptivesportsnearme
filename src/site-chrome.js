@@ -9,7 +9,7 @@
 // that file, so bump it on any site-nav.js change (browser caches ignore CDN
 // purges, and that has bitten us three times).
 
-export const NAV_VERSION = "20261003b";
+export const NAV_VERSION = "20261014a";
 
 // Shared presentation lives in public/styles.css.
 

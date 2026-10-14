@@ -170,6 +170,9 @@ test('a notice that could not go out on the request is sent by the scheduled swe
 // nothing here touches the organizations table.
 const LISTING = 'c76e8bad-5df9-5a4f-a526-1324f99877e1';
 const update = { pn: 'Atlanta Wolfpack', lid: LISTING, rel: 'run', notes: 'We moved practice to Decatur.', em: 'person@example.test', sid: '9c2e8b1a-1d4f-4b7e-8a00-abcdefabcdef' };
+// The listing a fix is about, as the directory has it. Receipts and notices take
+// its name from here, never from text the browser sent.
+const listed = (x) => x.directory.exec("INSERT INTO organizations (id,name,created_at,updated_at,city,state) VALUES ('" + LISTING + "','Atlanta Wolfpack','2026','2026','Atlanta','GA')");
 
 test('a suggested update is captured like a submission and changes no listing', async t => {
   const x = setup(t); verified(x);
@@ -198,7 +201,7 @@ test('an update with nothing to change is refused before anything is saved', asy
 });
 
 test('a plain suggestion reads as a listing update; a malformed listing id is ignored', async t => {
-  const x = setup(t); verified(x);
+  const x = setup(t); verified(x); listed(x);
   await x.post({ ...update, rel: 'other', cf_token: 'ok' });
   assert.equal(x.intakeRows()[0].summary, 'Listing update: Atlanta Wolfpack');
   const y = setup(t); verified(y);
@@ -266,10 +269,19 @@ test('an event without an email is captured; hello@ is told and no receipt is at
   assert.equal((await sendEvent(bad, { em: 'not-an-email' })).status, 422, 'an email that is given still has to be one');
 });
 
+test('a fix names the listing from the directory, not from what the browser sent', async t => {
+  const x = setup(t); verified(x); listed(x);
+  await x.post({ ...update, pn: 'Free prizes at evil.example', rel: 'other', cf_token: 'ok' });
+  assert.equal(x.intakeRows()[0].summary, 'Listing update: Atlanta Wolfpack');
+  const y = setup(t); verified(y); // a listing id the directory does not have
+  await y.post({ ...update, pn: 'Free prizes at evil.example', rel: 'other', cf_token: 'ok' });
+  assert.equal(y.intakeRows()[0].summary, `Listing update: listing ${LISTING}`);
+});
+
 test('a fix to a listing needs no email unless the program itself is confirming it', async t => {
   const { em, ...fix } = update;
   for (const rel of ['other', 'attend', undefined]) {
-    const x = setup(t); verified(x);
+    const x = setup(t); verified(x); listed(x);
     const response = await x.post({ ...fix, rel, cf_token: 'ok' });
     assert.equal(response.status, 200, `rel=${rel}`);
     const [row] = x.intakeRows();

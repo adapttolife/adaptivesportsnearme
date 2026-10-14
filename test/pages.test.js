@@ -176,13 +176,19 @@ test("servePage: sport keys and state codes the site does not have are 404s", as
   assert.match(titleOf(await tennis.text()), /^Tennis: adaptive tennis programs/);
   assert.match(titleOf(await (await serve("/sports/multi", env)).text()), /multi-sport/);
   assert.equal((await serve("/sports/veteran-meetup", env)).status, 200);
-  const florida = await (await serve("/states/fl", env)).text();
+  const lower = await serve("/states/fl", env);
+  assert.equal(lower.status, 301, "one spelling per state");
+  assert.equal(lower.headers.get("location"), `${ORIGIN}/states/FL`);
+  const florida = await (await serve("/states/FL", env)).text();
   assert.match(titleOf(florida), /Florida/);
-  assert.ok(florida.includes(`<link rel="canonical" href="${ORIGIN}/states/FL">`), "one canonical spelling per state");
+  assert.ok(florida.includes(`<link rel="canonical" href="${ORIGIN}/states/FL">`));
 });
 
-test("old URLs redirect permanently: /maps and /profile to the home page, /directory to sports", async () => {
-  for (const [path, to] of [["/maps", "/"], ["/maps/", "/"], ["/profile", "/"], ["/profile/", "/"], ["/directory", "/sports"], ["/directory/programs", "/sports"], ["/directory/grants/", "/sports"]]) {
+test("old URLs redirect permanently to the page that replaced them", async () => {
+  const id = "AAAAAAAA-BBBB-4CCC-8DDD-EEEEEEEEEEEE";
+  for (const [path, to] of [["/maps", "/"], ["/maps/", "/"], ["/profile", "/"], ["/profile/", "/"], ["/directory", "/sports"], ["/directory/programs", "/sports"],
+    ["/directory/grants/", "/grants"], ["/directory/events", "/events"], ["/directory/resources", "/resources"],
+    [`/programs/${id}`, `/programs/${id.toLowerCase()}`], [`/update/${id}`, `/update/${id.toLowerCase()}`], ["/states/wi", "/states/WI"]]) {
     for (const response of [await serve(path, { ASSETS: assets() }), await viaWorker(path, { ASSETS: assets() })]) {
       assert.equal(response.status, 301, path);
       assert.equal(response.headers.get("location"), ORIGIN + to, path);

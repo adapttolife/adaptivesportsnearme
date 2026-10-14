@@ -26,10 +26,12 @@ const LIST_COLS = `id, name, org_type, sport, sport_key, website_url, city,
 // move (1,069 of 2,465 live rows were name-only on 2026-10-13), so the rule
 // lives here in code, where no data copy can drop it. The row stays in D1 for
 // enrichment and reappears the moment it gains any of these.
+// Email and phone count only when the program said yes to showing them
+// (publicity_consent); a contact nobody can see is nothing to act on.
 export const ACTIONABLE = `((website_url IS NOT NULL AND website_url <> '')
   OR (city IS NOT NULL AND city <> '' AND state IS NOT NULL AND state <> '')
-  OR (email IS NOT NULL AND email <> '')
-  OR (phone IS NOT NULL AND phone <> ''))`;
+  OR (publicity_consent = 1 AND email IS NOT NULL AND email <> '')
+  OR (publicity_consent = 1 AND phone IS NOT NULL AND phone <> ''))`;
 const PUBLIC = `is_public = 1 AND status = 'active' AND ${ACTIONABLE}`;
 
 function rowToProgram(r, dist) {

@@ -30,7 +30,7 @@ function wasPushed(base) {
     const n = window.navigation;
     if (n && n.currentEntry && n.currentEntry.index > 0) {
       const prev = n.entries()[n.currentEntry.index - 1];
-      if (prev && new URL(prev.url).hash === base) return true;
+      if (prev) { const u = new URL(prev.url); if (u.pathname + u.search === base) return true; }
     }
   } catch (_) {}
   return false;

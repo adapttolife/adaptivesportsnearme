@@ -35,6 +35,9 @@ const HOME_DESCRIPTION = "Find adaptive sports programs, grants and events near 
 const REDIRECTS = [
   [/^\/maps\/?$/, "/"],
   [/^\/profile\/?$/, "/"],
+  [/^\/directory\/grants\/?$/, "/grants"],
+  [/^\/directory\/events\/?$/, "/events"],
+  [/^\/directory\/resources\/?$/, "/resources"],
   [/^\/directory(\/[a-z]+)?\/?$/, "/sports"],
 ];
 
@@ -144,6 +147,11 @@ export function injectMeta(html, meta, { url, production }) {
 
 export function redirectFor(pathname) {
   for (const [re, to] of REDIRECTS) if (re.test(pathname)) return to;
+  // One address per page: /states/fl -> /states/FL, an uppercase id -> lowercase.
+  const st = pathname.match(/^\/states\/([a-z]{2})\/?$/i);
+  if (st && st[1] !== st[1].toUpperCase()) return `/states/${st[1].toUpperCase()}`;
+  const id = pathname.match(new RegExp(`^/(programs|grants|update)/(${UUID})/?$`, "i"));
+  if (id && /[A-F]/.test(id[2])) return `/${id[1]}/${id[2].toLowerCase()}`;
   return null;
 }
 
@@ -192,7 +200,7 @@ export async function sitemapXml(env) {
     const snap = await directorySnapshot(env.DB);
     for (const p of snap.items) if (isListable(p)) urls.push(`/programs/${p.id}`);
     try {
-      const g = await env.DB.prepare("SELECT id FROM grants WHERE is_public = 1").all();
+      const g = await env.DB.prepare("SELECT id FROM grants WHERE is_public = 1 AND status = 'active'").all();
       for (const r of g.results || []) urls.push(`/grants/${r.id}`);
     } catch (_) { /* no grants table yet */ }
   }

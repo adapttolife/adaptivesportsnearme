@@ -7,7 +7,7 @@ const MONTH = ["January", "February", "March", "April", "May", "June", "July", "
 /** Month groups (h2 "October 2026") of event cards, soonest first. */
 function monthGroups(events) {
   const dated = events
-    .map((e) => ({ e, t: Date.parse(e.start || e.date || "") }))
+    .map((e) => { const d = A.eventDay(e.start || e.date); return { e, t: d ? d.getTime() : NaN }; })
     .filter((x) => Number.isFinite(x.t))
     .sort((a, b) => a.t - b.t);
   const groups = new Map();

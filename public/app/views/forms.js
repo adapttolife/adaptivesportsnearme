@@ -130,7 +130,7 @@ export async function render(ctx) {
   const D = ctx.data;
   if (ctx.path === "/add/program") return addProgram(D);
   if (ctx.path === "/add/event") return addEvent(D);
-  return update(D, ctx.params.id, ctx.query.rel || "");
+  return update(D, String(ctx.params.id || "").toLowerCase(), ctx.query.rel || "");
 }
 
 export function mount(root) {

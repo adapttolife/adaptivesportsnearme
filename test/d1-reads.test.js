@@ -185,6 +185,19 @@ test('count cache expires, isolates databases and never retains failures',async(
 
 // /api/orgs/:id is public: the same rule as the directory, and never our own
 // research files (CSV names, Google Drive links, a teammate's name).
+test('a contact nobody can see does not make a listing public', async () => {
+  const {sql,db} = database();
+  try {
+    const org = sql.prepare("INSERT INTO organizations (id,name,is_public,status,created_at,updated_at,state,email,phone,publicity_consent) VALUES (?,?,1,'active','2026','2026','GA',?,?,?)");
+    org.run('33333333-3333-3333-3333-333333333333','Hidden Contact Club','coach@example.test','555-0100',0);
+    org.run('44444444-4444-4444-4444-444444444444','Consenting Contact Club','coach@example.test','555-0100',1);
+    const snap = await directorySnapshot(db);
+    assert.deepEqual(snap.items.map(p => p.name), ['Consenting Contact Club']);
+    assert.equal(await getOrg(db, '33333333-3333-3333-3333-333333333333'), null, 'not public by direct link either');
+    assert.equal((await getOrg(db, '44444444-4444-4444-4444-444444444444')).email, 'coach@example.test');
+  } finally { sql.close(); }
+});
+
 test('getOrg follows the public rule and returns only public sources', async () => {
   const {sql,db} = database();
   try {

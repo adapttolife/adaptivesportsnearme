@@ -308,6 +308,8 @@ export function loadData() {
     };
     return D;
   })();
+  // A failed load is not kept: the next page (or "Try again") asks again.
+  DATA_P.catch(() => { DATA_P = null; });
   return DATA_P;
 }
 
@@ -791,9 +793,14 @@ export function grantCard(g) {
   return `<a class="gcard" href="/grants/${esc(g.id)}">${plate("grant", { kind: "card", keepText: true, inner: `<span class="vpill vpill--plain">${gi.audienceLabel}</span>` })}${gi.amount ? `<p class="gc-amt num">${esc(gi.amount)}</p>` : ""}<h3 class="gc-name">${esc(displayName(g.name))}</h3><p class="gc-dl">${esc(gi.deadlineText)}</p></a>`;
 }
 
+/** An event's day: "2026-11-01" is that calendar day where you are, not midnight UTC. */
+export function eventDay(s) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(s || ""));
+  return m ? new Date(+m[1], +m[2] - 1, +m[3]) : parseDay(s);
+}
 /** Event card: { id, title|name, key|sportKey, city, state, start (ISO), url } */
 export function eventCard(e) {
-  const d = parseDay(e.start || e.date);
+  const d = eventDay(e.start || e.date);
   const key = e.key || e.sportKey || "multi";
   const when = d ? `${["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][d.getDay()]}, ${MON[d.getMonth()]} ${d.getDate()}${/T\d\d:\d\d/.test(e.start || "") ? " · " + d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }) : ""}` : "";
   const place = e.city && e.state ? `${e.city}, ${e.state}` : e.state ? stateName(e.state) : "";
@@ -1189,7 +1196,7 @@ export function nav(href, { replace = false } = {}) {
   if (!to) { if (href) location.href = href; return; }
   PENDING = true;
   if (replace) { REPLACING = true; history.replaceState(history.state, "", to); render(); }
-  else if (here() === to) { PENDING = false; render({ force: true }); }
+  else if (here() === to) { REPLACING = true; render({ force: true }); }
   else { history.pushState(null, "", to); render(); }
 }
 /** history.back() when this session has navigated in-app, else go to the fallback. */
@@ -1223,14 +1230,30 @@ function loadCss(name) {
 }
 async function loadView(name) {
   if (!MODS[name]) MODS[name] = import("./views/" + name + ".js");
-  const [mod] = await Promise.all([MODS[name], loadCss(name)]);
-  return mod;
+  try {
+    const [mod] = await Promise.all([MODS[name], loadCss(name)]);
+    return mod;
+  } catch (e) { delete MODS[name]; throw e; }
+}
+/* The page when the directory or a page's code could not load: say so, offer to try again. */
+function loadError() {
+  return {
+    title: "We couldn't load this page · Adaptive Sports Near Me",
+    html: `<section class="nf"><h1 tabindex="-1">We couldn't load this page</h1><p>Check your connection and try again.</p><div class="btns"><button type="button" class="btn btn--ink" data-retry>${icon("refresh-cw", 20)}<span>Try again</span></button>${btn("Go to the home page", "/", "line")}</div></section>`,
+  };
 }
 
 function setMeta(title, description) {
   if (title) document.title = title;
   let m = $('meta[name="description"]');
   if (description && m) m.setAttribute("content", description);
+  // The same canonical the Worker writes (src/pages.js): the site's address, no query.
+  let path = location.pathname.replace(/\/+$/, "") || "/";
+  if (/^\/states\/[a-z]{2}$/i.test(path)) path = path.slice(0, 8) + path.slice(8).toUpperCase();
+  const url = "https://adaptivesportsnearme.com" + path;
+  const c = $('link[rel="canonical"]'), og = $('meta[property="og:url"]');
+  if (c) c.setAttribute("href", url);
+  if (og) og.setAttribute("content", url);
 }
 
 let CHROME_SIG = "";
@@ -1275,6 +1298,7 @@ async function render({ force = false } = {}) {
   // Overlay-only change (map=1 or open=...): keep the page, toggle the overlay.
   if (!force && CUR && CUR.path === path && qsKey(CUR.query, OVERLAY_KEYS) === qsKey(query, OVERLAY_KEYS)) {
     CUR = { ...CUR, hash, query, ctx: { ...CUR.ctx, query, isBack } };
+    REPLACING = false;
     await handleOverlays(CUR.ctx);
     return;
   }
@@ -1282,9 +1306,9 @@ async function render({ force = false } = {}) {
   const seq = ++SEQ;
   const m = matchRoute(path);
   const name = m ? m.name : null;
-  const data = await loadData();
-  let mod = null;
-  if (name) { try { mod = await loadView(name); } catch (e) { console.error(e); } }
+  let data = null, mod = null, failed = false;
+  try { data = await loadData(); } catch (e) { console.error(e); failed = true; }
+  if (name && !failed) { try { mod = await loadView(name); } catch (e) { console.error(e); failed = true; } }
   if (seq !== SEQ) return;
 
   if (CUR) { try { sessionStorage.setItem("asnm.scroll." + CUR.hash, String(Math.round(scrollY))); } catch (_) {} }
@@ -1294,8 +1318,11 @@ async function render({ force = false } = {}) {
   BAR_HREF = null; // only a bar rendered on this page may hand its links to the sports sheet
   const ctx = { name: name || "notFound", path, params: m ? m.params : {}, query, data, isBack, isFirst: FIRST };
   let out;
-  try { out = mod ? await mod.render(ctx) : notFound(); }
-  catch (e) { console.error(e); out = notFound(); }
+  if (failed) { out = loadError(); mod = null; }
+  else {
+    try { out = mod ? await mod.render(ctx) : notFound(); }
+    catch (e) { console.error(e); out = notFound(); }
+  }
   if (seq !== SEQ) return;
   out = out || notFound();
 
@@ -1389,8 +1416,8 @@ function findCtrl(main, c) {
   const vis = (x) => x && x.offsetParent !== null ? x : null;
   if (c && c.attr) return vis($(`[${c.attr}]`, main));
   if (c && c.id) return vis(document.getElementById(c.id));
-  const here = $$("a[href]", main).find((x) => x.getAttribute("href") === here() && x.offsetParent !== null);
-  if (here) return here;
+  const cur = $$("a[href]", main).find((x) => x.getAttribute("href") === here() && x.offsetParent !== null);
+  if (cur) return cur;
   if (c && c.href) return $$("a[href]", main).find((x) => x.getAttribute("href") === c.href && x.offsetParent !== null) || null;
   return null;
 }
@@ -1549,7 +1576,8 @@ async function turnstileToken(form) {
     let box = $(".ts-box", form);
     if (!box) { box = document.createElement("div"); box.className = "ts-box"; form.appendChild(box); }
     let settled = false;
-    box._done = (t) => { if (!settled) { settled = true; resolve(t || ""); } };
+    const done = (t) => { if (!settled) { settled = true; resolve(t || ""); } };
+    box._done = done;
     if (box._wid == null) {
       box._wid = ts.render(box, {
         sitekey: TS_KEY, appearance: "interaction-only", execution: "execute", size: "flexible",
@@ -1557,7 +1585,7 @@ async function turnstileToken(form) {
       });
     } else ts.reset(box._wid);
     ts.execute(box._wid);
-    setTimeout(() => box._done(""), 30000);
+    setTimeout(() => done(""), 30000);
   });
 }
 function formStatus(form) {
@@ -1646,6 +1674,7 @@ function boot() {
     const closeAfter = t.closest("[data-close-after]");
     if (t.closest("[data-skip]")) { e.preventDefault(); $("#main").focus(); return; }
     if (t.closest("[data-dismiss-beta]")) { store.set("asnm.beta", 0); refreshChrome(true); return; }
+    if (t.closest("[data-retry]")) { e.preventDefault(); render({ force: true }); return; }
     const op = t.closest("[data-open]");
     if (op) {
       e.preventDefault();
@@ -1740,6 +1769,8 @@ function boot() {
         if (a.hasAttribute("data-replace")) { if (closeAfter) closeOverlay({ restore: false }); nav(to, { replace: true }); return; }
         if (closeAfter || (OV && OV.name === "menu")) closeOverlay({ restore: false });
         if (a.closest("#main")) { try { sessionStorage.setItem("asnm.last." + here(), href); } catch (_) {} }
+        // A map opened from a page is a pushed entry, so closing it can step Back (views/map.js).
+        if (/[?&]map=1(&|$)/.test(to)) window.__asnmMapFrom = here();
         nav(to);
       }
     }

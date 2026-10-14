@@ -316,7 +316,14 @@ async function handleSubmitProgram(request, env, ctx, opts = {}) {
   const isEvent = !!opts.event || str(data.kind) === "event";
   const listingId = !isEvent && LISTING_ID_RE.test(str(data.lid)) ? str(data.lid).toLowerCase() : "";
   const relation = LISTING_RELATIONS.has(str(data.rel)) ? str(data.rel) : "";
-  const program = isEvent ? str(data.en) : (str(data.pn) || (listingId ? `listing ${listingId}` : ""));
+  // A fix or a claim names the listing by its id; the receipt and the notice use
+  // the listing's own name from the directory, never text the browser sent.
+  let program = isEvent ? str(data.en) : str(data.pn);
+  if (listingId) {
+    let listed = "";
+    try { listed = str((await env.DB?.prepare("SELECT name FROM organizations WHERE id = ?").bind(listingId).first())?.name); } catch { /* the id still names it */ }
+    program = listed || `listing ${listingId}`;
+  }
   const org = str(data.org);
   const sport = str(data.sport);
   const city = str(data.city);

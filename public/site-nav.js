@@ -46,10 +46,10 @@
       '<div class="drawer-head"><b>Adaptive Sports Near Me</b>' +
       '<button class="drawer-x" type="button" aria-label="Close menu">' + IC.x + "</button></div>";
     var prof =
-      '<a class="drawer-profile" href="/?profile=1">' +
+      '<a class="drawer-profile" href="/help">' +
       '<span class="dp-av">' + IC.user + "</span>" +
-      '<span class="dp-meta"><span class="dp-name">Set up your profile</span>' +
-      '<span class="dp-sub">Save favorites, follow sports</span></span></a>';
+      '<span class="dp-meta"><span class="dp-name">Run a program?</span>' +
+      '<span class="dp-sub">Claim it or add it, free</span></span></a>';
     // Newsletter CTA — the drawer's top slot (email-first). Standalone form + handler (see wire()).
     var news =
       '<div class="drawer-news">' +
@@ -66,26 +66,26 @@
       "</div>";
     var dest =
       '<div class="drawer-sec drawer-util">' +
-      '<a class="drawer-row-main" href="/">' + IC.compass + '<span class="drawer-row-label">Discover</span></a>' +
-      '<a class="drawer-row-main" href="/maps">' + IC.map + '<span class="drawer-row-label">Map view</span></a>' +
+      '<a class="drawer-row-main" href="/">' + IC.compass + '<span class="drawer-row-label">Programs near you</span></a>' +
+      '<a class="drawer-row-main" href="/states">' + IC.map + '<span class="drawer-row-label">States</span></a>' +
       '<a class="drawer-row-main" href="/events">' + IC.calsm + '<span class="drawer-row-label">Events</span></a>' +
-      '<a class="drawer-row-main" href="/?db=grants">' + IC.price + '<span class="drawer-row-label">Funding &amp; grants</span></a>' +
+      '<a class="drawer-row-main" href="/grants">' + IC.price + '<span class="drawer-row-label">Grants</span></a>' +
       '<a class="drawer-row-main" href="/blog">' + IC.book + '<span class="drawer-row-label">Blog</span></a>' +
       "</div>";
     var contribute =
       '<div class="drawer-div"></div><div class="drawer-sec drawer-util">' +
-      '<a class="drawer-row-main" href="/?add=program">' + IC.plus + '<span class="drawer-row-label">Add a program</span></a>' +
+      '<a class="drawer-row-main" href="/add/program">' + IC.plus + '<span class="drawer-row-label">Add a program</span></a>' +
       "</div>";
-    var chipList = '<a class="drawer-chip" href="/">All sports</a>' +
+    var chipList = '<a class="drawer-chip" href="/sports">All sports</a>' +
       SPORTS.map(function (s) {
-        return '<a class="drawer-chip" href="/?sport=' + s.key + '">' + s.label + "</a>";
+        return '<a class="drawer-chip" href="/sports/' + s.key + '">' + s.label + "</a>";
       }).join("");
     var chips =
       '<div class="drawer-div"></div><div class="drawer-sec"><p class="eyebrow">Browse by sport</p>' +
       '<div class="drawer-chips">' + chipList + "</div></div>";
     var about =
       '<div class="drawer-div"></div><div class="drawer-sec drawer-about">' +
-      '<a href="/">The project</a>' +
+      '<a href="/about">How we check listings</a>' +
       '<a href="https://sign.adapttolife.org/waiver?source=asnm">Sign waiver</a>' +
       "</div>";
     // Profile block moves to the bottom (just above About), fronted by a divider.

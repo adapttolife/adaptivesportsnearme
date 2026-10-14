@@ -268,7 +268,7 @@ function shareHtml(p) {
 /* ---------- render ---------- */
 export async function render(ctx) {
   const D = ctx.data;
-  const p = D.byId.get(ctx.params.id);
+  const p = D.byId.get(String(ctx.params.id || "").toLowerCase());
   if (!p) {
     return {
       title: "Listing not found · Adaptive Sports Near Me",
@@ -338,7 +338,7 @@ async function copyLink(url) {
 }
 
 export function mount(root, ctx) {
-  const p = ctx.data.byId.get(ctx.params.id);
+  const p = ctx.data.byId.get(String(ctx.params.id || "").toLowerCase());
   if (!p) return () => {};
   let disposed = false;
   const base = baseHash(p.id);
