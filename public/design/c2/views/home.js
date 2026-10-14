@@ -45,7 +45,7 @@ function sports(D) {
 
 function doors() {
   const d = (cls, href, key, title, line) => `<a class="door ${cls}" href="${href}"><span class="door-fig">${A.fig(key, { color: cls === "door--ink" ? "#FFFFFF" : "#1A1A1A", big: true })}</span><b>${title}</b><span>${line}</span></a>`;
-  return `<nav class="doors" aria-label="More ways in">${d("door--sun", "#/grants", "grant", "Grants", "Money for gear, travel and programs")}${d("door--sea", "#/events", "event", "Events", "Clinics, tryouts and game days")}${d("door--ink", "#/resources", "veteran-meetup", "Veterans", "Veteran-owned business directories, state by state")}${d("door--coral", "#/add/program", "multi", "Run a program?", "List it free. A person checks it.")}</nav>`;
+  return `<nav class="doors" aria-label="More ways in">${d("door--sun", "#/grants", "grant", "Grants", "Money for gear, travel and programs")}${d("door--sea", "#/events", "event", "Events", "Clinics, tryouts and game days")}${d("door--ink", "#/sports/veteran-meetup", "veteran-meetup", "Veterans", "Meetups, coffee calls and outdoor days near you")}${d("door--coral", "#/add/program", "multi", "Run a program?", "List it free. A person checks it.")}</nav>`;
 }
 
 async function nearRail(D) {

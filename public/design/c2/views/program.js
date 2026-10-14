@@ -90,7 +90,18 @@ function about(p) {
   if (!inner) inner = `<p class="pg-quiet">We don't have a description for this program yet.${p.website ? " The program's website has the details." : ""}</p>`;
   return `<section class="pg-sec" aria-labelledby="pg-about"><h2 id="pg-about">About this program</h2>${inner}</section>`;
 }
+/* Veteran meetups carry what happens, when, where and for whom (Karen's research). */
+function meetup(p) {
+  const m = p.meet;
+  if (!m) return "";
+  const row = (k, v) => v ? `<div><dt>${k}</dt><dd>${A.esc(v)}</dd></div>` : "";
+  const prog = m.program && m.program.toLowerCase() !== String(p.name).toLowerCase() ? m.program : "";
+  return `<section class="pg-sec pg-meet" aria-labelledby="pg-meet"><h2 id="pg-meet">The meetup</h2>${prog ? `<p class="pg-meet-prog">${A.esc(prog)}</p>` : ""}${m.what ? `<p>${A.esc(m.what)}</p>` : ""}
+<dl class="pg-facts">${row("When", m.when)}${row("Where", m.where)}${row("Format", m.format)}${row("Cost", m.cost)}${row("Who it's for", m.who)}</dl>
+<p class="pg-quiet">Times change, so confirm the next date with them before you go.</p></section>`;
+}
 function facts(p) {
+  if (p.meet) return "";
   const rows = [["Ages", p.ages], ["Cost", p.cost], ["Equipment", p.equipment]].filter(([, v]) => v != null && String(v).trim());
   if (!rows.length) return "";
   return `<dl class="pg-facts">${rows.map(([k, v]) => `<div><dt>${k}</dt><dd>${A.esc(String(v).trim())}</dd></div>`).join("")}</dl>`;
@@ -104,7 +115,7 @@ function wherePlay(p) {
   } else {
     body = `<p>This listing doesn't say where it is yet. If you know, <a href="#/update/${A.esc(p.id)}?rel=other">suggest an update</a>.</p>`;
   }
-  return `<section class="pg-sec" aria-labelledby="pg-where"><h2 id="pg-where">Where you'll play</h2>${body}</section>`;
+  return `<section class="pg-sec" aria-labelledby="pg-where"><h2 id="pg-where">${p.meet ? "Where it meets" : "Where you'll play"}</h2>${body}</section>`;
 }
 function links(p) {
   const row = (href, ic, label, sub, attrs = "") => `<li><a class="pg-link" href="${A.esc(href)}" ${attrs}><span class="pg-link-ic">${A.icon(ic, 20)}</span><span class="pg-link-text"><span class="pg-link-label">${A.esc(label)}</span>${sub ? `<span class="pg-link-sub">${A.esc(sub)}</span>` : ""}</span>${A.icon("chevron-right", 20)}</a></li>`;
@@ -220,7 +231,7 @@ ${hero(p)}
 <div class="pg-head"><h1 tabindex="-1">${A.esc(p.name)}</h1><p class="pg-meta">${meta}</p></div>
 <div class="pg-trust">${A.trust(p, "page")}</div>
 ${actionRow(p)}
-${about(p)}
+${p.meet ? meetup(p) : about(p)}
 ${facts(p)}
 ${wherePlay(p)}
 ${links(p)}

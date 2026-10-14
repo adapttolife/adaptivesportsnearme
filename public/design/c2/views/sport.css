@@ -49,3 +49,8 @@
 /* Header count link (remembered place) */
 .v-sport .ch-count .sp-count { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding-block: 0; }
 .v-sport .ch-count .sp-count .ic { flex: none; }
+/* Veterans: a black link band to the veteran-owned business directories. */
+.v-sport .vet-res { display: grid; grid-template-columns: 1fr auto; grid-template-rows: auto auto; align-items: center; gap: 2px 12px; margin-top: 20px; padding: 16px 18px; background: #1A1A1A; color: #fff; text-decoration: none; border-radius: var(--r-l); }
+.v-sport .vet-res b { font-size: 19px; font-weight: 900; }
+.v-sport .vet-res span { grid-column: 1; font-size: 15px; color: #E7E3DA; }
+.v-sport .vet-res .ic { grid-column: 2; grid-row: 1 / span 2; color: #F6B700; }

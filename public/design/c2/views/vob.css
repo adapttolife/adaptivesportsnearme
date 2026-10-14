@@ -1,0 +1,25 @@
+/* Veteran-owned businesses. Scoped under .v-vob. Black hero, white athletes. */
+.v-vob .vb-hero { position: relative; overflow: hidden; container-type: inline-size; margin-inline: calc(-1 * var(--gut)); padding: 28px var(--gut) 26px; background: #1A1A1A; color: #fff; }
+.v-vob .vb-hero h1 { position: relative; max-width: 9ch; color: #fff; }
+.v-vob .vb-kicker { position: relative; margin-top: 12px; font-size: 18px; color: #E7E3DA; max-width: 26ch; }
+.v-vob .vb-fig { position: absolute; right: -4cqw; top: 18px; width: 40cqw; max-width: 220px; aspect-ratio: 1; --A: .9; --Hm: .9; --Wm: .9; container-type: size; }
+.v-vob .vb-intro { margin-top: 18px; }
+.v-vob .vb-intro p + p { margin-top: 8px; }
+.v-vob .vb-cards { display: grid; gap: 10px; }
+@media (min-width: 768px) { .v-vob .vb-cards { grid-template-columns: repeat(3, 1fr); } .v-vob .vb-states { grid-template-columns: repeat(2, 1fr); } }
+.v-vob .vb-card { border: 2px solid #1A1A1A; border-radius: var(--r-l); padding: 16px; }
+.v-vob .vb-card h3 { font-size: 19px; }
+.v-vob .vb-card p { margin-top: 4px; color: var(--graphite); font-size: 16px; }
+.v-vob .vb-link { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; font-weight: 800; color: #1A1A1A; text-decoration: underline; text-underline-offset: 3px; }
+.v-vob .vb-pick { margin-top: 6px; max-width: 520px; }
+.v-vob .vb-pick label { display: block; font-weight: 700; margin-bottom: 6px; }
+.v-vob .vb-row { display: flex; gap: 8px; }
+.v-vob .vb-row select { flex: 1; min-width: 0; height: 52px; }
+.v-vob .vb-row .btn { height: 52px; }
+.v-vob .vb-states { display: grid; gap: 0 18px; margin-top: 16px; }
+.v-vob .vb-st { padding: 12px 0; border-top: 1px solid var(--line); scroll-margin-top: 88px; }
+.v-vob .vb-st h3 { font-size: 18px; }
+.v-vob .vb-st .vb-link { display: flex; }
+.v-vob .vb-nv { color: var(--muted); font-size: 15px; margin-top: 4px; }
+.v-vob .vb-fine { margin-top: 18px; font-size: 15px; color: var(--muted); }
+.v-vob .vb-back { margin-top: 18px; }

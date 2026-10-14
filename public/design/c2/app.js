@@ -102,8 +102,8 @@ const TONES = {
   snow: [TEAL, INK], water: [TEAL, INK], trail: [YELLOW, INK],
   calm: [INK, "#FFFFFF"], house: [CORAL, INK], grant: [YELLOW, INK], event: [TEAL, INK],
 };
-// Review switch (?look=hues | ?look=sharp) so Alec can compare colour strategies on the same pages.
-export const LOOK = new URLSearchParams(location.search).get("look") || "";
+// Look switch: sharp is the standard; ?look=today and ?look=hues stay for comparison.
+export const LOOK = new URLSearchParams(location.search).get("look") || "sharp"; // Alec, 2026-10-14: "I love the sharper version the best... This is the way"
 document.documentElement.dataset.look = LOOK;
 if (LOOK === "hues") Object.assign(TONES, {
   field: ["#2DBE6C", INK], snow: ["#3D7BFF", INK], trail: [ORANGE, INK],
@@ -130,7 +130,7 @@ const NOTE_FILL = {
   climbing: "Adaptive climbing walls and crags.", martialarts: "Martial arts and self-defense.",
   running: "Running groups and road races.", pickleball: "Adaptive and wheelchair pickleball.",
   amputeesports: "Sports for amputee athletes.", boccia: "A precision ball sport.",
-  "veteran-meetup": "Veterans meeting up to play and move.", "art-therapy": "Making art together.",
+  "veteran-meetup": "Coffee calls, outdoor days, support groups and game nights for veterans.", "art-therapy": "Making art together.",
   softball: "Adaptive softball.", lacrosse: "Adaptive lacrosse.", handball: "Wheelchair handball.",
   powerlifting: "Para powerlifting.", dance: "Wheelchair dance.",
 };
@@ -255,7 +255,10 @@ export function loadData() {
   if (DATA_P) return DATA_P;
   DATA_P = (async () => {
     const get = (u) => fetch(u).then((r) => { if (!r.ok) throw new Error(u + " " + r.status); return r.json(); });
-    const [prog, gr, st, sp] = await Promise.all([get("/design/programs.json"), get("/design/grants.json"), get("/design/states.json"), get("/design/sports.json")]);
+    const [prog, gr, st, sp, vets] = await Promise.all([get("/design/programs.json"), get("/design/grants.json"), get("/design/states.json"), get("/design/sports.json"),
+      get("/design/c2/data/veterans.json").catch(() => ({ items: [] }))]);
+    // Karen Atkinson's veteran meetups (her Sept 2 research; staging holds them as pending), listed with the directory.
+    prog.items = prog.items.concat(vets.items || []);
     const live = {};
     for (const s of sp.sports) {
       NAMES[s.key] = s.name;
@@ -1133,7 +1136,7 @@ const ROUTES = [
   ["/states", "states"], ["/states/:st", "state"], ["/programs/:id", "program"],
   ["/grants", "grants"], ["/grants/:id", "grant"], ["/events", "events"],
   ["/add/program", "forms"], ["/add/event", "forms"], ["/update/:id", "forms"],
-  ["/help", "help"], ["/about", "help"], ["/resources", "help"], ["/letter", "help"],
+  ["/help", "help"], ["/about", "help"], ["/resources/veteran-owned-businesses", "vob"], ["/resources", "help"], ["/letter", "help"],
 ];
 const OVERLAY_KEYS = new Set(["map", "open"]);
 const MODS = {}, CSS_DONE = {};

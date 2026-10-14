@@ -51,7 +51,7 @@ function aboutPage() {
 /* ---------- #/resources ---------- */
 function resourcesPage() {
   const html = `<div class="rs"><h1 tabindex="-1">Resources</h1>
-<article class="rs-card" aria-labelledby="rs-vob">${A.plate("veteran-meetup", { kind: "card", wide: true, cls: "rs-plate" })}<div class="rs-body"><h2 id="rs-vob">Veteran-owned business directories by state</h2><p>State lists of veteran-owned businesses, gathered in one place.</p><div class="rs-act">${A.btn("Open the directories", "/resources/veteran-owned-businesses", "ink", { icon: "arrow-right" })}</div></div></article></div>`;
+<article class="rs-card" aria-labelledby="rs-vob">${A.plate("veteran-meetup", { kind: "card", wide: true, cls: "rs-plate" })}<div class="rs-body"><h2 id="rs-vob">Veteran-owned business directories by state</h2><p>State lists of veteran-owned businesses, gathered in one place.</p><div class="rs-act">${A.btn("Open the directories", "#/resources/veteran-owned-businesses", "ink", { icon: "arrow-right" })}</div></div></article></div>`;
   return { title: "Resources · Adaptive Sports Near Me", description: DESC, html };
 }
 
