@@ -27,10 +27,14 @@ function rowToProgram(r, dist) {
     city: r.city,
     state: r.state,
     stateName: r.state_name,
-    zip: r.zip,
-    lat: r.lat,
-    lng: r.lng,
-    geoPrecision: r.geo_precision,
+    // zip: r.zip,
+    zip: null,
+    // lat: r.lat,
+    lat: null,
+    // lng: r.lng,
+    lng: null,
+    // geoPrecision: r.geo_precision,
+    geoPrecision: null,
     desc: r.description,
     cost: r.cost_note,
     equipment: r.equipment_provided === 1 ? "Provided" : r.equipment_provided === 0 ? "Bring your own" : null,
@@ -39,7 +43,8 @@ function rowToProgram(r, dist) {
     verification: r.verification_status,
     freshness: freshness(r.last_ok_at),
     lastChecked: r.last_ok_at,
-    dist: dist == null ? null : Math.round(dist * 10) / 10,
+    // dist: dist == null ? null : Math.round(dist * 10) / 10,
+    dist: null,
   };
 }
 
@@ -109,6 +114,7 @@ export async function listPrograms(db, params, opts = {}) {
   const offset = Math.max(parseInt(params.get("offset") || "0", 10) || 0, 0);
   const cond = where.join(" AND ");
 
+/*
   if (origin && !origin.missing) {
     const rows = await db.prepare(
       `SELECT ${LIST_COLS} FROM organizations WHERE ${cond} AND lat IS NOT NULL AND lng IS NOT NULL`
@@ -119,6 +125,7 @@ export async function listPrograms(db, params, opts = {}) {
     return { total, limit, offset, items, near: nearPayload(origin) };
   }
 
+*/
   const [count, rows] = await Promise.all([
     cachedCount(db, cond, binds),
     db.prepare(
@@ -126,7 +133,7 @@ export async function listPrograms(db, params, opts = {}) {
        ORDER BY (sport_key IS NULL), (state IS NULL), name LIMIT ? OFFSET ?`
     ).bind(...binds, limit, offset).all(),
   ]);
-  return { total: count?.n ?? 0, limit, offset, items: rows.results.map((r) => rowToProgram(r)), near: null };
+  return { total: count?.n ?? 0, limit, offset, items: rows.results.map((r) => rowToProgram(r)), near: nearPayload(origin) };
 }
 
 export async function getOrg(db, id) {
@@ -142,8 +149,8 @@ export async function getOrg(db, id) {
   ).bind(id).all();
   return {
     ...rowToProgram(row),
-    email: row.email,
-    phone: row.phone,
+    // email: row.email,
+    // phone: row.phone,
     primarySource: row.primary_data_source,
     sources: sources.results,
     updatedAt: row.updated_at,
@@ -190,6 +197,7 @@ export async function listSameSportNearby(db, org, limit = 6) {
     `SELECT ${LIST_COLS} FROM organizations WHERE ${where.join(" AND ")} LIMIT 80`
   ).bind(...binds).all();
   let items = (rows.results || []).map((r) => rowToProgram(r));
+/*
   if (org.lat != null && org.lng != null) {
     items = items.map((p) => {
       const dist = (p.lat != null && p.lng != null)
@@ -198,6 +206,7 @@ export async function listSameSportNearby(db, org, limit = 6) {
       return { ...p, dist };
     }).sort((a, b) => (a.dist ?? 1e9) - (b.dist ?? 1e9));
   }
+*/
   return items.slice(0, n);
 }
 
