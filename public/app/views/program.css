@@ -176,3 +176,48 @@
 /* Veteran meetup block */
 .v-program .pg-meet-prog { font-weight: 800; font-size: 18px; }
 .v-program .pg-meet .pg-facts { margin-top: 14px; }
+
+/* ================= Verified tag, date line and the story sheet (2026-10-14) ================= */
+/* The place stamp and the tag share one row on the picture's bottom edge: the stamp
+   on the left takes the room the tag (lower right) does not need, and only then
+   shortens its place with an ellipsis. */
+.v-program .pg-edge { position: absolute; z-index: 2; left: var(--gut); right: var(--gut); bottom: -24px; display: flex; align-items: center; justify-content: space-between; gap: 8px; pointer-events: none; }
+.v-program .pg-edge > * { pointer-events: auto; }
+@media (min-width: 768px) { .v-program .pg-edge { left: 20px; right: 20px; } }
+.v-program .pg-edge .pg-stamp { position: static; flex: 0 1 auto; min-width: 0; max-width: none; }
+.v-program .pg-vtag {
+  flex: none; margin-left: auto;
+  display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 14px;
+  background: #fff; color: var(--ink); border: 0; border-radius: var(--r-l); box-shadow: var(--sh-2);
+  font: inherit; font-size: 15px; font-weight: 700; line-height: 1.2; cursor: pointer;
+}
+.v-program .pg-vtag .ic { flex: none; color: var(--muted); }
+.v-program .pg-vtag.is-v .ic { color: var(--teal); }
+.v-program .pg-vtag:hover { background: var(--mist); }
+.v-program .pg-vtag:focus-visible { box-shadow: var(--focus); }
+@media (max-width: 420px) { .v-program .pg-vtag { padding: 0 12px; font-size: 14px; gap: 5px; } }
+.v-program .pg-hero.has-vtag + .pg-head { margin-top: 48px; }
+.v-program .pg-hero.has-stamp + .pg-head { margin-top: 48px; }
+.v-program .pg-head h1 .vcheck { vertical-align: 0; }
+.v-program .pg-fresh { margin-top: 6px; font-size: 15px; font-weight: 500; line-height: 1.45; color: var(--graphite); }
+.v-program .pg-fresh span + span::before { content: "\00b7"; margin: 0 7px; }
+.v-program-verify .vx-body p { font-size: 17px; line-height: 1.5; margin-top: 12px; }
+.v-program-verify .vx-body p:first-child { margin-top: 0; }
+.v-program-verify .vx-facts { list-style: none; margin: 14px 0 0; padding: 0; display: grid; gap: 8px; }
+.v-program-verify .vx-facts li { display: flex; gap: 8px; align-items: flex-start; font-size: 16px; font-weight: 600; line-height: 1.4; }
+.v-program-verify .vx-facts .ic { flex: none; margin-top: 2px; color: var(--teal); }
+.v-program-verify .vx-btns { margin-top: 20px; }
+.v-program-verify .vx-more { display: inline-flex; margin-top: 16px; }
+/* On phones the story is a short card from the bottom, not a full screen. */
+@media (max-width: 767px) {
+  .ov--sheet.v-program-verify { inset: auto 0 0 0; max-height: 88vh; border-radius: var(--r-xl) var(--r-xl) 0 0; box-shadow: var(--sh-2); }
+}
+.v-program-verify .ss-body { padding: 16px 20px 24px; }
+/* Narrow phones (320 to 360 px): the stamp drops its state outline so the place still reads. */
+@media (max-width: 360px) { .v-program .pg-edge .pg-stamp-map { display: none; } .v-program .pg-edge .pg-stamp { padding-left: 14px; } }
+/* Phones: a slightly smaller stamp, so "Brooklyn Park, MN" fits beside the tag at 390 px. */
+@media (max-width: 480px) {
+  .v-program .pg-edge .pg-stamp { gap: 8px; padding: 8px 12px 8px 8px; }
+  .v-program .pg-edge .pg-stamp-map, .v-program .pg-edge .pg-stamp-map .so { width: 32px; height: 32px; }
+  .v-program .pg-edge .pg-stamp-text { font-size: 16px; }
+}

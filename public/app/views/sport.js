@@ -1,4 +1,4 @@
-/* Sport community page: #/sports/:key (spec 6.5, community header 4.10). WP-D.
+/* Sport community page: /sports/:key (spec 6.5, community header 4.10). WP-D.
    Query: t = programs | grants | events (default programs), st = two-letter state.
    Counts stay local (5.4): the header counts only with a state (st) or the
    visitor's remembered place, never a national total.
@@ -14,14 +14,13 @@ const TABS = ["programs", "grants", "events"];
 const lc = (s) => s.charAt(0).toLowerCase() + s.slice(1);
 const byName = (a, b) => a.name.localeCompare(b.name);
 const byCity = (a, b) => (b.placed - a.placed) || String(a.cityFirst || "").localeCompare(String(b.cityFirst || "")) || byName(a, b);
-const byStateName = (a, b) => A.stateName(a.state).localeCompare(A.stateName(b.state)) || byCity(a, b);
 
 function hrefFor(key, { st = "", t = "" } = {}) {
   const q = new URLSearchParams();
   if (t && t !== "programs") q.set("t", t);
   if (st) q.set("st", st);
   const s = q.toString();
-  return "#/sports/" + key + (s ? "?" + s : "");
+  return "/sports/" + key + (s ? "?" + s : "");
 }
 
 /** One state group: h3 with a local count, the first rows, then a link to the state view. */
@@ -68,32 +67,30 @@ function programsTab(key, st, pool) {
       body = `<section class="sec sec--first">${A.emptyState({
         title: `No ${low} listed in ${A.stateName(st)} yet.`,
         body: "This directory is new and still growing. If you know one, tell us and a person will check it.",
-        actions: [{ label: `See ${low} everywhere`, href: hrefFor(key), attrs: "data-replace" }, { label: "Tell us about one", href: "#/add/program" }],
+        actions: [{ label: `See ${low} everywhere`, href: hrefFor(key), attrs: "data-replace" }, { label: "Tell us about one", href: "/add/program" }],
       })}</section>${nearestBlock(key, st, pool)}`;
     }
   } else if (!pool.length) {
     body = `<section class="sec sec--first">${A.emptyState({
       title: `No ${low} listed yet`,
       body: "This directory is new and still growing. Know a program? Add it and a person will check it before it goes up.",
-      actions: [{ label: "Tell us about one", href: "#/add/program" }, { label: "Browse sports", href: "#/sports" }],
+      actions: [{ label: "Tell us about one", href: "/add/program" }, { label: "Browse sports", href: "/sports" }],
     })}</section>`;
   } else {
-    const placedState = pool.filter((p) => p.state);
-    const ver = placedState.filter((p) => p.verified), unv = placedState.filter((p) => !p.verified);
+    // One list by state. Verified listings (the program confirmed) sort first in each state;
+    // nothing is split out or labeled "not verified" (Alec, 2026-10-14).
+    const withState = pool.filter((p) => p.state);
     const none = pool.filter((p) => !p.state).sort(byName);
-    if (ver.length) {
+    if (withState.length) {
       const by = {};
-      for (const p of ver) (by[p.state] = by[p.state] || []).push(p);
+      for (const p of withState) (by[p.state] = by[p.state] || []).push(p);
       const sts = Object.keys(by).sort((a, b) => A.stateName(a).localeCompare(A.stateName(b)));
       // Twelve states first, then "Show all N states" opens the rest in place (the state chips
       // above jump straight to any one state).
       const FIRST = 12;
-      const groups = sts.map((s, i) => stateGroup(key, s, by[s].sort(byCity), sts.length > FIRST ? 2 : 3, i >= FIRST)).join("");
+      const groups = sts.map((s, i) => stateGroup(key, s, by[s].sort((a, b) => (b.verified - a.verified) || byCity(a, b)), sts.length > FIRST ? 2 : 3, i >= FIRST)).join("");
       const moreBtn = sts.length > FIRST ? `<button type="button" class="btn btn--line rows-more" data-more="sp-v-groups" data-count="${sts.length} states">Show all ${sts.length} states</button>` : "";
-      body += `<section class="sec sec--first" aria-labelledby="sp-v">${A.sectionHead({ title: "Checked by a person", id: "sp-v", sub: "A person on our team confirmed each of these against an official source." })}<div class="grps" id="sp-v-groups">${groups}</div>${moreBtn}</section>`;
-    }
-    if (unv.length) {
-      body += `<section class="sec" aria-labelledby="sp-u">${A.sectionHead({ title: "Not yet verified", id: "sp-u", sub: "We found these, and no one on our team has confirmed them yet. Check the website before you go." })}${A.rowList(unv.sort(byStateName), { single: true }, { id: "sp-u-rows" })}</section>`;
+      body += `<section class="sec sec--first" aria-labelledby="sp-v">${A.sectionHead({ title: "By state", id: "sp-v" })}<div class="grps" id="sp-v-groups">${groups}</div>${moreBtn}</section>`;
     }
     if (none.length) {
       body += `<section class="sec" aria-labelledby="sp-n">${A.sectionHead({ title: "Place not listed yet", id: "sp-n", sub: "These listings don't say where they are yet. If you know, suggest an update." })}${A.rowList(none, { single: true }, { id: "sp-n-rows" })}</section>`;
@@ -114,11 +111,11 @@ export async function render(ctx) {
   A.remember("recent", key);
 
   // Header count: local only. A link to the visitor's own results when there is a remembered place.
-  const link = (text, href, ic) => `<a class="sp-count" href="${A.esc(href)}"${href.startsWith("#/sports/") ? " data-replace" : ""}>${A.icon(ic, 18)}<span>${A.esc(text)}</span></a>`;
+  const link = (text, href, ic) => `<a class="sp-count" href="${A.esc(href)}"${href.startsWith("/sports/") ? " data-replace" : ""}>${A.icon(ic, 18)}<span>${A.esc(text)}</span></a>`;
   let count = null;
   if (st) {
     const inSt = pool.filter((p) => p.state === st);
-    if (inSt.length) count = `${inSt.length} in ${A.esc(A.stateName(st))} · ${inSt.filter((p) => p.verified).length} checked by a person`;
+    if (inSt.length) count = `${inSt.length} in ${A.esc(A.stateName(st))}`;
   } else {
     const label = A.recall("place");
     if (label) {
@@ -132,7 +129,7 @@ export async function render(ctx) {
             const g = A.ladder(w, pool);
             const n = g.inCity.length + g.near.length;
             const inState = g.inCity.length + g.elsewhere.length + g.statewide.length + g.near.filter((p) => p.state === w.state).length;
-            if (n) count = link(`${n} near ${w.short}`, "#/near/" + encodeURIComponent(label) + "?s=" + encodeURIComponent(key), "map-pin");
+            if (n) count = link(`${n} near ${w.short}`, "/near/" + encodeURIComponent(label) + "?s=" + encodeURIComponent(key), "map-pin");
             else if (inState) count = link(`${inState} in ${A.stateName(w.state)}`, hrefFor(key, { st: w.state }), "map");
           }
         }
@@ -151,7 +148,7 @@ export async function render(ctx) {
   if (t === "programs") {
     body = programsTab(key, st, pool);
     // Veterans: the meetups, plus Karen's state-by-state veteran-owned business directories.
-    if (key === "veteran-meetup") body = `<a class="vet-res" href="#/resources/veteran-owned-businesses"><b>Veteran-owned businesses</b><span>Directories for all 50 states</span>${A.icon("arrow-right", 22)}</a>` + body;
+    if (key === "veteran-meetup") body = `<a class="vet-res" href="/resources/veteran-owned-businesses"><b>Veteran-owned businesses</b><span>Directories for all 50 states</span>${A.icon("arrow-right", 22)}</a>` + body;
   } else if (t === "grants") {
     const gs = D.grants.map((g) => [g, A.grantInfo(g)]);
     const sorter = (a, b) => (!!b[1].amount - !!a[1].amount) || a[0].name.localeCompare(b[0].name);
@@ -163,7 +160,7 @@ export async function render(ctx) {
     body = `<section class="sec sec--first">${A.emptyState({
       title: `No ${low} events posted yet`,
       body: "Know of a clinic, tryout or game day coming up? Add it and a person will check it before it goes live.",
-      actions: [{ label: "Add an event", href: "#/add/event" }, { label: "Get the letter", href: "", kind: "line", attrs: 'data-jump="letter"' }],
+      actions: [{ label: "Add an event", href: "/add/event" }, { label: "Get the letter", href: "", kind: "line", attrs: 'data-jump="letter"' }],
       image: "event",
     })}</section>`;
   }

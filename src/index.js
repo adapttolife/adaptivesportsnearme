@@ -6,14 +6,16 @@ import { notifyIntake } from './intake.js';
 // Serves the static site (env.ASSETS), the D1-backed directory API, the admin
 // review surface, and the cron maintenance pipeline (validate + enrich lanes).
 //   POST /api/subscribe        -> beehiiv (email capture, tagged asnm-prelaunch)
-//   POST /api/submit-program   -> shared intake (hello@ notice) + D1 submissions
+//   POST /api/submit-program   -> shared intake (hello@ notice) + D1 submissions (new program or a fix to a listing)
+//   POST /api/submit-event     -> the same path for a suggested event
 //   GET  /api/config           -> env name + prelaunch flag (front-end gate)
 //   GET  /api/directory        -> cached full public snapshot for client filters/maps
 //   GET  /api/programs         -> directory list (sport/state/q + zip/city/lat-lng nearby, paged)
-//   GET  /programs/:id         -> shareable program page (photo hero, name, city/state, website, source)
+//   GET  /, /programs/:id, /sports/:key, /states/:st, /grants, /events, ... -> the site's
+//                                 pages: one app shell (public/index.html + public/app/) with
+//                                 each page's own title, description and canonical (src/pages.js)
 //   GET  /api/grants           -> public grant list (athlete + program)
 //   GET  /api/grants/:id       -> one grant
-//   GET  /grants/:id           -> shareable grant page (same listing sheet as programs)
 //   GET  /api/orgs/:id         -> one org with source provenance
 //   GET  /api/stats            -> counts by sport/state
 //   GET  /api/events           -> upcoming public events (json)
@@ -28,10 +30,7 @@ import { notifyIntake } from './intake.js';
 //   *    /api/admin/*          -> review queue + lane triggers (ADMIN_KEY bearer)
 // All secrets stay server-side (Worker secrets). Bot defence: honeypot + required Turnstile.
 
-import { directorySnapshot, listPrograms, getOrg, stats, listSameSportNearby, listGrants, getGrant, listOtherGrants } from "./data.js";
-import { programPageTemplate, programNotFoundTemplate, PROGRAM_ID_RE } from "./program-page.js";
-import { grantPageTemplate, grantNotFoundTemplate, GRANT_ID_RE } from "./grant-page.js";
-import { veteranBusinessPageTemplate, resourcesIndexTemplate, VETERAN_BUSINESS_PATH } from "./resource-page.js";
+import { directorySnapshot, listPrograms, getOrg, stats, listGrants, getGrant } from "./data.js";
 import { listEvents, eventsToRss, eventsToIcs } from "./events.js";
 import { handleAdmin } from "./admin.js";
 import { runLane } from "./pipeline.js";
@@ -324,8 +323,9 @@ async function handleSubmitProgram(request, env, ctx, opts = {}) {
   const email = str(data.em).replace(/^mailto:/i, "");
   const notes = str(data.notes);
   const eventDate = str(data.ed);
+  const eventEnd = /^\d{4}-\d{2}-\d{2}$/.test(str(data.ee)) ? str(data.ee) : "";
   const eventTime = str(data.et).slice(0, 40);
-  const eventUrl = str(data.url).slice(0, 300);
+  const siteUrl = str(data.url).slice(0, 300);
 
   if (!program) return json({ ok: false, error: isEvent ? "Please add the event name." : "Please add the program name." }, 422);
   if (listingId && !notes) return json({ ok: false, error: "Please tell us what should change." }, 422);
@@ -346,10 +346,10 @@ async function handleSubmitProgram(request, env, ctx, opts = {}) {
   }
 
   const answers = isEvent
-    ? { event: program, date: eventDate, time: eventTime, city, state: stateRegion, url: eventUrl, org, sport, notes }
+    ? { event: program, date: eventDate, end: eventEnd, time: eventTime, city, state: stateRegion, url: siteUrl, org, sport, notes }
     : listingId
       ? { program, update_of: listingId, relation, notes }
-      : { program, org, sport, city, state: stateRegion, notes };
+      : { program, org, sport, city, state: stateRegion, website: siteUrl, notes };
   const intakeId = await programSubmissionId(str(data.sid), email, answers);
   const location = [city, stateRegion].filter(Boolean).join(", ");
   // The summary is the notice's subject line: one line, bounded.

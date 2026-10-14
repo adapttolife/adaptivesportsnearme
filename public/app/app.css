@@ -713,7 +713,7 @@ h3, .pc-name { font-weight: 800; letter-spacing: -0.01em; }
 [data-look="sharp"] #beta, [data-look="sharp"] #top { background: #121212; border-bottom: 0; }
 [data-look="sharp"] #top { border-bottom: 1px solid #2A2A2A; }
 [data-look="sharp"] .hd, [data-look="sharp"] .hd .iconbtn { color: #fff; }
-[data-look="sharp"] .hd-brand img { content: url(/design/reset/logo-cream.svg); }
+[data-look="sharp"] .hd-brand img { content: url(/app/logo-cream.svg); }
 [data-look="sharp"] .hd-add { border-radius: 4px; }
 [data-look="sharp"] .display, [data-look="sharp"] h1, [data-look="sharp"] .v-home .door b, [data-look="sharp"] .v-home .band h2, [data-look="sharp"] .letter h2 {
   font-family: "Sofia Sans Extra Condensed", "Sofia Sans", Arial, sans-serif; text-transform: uppercase; font-weight: 900; letter-spacing: -0.01em; }
@@ -740,3 +740,16 @@ h3, .pc-name { font-weight: 800; letter-spacing: -0.01em; }
 [data-look="sharp"] .pc-name { text-transform: none; }
 /* Program names are data: sentence case keeps long names readable. */
 [data-look="sharp"] .v-program h1 { text-transform: none; font-family: "Sofia Sans", Arial, sans-serif; letter-spacing: -0.03em; line-height: 1.02; font-size: var(--fs-h1); }
+
+/* ---------- Verified: the check beside a name, form status, Turnstile (2026-10-14) ---------- */
+/* Verified means the program itself confirmed its listing with us. Lists show the check
+   only then; nothing in a list ever says "not verified". */
+.vcheck { display: inline-flex; vertical-align: -3px; margin-left: 6px; color: var(--teal); }
+.vcheck .ic { flex: none; }
+.fm-status { margin-top: 10px; font-size: 15px; line-height: 1.4; color: var(--graphite); }
+.fm-status:empty { display: none; }
+.fm-status.is-err { color: var(--error); display: flex; gap: 6px; align-items: flex-start; }
+.fm-status .ic { flex: none; margin-top: 2px; }
+.ts-box { margin-top: 12px; }
+.ts-box:empty { display: none; }
+.fm-opt-note { font-weight: 500; color: var(--muted); }

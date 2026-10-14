@@ -121,7 +121,7 @@ function titleFor({ where, state, sport }) {
 export async function openMap(ctx, opts = {}) {
   const { where = null, sport = "", verifiedOnly = false } = opts;
   const state = (opts.state || (where && where.state) || "").toUpperCase();
-  const key = [location.hash.split("?")[0], state, sport, verifiedOnly ? 1 : 0].join("|");
+  const key = [A.here().split("?")[0], state, sport, verifiedOnly ? 1 : 0].join("|");
   if (S && S.key === key && document.contains(S.el)) return;   // already open for this view
   if (S) closeMap();
 
@@ -129,7 +129,7 @@ export async function openMap(ctx, opts = {}) {
   if (!state || !D.shapes[state]) return;
   const sc = scope(D, { where, state, sport, verifiedOnly });
   const title = titleFor({ where, state, sport });
-  const base = stripMap(location.hash);
+  const base = stripMap(A.here());
   const ST = A.stateName(state);
   const swN = sc.statewide.length;
   const legendYou = where && where.coords ? `<li><i class="mp-k mp-k--you" aria-hidden="true"></i>${A.esc(where.kind === "zip" ? where.zip : where.short)}</li>` : "";
@@ -349,7 +349,7 @@ function onDialogClick(e) {
     const q = new URLSearchParams();
     if (s.sport) q.set("s", s.sport);
     if (s.verifiedOnly) q.set("v", "1");
-    const target = "#/near/" + encodeURIComponent(cityLabel(c)) + (q.toString() ? "?" + q : "");
+    const target = "/near/" + encodeURIComponent(cityLabel(c)) + (q.toString() ? "?" + q : "");
     s.afterClose = "nav";
     try { history.replaceState(history.state, "", s.base); } catch (_) {}
     A.closeOverlay({ restore: false });
@@ -365,7 +365,7 @@ function onClose() {
   s.el.removeEventListener("click", onDialogClick);
   try { if (s.map) s.map.remove(); } catch (_) {}
   const after = s.afterClose;
-  if (!FROM_APP && after !== "nav" && hasMap(location.hash) && stripMap(location.hash) === s.base) {
+  if (!FROM_APP && after !== "nav" && hasMap(A.here()) && stripMap(A.here()) === s.base) {
     if (s.pushed) history.back();
     else A.nav(s.base, { replace: true });
   }

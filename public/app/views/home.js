@@ -1,7 +1,7 @@
-/* Home `#/`, direction C ("Signal Blocks").
+/* Home `/`, direction C ("Signal Blocks").
    Order: the coral hero (headline, place search, an athlete that changes sport
    twice and then rests), sports, the four doors (grants, events, veterans, run a
-   program), "Near <city>" after a search, "Checked by a person", grants on a
+   program), "Near <city>" after a search, "Checked by our team", grants on a
    yellow band, events on a teal band, states, the letter, help.
    Colour follows Laura Lian's identity: each colour is paired with black.
    No national counts on this page. */
@@ -14,9 +14,9 @@ const HERO = A.LOOK === "hues"
 const GRID = ["tennis", "basketball", "soccer", "baseball", "equestrian", "swimming", "skiing", "sledhockey"];
 const CHECKED_ORDER = ["tennis", "basketball", "equestrian", "soccer", "swimming", "baseball", "sledhockey", "golf", "rowing", "archery", "cycling", "sailing"];
 
-/** One verified, placed, dated listing per sport, each from a different state, newest check first. */
+/** One team-checked, placed, dated listing per sport, each from a different state, newest check first. */
 function checkedMix(items) {
-  const pool = items.filter((p) => p.verified && p.placed && p.lastChecked)
+  const pool = items.filter((p) => p.teamChecked && p.placed && p.lastChecked)
     .sort((a, b) => String(b.lastChecked).localeCompare(String(a.lastChecked)));
   const states = new Set(), out = [];
   for (const k of CHECKED_ORDER) {
@@ -29,23 +29,23 @@ function checkedMix(items) {
 
 function hero() {
   const last = A.recall("place");
-  const chip = last ? `<a class="chip hb-last" href="#/near/${encodeURIComponent(last)}">${A.icon("history", 18)}<span>Last search: ${A.esc(last)}</span></a>` : "";
+  const chip = last ? `<a class="chip hb-last" href="/near/${encodeURIComponent(last)}">${A.icon("history", 18)}<span>Last search: ${A.esc(last)}</span></a>` : "";
   const figs = HERO.map(([k], i) => `<span class="hb-fig${i === 0 ? " is-on" : ""}" data-i="${i}">${A.fig(k, { color: "#1A1A1A", big: true, cls: "fig--pin fig--mid" })}</span>`).join("");
   return `<section class="hb" data-hero style="--hb:${HERO[0][1]}"><div class="hb-art" aria-hidden="true">${figs}</div>
-<div class="hb-text"><h1 class="display" tabindex="-1">Find your place in adaptive sports.</h1><p class="hb-lede">Programs, grants and events near you. Every listing says whether a person checked it, and when.</p>${A.whereForm({ id: "home-where", after: chip })}</div></section>`;
+<div class="hb-text"><h1 class="display" tabindex="-1">Find your place in adaptive sports.</h1><p class="hb-lede">Programs, grants and events near you. Every listing shows when we last checked it.</p>${A.whereForm({ id: "home-where", after: chip })}</div></section>`;
 }
 
 function sports(D) {
   const counts = {};
   for (const p of D.items) counts[p.key] = (counts[p.key] || 0) + 1;
-  const tiles = GRID.map((k) => `<li><a class="st" href="#/sports/${A.esc(k)}">${A.plate(k, { kind: "tile", cls: "st-plate" })}<span class="st-name">${A.esc(A.sportName(k))}</span><span class="st-n num">${counts[k] || 0} programs</span></a></li>`).join("");
-  const all = `<li><a class="st st--all" href="#/sports"><span class="st-allbox">${A.icon("layout-grid", 34)}<b>All sports</b></span><span class="st-name">See all 45</span><span class="st-n">From archery to water skiing</span></a></li>`;
+  const tiles = GRID.map((k) => `<li><a class="st" href="/sports/${A.esc(k)}">${A.plate(k, { kind: "tile", cls: "st-plate" })}<span class="st-name">${A.esc(A.sportName(k))}</span><span class="st-n num">${counts[k] || 0} programs</span></a></li>`).join("");
+  const all = `<li><a class="st st--all" href="/sports"><span class="st-allbox">${A.icon("layout-grid", 34)}<b>All sports</b></span><span class="st-name">See all 45</span><span class="st-n">From archery to water skiing</span></a></li>`;
   return `<section class="sec hs" aria-labelledby="hs-h">${A.sectionHead({ title: "Pick a sport", id: "hs-h" })}<ul class="st-grid">${tiles}${all}</ul></section>`;
 }
 
 function doors() {
   const d = (cls, href, key, title, line) => `<a class="door ${cls}" href="${href}"><span class="door-fig">${A.fig(key, { color: cls === "door--ink" ? "#FFFFFF" : "#1A1A1A", big: true })}</span><b>${title}</b><span>${line}</span></a>`;
-  return `<nav class="doors" aria-label="More ways in">${d("door--sun", "#/grants", "grant", "Grants", "Money for gear, travel and programs")}${d("door--sea", "#/events", "event", "Events", "Clinics, tryouts and game days")}${d("door--ink", "#/sports/veteran-meetup", "veteran-meetup", "Veterans", "Meetups, coffee calls and outdoor days near you")}${d("door--coral", "#/add/program", "multi", "Run a program?", "List it free. A person checks it.")}</nav>`;
+  return `<nav class="doors" aria-label="More ways in">${d("door--sun", "/grants", "grant", "Grants", "Money for gear, travel and programs")}${d("door--sea", "/events", "event", "Events", "Clinics, tryouts and game days")}${d("door--ink", "/sports/veteran-meetup", "veteran-meetup", "Veterans", "Meetups, coffee calls and outdoor days near you")}${d("door--coral", "/add/program", "multi", "Run a program?", "List it free. A person checks it.")}</nav>`;
 }
 
 async function nearRail(D) {
@@ -58,13 +58,13 @@ async function nearRail(D) {
   const list = [...L.inCity, ...L.near].slice(0, 8);
   if (!list.length) return "";
   const short = where.short || where.city;
-  return `<section class="sec home-near">${A.sectionHead({ title: "Near " + short, seeAll: { label: "See all near " + short, href: "#/near/" + encodeURIComponent(where.label) } })}<div class="cards is-rail cols-4">${list.map((p) => A.programCard(p, { where })).join("")}</div></section>`;
+  return `<section class="sec home-near">${A.sectionHead({ title: "Near " + short, seeAll: { label: "See all near " + short, href: "/near/" + encodeURIComponent(where.label) } })}<div class="cards is-rail cols-4">${list.map((p) => A.programCard(p, { where })).join("")}</div></section>`;
 }
 
 function checkedRail(D) {
   const list = checkedMix(D.items);
   if (!list.length) return "";
-  return `<section class="sec home-checked">${A.sectionHead({ title: "Checked by a person", sub: "A person on our team confirmed each of these against an official source." })}<div class="cards is-rail cols-4">${list.map((p) => A.programCard(p, { stamp: true })).join("")}</div></section>`;
+  return `<section class="sec home-checked">${A.sectionHead({ title: "Checked by our team", sub: "A person on our team checked each of these against public sources." })}<div class="cards is-rail cols-4">${list.map((p) => A.programCard(p, { stamp: true })).join("")}</div></section>`;
 }
 
 function grants(D) {
@@ -72,11 +72,11 @@ function grants(D) {
   const withAmt = open.filter((g) => A.grantInfo(g).amount), rest = open.filter((g) => !A.grantInfo(g).amount);
   const list = [...withAmt, ...rest].slice(0, 3);
   if (!list.length) return "";
-  return `<section class="band band--sun" aria-labelledby="hg-h"><div class="band-in"><div class="band-head"><span class="band-fig">${A.fig("grant", { color: "#1A1A1A", big: true })}</span><div><h2 id="hg-h">Grants for athletes</h2><p>Money for equipment, travel and fees. You apply on the grant maker's site.</p></div></div><div class="grows glist is-one">${list.map(A.grantRow).join("")}</div><a class="btn btn--ink band-all" href="#/grants?a=athlete">See all grants</a></div></section>`;
+  return `<section class="band band--sun" aria-labelledby="hg-h"><div class="band-in"><div class="band-head"><span class="band-fig">${A.fig("grant", { color: "#1A1A1A", big: true })}</span><div><h2 id="hg-h">Grants for athletes</h2><p>Money for equipment, travel and fees. You apply on the grant maker's site.</p></div></div><div class="grows glist is-one">${list.map(A.grantRow).join("")}</div><a class="btn btn--ink band-all" href="/grants?a=athlete">See all grants</a></div></section>`;
 }
 
 function events() {
-  return `<section class="band band--sea" aria-labelledby="he-h"><div class="band-in"><div class="band-head"><span class="band-fig">${A.fig("event", { color: "#1A1A1A", big: true })}</span><div><h2 id="he-h">Events</h2><p>No events posted yet. Know of a clinic, tryout or game day coming up? Add it and a person will check it before it goes live.</p></div></div><a class="btn btn--ink band-all" href="#/add/event">Add an event</a></div></section>`;
+  return `<section class="band band--sea" aria-labelledby="he-h"><div class="band-in"><div class="band-head"><span class="band-fig">${A.fig("event", { color: "#1A1A1A", big: true })}</span><div><h2 id="he-h">Events</h2><p>No events posted yet. Know of a clinic, tryout or game day coming up? Add it and a person will check it before it goes live.</p></div></div><a class="btn btn--ink band-all" href="/add/event">Add an event</a></div></section>`;
 }
 
 function states() {

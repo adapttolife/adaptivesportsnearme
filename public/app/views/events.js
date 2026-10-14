@@ -1,4 +1,4 @@
-/* Events `#/events` (spec 6.11, WP-F).
+/* Events `/events` (spec 6.11, WP-F).
    No calendar or RSS feed links: there are no events yet, so the page promises no feed. */
 import * as A from "../app.js";
 
@@ -29,13 +29,13 @@ export async function render(ctx) {
 
   const body = events.length
     ? `<div class="ev-groups">${monthGroups(events)}</div>
-<div class="btns ev-add">${A.btn("Add an event", "#/add/event", "orange", { icon: "calendar-plus" })}</div>`
+<div class="btns ev-add">${A.btn("Add an event", "/add/event", "orange", { icon: "calendar-plus" })}</div>`
     : `<div class="ev-empty">${A.emptyState({
         title: "No events posted yet",
         body: "Events are the newest part of this directory. Know of one coming up? Add it and a person will check it before it goes live.",
         image: "event",
         actions: [
-          { label: "Add an event", href: "#/add/event", kind: "orange" },
+          { label: "Add an event", href: "/add/event", kind: "orange" },
           { label: "Get the letter", href: "", kind: "line", attrs: 'data-jump="letter"' },
         ],
       })}</div>`;

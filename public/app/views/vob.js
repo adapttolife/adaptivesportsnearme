@@ -1,4 +1,4 @@
-/* Veteran-owned businesses `#/resources/veteran-owned-businesses`.
+/* Veteran-owned businesses `/resources/veteran-owned-businesses`.
    Karen Atkinson's page (her Oct 8, 2026 email, "Page to link state directories"):
    her words, her links (checked Oct 13), the same data as production's
    src/resources/veteran-businesses.js, exported to data/veteran-businesses.json.
@@ -7,7 +7,7 @@ import * as A from "../app.js";
 
 let DATA = null;
 async function data() {
-  DATA = DATA || await fetch("/design/c2/data/veteran-businesses.json").then((r) => r.json());
+  DATA = DATA || await fetch("/data/veteran-businesses.json").then((r) => r.json());
   return DATA;
 }
 
@@ -29,7 +29,7 @@ ${ext(s.national.url, s.national.name)}</li>`).join("");
 <section class="sec" aria-labelledby="vb-s">${A.sectionHead({ title: c.stateLead, id: "vb-s" })}
 <p class="vb-scope">${A.esc(c.scope)}</p><form class="vb-pick" data-vb-pick><label for="vb-sel">Choose your state</label><div class="vb-row"><select id="vb-sel" class="input">${opts}</select><button class="btn btn--ink" type="submit">Go</button></div></form>
 <ul class="vb-states">${states}</ul></section>
-<p class="vb-back"><a class="tlink" href="#/sports/veteran-meetup">${A.icon("arrow-left", 18)}Veteran meetups near you</a></p>
+<p class="vb-back"><a class="tlink" href="/sports/veteran-meetup">${A.icon("arrow-left", 18)}Veteran meetups near you</a></p>
 </div>`,
     railActive: "resources",
   };

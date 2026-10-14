@@ -1,4 +1,4 @@
-/* State community page: #/states/:st (spec 6.7, community header 4.10). WP-D.
+/* State community page: /states/:st (spec 6.7, community header 4.10). WP-D.
    Query: s = sport key (filter), map = 1 (map overlay, handled by app.js + map.js).
    Counts here are for the state being viewed, which 5.4 allows.
    The group heading (.grp) is shared with the sport page and lives in app.css. */
@@ -11,7 +11,7 @@ const checkedT = (p) => { const t = Date.parse(p.lastChecked || ""); return Numb
 const cityKey = (p) => String(p.cityFirst || "").replace(/ and more$/, "");
 const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
 
-function hrefFor(st, s) { return "#/states/" + st + (s ? "?s=" + encodeURIComponent(s) : ""); }
+function hrefFor(st, s) { return "/states/" + st + (s ? "?s=" + encodeURIComponent(s) : ""); }
 
 /** 8 cards taking turns by sport: verified first, then the latest check date. */
 function around(all) {
@@ -49,11 +49,10 @@ export async function render(ctx) {
 
   // Header
   const h1 = s ? `${sName} in ${stName}` : stName;
-  const nV = list.filter((p) => p.verified).length;
-  const count = list.length ? `${plural(list.length, "listing", "listings")} · ${nV} checked by a person` : null;
+  const count = list.length ? plural(list.length, "listing", "listings") : null;
   const head = A.communityHeader({
     kind: "state", st, title: h1, count, dots: placed, sport: s,
-    mapHref: s ? `#/states/${st}?s=${encodeURIComponent(s)}&map=1` : `#/states/${st}?map=1`,
+    mapHref: s ? `/states/${st}?s=${encodeURIComponent(s)}&map=1` : `/states/${st}?map=1`,
   });
 
   // Sport bar: sports present in the state, plus the chosen one so it stays selected when empty.
@@ -90,11 +89,11 @@ export async function render(ctx) {
     body += `<section class="sec">${A.emptyState(s ? {
       title: `No ${sLow} listed in ${stName} yet.`,
       body: "This directory is new and still growing. If you know one, tell us and a person will check it.",
-      actions: [{ label: `See every sport in ${stName}`, href: hrefFor(st), attrs: "data-replace" }, { label: "Tell us about one", href: "#/add/program" }],
+      actions: [{ label: `See every sport in ${stName}`, href: hrefFor(st), attrs: "data-replace" }, { label: "Tell us about one", href: "/add/program" }],
     } : {
       title: `No programs listed in ${stName} yet.`,
       body: "This directory is new and still growing. If you know one, tell us and a person will check it.",
-      actions: [{ label: "Tell us about one", href: "#/add/program" }, { label: "Browse by state", href: "#/states" }],
+      actions: [{ label: "Tell us about one", href: "/add/program" }, { label: "Browse by state", href: "/states" }],
     })}</section>`;
     const groups = A.nearestOutside({ kind: "state", state: st, coords: null, city: null }, pool);
     if (groups.length) {
@@ -106,7 +105,7 @@ export async function render(ctx) {
   const gr = D.grants.map((g) => [g, A.grantInfo(g)]).filter(([g, i]) => g.audience === "athlete" && i.open)
     .sort((a, b) => (!!b[1].amount - !!a[1].amount) || a[0].name.localeCompare(b[0].name)).slice(0, 2);
   if (gr.length) {
-    body += `<section class="sec" aria-labelledby="st-gr">${A.sectionHead({ title: "Grants for athletes", id: "st-gr", sub: "Money for equipment, travel and fees. You apply on the grant maker's site.", seeAll: { label: "See all grants", href: "#/grants?a=athlete" } })}<div class="glist">${gr.map(([g]) => A.grantRow(g)).join("")}</div></section>`;
+    body += `<section class="sec" aria-labelledby="st-gr">${A.sectionHead({ title: "Grants for athletes", id: "st-gr", sub: "Money for equipment, travel and fees. You apply on the grant maker's site.", seeAll: { label: "See all grants", href: "/grants?a=athlete" } })}<div class="glist">${gr.map(([g]) => A.grantRow(g)).join("")}</div></section>`;
   }
 
   return {

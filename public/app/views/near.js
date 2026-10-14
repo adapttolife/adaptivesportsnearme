@@ -1,4 +1,4 @@
-/* Near results, #/near/:place (spec 6.2, WP-C).
+/* Near results, /near/:place (spec 6.2, WP-C).
    The honest order: in your city, then within about 25 miles, then elsewhere in
    your state, then across your state with no single city listed. Distances come
    only from A.relation() through the shared cards and rows.
@@ -10,15 +10,14 @@ import * as A from "../app.js";
 const GROUP_IDS = { inCity: "nr-in", near: "nr-near", elsewhere: "nr-else", statewide: "nr-sw" };
 let LAST = null; // { path, qs } of the previous near render, to announce filter changes
 
-/* ---------- hash helpers (the path stays exactly as typed, so map=1 stays an overlay-only change) ---------- */
+/* ---------- address helpers (the path stays exactly as typed, so map=1 stays an overlay-only change) ---------- */
 function hrefFor(ctx, changes = {}) {
-  const q = { s: ctx.query.s || "", v: ctx.query.v || "", ...changes };
+  const q = { s: ctx.query.s || "", ...changes };
   const qs = new URLSearchParams();
   if (q.s) qs.set("s", q.s);
-  if (q.v === "1") qs.set("v", "1");
   if (q.map === "1") qs.set("map", "1");
   const s = qs.toString();
-  return "#" + ctx.path + (s ? "?" + s : "");
+  return ctx.path + (s ? "?" + s : "");
 }
 const plural = (n, one, many) => (n === 1 ? one : many);
 
@@ -79,7 +78,7 @@ export async function render(ctx) {
   if (where.kind === "state") {
     // A state search shows the state page instead (sport kept).
     const s = ctx.query.s && D.sportByKey[ctx.query.s] ? ctx.query.s : "";
-    A.nav("#/states/" + where.state + (s ? "?s=" + encodeURIComponent(s) : ""), { replace: true });
+    A.nav("/states/" + where.state + (s ? "?s=" + encodeURIComponent(s) : ""), { replace: true });
     return { title: A.stateName(where.state) + " · Adaptive Sports Near Me", html: `<section class="nr-none"><h1 tabindex="-1">${A.esc(A.stateName(where.state))}</h1></section>` };
   }
   if (where.kind === "none") {
@@ -90,19 +89,17 @@ export async function render(ctx) {
   A.remember("place", where.label);
 
   const s = ctx.query.s && D.sportByKey[ctx.query.s] ? ctx.query.s : "";
-  const vOnly = ctx.query.v === "1";
   const sportLow = s ? A.sportName(s).toLowerCase() : "";
   const ST = A.stateName(where.state);
   const city = where.short;
 
-  const vPool = vOnly ? D.items.filter((p) => p.verified) : D.items;
-  const pool = s ? vPool.filter((p) => p.key === s) : vPool;
+  const pool = s ? D.items.filter((p) => p.key === s) : D.items;
   const g = A.ladder(where, pool);
   const total = g.inCity.length + g.near.length + g.elsewhere.length + g.statewide.length;
   const more = g.elsewhere.length + g.statewide.length;
 
-  // Sport bar: sports present anywhere in this place's ladder (verified filter applied), plus the active one.
-  const full = A.ladder(where, vPool);
+  // Sport bar: sports present anywhere in this place's ladder, plus the active one.
+  const full = A.ladder(where, D.items);
   const keys = new Set();
   for (const list of [full.inCity, full.near, full.elsewhere, full.statewide]) for (const p of list) keys.add(p.key);
   if (s) keys.add(s);
@@ -135,7 +132,6 @@ export async function render(ctx) {
   <button type="button" class="nr-place" data-open="search" data-place="${A.esc(where.label)}" data-sport="${A.esc(s)}">
     <span class="nr-place-t"><b>${A.esc(where.label)}</b><span class="nr-place-sep" aria-hidden="true"> · </span><span class="nr-place-s">${A.esc(s ? A.sportName(s) : "Any sport")}</span></span>${A.icon("chevron-down", 20)}
   </button>
-  <button type="button" class="chip nr-vchip" aria-pressed="${vOnly}" data-nr-verified>${A.icon(vOnly ? "check" : "badge-check", 18)}<span>Verified only</span></button>
   <a class="chip nr-mapbtn" href="${A.esc(hrefFor(ctx, { map: "1" }))}" data-nr-map>${A.icon("map", 18)}<span class="nr-maplabel">Map</span></a>
 </div>`;
 
@@ -170,15 +166,10 @@ export async function render(ctx) {
     const what = s ? sportLow : "programs";
     const actions = [];
     if (s) actions.push({ label: "See every sport near " + city, href: hrefFor(ctx, { s: "" }), attrs: "data-replace" });
-    else if (vOnly) actions.push({ label: "Show every listing", href: hrefFor(ctx, { v: "" }), attrs: "data-replace" });
-    else actions.push({ label: "Browse by state", href: "#/states" });
-    actions.push({ label: "Tell us about one", href: "#/add/program" });
-    if (vOnly) {
-      const loose = A.ladder(where, s ? D.items.filter((p) => p.key === s) : D.items);
-      if (s && loose.inCity.length + loose.near.length + loose.elsewhere.length + loose.statewide.length) actions.splice(1, 0, { label: "Include listings not yet verified", href: hrefFor(ctx, { v: "" }), attrs: "data-replace" });
-    }
+    else actions.push({ label: "Browse by state", href: "/states" });
+    actions.push({ label: "Tell us about one", href: "/add/program" });
     empty = `<div class="nr-empty">${A.emptyState({
-      title: `No ${vOnly ? "verified " : ""}${what} near ${city} yet`,
+      title: `No ${what} near ${city} yet`,
       body: "This directory is new and still growing.",
       actions,
     })}</div>`;
@@ -200,7 +191,7 @@ export async function render(ctx) {
 }
 
 export function mount(root, ctx) {
-  const qs = (ctx.query.s || "") + "|" + (ctx.query.v || "");
+  const qs = ctx.query.s || "";
   // Announce the new count after a filter change on the same place (spec 6.2 side effects).
   if (LAST && LAST.path === ctx.path && LAST.qs !== qs) {
     const total = countTotal(root);
@@ -211,15 +202,8 @@ export function mount(root, ctx) {
   LAST = { path: ctx.path, qs };
 
   const onClick = (e) => {
-    const v = e.target.closest("[data-nr-verified]");
-    if (v) {
-      e.preventDefault();
-      const on = v.getAttribute("aria-pressed") === "true";
-      A.nav(hrefFor(ctx, { v: on ? "" : "1" }), { replace: true });
-      return;
-    }
     // Tell the map it was pushed on top of this page, so closing it can go Back.
-    if (e.target.closest("[data-nr-map]")) window.__asnmMapFrom = location.hash;
+    if (e.target.closest("[data-nr-map]")) window.__asnmMapFrom = A.here();
   };
   root.addEventListener("click", onClick);
   return () => root.removeEventListener("click", onClick);

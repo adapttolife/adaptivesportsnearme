@@ -1,11 +1,15 @@
-/* ASNM round three prototype: router, data, place logic, shared components and
-   overlays (WP-A). Views import only this module: `import * as A from "../app.js"`.
+/* Adaptive Sports Near Me, the site: router, data, place logic, shared components,
+   overlays and forms. Views import only this module: `import * as A from "../app.js"`.
    Honesty rules kept here, because every view goes through these functions:
    - Places are city and state only. relation() is the only source of distance
      text, and only when both the visitor's place and the program's city are
      known. Programs with no city are never pinned and never get a distance.
-   - Trust is "Verified" or "Not yet verified" plus a date, never a score.
-   - Nothing is sent from this prototype. Forms validate in place and say so. */
+   - Trust is never a score. Verified (a check) means the program itself confirmed
+     its listing with us; lists show the check only then and never say
+     "unverified". The listing page says when a person last checked it.
+   - Forms validate in place, then post to the site's API with a Turnstile token. */
+
+import { isMenuRow, isDonationRow } from "./listable.js";
 
 const L = window.ListingArt, P = window.Proto;
 const $ = (s, r = document) => r.querySelector(s);
@@ -216,21 +220,7 @@ function sportsInDesc(p) {
   return out;
 }
 
-// A grant maker's site menu got scraped as listings (Donate, Give Now, Corporate Sponsorships...).
-// Any row that asks for money or support is not a program and never lists.
-// The name test only applies to rows with no state (the scraped menu); real programs keep
-// names like "Adaptive Recreation Partnership".
-const isDonationRow = (x) => /\bdonat/i.test(String(x.name || "")) || /donat|fundrais|partner-with-us|caf-supporters/i.test(String(x.website || "")) ||
-  (!x.state && (/\b(give|giving|fundrais\w*|sponsorships?|partnerships?|gala)\b/i.test(String(x.name || "")) || /^(partner|support|volunteer)$/i.test(String(x.name || "").trim())));
 const goodUrl = (u) => /^https?:\/\/\S+$/i.test(String(u || "").trim()) ? String(u).trim() : null;
-const urlHost = (u) => { try { return new URL(u).hostname.toLowerCase(); } catch (_) { return ""; } };
-// A scraped site menu item: no state, no city, and no real website (relative links like
-// "/region/idaho/" count as none) or a website on the grant maker's own domain.
-const isMenuRow = (x) => {
-  if (String(x.state || "").trim() || String(x.city || "").trim()) return false;
-  const w = goodUrl(x.website);
-  return !w || /(^|\.)challengedathletes\.org$/.test(urlHost(w));
-};
 
 function normalize(raw) {
   const p = { ...raw };
@@ -244,7 +234,11 @@ function normalize(raw) {
   }
   p.family = familyOf(p.key);
   p.tone = toneOf(p.key);
-  p.verified = p.verification === "verified";
+  // Verified (the check) means the program itself confirmed its listing with us
+  // (publicity_consent). A person on our team checking it (teamChecked, with the
+  // month) is said on the listing page, never as a badge (Alec, 2026-10-14).
+  p.verified = !!p.confirmed;
+  p.teamChecked = !!p.teamChecked;
   p.website = goodUrl(raw.website);
   p.cityFirst = cityShort(p.city);
   p.placed = isPlaced(p);
@@ -252,15 +246,29 @@ function normalize(raw) {
   return p;
 }
 
-/** Loads programs, grants, state shapes and sports once. */
+/* The live API rows, in the shape the views read. */
+// A listing's own lat/lng stay private until the program says yes (publicity_consent),
+// so maps and distances use the center of its listed city (cityCenter, from the server).
+function fromApi(r) {
+  const c = Array.isArray(r.cityCenter) ? r.cityCenter : null;
+  return { ...r, sportKey: L.symbolKey(r) || null, lat: c ? c[0] : null, lng: c ? c[1] : null, geo: c ? "city" : (r.state ? "state" : null) };
+}
+function grantFromApi(g) {
+  return { ...g, amount: g.amountDisplay || null, deadline: g.deadlineDisplay || null, url: g.applicationUrl || g.sourceUrl || null, open: g.isOpen ? 1 : 0 };
+}
+function eventFromApi(e) {
+  return { id: e.id, title: e.title, desc: e.description, sportKey: e.sport_key || null, venue: e.venue, city: e.city, state: e.state, url: e.url, start: e.starts_at, end: e.ends_at, allDay: e.all_day === 1 };
+}
+
+/** Loads programs, grants, events, state shapes and sports once. */
 export function loadData() {
   if (DATA_P) return DATA_P;
   DATA_P = (async () => {
     const get = (u) => fetch(u).then((r) => { if (!r.ok) throw new Error(u + " " + r.status); return r.json(); });
-    const [prog, gr, st, sp, vets] = await Promise.all([get("/design/programs.json"), get("/design/grants.json"), get("/design/states.json"), get("/design/sports.json"),
-      get("/design/c2/data/veterans.json").catch(() => ({ items: [] }))]);
-    // Karen Atkinson's veteran meetups (her Sept 2 research; staging holds them as pending), listed with the directory.
-    prog.items = prog.items.concat(vets.items || []);
+    // Grants and events are extra: if either is down, the directory still works.
+    const soft = (u) => get(u).catch((e) => { console.error(e); return { items: [] }; });
+    const [prog, gr, ev, st, sp] = await Promise.all([get("/api/directory"), soft("/api/grants"), soft("/api/events"), get("/data/states.json"), get("/data/sports.json")]);
+    prog.items = (prog.items || []).map(fromApi);
     const live = {};
     for (const s of sp.sports) {
       NAMES[s.key] = s.name;
@@ -292,11 +300,11 @@ export function loadData() {
     const byId = new Map(items.map((p) => [p.id, p]));
     const byState = {};
     for (const p of items) if (p.state) (byState[p.state] = byState[p.state] || []).push(p);
-    const grants = gr.items.map((g) => ({ ...g, rawName: g.name, name: displayName(g.name) }));
+    const grants = (gr.items || []).map(grantFromApi).map((g) => ({ ...g, rawName: g.name, name: displayName(g.name) }));
     D = {
       items, byId, grants, grantById: new Map(grants.map((g) => [g.id, g])), byState,
       sports, sportByKey: Object.fromEntries(sports.map((s) => [s.key, s])),
-      shapes: st.shapes, centers: st.centers, events: [], generated: prog.generated, countByKey: count,
+      shapes: st.shapes, centers: st.centers, fits: st.fits || {}, events: (ev.items || []).map(eventFromApi), countByKey: count,
     };
     return D;
   })();
@@ -338,7 +346,7 @@ let GEO_P = null, G = null;
 export function loadGeo() {
   if (GEO_P) return GEO_P;
   GEO_P = (async () => {
-    const [places, zcta] = await Promise.all([fetch("/design/places.json").then((r) => r.json()), fetch("/design/zcta.json").then((r) => r.json())]);
+    const [places, zcta] = await Promise.all([fetch("/data/places.json").then((r) => r.json()), fetch("/assets/data/zcta.json").then((r) => r.json())]);
     const list = Object.entries(places).map(([k, c]) => { const i = k.indexOf("|"); return { st: k.slice(0, i), city: k.slice(i + 1), c }; });
     G = { places, zcta, list };
     return { places, zcta };
@@ -434,7 +442,7 @@ export async function didYouMean(q, sport = "") {
   hits.sort((a, b) => ((D.byState[b[0]] || []).length - (D.byState[a[0]] || []).length) || a[0].localeCompare(b[0]));
   return hits.slice(0, 6).map(([code, h]) => {
     const label = `${displayCity(h.key)}, ${code}`;
-    return { label, href: "#/near/" + encodeURIComponent(label) + (sport ? "?s=" + encodeURIComponent(sport) : "") };
+    return { label, href: "/near/" + encodeURIComponent(label) + (sport ? "?s=" + encodeURIComponent(sport) : "") };
   });
 }
 export function didYouMeanHtml(opts) {
@@ -469,8 +477,8 @@ export async function suggestPlaces(text, limit = 6) {
   listed.sort(byName); other.sort(byName);
   const lower = String(text).trim().toLowerCase();
   const states = Object.entries(STATE_NAMES).filter(([code, n]) => n.toLowerCase().startsWith(lower) || (lower.length === 2 && code.toLowerCase() === lower))
-    .map(([code, n]) => ({ label: n, href: "#/states/" + code }));
-  const city = (e) => { const label = `${displayCity(e.city)}, ${e.st}`; return { label, href: "#/near/" + encodeURIComponent(label) }; };
+    .map(([code, n]) => ({ label: n, href: "/states/" + code }));
+  const city = (e) => { const label = `${displayCity(e.city)}, ${e.st}`; return { label, href: "/near/" + encodeURIComponent(label) }; };
   return [...listed.map(city), ...states, ...other.map(city)].slice(0, limit);
 }
 
@@ -704,31 +712,25 @@ export function avatar(key, size = 56) {
   return `<span class="av av--${s}" style="${toneStyle(key)}${wide}" aria-hidden="true">${fig(key)}</span>`;
 }
 
-/** One trust function; mode "short" (cards, rows, sticky) or "page" (listing trust box). */
+/** When the listing was last looked at: "Website checked Oct 8", else "Listed Oct 14", else "". */
+export function freshText(p) {
+  const checked = shortDate(p.lastChecked);
+  if (checked) return "Website checked\u00a0" + checked;
+  const listed = shortDate(p.listedAt);
+  return listed ? "Listed\u00a0" + listed : "";
+}
+/** The Verified check beside a name. Only for programs that confirmed their listing; nothing otherwise. */
+export function vcheck(p) {
+  return p && p.verified ? `<span class="vcheck">${icon("badge-check", 18)}<span class="sr"> Verified</span></span>` : "";
+}
+/** The date line for cards, rows ("short") and the phone sticky bar ("sticky"). No "unverified" words, ever. */
 export function trust(p, mode = "short") {
-  const v = !!p.verified;
-  if (mode === "page") {
-    const title = v ? "Verified" : "Not yet verified";
-    const body = v
-      ? "A person on our team checked this program against an official source. Schedules change, so check the website before you go."
-      : "We found this program, and no one on our team has confirmed it yet. Check the website before you go.";
-    let row;
-    if (p.lastChecked && longDate(p.lastChecked)) row = `Website last checked: <span class="num">${esc(longDate(p.lastChecked))}</span>`;
-    else if (!v && p.listedAt && longDate(p.listedAt)) row = `Listed: <span class="num">${esc(longDate(p.listedAt))}</span>, not checked yet`;
-    else row = "Website last checked: Not recorded yet";
-    let vm = "";
-    const ml = p.verifiedMonth && L.monthLabel(p.verifiedMonth);
-    if (ml) vm = `<p class="tb-row">Verified by a person: <span class="num">${esc(ml)}</span></p>`;
-    return `<div class="trustbox ${v ? "is-v" : "is-u"}"><p class="tb-title">${icon(v ? "badge-check" : "circle-dashed", 22)}<span>${title}</span></p><p class="tb-body">${body}</p><p class="tb-row">${row}</p>${vm}</div>`;
-  }
-  const checked = shortDate(p.lastChecked), listed = shortDate(p.listedAt);
-  const rest = checked ? "Website checked\u00a0" + checked : (!v && listed ? "Listed\u00a0" + listed : "No check date yet");
+  const v = !!p.verified, rest = freshText(p);
   if (mode === "sticky") {
-    // Phone sticky bar: two lines at most. Status, then the date; under 360px the date drops "Website".
-    const short = checked ? "Checked\u00a0" + checked : (!v && listed ? "Listed\u00a0" + listed : "No check date yet");
-    return `<span class="trust trust--stk ${v ? "is-v" : "is-u"}"><span class="ts-a">${icon(v ? "badge-check" : "circle-dashed", 18)}${v ? "<b>Verified</b>" : "Not yet verified"}</span><span class="ts-b num"><span class="ts-long">${esc(rest)}</span><span class="ts-short" aria-hidden="true">${esc(short)}</span></span></span>`;
+    const short = rest.replace(/^Website checked/, "Checked");
+    return `<span class="trust trust--stk${v ? " is-v" : ""}">${v ? `<span class="ts-a">${icon("badge-check", 18)}<b>Verified</b></span>` : ""}${rest ? `<span class="ts-b num"><span class="ts-long">${esc(rest)}</span><span class="ts-short" aria-hidden="true">${esc(short)}</span></span>` : ""}</span>`;
   }
-  return `<span class="trust ${v ? "is-v" : "is-u"}">${icon(v ? "badge-check" : "circle-dashed", 18)}<span>${v ? "<b>Verified</b>" : "Not yet verified"} · <span class="num">${esc(rest)}</span></span></span>`;
+  return rest ? `<span class="trust num">${esc(rest)}</span>` : "";
 }
 
 const vpill = () => `<span class="vpill">${icon("badge-check", 18)}Verified</span>`;
@@ -753,21 +755,20 @@ const metaText = (p, ctx) => (ctx && ctx.single) ? placeFor(p, ctx) : `${sportNa
 
 /** Card for lists that mix sports. ctx: { where, stamp, wide, sameCity } */
 export function programCard(p, ctx = {}) {
-  // One badge at most on the art (the place is in the line under the name).
-  const inner = p.verified ? vpill() : "";
-  const d = distText(p, ctx);
-  return `<a class="pcard${ctx.wide ? " is-wide" : ""}" href="#/programs/${esc(p.id)}">${plate(p, { kind: "card", inner, wide: ctx.wide })}<h3 class="pc-name" title="${esc(p.name)}">${esc(p.name)}</h3><p class="meta">${esc(metaText(p, { single: false }))}</p>${d ? `<p class="dist">${esc(d)}</p>` : ""}<p class="pc-trust">${trust(p, "short")}</p></a>`;
+  const d = distText(p, ctx), t = trust(p, "short");
+  return `<a class="pcard${ctx.wide ? " is-wide" : ""}" href="/programs/${esc(p.id)}">${plate(p, { kind: "card", wide: ctx.wide })}<h3 class="pc-name" title="${esc(p.name)}">${esc(p.name)}${vcheck(p)}</h3><p class="meta">${esc(metaText(p, { single: false }))}</p>${d ? `<p class="dist">${esc(d)}</p>` : ""}${t ? `<p class="pc-trust">${t}</p>` : ""}</a>`;
 }
 
 /** Row: tile left, then name, meta, distance and trust. ctx: { where, single, sameCity, outside }
     A list of one sport (ctx.single) drops the tile: the page header already shows the sport,
     so the row is name, place (and distance when real), then trust and date. */
 export function programRow(p, ctx = {}, hidden = false) {
-  const d = distText(p, ctx);
+  const d = distText(p, ctx), t = trust(p, "short");
   if (ctx.single) {
-    return `<a class="prow prow--c" href="#/programs/${esc(p.id)}"${hidden ? " hidden" : ""}><div class="pr-body"><h3 class="pr-name">${esc(p.name)}</h3><p class="meta">${esc(placeFor(p, ctx))}${d ? `<span class="pr-dist"> · ${esc(d)}</span>` : ""}</p><p class="pr-line">${trust(p, "short")}</p></div></a>`;
+    return `<a class="prow prow--c" href="/programs/${esc(p.id)}"${hidden ? " hidden" : ""}><div class="pr-body"><h3 class="pr-name">${esc(p.name)}${vcheck(p)}</h3><p class="meta">${esc(placeFor(p, ctx))}${d ? `<span class="pr-dist"> · ${esc(d)}</span>` : ""}</p>${t ? `<p class="pr-line">${t}</p>` : ""}</div></a>`;
   }
-  return `<a class="prow" href="#/programs/${esc(p.id)}"${hidden ? " hidden" : ""}>${plate(p, { kind: "row" })}<div class="pr-body"><h3 class="pr-name">${esc(p.name)}</h3><p class="meta">${esc(metaText(p, ctx))}</p><p class="pr-line">${d ? `<span class="pr-dist">${esc(d)}</span> · ` : ""}${trust(p, "short")}</p></div></a>`;
+  const line = [d ? `<span class="pr-dist">${esc(d)}</span>` : "", t].filter(Boolean).join(" · ");
+  return `<a class="prow" href="/programs/${esc(p.id)}"${hidden ? " hidden" : ""}>${plate(p, { kind: "row" })}<div class="pr-body"><h3 class="pr-name">${esc(p.name)}${vcheck(p)}</h3><p class="meta">${esc(metaText(p, ctx))}</p>${line ? `<p class="pr-line">${line}</p>` : ""}</div></a>`;
 }
 
 let UID = 0;
@@ -784,11 +785,11 @@ export function rowList(list, ctx = {}, { id, first = 12 } = {}) {
 export function grantRow(g) {
   const gi = grantInfo(g);
   const line = [gi.amount ? `<b class="g-amt num">${esc(gi.amount)}</b>` : "", `<span>${esc(gi.deadlineText)}</span>`].filter(Boolean).join(" · ");
-  return `<a class="grow" href="#/grants/${esc(g.id)}"><h3 class="g-name">${esc(displayName(g.name))}</h3><p class="g-from">From ${esc(g.source || "the grant maker")}</p><p class="g-line">${line}</p><p class="tags"><span class="tag">${gi.audienceLabel}</span>${gi.closed ? `<span class="tag tag--muted">Closed for now</span>` : ""}</p></a>`;
+  return `<a class="grow" href="/grants/${esc(g.id)}"><h3 class="g-name">${esc(displayName(g.name))}</h3><p class="g-from">From ${esc(g.source || "the grant maker")}</p><p class="g-line">${line}</p><p class="tags"><span class="tag">${gi.audienceLabel}</span>${gi.closed ? `<span class="tag tag--muted">Closed for now</span>` : ""}</p></a>`;
 }
 export function grantCard(g) {
   const gi = grantInfo(g);
-  return `<a class="gcard" href="#/grants/${esc(g.id)}">${plate("grant", { kind: "card", keepText: true, inner: `<span class="vpill vpill--plain">${gi.audienceLabel}</span>` })}${gi.amount ? `<p class="gc-amt num">${esc(gi.amount)}</p>` : ""}<h3 class="gc-name">${esc(displayName(g.name))}</h3><p class="gc-dl">${esc(gi.deadlineText)}</p></a>`;
+  return `<a class="gcard" href="/grants/${esc(g.id)}">${plate("grant", { kind: "card", keepText: true, inner: `<span class="vpill vpill--plain">${gi.audienceLabel}</span>` })}${gi.amount ? `<p class="gc-amt num">${esc(gi.amount)}</p>` : ""}<h3 class="gc-name">${esc(displayName(g.name))}</h3><p class="gc-dl">${esc(gi.deadlineText)}</p></a>`;
 }
 
 /** Event card: { id, title|name, key|sportKey, city, state, start (ISO), url } */
@@ -818,11 +819,11 @@ export function emptyState({ title, body, actions = [], image } = {}) {
 export function letterBlock({ source = "page" } = {}) {
   const i = uid("em");
   return `<section class="letter" id="letter" aria-labelledby="${i}-h"><h2 id="${i}-h" tabindex="-1">Get the letter</h2><p>New programs, grants and events, when there is something worth sending. No spam, and you can unsubscribe any time.</p>
-<form class="letter-form" data-letter data-source="${esc(source)}" novalidate><div class="field"><label for="${i}">Email</label><div class="letter-row"><input id="${i}" name="email" type="email" autocomplete="email" placeholder="name@example.com" required data-error="Enter an email address, like name@example.com."><button class="btn btn--ink" type="submit">Subscribe</button></div></div><input name="company" tabindex="-1" autocomplete="off" class="hpot" aria-hidden="true"><label class="check"><input type="checkbox" name="beta"><span>I want the first look at new features</span></label></form></section>`;
+<form class="letter-form" data-letter data-send="/api/subscribe" data-source="asnm-letter-${esc(source)}" data-done="You're on the list. We'll write when there is something worth sending." novalidate><div class="field"><label for="${i}">Email</label><div class="letter-row"><input id="${i}" name="em" type="email" autocomplete="email" placeholder="name@example.com" required data-error="Enter an email address, like name@example.com."><button class="btn btn--ink" type="submit">Subscribe</button></div></div><input name="company" tabindex="-1" autocomplete="off" class="hpot" aria-hidden="true"><label class="check"><input type="checkbox" name="beta"><span>I want the first look at new features</span></label></form></section>`;
 }
 
 export function helpBand() {
-  return `<section class="helpband" aria-labelledby="hb-h"><h2 id="hb-h">Help build this</h2><p>Know a program we missed, or run one listed here? Tell us.</p><div class="btns">${btn("Add a program", "#/add/program", "line")}${btn("Add an event", "#/add/event", "line")}${btn("Claim your program", "#/help", "line")}</div></section>`;
+  return `<section class="helpband" aria-labelledby="hb-h"><h2 id="hb-h">Help build this</h2><p>Know a program we missed, or run one listed here? Tell us.</p><div class="btns">${btn("Add a program", "/add/program", "line")}${btn("Add an event", "/add/event", "line")}${btn("Claim your program", "/help", "line")}</div></section>`;
 }
 
 /** State outline. dots: programs (px/py), [x, y] in the 100 box, or [lat, lng]. you: [lat, lng]. */
@@ -841,7 +842,7 @@ const tier = (n) => !n ? 0 : n < 10 ? 1 : n < 30 ? 2 : n < 60 ? 3 : 4;
 
 /** "Choose a state" list. mode: "open" | "toggle" (collapsed on phones). */
 export function stateList({ hrefFor, mode = "open", title = "Choose a state" } = {}) {
-  const href = hrefFor || ((st) => "#/states/" + st);
+  const href = hrefFor || ((st) => "/states/" + st);
   const id = uid("sl");
   const items = STATE_CODES.map((st) => `<li><a href="${esc(href(st))}">${esc(stateName(st))}</a></li>`).join("");
   const toggle = mode === "toggle" ? `<button type="button" class="btn btn--line slist-btn" aria-expanded="false" aria-controls="${id}" data-toggle-list>Show all states</button>` : "";
@@ -851,7 +852,7 @@ export function stateList({ hrefFor, mode = "open", title = "Choose a state" } =
 /** Tile map of states plus the "Choose a state" list. list: "open" | "toggle" | "none" */
 export function tileMap({ counts, hrefFor, selected, list = "open" } = {}) {
   const c = counts || Object.fromEntries(Object.entries(D.byState).map(([k, v]) => [k, v.length]));
-  const href = hrefFor || ((st) => "#/states/" + st);
+  const href = hrefFor || ((st) => "/states/" + st);
   const tiles = Object.entries(GRID).map(([st, [x, y]]) => {
     const n = c[st] || 0;
     return `<a class="tile t${tier(n)}" style="grid-column:${x + 1};grid-row:${y + 1}" href="${esc(href(st))}" aria-label="${esc(stateName(st))}"${selected === st ? ' aria-current="page"' : ""}><span class="tile-code">${st}</span><span class="tile-n num" aria-hidden="true">${n}</span></a>`;
@@ -920,7 +921,7 @@ export function communityHeader({ kind = "sport", key, st, title, line, count, a
   let acts = actions;
   if (acts == null) {
     acts = [btn("Get the letter", "", "line", { attrs: 'data-jump="letter"', icon: "mail" }), btn("Share", "", "line", { attrs: "data-share", icon: "share" })];
-    if (kind === "state") acts.push(btn("Map", mapHref || `#/states/${st}?map=1`, "line", { icon: "map" }));
+    if (kind === "state") acts.push(btn("Map", mapHref || `/states/${st}?map=1`, "line", { icon: "map" }));
   }
   const actHtml = Array.isArray(acts) ? acts.join("") : acts;
   const tabHtml = tabs && tabs.length ? `<nav class="tabs" aria-label="${esc(title)} sections">${tabs.map((t) => `<a href="${esc(t.href)}" data-replace${t.current ? ' aria-current="page"' : ""}>${esc(t.label)}</a>`).join("")}</nav>` : "";
@@ -929,7 +930,7 @@ export function communityHeader({ kind = "sport", key, st, title, line, count, a
 
 /** The desktop aside. */
 export function aboutBox() {
-  return `<div class="abox"><h2>About this directory</h2><p>Free to use, no account needed. This directory is new and still growing.</p><a class="tlink" href="#/about">How we check listings</a></div><div class="abox"><h2>Help build this</h2><div class="btns btns--stack">${btn("Add a program", "#/add/program", "line")}${btn("Claim your program", "#/help", "line")}</div></div>`;
+  return `<div class="abox"><h2>About this directory</h2><p>Free to use, no account needed. This directory is new and still growing.</p><a class="tlink" href="/about">How we check listings</a></div><div class="abox"><h2>Help build this</h2><div class="btns btns--stack">${btn("Add a program", "/add/program", "line")}${btn("Claim your program", "/help", "line")}</div></div>`;
 }
 
 /** Inline place search (home, "place not found"): input with type-ahead, Search, Use my location. */
@@ -944,14 +945,14 @@ export function whereForm({ value = "", sport = "", id, after = "" } = {}) {
 
 export function betaBar() {
   if (store.get("asnm.beta", 1) === 0) return "";
-  return `<div class="beta"><p>This directory is new and still growing. <a href="#/help">Help us build it</a></p><button type="button" class="iconbtn" data-dismiss-beta aria-label="Hide this message">${icon("x", 20)}</button></div>`;
+  return `<div class="beta"><p>This directory is new and still growing. <a href="/help">Help us build it</a></p><button type="button" class="iconbtn" data-dismiss-beta aria-label="Hide this message">${icon("x", 20)}</button></div>`;
 }
 
 export function header() {
-  return `<div class="hd"><button type="button" class="iconbtn hd-menu" data-open="menu" aria-label="Menu">${icon("menu", 24)}</button><a class="hd-brand" href="#/" aria-label="Adaptive Sports Near Me, home"><img src="/design/c2/logo.svg" alt="" width="32" height="32"><span class="hd-word" aria-hidden="true"><span>Adaptive Sports</span> <span>Near Me</span></span></a><span class="hd-grow"></span><button type="button" class="iconbtn hd-search" data-open="search" aria-label="Search">${icon("search", 22)}</button><a class="hd-add" href="#/help">${icon("plus", 20)}<span>Add</span></a></div>`;
+  return `<div class="hd"><button type="button" class="iconbtn hd-menu" data-open="menu" aria-label="Menu">${icon("menu", 24)}</button><a class="hd-brand" href="/" aria-label="Adaptive Sports Near Me, home"><img src="/app/logo.svg" alt="" width="32" height="32"><span class="hd-word" aria-hidden="true"><span>Adaptive Sports</span> <span>Near Me</span></span></a><span class="hd-grow"></span><button type="button" class="iconbtn hd-search" data-open="search" aria-label="Search">${icon("search", 22)}</button><a class="hd-add" href="/help">${icon("plus", 20)}<span>Add</span></a></div>`;
 }
 
-const nearHref = () => { const p = recall("place"); return p ? "#/near/" + encodeURIComponent(p) : null; };
+const nearHref = () => { const p = recall("place"); return p ? "/near/" + encodeURIComponent(p) : null; };
 export function drawerList(active = "") {
   let marked = false;
   const item = (id, href, ic, label) => {
@@ -967,21 +968,21 @@ export function drawerList(active = "") {
   // scrolling past every sport; the sports list stops at 8 and links to all of them.
   const sports = D ? topGroups(8) : [];
   return [
-    sec("Find", item("near", nearHref(), "map-pin", "Programs near you") + item("sports", "#/sports", "layout-grid", "Sports") + item("states", "#/states", "map", "States") + item("grants", "#/grants", "hand-coins", "Grants") + item("events", "#/events", "calendar", "Events")),
-    sec("Help build this", item("add-program", "#/add/program", "plus", "Add a program") + item("add-event", "#/add/event", "calendar-plus", "Add an event") + item("help", "#/help", "badge-check", "Claim your program") + item("about", "#/about", "shield-check", "How we check listings")),
-    sec("More", item("letter", "#/letter", "mail", "Get the letter") + item("resources", "#/resources", "book-open", "Resources")),
-    recent.length ? sec("Recently viewed", recent.map((k) => item("sport:" + k, "#/sports/" + k, avatar(k, 40), sportName(k))).join("")) : "",
-    sports.length ? sec("Sports", sports.map((g) => item("sport:" + g.key, "#/sports/" + g.key, avatar(g.key, 40), sportName(g.key))).join("") + item("sports-all", "#/sports", "ellipsis", "All sports")) : "",
+    sec("Find", item("near", nearHref(), "map-pin", "Programs near you") + item("sports", "/sports", "layout-grid", "Sports") + item("states", "/states", "map", "States") + item("grants", "/grants", "hand-coins", "Grants") + item("events", "/events", "calendar", "Events")),
+    sec("Help build this", item("add-program", "/add/program", "plus", "Add a program") + item("add-event", "/add/event", "calendar-plus", "Add an event") + item("help", "/help", "badge-check", "Claim your program") + item("about", "/about", "shield-check", "How we check listings")),
+    sec("More", item("letter", "/letter", "mail", "Get the letter") + item("resources", "/resources", "book-open", "Resources")),
+    recent.length ? sec("Recently viewed", recent.map((k) => item("sport:" + k, "/sports/" + k, avatar(k, 40), sportName(k))).join("")) : "",
+    sports.length ? sec("Sports", sports.map((g) => item("sport:" + g.key, "/sports/" + g.key, avatar(g.key, 40), sportName(g.key))).join("") + item("sports-all", "/sports", "ellipsis", "All sports")) : "",
   ].join("");
 }
 
 export function footer() {
   const near = nearHref();
   const li = (label, href) => `<li><a href="${esc(href)}">${esc(label)}</a></li>`;
-  return `<div class="ft"><div class="ft-brand"><img src="/design/c2/logo.svg" alt="" width="40" height="40"><p>A free directory of adaptive sports programs, grants and events. We list programs; we don't run them.</p></div>
-<div class="ft-cols"><div><h2 class="ft-h">Find</h2><ul>${near ? li("Programs near you", near) : `<li><button type="button" data-open="search">Programs near you</button></li>`}${li("Sports", "#/sports")}${li("States", "#/states")}${li("Grants", "#/grants")}${li("Events", "#/events")}</ul></div>
-<div><h2 class="ft-h">Help build this</h2><ul>${li("Add a program", "#/add/program")}${li("Add an event", "#/add/event")}${li("Claim your program", "#/help")}${li("How we check listings", "#/about")}</ul></div>
-<div><h2 class="ft-h">More</h2><ul>${li("Get the letter", "#/letter")}${li("Resources", "#/resources")}${li("Accessibility", "#/about")}</ul></div></div>
+  return `<div class="ft"><div class="ft-brand"><img src="/app/logo.svg" alt="" width="40" height="40"><p>A free directory of adaptive sports programs, grants and events. We list programs; we don't run them.</p></div>
+<div class="ft-cols"><div><h2 class="ft-h">Find</h2><ul>${near ? li("Programs near you", near) : `<li><button type="button" data-open="search">Programs near you</button></li>`}${li("Sports", "/sports")}${li("States", "/states")}${li("Grants", "/grants")}${li("Events", "/events")}</ul></div>
+<div><h2 class="ft-h">Help build this</h2><ul>${li("Add a program", "/add/program")}${li("Add an event", "/add/event")}${li("Claim your program", "/help")}${li("How we check listings", "/about")}</ul></div>
+<div><h2 class="ft-h">More</h2><ul>${li("Get the letter", "/letter")}${li("Resources", "/resources")}${li("Accessibility", "/about")}</ul></div></div>
 <p class="ft-fine">Adaptive Sports Near Me is a project of Adapt To Life. Check with each program before you go.</p><p class="ft-fine">© 2026 Adapt To Life</p></div>`;
 }
 
@@ -990,7 +991,7 @@ export function notFound() {
   return {
     title: "Page not found · Adaptive Sports Near Me",
     description: "The link may be old, or the listing may have moved.",
-    html: `<section class="nf"><h1 tabindex="-1">We couldn't find that page</h1><p>The link may be old, or the listing may have moved.</p><div class="btns">${btn("Find a program", "#/", "ink")}${btn("Browse sports", "#/sports", "line")}</div></section>`,
+    html: `<section class="nf"><h1 tabindex="-1">We couldn't find that page</h1><p>The link may be old, or the listing may have moved.</p><div class="btns">${btn("Find a program", "/", "ink")}${btn("Browse sports", "/sports", "line")}</div></section>`,
   };
 }
 
@@ -1122,7 +1123,7 @@ export async function openSearch(preset = {}) {
 export async function openSportsSheet(opts) {
   await loadData();
   const o = opts || {};
-  const hrefFor = o.hrefFor || ((k) => "#/sports/" + k);
+  const hrefFor = o.hrefFor || ((k) => "/sports/" + k);
   const replace = !!o.hrefFor;
   let groups = pictureGroups();
   if (o.present) {
@@ -1145,19 +1146,27 @@ const ROUTES = [
   ["/states", "states"], ["/states/:st", "state"], ["/programs/:id", "program"],
   ["/grants", "grants"], ["/grants/:id", "grant"], ["/events", "events"],
   ["/add/program", "forms"], ["/add/event", "forms"], ["/update/:id", "forms"],
-  ["/help", "help"], ["/about", "help"], ["/resources/veteran-owned-businesses", "vob"], ["/lab", "lab"], ["/resources", "help"], ["/letter", "help"],
+  ["/help", "help"], ["/about", "help"], ["/resources/veteran-owned-businesses", "vob"], ["/resources", "help"], ["/letter", "help"],
 ];
 const OVERLAY_KEYS = new Set(["map", "open"]);
 const MODS = {}, CSS_DONE = {};
 let REPLACING = false, PENDING = false, CUR = null, CLEANUP = null, SEQ = 0, ACTIVE = "", FIRST = true, MAP_MOD = null, MAP_OPEN = false;
 const SEEN = new Set(JSON.parse(sessionStorage.getItem("asnm.seen") || "[]"));
 
-function parseHash(h) {
-  const raw = (h || "#/").slice(1);
-  const qi = raw.indexOf("?");
-  const path = (qi < 0 ? raw : raw.slice(0, qi)) || "/";
-  const query = Object.fromEntries(new URLSearchParams(qi < 0 ? "" : raw.slice(qi + 1)));
-  return { path: path.length > 1 ? path.replace(/\/+$/, "") : path, query };
+/** This page's address (path and query): the key for scroll, "Show all" and focus memory. */
+export const here = () => location.pathname + location.search;
+function parseLoc() {
+  const path = location.pathname.length > 1 ? location.pathname.replace(/\/+$/, "") : "/";
+  return { path, query: Object.fromEntries(new URLSearchParams(location.search)) };
+}
+/** "/sports/tennis?st=FL" for an address the app draws itself, else null (full page load). */
+function appHref(href) {
+  if (!href || (href.startsWith("#") && !href.startsWith("#/"))) return null;   // in-page anchors stay with the browser
+  let u;
+  try { u = new URL(href.startsWith("#/") ? href.slice(1) : href, location.href); } catch (_) { return null; }
+  if (u.origin !== location.origin) return null;
+  const path = u.pathname.length > 1 ? u.pathname.replace(/\/+$/, "") : "/";
+  return path === "/" || matchRoute(path) ? path + u.search : null;
 }
 function matchRoute(path) {
   const segs = path.split("/").filter(Boolean);
@@ -1177,15 +1186,15 @@ const qsKey = (q, skip) => Object.keys(q).filter((k) => !skip.has(k)).sort().map
 
 /** Navigate. replace: filter-only changes (no new history entry). */
 export function nav(href, { replace = false } = {}) {
-  if (!href) return;
-  const h = href.startsWith("#") ? href : "#" + href;
+  const to = appHref(href);
+  if (!to) { if (href) location.href = href; return; }
   PENDING = true;
-  if (replace) { REPLACING = true; history.replaceState(history.state, "", h); render(); }
-  else if (location.hash === h) { PENDING = false; render({ force: true }); }
-  else location.hash = h;
+  if (replace) { REPLACING = true; history.replaceState(history.state, "", to); render(); }
+  else if (here() === to) { PENDING = false; render({ force: true }); }
+  else { history.pushState(null, "", to); render(); }
 }
 /** history.back() when this session has navigated in-app, else go to the fallback. */
-export function backOr(fallbackHref = "#/") {
+export function backOr(fallbackHref = "/") {
   const n = Number(sessionStorage.getItem("asnm.navs") || 0);
   if (n > 0) history.back();
   else nav(fallbackHref, { replace: true });
@@ -1257,10 +1266,8 @@ async function handleOverlays(ctx) {
 }
 
 async function render({ force = false } = {}) {
-  let hash = location.hash;
-  if (!hash || hash === "#") hash = "#/";
-  if (!hash.startsWith("#/")) { PENDING = false; return; }
-  const { path, query } = parseHash(hash);
+  const hash = here();
+  const { path, query } = parseLoc();
   const fromApp = PENDING; PENDING = false;
   const isBack = !fromApp && !FIRST && SEEN.has(hash);
   SEEN.add(hash);
@@ -1383,7 +1390,7 @@ function findCtrl(main, c) {
   const vis = (x) => x && x.offsetParent !== null ? x : null;
   if (c && c.attr) return vis($(`[${c.attr}]`, main));
   if (c && c.id) return vis(document.getElementById(c.id));
-  const here = $$("a[href]", main).find((x) => x.getAttribute("href") === location.hash && x.offsetParent !== null);
+  const here = $$("a[href]", main).find((x) => x.getAttribute("href") === here() && x.offsetParent !== null);
   if (here) return here;
   if (c && c.href) return $$("a[href]", main).find((x) => x.getAttribute("href") === c.href && x.offsetParent !== null) || null;
   return null;
@@ -1449,7 +1456,7 @@ function jumpTo(id) {
 }
 
 async function doShare(el) {
-  const url = el.getAttribute("data-share") && /^https?:|^#/.test(el.getAttribute("data-share")) ? new URL(el.getAttribute("data-share"), location.href).href : location.href.replace(/[?&]share=1/, "");
+  const url = el.getAttribute("data-share") && /^https?:|^\//.test(el.getAttribute("data-share")) ? new URL(el.getAttribute("data-share"), location.href).href : location.href.replace(/[?&]share=1/, "");
   const title = document.title;
   if (navigator.share) { try { await navigator.share({ title, url }); return; } catch (e) { if (e && e.name === "AbortError") return; } }
   try { await navigator.clipboard.writeText(url); }
@@ -1514,16 +1521,78 @@ function validate(form) {
   if (first) first.focus();
   return !first;
 }
-function protoDone(form) {
+/* ---------- sending forms ---------- */
+function formDone(form) {
   const back = form.getAttribute("data-done-href");
   const label = form.getAttribute("data-done-label");
   const panel = document.createElement("div");
   panel.className = "done";
   panel.setAttribute("role", "status");
   panel.setAttribute("tabindex", "-1");
-  panel.innerHTML = `<p class="done-title">${icon("check", 22)}<span>Thanks. This is a prototype, so nothing was sent.</span></p>${back ? `<div class="btns">${btn(label || "Back to the directory", back, "line")}</div>` : ""}`;
+  panel.innerHTML = `<p class="done-title">${icon("check", 22)}<span>${esc(form.getAttribute("data-done") || "Thanks. We got it.")}</span></p>${back ? `<div class="btns">${btn(label || "Back to the directory", back, "line")}</div>` : ""}`;
   form.replaceWith(panel);
   panel.focus({ preventScroll: false });
+}
+
+const TS_KEY = "0x4AAAAAADr2WPepRgjp8g-R";
+function turnstileApi() {
+  return new Promise((res) => {
+    const t0 = Date.now();
+    (function wait() { if (window.turnstile) return res(window.turnstile); if (Date.now() - t0 > 8000) return res(null); setTimeout(wait, 100); })();
+  });
+}
+/** The form's Turnstile token. It only shows a challenge when Cloudflare asks for one.
+    "" when the check could not run; the server then decides (production refuses). */
+async function turnstileToken(form) {
+  const ts = await turnstileApi();
+  if (!ts) return "";
+  return new Promise((resolve) => {
+    let box = $(".ts-box", form);
+    if (!box) { box = document.createElement("div"); box.className = "ts-box"; form.appendChild(box); }
+    let settled = false;
+    box._done = (t) => { if (!settled) { settled = true; resolve(t || ""); } };
+    if (box._wid == null) {
+      box._wid = ts.render(box, {
+        sitekey: TS_KEY, appearance: "interaction-only", execution: "execute", size: "flexible",
+        callback: (t) => box._done(t), "error-callback": () => { box._done(""); return true; }, "timeout-callback": () => box._done(""),
+      });
+    } else ts.reset(box._wid);
+    ts.execute(box._wid);
+    setTimeout(() => box._done(""), 30000);
+  });
+}
+function formStatus(form) {
+  let st = $(".fm-status", form);
+  if (!st) {
+    st = document.createElement("p"); st.className = "fm-status"; st.setAttribute("role", "status");
+    const b = $("button[type=submit]", form);
+    (b && b.closest(".fm-submit, .letter-row") || form).insertAdjacentElement("afterend", st);
+  }
+  return st;
+}
+async function sendForm(form) {
+  const button = $("button[type=submit]", form);
+  const status = formStatus(form);
+  status.classList.remove("is-err");
+  status.textContent = "Sending…";
+  if (button) button.disabled = true;
+  try {
+    const body = {};
+    for (const [k, v] of new FormData(form)) { const t = String(v).trim(); if (t) body[k] = t; }
+    if (!form._sid) form._sid = crypto.randomUUID ? crypto.randomUUID() : Date.now() + "-" + Math.random().toString(16).slice(2);
+    body.sid = form._sid;
+    body.source = form.getAttribute("data-source") || "asnm-site";
+    body.cf_token = await turnstileToken(form);
+    const r = await fetch(form.getAttribute("data-send"), { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+    const out = await r.json().catch(() => ({}));
+    if (!r.ok || !out.ok) { const err = new Error(out.error || ""); err.fromServer = true; throw err; }
+    formDone(form);
+  } catch (err) {
+    status.classList.add("is-err");
+    const msg = err && err.fromServer && err.message ? err.message : "We couldn't send that. Check your connection and try again.";
+    status.innerHTML = icon("circle-alert", 18) + `<span>${esc(msg)}</span>`;
+    if (button) button.disabled = false;
+  }
 }
 
 async function submitWhere(form, input, sport) {
@@ -1533,7 +1602,7 @@ async function submitWhere(form, input, sport) {
   const dym = $(".dym", form); if (dym) { dym.hidden = true; dym.innerHTML = ""; }
   const text = input.value.trim();
   if (!text && !sport) { say("Enter a city, state, or ZIP code."); return; }
-  if (!text && sport) { closeOverlay({ restore: false }); nav("#/sports/" + sport); return; }
+  if (!text && sport) { closeOverlay({ restore: false }); nav("/sports/" + sport); return; }
   const w = await resolvePlace(text);
   if (w.kind === "none") {
     say(`We couldn't find "${text}". Try a city and state, like Springfield, IL, or a 5-digit ZIP code.`);
@@ -1543,8 +1612,8 @@ async function submitWhere(form, input, sport) {
   }
   say(null);
   closeOverlay({ restore: false });
-  if (w.kind === "state") nav("#/states/" + w.state + (sport ? "?s=" + encodeURIComponent(sport) : ""));
-  else nav("#/near/" + encodeURIComponent(w.label) + (sport ? "?s=" + encodeURIComponent(sport) : ""));
+  if (w.kind === "state") nav("/states/" + w.state + (sport ? "?s=" + encodeURIComponent(sport) : ""));
+  else nav("/near/" + encodeURIComponent(w.label) + (sport ? "?s=" + encodeURIComponent(sport) : ""));
 }
 
 let SUG_T = null;
@@ -1554,7 +1623,7 @@ async function runSuggest(input) {
   const v = input.value;
   const res = v.trim().length >= 2 ? await suggestPlaces(v, 6) : [];
   if (input.value !== v) return;
-  list.innerHTML = res.map((r) => `<button type="button" class="sg-item" role="option" aria-selected="false" tabindex="-1" data-sg="${esc(r.label)}" data-for="${esc(input.id)}">${icon(r.href.startsWith("#/states") ? "map" : "map-pin", 18)}<span>${esc(r.label)}</span></button>`).join("");
+  list.innerHTML = res.map((r) => `<button type="button" class="sg-item" role="option" aria-selected="false" tabindex="-1" data-sg="${esc(r.label)}" data-for="${esc(input.id)}">${icon(r.href.startsWith("/states") ? "map" : "map-pin", 18)}<span>${esc(r.label)}</span></button>`).join("");
   list.hidden = !res.length;
   input.setAttribute("aria-expanded", String(!!res.length));
   const dym = input.form && $(".dym", input.form); if (dym && res.length) { dym.hidden = true; dym.innerHTML = ""; }
@@ -1563,7 +1632,7 @@ async function runSuggest(input) {
 function boot() {
   // Persistent drawer (hidden + inert when closed).
   const dr = document.createElement("div");
-  dr.innerHTML = `<div id="drawer-scrim" class="dr-scrim" data-close></div><div id="drawer" class="drawer" role="dialog" aria-modal="true" aria-labelledby="dr-h" hidden><div class="dr-head"><h2 id="dr-h" class="sr" tabindex="-1">Menu</h2><a href="#/" class="dr-logo" aria-label="Adaptive Sports Near Me, home"><img src="/design/c2/logo.svg" alt="" width="32" height="32"></a><button type="button" class="iconbtn dr-close" data-close aria-label="Close">${icon("x", 24)}</button></div><nav class="dr-list" aria-label="Menu"></nav></div>`;
+  dr.innerHTML = `<div id="drawer-scrim" class="dr-scrim" data-close></div><div id="drawer" class="drawer" role="dialog" aria-modal="true" aria-labelledby="dr-h" hidden><div class="dr-head"><h2 id="dr-h" class="sr" tabindex="-1">Menu</h2><a href="/" class="dr-logo" aria-label="Adaptive Sports Near Me, home"><img src="/app/logo.svg" alt="" width="32" height="32"></a><button type="button" class="iconbtn dr-close" data-close aria-label="Close">${icon("x", 24)}</button></div><nav class="dr-list" aria-label="Menu"></nav></div>`;
   while (dr.firstChild) document.body.appendChild(dr.firstChild);
   $("#drawer").inert = true;
   $("#top").innerHTML = header();
@@ -1591,7 +1660,7 @@ function boot() {
     const jp = t.closest("[data-jump]");
     if (jp) { e.preventDefault(); if (OV) closeOverlay({ restore: false }); jumpTo(jp.getAttribute("data-jump")); return; }
     const bk = t.closest("[data-back]");
-    if (bk) { e.preventDefault(); backOr(bk.getAttribute("data-back") || "#/"); return; }
+    if (bk) { e.preventDefault(); backOr(bk.getAttribute("data-back") || "/"); return; }
     const sh = t.closest("[data-share]");
     if (sh) { e.preventDefault(); doShare(sh); return; }
     const more = t.closest("[data-more]");
@@ -1599,7 +1668,7 @@ function boot() {
       const id = more.getAttribute("data-more");
       if (expandList(id)) {
         // Remember it for this page, so Back from a listing reopens the list.
-        const k = "asnm.more." + location.hash;
+        const k = "asnm.more." + here();
         try { const o = JSON.parse(sessionStorage.getItem(k) || "[]"); if (!o.includes(id)) o.push(id); sessionStorage.setItem(k, JSON.stringify(o)); } catch (_) {}
       }
       return;
@@ -1629,7 +1698,7 @@ function boot() {
         const w = await locateMe();
         if (status) status.textContent = "";
         closeOverlay({ restore: false });
-        nav("#/near/" + encodeURIComponent(w.label) + (sport ? "?s=" + encodeURIComponent(sport) : ""));
+        nav("/near/" + encodeURIComponent(w.label) + (sport ? "?s=" + encodeURIComponent(sport) : ""));
       } catch (_) {
         if (status) { status.classList.add("is-err"); status.innerHTML = icon("circle-alert", 18) + "<span>We couldn't get your location. Type your city instead.</span>"; }
       } finally { loc.disabled = false; }
@@ -1666,12 +1735,13 @@ function boot() {
     }
     if (a) {
       const href = a.getAttribute("href");
-      if (href && href.startsWith("#/") && !e.metaKey && !e.ctrlKey && !e.shiftKey && !a.target) {
-        if (a.hasAttribute("data-replace")) { e.preventDefault(); if (closeAfter) closeOverlay({ restore: false }); nav(href, { replace: true }); return; }
+      const to = !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && !a.target && !a.hasAttribute("download") ? appHref(href) : null;
+      if (to) {
+        e.preventDefault();
+        if (a.hasAttribute("data-replace")) { if (closeAfter) closeOverlay({ restore: false }); nav(to, { replace: true }); return; }
         if (closeAfter || (OV && OV.name === "menu")) closeOverlay({ restore: false });
-        if (a.closest("#main")) { try { sessionStorage.setItem("asnm.last." + (location.hash || "#/"), href); } catch (_) {} }
-        PENDING = true;
-        if (location.hash === href) { e.preventDefault(); nav(href); }
+        if (a.closest("#main")) { try { sessionStorage.setItem("asnm.last." + here(), href); } catch (_) {} }
+        nav(to);
       }
     }
   });
@@ -1689,11 +1759,11 @@ function boot() {
     const f = e.target;
     if (f.matches("form[data-sheet]")) { e.preventDefault(); submitWhere(f, $("input[name=place]", f), f._sheet.sport); return; }
     if (f.matches("form[data-where]")) { e.preventDefault(); submitWhere(f, $("input[name=place]", f), f.getAttribute("data-sport") || ""); return; }
-    if (f.matches("form[data-letter], form[data-proto]")) {
+    if (f.matches("form[data-send]")) {
       e.preventDefault();
       const hp = f.querySelector("input.hpot, input.hp, input[name=company]");
-      if (hp && hp.value) { protoDone(f); return; }
-      if (validate(f)) protoDone(f);
+      if (hp && hp.value) { formDone(f); return; }
+      if (validate(f)) sendForm(f);
     }
   });
 
@@ -1711,7 +1781,9 @@ function boot() {
     if (e.key === "Escape" && OV) { e.preventDefault(); closeOverlay(); }
   });
 
-  window.addEventListener("hashchange", () => render());
+  window.addEventListener("popstate", () => render());
+  // Links from the prototype used #/ addresses; they open the same page at its real address.
+  if (location.hash.startsWith("#/")) history.replaceState(null, "", location.hash.slice(1));
   render();
 }
 

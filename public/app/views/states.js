@@ -1,4 +1,4 @@
-/* States index `#/states` (spec 6.6, WP-B).
+/* States index `/states` (spec 6.6, WP-B).
    The tile map (listings per state; a per-state count, never a national total)
    and the "Choose a state" list, always open here, then the letter. */
 import * as A from "../app.js";

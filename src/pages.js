@@ -10,6 +10,7 @@
 // (ENV_NAME=production) asks to be indexed.
 import { getOrg, getGrant, directorySnapshot } from "./data.js";
 import { SPORT_NAMES } from "./sport-names.js";
+import { isListable } from "../public/app/listable.js";
 
 export const SITE_NAME = "Adaptive Sports Near Me";
 const ORIGIN = "https://adaptivesportsnearme.com";
@@ -59,7 +60,7 @@ const ROUTES = [
   [new RegExp(`^/programs/(${UUID})/?$`, "i"), async (m, env) => {
     if (!env.DB) return { title: "Program", description: HOME_DESCRIPTION };
     const p = await getOrg(env.DB, m[1].toLowerCase());
-    if (!p) return notFound("We couldn't find that program");
+    if (!p || !isListable(p)) return notFound("We couldn't find that program");
     const place = placeText(p);
     const sport = p.sportLabel || "Adaptive sports";
     return {
@@ -135,8 +136,7 @@ export function injectMeta(html, meta, { url, production }) {
   return html
     .replace(/<title>[^<]*<\/title>/, `<title>${esc(title)}</title>`)
     .replace(/<meta name="description" content="[^"]*">/, `<meta name="description" content="${esc(description)}">`)
-    .replace(/<link rel="canonical" href="[^"]*">\s*/, "")
-    .replace("<!--asnm:meta-->", tags);
+    .replace(/<!--asnm:meta-->[\s\S]*?<!--\/asnm:meta-->/, tags);
 }
 
 export function redirectFor(pathname) {
@@ -157,9 +157,11 @@ export async function servePage(request, env, url) {
   const to = redirectFor(url.pathname);
   if (to) return Response.redirect(new URL(to, url).toString(), 301);
   const hit = matchPage(url.pathname);
-  if (!hit) return null;
+  // Not a page we know and not a file or an API: the app's own "not found" page, as a 404.
+  if (!hit && (/\.[a-z0-9]{1,8}$/i.test(url.pathname) || /^\/(api|admin)(\/|$)/.test(url.pathname))) return null;
   let meta;
-  try { meta = await hit.build(hit.m, env, url); } catch (err) {
+  if (!hit) meta = notFound();
+  else try { meta = await hit.build(hit.m, env, url); } catch (err) {
     console.error("page meta error:", err);
     meta = { title: SITE_NAME, description: HOME_DESCRIPTION };
   }
@@ -181,7 +183,7 @@ export async function sitemapXml(env) {
   for (const st of Object.keys(STATE_NAMES)) urls.push(`/states/${st}`);
   if (env.DB) {
     const snap = await directorySnapshot(env.DB);
-    for (const p of snap.items) urls.push(`/programs/${p.id}`);
+    for (const p of snap.items) if (isListable(p)) urls.push(`/programs/${p.id}`);
     try {
       const g = await env.DB.prepare("SELECT id FROM grants").all();
       for (const r of g.results || []) urls.push(`/grants/${r.id}`);

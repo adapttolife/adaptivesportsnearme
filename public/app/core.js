@@ -1,5 +1,5 @@
-/* Shared prototype core for the 2026-10 redesign directions. Real data from
-   /api/directory (public listings a person can act on). No framework. */
+/* Shared helpers for the site: state names, place parsing, small text tools.
+   Loaded as a classic script before app.js (window.Proto). No framework. */
 (function () {
   const STATE_NAMES = {
     AL: "Alabama", AK: "Alaska", AZ: "Arizona", AR: "Arkansas", CA: "California", CO: "Colorado",
@@ -134,23 +134,5 @@
     return { total: pool.length, verified: pool.filter((p) => p.verified).length, inCity, rest, noCity };
   }
 
-  async function load() {
-    const [prog, gr] = await Promise.all([
-      fetch("/design/programs.json").then((r) => r.json()),
-      fetch("/design/grants.json").then((r) => r.json()),
-    ]);
-    const items = prog.items.map((p) => ({
-      ...p,
-      verified: p.verification === "verified",
-      family: familyOf(p),
-    }));
-    for (const p of items) p.familyLabel = FAMILY_LABEL[p.family] || "Multi-sport and recreation";
-    const byState = {};
-    for (const p of items) if (p.state) (byState[p.state] = byState[p.state] || []).push(p);
-    const families = {};
-    for (const p of items) families[p.family] = (families[p.family] || 0) + 1;
-    return { items, grants: gr.items, byState, families, generated: prog.generated };
-  }
-
-  window.Proto = { load, esc, place, host, parsePlace, groupFor, cleanCity, STATE_NAMES, FAMILY_LABEL, byTrust };
+  window.Proto = { esc, place, host, parsePlace, groupFor, cleanCity, STATE_NAMES, FAMILY_LABEL, byTrust };
 })();

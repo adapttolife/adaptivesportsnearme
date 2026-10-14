@@ -1,4 +1,4 @@
-/* Grant page `#/grants/:id` (spec 6.10, WP-F).
+/* Grant page `/grants/:id` (spec 6.10, WP-F).
    PROMOTE: .v-grant .bbox (desktop booking box: sticky, border, radius 20,
    --sh-2; the listing page needs the same one) and .v-grant .facts (the dl
    fact list). Never shows an email address or a phone number. */
@@ -23,7 +23,7 @@ function notFoundGrant() {
   return {
     title: "Grant not found · Adaptive Sports Near Me",
     description: "This grant may have been removed or renamed.",
-    html: `<section class="nf"><h1 tabindex="-1">We couldn't find that grant</h1><p>It may have been removed or renamed.</p><div class="btns">${A.btn("See all grants", "#/grants", "ink")}${A.btn("Find a program", "#/", "line")}</div></section>`,
+    html: `<section class="nf"><h1 tabindex="-1">We couldn't find that grant</h1><p>It may have been removed or renamed.</p><div class="btns">${A.btn("See all grants", "/grants", "ink")}${A.btn("Find a program", "/", "line")}</div></section>`,
     railActive: "grants",
   };
 }
@@ -41,7 +41,7 @@ export async function render(ctx) {
   const deadlineFact = cap(gi.deadlineText.replace(/^Deadline:\s*/, ""));
   const who = g.audience === "program" ? "Programs" : "Athletes";
   const aud = g.audience === "program" ? "program" : "athlete";
-  const listHref = aud === "athlete" ? "#/grants" : "#/grants?a=program";
+  const listHref = aud === "athlete" ? "/grants" : "/grants?a=program";
   const url = g.url && /^https?:\/\//i.test(g.url) ? g.url : null;
   const actionLabel = gi.open ? "Apply on their site" : "Visit their site";
 

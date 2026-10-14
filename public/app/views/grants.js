@@ -1,4 +1,4 @@
-/* Grants list `#/grants` (spec 6.9, WP-F).
+/* Grants list `/grants` (spec 6.9, WP-F).
    PROMOTE: .v-grants .gband (Sand page band with a 120px figure tile; events
    uses the same shape as .v-events .eband) and .v-grants .seg (segmented
    filter links, 48px, aria-current). Both could become shared components. */
@@ -25,7 +25,7 @@ export async function render(ctx) {
   const shut = pool.filter((g) => !A.grantInfo(g).open).sort((x, y) => x.name.localeCompare(y.name));
 
   const seg = `<nav class="seg" aria-label="Who the grant is for">${AUD.map(([k, label]) => {
-    const href = k === "athlete" ? "#/grants" : "#/grants?a=" + k;
+    const href = k === "athlete" ? "/grants" : "/grants?a=" + k;
     const cur = k === a;
     return `<a href="${href}" data-replace${cur ? ' aria-current="page"' : ""}>${cur ? A.icon("check", 18) : ""}<span>${label}</span></a>`;
   }).join("")}</nav>`;
