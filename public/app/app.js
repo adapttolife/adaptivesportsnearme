@@ -863,7 +863,7 @@ export function tileMap({ counts, hrefFor, selected, list = "open" } = {}) {
     const n = c[st] || 0;
     return `<a class="tile t${tier(n)}" style="grid-column:${x + 1};grid-row:${y + 1}" href="${esc(href(st))}" aria-label="${esc(stateName(st))}"${selected === st ? ' aria-current="page"' : ""}><span class="tile-code">${st}</span><span class="tile-n num" aria-hidden="true">${n}</span></a>`;
   }).join("");
-  return `<div class="tmap"><div class="tm-grid">${tiles}</div><p class="tm-legend"><span class="tm-key" aria-hidden="true"><i class="t1"></i><i class="t2"></i><i class="t3"></i><i class="t4"></i></span>Darker means more listings so far.</p></div>${list === "none" ? "" : stateList({ hrefFor, mode: list })}`;
+  return `<div class="tmap"><div class="tm-grid">${tiles}</div><p class="tm-legend"><span class="tm-key" aria-hidden="true"><i class="t1"></i><i class="t2"></i><i class="t3"></i><i class="t4"></i></span> Listing density.</p></div>${list === "none" ? "" : stateList({ hrefFor, mode: list })}`;
 }
 
 let BAR_HREF = null;
