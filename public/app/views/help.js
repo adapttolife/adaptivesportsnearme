@@ -91,7 +91,7 @@ export function mount(root, ctx) {
       .map((x) => ({ ...x, s: x.f.startsWith(" " + q) ? 0 : x.f.includes(" " + toks[0]) ? 1 : 2 }))
       .sort((a, b) => a.s - b.s || a.p.name.localeCompare(b.p.name));
     const shown = hits.slice(0, 6);
-    list.innerHTML = shown.map((x) => A.programRow(x.p, {}).replace(`href="/programs/${A.esc(x.p.id)}"`, `href="/update/${A.esc(x.p.id)}?rel=run"`)).join("");
+    list.innerHTML = shown.map((x) => A.programRow(x.p, {}).replace(/href="[^"]*"/, `href="/update/${A.esc(x.p.id)}?rel=run"`)).join("");
     list.hidden = !shown.length;
     if (!hits.length) {
       status.innerHTML = `We couldn't find an organization called "${A.esc(input.value.trim())}". Check the spelling, or <a href="/add/program">add it</a>.`;

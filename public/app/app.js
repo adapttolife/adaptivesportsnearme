@@ -1099,7 +1099,7 @@ let OV = null; // { name, el, release, onClose, pushed }
    back off; following a link from inside it reuses the entry, so Back from the next
    page lands on this page in one press. Sheets that live in the address (?map=1,
    ?share=1, ?open=) keep their own handling. */
-let SHEET_ENTRY = false, SKIP_POP = false, CONFIRMED = false;
+let SHEET_ENTRY = false, SKIP_POP = false;
 /** Give the open sheet its own Back step (once per entry; a sheet opened from a sheet shares it). */
 export function pushSheet() {
   if (!OV) return;
@@ -1210,7 +1210,7 @@ const ROUTES = [
   ["/states", "states"], ["/states/:st", "state"], ["/organizations", "organizations"], ["/organizations/:id", "program"], ["/programs", "programs"], ["/programs/:id", "program-detail"],
   ["/grants", "grants"], ["/grants/:id", "grant"], ["/events", "events"],
   ["/add/program", "forms"], ["/add/event", "forms"], ["/update/:id", "forms"],
-  ["/help", "help"], ["/about", "help"], ["/resources/veteran-owned-businesses", "vob"], ["/resources", "help"], ["/letter", "help"],
+  ["/help", "help"], ["/about", "help"], ["/resources/veteran-owned-businesses", "vob"], ["/resources", "help"], ["/letter", "help"], ["/letter/confirmed", "letter-confirmed"],
 ];
 const OVERLAY_KEYS = new Set(["map", "open"]);
 const MODS = {}, CSS_DONE = {};
@@ -1461,11 +1461,6 @@ async function render({ force = false } = {}) {
     sessionStorage.setItem("asnm.navs", String(n));
   }
   REPLACING = false;
-  if (CONFIRMED) {
-    CONFIRMED = false;
-    main.insertAdjacentHTML("afterbegin", `<div class="done confirm-note" role="status" tabindex="-1"><p class="done-title">${icon("check", 22)}<span>You're confirmed. The letter will come to your inbox when there's something worth sending.</span></p></div>`);
-    setTimeout(() => announce("You're confirmed for the letter."), 300);
-  }
   if (FIRST) {
     const later = window.requestIdleCallback || ((f) => setTimeout(f, 1200));
     later(() => loadScript(USERWAY_SRC, { "data-account": "sFogOSJsXe" }), { timeout: 4000 });
@@ -1923,11 +1918,11 @@ function boot() {
     if (e.key === "Escape" && OV) { e.preventDefault(); closeOverlay(); }
   });
 
-  // Back from the letter's confirmation email (beehiiv's Opt-in Redirect URL: /?confirmed=1).
-  if (new URLSearchParams(location.search).get("confirmed") === "1") {
+  // Back from the letter's confirmation email (beehiiv's Opt-in Redirect URL, /?confirmed=1):
+  // that moment has its own page, before the first draw.
+  if (location.pathname === "/" && new URLSearchParams(location.search).get("confirmed") === "1") {
     const q = new URLSearchParams(location.search); q.delete("confirmed");
-    history.replaceState(history.state, "", location.pathname + (q.toString() ? "?" + q : "") + location.hash);
-    CONFIRMED = true;
+    history.replaceState(history.state, "", "/letter/confirmed" + (q.toString() ? "?" + q : "") + location.hash);
   }
   window.addEventListener("popstate", () => {
     if (SKIP_POP) { SKIP_POP = false; return; }          // our own step back after a sheet closed

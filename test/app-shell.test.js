@@ -247,18 +247,61 @@ test("everything that sticks to the top of the page sits below the sticky header
 // width and the search box shrank to a sliver (390px, October 15).
 test("on phones the home hero stacks the drawing above the headline and search", () => {
   const css = read("public/app/views/home.css").replace(/\/\*[\s\S]*?\*\//g, "");
-  const rule = (src, sel) => (src.match(new RegExp(`(?:^|\\})\\s*${sel.replace(/[.*]/g, "\\$&")}\\s*\\{([^{}]*)\\}`)) || [])[1] || "";
+  const rule = (src, sel) => (src.match(new RegExp(`(?:^|\\})\\s*${sel.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*\\{([^{}]*)\\}`)) || [])[1] || "";
   const phone = (css.match(/@media \(max-width: 767px\) \{([\s\S]*?)\n\}/) || [])[1] || "";
   assert.match(rule(phone, ".v-home .hb-art"), /position:\s*relative/, "the drawing is in the flow on phones");
   if (/display:\s*flex/.test(rule(css, ".v-home .hb")))
     assert.match(rule(phone, ".v-home .hb"), /flex-direction:\s*column/, "the flex hero stacks on phones");
+  // The sharp look clamps the headline beside the desktop drawing; on phones that
+  // clamp went negative (0px wide, one word per line), so phones lift it.
+  const app = read("public/app/app.css").replace(/\/\*[\s\S]*?\*\//g, "");
+  if (/max-width:\s*calc\(/.test(rule(app, '[data-look="sharp"] .v-home .hb h1'))) {
+    const phones = [...app.matchAll(/@media \(max-width: 767px\) \{([\s\S]*?)\n\}/g)].map((m) => rule(m[1], '[data-look="sharp"] .v-home .hb h1')).join(" ");
+    assert.match(phones, /max-width:\s*none/, "the headline gets the full width on phones");
+  }
+});
+
+// The page's width cap (--max) gives desktop side room. On phones a vw cap stacked a
+// 20px margin on the page padding and pulled the full-bleed heroes in from the edges.
+test("phones use the whole screen; the 90vw cap starts at 768px", () => {
+  for (const file of ["public/app/app.css", "public/styles.css"]) {
+    const css = read(file).replace(/\/\*[\s\S]*?\*\//g, "");
+    const base = (css.match(/(?:^|\})\s*:root\s*\{([^{}]*)\}/) || [])[1] || "";
+    assert.match(base, /--max:\s*100%/, `${file}: phones get the full width`);
+    const wide = [...css.matchAll(/@media \(min-width: 768px\) \{\s*:root\s*\{([^{}]*)\}/g)].map((m) => m[1]).join(" ");
+    assert.match(wide, /--max:\s*90vw/, `${file}: the 90vw cap applies from 768px`);
+  }
+  // With no cap on phones, the footer brings its own side padding (it touched the edges).
+  const app = read("public/app/app.css").replace(/\/\*[\s\S]*?\*\//g, "");
+  const phoneFt = [...app.matchAll(/@media \(max-width: 767px\) \{([\s\S]*?)\n\}/g)].map((m) => (m[1].match(/(?:^|\})\s*\.ft\s*\{([^{}]*)\}/) || [])[1] || "").join(" ");
+  assert.match(phoneFt, /padding-inline:\s*var\(--gut\)/, "the footer keeps side padding on phones");
+});
+
+// Listings live at /organizations/<id> (2026-10-15). The claim finder sends each row to
+// its fix form whatever the listing's address is, and the fix form links back to it.
+test("the claim finder and the fix form use the listing's own address", () => {
+  const help = read("public/app/views/help.js"), forms = read("public/app/views/forms.js");
+  assert.match(help, /A\.programRow\(x\.p, \{\}\)\.replace\(\/href="\[\^"\]\*"\/, `href="\/update\/\$\{A\.esc\(x\.p\.id\)\}\?rel=run"`\)/);
+  assert.match(forms, /const href = "\/organizations\/" \+ p\.id;/);
+  const row = between(APP, "export function programRow(", "\n}\n");
+  assert.match(row, /href="\/organizations\/\$\{esc\(p\.id\)\}"/, "a row links to the organization's page");
+  for (const [file, text] of [["help.js", help], ["forms.js", forms]]) assert.doesNotMatch(text, /["`]\/programs\/["`$]/, `${file} builds no /programs/ link for a listing`);
 });
 
 // The letter's thank-you says what happens next: a new signup confirms its email first.
-test("the letter's thank-you asks a new subscriber to confirm, and the confirmation lands on a note", () => {
+test("the letter's thank-you asks a new subscriber to confirm, and the confirmation lands on its own page", () => {
   const send = between(APP, "async function sendForm(", "\n}\n");
   assert.match(send, /out\.confirm \? "Almost done\. Check your inbox for an email from Adaptive Sports Near Me and tap Confirm\."/);
   assert.match(send, /out\.existing \? "You're already on the list/);
-  assert.match(APP, /get\("confirmed"\) === "1"/);
-  assert.match(APP, /You're confirmed\. The letter will come to your inbox/);
+  // beehiiv's Opt-in Redirect URL is /?confirmed=1: before the first draw it becomes /letter/confirmed.
+  assert.match(APP, /location\.pathname === "\/" && new URLSearchParams\(location\.search\)\.get\("confirmed"\) === "1"/);
+  assert.match(APP, /history\.replaceState\(history\.state, "", "\/letter\/confirmed"/);
+  assert.match(APP, /\["\/letter\/confirmed", "letter-confirmed"\]/);
+  assert.doesNotMatch(APP, /confirm-note/, "no note on top of the home page any more");
+  const view = read("public/app/views/letter-confirmed.js");
+  assert.match(view, /<h1 class="display" id="lc-h" tabindex="-1">You're on the list\.<\/h1>/);
+  assert.match(view, /Email confirmed/);
+  assert.match(view, /FROM = "news@mail\.adaptivesportsnearme\.com"/);
+  assert.match(view, /A\.whereForm\(/, "the next step is the directory");
+  assert.match(read("public/app/views/letter-confirmed.css"), /body\[data-view="letter-confirmed"\] \.beta \{\s*display: none;/);
 });

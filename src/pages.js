@@ -78,9 +78,15 @@ const ROUTES = [
   }],
   [new RegExp(`^/programs/(${UUID})/?$`, "i"), async (m, env) => {
     if (!env.DB) return { title: "Program", description: HOME_DESCRIPTION };
-    const p = await getProgram(env.DB, m[1].toLowerCase());
-    if (!p) return notFound("We couldn't find that program");
-    return { title: p.name, description: `${p.name}. ${p.sportLabel || "Adaptive sports"}.`, jsonld: programJsonLd(p, env) };
+    const id = m[1].toLowerCase();
+    let p = null;
+    try { p = await getProgram(env.DB, id); } catch (_) { p = null; } // a database without the programs table yet
+    if (p) return { title: p.name, description: `${p.name}. ${p.sportLabel || "Adaptive sports"}.`, jsonld: programJsonLd(p, env) };
+    // Listings lived at /programs/<organization id> until 2026-10-15: shared links,
+    // receipts and search results move to the organization's page for good.
+    const org = await getOrg(env.DB, id);
+    if (org && isListable(org)) return { redirect: `/organizations/${id}` };
+    return notFound("We couldn't find that program");
   }],
   [/^\/grants\/?$/, () => ({ title: "Grants for adaptive athletes and programs", description: "Grants that pay for adaptive sports equipment, travel, fees and programs. You apply on the grant maker's site." })],
   [new RegExp(`^/grants/(${UUID})/?$`, "i"), async (m, env) => {
@@ -98,6 +104,7 @@ const ROUTES = [
   [/^\/about\/?$/, () => ({ title: "How we check listings", description: "What Verified means, what Not verified yet means, and how we keep every listing up to date." })],
   [/^\/resources\/?$/, () => ({ title: "Resources", description: "Directories and resources for adaptive athletes, veterans and families." })],
   [/^\/resources\/veteran-owned-businesses\/?$/, () => ({ title: "Support Veteran-Owned Businesses", description: "Find veteran-owned businesses in your state using these directories." })],
+  [/^\/letter\/confirmed\/?$/, () => ({ title: "You're on the list", description: "New programs, grants and events from Adaptive Sports Near Me, when there's something worth sending.", noindex: true })],
   [/^\/letter\/?$/, () => ({ title: "Get the letter", description: "New programs, grants and events, when there is something worth sending." })],
 ];
 
@@ -137,7 +144,7 @@ const VIEWS = [
   [/^\/states$/, "states"], [/^\/states\/[^/]+$/, "state"], [/^\/organizations$/, "organizations"], [/^\/organizations\/[^/]+$/, "program"], [/^\/programs$/, "programs"], [/^\/programs\/[^/]+$/, "program-detail"],
   [/^\/grants$/, "grants"], [/^\/grants\/[^/]+$/, "grant"], [/^\/events$/, "events"],
   [/^\/(add\/program|add\/event|update\/[^/]+)$/, "forms"], [/^\/resources\/veteran-owned-businesses$/, "vob"],
-  [/^\/(help|about|resources|letter)$/, "help"],
+  [/^\/letter\/confirmed$/, "letter-confirmed"], [/^\/(help|about|resources|letter)$/, "help"],
 ];
 export function preloadHints(pathname) {
   const path = pathname.length > 1 ? pathname.replace(/\/+$/, "") : "/";
@@ -181,7 +188,7 @@ export function redirectFor(pathname) {
   // One address per page: /states/fl -> /states/FL, an uppercase id -> lowercase.
   const st = pathname.match(/^\/states\/([a-z]{2})\/?$/i);
   if (st && st[1] !== st[1].toUpperCase()) return `/states/${st[1].toUpperCase()}`;
-  const id = pathname.match(new RegExp(`^/(programs|grants|update)/(${UUID})/?$`, "i"));
+  const id = pathname.match(new RegExp(`^/(programs|organizations|grants|update)/(${UUID})/?$`, "i"));
   if (id && /[A-F]/.test(id[2])) return `/${id[1]}/${id[2].toLowerCase()}`;
   return null;
 }
@@ -211,6 +218,7 @@ export async function servePage(request, env, url) {
     console.error("page meta error:", err);
     meta = { title: SITE_NAME, description: HOME_DESCRIPTION };
   }
+  if (meta.redirect) return Response.redirect(new URL(meta.redirect, url).toString(), 301);
   const shell = await env.ASSETS.fetch(new Request(new URL("/", url), { method: "GET" }));
   const hints = meta.status === 404 ? [] : preloadHints(url.pathname);
   const html = injectMeta(await shell.text(), meta, { url, production: env.ENV_NAME === "production", hints });
@@ -230,7 +238,7 @@ export async function sitemapXml(env) {
   for (const st of Object.keys(STATE_NAMES)) urls.push(`/states/${st}`);
   if (env.DB) {
     const snap = await directorySnapshot(env.DB);
-    for (const p of snap.items) if (isListable(p)) urls.push(`/programs/${p.id}`);
+    for (const p of snap.items) if (isListable(p)) urls.push(`/organizations/${p.id}`);
     try {
       const g = await env.DB.prepare("SELECT id FROM grants WHERE is_public = 1 AND status = 'active'").all();
       for (const r of g.results || []) urls.push(`/grants/${r.id}`);

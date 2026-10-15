@@ -55,7 +55,7 @@
 	--sec: 48px;
 	--rail-w: 272px;
 	--aside-w: 300px;
-	--max: 90vw;
+	--max: 100%; /* phones use the whole screen; 90vw from 768px (below) */
 }
 
 :root[data-theme="dark"] {
@@ -92,6 +92,7 @@
 
 @media (min-width: 768px) {
 	:root {
+		--max: 90vw;
 		--fs-display: 56px;
 		--fs-h1: 40px;
 		--fs-h2: 28px;
@@ -3089,6 +3090,12 @@ body.stk-away .stk {
 	margin: 0 auto;
 	padding: 48px 0 calc(48px + env(safe-area-inset-bottom));
 }
+/* Phones have no width cap (--max: 100%), so the footer keeps the page's side padding. */
+@media (max-width: 767px) {
+	.ft {
+		padding-inline: var(--gut);
+	}
+}
 body.has-sticky .ft {
 	padding-bottom: calc(var(--stk-h, 96px) + 48px);
 }
@@ -3505,6 +3512,15 @@ h3,
 	}
 }
 
+/* On phones the drawing sits above the headline, so the headline takes the full
+   width. The desktop clamp above goes negative under ~460px of hero, which left
+   the headline 0px wide and the fitter shrank it to one small word per line. */
+@media (max-width: 767px) {
+	[data-look="sharp"] .v-home .hb h1 {
+		max-width: none;
+	}
+}
+
 [data-look="sharp"] h1 {
 	line-height: 0.92;
 	font-size: calc(var(--fs-h1) * 1.25);
@@ -3649,7 +3665,3 @@ h3,
 	color: var(--muted);
 }
 
-/* "You're confirmed" after the letter's confirmation email. */
-.confirm-note {
-	margin: 16px 0 0;
-}
