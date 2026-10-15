@@ -271,6 +271,10 @@ test("phones use the whole screen; the 90vw cap starts at 768px", () => {
     const wide = [...css.matchAll(/@media \(min-width: 768px\) \{\s*:root\s*\{([^{}]*)\}/g)].map((m) => m[1]).join(" ");
     assert.match(wide, /--max:\s*90vw/, `${file}: the 90vw cap applies from 768px`);
   }
+  // With no cap on phones, the footer brings its own side padding (it touched the edges).
+  const app = read("public/app/app.css").replace(/\/\*[\s\S]*?\*\//g, "");
+  const phoneFt = [...app.matchAll(/@media \(max-width: 767px\) \{([\s\S]*?)\n\}/g)].map((m) => (m[1].match(/(?:^|\})\s*\.ft\s*\{([^{}]*)\}/) || [])[1] || "").join(" ");
+  assert.match(phoneFt, /padding-inline:\s*var\(--gut\)/, "the footer keeps side padding on phones");
 });
 
 // The letter's thank-you says what happens next: a new signup confirms its email first.
