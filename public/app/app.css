@@ -3653,7 +3653,3 @@ h3,
 	color: var(--muted);
 }
 
-/* "You're confirmed" after the letter's confirmation email. */
-.confirm-note {
-	margin: 16px 0 0;
-}

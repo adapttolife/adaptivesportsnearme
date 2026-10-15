@@ -327,6 +327,19 @@ test("the Worker serves the sitemap as XML, and a failing database is a 503, not
 
 // Every page starts its own code (and a listing its details) with the page, so a
 // slow phone never waits for one download to start the next.
+// Where the letter's confirmation email lands: a real page, kept out of search.
+test("/letter/confirmed is a page with its own title, kept out of search and the sitemap", async () => {
+  const response = await serve("/letter/confirmed", { ENV_NAME: "production", ASSETS: assets() });
+  assert.equal(response.status, 200);
+  assert.equal(response.headers.get("x-robots-tag"), "noindex");
+  const html = await response.text();
+  assert.match(html, /<title>You(&#39;|')re on the list/);
+  assert.ok(html.includes('<meta name="robots" content="noindex">'));
+  assert.ok(html.includes('<link rel="modulepreload" href="/app/views/letter-confirmed.js">'));
+  assert.ok(!(await sitemapXml({})).includes("/letter/confirmed"));
+  assert.equal((await viaWorker("/letter/confirmed", { ASSETS: assets() })).status, 200);
+});
+
 test("each page names its own code, and a listing page its details, for the browser to start early", async () => {
   const { preloadHints } = await import("../src/pages.js");
   const hrefs = (path) => preloadHints(path).map((t) => t.match(/href="([^"]+)"/)[1]);
