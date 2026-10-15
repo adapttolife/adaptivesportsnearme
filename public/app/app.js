@@ -35,7 +35,7 @@ export const stateName = (st) => STATE_NAMES[st] || st || "";
 /** Lucide icon as an inline SVG string (decorative). Icons come from ./icons.js, the
     few the site uses (scripts/build-app-icons.mjs), not the whole library. */
 const ICON_CACHE = {}, ICON_MISSING = new Set();
-export function icon(name, size = 20) {
+export function icon(name, size = 20, drawer = false) {
   const k = name + "@" + size;
   if (ICON_CACHE[k]) return ICON_CACHE[k];
   const pas = String(name).split("-").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join("");
@@ -45,7 +45,7 @@ export function icon(name, size = 20) {
     return "";
   }
   const kids = node.map(([tag, attrs]) => "<" + tag + Object.entries(attrs).map(([a, v]) => ` ${a}="${esc(v)}"`).join("") + "/>").join("");
-  return (ICON_CACHE[k] = `<svg class="ic" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">${kids}</svg>`);
+  return (ICON_CACHE[k] = `<svg class="ic" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"${drawer ? ` style="width: 40px;"` : ''}>${kids}</svg>`);
 }
 
 const store = {
@@ -665,7 +665,7 @@ export function grantInfo(g) {
 export function fig(key, { color, cls = "", big = false } = {}) {
   const k = key && OPTICAL[key] ? key : "multi";
   const o = OPTICAL[k];
-  const dk = Math.min(1.04, Math.max(0.90, Math.pow(0.31 / o[3], 0.3)));
+  const dk = 0.75;
   return `<i class="fig${cls ? " " + cls : ""}" aria-hidden="true" style="--src:url(/emblems/sports/${k}.svg);--w:${o[0]};--h:${o[1]};--g:${o[2]};--diag:${Math.hypot(o[0], o[1]).toFixed(3)};--dk:${dk.toFixed(3)}${color ? ";color:" + color : ""}"></i>`;
 }
 
@@ -972,7 +972,7 @@ export function drawerList(active = "") {
   let marked = false;
   const item = (id, href, ic, label) => {
     const cur = !marked && active && id === active; if (cur) marked = true;
-    const iconHtml = typeof ic === "string" && ic.startsWith("<") ? ic : icon(ic, 20);
+    const iconHtml = typeof ic === "string" && ic.startsWith("<") ? ic : icon(ic, 20, ic === 'ellipsis');
     return href
       ? `<li><a class="dl-item" href="${esc(href)}"${cur ? ' aria-current="page"' : ""}>${iconHtml}<span>${esc(label)}</span></a></li>`
       : `<li><button type="button" class="dl-item" data-open="search">${iconHtml}<span>${esc(label)}</span></button></li>`;

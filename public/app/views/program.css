@@ -328,7 +328,7 @@
 	gap: 8px;
 	min-height: 44px;
 	padding: 8px 16px;
-	border-radius: 999px;
+	border-radius: 15px;
 	background: var(--mist);
 	border: 1px solid var(--line);
 	font-size: 15px;
