@@ -181,7 +181,7 @@ test('a suggested update is captured like a submission and changes no listing', 
   assert.equal(response.status, 200); assert.deepEqual(await response.json(), { ok: true });
   const [row] = x.intakeRows();
   assert.equal(row.kind, 'program');
-  assert.equal(row.summary, 'Program confirming its listing: Atlanta Wolfpack');
+  assert.equal(row.summary, 'Organization confirming its listing: Atlanta Wolfpack');
   assert.deepEqual(JSON.parse(row.payload), { program: 'Atlanta Wolfpack', update_of: LISTING, relation: 'run', notes: 'We moved practice to Decatur.' });
   const sub = x.directory.prepare('SELECT * FROM submissions').get();
   assert.equal(sub.kind, 'listing_update'); assert.equal(JSON.parse(sub.payload).update_of, LISTING);
@@ -312,4 +312,19 @@ test('the event endpoint takes POST only, and like every form needs Turnstile an
   const limited = setup(t, { limited: true }); verified(limited);
   assert.equal((await sendEvent(limited)).status, 429);
   assert.equal(x.intakeRows().length + limited.intakeRows().length, 0);
+});
+
+// A new listing names its organization; the program (what they offer) is optional
+// (Alec and Faisal, 2026-10-15: a listing is an organization, a program is what it offers).
+test('a new listing can name just its organization', async t => {
+  const x = setup(t); verified(x);
+  const { pn, ...noProgram } = body;
+  const response = await x.post({ ...noProgram, org: 'Troy Adaptive Sports', cf_token: 'ok' });
+  assert.equal(response.status, 200);
+  assert.match(x.intakeRows()[0].summary, /^New program submission: Troy Adaptive Sports/);
+  const y = setup(t); verified(y);
+  const { org, ...nothing } = noProgram;
+  const refused = await y.post({ ...nothing, cf_token: 'ok' });
+  assert.equal(refused.status, 422);
+  assert.equal((await refused.json()).error, "Please add the organization's name.");
 });

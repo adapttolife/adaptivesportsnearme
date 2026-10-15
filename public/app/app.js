@@ -4,7 +4,7 @@
    - Places are city and state only. relation() is the only source of distance
      text, and only when both the visitor's place and the program's city are
      known. Programs with no city are never pinned and never get a distance.
-   - Trust is never a score. Verified (a check) means the program itself confirmed
+   - Trust is never a score. Verified (a check) means the organization itself confirmed
      its listing with us; lists show the check only then and never say
      "unverified". The listing page says when we last checked it.
    - Forms validate in place, then post to the site's API with a Turnstile token. */
@@ -163,7 +163,7 @@ const EXTRA_SPORTS = {
 };
 // sports.json leaves some notes empty or internal; these fill the gaps (Clubhouse copy).
 const NOTE_FILL = {
-  multi: "Programs that offer several sports in one place.", sledhockey: "Ice hockey played on a sled.",
+  multi: "Organizations that offer several sports in one place.", sledhockey: "Ice hockey played on a sled.",
   golf: "Adaptive golf lessons and leagues.", archery: "Adaptive archery ranges and clubs.",
   sailing: "Adaptive sailing on lakes and coasts.", trackfield: "Racing, throwing and jumping.",
   climbing: "Adaptive climbing walls and crags.", martialarts: "Martial arts and self-defense.",
@@ -247,7 +247,7 @@ function normalize(raw) {
   if (Array.isArray(raw.trio) && raw.trio.length >= 2) p.trio = raw.trio;
   p.family = familyOf(p.key);
   p.tone = toneOf(p.key);
-  // Verified (the check) means the program itself confirmed its listing with us
+  // Verified (the check) means the organization itself confirmed its listing with us
   // (publicity_consent). A person on our team checking it (teamChecked, with the
   // month) is said on the listing page, never as a badge (Alec, 2026-10-14).
   p.verified = !!p.confirmed;
@@ -679,7 +679,7 @@ export function grantInfo(g) {
   else if (yearly) deadlineText = "Next deadline: " + yearly;
   else deadlineText = "Deadline: " + dl.replace(/\s*[\u2013\u2014]\s*/g, " to ");
   const closed = Number(g.open) === 0;
-  return { amount, deadlineText, past, closed, audienceLabel: g.audience === "program" ? "For programs" : "For athletes", open: Number(g.open) === 1 && !past };
+  return { amount, deadlineText, past, closed, audienceLabel: g.audience === "program" ? "For organizations" : "For athletes", open: Number(g.open) === 1 && !past };
 }
 
 /* ======================================================================
@@ -866,7 +866,7 @@ export function letterBlock({ source = "page" } = {}) {
 }
 
 export function helpBand() {
-  return `<section class="helpband" aria-labelledby="hb-h"><h2 id="hb-h">Help build this</h2><p>Know a program we missed, or run one listed here? Tell us.</p><div class="btns">${btn("Add a program", "/add/program", "line")}${btn("Add an event", "/add/event", "line")}${btn("Claim your program", "/help", "line")}</div></section>`;
+  return `<section class="helpband" aria-labelledby="hb-h"><h2 id="hb-h">Help build this</h2><p>Know a program we missed, or run an organization listed here? Tell us.</p><div class="btns">${btn("Add a program", "/add/program", "line")}${btn("Add an event", "/add/event", "line")}${btn("Claim your organization", "/help", "line")}</div></section>`;
 }
 
 /** State outline. dots: programs (px/py), [x, y] in the 100 box, or [lat, lng]. you: [lat, lng]. */
@@ -973,7 +973,7 @@ export function communityHeader({ kind = "sport", key, st, title, line, count, a
 
 /** The desktop aside. */
 export function aboutBox() {
-  return `<div class="abox"><h2>About this directory</h2><p>Free to use, no account needed. This directory is new and still growing.</p><a class="tlink" href="/about">How we check listings</a></div><div class="abox"><h2>Help build this</h2><div class="btns btns--stack">${btn("Add a program", "/add/program", "line")}${btn("Claim your program", "/help", "line")}</div></div>`;
+  return `<div class="abox"><h2>About this directory</h2><p>Free to use, no account needed. This directory is new and still growing.</p><a class="tlink" href="/about">How we check listings</a></div><div class="abox"><h2>Help build this</h2><div class="btns btns--stack">${btn("Add a program", "/add/program", "line")}${btn("Claim your organization", "/help", "line")}</div></div>`;
 }
 
 /** Inline place search (home, "place not found"): input with type-ahead, Search, Use my location. */
@@ -1014,7 +1014,7 @@ export function drawerList(active = "") {
   const display = `<div class="dl-sec"><h2 class="dl-h">Display</h2><button type="button" class="dl-item dl-theme" data-theme-toggle aria-pressed="${dark}"><span>Dark mode</span><span class="dl-theme-state">${dark ? "On" : "Off"}</span></button></div>`;
   return [
     sec("Find", item("near", nearHref(), "map-pin", "Programs near you") + item("sports", "/sports", "layout-grid", "Sports") + item("states", "/states", "map", "States") + item("grants", "/grants", "hand-coins", "Grants") + item("events", "/events", "calendar", "Events")),
-    sec("Help build this", item("add-program", "/add/program", "plus", "Add a program") + item("add-event", "/add/event", "calendar-plus", "Add an event") + item("help", "/help", "badge-check", "Claim your program") + item("about", "/about", "shield-check", "How we check listings")),
+    sec("Help build this", item("add-program", "/add/program", "plus", "Add a program") + item("add-event", "/add/event", "calendar-plus", "Add an event") + item("help", "/help", "badge-check", "Claim your organization") + item("about", "/about", "shield-check", "How we check listings")),
     sec("More", item("letter", "/letter", "mail", "Get the letter") + item("resources", "/resources", "book-open", "Resources")),
     display,
     recent.length ? sec("Recently viewed", recent.map((k) => item("sport:" + k, "/sports/" + k, avatar(k, 40), sportName(k))).join("")) : "",
@@ -1027,9 +1027,9 @@ export function footer() {
   const li = (label, href) => `<li><a href="${esc(href)}">${esc(label)}</a></li>`;
   return `<div class="ft"><div class="ft-brand"><img src="/app/logo.svg" alt="" width="40" height="40"><div class="ft-brand-text"><p class="ft-name">Adaptive Sports Near Me</p><p>A free directory of adaptive sports programs, grants and events. We list programs; we don't run them.</p></div></div>
 <div class="ft-cols"><div><h2 class="ft-h">Find</h2><ul>${near ? li("Programs near you", near) : `<li><button type="button" data-open="search">Programs near you</button></li>`}${li("Sports", "/sports")}${li("States", "/states")}${li("Grants", "/grants")}${li("Events", "/events")}</ul></div>
-<div><h2 class="ft-h">Help build this</h2><ul>${li("Add a program", "/add/program")}${li("Add an event", "/add/event")}${li("Claim your program", "/help")}${li("How we check listings", "/about")}</ul></div>
+<div><h2 class="ft-h">Help build this</h2><ul>${li("Add a program", "/add/program")}${li("Add an event", "/add/event")}${li("Claim your organization", "/help")}${li("How we check listings", "/about")}</ul></div>
 <div><h2 class="ft-h">More</h2><ul>${li("Get the letter", "/letter")}${li("Resources", "/resources")}${li("Accessibility", "/about")}</ul></div></div>
-<div class="ft-fine"><p class="ft-fine">Adaptive Sports Near Me is a project of <a href="https://adapttolife.org">Adapt To Life</a>. Check with each program before you go.</p><p class="ft-fine">© 2026 <a href="https://adapttolife.org">Adapt To Life</a></p></div></div>`;
+<div class="ft-fine"><p class="ft-fine">Adaptive Sports Near Me is a project of <a href="https://adapttolife.org">Adapt To Life</a>. Check with each organization before you go.</p><p class="ft-fine">© 2026 <a href="https://adapttolife.org">Adapt To Life</a></p></div></div>`;
 }
 
 /** Render output for any unknown route, id or key. */

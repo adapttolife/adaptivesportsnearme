@@ -15,15 +15,15 @@ function card({ ic, title, body, action, cls = "", extra = "" }) {
 
 function helpPage() {
   const art = `<div class="hp-figs" aria-hidden="true">${TRIO.map((k, i) => `<span class="hp-slot${i === 0 ? " is-first" : ""}">${A.fig(k, { color: "#1A1A1A", big: true })}</span>`).join("")}</div>`;
-  const finder = `<div class="hp-find" role="search" aria-label="Find your program">
-<label class="hp-flabel" for="hp-claim">Program name</label>
+  const finder = `<div class="hp-find" role="search" aria-label="Find your organization">
+<label class="hp-flabel" for="hp-claim">Organization name</label>
 <div class="hp-frow">${A.icon("search", 20)}<input id="hp-claim" type="search" autocomplete="off" enterkeyhint="search" aria-describedby="hp-claim-st" aria-controls="hp-claim-list"></div>
 <p class="hp-status" id="hp-claim-st" role="status">Type two or more letters of the name.</p>
 <div class="hp-results" id="hp-claim-list" hidden></div></div>`;
   const html = `<div class="hp-page">
 <div class="hp-hero" style="--t:${A.toneOf("multi").t}">${art}<div class="hp-text"><h1 tabindex="-1">Help build this</h1><p class="hp-sub">This directory is new and still growing. Here is how you can help.</p></div></div>
 <div class="hp-cards">
-${card({ ic: "badge-check", title: "Claim your program", body: "Run a program listed here? Find it and confirm the details.", cls: "hp-card--claim", extra: finder })}
+${card({ ic: "badge-check", title: "Claim your organization", body: "Run or work for an organization listed here? Find it and confirm the details.", cls: "hp-card--claim", extra: finder })}
 ${card({ ic: "plus", title: "Add a program", body: "Know a program we're missing? Tell us and we'll check it.", action: A.btn("Add a program", "/add/program", "ink") })}
 ${card({ ic: "calendar-plus", title: "Add an event", body: "Share a clinic, tryout, game day or meetup.", action: A.btn("Add an event", "/add/event", "line") })}
 ${card({ ic: "square-pen", title: "Suggest a fix", body: "Spot something wrong? Every listing has a Suggest a fix link.", cls: "hp-card--wide", action: A.btn("Find a listing", "", "line", { attrs: 'data-open="search"', icon: "search" }) })}
@@ -34,11 +34,11 @@ ${A.letterBlock({ source: "help" })}</div>`;
 
 /* ---------- /about ---------- */
 const ABOUT = [
-  ["is-v", "badge-check", "Verified", "The program itself confirmed its listing with us. Only then does a listing show the check. We're asking every program."],
-  ["", "search-check", "Checked by our team", "A person on our team checked the listing against public sources, like the program's own website. The listing says when."],
-  ["is-u", "info", "Not verified yet", "We found the program in public sources, and we check its website regularly. Not verified doesn't mean anything is wrong. Check the website before you go."],
-  ["", "calendar-check", "Dates", "Every listing shows the last day we checked that the program's website works."],
-  ["", "lock", "Privacy", "We show the city and state. A program's address, phone number and email show only when the program says yes."],
+  ["is-v", "badge-check", "Verified", "The organization itself confirmed its listing with us. Only then does a listing show the check. We're asking every organization."],
+  ["", "search-check", "Checked by our team", "A person on our team checked the listing against public sources, like the organization's own website. The listing says when."],
+  ["is-u", "info", "Not verified yet", "We found the organization in public sources, and we check its website regularly. Not verified doesn't mean anything is wrong. Check the website before you go."],
+  ["", "calendar-check", "Dates", "Every listing shows the last day we checked that the organization's website works."],
+  ["", "lock", "Privacy", "We show the city and state. An organization's address, phone number and email show only when the organization says yes."],
   ["", "building-2", "We list programs; we don't run them", "Adaptive Sports Near Me is a free directory from Adapt To Life. Each program is run by its own organization."],
   ["", "accessibility", "Accessibility", null],
 ];
@@ -94,11 +94,11 @@ export function mount(root, ctx) {
     list.innerHTML = shown.map((x) => A.programRow(x.p, {}).replace(`href="/programs/${A.esc(x.p.id)}"`, `href="/update/${A.esc(x.p.id)}?rel=run"`)).join("");
     list.hidden = !shown.length;
     if (!hits.length) {
-      status.innerHTML = `We couldn't find a program called "${A.esc(input.value.trim())}". Check the spelling, or <a href="/add/program">add it as a new program</a>.`;
+      status.innerHTML = `We couldn't find an organization called "${A.esc(input.value.trim())}". Check the spelling, or <a href="/add/program">add it</a>.`;
     } else if (hits.length > 6) {
       status.textContent = `Showing 6 of ${hits.length}. Type more of the name to narrow it down.`;
     } else {
-      status.textContent = hits.length === 1 ? "1 program matches. Choose it to confirm the details." : `${hits.length} programs match. Choose yours to confirm the details.`;
+      status.textContent = hits.length === 1 ? "1 organization matches. Choose it to confirm the details." : `${hits.length} organizations match. Choose yours to confirm the details.`;
     }
   };
   const onInput = () => { clearTimeout(t); t = setTimeout(run, 120); };

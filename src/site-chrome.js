@@ -62,7 +62,7 @@ export function footerHtml() {
     </div>
     <div class="foot-cols">
       <div class="foot-col"><h2>Find</h2><a href="/">Programs near you</a><a href="/sports">Sports</a><a href="/states">States</a><a href="/grants">Grants</a><a href="/events">Events</a></div>
-      <div class="foot-col"><h2>Help build this</h2><a href="/add/program">Add a program</a><a href="/add/event">Add an event</a><a href="/help">Claim your program</a><a href="/about">How we check listings</a></div>
+      <div class="foot-col"><h2>Help build this</h2><a href="/add/program">Add a program</a><a href="/add/event">Add an event</a><a href="/help">Claim your organization</a><a href="/about">How we check listings</a></div>
       <div class="foot-col"><h2>More</h2><a href="/letter">Get the letter</a><a href="/resources">Resources</a><a href="/blog">Blog</a><a href="/about">Accessibility</a><a href="https://adapttolife.org" target="_blank" rel="noopener">Adapt To Life</a></div>
     </div>
   </div>

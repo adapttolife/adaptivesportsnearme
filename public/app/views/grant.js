@@ -71,7 +71,7 @@ export async function render(ctx) {
   // 6. Other grants, same audience, open.
   const others = D.grants.filter((x) => x.id !== g.id && x.audience === g.audience && A.grantInfo(x).open).sort(openOrder).slice(0, 4);
   const othersHtml = others.length
-    ? `<section class="sec gp-others" aria-labelledby="g-others">${A.sectionHead({ title: aud === "athlete" ? "Other grants for athletes" : "Other grants for programs", id: "g-others", seeAll: { label: "See all grants", href: listHref } })}<div class="glist">${others.map(A.grantRow).join("")}</div></section>`
+    ? `<section class="sec gp-others" aria-labelledby="g-others">${A.sectionHead({ title: aud === "athlete" ? "Other grants for athletes" : "Other grants for organizations", id: "g-others", seeAll: { label: "See all grants", href: listHref } })}<div class="glist">${others.map(A.grantRow).join("")}</div></section>`
     : "";
 
   // 5. Booking box (desktop) and sticky bar (phone).

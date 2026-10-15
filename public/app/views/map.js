@@ -186,7 +186,7 @@ async function build(s) {
   if (s.dead) return;
   s.loaded = true;
   s.el.querySelector(".mp-stage").classList.add("is-ready");
-  s.el.querySelector(".mp-status").textContent = s.cities.length ? "" : "No program in this view lists a city yet.";
+  s.el.querySelector(".mp-status").textContent = s.cities.length ? "" : "No organization in this view lists a city yet.";
 
   const font = ["Noto Sans Bold"];
   if (s.where && s.where.coords) {

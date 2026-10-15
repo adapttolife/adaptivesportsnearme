@@ -70,7 +70,7 @@ const ROUTES = [
     const sport = p.sportLabel || "Adaptive sports";
     return {
       title: `${p.name}: ${sport}${place ? ` in ${place}` : ""}`,
-      description: `${p.name}${place ? ` in ${place}` : ""}. ${sport}. See the program's website, when we last checked it, and suggest a fix.`,
+      description: `${p.name}${place ? ` in ${place}` : ""}. ${sport}. See the organization's website, when we last checked it, and suggest a fix.`,
       jsonld: programJsonLd(p, env),
     };
   }],
