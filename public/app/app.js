@@ -940,7 +940,7 @@ export function communityHeader({ kind = "sport", key, st, title, line, count, a
   }
   const actHtml = Array.isArray(acts) ? acts.join("") : acts;
   const tabHtml = tabs && tabs.length ? `<nav class="tabs" aria-label="${esc(title)} sections">${tabs.map((t) => `<a href="${esc(t.href)}" data-replace${t.current ? ' aria-current="page"' : ""}>${esc(t.label)}</a>`).join("")}</nav>` : "";
-  return `<header class="ch ch--${kind}">${banner}<div class="ch-body">${av}${kind === "state" ? "" : h1}${line ? `<p class="ch-line">${esc(line)}</p>` : ""}${cnt}${actHtml ? `<div class="btns ch-acts">${actHtml}</div>` : ""}</div>${tabHtml}</header>`;
+  return `<div class="ch ch--${kind}">${banner}<div class="ch-body">${av}${kind === "state" ? "" : h1}${line ? `<p class="ch-line">${esc(line)}</p>` : ""}${cnt}${actHtml ? `<div class="btns ch-acts">${actHtml}</div>` : ""}</div>${tabHtml}</div>`;
 }
 
 /** The desktop aside. */

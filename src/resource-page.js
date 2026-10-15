@@ -63,7 +63,7 @@ export function veteranBusinessPageTemplate({ site = SITE } = {}) {
     `<a href="#state-${s.code.toLowerCase()}" aria-label="${esc(s.name)}">${s.code}</a>`).join("");
   const nationwide = NATIONWIDE.map((d) =>
     `<li class="res-card">${ext(d.url, d.name, "res-card-name")}<p>${esc(d.note)}</p></li>`).join("");
-  const body = `<header class="bar"><a class="back" href="/resources">← Resources</a></header>
+  const body = `<div class="bar"><a class="back" href="/resources">← Resources</a></div>
 <div class="res-hero">
 <p class="res-eyebrow">Resources</p>
 <h1>${esc(COPY.title)}</h1>
@@ -96,7 +96,7 @@ ${COPY.intro.map((p) => `<p class="res-lede">${esc(p)}</p>`).join("\n")}
 
 // The resources door. One page today; more resource lists join it here.
 export function resourcesIndexTemplate({ site = SITE } = {}) {
-  const body = `<header class="bar"><a class="back" href="/">← Directory</a></header>
+  const body = `<div class="bar"><a class="back" href="/">← Directory</a></div>
 <div class="res-hero">
 <p class="res-eyebrow">Resources</p>
 <h1>Resources</h1>

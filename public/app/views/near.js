@@ -115,7 +115,7 @@ export async function render(ctx) {
   if (g.inCity.length) sum.push(`<b class="num">${g.inCity.length}</b> in ${A.esc(city)}`);
   if (g.near.length) sum.push(`<b class="num">${g.near.length}</b> within about 25 miles`);
   if (more) sum.push(`<b class="num">${more}</b> more in ${A.esc(ST)}`);
-  const header = `<header class="nr-hd">
+  const header = `<div class="nr-hd">
   ${outline ? `<div class="nr-stamp" aria-hidden="true">${outline}</div>` : ""}
   <div class="nr-text">
     <h1 tabindex="-1">${A.esc(h1)}</h1>
@@ -125,7 +125,7 @@ export async function render(ctx) {
     <p class="nr-note">${A.icon("info", 18)}<span>Distances are city to city, so they are close, not exact.</span></p>
     ${outline ? legend(where, dots.length > 0, hasYou) : ""}
   </div>
-</header>`;
+</div>`;
 
   /* 2. sticky toolbar */
   const toolbar = `<div class="nr-tools" role="group" aria-label="Search and filters">

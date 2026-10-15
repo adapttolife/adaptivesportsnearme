@@ -40,10 +40,10 @@ export async function render(ctx) {
         ],
       })}</div>`;
 
-  const html = `<header class="ehead">
+  const html = `<div class="ehead">
   <h1 tabindex="-1">Events</h1>
   <p>Clinics, tryouts, games and meetups.</p>
-</header>
+</div>
 ${body}
 ${A.letterBlock({ source: "events" })}`;
 

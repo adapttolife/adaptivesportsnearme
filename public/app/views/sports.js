@@ -28,7 +28,7 @@ export async function render(ctx) {
   const sibLine = unlistedSibs.length
     ? `<p class="sx-sibs">Also not listed yet: ${unlistedSibs.map((k) => `<a href="/sports/${A.esc(k)}">${A.esc(A.sportName(k))}</a>`).join(", ")}</p>`
     : "";
-  const html = `<header class="sx-head"><h1 tabindex="-1">Sports</h1><p class="sx-sub">Pick a sport to see programs, grants and events.</p></header>
+  const html = `<div class="sx-head"><h1 tabindex="-1">Sports</h1><p class="sx-sub">Pick a sport to see programs, grants and events.</p></div>
 <section class="sx-sec" aria-labelledby="sx-listed"><h2 id="sx-listed">Listed so far</h2><ul class="sx-grid">${listed.map(tile).join("")}</ul></section>
 <section class="sx-sec sx-sec--none" aria-labelledby="sx-none"><h2 id="sx-none">Not listed yet</h2><p class="sx-secsub">Know a program? Add it and we'll check it.</p>${unlisted.length ? `<ul class="sx-grid">${unlisted.map(tile).join("")}</ul>` : ""}${sibLine}<div class="btns">${A.btn("Add a program", "/add/program", "ink", { icon: "plus" })}</div></section>`;
   return {

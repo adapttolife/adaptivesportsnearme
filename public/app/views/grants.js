@@ -38,10 +38,10 @@ export async function render(ctx) {
     ? `<section class="sec g-sec" aria-labelledby="g-past">${A.sectionHead({ title: "Past deadlines and closed for now", sub: "Check their site for the next round.", id: "g-past" })}<div class="glist${one}">${shut.map(A.grantRow).join("")}</div></section>`
     : "";
 
-  const html = `<header class="gband">
+  const html = `<div class="gband">
   <div class="gb-text"><h1 tabindex="-1">Grants</h1><p>Money for adaptive sports from the groups that give it. You apply on their site.</p></div>
   <div class="gb-art">${A.plate("grant", { kind: "tile" })}</div>
-</header>
+</div>
 ${seg}
 <section class="g-sec g-open" aria-labelledby="g-open">${A.sectionHead({ title: "Open now", id: "g-open" })}${openHtml}</section>
 ${shutHtml}

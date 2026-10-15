@@ -46,7 +46,7 @@ function page({ title, h1, intro, tile, top = "", form, back = "" }) {
   return {
     title: title + " · Adaptive Sports Near Me",
     description: DESC,
-    html: `<div class="fm">${back}<header class="fm-head">${tile || ""}<div class="fm-htext"><h1 tabindex="-1">${A.esc(h1)}</h1>${intro ? `<p class="fm-intro">${A.esc(intro)}</p>` : ""}</div></header>
+    html: `<div class="fm">${back}<div class="fm-head">${tile || ""}<div class="fm-htext"><h1 tabindex="-1">${A.esc(h1)}</h1>${intro ? `<p class="fm-intro">${A.esc(intro)}</p>` : ""}</div></div>
 <div class="fm-grid"><div class="fm-main">${top}${form}</div><div class="fm-side">${checkBox()}</div></div></div>`,
   };
 }
