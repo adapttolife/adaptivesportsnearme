@@ -244,9 +244,7 @@ test("the privacy policy's promises hold in the code", () => {
   // "We don't set cookies while you browse" (only organization sign-in sets one, from the server).
   assert.match(PRIVACY, /We don't set cookies while you browse\. If you sign in to manage your organization's listing, we set one cookie/);
   assert.ok(!/document\.cookie/.test(appFiles), "the app sets or reads a cookie");
-  const worker = read("src/index.js") + read("src/organization-access.js");
-  for (const m of worker.matchAll(/"Set-Cookie"|'Set-Cookie'|Set-Cookie/g)) void m;
-  assert.match(read("src/organization-access.js"), /HttpOnly; Secure; SameSite=Lax/, "the sign-in cookie is the only cookie and stays HttpOnly");
+  assert.match(read("src/organization-access.js"), /HttpOnly; Secure; SameSite=Lax/, "the organization sign-in cookie stays HttpOnly");
   // "Your exact position is not sent to us."
   assert.match(PRIVACY, /Your exact position is not sent to us/);
   const locate = between(APP, "export function locateMe()", "\n}\n");
