@@ -241,9 +241,12 @@ test("every outside service a visitor's browser contacts is named in the privacy
 });
 test("the privacy policy's promises hold in the code", () => {
   const appFiles = readdirSync(new URL("../public/app/", import.meta.url), { recursive: true }).filter((f) => f.endsWith(".js")).map((f) => read(`public/app/${f}`)).join("\n");
-  // "We don't set cookies."
-  assert.match(PRIVACY, /We don't set cookies/);
+  // "We don't set cookies while you browse" (only organization sign-in sets one, from the server).
+  assert.match(PRIVACY, /We don't set cookies while you browse\. If you sign in to manage your organization's listing, we set one cookie/);
   assert.ok(!/document\.cookie/.test(appFiles), "the app sets or reads a cookie");
+  const worker = read("src/index.js") + read("src/organization-access.js");
+  for (const m of worker.matchAll(/"Set-Cookie"|'Set-Cookie'|Set-Cookie/g)) void m;
+  assert.match(read("src/organization-access.js"), /HttpOnly; Secure; SameSite=Lax/, "the sign-in cookie is the only cookie and stays HttpOnly");
   // "Your exact position is not sent to us."
   assert.match(PRIVACY, /Your exact position is not sent to us/);
   const locate = between(APP, "export function locateMe()", "\n}\n");
@@ -281,4 +284,13 @@ test("everything that sticks to the top of the page sits below the sticky header
   }
   assert.ok(checked >= 6, `checked only ${checked} sticky rules`);
   assert.match(read("public/app/app.css"), /scroll-padding-top:\s*calc\(var\(--top-h\)/, "jumps land below the header");
+});
+
+// The letter's thank-you says what happens next: a new signup confirms its email first.
+test("the letter's thank-you asks a new subscriber to confirm, and the confirmation lands on a note", () => {
+  const send = between(APP, "async function sendForm(", "\n}\n");
+  assert.match(send, /out\.confirm \? "Almost done\. Check your inbox for an email from Adaptive Sports Near Me and tap Confirm\."/);
+  assert.match(send, /out\.existing \? "You're already on the list/);
+  assert.match(APP, /get\("confirmed"\) === "1"/);
+  assert.match(APP, /You're confirmed\. The letter will come to your inbox/);
 });

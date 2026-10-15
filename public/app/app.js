@@ -35,7 +35,7 @@ export const stateName = (st) => STATE_NAMES[st] || st || "";
 /** Lucide icon as an inline SVG string (decorative). Icons come from ./icons.js, the
     few the site uses (scripts/build-app-icons.mjs), not the whole library. */
 const ICON_CACHE = {}, ICON_MISSING = new Set();
-export function icon(name, size = 20) {
+export function icon(name, size = 20, drawer = false) {
   const k = name + "@" + size;
   if (ICON_CACHE[k]) return ICON_CACHE[k];
   const pas = String(name).split("-").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join("");
@@ -45,13 +45,41 @@ export function icon(name, size = 20) {
     return "";
   }
   const kids = node.map(([tag, attrs]) => "<" + tag + Object.entries(attrs).map(([a, v]) => ` ${a}="${esc(v)}"`).join("") + "/>").join("");
-  return (ICON_CACHE[k] = `<svg class="ic" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">${kids}</svg>`);
+  return (ICON_CACHE[k] = `<svg class="ic" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"${drawer ? ` style="width: 40px;"` : ''}>${kids}</svg>`);
 }
 
 const store = {
   get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (_) { return d; } },
   set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (_) {} },
 };
+const systemTheme = () => matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+const savedTheme = () => {
+  const value = store.get("asnm.theme", null);
+  return value === "light" || value === "dark" ? value : null;
+};
+const currentTheme = () => {
+  const value = document.documentElement.dataset.theme;
+  return value === "light" || value === "dark" ? value : null;
+};
+function syncThemeControls() {
+  const dark = currentTheme() === "dark";
+  for (const control of $$('[data-theme-toggle]')) {
+    control.setAttribute("aria-pressed", String(dark));
+    const state = $(".dl-theme-state", control);
+    if (state) state.textContent = dark ? "On" : "Off";
+  }
+}
+function setTheme(theme, save = true) {
+  const value = theme === "dark" ? "dark" : "light";
+  document.documentElement.dataset.theme = value;
+  if (save) store.set("asnm.theme", value);
+  const meta = $('meta[name="theme-color"]');
+  if (meta) meta.setAttribute("content", value === "dark" ? "#171716" : "#f3f3f3");
+  syncThemeControls();
+}
+setTheme(savedTheme() || currentTheme() || systemTheme(), false);
+const themeMedia = matchMedia("(prefers-color-scheme: dark)");
+themeMedia.addEventListener("change", () => { if (!savedTheme()) setTheme(systemTheme(), false); });
 /** remember("place", "Tampa, FL") / remember("recent", "tennis") */
 export function remember(kind, value) {
   if (kind === "place") { if (value) store.set("asnm.place", String(value)); }
@@ -109,7 +137,7 @@ const CORAL = "#FF5C39", ORANGE = "#F96C03", TEAL = "#00C7B1", YELLOW = "#F6B700
 const TONES = {
   court: [CORAL, INK], racquet: [YELLOW, INK], field: [ORANGE, INK],
   snow: [TEAL, INK], water: [TEAL, INK], trail: [YELLOW, INK],
-  calm: [INK, "#FFFFFF"], house: [CORAL, INK], grant: [YELLOW, INK], event: [TEAL, INK],
+  calm: [INK, "#f3f3f3"], house: [CORAL, INK], grant: [YELLOW, INK], event: [TEAL, INK],
 };
 // Look switch: sharp is the standard; ?look=today and ?look=hues stay for comparison.
 export const LOOK = new URLSearchParams(location.search).get("look") || "sharp"; // Alec, 2026-10-14: "I love the sharper version the best... This is the way"
@@ -665,7 +693,7 @@ export function grantInfo(g) {
 export function fig(key, { color, cls = "", big = false } = {}) {
   const k = key && OPTICAL[key] ? key : "multi";
   const o = OPTICAL[k];
-  const dk = Math.min(1.04, Math.max(0.90, Math.pow(0.31 / o[3], 0.3)));
+  const dk = 0.75;
   return `<i class="fig${cls ? " " + cls : ""}" aria-hidden="true" style="--src:url(/emblems/sports/${k}.svg);--w:${o[0]};--h:${o[1]};--g:${o[2]};--diag:${Math.hypot(o[0], o[1]).toFixed(3)};--dk:${dk.toFixed(3)}${color ? ";color:" + color : ""}"></i>`;
 }
 
@@ -972,7 +1000,7 @@ export function drawerList(active = "") {
   let marked = false;
   const item = (id, href, ic, label) => {
     const cur = !marked && active && id === active; if (cur) marked = true;
-    const iconHtml = typeof ic === "string" && ic.startsWith("<") ? ic : icon(ic, 20);
+    const iconHtml = typeof ic === "string" && ic.startsWith("<") ? ic : icon(ic, 20, ic === 'ellipsis');
     return href
       ? `<li><a class="dl-item" href="${esc(href)}"${cur ? ' aria-current="page"' : ""}>${iconHtml}<span>${esc(label)}</span></a></li>`
       : `<li><button type="button" class="dl-item" data-open="search">${iconHtml}<span>${esc(label)}</span></button></li>`;
@@ -982,10 +1010,13 @@ export function drawerList(active = "") {
   // Find, Help build this and More come first, so a phone reaches Resources without
   // scrolling past every sport; the sports list stops at 8 and links to all of them.
   const sports = D ? topGroups(8) : [];
+  const dark = currentTheme() === "dark";
+  const display = `<div class="dl-sec"><h2 class="dl-h">Display</h2><button type="button" class="dl-item dl-theme" data-theme-toggle aria-pressed="${dark}"><span>Dark mode</span><span class="dl-theme-state">${dark ? "On" : "Off"}</span></button></div>`;
   return [
     sec("Find", item("near", nearHref(), "map-pin", "Programs near you") + item("sports", "/sports", "layout-grid", "Sports") + item("states", "/states", "map", "States") + item("grants", "/grants", "hand-coins", "Grants") + item("events", "/events", "calendar", "Events")),
     sec("Help build this", item("add-program", "/add/program", "plus", "Add a program") + item("add-event", "/add/event", "calendar-plus", "Add an event") + item("help", "/help", "badge-check", "Claim your program") + item("about", "/about", "shield-check", "How we check listings")),
     sec("More", item("letter", "/letter", "mail", "Get the letter") + item("resources", "/resources", "book-open", "Resources")),
+    display,
     recent.length ? sec("Recently viewed", recent.map((k) => item("sport:" + k, "/sports/" + k, avatar(k, 40), sportName(k))).join("")) : "",
     sports.length ? sec("Sports", sports.map((g) => item("sport:" + g.key, "/sports/" + g.key, avatar(g.key, 40), sportName(g.key))).join("") + item("sports-all", "/sports", "ellipsis", "All sports")) : "",
   ].join("");
@@ -1067,7 +1098,7 @@ let OV = null; // { name, el, release, onClose, pushed }
    back off; following a link from inside it reuses the entry, so Back from the next
    page lands on this page in one press. Sheets that live in the address (?map=1,
    ?share=1, ?open=) keep their own handling. */
-let SHEET_ENTRY = false, SKIP_POP = false;
+let SHEET_ENTRY = false, SKIP_POP = false, CONFIRMED = false;
 /** Give the open sheet its own Back step (once per entry; a sheet opened from a sheet shares it). */
 export function pushSheet() {
   if (!OV) return;
@@ -1426,6 +1457,11 @@ async function render({ force = false } = {}) {
     sessionStorage.setItem("asnm.navs", String(n));
   }
   REPLACING = false;
+  if (CONFIRMED) {
+    CONFIRMED = false;
+    main.insertAdjacentHTML("afterbegin", `<div class="done confirm-note" role="status" tabindex="-1"><p class="done-title">${icon("check", 22)}<span>You're confirmed. The letter will come to your inbox when there's something worth sending.</span></p></div>`);
+    setTimeout(() => announce("You're confirmed for the letter."), 300);
+  }
   if (FIRST) {
     const later = window.requestIdleCallback || ((f) => setTimeout(f, 1200));
     later(() => loadScript(USERWAY_SRC, { "data-account": "sFogOSJsXe" }), { timeout: 4000 });
@@ -1589,14 +1625,14 @@ function validate(form) {
   return !first;
 }
 /* ---------- sending forms ---------- */
-function formDone(form) {
+function formDone(form, message) {
   const back = form.getAttribute("data-done-href");
   const label = form.getAttribute("data-done-label");
   const panel = document.createElement("div");
   panel.className = "done";
   panel.setAttribute("role", "status");
   panel.setAttribute("tabindex", "-1");
-  panel.innerHTML = `<p class="done-title">${icon("check", 22)}<span>${esc(form.getAttribute("data-done") || "Thanks. We got it.")}</span></p>${back ? `<div class="btns">${btn(label || "Back to the directory", back, "line")}</div>` : ""}`;
+  panel.innerHTML = `<p class="done-title">${icon("check", 22)}<span>${esc(message || form.getAttribute("data-done") || "Thanks. We got it.")}</span></p>${back ? `<div class="btns">${btn(label || "Back to the directory", back, "line")}</div>` : ""}`;
   form.replaceWith(panel);
   panel.focus({ preventScroll: false });
 }
@@ -1668,7 +1704,10 @@ async function sendForm(form) {
     const r = await fetch(form.getAttribute("data-send"), { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
     const out = await r.json().catch(() => ({}));
     if (!r.ok || !out.ok) { const err = new Error(out.error || ""); err.fromServer = true; throw err; }
-    formDone(form);
+    // The letter: a new signup confirms its email first (beehiiv sends the confirmation).
+    const letter = form.matches("[data-letter]");
+    formDone(form, letter && out.confirm ? "Almost done. Check your inbox for an email from Adaptive Sports Near Me and tap Confirm."
+      : letter && out.existing ? "You're already on the list. Thanks for being here." : null);
   } catch (err) {
     status.classList.add("is-err");
     const msg = err && err.fromServer && err.message ? err.message : "We couldn't send that. Check your connection and try again.";
@@ -1735,6 +1774,7 @@ function boot() {
     if (t.closest("[data-skip]")) { e.preventDefault(); $("#main").focus(); return; }
     if (t.closest("[data-dismiss-beta]")) { store.set("asnm.beta", 0); refreshChrome(true); return; }
     if (t.closest("[data-retry]")) { e.preventDefault(); render({ force: true }); return; }
+    if (t.closest("[data-theme-toggle]")) { e.preventDefault(); setTheme(currentTheme() === "dark" ? "light" : "dark"); return; }
     const op = t.closest("[data-open]");
     if (op) {
       e.preventDefault();
@@ -1877,6 +1917,12 @@ function boot() {
     if (e.key === "Escape" && OV) { e.preventDefault(); closeOverlay(); }
   });
 
+  // Back from the letter's confirmation email (beehiiv's Opt-in Redirect URL: /?confirmed=1).
+  if (new URLSearchParams(location.search).get("confirmed") === "1") {
+    const q = new URLSearchParams(location.search); q.delete("confirmed");
+    history.replaceState(history.state, "", location.pathname + (q.toString() ? "?" + q : "") + location.hash);
+    CONFIRMED = true;
+  }
   window.addEventListener("popstate", () => {
     if (SKIP_POP) { SKIP_POP = false; return; }          // our own step back after a sheet closed
     if (SHEET_ENTRY) {

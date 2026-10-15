@@ -103,3 +103,24 @@ test('full newsletter flow uses Gmail for welcome and house notification, not Cl
 }));
 test('wrong publication fails before touching network or database', async () => run({}, async x => { x.env.BEEHIIV_PUBLICATION_ID = 'wrong'; assert.equal((await safeNewsletterSubscribe(x.env, 'person@example.test', 'x')).status, 503); assert.equal(x.requests.length, 0); assert.equal(x.state().length, 0); }));
 test('actual Worker route keeps background delivery alive through waitUntil', async () => run({}, async x => { const jobs = []; const response = await worker.fetch(new Request('https://test.example/api/subscribe', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ em: 'person@example.test', nm: 'Zoë', beta: 'on' }) }), x.env, { waitUntil(p) { jobs.push(p); } }); assert.equal(response.status, 200); assert.equal(jobs.length, 1); await Promise.all(jobs); assert.equal(x.state()[0].state, 'sent'); }));
+
+// Every signup from the site confirms its email (Alec, 2026-10-15). beehiiv sends the
+// confirmation and keeps the subscriber pending; our welcome goes only to an active
+// subscription, so a pending signup gets beehiiv's confirmation and nothing else from us.
+test('a new signup asks beehiiv to confirm the email, and a pending signup gets no welcome from us', async () => run({ status: 'pending' }, async x => {
+  const r = await safeNewsletterSubscribe(x.env, 'person@example.test', 'asnm-letter-home');
+  await r.welcomeJob;
+  assert.equal(JSON.parse(x.posts()[0].init.body).double_opt_override, 'on');
+  assert.equal(x.state()[0].state, 'not-active-no-welcome');
+  assert.equal(x.mail.filter(m => m.to === 'person@example.test').length, 0, 'no welcome before they confirm');
+}));
+test('the site is told to ask for the confirmation, or that the email is already on the list', async () => {
+  for (const [options, expected] of [[{ status: 'pending' }, { ok: true, confirm: true }], [{ existing: 'active' }, { ok: true, existing: true }]]) {
+    await run(options, async x => {
+      const jobs = [];
+      const response = await worker.fetch(new Request('https://test.example/api/subscribe', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ em: 'person@example.test' }) }), x.env, { waitUntil(p) { jobs.push(p); } });
+      assert.deepEqual(await response.json(), expected);
+      await Promise.all(jobs);
+    });
+  }
+});

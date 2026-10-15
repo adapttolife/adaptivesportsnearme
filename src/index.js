@@ -1,6 +1,6 @@
 import { servePage, robotsTxt, sitemapXml } from "./pages.js";
 import { safeNewsletterSubscribe } from './newsletter.js';
-import { queueFormConfirmation } from './email.js';
+import { queueFormConfirmation, sendOrganizationLoginLink } from './email.js';
 import { notifyIntake } from './intake.js';
 // Adaptive Sports Near Me — Worker entry.
 // Serves the static site (env.ASSETS), the D1-backed directory API, the admin
@@ -44,6 +44,11 @@ import {
   getProfileWithFavorites, orgExists, setFavorite, validState, parseSports,
 } from "./profile.js";
 import {
+  clearOrgCookie, consumeLoginToken, createOrganizationSession, issueLoginToken, serializeOrgCookie,
+  organizationsForClaimEmail, organizationForClaimEmail, readOrganizationSession,
+  updateClaimedOrganization, validEmail,
+} from "./organization-access.js";
+import {
   listPosts, getPostBySlug, blogIndexTemplate, blogPostTemplate, blogFallbackTemplate, blogNotFoundTemplate,
 } from "./blog.js";
 
@@ -64,7 +69,8 @@ const application = {
     const url = new URL(request.url);
     // Versions uploaded with production config must not accept preview mutations.
     // Staging uploads use ENV_NAME=staging and the staging database bindings.
-    if (env.ENV_NAME === 'production' && !['GET', 'HEAD'].includes(request.method) &&
+    if (env.ENV_NAME === 'production' &&
+      (!['GET', 'HEAD'].includes(request.method) || url.pathname === '/api/org-auth/verify') &&
       !['adaptivesportsnearme.com', 'www.adaptivesportsnearme.com'].includes(url.hostname)) {
       return json({ ok: false, error: 'This preview is read-only. Use the isolated review environment.' }, 403);
     }
@@ -93,6 +99,31 @@ const application = {
     if (url.pathname === "/api/profile/signout") {
       if (request.method !== "POST") return json({ ok: false, error: "Method not allowed" }, 405);
       return handleProfileSignout();
+    }
+    if (url.pathname === "/api/org-auth/request-link") {
+      if (request.method !== "POST") return json({ ok: false, error: "Method not allowed" }, 405);
+      const limited = await formLimited(request, env, 'Sign-in is temporarily unavailable.');
+      if (limited) return limited;
+      return handleOrganizationLoginRequest(request, env, url);
+    }
+    if (url.pathname === "/api/org-auth/verify") {
+      if (request.method !== "GET") return json({ ok: false, error: "Method not allowed" }, 405);
+      return handleOrganizationLoginVerify(url, env);
+    }
+    if (url.pathname === "/api/org-auth/session") {
+      if (request.method !== "GET") return json({ ok: false, error: "Method not allowed" }, 405);
+      return handleOrganizationSession(request, env);
+    }
+    if (url.pathname === "/api/org-auth/signout") {
+      if (request.method !== "POST") return json({ ok: false, error: "Method not allowed" }, 405);
+      return new Response(JSON.stringify({ ok: true }), { headers: { "Content-Type": "application/json", "Cache-Control": "no-store", "Set-Cookie": clearOrgCookie() } });
+    }
+    const managedOrganization = url.pathname.match(/^\/api\/organizations\/([0-9a-f-]{36})\/manage$/i);
+    if (managedOrganization) {
+      if (!["GET", "PATCH"].includes(request.method)) return json({ ok: false, error: "Method not allowed" }, 405);
+      return request.method === "GET"
+        ? handleManagedOrganizationGet(request, env, managedOrganization[1])
+        : handleManagedOrganizationUpdate(request, env, managedOrganization[1]);
     }
 
     if (url.pathname === "/api/location") {
@@ -257,7 +288,8 @@ async function handleSubscribe(request, env, ctx) {
     else await result.welcomeJob;
   }
 
-  return json({ ok: true });
+  // A new signup has to confirm its email first; someone already subscribed is told so.
+  return json({ ok: true, ...(result.existing ? { existing: true } : { confirm: true }) });
 }
 
 // Maps our two optional signup answers onto the publication's custom fields.
@@ -545,6 +577,103 @@ function handleProfileSignout() {
     status: 200,
     headers: { "Content-Type": "application/json", "Cache-Control": "no-store", "Set-Cookie": clearProfileCookie() },
   });
+}
+
+const ORGANIZATION_AUTH_CACHE = "private, no-store";
+
+function organizationAuthReady(env) {
+  return !!(env.DB && (env.ORG_AUTH_SIGNING_KEY || env.PROFILE_SIGNING_KEY));
+}
+
+function organizationAuthSecret(env) {
+  return env.ORG_AUTH_SIGNING_KEY || env.PROFILE_SIGNING_KEY;
+}
+
+async function handleOrganizationLoginRequest(request, env, url) {
+  if (!organizationAuthReady(env)) {
+    console.error("organization authentication unavailable");
+    return json({ ok: false, error: "Organization sign-in is temporarily unavailable." }, 503, ORGANIZATION_AUTH_CACHE);
+  }
+  const data = await readBody(request);
+  if (data === null) return json({ ok: false, error: "Could not read your request." }, 400, ORGANIZATION_AUTH_CACHE);
+  if (str(data.company)) return json({ ok: true }, 200, ORGANIZATION_AUTH_CACHE);
+  const email = validEmail(data.email || data.em);
+  if (!email) return json({ ok: false, error: "Please enter a valid email." }, 422, ORGANIZATION_AUTH_CACHE);
+  try {
+    const organizations = await organizationsForClaimEmail(env.DB, email);
+    if (!organizations.length) return json({ ok: true }, 200, ORGANIZATION_AUTH_CACHE);
+    const token = await issueLoginToken(env.DB, email);
+    const link = new URL("/api/org-auth/verify", url.origin);
+    link.searchParams.set("token", token);
+    await sendOrganizationLoginLink(env, email, link.toString());
+    return json({ ok: true }, 200, ORGANIZATION_AUTH_CACHE);
+  } catch (err) {
+    console.error("organization login link failed", { reason: err instanceof Error ? err.message : "unknown" });
+    return json({ ok: false, error: "Organization sign-in is temporarily unavailable." }, 503, ORGANIZATION_AUTH_CACHE);
+  }
+}
+
+async function handleOrganizationLoginVerify(url, env) {
+  if (!organizationAuthReady(env)) return json({ ok: false, error: "Organization sign-in is temporarily unavailable." }, 503, ORGANIZATION_AUTH_CACHE);
+  try {
+    const email = await consumeLoginToken(env.DB, url.searchParams.get("token") || "");
+    if (!email) return json({ ok: false, error: "This sign-in link has expired or was already used." }, 401, ORGANIZATION_AUTH_CACHE);
+    const session = await createOrganizationSession(env.DB, email, organizationAuthSecret(env));
+    return new Response(JSON.stringify({ ok: true }), {
+      headers: { "Content-Type": "application/json", "Cache-Control": "no-store", "Set-Cookie": serializeOrgCookie(session.id, session.signature) },
+    });
+  } catch (err) {
+    console.error("organization login verification failed", { reason: err instanceof Error ? err.message : "unknown" });
+    return json({ ok: false, error: "Organization sign-in is temporarily unavailable." }, 503, ORGANIZATION_AUTH_CACHE);
+  }
+}
+
+async function authorizedOrganizationSession(request, env) {
+  if (!organizationAuthReady(env)) return null;
+  return readOrganizationSession(request, env.DB, organizationAuthSecret(env));
+}
+
+async function handleOrganizationSession(request, env) {
+  const session = await authorizedOrganizationSession(request, env);
+  if (!session) return json({ ok: false, error: "Sign in to manage a program." }, 401, ORGANIZATION_AUTH_CACHE);
+  try {
+    return json({ ok: true, organizations: await organizationsForClaimEmail(env.DB, session.email) }, 200, ORGANIZATION_AUTH_CACHE);
+  } catch (err) {
+    console.error("organization session fetch failed", { reason: err instanceof Error ? err.message : "unknown" });
+    return json({ ok: false, error: "Organization details are temporarily unavailable." }, 503, ORGANIZATION_AUTH_CACHE);
+  }
+}
+
+async function handleManagedOrganizationGet(request, env, id) {
+  const session = await authorizedOrganizationSession(request, env);
+  if (!session) return json({ ok: false, error: "Sign in to manage a program." }, 401, ORGANIZATION_AUTH_CACHE);
+  try {
+    const organization = await organizationForClaimEmail(env.DB, id, session.email);
+    return organization ? json({ ok: true, organization }, 200, ORGANIZATION_AUTH_CACHE)
+      : json({ ok: false, error: "Program not found." }, 404, ORGANIZATION_AUTH_CACHE);
+  } catch (err) {
+    console.error("managed organization fetch failed", { reason: err instanceof Error ? err.message : "unknown" });
+    return json({ ok: false, error: "Organization details are temporarily unavailable." }, 503, ORGANIZATION_AUTH_CACHE);
+  }
+}
+
+async function handleManagedOrganizationUpdate(request, env, id) {
+  const session = await authorizedOrganizationSession(request, env);
+  if (!session) return json({ ok: false, error: "Sign in to manage a program." }, 401, ORGANIZATION_AUTH_CACHE);
+  const data = await readBody(request);
+  if (data === null) return json({ ok: false, error: "Could not read your changes." }, 400, ORGANIZATION_AUTH_CACHE);
+  try {
+    const organization = await updateClaimedOrganization(env.DB, id, session.email, data);
+    return organization ? json({ ok: true, organization }, 200, ORGANIZATION_AUTH_CACHE)
+      : json({ ok: false, error: "Program not found." }, 404, ORGANIZATION_AUTH_CACHE);
+  } catch (err) {
+    const reason = err instanceof Error ? err.message : "";
+    if (["name-required", "website-invalid", "email-invalid", "sports-invalid"].includes(reason)) {
+      return json({ ok: false, error: "Please check the program details and try again." }, 422, ORGANIZATION_AUTH_CACHE);
+    }
+    console.error("managed organization update failed", { reason: reason || "unknown" });
+    return json({ ok: false, error: "Could not save organization details right now." }, 503, ORGANIZATION_AUTH_CACHE);
+  }
 }
 
 // ---- Blog (Beehiiv is the CMS) -----------------------------------------------

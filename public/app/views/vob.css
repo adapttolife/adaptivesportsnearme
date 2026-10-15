@@ -6,13 +6,13 @@
 	margin-inline: calc(-1 * var(--gut));
 	padding: 28px var(--gut) 26px;
 	background: #1a1a1a;
-	color: #fff;
+	color: #f3f3f3;
 }
 
 .v-vob .vb-hero h1 {
 	position: relative;
 	max-width: 9ch;
-	color: #fff;
+	color: #f3f3f3;
 }
 
 .v-vob .vb-kicker {
@@ -70,7 +70,7 @@
 }
 
 .v-vob .vb-card {
-	border: 2px solid #1a1a1a;
+	border: 2px solid var(--ink);
 	border-radius: var(--r-l);
 	padding: 16px;
 }
@@ -176,7 +176,7 @@
 /* Karen's emphasis from her email: the kicker and the state line bold, the note in italics. */
 .v-vob .vb-kicker {
 	font-weight: 800;
-	color: #fff;
+	color: #f3f3f3;
 }
 
 .v-vob .vb-note {

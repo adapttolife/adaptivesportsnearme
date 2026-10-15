@@ -6,7 +6,7 @@
 	color-scheme: light;
 	--ink: #1a1a1a;
 	--ink2: #3a3a37;
-	--paper: #ffffff;
+	--paper: #f3f3f3;
 	--mist: #f7f7f5;
 	--sand: #f0efec;
 	--sand2: #e8e7e3;
@@ -112,7 +112,7 @@ select {
 :focus-visible {
 	outline: 2px solid var(--orange);
 	outline-offset: 2px;
-	border-radius: 4px;
+	border-radius: 10px;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -131,7 +131,7 @@ select {
 	left: -999px;
 	top: 8px;
 	background: var(--ink);
-	color: #fff;
+	color: #f3f3f3;
 	padding: 10px 16px;
 	border-radius: var(--r);
 	z-index: 200;
@@ -290,7 +290,7 @@ select {
 	margin-right: 5px;
 	border-radius: 50%;
 	background: var(--orange);
-	color: #fff;
+	color: #f3f3f3;
 	display: grid;
 	place-items: center;
 	transition:
@@ -397,7 +397,7 @@ select {
 	margin-right: 6px;
 	border-radius: 50%;
 	background: var(--orange);
-	color: #fff;
+	color: #f3f3f3;
 	display: grid;
 	place-items: center;
 	transition:
@@ -670,7 +670,7 @@ select {
 
 .btn-pill .badge {
 	background: var(--ink);
-	color: #fff;
+	color: #f3f3f3;
 	font-size: 11px;
 	min-width: 18px;
 	height: 18px;
@@ -817,7 +817,7 @@ select {
 
 .chip.on {
 	background: var(--ink);
-	color: #fff;
+	color: #f3f3f3;
 	border-color: var(--ink);
 }
 
@@ -1201,7 +1201,7 @@ select {
 
 .st-open {
 	background: var(--ink);
-	color: #fff;
+	color: #f3f3f3;
 }
 
 .st-wait {
@@ -1252,7 +1252,7 @@ select {
 
 .cbadge.rsvp {
 	background: var(--ink);
-	color: #fff;
+	color: #f3f3f3;
 }
 
 .heart {
@@ -1272,7 +1272,7 @@ select {
 }
 
 .heart:hover {
-	background: #fff;
+	background: #f3f3f3;
 	transform: scale(1.08);
 }
 
@@ -1344,7 +1344,7 @@ select {
 	height: 22px;
 	border-radius: 50%;
 	background: var(--ink);
-	color: #fff;
+	color: #f3f3f3;
 	font-size: 12px;
 	font-weight: 700;
 	display: grid;
@@ -1484,7 +1484,7 @@ select {
 	align-items: center;
 	gap: 6px;
 	min-height: var(--tap);
-	background: #fff;
+	background: #f3f3f3;
 	border: 1px solid var(--line);
 	border-radius: 999px;
 	padding: 7px 12px;
@@ -1528,7 +1528,7 @@ select {
 .mpill:focus-visible,
 .mpill.active {
 	background: var(--ink);
-	color: #fff;
+	color: #f3f3f3;
 	z-index: 5;
 }
 
@@ -1544,7 +1544,7 @@ select {
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	background: #fff;
+	background: #f3f3f3;
 	border: 1px solid var(--line);
 	border-radius: 999px;
 	font-family: "DM Sans", sans-serif;
@@ -1563,7 +1563,7 @@ select {
 .mpin:hover,
 .mpin.active {
 	background: var(--ink);
-	color: #fff;
+	color: #f3f3f3;
 }
 
 .mdot {
@@ -1586,7 +1586,7 @@ select {
 	height: 16px;
 	border-radius: 50%;
 	background: var(--orange);
-	border: 2.5px solid #fff;
+	border: 2.5px solid #f3f3f3;
 	box-shadow: 0 1px 6px rgba(20, 18, 14, 0.35);
 	pointer-events: none;
 	transition: transform 0.12s var(--ease);
@@ -1612,7 +1612,7 @@ select {
 	display: flex;
 	align-items: center;
 	gap: 7px;
-	background: #fff;
+	background: #f3f3f3;
 	border: 1px solid var(--line);
 	border-radius: var(--r-full);
 	padding: 9px 15px;
@@ -1642,7 +1642,7 @@ select {
 	align-items: center;
 	gap: 8px;
 	background: var(--ink);
-	color: #fff;
+	color: #f3f3f3;
 	border-radius: var(--r-full);
 	padding: 11px 18px;
 	font-family: "DM Sans", sans-serif;
@@ -1669,7 +1669,7 @@ select {
 	bottom: 16px;
 	width: min(400px, calc(100% - 32px));
 	z-index: 7;
-	background: #fff;
+	background: #f3f3f3;
 	border-radius: var(--r-xl);
 	box-shadow: 0 8px 30px rgba(20, 18, 14, 0.22);
 	display: flex;
@@ -1755,7 +1755,7 @@ select {
 
 .mapxd-foot a:hover {
 	background: var(--ink);
-	color: #fff;
+	color: #f3f3f3;
 }
 
 /* Phone bottom tray — peek 35% / expanded 90%. Desktop overrides to a left panel. */
@@ -1765,7 +1765,7 @@ select {
 	right: 0;
 	bottom: 0;
 	z-index: 8;
-	background: #fff;
+	background: #f3f3f3;
 	border-radius: var(--r-xl) var(--r-xl) 0 0;
 	box-shadow: 0 -8px 30px rgba(20, 18, 14, 0.18);
 	height: 35%;
@@ -1856,7 +1856,7 @@ select {
 	padding: 0 18px;
 	border-radius: var(--r-full);
 	border: 1px solid var(--line);
-	background: #fff;
+	background: #f3f3f3;
 	color: var(--ink);
 	font-weight: 600;
 	font-size: 14px;
@@ -1864,7 +1864,7 @@ select {
 
 .map-tray .tray-pill.primary {
 	background: var(--ink);
-	color: #fff;
+	color: #f3f3f3;
 	border-color: var(--ink);
 }
 
@@ -1909,7 +1909,7 @@ select {
 	border-radius: 50%;
 	color: var(--muted);
 	cursor: pointer;
-	background: #fff;
+	background: #f3f3f3;
 	border: 1px solid var(--line);
 	box-shadow: 0 1px 4px rgba(20, 18, 14, 0.12);
 }
@@ -2090,7 +2090,7 @@ select {
 	height: 30px;
 	padding: 0 9px;
 	border-radius: var(--r-full);
-	background: #fff;
+	background: #f3f3f3;
 	color: var(--ink);
 	font-size: 13px;
 	font-weight: 700;
@@ -2107,7 +2107,7 @@ select {
 .mk button:hover,
 .mk.active button {
 	background: var(--ink);
-	color: #fff;
+	color: #f3f3f3;
 	transform: scale(1.12);
 	z-index: 10;
 }
@@ -2308,7 +2308,7 @@ table.list tbody tr:hover {
 	width: 100%;
 	height: 50px;
 	background: var(--orange);
-	color: #fff;
+	color: #f3f3f3;
 	border-radius: var(--r);
 	font-size: 16px;
 	font-weight: 700;
@@ -2374,7 +2374,7 @@ a.cta {
 	left: 16px;
 	bottom: 16px;
 	z-index: 2;
-	color: #fff;
+	color: #f3f3f3;
 }
 
 .dov-sport {
@@ -2462,7 +2462,7 @@ a.cta {
 .desc-x:focus-visible ~ .desc-btn {
 	outline: 2px solid var(--orange);
 	outline-offset: 3px;
-	border-radius: 4px;
+	border-radius: 10px;
 }
 
 @media (max-width: 720px) {
@@ -3014,7 +3014,7 @@ a.evrow:hover {
 
 .hdr-add:hover {
 	background: var(--orange);
-	color: #fff;
+	color: #f3f3f3;
 	border-color: var(--orange);
 }
 
@@ -3346,7 +3346,7 @@ a.evrow:hover {
 	gap: 10px;
 	max-width: calc(100vw - 28px);
 	background: var(--ink);
-	color: #fff;
+	color: #f3f3f3;
 	border-radius: var(--r-full);
 	padding: 10px 12px 10px 15px;
 	font-size: 13.5px;
@@ -3362,7 +3362,7 @@ a.evrow:hover {
 .trustpill > svg:first-child {
 	width: 17px;
 	height: 17px;
-	color: #fff;
+	color: #f3f3f3;
 }
 
 .trustpill b {
@@ -3380,7 +3380,7 @@ a.evrow:hover {
 	border-radius: 50%;
 	display: grid;
 	place-items: center;
-	color: #fff;
+	color: #f3f3f3;
 	opacity: 0.65;
 	transition:
 		opacity 0.15s,
@@ -3635,7 +3635,7 @@ a.evrow:hover {
 	width: 100%;
 	height: 50px;
 	background: var(--orange);
-	color: #fff;
+	color: #f3f3f3;
 	border-radius: var(--r);
 	font-size: 16px;
 	font-weight: 700;
@@ -3744,7 +3744,7 @@ a.evrow:hover {
 	padding: 0 22px;
 	border-radius: var(--r-full);
 	background: var(--orange);
-	color: #fff;
+	color: #f3f3f3;
 	font-size: 15px;
 	font-weight: 700;
 	white-space: nowrap;
@@ -4921,7 +4921,7 @@ body.content-page > main {
 .detail-page .desc-x:focus-visible ~ .desc-btn {
 	outline: 2px solid var(--orange);
 	outline-offset: 3px;
-	border-radius: 4px;
+	border-radius: 10px;
 }
 
 @media (max-width: 720px) {
@@ -4942,7 +4942,7 @@ body.content-page > main {
 	height: var(--tap);
 	padding: 0 22px;
 	background: var(--orange);
-	color: #fff;
+	color: #f3f3f3;
 	border-radius: var(--r);
 	font-size: 16px;
 	font-weight: 700;
@@ -5159,7 +5159,7 @@ main.detail-page.wrap {
 	width: 100%;
 	min-height: 48px;
 	background: var(--orange);
-	color: #fff;
+	color: #f3f3f3;
 	border: none;
 	border-radius: var(--r);
 	font-size: 15px;
@@ -5288,7 +5288,7 @@ main.detail-page.wrap {
 	bottom: 24px;
 	transform: translateX(-50%);
 	background: var(--ink);
-	color: #fff;
+	color: #f3f3f3;
 	padding: 10px 18px;
 	border-radius: var(--r-full);
 	font-size: 13px;
@@ -5475,7 +5475,7 @@ main.detail-page.wrap {
 
 .admin-page .btn-approve:active {
 	background: var(--green);
-	color: #fff;
+	color: #f3f3f3;
 }
 
 .admin-page .btn-reject {
@@ -5782,7 +5782,7 @@ main.detail-page.wrap {
 	background: var(--paper);
 	display: grid;
 	place-items: center;
-	color: #fff;
+	color: #f3f3f3;
 	transition:
 		background 0.15s,
 		border-color 0.15s;

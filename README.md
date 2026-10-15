@@ -42,6 +42,27 @@ directory ordering, case-insensitive admin ordering, source linkage and pending
 review ordering. Building indexes consumes some reads/writes once; subsequent
 writes also maintain them.
 
+## Organization management access
+
+`db/migrations/0008_organization_access.sql` adds `organizations.claim_email`
+and the passwordless login tables. Set `claim_email` only after staff verify the
+claimant’s connection to the program; it is the login address and may differ
+from the public organization email. Apply it to staging before production:
+
+```sh
+npx wrangler d1 execute asnm-db-staging --config wrangler.preview.json --remote --file db/migrations/0008_organization_access.sql
+npx wrangler d1 execute asnm-db --config wrangler.json --remote --file db/migrations/0008_organization_access.sql
+```
+
+Set the `ORG_AUTH_SIGNING_KEY` secret independently on both Workers. Claimants
+request a one-time email link at `POST /api/org-auth/request-link`; authenticated
+sessions can read and update only organizations whose `claim_email` matches the
+verified address through `/api/organizations/:id/manage`.
+
+Staff assign or clear a verified claim address with the existing admin bearer key:
+`PATCH /api/admin/organizations/:id/claim-email` and a JSON body containing
+`claim_email`. This is intentionally separate from the public organization email.
+
 Cloudflare's free allowance is **5 million rows read per day per account**,
 shared across databases, not five million for each staging/production database.
 See [D1 pricing](https://developers.cloudflare.com/d1/platform/pricing/).
@@ -224,7 +245,7 @@ settings, DNS, and certificate status must also be checked in Cloudflare.
 ## Secrets (per worker, via `wrangler secret put`)
 
 `BEEHIIV_API_KEY`, `BEEHIIV_PUBLICATION_ID`, `TURNSTILE_SECRET_KEY`,
-and `ADMIN_KEY` (enables `/api/admin/*`; unset = admin disabled, 401).
+`ORG_AUTH_SIGNING_KEY`, and `ADMIN_KEY` (enables `/api/admin/*`; unset = admin disabled, 401).
 
 ## Maintaining the data
 

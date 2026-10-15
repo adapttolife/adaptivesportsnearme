@@ -67,6 +67,7 @@
 	letter-spacing: -0.04em;
 	max-width: 6.4ch;
 	transition:
+		color 280ms ease,
 		font-size 280ms ease,
 		width 280ms ease;
 }
@@ -126,7 +127,7 @@
 	padding: 22px 18px 4px;
 	border: 0;
 	border-radius: 16px;
-	background: #fff;
+	background: #f3f3f3;
 	box-shadow: 0 2px 0 rgba(0, 0, 0, 0.08);
 }
 
@@ -139,12 +140,12 @@
 	padding: 0 20px;
 	border-radius: 16px;
 	background: #1a1a1a;
-	color: #fff;
+	color: #f3f3f3;
 	border: 0;
 }
 
 .v-home .hb.is-ink .wf-row .btn {
-	background: #fff;
+	background: #f3f3f3;
 	color: #1a1a1a;
 }
 
@@ -172,8 +173,8 @@
 
 @media (min-width: 768px) {
 	.v-home .hb {
-		padding: 56px var(--gut) 52px;
-		border-radius: 0 0 28px 28px;
+		padding: 56px var(--gut) 32px;
+		border-radius: 0 0 15px 15px;
 	}
 	.v-home .hb-art {
 		top: 50%;
@@ -299,7 +300,7 @@
 	aspect-ratio: 1;
 	border-radius: 18px;
 	background: #1a1a1a;
-	color: #fff;
+	color: #f3f3f3;
 }
 
 .v-home .st-allbox b {
@@ -321,7 +322,7 @@
 		gap: 14px;
 	}
 	.v-home .door {
-		border-radius: 22px;
+		border-radius: 12px;
 	}
 }
 
@@ -386,7 +387,7 @@
 
 .v-home .door--ink {
 	background: #1a1a1a;
-	color: #fff;
+	color: #f3f3f3;
 }
 
 .v-home .door--coral {
@@ -413,7 +414,7 @@
 @media (min-width: 768px) {
 	.v-home .band {
 		margin-inline: 0;
-		border-radius: 28px;
+		border-radius: 15px;
 		padding: 36px;
 	}
 }
@@ -465,7 +466,7 @@
 }
 
 .v-home .band .grow {
-	background: #fff;
+	background: #f3f3f3;
 	border: 0;
 	border-radius: 18px;
 	padding: 14px 16px;

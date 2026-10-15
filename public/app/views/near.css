@@ -104,14 +104,14 @@
 
 .v-near .nr-k--dot {
 	background: var(--orange);
-	box-shadow: 0 0 0 2px #fff;
+	box-shadow: 0 0 0 2px #f3f3f3;
 	width: 10px;
 	height: 10px;
 	margin: 0 2px;
 }
 
 .v-near .nr-k--you {
-	background: #fff;
+	background: #f3f3f3;
 	border: 3px solid var(--orange);
 }
 
@@ -356,7 +356,7 @@
 	min-width: 32px;
 	height: 32px;
 	padding: 0 10px;
-	border-radius: 999px;
+	border-radius: 15px;
 	background: var(--sand);
 	font-size: 15px;
 	font-weight: 700;
@@ -456,7 +456,6 @@
 @media (max-width: 767px) {
 	.v-near .nr-none-form {
 		margin-inline: calc(-1 * var(--gut));
-		border-radius: 0;
 		padding: 20px var(--gut);
 	}
 }
@@ -470,7 +469,7 @@
 }
 
 .v-near .nr-stamp {
-	background: #fff;
+	background: var(--paper);
 	border: 0;
 }
 
@@ -485,5 +484,5 @@
 }
 
 .v-near .nr-k--you {
-	border-color: #1a1a1a;
+	border-color: var(--ink);
 }

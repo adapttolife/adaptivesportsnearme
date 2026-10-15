@@ -60,7 +60,7 @@
 	width: 44px;
 	height: 44px;
 	border-radius: 50%;
-	background: #fff;
+	background: #f3f3f3;
 	color: var(--ink);
 	text-decoration: none;
 	box-shadow:
@@ -136,7 +136,7 @@
 	gap: 10px;
 	min-height: 56px;
 	padding: 8px 16px 8px 8px;
-	background: #fff;
+	background: #f3f3f3;
 	color: var(--ink);
 	border-radius: var(--r-l);
 	box-shadow: var(--sh-2);
@@ -224,7 +224,7 @@
 
 .v-program .trustbox.is-v {
 	border-color: color-mix(in srgb, var(--teal) 28%, var(--line));
-	background: color-mix(in srgb, var(--teal-soft) 45%, #fff);
+	background: color-mix(in srgb, var(--teal-soft) 45%, var(--paper));
 }
 
 /* ================= 4. Action row (phones and tablets) ================= */
@@ -328,7 +328,7 @@
 	gap: 8px;
 	min-height: 44px;
 	padding: 8px 16px;
-	border-radius: 999px;
+	border-radius: 15px;
 	background: var(--mist);
 	border: 1px solid var(--line);
 	font-size: 15px;
@@ -536,7 +536,7 @@
 
 .pg-poster.is-inv {
 	background: var(--d);
-	color: #fff;
+	color: #f3f3f3;
 }
 
 .pg-poster .pp-in {
@@ -570,7 +570,7 @@
 }
 
 .pg-poster.is-inv .pp-art {
-	color: #fff;
+	color: #f3f3f3;
 }
 
 /* Trio poster: trioFigs() sizes the row to fit the art box, so nothing crosses the poster edge */
@@ -626,7 +626,7 @@
 	min-width: 48px;
 	min-height: 48px;
 	border-radius: 50%;
-	background: #fff;
+	background: #f3f3f3;
 	flex: none;
 }
 
@@ -708,7 +708,7 @@
 	gap: 6px;
 	min-height: 44px;
 	padding: 0 14px;
-	background: #fff;
+	background: #f3f3f3;
 	color: var(--ink);
 	border: 0;
 	border-radius: var(--r-l);

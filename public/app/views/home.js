@@ -39,13 +39,15 @@ function hero() {
 function sports(D) {
   const counts = {};
   for (const p of D.items) counts[p.key] = (counts[p.key] || 0) + 1;
-  const tiles = GRID.map((k) => `<li><a class="st" href="/sports/${A.esc(k)}" data-hero-sport="${A.esc(k)}">${A.plate(k, { kind: "tile", cls: "st-plate" })}<span class="st-name">${A.esc(A.sportName(k))}</span><span class="st-n num">${counts[k] || 0} programs</span></a></li>`).join("");
+  const tiles = GRID.map((key, order) => ({ key, order, count: counts[key] || 0 }))
+    .sort((a, b) => b.count - a.count || a.order - b.order)
+    .map(({ key, count }) => `<li><a class="st" href="/sports/${A.esc(key)}" data-hero-sport="${A.esc(key)}">${A.plate(key, { kind: "tile", cls: "st-plate" })}<span class="st-name">${A.esc(A.sportName(key))}</span><span class="st-n num">${count} programs</span></a></li>`).join("");
   const all = `<li><a class="st st--all" href="/sports"><span class="st-allbox">${A.icon("layout-grid", 34)}<b>All sports</b></span><span class="st-name">See all 45</span><span class="st-n">From archery to water skiing</span></a></li>`;
   return `<section class="sec hs" aria-labelledby="hs-h">${A.sectionHead({ title: "Pick a sport", id: "hs-h" })}<ul class="st-grid">${tiles}${all}</ul></section>`;
 }
 
 function doors() {
-  const d = (cls, href, key, title, line) => `<a class="door ${cls}" href="${href}"><span class="door-fig">${A.fig(key, { color: cls === "door--ink" ? "#FFFFFF" : "#1A1A1A", big: true })}</span><b>${title}</b><span>${line}</span></a>`;
+  const d = (cls, href, key, title, line) => `<a class="door ${cls}" href="${href}"><span class="door-fig">${A.fig(key, { color: cls === "door--ink" ? "#f3f3f3" : "#1A1A1A", big: true })}</span><b>${title}</b><span>${line}</span></a>`;
   return `<nav class="doors" aria-label="More ways in">${d("door--sun", "/grants", "grant", "Grants", "Money for gear, travel and programs")}${d("door--sea", "/events", "event", "Events", "Clinics, tryouts and game days")}${d("door--ink", "/sports/veteran-meetup", "veteran-meetup", "Veterans", "Meetups, coffee calls and outdoor days near you")}${d("door--coral", "/add/program", "multi", "Run a program?", "List it free. A person checks it.")}</nav>`;
 }
 
@@ -138,7 +140,7 @@ export function mount(root) {
     figs.forEach((f) => f.classList.toggle("is-on", f.dataset.heroFigure === key));
     hb.style.setProperty("--hb", color);
     hb.style.setProperty("--hb-fg", foreground);
-    hb.classList.toggle("is-ink", foreground === "#FFFFFF");
+    hb.classList.toggle("is-ink", foreground === "#f3f3f3");
     title.textContent = sport ? `Find your place in adaptive ${A.sportName(key)}.` : "Find your place in adaptive sports.";
     fitTitle();
   };

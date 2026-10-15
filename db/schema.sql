@@ -26,6 +26,7 @@ CREATE TABLE IF NOT EXISTS organizations (
   sports_json          TEXT,                    -- JSON array; future multi-sport support
   website_url          TEXT,
   email                TEXT,
+  claim_email          TEXT,
   phone                TEXT,
   city                 TEXT,
   state                TEXT,                    -- USPS 2-letter code
@@ -54,6 +55,7 @@ CREATE TABLE IF NOT EXISTS organizations (
 CREATE INDEX IF NOT EXISTS organizations_state_idx ON organizations (state);
 CREATE INDEX IF NOT EXISTS organizations_sport_idx ON organizations (sport_key);
 CREATE INDEX IF NOT EXISTS organizations_status_idx ON organizations (status, is_public);
+CREATE INDEX IF NOT EXISTS organizations_claim_email_idx ON organizations (claim_email COLLATE NOCASE);
 
 CREATE TABLE IF NOT EXISTS organization_data_sources (
   organization_id      TEXT NOT NULL REFERENCES organizations(id),

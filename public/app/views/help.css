@@ -400,10 +400,6 @@
 	background: var(--paper);
 }
 
-.v-help .rs-card .rs-plate {
-	border-radius: 0;
-}
-
 .v-help .rs-body {
 	padding: 20px;
 }
@@ -466,7 +462,7 @@
 }
 
 .v-help .lt-stack .av {
-	box-shadow: 0 0 0 4px #fff;
+	box-shadow: 0 0 0 4px var(--paper);
 }
 
 .v-help .lt-stack .av + .av {
