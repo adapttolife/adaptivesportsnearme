@@ -2305,7 +2305,7 @@ textarea:focus {
 
 .tile {
 	aspect-ratio: 1;
-	border-radius: var(--r-s);
+	border-radius: var(--r-xl);
 	display: flex;
 	flex-direction: column;
 	align-items: center;
@@ -2400,7 +2400,7 @@ textarea:focus {
 .tm-key i {
 	width: 16px;
 	height: 16px;
-	border-radius: 10px;
+	border-radius: var(--r-s);
 }
 
 .tm-key .t1 {
@@ -3384,10 +3384,10 @@ h3,
 }
 
 [data-look="sharp"] {
-	--r-s: 2px;
-	--r: 4px;
-	--r-l: 6px;
-	--r-xl: 8px;
+	--r-s: 4px;
+	--r: 6px;
+	--r-l: 8px;
+	--r-xl: 10px;
 }
 
 [data-look="sharp"] #beta,

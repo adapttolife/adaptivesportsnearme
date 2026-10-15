@@ -173,7 +173,7 @@
 
 @media (min-width: 768px) {
 	.v-home .hb {
-		padding: 56px var(--gut) 52px;
+		padding: 56px var(--gut) 32px;
 		border-radius: 0 0 15px 15px;
 	}
 	.v-home .hb-art {
