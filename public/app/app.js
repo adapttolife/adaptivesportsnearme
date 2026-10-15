@@ -1405,7 +1405,7 @@ async function render({ force = false } = {}) {
     const anchor = $(".nr-tools", main) || (focusEl && focusEl.closest(".sbar, .pchips, .tabs, .seg")) || $(".sbar, .pchips, .tabs, .seg", main);
     let top = 0;
     if (anchor) { const prev = anchor.previousElementSibling; top = Math.max(0, Math.round((prev ? prev.getBoundingClientRect().bottom : anchor.getBoundingClientRect().top) + scrollY) - (prev ? 0 : 8)); }
-    scrollTo(0, Math.min(prevY, top));
+    scrollTo(0, Math.max(0, Math.min(prevY, top - ($("#top") ? $("#top").offsetHeight : 0))));   // below the sticky header
   } else {
     try { sessionStorage.removeItem(moreKey); } catch (_) {}
     scrollTo(0, 0);
@@ -1718,6 +1718,11 @@ function boot() {
   while (dr.firstChild) document.body.appendChild(dr.firstChild);
   $("#drawer").inert = true;
   $("#top").innerHTML = header();
+  // The header sticks to the top; its height lets everything else stick below it (app.css --top-h).
+  const topEl = $("#top");
+  const setTopH = () => document.documentElement.style.setProperty("--top-h", topEl.offsetHeight + "px");
+  setTopH();
+  if (window.ResizeObserver) new ResizeObserver(setTopH).observe(topEl);
   refreshChrome(true);
 
   const nt = performance.getEntriesByType && performance.getEntriesByType("navigation")[0];
