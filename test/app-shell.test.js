@@ -242,6 +242,18 @@ test("everything that sticks to the top of the page sits below the sticky header
   assert.match(read("public/app/app.css"), /scroll-padding-top:\s*calc\(var\(--top-h\)/, "jumps land below the header");
 });
 
+// On phones the home hero's drawing joins the flow above the headline. The hero is a
+// flex container, so the phone rule must stack it; as a row, the drawing took half the
+// width and the search box shrank to a sliver (390px, October 15).
+test("on phones the home hero stacks the drawing above the headline and search", () => {
+  const css = read("public/app/views/home.css").replace(/\/\*[\s\S]*?\*\//g, "");
+  const rule = (src, sel) => (src.match(new RegExp(`(?:^|\\})\\s*${sel.replace(/[.*]/g, "\\$&")}\\s*\\{([^{}]*)\\}`)) || [])[1] || "";
+  const phone = (css.match(/@media \(max-width: 767px\) \{([\s\S]*?)\n\}/) || [])[1] || "";
+  assert.match(rule(phone, ".v-home .hb-art"), /position:\s*relative/, "the drawing is in the flow on phones");
+  if (/display:\s*flex/.test(rule(css, ".v-home .hb")))
+    assert.match(rule(phone, ".v-home .hb"), /flex-direction:\s*column/, "the flex hero stacks on phones");
+});
+
 // The letter's thank-you says what happens next: a new signup confirms its email first.
 test("the letter's thank-you asks a new subscriber to confirm, and the confirmation lands on a note", () => {
   const send = between(APP, "async function sendForm(", "\n}\n");
