@@ -91,6 +91,8 @@ const ROUTES = [
   [/^\/resources\/?$/, () => ({ title: "Resources", description: "Directories and resources for adaptive athletes, veterans and families." })],
   [/^\/resources\/veteran-owned-businesses\/?$/, () => ({ title: "Support Veteran-Owned Businesses", description: "Find veteran-owned businesses in your state using these directories." })],
   [/^\/letter\/?$/, () => ({ title: "Get the letter", description: "New programs, grants and events, when there is something worth sending." })],
+  [/^\/privacy\/?$/, () => ({ title: "Privacy policy", description: "What Adaptive Sports Near Me collects, why, and the choices you have." })],
+  [/^\/terms\/?$/, () => ({ title: "Terms of use", description: "The terms for using Adaptive Sports Near Me, a free directory run by Adapt To Life." })],
 ];
 
 function notFound(title = "Page not found") {
@@ -129,7 +131,7 @@ const VIEWS = [
   [/^\/states$/, "states"], [/^\/states\/[^/]+$/, "state"], [/^\/programs\/[^/]+$/, "program"],
   [/^\/grants$/, "grants"], [/^\/grants\/[^/]+$/, "grant"], [/^\/events$/, "events"],
   [/^\/(add\/program|add\/event|update\/[^/]+)$/, "forms"], [/^\/resources\/veteran-owned-businesses$/, "vob"],
-  [/^\/(help|about|resources|letter)$/, "help"],
+  [/^\/(help|about|resources|letter|privacy|terms)$/, "help"],
 ];
 export function preloadHints(pathname) {
   const path = pathname.length > 1 ? pathname.replace(/\/+$/, "") : "/";
@@ -215,7 +217,7 @@ export function robotsTxt(env) {
 }
 
 export async function sitemapXml(env) {
-  const urls = ["/", "/sports", "/states", "/grants", "/events", "/help", "/about", "/resources", "/resources/veteran-owned-businesses", "/letter"];
+  const urls = ["/", "/sports", "/states", "/grants", "/events", "/help", "/about", "/resources", "/resources/veteran-owned-businesses", "/letter", "/privacy", "/terms"];
   for (const k of Object.keys(SPORT_NAMES)) urls.push(`/sports/${k}`);
   for (const st of Object.keys(STATE_NAMES)) urls.push(`/states/${st}`);
   if (env.DB) {
