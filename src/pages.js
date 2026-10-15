@@ -63,6 +63,7 @@ const ROUTES = [
     return { title: `Adaptive sports in ${name}`, description: `Adaptive sports programs, grants and events in ${name}. Every listing shows when it was last checked.`, canonical: `${ORIGIN}/states/${st}` };
   }],
   [/^\/organizations\/?$/, () => ({ title: "Adaptive sports organizations", description: "Browse adaptive sports organizations and the programs they run." })],
+  [/^\/programs\/?$/, () => ({ title: "Adaptive sports programs", description: "Browse adaptive sports programs across all organizations." })],
   [new RegExp(`^/organizations/(${UUID})/?$`, "i"), async (m, env) => {
     if (!env.DB) return { title: "Program", description: HOME_DESCRIPTION };
     const p = await getOrg(env.DB, m[1].toLowerCase());
@@ -133,7 +134,7 @@ const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "
 // (/api/orgs/<id>) with the page, so nothing waits for anything else.
 const VIEWS = [
   [/^\/$/, "home"], [/^\/near\/[^/]+$/, "near"], [/^\/sports$/, "sports"], [/^\/sports\/[^/]+$/, "sport"],
-  [/^\/states$/, "states"], [/^\/states\/[^/]+$/, "state"], [/^\/organizations$/, "organizations"], [/^\/organizations\/[^/]+$/, "program"], [/^\/programs\/[^/]+$/, "program-detail"],
+  [/^\/states$/, "states"], [/^\/states\/[^/]+$/, "state"], [/^\/organizations$/, "organizations"], [/^\/organizations\/[^/]+$/, "program"], [/^\/programs$/, "programs"], [/^\/programs\/[^/]+$/, "program-detail"],
   [/^\/grants$/, "grants"], [/^\/grants\/[^/]+$/, "grant"], [/^\/events$/, "events"],
   [/^\/(add\/program|add\/event|update\/[^/]+)$/, "forms"], [/^\/resources\/veteran-owned-businesses$/, "vob"],
   [/^\/(help|about|resources|letter)$/, "help"],

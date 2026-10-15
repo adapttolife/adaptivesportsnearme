@@ -1140,7 +1140,7 @@ body.ov-open {
 
 .btn--orange {
 	background: var(--orange);
-	color: var(--ink);
+	color: #1a1a1a;
 }
 
 .btn--orange:hover {
