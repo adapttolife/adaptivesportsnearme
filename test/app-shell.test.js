@@ -220,3 +220,44 @@ test("sheets opened by a tap get their own Back step", () => {
   assert.match(read("public/app/views/program.js"), /A\.pushSheet\(\);/);
   assert.match(between(APP, 'window.addEventListener("popstate"', "render();\n  });"), /closeOverlay\(\{ mode: "pop" \}\)/);
 });
+
+// The privacy policy and terms (public/app/views/help.js) describe what the site does.
+// These checks keep the two in step: a change that breaks one of the policy's
+// promises fails here first, so the page gets updated in the same change.
+const HELP = read("public/app/views/help.js");
+const PRIVACY = between(HELP, "function privacyPage()", "\nfunction termsPage()");
+test("every outside service a visitor's browser contacts is named in the privacy policy", () => {
+  const sources = [read("public/index.html"), APP, ...readdirSync(new URL("../public/app/views/", import.meta.url)).filter((f) => f.endsWith(".js")).map((f) => read(`public/app/views/${f}`))].join("\n");
+  const hosts = new Set([...sources.matchAll(/https:\/\/([a-z0-9.-]+\.[a-z]{2,})/g)].map((m) => m[1]).filter((h) => !/(^|\.)(adaptivesportsnearme\.com|adapttolife\.org|w3\.org)$/.test(h)));
+  const NAMED = {
+    "fonts.googleapis.com": "Google Fonts", "fonts.gstatic.com": "Google Fonts", "tiles.openfreemap.org": "OpenFreeMap",
+    "cdn.userway.org": "UserWay", "challenges.cloudflare.com": "Cloudflare Turnstile",
+  };
+  assert.ok(hosts.size >= 4, `found ${[...hosts]}`);
+  for (const h of hosts) {
+    assert.ok(NAMED[h], `${h} is contacted by the site but not mapped here: add it to the privacy policy and to NAMED`);
+    assert.ok(PRIVACY.includes(NAMED[h]), `the privacy policy does not name ${NAMED[h]} (${h})`);
+  }
+});
+test("the privacy policy's promises hold in the code", () => {
+  const appFiles = readdirSync(new URL("../public/app/", import.meta.url), { recursive: true }).filter((f) => f.endsWith(".js")).map((f) => read(`public/app/${f}`)).join("\n");
+  // "We don't set cookies."
+  assert.match(PRIVACY, /We don't set cookies/);
+  assert.ok(!/document\.cookie/.test(appFiles), "the app sets or reads a cookie");
+  // "Your exact position is not sent to us."
+  assert.match(PRIVACY, /Your exact position is not sent to us/);
+  const locate = between(APP, "export function locateMe()", "\n}\n");
+  assert.ok(!/fetch\(|navigator\.sendBeacon|XMLHttpRequest/.test(locate), "locateMe sends something to a server");
+  // "We don't store your IP address with what you sent."
+  assert.match(PRIVACY, /We don't store your IP address/);
+  const worker = read("src/index.js");
+  const ipUses = [...worker.matchAll(/request\.headers\.get\(['"]CF-Connecting-IP['"]\)/g)].length;
+  const allowed = [...worker.matchAll(/verifyTurnstile\(env, str\(data\.cf_token\), request\.headers\.get\("CF-Connecting-IP"\)\)/g)].length + [...worker.matchAll(/FORM_LIMITER\.limit\(\{ key: request\.headers\.get\('CF-Connecting-IP'\)/g)].length;
+  assert.equal(ipUses, allowed, "the IP address is used for something other than the spam check and the rate limit");
+  for (const m of worker.matchAll(/INSERT[^`"]*INTO (intake|submissions)\s*\(([^)]*)\)/gi)) assert.ok(!/\bip\b|address|user_agent/i.test(m[2]), `${m[1]} stores an IP or browser detail`);
+  // The pages exist where the site links to them.
+  assert.match(between(APP, "function footer(", "\n}\n"), /href="\/privacy"[\s\S]*href="\/terms"/);
+  assert.match(between(APP, "export function letterBlock(", "\n}\n"), /href="\/privacy"/);
+  assert.match(read("public/app/views/forms.js"), /href="\/privacy"/);
+  assert.match(APP, /\["\/privacy", "help"\], \["\/terms", "help"\]/);
+});
