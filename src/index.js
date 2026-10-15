@@ -346,7 +346,7 @@ async function handleSubmitProgram(request, env, ctx, opts = {}) {
 
   // A suggested update to an existing listing rides the same capture path as a
   // new program: lid names the listing, rel says who is asking (rel=run is the
-  // program itself, the route to Verified). A person reads both before anything
+  // organization itself, the route to Verified). A person reads both before anything
   // in the directory changes; nothing here writes organizations.
   // A suggested event (kind=event) rides the same path too (opening-day bar:
   // add-an-event works); a person checks it before it is listed.
@@ -355,7 +355,8 @@ async function handleSubmitProgram(request, env, ctx, opts = {}) {
   const relation = LISTING_RELATIONS.has(str(data.rel)) ? str(data.rel) : "";
   // A fix or a claim names the listing by its id; the receipt and the notice use
   // the listing's own name from the directory, never text the browser sent.
-  let program = isEvent ? str(data.en) : str(data.pn);
+  // A new listing names its organization; the program (what they offer) is optional.
+  let program = isEvent ? str(data.en) : (str(data.pn) || str(data.org));
   if (listingId) {
     let listed = "";
     try { listed = str((await env.DB?.prepare("SELECT name FROM organizations WHERE id = ?").bind(listingId).first())?.name); } catch { /* the id still names it */ }
@@ -372,7 +373,7 @@ async function handleSubmitProgram(request, env, ctx, opts = {}) {
   const eventTime = str(data.et).slice(0, 40);
   const siteUrl = str(data.url).slice(0, 300);
 
-  if (!program) return json({ ok: false, error: isEvent ? "Please add the event name." : "Please add the program name." }, 422);
+  if (!program) return json({ ok: false, error: isEvent ? "Please add the event name." : "Please add the organization's name." }, 422);
   if (listingId && !notes) return json({ ok: false, error: "Please tell us what should change." }, 422);
   if (isEvent && !/^\d{4}-\d{2}-\d{2}$/.test(eventDate)) return json({ ok: false, error: "Please add the date of the event." }, 422);
   // Email: a fix to a listing or a suggested event may come without one (Alec,
@@ -401,7 +402,7 @@ async function handleSubmitProgram(request, env, ctx, opts = {}) {
   const summary = (isEvent
     ? `New event submission: ${program.slice(0, 120)} (${eventDate}${location ? `, ${location.slice(0, 80)}` : ""})`
     : listingId
-      ? `${relation === "run" ? "Program confirming its listing" : "Listing update"}: ${program.slice(0, 120)}`
+      ? `${relation === "run" ? "Organization confirming its listing" : "Listing update"}: ${program.slice(0, 120)}`
       : `New program submission: ${program.slice(0, 120)}${location ? ` (${location.slice(0, 80)})` : ""}`).replace(/[\r\n]+/g, " ");
   const submissionKind = isEvent ? "new_event" : listingId ? "listing_update" : "new_program";
   const source = str(data.source).slice(0, 80) || "asnm-prelaunch";

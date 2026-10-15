@@ -3594,7 +3594,7 @@ h3,
 }
 
 /* ---------- Verified: the check beside a name, form status, Turnstile (2026-10-14) ---------- */
-/* Verified means the program itself confirmed its listing with us. Lists show the check
+/* Verified means the organization itself confirmed its listing with us. Lists show the check
    only then; nothing in a list ever says "not verified". */
 .vcheck {
 	display: inline-flex;

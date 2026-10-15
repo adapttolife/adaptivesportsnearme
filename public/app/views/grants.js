@@ -6,7 +6,7 @@ import * as A from "../app.js";
 
 const AUD = [
   ["athlete", "For athletes"],
-  ["program", "For programs"],
+  ["program", "For organizations"],
   ["all", "All grants"],
 ];
 

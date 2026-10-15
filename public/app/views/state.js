@@ -81,7 +81,7 @@ export async function render(ctx) {
   }
 
   if (statewide.length) {
-    body += `<section class="sec" aria-labelledby="st-wide">${A.sectionHead({ title: `Across ${stName}, no single city listed`, id: "st-wide", sub: `These programs serve ${stName} but don't list a single city.` })}${A.rowList(statewide.sort(byTrust), { single: !!s }, { id: "st-wide-rows" })}</section>`;
+    body += `<section class="sec" aria-labelledby="st-wide">${A.sectionHead({ title: `Across ${stName}, no single city listed`, id: "st-wide", sub: `These organizations serve ${stName} but don't list a single city.` })}${A.rowList(statewide.sort(byTrust), { single: !!s }, { id: "st-wide-rows" })}</section>`;
   }
 
   if (!list.length) {

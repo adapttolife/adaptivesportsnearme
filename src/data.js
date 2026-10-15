@@ -59,7 +59,7 @@ function rowToProgram(r, dist) {
     ages: r.ages,
     quality: r.data_quality_rating,
     verification: r.verification_status,
-    // Two separate signals (Alec, 2026-10-14). confirmed: the program itself gave
+    // Two separate signals (Alec, 2026-10-14). confirmed: the organization itself gave
     // permission, which is the Verified check on the site (publicity_consent, the
     // same flag that lets its contact details show). teamChecked: a person on our
     // team checked the listing (verification_status 'verified', checkedMonth when).

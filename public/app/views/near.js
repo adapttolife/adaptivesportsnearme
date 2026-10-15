@@ -157,7 +157,7 @@ export async function render(ctx) {
     groups += `<section class="nr-group" aria-labelledby="${GROUP_IDS.elsewhere}">${groupHead({ id: GROUP_IDS.elsewhere, title: "Elsewhere in " + ST, count: g.elsewhere.length, sub: where.coords ? "Closest first." : null })}${A.rowList(g.elsewhere, rctx, { id: "nr-else-rows" })}</section>`;
   }
   if (g.statewide.length) {
-    groups += `<section class="nr-group" aria-labelledby="${GROUP_IDS.statewide}">${groupHead({ id: GROUP_IDS.statewide, title: `Across ${ST}, no single city listed`, count: g.statewide.length, sub: `These programs serve ${ST} but don't list a single city.` })}${A.rowList(g.statewide, rctx, { id: "nr-sw-rows" })}</section>`;
+    groups += `<section class="nr-group" aria-labelledby="${GROUP_IDS.statewide}">${groupHead({ id: GROUP_IDS.statewide, title: `Across ${ST}, no single city listed`, count: g.statewide.length, sub: `These organizations serve ${ST} but don't list a single city.` })}${A.rowList(g.statewide, rctx, { id: "nr-sw-rows" })}</section>`;
   }
 
   /* 6. empty or thin */
@@ -175,7 +175,7 @@ export async function render(ctx) {
     })}</div>`;
     const out = A.nearestOutside(where, pool);
     if (out.length) {
-      empty += `<section class="nr-group nr-outside" aria-labelledby="nr-out">${groupHead({ id: "nr-out", title: `Nearest ${s ? sportLow : "programs"} outside ${ST}`, sub: "Nearest states first. A program with no single city counts from the middle of its state, so it shows no miles." })}${out.map((grp) =>
+      empty += `<section class="nr-group nr-outside" aria-labelledby="nr-out">${groupHead({ id: "nr-out", title: `Nearest ${s ? sportLow : "programs"} outside ${ST}`, sub: "Nearest states first. An organization with no single city counts from the middle of its state, so it shows no miles." })}${out.map((grp) =>
         `<h3 class="nr-sth">${A.esc(A.stateName(grp.state))}</h3><div class="rows">${grp.items.map((p) => A.programRow(p, { ...rctx, outside: true })).join("")}</div>`).join("")}</section>`;
     }
   }

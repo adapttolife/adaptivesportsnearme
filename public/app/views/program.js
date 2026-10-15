@@ -62,7 +62,7 @@ function hero(p) {
   return `<div class="pg-hero has-vtag${label ? " has-stamp" : ""}">
 ${A.plate(p, { kind: "hero" })}
 <button type="button" class="pg-hb pg-back" data-back="${A.esc(backHref(p))}" aria-label="Back">${A.icon("arrow-left", 22)}</button>
-<a class="pg-hb pg-share" href="/programs/${A.esc(p.id)}?share=1" data-poster="hero" aria-label="Share this program">${A.icon("share", 20)}</a>
+<a class="pg-hb pg-share" href="/programs/${A.esc(p.id)}?share=1" data-poster="hero" aria-label="Share this listing">${A.icon("share", 20)}</a>
 <div class="pg-edge">${stamp}${vtag(p)}</div></div>`;
 }
 
@@ -85,17 +85,19 @@ function freshLine(p) {
 }
 function verifyHtml(p) {
   const fix = A.btn("Suggest a fix", `/update/${p.id}`, "line");
-  const run = A.btn("I run this program", `/update/${p.id}?rel=run`, "ink");
+  const run = A.btn("I'm with this organization", `/update/${p.id}?rel=run`, "ink");
   const bits = freshBits(p);
   const facts = bits.length ? `<ul class="vx-facts">${bits.map((b) => `<li>${A.icon("check", 18)}<span class="num">${A.esc(b)}</span></li>`).join("")}</ul>` : "";
   const body = p.verified
-    ? `<p>The program itself confirmed this listing with us.</p>${facts}<p>Schedules change, so check the program's website before you go.</p>`
-    : `<p>We found this program in public sources, like its own website, and we check that website regularly.</p>${facts}<p><b>Verified</b> means the program itself confirmed its listing with us. We're asking every program.</p><p>Not verified doesn't mean anything is wrong. Check the program's website before you go.</p>`;
+    ? `<p>The organization itself confirmed this listing with us.</p>${facts}<p>Schedules change, so check the organization's website before you go.</p>`
+    : `<p>We found this organization in public sources, like its own website, and we check that website regularly.</p>${facts}<p><b>Verified</b> means the organization itself confirmed its listing with us. We're asking every organization.</p><p>Not verified doesn't mean anything is wrong. Check the organization's website before you go.</p>`;
   return `<div class="ss-top"><button type="button" class="iconbtn" data-close aria-label="Close">${A.icon("x", 24)}</button><h2 id="vx-h" tabindex="-1">${p.verified ? "Verified" : "Not verified yet"}</h2></div>
 <div class="ss-body vx-body">${body}<div class="btns vx-btns">${p.verified ? fix : run + fix}</div><a class="tlink vx-more" href="/about">How we check listings${A.icon("arrow-right", 18)}</a></div>`;
 }
 
-/* ---------- About: "Who it's for" and "Sports here" (6.8.5) ---------- */
+/* ---------- About this organization: "Who it's for" and its programs ----------
+   Words (Alec and Faisal, 2026-10-15): a listing is an organization, the group that
+   runs things; a program is what it offers, like wheelchair tennis. */
 function sportChips(text) {
   const seen = new Set();
   const parts = String(text).split(/[;,]/).map((s) => s.trim().replace(/\.$/, "")).filter((s) => s && !/^see\b/i.test(s));
@@ -116,10 +118,10 @@ function about(p) {
   let inner = "";
   if (served) inner += `<h3 class="pg-h3">Who it's for</h3><p>${A.esc(upperFirst(served.replace(/\s+/g, " ")))}</p>`;
   const chips = sports ? sportChips(sports) : "";
-  if (chips) inner += `<h3 class="pg-h3">Sports here</h3>${chips}`;
+  if (chips) inner += `<h3 class="pg-h3">Programs</h3>${chips}`;
   if (!inner && p.desc && !/Sports and activities:|Athletes served:/i.test(p.desc)) inner = `<p>${A.esc(p.desc)}</p>`;
-  if (!inner) inner = `<p class="pg-quiet">We don't have a description for this program yet.${p.website ? " The program's website has the details." : ""}</p>`;
-  return `<section class="pg-sec" aria-labelledby="pg-about"><h2 id="pg-about">About this program</h2>${inner}</section>`;
+  if (!inner) inner = `<p class="pg-quiet">We don't have a description for this organization yet.${p.website ? " Its website has the details." : ""}</p>`;
+  return `<section class="pg-sec" aria-labelledby="pg-about"><h2 id="pg-about">About this organization</h2>${inner}</section>`;
 }
 /* Karen's veteran research (meetups, equine therapy, art therapy) carries what
    happens, the approach, when, where (a venue name only), format, cost and who. */
@@ -179,7 +181,7 @@ function wherePlay(p) {
   if (p.placed) {
     body = `<p>${A.esc(A.placeText(p))}. We show the city only, so check the website for the exact place.</p><a class="tlink" href="/near/${enc(A.placeText(p))}">Programs near ${A.esc(A.placeText(p))}${A.icon("arrow-right", 18)}</a>`;
   } else if (p.state) {
-    body = `<p>This program serves ${A.esc(A.stateName(p.state))} and doesn't list a single city.</p><a class="tlink" href="/states/${A.esc(p.state)}">Programs in ${A.esc(A.stateName(p.state))}${A.icon("arrow-right", 18)}</a>`;
+    body = `<p>This organization serves ${A.esc(A.stateName(p.state))} and doesn't list a single city.</p><a class="tlink" href="/states/${A.esc(p.state)}">Programs in ${A.esc(A.stateName(p.state))}${A.icon("arrow-right", 18)}</a>`;
   } else {
     body = `<p>This listing doesn't say where it is yet. If you know, <a href="/update/${A.esc(p.id)}">suggest a fix</a>.</p>`;
   }
@@ -188,7 +190,7 @@ function wherePlay(p) {
 function links(p) {
   const row = (href, ic, label, sub, attrs = "") => `<li><a class="pg-link" href="${A.esc(href)}" ${attrs}><span class="pg-link-ic">${A.icon(ic, 20)}</span><span class="pg-link-text"><span class="pg-link-label">${A.esc(label)}</span>${sub ? `<span class="pg-link-sub">${A.esc(sub)}</span>` : ""}</span>${A.icon("chevron-right", 20)}</a></li>`;
   const runSub = p.verified ? "Update your listing." : "Confirm your listing to get the Verified check.";
-  return `<ul class="pg-links">${row(`/update/${p.id}`, "pencil", "Suggest a fix")}${row(`/update/${p.id}?rel=run`, "badge-check", "I run this program", runSub)}${row(`/programs/${p.id}?share=1`, "share", "Share", "", 'data-poster="links"')}</ul>`;
+  return `<ul class="pg-links">${row(`/update/${p.id}`, "pencil", "Suggest a fix")}${row(`/update/${p.id}?rel=run`, "badge-check", "I'm with this organization", runSub)}${row(`/programs/${p.id}?share=1`, "share", "Share", "", 'data-poster="links"')}</ul>`;
 }
 
 /* ---------- More of this sport, from the listing's own city (6.8.9) ---------- */
@@ -229,7 +231,7 @@ function visitBtn(p, { full = false } = {}) {
 }
 function hostNote(p) {
   const h = p.website && host(p.website);
-  return h ? `<p class="pg-host">Opens ${A.esc(h)}</p>` : `<p class="pg-host">We don't have a website for this program yet.</p>`;
+  return h ? `<p class="pg-host">Opens ${A.esc(h)}</p>` : `<p class="pg-host">We don't have a website for this organization yet.</p>`;
 }
 function actionRow(p) {
   // data-sticky-twin: the phone sticky bar steps aside while this row is on screen (one ink button at a time).
@@ -258,7 +260,7 @@ ${place ? `<span class="pp-place">${A.esc(place)}</span>` : ""}
 }
 function shareHtml(p) {
   const native = typeof navigator !== "undefined" && typeof navigator.share === "function";
-  return `<div class="ss-top"><button type="button" class="iconbtn" data-close aria-label="Close">${A.icon("x", 24)}</button><h2 id="pg-sh-h">Share this program</h2></div>
+  return `<div class="ss-top"><button type="button" class="iconbtn" data-close aria-label="Close">${A.icon("x", 24)}</button><h2 id="pg-sh-h">Share this listing</h2></div>
 <div class="ss-body pg-sh-body">${poster(p)}
 <div class="btns pg-sh-btns"><button type="button" class="btn btn--ink" data-copy-link>${A.icon("link", 20)}<span>Copy link</span></button>${native ? `<button type="button" class="btn btn--line" data-native-share>${A.icon("share", 20)}<span>Share</span></button>` : ""}</div>
 <p class="pg-sh-status" role="status"></p>
@@ -319,7 +321,7 @@ ${more(p, D)}
 
   return {
     title: `${p.name}, ${sport}${tp ? " in " + tp : ""} · Adaptive Sports Near Me`,
-    description: `${p.name}: ${lowerFirst(sport)}${tp ? " in " + tp : ""}.${p.verified ? " Verified: the program confirmed this listing." : ""} Free, no account needed.`,
+    description: `${p.name}: ${lowerFirst(sport)}${tp ? " in " + tp : ""}.${p.verified ? " Verified: the organization confirmed this listing." : ""} Free, no account needed.`,
     html: main,
     sticky,
   };
