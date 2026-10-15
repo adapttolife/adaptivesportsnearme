@@ -469,7 +469,7 @@
 }
 
 .v-near .nr-stamp {
-	background: #f3f3f3;
+	background: var(--paper);
 	border: 0;
 }
 
