@@ -260,6 +260,7 @@ test("the privacy policy's promises hold in the code", () => {
   assert.match(between(APP, "export function letterBlock(", "\n}\n"), /href="\/privacy"/);
   assert.match(read("public/app/views/forms.js"), /href="\/privacy"/);
   assert.match(APP, /\["\/privacy", "help"\], \["\/terms", "help"\]/);
+});
 
 // The header sticks to the top (#top). Anything else that sticks to the top of the
 // page must sit below it (top uses --top-h), or it slides under the header when you
