@@ -55,7 +55,7 @@
 	--sec: 48px;
 	--rail-w: 272px;
 	--aside-w: 300px;
-	--max: clamp(85vw, 1500px, 100%);
+	--max: 90vw;
 }
 
 :root[data-theme="dark"] {
