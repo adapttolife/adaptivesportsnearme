@@ -30,15 +30,16 @@ function checkedMix(items) {
 function hero() {
   const last = A.recall("place");
   const chip = last ? `<a class="chip hb-last" href="/near/${encodeURIComponent(last)}">${A.icon("history", 18)}<span>Last search: ${A.esc(last)}</span></a>` : "";
-  const figs = HERO.map(([k], i) => `<span class="hb-fig${i === 0 ? " is-on" : ""}" data-i="${i}">${A.fig(k, { color: "#1A1A1A", big: true, cls: "fig--pin fig--mid" })}</span>`).join("");
-  return `<section class="hb" data-hero style="--hb:${HERO[0][1]}"><div class="hb-art" aria-hidden="true">${figs}</div>
+  const figures = [...new Set([...HERO.map(([k]) => k), ...GRID])];
+  const figs = figures.map((k, i) => `<span class="hb-fig${i === 0 ? " is-on" : ""}" data-hero-figure="${A.esc(k)}">${A.fig(k, { big: true, cls: "fig--pin fig--mid" })}</span>`).join("");
+  return `<section class="hb" data-hero style="--hb:${HERO[0][1]};--hb-fg:${A.toneOf(HERO[0][0]).d}"><div class="hb-art" aria-hidden="true">${figs}</div>
 <div class="hb-text"><h1 class="display" tabindex="-1">Find your place in adaptive sports.</h1><p class="hb-lede">Programs, grants and events near you. Every listing shows when we last checked it.</p>${A.whereForm({ id: "home-where", after: chip })}</div></section>`;
 }
 
 function sports(D) {
   const counts = {};
   for (const p of D.items) counts[p.key] = (counts[p.key] || 0) + 1;
-  const tiles = GRID.map((k) => `<li><a class="st" href="/sports/${A.esc(k)}">${A.plate(k, { kind: "tile", cls: "st-plate" })}<span class="st-name">${A.esc(A.sportName(k))}</span><span class="st-n num">${counts[k] || 0} programs</span></a></li>`).join("");
+  const tiles = GRID.map((k) => `<li><a class="st" href="/sports/${A.esc(k)}" data-hero-sport="${A.esc(k)}">${A.plate(k, { kind: "tile", cls: "st-plate" })}<span class="st-name">${A.esc(A.sportName(k))}</span><span class="st-n num">${counts[k] || 0} programs</span></a></li>`).join("");
   const all = `<li><a class="st st--all" href="/sports"><span class="st-allbox">${A.icon("layout-grid", 34)}<b>All sports</b></span><span class="st-name">See all 45</span><span class="st-n">From archery to water skiing</span></a></li>`;
   return `<section class="sec hs" aria-labelledby="hs-h">${A.sectionHead({ title: "Pick a sport", id: "hs-h" })}<ul class="st-grid">${tiles}${all}</ul></section>`;
 }
@@ -96,16 +97,87 @@ export async function render(ctx) {
 export function mount(root) {
   const input = root.querySelector("#home-where");
   if (input) input.setAttribute("placeholder", " ");
-  // The hero athlete changes sport twice through the set, then rests on the first.
   const hb = root.querySelector("[data-hero]");
-  if (!hb || matchMedia("(prefers-reduced-motion: reduce)").matches) return () => {};
-  const figs = [...hb.querySelectorAll(".hb-fig")];
-  let i = 0, steps = 0;
-  const t = setInterval(() => {
-    i = (i + 1) % HERO.length; steps++;
-    figs.forEach((f, j) => f.classList.toggle("is-on", j === i));
-    hb.style.setProperty("--hb", HERO[i][1]);
-    if (steps >= HERO.length * 2) clearInterval(t);
+  if (!hb) return () => {};
+  const title = hb.querySelector("h1");
+  const figs = [...hb.querySelectorAll("[data-hero-figure]")];
+  const tiles = [...root.querySelectorAll("[data-hero-sport]")];
+  let i = 0, active = null;
+  const fitTitle = () => {
+    title.style.removeProperty("font-size");
+    title.style.removeProperty("max-width");
+    title.style.removeProperty("width");
+    const style = getComputedStyle(title);
+    const canvas = document.createElement("canvas");
+    const context = canvas.getContext("2d");
+    context.font = `${style.fontStyle} ${style.fontVariant} ${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
+    let size = parseFloat(getComputedStyle(title).fontSize);
+    let lineHeight = parseFloat(getComputedStyle(title).lineHeight);
+    while (title.scrollHeight > lineHeight * 3 + 1 && size > 24) {
+      size -= 1;
+      title.style.fontSize = `${size}px`;
+      lineHeight = parseFloat(getComputedStyle(title).lineHeight);
+    }
+  };
+  const setBannerHeight = () => {
+    const current = title.textContent;
+    title.style.setProperty("transition", "none");
+    hb.style.removeProperty("min-height");
+    let height = 0;
+    for (const key of [null, ...new Set([...HERO.map(([sport]) => sport), ...GRID])]) {
+      title.textContent = key ? `Find your place in adaptive ${A.sportName(key)}.` : "Find your place in adaptive sports.";
+      fitTitle();
+      height = Math.max(height, hb.getBoundingClientRect().height);
+    }
+    title.textContent = current;
+    fitTitle();
+    hb.style.minHeight = `${Math.ceil(height)}px`;
+    title.style.removeProperty("transition");
+  };
+  const show = (key, color, foreground, sport) => {
+    figs.forEach((f) => f.classList.toggle("is-on", f.dataset.heroFigure === key));
+    hb.style.setProperty("--hb", color);
+    hb.style.setProperty("--hb-fg", foreground);
+    hb.classList.toggle("is-ink", foreground === "#FFFFFF");
+    title.textContent = sport ? `Find your place in adaptive ${A.sportName(key)}.` : "Find your place in adaptive sports.";
+    fitTitle();
+  };
+  const showLoop = () => show(HERO[i][0], HERO[i][1], A.toneOf(HERO[i][0]).d);
+  const begin = (key) => {
+    active = key;
+    const tone = A.toneOf(key);
+    show(key, tone.t, tone.d, true);
+  };
+  const end = () => {
+    active = null;
+    showLoop();
+  };
+  const enter = (event) => begin(event.currentTarget.dataset.heroSport);
+  const leave = () => end();
+  const focus = (event) => begin(event.currentTarget.dataset.heroSport);
+  const blur = () => end();
+  const resize = () => setBannerHeight();
+  setBannerHeight();
+  for (const tile of tiles) {
+    tile.addEventListener("pointerenter", enter);
+    tile.addEventListener("pointerleave", leave);
+    tile.addEventListener("focus", focus);
+    tile.addEventListener("blur", blur);
+  }
+  addEventListener("resize", resize);
+  const t = matchMedia("(prefers-reduced-motion: reduce)").matches ? null : setInterval(() => {
+    if (active) return;
+    i = (i + 1) % HERO.length;
+    showLoop();
   }, 2600);
-  return () => clearInterval(t);
+  return () => {
+    if (t) clearInterval(t);
+    for (const tile of tiles) {
+      tile.removeEventListener("pointerenter", enter);
+      tile.removeEventListener("pointerleave", leave);
+      tile.removeEventListener("focus", focus);
+      tile.removeEventListener("blur", blur);
+    }
+    removeEventListener("resize", resize);
+  };
 }

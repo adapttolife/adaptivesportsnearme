@@ -52,7 +52,7 @@
 	--sec: 48px;
 	--rail-w: 272px;
 	--aside-w: 300px;
-	--max: 1280px;
+	--max: clamp(85vw, 1500px, 100%);
 }
 
 @media (min-width: 768px) {
@@ -499,6 +499,7 @@ body.is-home .hd-search {
 		padding-right: 40px;
 	}
 }
+
 /* Narrow phones: "Add" keeps its name for screen readers and shows the icon; under 360 the logo stands alone. */
 @media (max-width: 389px) {
 	.hd-add {
@@ -736,6 +737,7 @@ body.ov-open {
 .ss-loc {
 	margin-top: 6px;
 }
+
 /* 12 tiles (11 sports and "Any sport"): 4 columns, 3 under 380px, so no tile sits alone
    and no label runs past two lines. */
 .ss-grid {
@@ -980,6 +982,7 @@ body.ov-open {
 	flex-wrap: wrap;
 	align-items: center;
 	gap: 4px 12px;
+	margin-top: 4px;
 }
 
 .wf-after .wf-loc {
@@ -1263,9 +1266,8 @@ textarea:focus {
 /* ================= 3. Images: the figure, plates, avatars =================
    Alec's drawings sit centered in square files. fig() passes each drawing's
    share of its square: --w and --h (width, height), --g (their geometric mean),
-   --diag (the diagonal), --dk (ink-density correction) and --cx (centroid
-   offset). --B is the square's size. Every limit is on the DRAWING, never the
-   square, so nothing is cut off:
+   --diag (the diagonal), --dk (ink-density correction). --B is the square's
+   size. Every limit is on the DRAWING, never the square, so nothing is cut off:
      A   optical size: the drawing's g * B is A of the host's height (same visual weight)
      Hm  the drawing's height is at most Hm of the host's height
      Wm  the drawing's width is at most Wm of the host's width
@@ -1294,12 +1296,7 @@ textarea:focus {
 	background: currentColor;
 	-webkit-mask: var(--src) center / contain no-repeat;
 	mask: var(--src) center / contain no-repeat;
-	translate: clamp(
-			calc(-1 * var(--slack)),
-			calc(var(--cx, 0) * -1 * var(--B)),
-			var(--slack)
-		)
-		0;
+	translate: clamp(calc(-1 * var(--slack)), 0, var(--slack)) 0;
 	transition: scale var(--ease);
 }
 
@@ -1341,6 +1338,7 @@ textarea:focus {
 	background: var(--d);
 	color: #fff;
 }
+
 /* Cards: the drawing is centered in the area under the badge band (48px holds the
    Verified pill, 10px under it), so the pill never sits on an athlete. */
 .plate--card {
@@ -1663,6 +1661,7 @@ textarea:focus {
 		grid-template-columns: repeat(4, minmax(0, 1fr));
 	}
 }
+
 /* phone rail: horizontal, 264px cards, gap 12; a grid from 768 */
 @media (max-width: 767px) {
 	.cards.is-rail {
@@ -1823,7 +1822,7 @@ textarea:focus {
 
 .prow {
 	display: flex;
-	align-items: flex-start;
+	align-items: center;
 	gap: 14px;
 	min-height: 96px;
 	padding: 12px 0;
@@ -1863,7 +1862,6 @@ textarea:focus {
 }
 
 .pr-line {
-	margin-top: 4px;
 	font-size: 15px;
 	line-height: 1.4;
 	color: var(--muted);
@@ -1883,6 +1881,7 @@ textarea:focus {
 	vertical-align: -3px;
 	margin-right: 4px;
 }
+
 /* Lists of one sport: no tile, so the row is just the words (name, place, trust). */
 .prow--c {
 	display: block;
@@ -2593,6 +2592,7 @@ textarea:focus {
 	background: var(--ink);
 	border-radius: 2px;
 }
+
 /* "Also: Surfing" sits beside its tile, centered on the avatar, so the bar keeps one height */
 .sb-item--also {
 	width: auto;
@@ -2675,6 +2675,7 @@ textarea:focus {
 	vertical-align: -3px;
 	margin-right: 4px;
 }
+
 /* Sticky trust: line 1 the status, line 2 the date. Under 360px the date reads "Checked Oct 9". */
 .stk-left .trust--stk {
 	display: flex;
@@ -2809,6 +2810,7 @@ body.stk-away .stk {
 .ch-bart .so .so-shape {
 	fill: #fff;
 }
+
 /* with a sport chosen, its avatar sits on the outline's lower left, carrying the sport's colour */
 .ch-sav {
 	position: absolute;
@@ -3281,6 +3283,7 @@ h3,
 .helpband h2 {
 	font-size: 28px;
 }
+
 /* Selected state is black, never a pale tint. */
 .chip[aria-current],
 .chip[aria-pressed="true"],
@@ -3300,6 +3303,7 @@ h3,
 	background: #fff1ec;
 	box-shadow: inset 0 0 0 2px #1a1a1a;
 }
+
 /* Trust box: black, with a yellow check for verified (Laura's yellow + black). */
 .trustbox {
 	background: #1a1a1a !important;
@@ -3410,7 +3414,8 @@ h3,
 [data-look="sharp"] .v-home .hb h1 {
 	font-size: clamp(60px, 17cqw, 120px);
 	line-height: 0.86;
-	max-width: 8.4ch;
+	max-width: calc(110% - max(460px, 40cqw));
+	margin-bottom: auto;
 }
 
 @media (min-width: 768px) {
@@ -3519,6 +3524,7 @@ h3,
 [data-look="sharp"] .pc-name {
 	text-transform: none;
 }
+
 /* Program names are data: sentence case keeps long names readable. */
 [data-look="sharp"] .v-program h1 {
 	text-transform: none;

@@ -19,13 +19,13 @@ function helpPage() {
 <label class="hp-flabel" for="hp-claim">Program name</label>
 <div class="hp-frow">${A.icon("search", 20)}<input id="hp-claim" type="search" autocomplete="off" enterkeyhint="search" aria-describedby="hp-claim-st" aria-controls="hp-claim-list"></div>
 <p class="hp-status" id="hp-claim-st" role="status">Type two or more letters of the name.</p>
-<div class="rows hp-results" id="hp-claim-list" hidden></div></div>`;
+<div class="hp-results" id="hp-claim-list" hidden></div></div>`;
   const html = `<div class="hp-page">
 <div class="hp-hero" style="--t:${A.toneOf("multi").t}">${art}<div class="hp-text"><h1 tabindex="-1">Help build this</h1><p class="hp-sub">This directory is new and still growing. Here is how you can help.</p></div></div>
 <div class="hp-cards">
+${card({ ic: "badge-check", title: "Claim your program", body: "Run a program listed here? Find it and confirm the details.", cls: "hp-card--claim", extra: finder })}
 ${card({ ic: "plus", title: "Add a program", body: "Know a program we're missing? Tell us and we'll check it.", action: A.btn("Add a program", "/add/program", "ink") })}
 ${card({ ic: "calendar-plus", title: "Add an event", body: "Share a clinic, tryout, game day or meetup.", action: A.btn("Add an event", "/add/event", "line") })}
-${card({ ic: "badge-check", title: "Claim your program", body: "Run a program listed here? Find it and confirm the details.", cls: "hp-card--claim", extra: finder })}
 ${card({ ic: "square-pen", title: "Suggest a fix", body: "Spot something wrong? Every listing has a Suggest a fix link.", cls: "hp-card--wide", action: A.btn("Find a listing", "", "line", { attrs: 'data-open="search"', icon: "search" }) })}
 </div>
 ${A.letterBlock({ source: "help" })}</div>`;

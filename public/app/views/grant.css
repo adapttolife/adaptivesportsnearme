@@ -1,85 +1,301 @@
 /* Grant page (6.10). Scoped under .v-grant. */
 
 /* 1. Hero: 16:10 full bleed on phones, 16:6 with radius 20 from 768. Soft gold, deep figure. */
-.v-grant .gp-hero { margin-inline: calc(-1 * var(--gut)); }
-.v-grant .gp-hero .plate--hero { aspect-ratio: 16 / 10; max-height: none; }
-@media (min-width: 768px) {
-  .v-grant .gp-hero { margin: 24px 0 0; }
-  .v-grant .gp-hero .plate--hero { aspect-ratio: 16 / 6; border-radius: var(--r-xl); }
+.v-grant .gp-hero {
+	margin-inline: calc(-1 * var(--gut));
 }
+
+.v-grant .gp-hero .plate--hero {
+	aspect-ratio: 16 / 10;
+	max-height: none;
+}
+
+@media (min-width: 768px) {
+	.v-grant .gp-hero {
+		margin: 24px 0 0;
+	}
+	.v-grant .gp-hero .plate--hero {
+		aspect-ratio: 16 / 6;
+		border-radius: var(--r-xl);
+	}
+}
+
 .v-grant .hb-back {
-  position: absolute; left: 12px; top: 12px; z-index: 2; display: grid; place-items: center;
-  width: 44px; height: 44px; border-radius: 50%; background: #fff; color: var(--ink); box-shadow: var(--sh-1);
+	position: absolute;
+	left: 12px;
+	top: 12px;
+	z-index: 2;
+	display: grid;
+	place-items: center;
+	width: 44px;
+	height: 44px;
+	border-radius: 50%;
+	background: #fff;
+	color: var(--ink);
+	box-shadow: var(--sh-1);
 }
-.v-grant .hb-back:hover { box-shadow: var(--sh-2); }
-.v-grant .hb-back:focus-visible { box-shadow: var(--focus); border-radius: 50%; }
-.v-grant .hb-aud { top: auto; left: 12px; bottom: 12px; }
+
+.v-grant .hb-back:hover {
+	box-shadow: var(--sh-2);
+}
+
+.v-grant .hb-back:focus-visible {
+	box-shadow: var(--focus);
+	border-radius: 50%;
+}
+
+.v-grant .hb-aud {
+	top: auto;
+	left: 12px;
+	bottom: 12px;
+}
+
 @media (min-width: 768px) {
-  .v-grant .hb-back { left: 16px; top: 16px; }
-  .v-grant .hb-aud { left: 16px; bottom: 16px; }
+	.v-grant .hb-back {
+		left: 16px;
+		top: 16px;
+	}
+	.v-grant .hb-aud {
+		left: 16px;
+		bottom: 16px;
+	}
 }
 
 /* Two columns at 1100: content (max 680) and the 340px booking box. */
-.v-grant .gp-grid { display: block; }
-.v-grant .bbox { display: none; }
+.v-grant .gp-grid {
+	display: block;
+}
+
+.v-grant .bbox {
+	display: none;
+}
+
 @media (min-width: 1100px) {
-  .v-grant .gp-grid { display: grid; grid-template-columns: minmax(0, 680px) 340px; gap: 40px; align-items: start; justify-content: space-between; }
-  .v-grant .bbox {
-    display: block; position: sticky; top: 24px; margin-top: 24px;
-    border: 1px solid var(--line); border-radius: var(--r-xl); box-shadow: var(--sh-2); padding: 24px; background: var(--paper);
-  }
+	.v-grant .gp-grid {
+		display: grid;
+		grid-template-columns: minmax(0, 680px) 340px;
+		gap: 40px;
+		align-items: start;
+		justify-content: space-between;
+	}
+	.v-grant .bbox {
+		display: block;
+		position: sticky;
+		top: 24px;
+		margin-top: 24px;
+		border: 1px solid var(--line);
+		border-radius: var(--r-xl);
+		box-shadow: var(--sh-2);
+		padding: 24px;
+		background: var(--paper);
+	}
 }
 
 /* 2. Amount, name, source */
-.v-grant .gp-head { margin-top: 24px; }
-.v-grant .gp-amt { font-size: var(--fs-h2); font-weight: 700; line-height: 1.2; color: var(--ink); letter-spacing: -0.01em; }
-.v-grant .gp-amt + h1 { margin-top: 6px; }
+.v-grant .gp-head {
+	margin-top: 24px;
+}
+
+.v-grant .gp-amt {
+	font-size: var(--fs-h2);
+	font-weight: 700;
+	line-height: 1.2;
+	color: var(--ink);
+	letter-spacing: -0.01em;
+}
+
+.v-grant .gp-amt + h1 {
+	margin-top: 6px;
+}
+
 /* On desktop the booking box carries the amount, so it is not said twice above the name. */
-@media (min-width: 1100px) { .v-grant .gp-amt { display: none; } .v-grant .gp-amt + h1 { margin-top: 0; } }
-.v-grant .gp-head h1 { overflow-wrap: anywhere; }
-.v-grant .gp-from { margin-top: 8px; font-size: 17px; font-weight: 500; color: var(--graphite); }
-.v-grant .gp-head .tags { margin-top: 12px; }
-@media (min-width: 768px) { .v-grant .gp-head { margin-top: 32px; } }
+@media (min-width: 1100px) {
+	.v-grant .gp-amt {
+		display: none;
+	}
+	.v-grant .gp-amt + h1 {
+		margin-top: 0;
+	}
+}
+
+.v-grant .gp-head h1 {
+	overflow-wrap: anywhere;
+}
+
+.v-grant .gp-from {
+	margin-top: 8px;
+	font-size: 17px;
+	font-weight: 500;
+	color: var(--graphite);
+}
+
+.v-grant .gp-head .tags {
+	margin-top: 12px;
+}
+
+@media (min-width: 768px) {
+	.v-grant .gp-head {
+		margin-top: 32px;
+	}
+}
 
 /* 3. Facts */
-.v-grant .facts { margin-top: 24px; border-top: 1px solid var(--line); }
-.v-grant .facts > div { display: grid; grid-template-columns: minmax(0, 1fr); gap: 2px; padding: 14px 0; border-bottom: 1px solid var(--line); }
-.v-grant .facts dt { font-size: 15px; font-weight: 600; color: var(--muted); line-height: 1.4; }
-.v-grant .facts dd { font-size: 17px; line-height: 1.5; color: var(--ink); max-width: 60ch; }
+.v-grant .facts {
+	margin-top: 24px;
+	border-top: 1px solid var(--line);
+}
+
+.v-grant .facts > div {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	gap: 2px;
+	padding: 14px 0;
+	border-bottom: 1px solid var(--line);
+}
+
+.v-grant .facts dt {
+	font-size: 15px;
+	font-weight: 600;
+	color: var(--muted);
+	line-height: 1.4;
+}
+
+.v-grant .facts dd {
+	font-size: 17px;
+	line-height: 1.5;
+	color: var(--ink);
+	max-width: 60ch;
+}
+
 @media (min-width: 600px) {
-  .v-grant .facts > div { grid-template-columns: 160px minmax(0, 1fr); gap: 16px; align-items: baseline; }
-  .v-grant .facts dt { font-size: 16px; }
+	.v-grant .facts > div {
+		grid-template-columns: 160px minmax(0, 1fr);
+		gap: 16px;
+		align-items: baseline;
+	}
+	.v-grant .facts dt {
+		font-size: 16px;
+	}
 }
 
 /* 4. Note box (Mist) */
-.v-grant .gp-note { display: flex; gap: 12px; align-items: flex-start; margin-top: 24px; padding: 18px 20px; background: var(--mist); border-radius: var(--r-l); }
-.v-grant .gp-note .ic { flex: none; margin-top: 3px; color: var(--graphite); }
-.v-grant .gp-note p { font-size: 16px; line-height: 1.5; color: var(--graphite); }
+.v-grant .gp-note {
+	display: flex;
+	gap: 12px;
+	align-items: flex-start;
+	margin-top: 24px;
+	padding: 18px 20px;
+	background: var(--mist);
+	border-radius: var(--r-l);
+}
+
+.v-grant .gp-note .ic {
+	flex: none;
+	margin-top: 3px;
+	color: var(--graphite);
+}
+
+.v-grant .gp-note p {
+	font-size: 16px;
+	line-height: 1.5;
+	color: var(--graphite);
+}
 
 /* 5. Booking box contents */
-.v-grant .bb-amt { font-size: var(--fs-h2); font-weight: 700; line-height: 1.15; color: var(--ink); }
-.v-grant .bb-amt.is-soft { font-size: var(--fs-h4); line-height: 1.3; }
-.v-grant .bb-dl { margin-top: 6px; font-size: 16px; color: var(--graphite); }
-.v-grant .bb-act { margin-top: 20px; }
-.v-grant .bb-act .btn { width: 100%; white-space: normal; }
-.v-grant .bb-fine { margin-top: 12px; font-size: 15px; color: var(--muted); line-height: 1.45; }
-.v-grant .bbox .tlink { margin-top: 4px; font-size: 16px; }
+.v-grant .bb-amt {
+	font-size: var(--fs-h2);
+	font-weight: 700;
+	line-height: 1.15;
+	color: var(--ink);
+}
+
+.v-grant .bb-amt.is-soft {
+	font-size: var(--fs-h4);
+	line-height: 1.3;
+}
+
+.v-grant .bb-dl {
+	margin-top: 6px;
+	font-size: 16px;
+	color: var(--graphite);
+}
+
+.v-grant .bb-act {
+	margin-top: 20px;
+}
+
+.v-grant .bb-act .btn {
+	width: 100%;
+	white-space: normal;
+}
+
+.v-grant .bb-fine {
+	margin-top: 12px;
+	font-size: 15px;
+	color: var(--muted);
+	line-height: 1.45;
+}
+
+.v-grant .bbox .tlink {
+	margin-top: 4px;
+	font-size: 16px;
+}
 
 /* 6. Other grants */
-.v-grant .gp-others .sh { margin-bottom: 4px; }
-.v-grant .glist { border-top: 1px solid var(--line); }
-.v-grant .glist .grow:first-child { border-top: 0; }
-.v-grant .grow { position: relative; padding-right: 40px; }
-.v-grant .grow::after {
-  content: ""; position: absolute; right: 8px; top: 50%; width: 10px; height: 10px; translate: 0 -50%; rotate: 45deg;
-  border-top: 2px solid var(--muted); border-right: 2px solid var(--muted); transition: translate var(--ease);
+.v-grant .gp-others .sh {
+	margin-bottom: 4px;
 }
-.v-grant .grow:hover::after { translate: 3px -50%; border-color: var(--ink); }
-@media (forced-colors: active) { .v-grant .grow::after { border-color: CanvasText; } }
+
+.v-grant .glist {
+	border-top: 1px solid var(--line);
+}
+
+.v-grant .glist .grow:first-child {
+	border-top: 0;
+}
+
+.v-grant .grow {
+	position: relative;
+	padding-right: 40px;
+}
+
+.v-grant .grow::after {
+	content: "";
+	position: absolute;
+	right: 8px;
+	top: 50%;
+	width: 10px;
+	height: 10px;
+	translate: 0 -50%;
+	rotate: 45deg;
+	border-top: 2px solid var(--muted);
+	border-right: 2px solid var(--muted);
+	transition: translate var(--ease);
+}
+
+.v-grant .grow:hover::after {
+	translate: 3px -50%;
+	border-color: var(--ink);
+}
+
+@media (forced-colors: active) {
+	.v-grant .grow::after {
+		border-color: CanvasText;
+	}
+}
 
 /* Sticky bar (outside main, so scoped by body[data-view]): the amount reads as the headline. */
-body[data-view="grant"] .stk-left b { font-size: 17px; font-weight: 700; color: var(--ink); }
+body[data-view="grant"] .stk-left b {
+	font-size: 17px;
+	font-weight: 700;
+	color: var(--ink);
+}
 
 /* Other grants share this grant's audience, so the repeated audience pill is dropped. */
-.v-grant .glist .tag:not(.tag--muted) { display: none; }
-.v-grant .glist .tags:not(:has(.tag--muted)) { display: none; }
+.v-grant .glist .tag:not(.tag--muted) {
+	display: none;
+}
+
+.v-grant .glist .tags:not(:has(.tag--muted)) {
+	display: none;
+}
