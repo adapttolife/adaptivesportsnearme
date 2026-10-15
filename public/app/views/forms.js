@@ -108,7 +108,7 @@ function update(D, pid, relRaw) {
   }
   const rel = relRaw === "run" || relRaw === "attend" || relRaw === "other" ? relRaw : "";
   const r = REL[rel === "run" ? "run" : "fix"];
-  const href = "/programs/" + p.id;
+  const href = "/organizations/" + p.id;
   const back = `<a class="fm-back" href="${A.esc(href)}" data-back="${A.esc(href)}">${A.icon("arrow-left", 20)}<span>Back to the listing</span></a>`;
   const top = `<div class="fm-listing"><p class="fm-lab">The listing</p><div class="rows">${A.programRow(p, {})}</div></div>`;
   const opts = [["run", "I'm with this organization"], ["attend", "I've been"], ["other", "Something else"]];

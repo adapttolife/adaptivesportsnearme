@@ -130,32 +130,39 @@ test("only production asks to be indexed: staging, previews and noindex pages sa
   }
 });
 
-test("servePage: a program or grant id with no listing is a 404; a listed one is a 200 titled with its name", async () => {
+test("servePage: an organization or grant id with no listing is a 404; a listed one is a 200 titled with its name", async () => {
   const { sql, DB } = database();
   try {
     const env = { ENV_NAME: "production", DB, ASSETS: assets() };
-    const missing = await serve(`/programs/${MISSING}`, env);
+    const missing = await serve(`/organizations/${MISSING}`, env);
     assert.equal(missing.status, 404);
     assert.equal(missing.headers.get("x-robots-tag"), "noindex");
     const missingHtml = await missing.text();
     assert.ok(missingHtml.includes('<meta name="robots" content="noindex">'));
     assert.ok(missingHtml.includes('<script type="module" src="/app/app.js"></script>'), "the app still draws its own not-found page");
-    assert.equal((await serve(`/programs/${HIDDEN}`, env)).status, 404, "not public");
-    assert.equal((await serve(`/programs/${MENU_ROW}`, env)).status, 404, "not a program");
+    assert.equal((await serve(`/organizations/${HIDDEN}`, env)).status, 404, "not public");
+    assert.equal((await serve(`/organizations/${MENU_ROW}`, env)).status, 404, "not a program");
 
-    const found = await serve(`/programs/${PROGRAM}`, env);
+    const found = await serve(`/organizations/${PROGRAM}`, env);
     assert.equal(found.status, 200);
     assert.equal(found.headers.get("x-robots-tag"), null);
     assert.match(found.headers.get("content-type"), /text\/html/);
     const html = await found.text();
     assert.match(titleOf(html), /^Atlanta Wolfpack\b/);
-    assert.ok(html.includes(`<link rel="canonical" href="${ORIGIN}/programs/${PROGRAM}">`));
+    assert.ok(html.includes(`<link rel="canonical" href="${ORIGIN}/organizations/${PROGRAM}">`));
     const ld = jsonLd(html);
     assert.equal(ld["@type"], "SportsOrganization");
     assert.equal(ld.name, "Atlanta Wolfpack");
     assert.equal(ld.url, "https://adaptedsports.org/");
     assert.equal(ld.address.addressRegion, "GA");
-    assert.equal((await serve(`/programs/${PROGRAM.toUpperCase()}`, env)).status, 200, "ids match in any case");
+    assert.equal((await serve(`/organizations/${PROGRAM.toUpperCase()}`, env)).status, 200, "ids match in any case");
+
+    // Listings lived at /programs/<organization id> until 2026-10-15: old links move for good.
+    const moved = await serve(`/programs/${PROGRAM}`, env);
+    assert.equal(moved.status, 301);
+    assert.equal(moved.headers.get("location"), `${ORIGIN}/organizations/${PROGRAM}`);
+    assert.equal((await serve(`/programs/${MISSING}`, env)).status, 404, "no program and no listing");
+    assert.equal((await serve(`/programs/${HIDDEN}`, env)).status, 404, "a hidden listing does not move into view");
 
     assert.equal((await serve(`/grants/${MISSING}`, env)).status, 404);
     const grant = await serve(`/grants/${GRANT}`, env);
@@ -212,7 +219,7 @@ test("the Worker answers page paths with the shell, old paths with a redirect, a
   for (const path of [
     "/sports", "/sports/cycling", "/sports/tennis/", "/states", "/states/FL", "/grants", "/events", "/help", "/about",
     "/resources", "/resources/veteran-owned-businesses", "/letter", "/add/program", "/add/event", `/update/${PROGRAM}`,
-    "/near/Tampa%2C%20FL", `/programs/${PROGRAM}`, `/grants/${GRANT}`,
+    "/near/Tampa%2C%20FL", `/organizations/${PROGRAM}`, `/programs/${PROGRAM}`, `/grants/${GRANT}`,
   ]) {
     const response = await viaWorker(path, env);
     assert.equal(response.status, 200, path);
@@ -288,14 +295,15 @@ test("sitemap.xml lists every sport, every state, each listed program and each g
     }
     for (const key of Object.keys(SPORT_NAMES)) assert.ok(locs.includes(`${ORIGIN}/sports/${key}`), key);
     for (const st of Object.keys(STATE_NAMES)) assert.ok(locs.includes(`${ORIGIN}/states/${st}`), st);
-    assert.ok(locs.includes(`${ORIGIN}/programs/${PROGRAM}`));
+    assert.ok(locs.includes(`${ORIGIN}/organizations/${PROGRAM}`));
+    assert.ok(!locs.some((u) => u.includes("/programs/")), "listings are organizations; the old addresses redirect");
     assert.ok(locs.includes(`${ORIGIN}/grants/${GRANT}`));
     assert.ok(!xml.includes(HIDDEN) && !xml.includes(MENU_ROW), "never a hidden listing or a row that is not a program");
     assert.ok(!locs.some((u) => /\/(near|add|update)\//.test(u)), "never a page that asks not to be indexed");
   } finally { sql.close(); }
   const bare = await sitemapXml({});
   assert.ok(bare.includes(`${ORIGIN}/sports/tennis`));
-  assert.doesNotMatch(bare, /\/programs\/|\/grants\/[0-9a-f]/, "no database, no listings");
+  assert.doesNotMatch(bare, /\/organizations\/|\/programs\/|\/grants\/[0-9a-f]/, "no database, no listings");
 });
 
 test("sitemap.xml leaves out grants that are not public (their pages are 404s)", async () => {
@@ -313,7 +321,7 @@ test("the Worker serves the sitemap as XML, and a failing database is a 503, not
     const response = await viaWorker("/sitemap.xml", { ENV_NAME: "production", DB });
     assert.equal(response.status, 200);
     assert.match(response.headers.get("content-type"), /application\/xml/);
-    assert.ok((await response.text()).includes(`${ORIGIN}/programs/${PROGRAM}`));
+    assert.ok((await response.text()).includes(`${ORIGIN}/organizations/${PROGRAM}`));
   } finally { sql.close(); }
   const errors = [], log = console.error;
   console.error = (...args) => errors.push(args);
@@ -346,7 +354,8 @@ test("each page names its own code, and a listing page its details, for the brow
   assert.deepEqual(hrefs("/"), ["/app/views/home.js", "/app/views/home.css"]);
   assert.deepEqual(hrefs("/sports/tennis/"), ["/app/views/sport.js", "/app/views/sport.css"]);
   assert.deepEqual(hrefs("/update/" + PROGRAM), ["/app/views/forms.js", "/app/views/forms.css"]);
-  assert.deepEqual(hrefs("/programs/" + PROGRAM.toUpperCase()), ["/app/views/program.js", "/app/views/program.css", "/api/orgs/" + PROGRAM]);
+  assert.deepEqual(hrefs("/organizations/" + PROGRAM.toUpperCase()), ["/app/views/program.js", "/app/views/program.css", "/api/organizations/" + PROGRAM]);
+  assert.deepEqual(hrefs("/programs/" + PROGRAM), ["/app/views/program-detail.js", "/app/views/program-detail.css", "/api/programs/" + PROGRAM]);
   assert.deepEqual(hrefs("/nope"), []);
   // The shell starts the listings for every page, and a missing page names no code.
   assert.ok(SHELL.includes('<link rel="preload" href="/api/listings" as="fetch" crossorigin>'));

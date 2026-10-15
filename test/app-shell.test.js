@@ -277,6 +277,17 @@ test("phones use the whole screen; the 90vw cap starts at 768px", () => {
   assert.match(phoneFt, /padding-inline:\s*var\(--gut\)/, "the footer keeps side padding on phones");
 });
 
+// Listings live at /organizations/<id> (2026-10-15). The claim finder sends each row to
+// its fix form whatever the listing's address is, and the fix form links back to it.
+test("the claim finder and the fix form use the listing's own address", () => {
+  const help = read("public/app/views/help.js"), forms = read("public/app/views/forms.js");
+  assert.match(help, /A\.programRow\(x\.p, \{\}\)\.replace\(\/href="\[\^"\]\*"\/, `href="\/update\/\$\{A\.esc\(x\.p\.id\)\}\?rel=run"`\)/);
+  assert.match(forms, /const href = "\/organizations\/" \+ p\.id;/);
+  const row = between(APP, "export function programRow(", "\n}\n");
+  assert.match(row, /href="\/organizations\/\$\{esc\(p\.id\)\}"/, "a row links to the organization's page");
+  for (const [file, text] of [["help.js", help], ["forms.js", forms]]) assert.doesNotMatch(text, /["`]\/programs\/["`$]/, `${file} builds no /programs/ link for a listing`);
+});
+
 // The letter's thank-you says what happens next: a new signup confirms its email first.
 test("the letter's thank-you asks a new subscriber to confirm, and the confirmation lands on its own page", () => {
   const send = between(APP, "async function sendForm(", "\n}\n");
