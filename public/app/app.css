@@ -3499,6 +3499,15 @@ h3,
 	}
 }
 
+/* On phones the drawing sits above the headline, so the headline takes the full
+   width. The desktop clamp above goes negative under ~460px of hero, which left
+   the headline 0px wide and the fitter shrank it to one small word per line. */
+@media (max-width: 767px) {
+	[data-look="sharp"] .v-home .hb h1 {
+		max-width: none;
+	}
+}
+
 [data-look="sharp"] h1 {
 	line-height: 0.92;
 	font-size: calc(var(--fs-h1) * 1.25);

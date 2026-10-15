@@ -247,11 +247,18 @@ test("everything that sticks to the top of the page sits below the sticky header
 // width and the search box shrank to a sliver (390px, October 15).
 test("on phones the home hero stacks the drawing above the headline and search", () => {
   const css = read("public/app/views/home.css").replace(/\/\*[\s\S]*?\*\//g, "");
-  const rule = (src, sel) => (src.match(new RegExp(`(?:^|\\})\\s*${sel.replace(/[.*]/g, "\\$&")}\\s*\\{([^{}]*)\\}`)) || [])[1] || "";
+  const rule = (src, sel) => (src.match(new RegExp(`(?:^|\\})\\s*${sel.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*\\{([^{}]*)\\}`)) || [])[1] || "";
   const phone = (css.match(/@media \(max-width: 767px\) \{([\s\S]*?)\n\}/) || [])[1] || "";
   assert.match(rule(phone, ".v-home .hb-art"), /position:\s*relative/, "the drawing is in the flow on phones");
   if (/display:\s*flex/.test(rule(css, ".v-home .hb")))
     assert.match(rule(phone, ".v-home .hb"), /flex-direction:\s*column/, "the flex hero stacks on phones");
+  // The sharp look clamps the headline beside the desktop drawing; on phones that
+  // clamp went negative (0px wide, one word per line), so phones lift it.
+  const app = read("public/app/app.css").replace(/\/\*[\s\S]*?\*\//g, "");
+  if (/max-width:\s*calc\(/.test(rule(app, '[data-look="sharp"] .v-home .hb h1'))) {
+    const phones = [...app.matchAll(/@media \(max-width: 767px\) \{([\s\S]*?)\n\}/g)].map((m) => rule(m[1], '[data-look="sharp"] .v-home .hb h1')).join(" ");
+    assert.match(phones, /max-width:\s*none/, "the headline gets the full width on phones");
+  }
 });
 
 // The letter's thank-you says what happens next: a new signup confirms its email first.
