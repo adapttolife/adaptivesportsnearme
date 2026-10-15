@@ -67,7 +67,10 @@ export async function safeNewsletterSubscribe(env, input, campaign, extra = {}) 
       body: JSON.stringify({
         email, reactivate_existing: false, send_welcome_email: false,
         automation_ids: [], newsletter_list_ids: [], skip_newsletter_list_auto_subscribe: true,
-        double_opt_override: 'not_set', utm_source: 'asnm-prelaunch', utm_medium: 'website',
+        // Every signup from the site confirms its email (Alec, 2026-10-15): beehiiv sends the
+        // confirmation and keeps the subscriber pending until they tap Confirm. The welcome
+        // below goes only to an active subscription, so a pending one gets just beehiiv's email.
+        double_opt_override: 'on', utm_source: 'asnm-prelaunch', utm_medium: 'website',
         utm_campaign: campaign, referring_site: 'adaptivesportsnearme.com', custom_fields
       }),
     });
