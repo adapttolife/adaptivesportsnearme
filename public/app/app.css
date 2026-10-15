@@ -399,6 +399,9 @@ body.has-sticky #main {
 #top {
 	background: var(--paper);
 	border-bottom: 1px solid var(--line);
+	position: sticky;
+	top: 0;
+	z-index: 101;
 }
 
 .hd {
@@ -424,6 +427,7 @@ body.has-sticky #main {
 
 .iconbtn:hover {
 	background: var(--mist);
+	color: var(--ink) !important;
 }
 
 .hd-brand {
@@ -1230,7 +1234,7 @@ textarea:focus {
 .check input {
 	width: 22px;
 	height: 22px;
-	accent-color: var(--ink);
+	accent-color: var(--coral);
 	flex: none;
 }
 
@@ -3006,7 +3010,7 @@ body.stk-away .stk {
 .ft {
 	max-width: var(--max);
 	margin: 0 auto;
-	padding: 48px var(--gut) calc(48px + env(safe-area-inset-bottom));
+	padding: 48px 0 calc(48px + env(safe-area-inset-bottom));
 }
 body.has-sticky .ft {
 	padding-bottom: calc(var(--stk-h, 96px) + 48px);
@@ -3016,9 +3020,7 @@ body.has-sticky .ft {
 	body.has-sticky .ft {
 		padding-bottom: 48px;
 	}
-	.ft {
-		padding-left: calc(var(--rail-w) + 40px);
-	}
+
 	body.is-home .ft {
 		padding-left: var(--gut);
 	}
