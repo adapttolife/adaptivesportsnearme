@@ -114,10 +114,10 @@ test('Worker serves the complete snapshot contract used by homepage hydration',a
     assert.deepEqual(await response.json(),{ok:true,total:0,items:[]});
     assert.equal(queries.length,1);
     // The app (public/app/app.js) loads the slim directory once (/api/listings) and a
-    // listing's details only on its own page (/api/orgs/:id); never the paged API.
+    // listing's details only on its own page (/api/organizations/:id); never the paged API.
     const app=read('public/app/app.js');
     assert.match(app,/"\/api\/listings"/);
-    assert.match(app,/"\/api\/orgs\/"/);
+    assert.match(app,/"\/api\/organizations\/"/);
     assert.doesNotMatch(app,/\/api\/programs/);
   } finally {sql.close();}
 });

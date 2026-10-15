@@ -62,7 +62,7 @@ function hero(p) {
   return `<div class="pg-hero has-vtag${label ? " has-stamp" : ""}">
 ${A.plate(p, { kind: "hero" })}
 <button type="button" class="pg-hb pg-back" data-back="${A.esc(backHref(p))}" aria-label="Back">${A.icon("arrow-left", 22)}</button>
-<a class="pg-hb pg-share" href="/programs/${A.esc(p.id)}?share=1" data-poster="hero" aria-label="Share this listing">${A.icon("share", 20)}</a>
+<a class="pg-hb pg-share" href="/organizations/${A.esc(p.id)}?share=1" data-poster="hero" aria-label="Share this organization">${A.icon("share", 20)}</a>
 <div class="pg-edge">${stamp}${vtag(p)}</div></div>`;
 }
 
@@ -190,7 +190,7 @@ function wherePlay(p) {
 function links(p) {
   const row = (href, ic, label, sub, attrs = "") => `<li><a class="pg-link" href="${A.esc(href)}" ${attrs}><span class="pg-link-ic">${A.icon(ic, 20)}</span><span class="pg-link-text"><span class="pg-link-label">${A.esc(label)}</span>${sub ? `<span class="pg-link-sub">${A.esc(sub)}</span>` : ""}</span>${A.icon("chevron-right", 20)}</a></li>`;
   const runSub = p.verified ? "Update your listing." : "Confirm your listing to get the Verified check.";
-  return `<ul class="pg-links">${row(`/update/${p.id}`, "pencil", "Suggest a fix")}${row(`/update/${p.id}?rel=run`, "badge-check", "I'm with this organization", runSub)}${row(`/programs/${p.id}?share=1`, "share", "Share", "", 'data-poster="links"')}</ul>`;
+  return `<ul class="pg-links">${row(`/update/${p.id}`, "pencil", "Suggest a fix")}${row(`/update/${p.id}?rel=run`, "badge-check", "I'm with this organization", runSub)}${row(`/organizations/${p.id}?share=1`, "share", "Share", "", 'data-poster="links"')}</ul>`;
 }
 
 /* ---------- More of this sport, from the listing's own city (6.8.9) ---------- */
@@ -282,6 +282,12 @@ export async function render(ctx) {
   // lists leave them out). A listing gone since the list loaded is not found.
   const p = await A.loadDetail(listed.id);
   if (!p || !p.detail) return listingNotFound();
+  let linkedPrograms = "";
+  try {
+    const response = await fetch(`/api/organizations/${encodeURIComponent(p.id)}/programs`);
+    const body = response.ok ? await response.json() : null;
+    if (body?.items?.length) linkedPrograms = `<section class="pg-sec"><h2>Programs</h2><div class="rows">${body.items.map((item) => `<a class="prow" href="/programs/${A.esc(item.id)}"><div class="pr-body"><h3 class="pr-name">${A.esc(item.name)}</h3><p class="meta">${A.esc(item.sportLabel || "Adaptive sports")}</p></div></a>`).join("")}</div></section>`;
+  } catch (_) {}
 
   if (p.meet === undefined) { const m = meetFrom(p); p.meet = m ? m.meet : null; p.also = m ? m.also : []; }
 
@@ -310,6 +316,7 @@ ${actionRow(p)}
 ${p.meet ? meetup(p) : about(p)}
 ${facts(p)}
 ${wherePlay(p)}
+${linkedPrograms}
 ${links(p)}
 ${more(p, D)}
 </div>${bookBox(p)}</div>`;
@@ -328,7 +335,7 @@ ${more(p, D)}
 }
 
 /* ---------- mount: share sheet, copy link ---------- */
-function baseHash(id) { return "/programs/" + id; }
+function baseHash(id) { return "/organizations/" + id; }
 function hasShare() { return /[?&]share=1(?:&|$)/.test(A.here()); }
 
 async function copyLink(url) {

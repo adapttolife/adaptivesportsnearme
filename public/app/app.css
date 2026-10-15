@@ -733,7 +733,7 @@ body.ov-open {
 
 .ov {
 	position: fixed;
-	z-index: 71;
+	z-index: 171;
 	background: var(--paper);
 	display: flex;
 	flex-direction: column;

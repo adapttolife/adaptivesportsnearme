@@ -8,7 +8,7 @@
 //
 // Previews and staging say noindex (meta robots + X-Robots-Tag); only production
 // (ENV_NAME=production) asks to be indexed.
-import { getOrg, getGrant, directorySnapshot } from "./data.js";
+import { getOrg, getProgram, getGrant, directorySnapshot } from "./data.js";
 import { SPORT_NAMES } from "./sport-names.js";
 import { isListable } from "../public/app/listable.js";
 
@@ -62,7 +62,8 @@ const ROUTES = [
     if (!name) return notFound();
     return { title: `Adaptive sports in ${name}`, description: `Adaptive sports programs, grants and events in ${name}. Every listing shows when it was last checked.`, canonical: `${ORIGIN}/states/${st}` };
   }],
-  [new RegExp(`^/programs/(${UUID})/?$`, "i"), async (m, env) => {
+  [/^\/organizations\/?$/, () => ({ title: "Adaptive sports organizations", description: "Browse adaptive sports organizations and the programs they run." })],
+  [new RegExp(`^/organizations/(${UUID})/?$`, "i"), async (m, env) => {
     if (!env.DB) return { title: "Program", description: HOME_DESCRIPTION };
     const p = await getOrg(env.DB, m[1].toLowerCase());
     if (!p || !isListable(p)) return notFound("We couldn't find that program");
@@ -73,6 +74,12 @@ const ROUTES = [
       description: `${p.name}${place ? ` in ${place}` : ""}. ${sport}. See the organization's website, when we last checked it, and suggest a fix.`,
       jsonld: programJsonLd(p, env),
     };
+  }],
+  [new RegExp(`^/programs/(${UUID})/?$`, "i"), async (m, env) => {
+    if (!env.DB) return { title: "Program", description: HOME_DESCRIPTION };
+    const p = await getProgram(env.DB, m[1].toLowerCase());
+    if (!p) return notFound("We couldn't find that program");
+    return { title: p.name, description: `${p.name}. ${p.sportLabel || "Adaptive sports"}.`, jsonld: programJsonLd(p, env) };
   }],
   [/^\/grants\/?$/, () => ({ title: "Grants for adaptive athletes and programs", description: "Grants that pay for adaptive sports equipment, travel, fees and programs. You apply on the grant maker's site." })],
   [new RegExp(`^/grants/(${UUID})/?$`, "i"), async (m, env) => {
@@ -126,7 +133,7 @@ const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "
 // (/api/orgs/<id>) with the page, so nothing waits for anything else.
 const VIEWS = [
   [/^\/$/, "home"], [/^\/near\/[^/]+$/, "near"], [/^\/sports$/, "sports"], [/^\/sports\/[^/]+$/, "sport"],
-  [/^\/states$/, "states"], [/^\/states\/[^/]+$/, "state"], [/^\/programs\/[^/]+$/, "program"],
+  [/^\/states$/, "states"], [/^\/states\/[^/]+$/, "state"], [/^\/organizations$/, "organizations"], [/^\/organizations\/[^/]+$/, "program"], [/^\/programs\/[^/]+$/, "program-detail"],
   [/^\/grants$/, "grants"], [/^\/grants\/[^/]+$/, "grant"], [/^\/events$/, "events"],
   [/^\/(add\/program|add\/event|update\/[^/]+)$/, "forms"], [/^\/resources\/veteran-owned-businesses$/, "vob"],
   [/^\/(help|about|resources|letter)$/, "help"],
@@ -136,8 +143,10 @@ export function preloadHints(pathname) {
   const hit = VIEWS.find(([re]) => re.test(path));
   if (!hit) return [];
   const tags = [`<link rel="modulepreload" href="/app/views/${hit[1]}.js">`, `<link rel="preload" href="/app/views/${hit[1]}.css" as="style">`];
-  const id = path.match(new RegExp(`^/programs/(${UUID})$`, "i"));
-  if (id) tags.push(`<link rel="preload" href="/api/orgs/${id[1].toLowerCase()}" as="fetch" crossorigin>`);
+  const orgId = path.match(new RegExp(`^/organizations/(${UUID})$`, "i"));
+  if (orgId) tags.push(`<link rel="preload" href="/api/organizations/${orgId[1].toLowerCase()}" as="fetch" crossorigin>`);
+  const programId = path.match(new RegExp(`^/programs/(${UUID})$`, "i"));
+  if (programId) tags.push(`<link rel="preload" href="/api/programs/${programId[1].toLowerCase()}" as="fetch" crossorigin>`);
   return tags;
 }
 

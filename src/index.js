@@ -31,7 +31,7 @@ import { notifyIntake } from './intake.js';
 //   *    /api/admin/*          -> review queue + lane triggers (ADMIN_KEY bearer)
 // All secrets stay server-side (Worker secrets). Bot defence: honeypot + required Turnstile.
 
-import { directorySnapshot, listingsSnapshot, listPrograms, getOrg, stats, listGrants, getGrant } from "./data.js";
+import { directorySnapshot, listingsSnapshot, listActualPrograms, getProgram, getOrg, stats, listGrants, getGrant } from "./data.js";
 import { listEvents, eventsToRss, eventsToIcs } from "./events.js";
 import { handleAdmin } from "./admin.js";
 import { runLane } from "./pipeline.js";
@@ -156,13 +156,23 @@ const application = {
           return json({ ok: true, ...(await directorySnapshot(env.DB, { places })) }, 200, API_CACHE);
         }
         if (url.pathname === "/api/programs") {
-          return json({ ok: true, ...(await listPrograms(env.DB, url.searchParams, { assets: env.ASSETS })) }, 200, API_CACHE);
+          return json({ ok: true, ...(await listActualPrograms(env.DB, url.searchParams)) }, 200, API_CACHE);
         }
-        const org = url.pathname.match(/^\/api\/orgs\/([0-9a-f-]{36})$/);
+        const program = url.pathname.match(/^\/api\/programs\/([0-9a-f-]{36})$/);
+        if (program) {
+          const record = await getProgram(env.DB, program[1]);
+          return record ? json({ ok: true, program: record }, 200, API_CACHE) : json({ ok: false, error: "Not found" }, 404);
+        }
+        const org = url.pathname.match(/^\/api\/(?:orgs|organizations)\/([0-9a-f-]{36})$/);
         if (org) {
           const record = await getOrg(env.DB, org[1]);
-          return record ? json({ ok: true, org: record }, 200, API_CACHE)
+          return record ? json({ ok: true, organization: record, org: record }, 200, API_CACHE)
             : json({ ok: false, error: "Not found" }, 404);
+        }
+        const organizationPrograms = url.pathname.match(/^\/api\/organizations\/([0-9a-f-]{36})\/programs$/);
+        if (organizationPrograms) {
+          const items = await listActualPrograms(env.DB, new URLSearchParams({ organization_id: organizationPrograms[1], limit: "200" }));
+          return json({ ok: true, ...items }, 200, API_CACHE);
         }
         if (url.pathname === "/api/stats") {
           return json({ ok: true, ...(await stats(env.DB)) }, 200, API_CACHE);

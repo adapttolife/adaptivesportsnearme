@@ -276,10 +276,11 @@ function fromApi(r) {
 const DETAIL = new Map();
 export function loadDetail(id) {
   if (!DETAIL.has(id)) {
-    const p = fetch("/api/orgs/" + encodeURIComponent(id)).then(async (r) => {
+    const p = fetch("/api/organizations/" + encodeURIComponent(id)).then(async (r) => {
       if (r.status === 404) return null;
-      if (!r.ok) throw new Error("/api/orgs " + r.status);
-      return (await r.json()).org || null;
+      if (!r.ok) throw new Error("/api/organizations " + r.status);
+      const body = await r.json();
+      return body.organization || body.org || null;
     });
     DETAIL.set(id, p);
     p.catch(() => DETAIL.delete(id));   // a failed load is asked again next time
@@ -794,7 +795,7 @@ const metaText = (p, ctx) => (ctx && ctx.single) ? placeFor(p, ctx) : `${sportNa
 /** Card for lists that mix sports. ctx: { where, stamp, wide, sameCity } */
 export function programCard(p, ctx = {}) {
   const d = distText(p, ctx), t = trust(p, "short");
-  return `<a class="pcard${ctx.wide ? " is-wide" : ""}" href="/programs/${esc(p.id)}">${plate(p, { kind: "card", wide: ctx.wide })}<h3 class="pc-name" title="${esc(p.name)}">${esc(p.name)}${vcheck(p)}</h3><p class="meta">${esc(metaText(p, { single: false }))}</p>${d ? `<p class="dist">${esc(d)}</p>` : ""}${t ? `<p class="pc-trust">${t}</p>` : ""}</a>`;
+  return `<a class="pcard${ctx.wide ? " is-wide" : ""}" href="/organizations/${esc(p.id)}">${plate(p, { kind: "card", wide: ctx.wide })}<h3 class="pc-name" title="${esc(p.name)}">${esc(p.name)}${vcheck(p)}</h3><p class="meta">${esc(metaText(p, { single: false }))}</p>${d ? `<p class="dist">${esc(d)}</p>` : ""}${t ? `<p class="pc-trust">${t}</p>` : ""}</a>`;
 }
 
 /** Row: tile left, then name, meta, distance and trust. ctx: { where, single, sameCity, outside }
@@ -803,10 +804,10 @@ export function programCard(p, ctx = {}) {
 export function programRow(p, ctx = {}, hidden = false) {
   const d = distText(p, ctx), t = trust(p, "short");
   if (ctx.single) {
-    return `<a class="prow prow--c" href="/programs/${esc(p.id)}"${hidden ? " hidden" : ""}><div class="pr-body"><h3 class="pr-name">${esc(p.name)}${vcheck(p)}</h3><p class="meta">${esc(placeFor(p, ctx))}${d ? `<span class="pr-dist"> · ${esc(d)}</span>` : ""}</p>${t ? `<p class="pr-line">${t}</p>` : ""}</div></a>`;
+    return `<a class="prow prow--c" href="/organizations/${esc(p.id)}"${hidden ? " hidden" : ""}><div class="pr-body"><h3 class="pr-name">${esc(p.name)}${vcheck(p)}</h3><p class="meta">${esc(placeFor(p, ctx))}${d ? `<span class="pr-dist"> · ${esc(d)}</span>` : ""}</p>${t ? `<p class="pr-line">${t}</p>` : ""}</div></a>`;
   }
   const line = [d ? `<span class="pr-dist">${esc(d)}</span>` : "", t].filter(Boolean).join(" · ");
-  return `<a class="prow" href="/programs/${esc(p.id)}"${hidden ? " hidden" : ""}>${plate(p, { kind: "row" })}<div class="pr-body"><h3 class="pr-name">${esc(p.name)}${vcheck(p)}</h3><p class="meta">${esc(metaText(p, ctx))}</p>${line ? `<p class="pr-line">${line}</p>` : ""}</div></a>`;
+  return `<a class="prow" href="/organizations/${esc(p.id)}"${hidden ? " hidden" : ""}>${plate(p, { kind: "row" })}<div class="pr-body"><h3 class="pr-name">${esc(p.name)}${vcheck(p)}</h3><p class="meta">${esc(metaText(p, ctx))}</p>${line ? `<p class="pr-line">${line}</p>` : ""}</div></a>`;
 }
 
 let UID = 0;
@@ -1013,7 +1014,7 @@ export function drawerList(active = "") {
   const dark = currentTheme() === "dark";
   const display = `<div class="dl-sec"><h2 class="dl-h">Display</h2><button type="button" class="dl-item dl-theme" data-theme-toggle aria-pressed="${dark}"><span>Dark mode</span><span class="dl-theme-state">${dark ? "On" : "Off"}</span></button></div>`;
   return [
-    sec("Find", item("near", nearHref(), "map-pin", "Programs near you") + item("sports", "/sports", "layout-grid", "Sports") + item("states", "/states", "map", "States") + item("grants", "/grants", "hand-coins", "Grants") + item("events", "/events", "calendar", "Events")),
+    sec("Find", item("near", nearHref(), "map-pin", "Programs near you") + item("organizations", "/organizations", "building-2", "Organizations") + item("sports", "/sports", "layout-grid", "Sports") + item("states", "/states", "map", "States") + item("grants", "/grants", "hand-coins", "Grants") + item("events", "/events", "calendar", "Events")),
     sec("Help build this", item("add-program", "/add/program", "plus", "Add a program") + item("add-event", "/add/event", "calendar-plus", "Add an event") + item("help", "/help", "badge-check", "Claim your organization") + item("about", "/about", "shield-check", "How we check listings")),
     sec("More", item("letter", "/letter", "mail", "Get the letter") + item("resources", "/resources", "book-open", "Resources")),
     display,
@@ -1026,7 +1027,7 @@ export function footer() {
   const near = nearHref();
   const li = (label, href) => `<li><a href="${esc(href)}">${esc(label)}</a></li>`;
   return `<div class="ft"><div class="ft-brand"><img src="/app/logo.svg" alt="" width="40" height="40"><div class="ft-brand-text"><p class="ft-name">Adaptive Sports Near Me</p><p>A free directory of adaptive sports programs, grants and events. We list programs; we don't run them.</p></div></div>
-<div class="ft-cols"><div><h2 class="ft-h">Find</h2><ul>${near ? li("Programs near you", near) : `<li><button type="button" data-open="search">Programs near you</button></li>`}${li("Sports", "/sports")}${li("States", "/states")}${li("Grants", "/grants")}${li("Events", "/events")}</ul></div>
+<div class="ft-cols"><div><h2 class="ft-h">Find</h2><ul>${near ? li("Programs near you", near) : `<li><button type="button" data-open="search">Programs near you</button></li>`}${li("Organizations", "/organizations")}${li("Sports", "/sports")}${li("States", "/states")}${li("Grants", "/grants")}${li("Events", "/events")}</ul></div>
 <div><h2 class="ft-h">Help build this</h2><ul>${li("Add a program", "/add/program")}${li("Add an event", "/add/event")}${li("Claim your organization", "/help")}${li("How we check listings", "/about")}</ul></div>
 <div><h2 class="ft-h">More</h2><ul>${li("Get the letter", "/letter")}${li("Resources", "/resources")}${li("Accessibility", "/about")}</ul></div></div>
 <div class="ft-fine"><p class="ft-fine">Adaptive Sports Near Me is a project of <a href="https://adapttolife.org">Adapt To Life</a>. Check with each organization before you go.</p><p class="ft-fine">© 2026 <a href="https://adapttolife.org">Adapt To Life</a></p></div></div>`;
@@ -1205,7 +1206,7 @@ export async function openSportsSheet(opts) {
 
 const ROUTES = [
   ["/", "home"], ["/near/:place", "near"], ["/sports", "sports"], ["/sports/:key", "sport"],
-  ["/states", "states"], ["/states/:st", "state"], ["/programs/:id", "program"],
+  ["/states", "states"], ["/states/:st", "state"], ["/organizations", "organizations"], ["/organizations/:id", "program"], ["/programs/:id", "program-detail"],
   ["/grants", "grants"], ["/grants/:id", "grant"], ["/events", "events"],
   ["/add/program", "forms"], ["/add/event", "forms"], ["/update/:id", "forms"],
   ["/help", "help"], ["/about", "help"], ["/resources/veteran-owned-businesses", "vob"], ["/resources", "help"], ["/letter", "help"],
@@ -1274,6 +1275,7 @@ export function backOr(fallbackHref = "/") {
 function defaultActive(name, path, params) {
   if (name === "near") return "near";
   if (name === "sports") return "sports";
+  if (name === "organizations") return "organizations";
   if (name === "sport") return "sport:" + params.key;
   if (name === "states" || name === "state") return "states";
   if (name === "grants" || name === "grant") return "grants";

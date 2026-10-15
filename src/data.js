@@ -218,6 +218,36 @@ export async function getOrg(db, id) {
   };
 }
 
+const PROGRAM_COLS = `p.id, p.organization_id, p.name, NULL AS org_type, p.sport, p.sport_key,
+  p.website_url, p.city, p.state, p.state_name, p.zip, p.publicity_consent, p.lat, p.lng,
+  p.geo_precision, p.description, p.cost_note, p.equipment_provided, p.ages,
+  NULL AS data_quality_rating, p.verification_status, p.verification_method, p.last_ok_at, p.created_at`;
+const PROGRAM_PUBLIC = "p.is_public = 1 AND p.status = 'active' AND o.is_public = 1 AND o.status = 'active'";
+function programParent(row) {
+  return { id: row.organization_id, name: row.organization_name, city: row.organization_city,
+    state: row.organization_state, stateName: row.organization_state_name, website: row.organization_website_url };
+}
+export async function listActualPrograms(db, params = new URLSearchParams()) {
+  const where = [PROGRAM_PUBLIC], binds = [];
+  const organizationId = (params.get("organization_id") || "").trim();
+  if (organizationId) { where.push("p.organization_id = ?"); binds.push(organizationId); }
+  const q = (params.get("q") || "").trim().slice(0, 120);
+  if (q) { const like = `%${q.replace(/[\\%_]/g, "\\$&")}%`; where.push("(p.name LIKE ? ESCAPE '\\' OR o.name LIKE ? ESCAPE '\\' OR p.sport LIKE ? ESCAPE '\\')"); binds.push(like, like, like); }
+  const limit = Math.min(Math.max(Number.parseInt(params.get("limit") || "60", 10) || 60, 1), 200);
+  const offset = Math.max(Number.parseInt(params.get("offset") || "0", 10) || 0, 0);
+  const condition = where.join(" AND ");
+  const [count, rows] = await Promise.all([
+    db.prepare(`SELECT COUNT(*) AS n FROM programs p JOIN organizations o ON o.id = p.organization_id WHERE ${condition}`).bind(...binds).first(),
+    db.prepare(`SELECT ${PROGRAM_COLS}, o.name AS organization_name, o.city AS organization_city, o.state AS organization_state, o.state_name AS organization_state_name, o.website_url AS organization_website_url FROM programs p JOIN organizations o ON o.id = p.organization_id WHERE ${condition} ORDER BY p.name COLLATE NOCASE LIMIT ? OFFSET ?`).bind(...binds, limit, offset).all(),
+  ]);
+  return { total: count?.n ?? 0, limit, offset, items: (rows.results || []).map((row) => ({ ...rowToProgram(row), organization: programParent(row) })) };
+}
+export async function getProgram(db, id) {
+  const row = await db.prepare(`SELECT ${PROGRAM_COLS}, p.email, p.phone, p.updated_at, o.name AS organization_name, o.city AS organization_city, o.state AS organization_state, o.state_name AS organization_state_name, o.website_url AS organization_website_url FROM programs p JOIN organizations o ON o.id = p.organization_id WHERE p.id = ? AND ${PROGRAM_PUBLIC}`).bind(id).first();
+  if (!row) return null;
+  return { ...rowToProgram(row), ...(row.publicity_consent === 1 ? { email: row.email, phone: row.phone } : {}), organization: programParent(row), updatedAt: row.updated_at };
+}
+
 // Sources as a visitor may see them, once each.
 export function publicSources(rows) {
   const seen = new Set();
