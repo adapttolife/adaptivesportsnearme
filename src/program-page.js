@@ -255,7 +255,7 @@ export function programPageTemplate(org, { site = SITE, nearby = [] } = {}) {
   const loc = locLine(org);
   const canonical = `${site}/programs/${org.id}`;
   const photo = photoPath(org.sport, org);
-  const body = `<header class="bar"><a class="back" href="/">← Directory</a></header>
+  const body = `<div class="bar"><a class="back" href="/">← Directory</a></div>
 ${listingInnerHtml(org, { nearby })}`;
   return page({
     title: `${name} · Adaptive Sports Near Me`,
@@ -267,7 +267,7 @@ ${listingInnerHtml(org, { nearby })}`;
 }
 
 export function programNotFoundTemplate({ site = SITE } = {}) {
-  const body = `<header class="bar"><a class="back" href="/">← Directory</a></header>
+  const body = `<div class="bar"><a class="back" href="/">← Directory</a></div>
 <h1>Program not found</h1>
 <p class="empty">That listing is not in the directory.</p>`;
   return page({

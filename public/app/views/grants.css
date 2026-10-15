@@ -2,63 +2,214 @@
 
 /* Sand page band: h1 and sub on the left, the grant figure tile on the right. */
 .v-grants .gband {
-  display: flex; align-items: center; gap: 16px;
-  background: var(--sand); margin-inline: calc(-1 * var(--gut)); padding: 28px var(--gut) 28px;
+	display: flex;
+	align-items: center;
+	gap: 16px;
+	background: var(--sand);
+	margin-inline: calc(-1 * var(--gut));
+	padding: 28px var(--gut) 28px;
 }
-.v-grants .gb-text { flex: 1; min-width: 0; }
-.v-grants .gband h1 { font-size: var(--fs-h1); }
-.v-grants .gband p { margin-top: 8px; font-size: 17px; color: var(--graphite); max-width: 46ch; }
-.v-grants .gb-art { flex: none; width: 120px; height: 120px; }
-.v-grants .gb-art .plate { width: 120px; height: 120px; border-radius: var(--r-l); box-shadow: 0 0 0 1px rgba(138, 99, 0, .10); }
-@media (max-width: 379px) { .v-grants .gb-art, .v-grants .gb-art .plate { width: 96px; height: 96px; } }
+
+.v-grants .gb-text {
+	flex: 1;
+	min-width: 0;
+}
+
+.v-grants .gband h1 {
+	font-size: var(--fs-h1);
+}
+
+.v-grants .gband p {
+	margin-top: 8px;
+	font-size: 17px;
+	color: var(--graphite);
+	max-width: 46ch;
+}
+
+.v-grants .gb-art {
+	flex: none;
+	width: 120px;
+	height: 120px;
+}
+
+.v-grants .gb-art .plate {
+	width: 120px;
+	height: 120px;
+	border-radius: var(--r-l);
+	box-shadow: 0 0 0 1px rgba(138, 99, 0, 0.1);
+}
+
+@media (max-width: 379px) {
+	.v-grants .gb-art,
+	.v-grants .gb-art .plate {
+		width: 96px;
+		height: 96px;
+	}
+}
+
 @media (min-width: 768px) {
-  .v-grants .gband { margin: 24px 0 0; border-radius: var(--r-xl); padding: 36px 36px 36px 40px; gap: 32px; }
-  .v-grants .gband p { font-size: 18px; }
+	.v-grants .gband {
+		margin: 24px 0 0;
+		border-radius: var(--r-xl);
+		padding: 36px 36px 36px 40px;
+		gap: 32px;
+	}
+	.v-grants .gband p {
+		font-size: 18px;
+	}
 }
 
 /* Segmented filter links: a 3px track holding 48px links, the current one in the selected-chip style. */
 .v-grants .seg {
-  display: flex; gap: 3px; margin-top: 24px; padding: 3px;
-  border: 1px solid var(--line-strong); border-radius: var(--r); background: var(--paper);
+	display: flex;
+	gap: 3px;
+	margin-top: 24px;
+	padding: 3px;
+	border: 1px solid var(--line-strong);
+	border-radius: var(--r);
+	background: var(--paper);
 }
+
 .v-grants .seg a {
-  flex: 1 1 0; min-width: 0; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-  min-height: 48px; padding: 0 8px; border-radius: 9px;
-  font-size: var(--fs-label); font-weight: 600; line-height: 1.2; text-align: center; text-decoration: none; color: var(--graphite);
+	flex: 1 1 0;
+	min-width: 0;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 6px;
+	min-height: 48px;
+	padding: 0 8px;
+	border-radius: 9px;
+	font-size: var(--fs-label);
+	font-weight: 600;
+	line-height: 1.2;
+	text-align: center;
+	text-decoration: none;
+	color: var(--graphite);
 }
-.v-grants .seg a:hover { background: var(--mist); color: var(--ink); }
-.v-grants .seg a[aria-current="page"] { background: var(--orange-soft); color: var(--ink); font-weight: 700; box-shadow: inset 0 0 0 1.5px var(--orange); }
-.v-grants .seg a .ic { flex: none; }
-.v-grants .seg a:focus-visible { box-shadow: var(--focus); }
-@media (max-width: 400px) { .v-grants .seg a .ic { display: none; } }
+
+.v-grants .seg a:hover {
+	background: var(--mist);
+	color: var(--ink);
+}
+
+.v-grants .seg a[aria-current="page"] {
+	background: var(--orange-soft);
+	color: var(--ink);
+	font-weight: 700;
+	box-shadow: inset 0 0 0 1.5px var(--orange);
+}
+
+.v-grants .seg a .ic {
+	flex: none;
+}
+
+.v-grants .seg a:focus-visible {
+	box-shadow: var(--focus);
+}
+
+@media (max-width: 400px) {
+	.v-grants .seg a .ic {
+		display: none;
+	}
+}
 
 /* Sections */
-.v-grants .g-open { margin-top: 32px; }
-.v-grants .g-sec .sh { margin-bottom: 4px; }
-.v-grants .glist { border-top: 1px solid var(--line); }
-.v-grants .g-none { padding: 20px; background: var(--mist); border-radius: var(--r-l); color: var(--graphite); font-size: 17px; }
+.v-grants .g-open {
+	margin-top: 32px;
+}
+
+.v-grants .g-sec .sh {
+	margin-bottom: 4px;
+}
+
+.v-grants .glist {
+	border-top: 1px solid var(--line);
+}
+
+.v-grants .g-none {
+	padding: 20px;
+	background: var(--mist);
+	border-radius: var(--r-l);
+	color: var(--graphite);
+	font-size: 17px;
+}
 
 /* In a one-audience list the segmented control already says who it's for, so the
    repeated audience pill is dropped; "Closed for now" stays. (All grants keeps both.) */
-.v-grants .glist.is-one .tag:not(.tag--muted) { display: none; }
-.v-grants .glist.is-one .tags:not(:has(.tag--muted)) { display: none; }
+.v-grants .glist.is-one .tag:not(.tag--muted) {
+	display: none;
+}
+
+.v-grants .glist.is-one .tags:not(:has(.tag--muted)) {
+	display: none;
+}
 
 /* Rows: text first; a quiet chevron on the right says the row opens a page. */
-.v-grants .grow { position: relative; padding-right: 40px; }
-.v-grants .grow:first-child { border-top: 0; }
+.v-grants .grow {
+	position: relative;
+	padding-right: 40px;
+}
+
+.v-grants .grow:first-child {
+	border-top: 0;
+}
+
 .v-grants .grow::after {
-  content: ""; position: absolute; right: 8px; top: 50%; width: 10px; height: 10px; translate: 0 -50%; rotate: 45deg;
-  border-top: 2px solid var(--muted); border-right: 2px solid var(--muted); transition: translate var(--ease);
+	content: "";
+	position: absolute;
+	right: 8px;
+	top: 50%;
+	width: 10px;
+	height: 10px;
+	translate: 0 -50%;
+	rotate: 45deg;
+	border-top: 2px solid var(--muted);
+	border-right: 2px solid var(--muted);
+	transition: translate var(--ease);
 }
-.v-grants .grow:hover::after { translate: 3px -50%; border-color: var(--ink); }
-.v-grants .g-line .g-amt { font-size: 16px; }
+
+.v-grants .grow:hover::after {
+	translate: 3px -50%;
+	border-color: var(--ink);
+}
+
+.v-grants .g-line .g-amt {
+	font-size: 16px;
+}
+
 @media (min-width: 768px) {
-  .v-grants .grow { padding: 18px 48px 18px 0; }
-  .v-grants .g-name { font-size: var(--fs-h3); }
+	.v-grants .grow {
+		padding: 18px 48px 18px 0;
+	}
+	.v-grants .g-name {
+		font-size: var(--fs-h3);
+	}
 }
-@media (forced-colors: active) { .v-grants .grow::after { border-color: CanvasText; } }
+
+@media (forced-colors: active) {
+	.v-grants .grow::after {
+		border-color: CanvasText;
+	}
+}
+
 /* Direction C: a full yellow band, the grant athlete in black. */
-.v-grants .gband { background: #F6B700; color: #1A1A1A; }
-.v-grants .gband p { color: #1A1A1A; }
-.v-grants .gb-art .plate { box-shadow: none; background: transparent; }
-.v-grants .seg a[aria-current="page"] { background: #1A1A1A; color: #fff; box-shadow: none; }
+.v-grants .gband {
+	background: #f6b700;
+	color: #1a1a1a;
+}
+
+.v-grants .gband p {
+	color: #1a1a1a;
+}
+
+.v-grants .gb-art .plate {
+	box-shadow: none;
+	background: transparent;
+}
+
+.v-grants .seg a[aria-current="page"] {
+	background: #1a1a1a;
+	color: #fff;
+	box-shadow: none;
+}

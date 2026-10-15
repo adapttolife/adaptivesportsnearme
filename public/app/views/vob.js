@@ -23,7 +23,7 @@ ${ext(s.national.url, s.national.name)}</li>`).join("");
     title: `${c.title} · Adaptive Sports Near Me`,
     description: c.intro[1],
     html: `<div class="vb">
-<header class="vb-hero"><span class="vb-art" aria-hidden="true">${A.fig("veteran-meetup", { color: "#FFFFFF", big: true, cls: "fig--pin fig--mid" })}</span><h1 tabindex="-1">${A.esc(c.title)}</h1><p class="vb-kicker">${A.esc(c.kicker)}</p></header>
+<div class="vb-hero"><span class="vb-art" aria-hidden="true">${A.fig("veteran-meetup", { color: "#FFFFFF", big: true, cls: "fig--pin fig--mid" })}</span><h1 tabindex="-1">${A.esc(c.title)}</h1><p class="vb-kicker">${A.esc(c.kicker)}</p></div>
 <div class="vb-intro">${c.intro.map((t) => `<p>${A.esc(t)}</p>`).join("")}<p class="vb-note">${A.esc(c.disclaimer)}</p></div>
 <section class="sec" aria-labelledby="vb-n">${A.sectionHead({ title: "Nationwide", id: "vb-n" })}<ul class="vb-cards">${nation}</ul></section>
 <section class="sec" aria-labelledby="vb-s">${A.sectionHead({ title: c.stateLead, id: "vb-s" })}

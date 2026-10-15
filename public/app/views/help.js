@@ -19,13 +19,13 @@ function helpPage() {
 <label class="hp-flabel" for="hp-claim">Program name</label>
 <div class="hp-frow">${A.icon("search", 20)}<input id="hp-claim" type="search" autocomplete="off" enterkeyhint="search" aria-describedby="hp-claim-st" aria-controls="hp-claim-list"></div>
 <p class="hp-status" id="hp-claim-st" role="status">Type two or more letters of the name.</p>
-<div class="rows hp-results" id="hp-claim-list" hidden></div></div>`;
+<div class="hp-results" id="hp-claim-list" hidden></div></div>`;
   const html = `<div class="hp-page">
-<header class="hp-hero" style="--t:${A.toneOf("multi").t}">${art}<div class="hp-text"><h1 tabindex="-1">Help build this</h1><p class="hp-sub">This directory is new and still growing. Here is how you can help.</p></div></header>
+<div class="hp-hero" style="--t:${A.toneOf("multi").t}">${art}<div class="hp-text"><h1 tabindex="-1">Help build this</h1><p class="hp-sub">This directory is new and still growing. Here is how you can help.</p></div></div>
 <div class="hp-cards">
+${card({ ic: "badge-check", title: "Claim your program", body: "Run a program listed here? Find it and confirm the details.", cls: "hp-card--claim", extra: finder })}
 ${card({ ic: "plus", title: "Add a program", body: "Know a program we're missing? Tell us and we'll check it.", action: A.btn("Add a program", "/add/program", "ink") })}
 ${card({ ic: "calendar-plus", title: "Add an event", body: "Share a clinic, tryout, game day or meetup.", action: A.btn("Add an event", "/add/event", "line") })}
-${card({ ic: "badge-check", title: "Claim your program", body: "Run a program listed here? Find it and confirm the details.", cls: "hp-card--claim", extra: finder })}
 ${card({ ic: "square-pen", title: "Suggest a fix", body: "Spot something wrong? Every listing has a Suggest a fix link.", cls: "hp-card--wide", action: A.btn("Find a listing", "", "line", { attrs: 'data-open="search"', icon: "search" }) })}
 </div>
 ${A.letterBlock({ source: "help" })}</div>`;
@@ -45,7 +45,7 @@ const ABOUT = [
 function aboutPage() {
   const a11y = `We aim to meet WCAG 2.2 AA. If something doesn't work for you, tell us through <a href="/help">Suggest a fix</a> or <a href="/add/program">the Add a program form</a>.`;
   const secs = ABOUT.map(([cls, ic, h, body], i) => `<section class="ab-sec" aria-labelledby="ab-${i}"><span class="ab-ic ${cls}" aria-hidden="true">${A.icon(ic, 24)}</span><div class="ab-text"><h2 id="ab-${i}">${A.esc(h)}</h2><p>${body == null ? a11y : A.esc(body)}</p></div></section>`).join("");
-  const html = `<div class="ab"><header class="ab-head"><h1 tabindex="-1">How we check listings</h1></header><div class="ab-grid">${secs}</div><p class="ab-legal">Read our <a href="/privacy">privacy policy</a> and <a href="/terms">terms of use</a>.</p>${A.helpBand()}</div>`;
+  const html = `<div class="ab"><div class="ab-head"><h1 tabindex="-1">How we check listings</h1></div><div class="ab-grid">${secs}</div><p class="ab-legal">Read our <a href="/privacy">privacy policy</a> and <a href="/terms">terms of use</a>.</p>${A.helpBand()}</div>`;
   return { title: "How we check listings · Adaptive Sports Near Me", description: DESC, html };
 }
 
@@ -73,7 +73,7 @@ function legalPage({ title, description, h1, intro, sections }) {
   const secs = sections.map(([h, body], i) => `<section class="lg-sec" aria-labelledby="lg-${i}"><h2 id="lg-${i}">${h}</h2>${body}</section>`).join("");
   return {
     title: `${title} · Adaptive Sports Near Me`, description,
-    html: `<article class="lg"><header class="lg-head"><h1 tabindex="-1">${h1}</h1><p class="lg-date">Last updated ${UPDATED}</p><p class="lg-intro">${intro}</p></header>${secs}</article>`,
+    html: `<article class="lg"><div class="lg-head"><h1 tabindex="-1">${h1}</h1><p class="lg-date">Last updated ${UPDATED}</p><p class="lg-intro">${intro}</p></div>${secs}</article>`,
   };
 }
 

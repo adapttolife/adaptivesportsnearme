@@ -3,10 +3,24 @@
 
 /* Actions on phones: the letter full width, Share and Map side by side */
 @media (max-width: 479px) {
-  .v-state .ch-acts { display: grid; grid-template-columns: 1fr 1fr; }
-  .v-state .ch-acts > :first-child { grid-column: 1 / -1; }
+	.v-state .ch-acts {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+	}
+
+	.v-state .ch-acts > :first-child {
+		grid-column: 1 / -1;
+	}
 }
 
-.v-state .st-bar { margin-top: 24px; }
-.v-state .st-bar + .sec { margin-top: 32px; }
-.v-state .st-cards { align-items: start; }
+.v-state .st-bar {
+	margin-top: 24px;
+}
+
+.v-state .st-bar + .sec {
+	margin-top: 32px;
+}
+
+.v-state .st-cards {
+	align-items: start;
+}

@@ -180,7 +180,7 @@ export function grantPageTemplate(grant, { site = SITE, nearby = [] } = {}) {
   const loc = grantLocLine(grant);
   const canonical = `${site}/grants/${grant.id}`;
   const photo = isCoverVisual(listingVisual(grant, "grant")) ? listingVisual(grant, "grant").src : null;
-  const body = `<header class="bar"><a class="back" href="/?db=grants">← Grants</a></header>
+  const body = `<div class="bar"><a class="back" href="/?db=grants">← Grants</a></div>
 ${listingInnerHtml(grant, { nearby })}`;
   return page({
     title: `${name} · Adaptive Sports Near Me`,
@@ -192,7 +192,7 @@ ${listingInnerHtml(grant, { nearby })}`;
 }
 
 export function grantNotFoundTemplate({ site = SITE } = {}) {
-  const body = `<header class="bar"><a class="back" href="/?db=grants">← Grants</a></header>
+  const body = `<div class="bar"><a class="back" href="/?db=grants">← Grants</a></div>
 <h1>Grant not found</h1>
 <p class="empty">That listing is not in the directory.</p>`;
   return page({

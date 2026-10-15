@@ -666,7 +666,7 @@ export function fig(key, { color, cls = "", big = false } = {}) {
   const k = key && OPTICAL[key] ? key : "multi";
   const o = OPTICAL[k];
   const dk = Math.min(1.04, Math.max(0.90, Math.pow(0.31 / o[3], 0.3)));
-  return `<i class="fig${cls ? " " + cls : ""}" aria-hidden="true" style="--src:url(/emblems/sports/${k}.svg);--w:${o[0]};--h:${o[1]};--g:${o[2]};--diag:${Math.hypot(o[0], o[1]).toFixed(3)};--dk:${dk.toFixed(3)};--cx:${o[4]}${color ? ";color:" + color : ""}"></i>`;
+  return `<i class="fig${cls ? " " + cls : ""}" aria-hidden="true" style="--src:url(/emblems/sports/${k}.svg);--w:${o[0]};--h:${o[1]};--g:${o[2]};--diag:${Math.hypot(o[0], o[1]).toFixed(3)};--dk:${dk.toFixed(3)}${color ? ";color:" + color : ""}"></i>`;
 }
 
 if (typeof window !== "undefined") { window.ASNM_FIG = fig; window.ASNM_ICON_KEYS = Object.keys(OPTICAL); window.ASNM_PLATE = (...a) => plate(...a); }
@@ -833,7 +833,7 @@ export function emptyState({ title, body, actions = [], image } = {}) {
 /** The letter, inline only (id="letter"). */
 export function letterBlock({ source = "page" } = {}) {
   const i = uid("em");
-  return `<section class="letter" id="letter" aria-labelledby="${i}-h"><h2 id="${i}-h" tabindex="-1">Get the letter</h2><p>New programs, grants and events, when there is something worth sending. No spam, and you can unsubscribe any time.</p>
+  return `<section class="letter" id="letter" aria-labelledby="${i}-h"><h2 id="${i}-h" tabindex="-1">Get the letter</h2><p>New programs, grants and events, when there is something worth sending. No spam, unsubscribe any time.</p>
 <form class="letter-form" data-letter data-send="/api/subscribe" data-source="asnm-letter-${esc(source)}" data-done="You're on the list. We'll write when there is something worth sending." novalidate><div class="field"><label for="${i}">Email</label><div class="letter-row"><input id="${i}" name="em" type="email" autocomplete="email" placeholder="name@example.com" required data-error="Enter an email address, like name@example.com."><button class="btn btn--ink" type="submit">Subscribe</button></div></div><input name="company" tabindex="-1" autocomplete="off" class="hpot" aria-hidden="true"><label class="check"><input type="checkbox" name="beta"><span>I want the first look at new features</span></label><p class="letter-fine">We use your email only to send the letter. <a href="/privacy">Privacy policy</a></p></form></section>`;
 }
 
@@ -940,7 +940,7 @@ export function communityHeader({ kind = "sport", key, st, title, line, count, a
   }
   const actHtml = Array.isArray(acts) ? acts.join("") : acts;
   const tabHtml = tabs && tabs.length ? `<nav class="tabs" aria-label="${esc(title)} sections">${tabs.map((t) => `<a href="${esc(t.href)}" data-replace${t.current ? ' aria-current="page"' : ""}>${esc(t.label)}</a>`).join("")}</nav>` : "";
-  return `<header class="ch ch--${kind}">${banner}<div class="ch-body">${av}${kind === "state" ? "" : h1}${line ? `<p class="ch-line">${esc(line)}</p>` : ""}${cnt}${actHtml ? `<div class="btns ch-acts">${actHtml}</div>` : ""}</div>${tabHtml}</header>`;
+  return `<div class="ch ch--${kind}">${banner}<div class="ch-body">${av}${kind === "state" ? "" : h1}${line ? `<p class="ch-line">${esc(line)}</p>` : ""}${cnt}${actHtml ? `<div class="btns ch-acts">${actHtml}</div>` : ""}</div>${tabHtml}</div>`;
 }
 
 /** The desktop aside. */
