@@ -8,7 +8,7 @@
 	--ink: #1a1a1a;
 	--graphite: #3a3a37;
 	--muted: #5f5d59;
-	--paper: #ffffff;
+	--paper: #f3f3f3;
 	--mist: #f7f7f5;
 	--sand: #f0efec;
 	--line: #e4e2dd;
@@ -26,7 +26,7 @@
 	--teal-soft: #ddf7f3;
 	--error: #b42318;
 	--error-soft: #fdecea;
-	--focus: 0 0 0 3px #ffffff, 0 0 0 5px #1a1a1a;
+	--focus: 0 0 0 3px #f3f3f3, 0 0 0 5px #1a1a1a;
 
 	--font: "Sofia Sans", Arial, Helvetica, system-ui, sans-serif;
 	--fs-display: 40px;
@@ -196,7 +196,7 @@ p a:not(.btn),
 	top: -100px;
 	z-index: 100;
 	background: var(--ink);
-	color: #fff;
+	color: #f3f3f3;
 	font-weight: 700;
 	padding: 12px 16px;
 	border-radius: var(--r);
@@ -1069,7 +1069,7 @@ body.ov-open {
 
 .btn--ink {
 	background: var(--ink);
-	color: #fff;
+	color: #f3f3f3;
 }
 
 .btn--ink:hover {
@@ -1346,7 +1346,7 @@ textarea:focus {
 
 .plate.is-inv {
 	background: var(--d);
-	color: #fff;
+	color: #f3f3f3;
 }
 
 /* Cards: the drawing is centered in the area under the badge band (48px holds the
@@ -1580,7 +1580,7 @@ textarea:focus {
 	gap: 6px;
 	height: 32px;
 	padding: 0 12px 0 9px;
-	background: #fff;
+	background: #f3f3f3;
 	color: var(--ink);
 	border-radius: 15px;
 	font-size: 15px;
@@ -1607,7 +1607,7 @@ textarea:focus {
 	place-items: center;
 	width: 48px;
 	height: 48px;
-	background: #fff;
+	background: #f3f3f3;
 	border-radius: var(--r);
 	box-shadow: var(--sh-1);
 }
@@ -1631,13 +1631,13 @@ textarea:focus {
 
 .so-dot {
 	fill: var(--orange);
-	stroke: #fff;
+	stroke: #f3f3f3;
 	stroke-width: 1px;
 	vector-effect: non-scaling-stroke;
 }
 
 .so-you {
-	fill: #fff;
+	fill: #f3f3f3;
 	stroke: var(--orange);
 	stroke-width: 3px;
 	vector-effect: non-scaling-stroke;
@@ -2330,7 +2330,7 @@ textarea:focus {
 }
 
 .tile.t0 {
-	background: #fff;
+	background: #f3f3f3;
 	border-color: var(--line-input);
 	color: var(--muted);
 }
@@ -2352,7 +2352,7 @@ textarea:focus {
 
 .tile.t4 {
 	background: #c5430c;
-	color: #fff;
+	color: #f3f3f3;
 }
 
 .tile:hover {
@@ -2761,7 +2761,7 @@ body.stk-away .stk {
 
 .ch-banner--sport.is-inv {
 	background: var(--d);
-	color: #fff;
+	color: #f3f3f3;
 }
 
 .ch-banner--sport {
@@ -2810,7 +2810,7 @@ body.stk-away .stk {
 }
 
 .ch-bart .so .so-shape {
-	fill: #fff;
+	fill: #f3f3f3;
 }
 
 /* with a sport chosen, its avatar sits on the outline's lower left, carrying the sport's colour */
@@ -2824,7 +2824,7 @@ body.stk-away .stk {
 .ch-sav .av {
 	width: 56px;
 	height: 56px;
-	box-shadow: 0 0 0 3px #fff;
+	box-shadow: 0 0 0 3px #f3f3f3;
 }
 
 @media (min-width: 768px) {
@@ -2867,7 +2867,7 @@ body.stk-away .stk {
 	margin-top: -32px;
 	margin-left: 0;
 	border-radius: 50%;
-	box-shadow: 0 0 0 4px #fff;
+	box-shadow: 0 0 0 4px #f3f3f3;
 	position: relative;
 	z-index: 1;
 }
@@ -3209,13 +3209,13 @@ h3,
 }
 #beta {
 	background: #1a1a1a;
-	color: #fff;
+	color: #f3f3f3;
 }
 #beta .beta {
-	color: #fff;
+	color: #f3f3f3;
 }
 #beta .iconbtn {
-	color: #fff;
+	color: #f3f3f3;
 }
 
 .hd-add {
@@ -3253,13 +3253,13 @@ h3,
 
 .letter {
 	background: #1a1a1a;
-	color: #fff;
+	color: #f3f3f3;
 	border-radius: 15px;
 	padding: 32px 24px;
 }
 
 .letter h2 {
-	color: #fff;
+	color: #f3f3f3;
 	font-size: 32px;
 	line-height: 1;
 }
@@ -3269,11 +3269,11 @@ h3,
 }
 
 .letter label {
-	color: #fff;
+	color: #f3f3f3;
 }
 
 .letter-row input {
-	background: #fff;
+	background: #f3f3f3;
 	color: #1a1a1a;
 	border: 0;
 }
@@ -3303,13 +3303,13 @@ h3,
 .chip.is-on {
 	background: #1a1a1a;
 	border: 1.5px solid #1a1a1a;
-	color: #fff;
+	color: #f3f3f3;
 }
 
 .chip[aria-current] .ic,
 .chip[aria-pressed="true"] .ic,
 .chip.is-on .ic {
-	color: #fff;
+	color: #f3f3f3;
 }
 
 .ss-tile[aria-pressed="true"] {
@@ -3320,13 +3320,13 @@ h3,
 /* Trust box: black, with a yellow check for verified (Laura's yellow + black). */
 .trustbox {
 	background: #1a1a1a !important;
-	color: #fff;
+	color: #f3f3f3;
 	border: 0 !important;
 	border-radius: 12px;
 }
 
 .trustbox .tb-title {
-	color: #fff;
+	color: #f3f3f3;
 }
 
 .trustbox.is-v .tb-title .ic {
@@ -3334,7 +3334,7 @@ h3,
 }
 
 .trustbox.is-u .tb-title .ic {
-	color: #fff;
+	color: #f3f3f3;
 }
 
 .trustbox .tb-body {
@@ -3342,7 +3342,7 @@ h3,
 }
 
 .trustbox .tb-row {
-	color: #fff;
+	color: #f3f3f3;
 }
 
 /* ================= Review looks =================
@@ -3402,7 +3402,7 @@ h3,
 
 [data-look="sharp"] .hd,
 [data-look="sharp"] .hd .iconbtn {
-	color: #fff;
+	color: #f3f3f3;
 }
 
 [data-look="sharp"] .hd-brand img {
@@ -3486,7 +3486,7 @@ h3,
 
 [data-look="sharp"] .v-home .band .grow {
 	background: #121212;
-	color: #fff;
+	color: #f3f3f3;
 	border-radius: 10px;
 }
 
@@ -3497,7 +3497,7 @@ h3,
 
 [data-look="sharp"] .v-home .band .grow .tag {
 	background: transparent;
-	color: #fff;
+	color: #f3f3f3;
 	border: 1px solid #555;
 }
 

@@ -47,7 +47,7 @@ function sports(D) {
 }
 
 function doors() {
-  const d = (cls, href, key, title, line) => `<a class="door ${cls}" href="${href}"><span class="door-fig">${A.fig(key, { color: cls === "door--ink" ? "#FFFFFF" : "#1A1A1A", big: true })}</span><b>${title}</b><span>${line}</span></a>`;
+  const d = (cls, href, key, title, line) => `<a class="door ${cls}" href="${href}"><span class="door-fig">${A.fig(key, { color: cls === "door--ink" ? "#f3f3f3" : "#1A1A1A", big: true })}</span><b>${title}</b><span>${line}</span></a>`;
   return `<nav class="doors" aria-label="More ways in">${d("door--sun", "/grants", "grant", "Grants", "Money for gear, travel and programs")}${d("door--sea", "/events", "event", "Events", "Clinics, tryouts and game days")}${d("door--ink", "/sports/veteran-meetup", "veteran-meetup", "Veterans", "Meetups, coffee calls and outdoor days near you")}${d("door--coral", "/add/program", "multi", "Run a program?", "List it free. A person checks it.")}</nav>`;
 }
 
@@ -140,7 +140,7 @@ export function mount(root) {
     figs.forEach((f) => f.classList.toggle("is-on", f.dataset.heroFigure === key));
     hb.style.setProperty("--hb", color);
     hb.style.setProperty("--hb-fg", foreground);
-    hb.classList.toggle("is-ink", foreground === "#FFFFFF");
+    hb.classList.toggle("is-ink", foreground === "#f3f3f3");
     title.textContent = sport ? `Find your place in adaptive ${A.sportName(key)}.` : "Find your place in adaptive sports.";
     fitTitle();
   };

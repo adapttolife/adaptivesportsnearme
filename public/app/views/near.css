@@ -104,14 +104,14 @@
 
 .v-near .nr-k--dot {
 	background: var(--orange);
-	box-shadow: 0 0 0 2px #fff;
+	box-shadow: 0 0 0 2px #f3f3f3;
 	width: 10px;
 	height: 10px;
 	margin: 0 2px;
 }
 
 .v-near .nr-k--you {
-	background: #fff;
+	background: #f3f3f3;
 	border: 3px solid var(--orange);
 }
 
@@ -469,7 +469,7 @@
 }
 
 .v-near .nr-stamp {
-	background: #fff;
+	background: #f3f3f3;
 	border: 0;
 }
 

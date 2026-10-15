@@ -109,7 +109,7 @@ const CORAL = "#FF5C39", ORANGE = "#F96C03", TEAL = "#00C7B1", YELLOW = "#F6B700
 const TONES = {
   court: [CORAL, INK], racquet: [YELLOW, INK], field: [ORANGE, INK],
   snow: [TEAL, INK], water: [TEAL, INK], trail: [YELLOW, INK],
-  calm: [INK, "#FFFFFF"], house: [CORAL, INK], grant: [YELLOW, INK], event: [TEAL, INK],
+  calm: [INK, "#f3f3f3"], house: [CORAL, INK], grant: [YELLOW, INK], event: [TEAL, INK],
 };
 // Look switch: sharp is the standard; ?look=today and ?look=hues stay for comparison.
 export const LOOK = new URLSearchParams(location.search).get("look") || "sharp"; // Alec, 2026-10-14: "I love the sharper version the best... This is the way"
