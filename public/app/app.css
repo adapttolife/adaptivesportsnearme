@@ -291,7 +291,7 @@ body.has-sticky #main {
 		grid-column: 1;
 		grid-row: 1 / span 2;
 		position: sticky;
-		top: 0;
+		top: 45px;
 		align-self: start;
 		max-height: 100vh;
 		overflow-y: auto;
@@ -423,11 +423,17 @@ body.has-sticky #main {
 	color: var(--ink);
 	flex: none;
 	text-decoration: none;
+	transition:
+		background-color var(--ease),
+		color var(--ease);
 }
 
 .iconbtn:hover {
 	background: var(--mist);
 	color: var(--ink) !important;
+	transition:
+		background-color var(--ease),
+		color var(--ease);
 }
 
 .hd-brand {
@@ -486,9 +492,6 @@ body.has-sticky #main {
 	white-space: nowrap;
 }
 
-.hd-add:hover {
-	border-color: var(--ink);
-}
 body.is-home .hd-search {
 	display: none;
 }
@@ -527,7 +530,7 @@ body.is-home .hd-search {
 /* ================= 4.4 Drawer and rail ================= */
 .drawer {
 	position: fixed;
-	z-index: 60;
+	z-index: 120;
 	top: 0;
 	bottom: 0;
 	left: 0;
@@ -644,7 +647,6 @@ body.is-home .hd-search {
 
 .dl-item:focus-visible {
 	box-shadow: inset 0 0 0 3px var(--orange);
-	border-radius: 0;
 }
 
 /* ================= Overlays: scrim, dialog, sheets ================= */
@@ -805,7 +807,7 @@ body.ov-open {
 	min-height: 44px;
 	padding: 0 12px;
 	border: 1px solid var(--line-strong);
-	border-radius: 999px;
+	border-radius: 15px;
 	font-size: 15px;
 	font-weight: 600;
 }
@@ -1122,7 +1124,7 @@ body.ov-open {
 	min-height: 44px;
 	padding: 0 16px;
 	border: 1px solid var(--line-strong);
-	border-radius: 999px;
+	border-radius: 15px;
 	background: var(--paper);
 	font-size: var(--fs-label);
 	font-weight: 600;
@@ -1343,7 +1345,7 @@ textarea:focus {
    Verified pill, 10px under it), so the pill never sits on an athlete. */
 .plate--card {
 	aspect-ratio: 4 / 3;
-	padding: 48px 0 10px;
+	padding: 24px;
 	--A: 0.8;
 	--Hm: 0.96;
 	--Wm: 0.84;
@@ -1425,7 +1427,6 @@ textarea:focus {
    (upper right) balance. */
 .plate--hero {
 	aspect-ratio: 4 / 3;
-	border-radius: 0;
 	--A: 0.62;
 	--Hm: 0.72;
 	--Wm: 0.86;
@@ -1573,7 +1574,7 @@ textarea:focus {
 	padding: 0 12px 0 9px;
 	background: #fff;
 	color: var(--ink);
-	border-radius: 999px;
+	border-radius: 15px;
 	font-size: 15px;
 	font-weight: 700;
 	line-height: 1;
@@ -1695,12 +1696,6 @@ textarea:focus {
 	transition:
 		border-color var(--ease),
 		box-shadow var(--ease);
-}
-
-.pcard:hover,
-.gcard:hover {
-	border-color: var(--line-strong);
-	box-shadow: var(--sh-1);
 }
 
 .pcard:hover .plate .fig,
@@ -2051,7 +2046,7 @@ textarea:focus {
 	align-items: center;
 	height: 32px;
 	padding: 0 12px;
-	border-radius: 999px;
+	border-radius: 15px;
 	background: var(--mist);
 	border: 1px solid var(--line);
 	font-size: 15px;
@@ -2253,7 +2248,6 @@ textarea:focus {
 @media (max-width: 767px) {
 	.letter {
 		margin-inline: calc(-1 * var(--gut));
-		border-radius: 0;
 		padding: 32px var(--gut);
 	}
 }
@@ -2398,7 +2392,7 @@ textarea:focus {
 .tm-key i {
 	width: 16px;
 	height: 16px;
-	border-radius: 4px;
+	border-radius: 10px;
 }
 
 .tm-key .t1 {
@@ -2964,6 +2958,11 @@ body.stk-away .stk {
 	color: var(--graphite);
 }
 
+.abox .tlink {
+	padding-bottom: 0;
+	min-height: unset;
+}
+
 .abox .btns {
 	margin-top: 12px;
 }
@@ -3212,22 +3211,28 @@ h3,
 }
 
 .hd-add {
-	background: #ff5c39;
+	background-color: #ff5c39;
 	border-color: #ff5c39;
 	color: #1a1a1a;
 	font-weight: 800;
+	transition:
+		background-color var(--ease),
+		border-color var(--ease),
+		color var(--ease);
 }
 
 .hd-add:hover {
-	border-color: #1a1a1a;
+	background-color: var(--orange-ink);
+	border-color: var(--orange-ink);
+	color: var(--paper);
+	transition:
+		background-color var(--ease),
+		border-color var(--ease),
+		color var(--ease);
 }
 
 .plate {
 	border-radius: 18px;
-}
-
-.plate--hero {
-	border-radius: 0;
 }
 
 .vpill {
@@ -3241,7 +3246,7 @@ h3,
 .letter {
 	background: #1a1a1a;
 	color: #fff;
-	border-radius: 28px;
+	border-radius: 15px;
 	padding: 32px 24px;
 }
 
@@ -3309,7 +3314,7 @@ h3,
 	background: #1a1a1a !important;
 	color: #fff;
 	border: 0 !important;
-	border-radius: 22px;
+	border-radius: 12px;
 }
 
 .trustbox .tb-title {
@@ -3397,7 +3402,7 @@ h3,
 }
 
 [data-look="sharp"] .hd-add {
-	border-radius: 4px;
+	border-radius: 10px;
 }
 
 [data-look="sharp"] .display,
@@ -3445,24 +3450,12 @@ h3,
 [data-look="sharp"] .plate,
 [data-look="sharp"] .v-home .st .plate,
 [data-look="sharp"] .v-home .st-allbox {
-	border-radius: 4px;
-}
-
-[data-look="sharp"] .plate--hero {
-	border-radius: 0;
-}
-
-[data-look="sharp"] .v-home .hb {
-	border-radius: 0;
+	border-radius: 10px;
 }
 
 [data-look="sharp"] .v-home .hb .wf-row .input,
 [data-look="sharp"] .v-home .hb .wf-row .btn {
-	border-radius: 4px;
-}
-
-[data-look="sharp"] .v-home .door {
-	border-radius: 0;
+	border-radius: 10px;
 }
 
 [data-look="sharp"] .v-home .door b {
@@ -3478,10 +3471,6 @@ h3,
 	letter-spacing: 0.01em;
 }
 
-[data-look="sharp"] .v-home .band {
-	border-radius: 0;
-}
-
 [data-look="sharp"] .v-home .band h2 {
 	font-size: 44px;
 	line-height: 0.9;
@@ -3490,7 +3479,7 @@ h3,
 [data-look="sharp"] .v-home .band .grow {
 	background: #121212;
 	color: #fff;
-	border-radius: 4px;
+	border-radius: 10px;
 }
 
 [data-look="sharp"] .v-home .band .grow .g-from,
@@ -3508,7 +3497,7 @@ h3,
 [data-look="sharp"] .chip,
 [data-look="sharp"] .input,
 [data-look="sharp"] .vpill {
-	border-radius: 4px;
+	border-radius: 10px;
 }
 
 [data-look="sharp"] .letter,

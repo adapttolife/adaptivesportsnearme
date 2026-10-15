@@ -400,10 +400,6 @@
 	background: var(--paper);
 }
 
-.v-help .rs-card .rs-plate {
-	border-radius: 0;
-}
-
 .v-help .rs-body {
 	padding: 20px;
 }

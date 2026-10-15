@@ -356,7 +356,7 @@
 	min-width: 32px;
 	height: 32px;
 	padding: 0 10px;
-	border-radius: 999px;
+	border-radius: 15px;
 	background: var(--sand);
 	font-size: 15px;
 	font-weight: 700;
@@ -456,7 +456,6 @@
 @media (max-width: 767px) {
 	.v-near .nr-none-form {
 		margin-inline: calc(-1 * var(--gut));
-		border-radius: 0;
 		padding: 20px var(--gut);
 	}
 }
