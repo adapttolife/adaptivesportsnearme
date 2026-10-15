@@ -1014,7 +1014,7 @@ export function drawerList(active = "") {
   const dark = currentTheme() === "dark";
   const display = `<div class="dl-sec"><h2 class="dl-h">Display</h2><button type="button" class="dl-item dl-theme" data-theme-toggle aria-pressed="${dark}"><span>Dark mode</span><span class="dl-theme-state">${dark ? "On" : "Off"}</span></button></div>`;
   return [
-    sec("Find", item("near", nearHref(), "map-pin", "Programs near you") + item("organizations", "/organizations", "building-2", "Organizations") + item("sports", "/sports", "layout-grid", "Sports") + item("states", "/states", "map", "States") + item("grants", "/grants", "hand-coins", "Grants") + item("events", "/events", "calendar", "Events")),
+    sec("Find", item("near", nearHref(), "map-pin", "Near you") + item("organizations", "/organizations", "building-2", "Organizations") + item("sports", "/sports", "layout-grid", "Sports") + item("states", "/states", "map", "States") + item("grants", "/grants", "hand-coins", "Grants") + item("events", "/events", "calendar", "Events")),
     sec("Help build this", item("add-program", "/add/program", "plus", "Add a program") + item("add-event", "/add/event", "calendar-plus", "Add an event") + item("help", "/help", "badge-check", "Claim your organization") + item("about", "/about", "shield-check", "How we check listings")),
     sec("More", item("letter", "/letter", "mail", "Get the letter") + item("resources", "/resources", "book-open", "Resources")),
     display,
@@ -1027,7 +1027,7 @@ export function footer() {
   const near = nearHref();
   const li = (label, href) => `<li><a href="${esc(href)}">${esc(label)}</a></li>`;
   return `<div class="ft"><div class="ft-brand"><img src="/app/logo.svg" alt="" width="40" height="40"><div class="ft-brand-text"><p class="ft-name">Adaptive Sports Near Me</p><p>A free directory of adaptive sports programs, grants and events. We list programs; we don't run them.</p></div></div>
-<div class="ft-cols"><div><h2 class="ft-h">Find</h2><ul>${near ? li("Programs near you", near) : `<li><button type="button" data-open="search">Programs near you</button></li>`}${li("Organizations", "/organizations")}${li("Sports", "/sports")}${li("States", "/states")}${li("Grants", "/grants")}${li("Events", "/events")}</ul></div>
+<div class="ft-cols"><div><h2 class="ft-h">Find</h2><ul>${near ? li("Near you", near) : `<li><button type="button" data-open="search">Near you</button></li>`}${li("Organizations", "/organizations")}${li("Sports", "/sports")}${li("States", "/states")}${li("Grants", "/grants")}${li("Events", "/events")}</ul></div>
 <div><h2 class="ft-h">Help build this</h2><ul>${li("Add a program", "/add/program")}${li("Add an event", "/add/event")}${li("Claim your organization", "/help")}${li("How we check listings", "/about")}</ul></div>
 <div><h2 class="ft-h">More</h2><ul>${li("Get the letter", "/letter")}${li("Resources", "/resources")}${li("Accessibility", "/about")}</ul></div></div>
 <div class="ft-fine"><p class="ft-fine">Adaptive Sports Near Me is a project of <a href="https://adapttolife.org">Adapt To Life</a>. Check with each organization before you go.</p><p class="ft-fine">© 2026 <a href="https://adapttolife.org">Adapt To Life</a></p></div></div>`;
@@ -1168,6 +1168,7 @@ export async function openSearch(preset = {}) {
     name: "search", cls: "ov--sheet ov--search", labelledby: "ss-h",
     html: `<form class="ss" data-sheet novalidate><div class="ss-top"><button type="button" class="iconbtn" data-close aria-label="Close">${icon("x", 24)}</button><h2 id="ss-h">Search</h2></div>
 <div class="ss-body"><h3 class="ss-q">Where?</h3><label class="ss-label" for="ss-where">City, state or ZIP</label><input id="ss-where" class="input" name="place" value="${esc(preset.place || "")}" autocomplete="off" enterkeyhint="search" data-suggest="ss-list" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="ss-list" aria-describedby="ss-err" data-autofocus><p class="ferr" id="ss-err" hidden></p><div class="dym" hidden></div><div class="suggest" id="ss-list" role="listbox" aria-label="Places" hidden></div>
+<h3 class="ss-q">Organization name <span class="ss-opt">(optional)</span></h3><label class="ss-label" for="ss-organization">Search organizations</label><input id="ss-organization" class="input" name="organization" autocomplete="off" enterkeyhint="search" placeholder="Organization name">
 <button type="button" class="btn btn--text ss-loc" data-locate>${icon("locate", 20)}<span>Use my location</span></button><p class="wf-status" role="status"></p>
 <h3 class="ss-q">Which sport? <span class="ss-opt">(optional)</span></h3><div class="ss-grid" role="group" aria-label="Sport">${grid()}</div>
 <button type="button" class="btn btn--line ss-more" data-showall aria-expanded="${st.all}"${st.all ? " hidden" : ""}>Show all sports</button></div>
@@ -1724,6 +1725,8 @@ async function submitWhere(form, input, sport) {
   if (list) { list.hidden = true; list.innerHTML = ""; input.setAttribute("aria-expanded", "false"); }
   const dym = $(".dym", form); if (dym) { dym.hidden = true; dym.innerHTML = ""; }
   const text = input.value.trim();
+  const organization = String(new FormData(form).get("organization") || "").trim();
+  if (organization) { closeOverlay({ restore: false, mode: "nav" }); nav("/organizations?q=" + encodeURIComponent(organization)); return; }
   if (!text && !sport) { say("Enter a city, state, or ZIP code."); return; }
   if (!text && sport) { closeOverlay({ restore: false, mode: "nav" }); nav("/sports/" + sport); return; }
   const w = await resolvePlace(text);

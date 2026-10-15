@@ -1,1 +1,2 @@
-.v-organizations #organization-search { width: min(100%, 34rem); margin: .75rem 0 1.25rem; }
+.v-organizations label[for="organization-search"] { display: block; margin-bottom: .5rem; }
+.v-organizations #organization-search { display: block; width: min(100%, 34rem); margin: 0 0 1.25rem; }

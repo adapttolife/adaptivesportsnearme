@@ -229,6 +229,10 @@ function programParent(row) {
 }
 export async function listActualPrograms(db, params = new URLSearchParams()) {
   const where = [PROGRAM_PUBLIC], binds = [];
+  const state = (params.get("state") || "").trim().toUpperCase();
+  if (/^[A-Z]{2}$/.test(state)) { where.push("p.state = ?"); binds.push(state); }
+  const city = (params.get("city") || "").trim().slice(0, 120);
+  if (city) { where.push("LOWER(p.city) = LOWER(?)"); binds.push(city); }
   const organizationId = (params.get("organization_id") || "").trim();
   if (organizationId) { where.push("p.organization_id = ?"); binds.push(organizationId); }
   const q = (params.get("q") || "").trim().slice(0, 120);

@@ -6,7 +6,7 @@ export async function render(ctx) {
   return {
     title: "Organizations · Adaptive Sports Near Me",
     description: "Browse adaptive sports organizations and the programs they run.",
-    html: `<section class="sec"><h1 tabindex="-1">Organizations</h1><p>Browse the organizations in our directory and the programs they run.</p><label for="organization-search">Search organizations</label><input id="organization-search" type="search" autocomplete="off" placeholder="Organization name"><div id="organization-results">${draw(D.items)}</div></section>`,
+    html: `<section class="sec"><h1 tabindex="-1">Organizations</h1><p>Browse the organizations in our directory and the programs they run.</p><label for="organization-search">Search organizations</label><input id="organization-search" type="search" autocomplete="off" placeholder="Organization name" value="${A.esc(ctx.query.q || "")}"><div id="organization-results">${draw(D.items)}</div></section>`,
   };
 }
 export function mount(root, ctx) {
@@ -17,5 +17,6 @@ export function mount(root, ctx) {
     results.innerHTML = draw(q ? items.filter((item) => item.name.toLowerCase().includes(q)) : items);
   };
   input.addEventListener("input", update);
+  update();
   return () => input.removeEventListener("input", update);
 }
