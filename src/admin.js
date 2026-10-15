@@ -8,6 +8,7 @@ import { checkPublicDescription, looksLikeNavigationLabel } from "./description-
 // Only these organization fields may be changed by an approved review item.
 const APPLY_WHITELIST = new Set([
   "email", "phone", "city", "state", "state_name", "zip", "website_url",
+  "claim_email",
   "status", "description", "cost_note", "ages", "equipment_provided",
   "sport", "sport_key", "sports_json", "lat", "lng", "geo_precision",
   "internal_notes",
@@ -81,6 +82,20 @@ export async function handleAdmin(request, env, url) {
       `${QUEUE_ITEM_SELECT} WHERE r.status = ? ORDER BY r.created_at DESC LIMIT 200`
     ).bind(status).all();
     return json({ ok: true, items: results.map(mapQueueRow) });
+  }
+
+  const claimEmail = path.match(/^\/organizations\/([0-9a-f-]{36})\/claim-email$/i);
+  if (claimEmail && request.method === "PATCH") {
+    const body = await request.json().catch(() => ({}));
+    const email = str(body.claim_email, 320).toLowerCase();
+    if (email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+      return json({ ok: false, error: "claim_email must be a valid email or blank" }, 422);
+    }
+    const result = await db.prepare(
+      `UPDATE organizations SET claim_email = ?, updated_at = ? WHERE id = ?`
+    ).bind(email || null, new Date().toISOString(), claimEmail[1]).run();
+    if (!Number(result?.meta?.changes ?? 0)) return json({ ok: false, error: "No such organization" }, 404);
+    return json({ ok: true, organization_id: claimEmail[1], claim_email: email || null });
   }
 
   const decide = path.match(/^\/queue\/(\d+)$/);

@@ -8,6 +8,13 @@ export async function cfSend(env, message) {
   return sendMail(env, message);
 }
 
+export async function sendOrganizationLoginLink(env, email, link) {
+  const subject = "Your Adaptive Sports Near Me sign-in link";
+  const text = `Use this link to manage your program listing:\n\n${link}\n\nThis link expires in 15 minutes and can be used once. If you did not request it, you can ignore this email.`;
+  const html = shell(`<p>Use this link to manage your program listing:</p><p><a href="${esc(link)}">Manage your listing</a></p><p>This link expires in 15 minutes and can be used once. If you did not request it, you can ignore this email.</p>`);
+  return cfSend(env, { from: HOUSE_FROM, to: email, replyTo: HOUSE_REPLY, subject, text, html });
+}
+
 // Called only after the form's primary save succeeds. One send attempt, with
 // no automatic retry: a lost provider response may still mean mail was sent.
 export async function queueFormConfirmation(env, ctx, { kind, email, program }) {
