@@ -1067,7 +1067,7 @@ let OV = null; // { name, el, release, onClose, pushed }
    back off; following a link from inside it reuses the entry, so Back from the next
    page lands on this page in one press. Sheets that live in the address (?map=1,
    ?share=1, ?open=) keep their own handling. */
-let SHEET_ENTRY = false, SKIP_POP = false;
+let SHEET_ENTRY = false, SKIP_POP = false, CONFIRMED = false;
 /** Give the open sheet its own Back step (once per entry; a sheet opened from a sheet shares it). */
 export function pushSheet() {
   if (!OV) return;
@@ -1426,6 +1426,11 @@ async function render({ force = false } = {}) {
     sessionStorage.setItem("asnm.navs", String(n));
   }
   REPLACING = false;
+  if (CONFIRMED) {
+    CONFIRMED = false;
+    main.insertAdjacentHTML("afterbegin", `<div class="done confirm-note" role="status" tabindex="-1"><p class="done-title">${icon("check", 22)}<span>You're confirmed. The letter will come to your inbox when there's something worth sending.</span></p></div>`);
+    setTimeout(() => announce("You're confirmed for the letter."), 300);
+  }
   if (FIRST) {
     const later = window.requestIdleCallback || ((f) => setTimeout(f, 1200));
     later(() => loadScript(USERWAY_SRC, { "data-account": "sFogOSJsXe" }), { timeout: 4000 });
@@ -1589,14 +1594,14 @@ function validate(form) {
   return !first;
 }
 /* ---------- sending forms ---------- */
-function formDone(form) {
+function formDone(form, message) {
   const back = form.getAttribute("data-done-href");
   const label = form.getAttribute("data-done-label");
   const panel = document.createElement("div");
   panel.className = "done";
   panel.setAttribute("role", "status");
   panel.setAttribute("tabindex", "-1");
-  panel.innerHTML = `<p class="done-title">${icon("check", 22)}<span>${esc(form.getAttribute("data-done") || "Thanks. We got it.")}</span></p>${back ? `<div class="btns">${btn(label || "Back to the directory", back, "line")}</div>` : ""}`;
+  panel.innerHTML = `<p class="done-title">${icon("check", 22)}<span>${esc(message || form.getAttribute("data-done") || "Thanks. We got it.")}</span></p>${back ? `<div class="btns">${btn(label || "Back to the directory", back, "line")}</div>` : ""}`;
   form.replaceWith(panel);
   panel.focus({ preventScroll: false });
 }
@@ -1668,7 +1673,10 @@ async function sendForm(form) {
     const r = await fetch(form.getAttribute("data-send"), { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
     const out = await r.json().catch(() => ({}));
     if (!r.ok || !out.ok) { const err = new Error(out.error || ""); err.fromServer = true; throw err; }
-    formDone(form);
+    // The letter: a new signup confirms its email first (beehiiv sends the confirmation).
+    const letter = form.matches("[data-letter]");
+    formDone(form, letter && out.confirm ? "Almost done. Check your inbox for an email from Adaptive Sports Near Me and tap Confirm."
+      : letter && out.existing ? "You're already on the list. Thanks for being here." : null);
   } catch (err) {
     status.classList.add("is-err");
     const msg = err && err.fromServer && err.message ? err.message : "We couldn't send that. Check your connection and try again.";
@@ -1877,6 +1885,12 @@ function boot() {
     if (e.key === "Escape" && OV) { e.preventDefault(); closeOverlay(); }
   });
 
+  // Back from the letter's confirmation email (beehiiv's Opt-in Redirect URL: /?confirmed=1).
+  if (new URLSearchParams(location.search).get("confirmed") === "1") {
+    const q = new URLSearchParams(location.search); q.delete("confirmed");
+    history.replaceState(history.state, "", location.pathname + (q.toString() ? "?" + q : "") + location.hash);
+    CONFIRMED = true;
+  }
   window.addEventListener("popstate", () => {
     if (SKIP_POP) { SKIP_POP = false; return; }          // our own step back after a sheet closed
     if (SHEET_ENTRY) {

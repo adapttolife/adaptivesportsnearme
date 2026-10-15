@@ -241,3 +241,12 @@ test("everything that sticks to the top of the page sits below the sticky header
   assert.ok(checked >= 6, `checked only ${checked} sticky rules`);
   assert.match(read("public/app/app.css"), /scroll-padding-top:\s*calc\(var\(--top-h\)/, "jumps land below the header");
 });
+
+// The letter's thank-you says what happens next: a new signup confirms its email first.
+test("the letter's thank-you asks a new subscriber to confirm, and the confirmation lands on a note", () => {
+  const send = between(APP, "async function sendForm(", "\n}\n");
+  assert.match(send, /out\.confirm \? "Almost done\. Check your inbox for an email from Adaptive Sports Near Me and tap Confirm\."/);
+  assert.match(send, /out\.existing \? "You're already on the list/);
+  assert.match(APP, /get\("confirmed"\) === "1"/);
+  assert.match(APP, /You're confirmed\. The letter will come to your inbox/);
+});
