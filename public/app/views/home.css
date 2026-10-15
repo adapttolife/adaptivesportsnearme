@@ -201,6 +201,11 @@
    band is 46% of the hero's width, never more than 22% of the screen height, and
    every drawing stands on its bottom line, on the right edge (Alec's pick); ?band=left for the left. */
 @media (max-width: 767px) {
+	/* The hero is a flex row (for its 50vh height); on phones the art joins the
+	   flow, so stack it, or the headline and search share half the width. */
+	.v-home .hb {
+		flex-direction: column;
+	}
 	.v-home .hb-art {
 		position: relative;
 		right: auto;
