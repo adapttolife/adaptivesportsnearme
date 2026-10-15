@@ -116,7 +116,7 @@
 	.v-forms .fm-side {
 		margin-top: 0;
 		position: sticky;
-		top: 24px;
+		top: calc(var(--top-h, 0px) + 24px);
 	}
 }
 

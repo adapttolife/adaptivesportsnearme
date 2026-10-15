@@ -191,6 +191,13 @@ export async function render(ctx) {
 }
 
 export function mount(root, ctx) {
+  // The results toolbar sticks below the header: jumps land below both.
+  const tools = root.querySelector(".nr-tools"), rootStyle = document.documentElement.style;
+  const setStick = () => rootStyle.setProperty("--stick-h", (tools ? tools.offsetHeight : 0) + "px");
+  setStick();
+  const ro = window.ResizeObserver && tools ? new ResizeObserver(setStick) : null;
+  if (ro) ro.observe(tools);
+  const unstick = () => { if (ro) ro.disconnect(); rootStyle.removeProperty("--stick-h"); };
   const qs = ctx.query.s || "";
   // Announce the new count after a filter change on the same place (spec 6.2 side effects).
   if (LAST && LAST.path === ctx.path && LAST.qs !== qs) {
@@ -206,7 +213,7 @@ export function mount(root, ctx) {
     if (e.target.closest("[data-nr-map]")) window.__asnmMapFrom = A.here();
   };
   root.addEventListener("click", onClick);
-  return () => root.removeEventListener("click", onClick);
+  return () => { root.removeEventListener("click", onClick); unstick(); };
 }
 
 function countTotal(root) {

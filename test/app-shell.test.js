@@ -260,4 +260,24 @@ test("the privacy policy's promises hold in the code", () => {
   assert.match(between(APP, "export function letterBlock(", "\n}\n"), /href="\/privacy"/);
   assert.match(read("public/app/views/forms.js"), /href="\/privacy"/);
   assert.match(APP, /\["\/privacy", "help"\], \["\/terms", "help"\]/);
+
+// The header sticks to the top (#top). Anything else that sticks to the top of the
+// page must sit below it (top uses --top-h), or it slides under the header when you
+// scroll. Sticky parts inside a sheet or the map dialog have their own scroll box.
+test("everything that sticks to the top of the page sits below the sticky header", () => {
+  const dir = new URL("../public/app/", import.meta.url);
+  const css = readdirSync(dir, { recursive: true }).filter((f) => f.endsWith(".css")).map((f) => [f, read(`public/app/${f}`)]);
+  const OWN_SCROLL = /^(#top|\.dr-head|\.v-map \.mp-all)$/;
+  let checked = 0;
+  for (const [file, text] of css) {
+    for (const m of text.replace(/\/\*[\s\S]*?\*\//g, "").matchAll(/([^{}]+)\{([^{}]*position:\s*sticky[^{}]*)\}/g)) {
+      const selector = m[1].trim().split("\n").pop().trim(), body = m[2];
+      const top = (body.match(/(?:^|[;\s])top:\s*([^;]+)/) || [])[1];
+      if (!top || OWN_SCROLL.test(selector)) continue;
+      checked++;
+      assert.match(top, /var\(--top-h/, `${file}: ${selector} sticks at top: ${top.trim()}, under the sticky header`);
+    }
+  }
+  assert.ok(checked >= 6, `checked only ${checked} sticky rules`);
+  assert.match(read("public/app/app.css"), /scroll-padding-top:\s*calc\(var\(--top-h\)/, "jumps land below the header");
 });
