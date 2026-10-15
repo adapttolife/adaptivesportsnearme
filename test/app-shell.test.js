@@ -278,10 +278,19 @@ test("phones use the whole screen; the 90vw cap starts at 768px", () => {
 });
 
 // The letter's thank-you says what happens next: a new signup confirms its email first.
-test("the letter's thank-you asks a new subscriber to confirm, and the confirmation lands on a note", () => {
+test("the letter's thank-you asks a new subscriber to confirm, and the confirmation lands on its own page", () => {
   const send = between(APP, "async function sendForm(", "\n}\n");
   assert.match(send, /out\.confirm \? "Almost done\. Check your inbox for an email from Adaptive Sports Near Me and tap Confirm\."/);
   assert.match(send, /out\.existing \? "You're already on the list/);
-  assert.match(APP, /get\("confirmed"\) === "1"/);
-  assert.match(APP, /You're confirmed\. The letter will come to your inbox/);
+  // beehiiv's Opt-in Redirect URL is /?confirmed=1: before the first draw it becomes /letter/confirmed.
+  assert.match(APP, /location\.pathname === "\/" && new URLSearchParams\(location\.search\)\.get\("confirmed"\) === "1"/);
+  assert.match(APP, /history\.replaceState\(history\.state, "", "\/letter\/confirmed"/);
+  assert.match(APP, /\["\/letter\/confirmed", "letter-confirmed"\]/);
+  assert.doesNotMatch(APP, /confirm-note/, "no note on top of the home page any more");
+  const view = read("public/app/views/letter-confirmed.js");
+  assert.match(view, /<h1 class="display" id="lc-h" tabindex="-1">You're on the list\.<\/h1>/);
+  assert.match(view, /Email confirmed/);
+  assert.match(view, /FROM = "news@mail\.adaptivesportsnearme\.com"/);
+  assert.match(view, /A\.whereForm\(/, "the next step is the directory");
+  assert.match(read("public/app/views/letter-confirmed.css"), /body\[data-view="letter-confirmed"\] \.beta \{\s*display: none;/);
 });

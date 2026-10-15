@@ -98,6 +98,7 @@ const ROUTES = [
   [/^\/about\/?$/, () => ({ title: "How we check listings", description: "What Verified means, what Not verified yet means, and how we keep every listing up to date." })],
   [/^\/resources\/?$/, () => ({ title: "Resources", description: "Directories and resources for adaptive athletes, veterans and families." })],
   [/^\/resources\/veteran-owned-businesses\/?$/, () => ({ title: "Support Veteran-Owned Businesses", description: "Find veteran-owned businesses in your state using these directories." })],
+  [/^\/letter\/confirmed\/?$/, () => ({ title: "You're on the list", description: "New programs, grants and events from Adaptive Sports Near Me, when there's something worth sending.", noindex: true })],
   [/^\/letter\/?$/, () => ({ title: "Get the letter", description: "New programs, grants and events, when there is something worth sending." })],
 ];
 
@@ -137,7 +138,7 @@ const VIEWS = [
   [/^\/states$/, "states"], [/^\/states\/[^/]+$/, "state"], [/^\/organizations$/, "organizations"], [/^\/organizations\/[^/]+$/, "program"], [/^\/programs$/, "programs"], [/^\/programs\/[^/]+$/, "program-detail"],
   [/^\/grants$/, "grants"], [/^\/grants\/[^/]+$/, "grant"], [/^\/events$/, "events"],
   [/^\/(add\/program|add\/event|update\/[^/]+)$/, "forms"], [/^\/resources\/veteran-owned-businesses$/, "vob"],
-  [/^\/(help|about|resources|letter)$/, "help"],
+  [/^\/letter\/confirmed$/, "letter-confirmed"], [/^\/(help|about|resources|letter)$/, "help"],
 ];
 export function preloadHints(pathname) {
   const path = pathname.length > 1 ? pathname.replace(/\/+$/, "") : "/";
