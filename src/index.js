@@ -257,7 +257,8 @@ async function handleSubscribe(request, env, ctx) {
     else await result.welcomeJob;
   }
 
-  return json({ ok: true });
+  // A new signup has to confirm its email first; someone already subscribed is told so.
+  return json({ ok: true, ...(result.existing ? { existing: true } : { confirm: true }) });
 }
 
 // Maps our two optional signup answers onto the publication's custom fields.
