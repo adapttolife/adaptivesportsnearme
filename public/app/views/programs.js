@@ -15,7 +15,7 @@ export async function render(ctx) {
   return {
     title: "Programs · Adaptive Sports Near Me",
     description: "Browse adaptive sports programs across all organizations.",
-    html: `<section class="sec"><h1 tabindex="-1">Programs</h1><p>Browse programs across all organizations.</p><label for="program-search">Search programs</label><input id="program-search" type="search" autocomplete="off" placeholder="Program name"><div id="program-results">${rows(items)}</div></section>`,
+    html: `<section class="sec"><h1 tabindex="-1">Programs</h1><p>Browse the ${(body.total ?? items.length).toLocaleString()} programs across all organizations.</p><label for="program-search">Search programs</label><input id="program-search" type="search" autocomplete="off" placeholder="Program name"><div id="program-results">${rows(items)}</div></section>`,
   };
 }
 

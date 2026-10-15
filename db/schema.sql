@@ -93,7 +93,7 @@ CREATE INDEX IF NOT EXISTS programs_status_idx ON programs (status, is_public);
 CREATE INDEX IF NOT EXISTS programs_sport_idx ON programs (sport_key);
 
 CREATE TABLE IF NOT EXISTS organization_data_sources (
-  organization_id      TEXT NOT NULL REFERENCES organizations(id),
+  organization_id      TEXT,
   source_id            TEXT NOT NULL REFERENCES data_sources(source_id),
   source_record_url    TEXT,
   data_quality_rating  TEXT,
@@ -116,7 +116,7 @@ CREATE INDEX IF NOT EXISTS link_checks_org_idx ON link_checks (organization_id, 
 
 CREATE TABLE IF NOT EXISTS review_queue (
   item_id              INTEGER PRIMARY KEY AUTOINCREMENT,
-  organization_id      TEXT REFERENCES organizations(id),
+  organization_id      TEXT,
   lane                 TEXT NOT NULL,            -- 'validate' | 'enrich' | 'submission'
   proposed_change      TEXT NOT NULL,            -- JSON: {field: {from, to}, ...}
   evidence             TEXT,                     -- JSON: source URL, excerpt, etc.

@@ -86,6 +86,10 @@
 	content: url(/app/logo-cream.svg);
 }
 
+:root[data-theme="dark"] .hp-hero h1 {
+	color: #1a1a1a;
+}
+
 @media (min-width: 768px) {
 	:root {
 		--fs-display: 56px;
@@ -677,7 +681,9 @@ body.is-home .hd-search {
 :root[data-theme="dark"] .vpill,
 :root[data-theme="dark"] .pstamp,
 :root[data-theme="dark"] .v-program .pg-hb,
+:root[data-theme="dark"] .v-program-detail .pg-hb,
 :root[data-theme="dark"] .v-program .pg-stamp,
+:root[data-theme="dark"] .v-program-detail .pg-stamp,
 :root[data-theme="dark"] .v-program .pg-vtag,
 :root[data-theme="dark"] .pg-poster .pp-disc,
 :root[data-theme="dark"] .v-map .mp-k--you,
@@ -1518,7 +1524,7 @@ textarea:focus {
 
 @media (min-width: 768px) {
 	.plate--hero {
-		aspect-ratio: 16 / 9;
+		aspect-ratio: 5 / 2;
 		max-height: 440px;
 		border-radius: var(--r-xl);
 		--pb: 48px;
@@ -3178,7 +3184,7 @@ body.has-sticky .ft {
 @media (min-width: 600px) {
 	.ft-cols a,
 	.ft-cols button {
-		min-height: 44px;
+		min-height: 35px;
 	}
 }
 
