@@ -25,7 +25,7 @@
 	.v-program .pg-book {
 		display: block;
 		position: sticky;
-		top: 24px;
+		top: calc(var(--top-h, 0px) + 24px);
 		margin-top: 24px;
 	}
 	.v-program .pg-acts {

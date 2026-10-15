@@ -291,9 +291,9 @@ body.has-sticky #main {
 		grid-column: 1;
 		grid-row: 1 / span 2;
 		position: sticky;
-		top: 45px;
+		top: var(--top-h, 0px);
 		align-self: start;
-		max-height: 100vh;
+		max-height: calc(100vh - var(--top-h, 0px));
 		overflow-y: auto;
 		overscroll-behavior: contain;
 		border-right: 1px solid var(--line);
@@ -335,10 +335,10 @@ body.has-sticky #main {
 		grid-column: 3;
 		grid-row: 1;
 		position: sticky;
-		top: 0;
+		top: var(--top-h, 0px);
 		align-self: start;
 		padding: 24px 24px 32px 0;
-		max-height: 100vh;
+		max-height: calc(100vh - var(--top-h, 0px));
 		overflow-y: auto;
 	}
 }
@@ -396,6 +396,14 @@ body.has-sticky #main {
 }
 
 /* ================= 4.2 Header ================= */
+/* The header sticks to the top. --top-h is its height (set by app.js as it changes),
+   so everything else that sticks sits below it, and jumps and scroll-to-element land
+   below it too (--stick-h adds a page's own sticky bar, like the results toolbar). */
+:root {
+	--top-h: 57px;
+	scroll-padding-top: calc(var(--top-h) + var(--stick-h, 0px) + 8px);
+}
+
 #top {
 	background: var(--paper);
 	border-bottom: 1px solid var(--line);
@@ -1971,7 +1979,7 @@ textarea:focus {
 		align-items: flex-start;
 		padding: 16px 0;
 		position: sticky;
-		top: 0;
+		top: var(--top-h, 0px);
 		align-self: start;
 		background: var(--paper);
 	}

@@ -81,7 +81,7 @@
 	.v-grant .bbox {
 		display: block;
 		position: sticky;
-		top: 24px;
+		top: calc(var(--top-h, 0px) + 24px);
 		margin-top: 24px;
 		border: 1px solid var(--line);
 		border-radius: var(--r-xl);
