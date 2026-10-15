@@ -224,7 +224,7 @@
 
 .v-program .trustbox.is-v {
 	border-color: color-mix(in srgb, var(--teal) 28%, var(--line));
-	background: color-mix(in srgb, var(--teal-soft) 45%, #fff);
+	background: color-mix(in srgb, var(--teal-soft) 45%, var(--paper));
 }
 
 /* ================= 4. Action row (phones and tablets) ================= */

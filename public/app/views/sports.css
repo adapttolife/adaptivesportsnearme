@@ -89,7 +89,7 @@
 
 @media (hover: hover) {
 	.v-sports .sx:hover {
-		background: color-mix(in srgb, var(--t) 50%, #fff);
+		background: color-mix(in srgb, var(--t) 50%, var(--paper));
 	}
 	.v-sports .sx:hover .av {
 		scale: 1.06;

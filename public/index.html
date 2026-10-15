@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="color-scheme" content="light">
+<meta name="color-scheme" content="light dark">
 <title>Adaptive Sports Near Me: find adaptive sports programs near you</title>
 <meta name="description" content="Find adaptive sports programs, grants and events near you, each with the date we last checked it. Free, no account needed.">
 <!--asnm:meta-->
@@ -23,6 +23,14 @@
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="manifest" href="/manifest.json">
 <meta name="theme-color" content="#121212">
+<script>
+try {
+  const saved = JSON.parse(localStorage.getItem("asnm.theme") || "null");
+  document.documentElement.dataset.theme = saved === "light" || saved === "dark" ? saved : matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+} catch (_) {
+  document.documentElement.dataset.theme = matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+}
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sofia+Sans:wght@400..900&family=Sofia+Sans+Extra+Condensed:wght@700..900&display=swap" rel="stylesheet">
 <!-- Every page draws from the listings, so their download starts now, with the page's

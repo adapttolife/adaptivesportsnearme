@@ -52,6 +52,34 @@ const store = {
   get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (_) { return d; } },
   set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (_) {} },
 };
+const systemTheme = () => matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+const savedTheme = () => {
+  const value = store.get("asnm.theme", null);
+  return value === "light" || value === "dark" ? value : null;
+};
+const currentTheme = () => {
+  const value = document.documentElement.dataset.theme;
+  return value === "light" || value === "dark" ? value : null;
+};
+function syncThemeControls() {
+  const dark = currentTheme() === "dark";
+  for (const control of $$('[data-theme-toggle]')) {
+    control.setAttribute("aria-pressed", String(dark));
+    const state = $(".dl-theme-state", control);
+    if (state) state.textContent = dark ? "On" : "Off";
+  }
+}
+function setTheme(theme, save = true) {
+  const value = theme === "dark" ? "dark" : "light";
+  document.documentElement.dataset.theme = value;
+  if (save) store.set("asnm.theme", value);
+  const meta = $('meta[name="theme-color"]');
+  if (meta) meta.setAttribute("content", value === "dark" ? "#171716" : "#f3f3f3");
+  syncThemeControls();
+}
+setTheme(savedTheme() || currentTheme() || systemTheme(), false);
+const themeMedia = matchMedia("(prefers-color-scheme: dark)");
+themeMedia.addEventListener("change", () => { if (!savedTheme()) setTheme(systemTheme(), false); });
 /** remember("place", "Tampa, FL") / remember("recent", "tennis") */
 export function remember(kind, value) {
   if (kind === "place") { if (value) store.set("asnm.place", String(value)); }
@@ -982,10 +1010,13 @@ export function drawerList(active = "") {
   // Find, Help build this and More come first, so a phone reaches Resources without
   // scrolling past every sport; the sports list stops at 8 and links to all of them.
   const sports = D ? topGroups(8) : [];
+  const dark = currentTheme() === "dark";
+  const display = `<div class="dl-sec"><h2 class="dl-h">Display</h2><button type="button" class="dl-item dl-theme" data-theme-toggle aria-pressed="${dark}"><span>Dark mode</span><span class="dl-theme-state">${dark ? "On" : "Off"}</span></button></div>`;
   return [
     sec("Find", item("near", nearHref(), "map-pin", "Programs near you") + item("sports", "/sports", "layout-grid", "Sports") + item("states", "/states", "map", "States") + item("grants", "/grants", "hand-coins", "Grants") + item("events", "/events", "calendar", "Events")),
     sec("Help build this", item("add-program", "/add/program", "plus", "Add a program") + item("add-event", "/add/event", "calendar-plus", "Add an event") + item("help", "/help", "badge-check", "Claim your program") + item("about", "/about", "shield-check", "How we check listings")),
     sec("More", item("letter", "/letter", "mail", "Get the letter") + item("resources", "/resources", "book-open", "Resources")),
+    display,
     recent.length ? sec("Recently viewed", recent.map((k) => item("sport:" + k, "/sports/" + k, avatar(k, 40), sportName(k))).join("")) : "",
     sports.length ? sec("Sports", sports.map((g) => item("sport:" + g.key, "/sports/" + g.key, avatar(g.key, 40), sportName(g.key))).join("") + item("sports-all", "/sports", "ellipsis", "All sports")) : "",
   ].join("");
@@ -1743,6 +1774,7 @@ function boot() {
     if (t.closest("[data-skip]")) { e.preventDefault(); $("#main").focus(); return; }
     if (t.closest("[data-dismiss-beta]")) { store.set("asnm.beta", 0); refreshChrome(true); return; }
     if (t.closest("[data-retry]")) { e.preventDefault(); render({ force: true }); return; }
+    if (t.closest("[data-theme-toggle]")) { e.preventDefault(); setTheme(currentTheme() === "dark" ? "light" : "dark"); return; }
     const op = t.closest("[data-open]");
     if (op) {
       e.preventDefault();
