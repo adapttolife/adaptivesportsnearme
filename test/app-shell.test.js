@@ -261,6 +261,18 @@ test("on phones the home hero stacks the drawing above the headline and search",
   }
 });
 
+// The page's width cap (--max) gives desktop side room. On phones a vw cap stacked a
+// 20px margin on the page padding and pulled the full-bleed heroes in from the edges.
+test("phones use the whole screen; the 90vw cap starts at 768px", () => {
+  for (const file of ["public/app/app.css", "public/styles.css"]) {
+    const css = read(file).replace(/\/\*[\s\S]*?\*\//g, "");
+    const base = (css.match(/(?:^|\})\s*:root\s*\{([^{}]*)\}/) || [])[1] || "";
+    assert.match(base, /--max:\s*100%/, `${file}: phones get the full width`);
+    const wide = [...css.matchAll(/@media \(min-width: 768px\) \{\s*:root\s*\{([^{}]*)\}/g)].map((m) => m[1]).join(" ");
+    assert.match(wide, /--max:\s*90vw/, `${file}: the 90vw cap applies from 768px`);
+  }
+});
+
 // The letter's thank-you says what happens next: a new signup confirms its email first.
 test("the letter's thank-you asks a new subscriber to confirm, and the confirmation lands on a note", () => {
   const send = between(APP, "async function sendForm(", "\n}\n");

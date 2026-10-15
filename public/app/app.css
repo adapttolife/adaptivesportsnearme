@@ -55,7 +55,7 @@
 	--sec: 48px;
 	--rail-w: 272px;
 	--aside-w: 300px;
-	--max: 90vw;
+	--max: 100%; /* phones use the whole screen; 90vw from 768px (below) */
 }
 
 :root[data-theme="dark"] {
@@ -88,6 +88,7 @@
 
 @media (min-width: 768px) {
 	:root {
+		--max: 90vw;
 		--fs-display: 56px;
 		--fs-h1: 40px;
 		--fs-h2: 28px;
