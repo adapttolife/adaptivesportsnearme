@@ -1461,12 +1461,24 @@ async function render({ force = false } = {}) {
     sessionStorage.setItem("asnm.navs", String(n));
   }
   REPLACING = false;
+  sportMotion([main, aside, sticky, $("#rail")], FIRST);
   if (FIRST) {
     const later = window.requestIdleCallback || ((f) => setTimeout(f, 1200));
     later(() => loadScript(USERWAY_SRC, { "data-account": "sFogOSJsXe" }), { timeout: 4000 });
   }
   FIRST = false;
   await handleOverlays(ctx);
+}
+
+/* Alec's sport drawings in motion (public/app/motion.js): each figure plays its sport's
+   move. The player loads after the first page draws, like the widgets, and never for
+   anyone who asks for reduced motion. */
+let MOTION_PLAYER = null;
+function sportMotion(roots, first) {
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const go = () => (MOTION_PLAYER = MOTION_PLAYER || import("./motion.js")).then((m) => m.attach(roots)).catch(() => {});
+  if (first) (window.requestIdleCallback || ((f) => setTimeout(f, 800)))(go, { timeout: 2500 });
+  else go();
 }
 
 /* The page's own place and sport, for the header search. */
