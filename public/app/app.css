@@ -1567,6 +1567,13 @@ textarea:focus {
 	bottom: calc(var(--pb) - (1 - var(--h)) * var(--B) / 2);
 }
 
+@media (max-width: 768px) {
+	.plate--hero:not(.is-trio) > .fig {
+		right: unset;
+		bottom: unset;
+	}
+}
+
 .plate--hero.is-trio .trio {
 	bottom: var(--pb);
 }
@@ -3595,6 +3602,12 @@ h3,
 [data-look="sharp"] .v-home .hb .wf-row .input,
 [data-look="sharp"] .v-home .hb .wf-row .btn {
 	border-radius: 10px;
+}
+
+@media (max-width: 768px) {
+	.plate--hero {
+		border-radius: 0;
+	}
 }
 
 [data-look="sharp"] .v-home .door b {
