@@ -10,7 +10,7 @@
 	--graphite: #3a3a37;
 	--muted: #5f5d59;
 	--paper: #f3f3f3;
-	--mist: #f7f7f5;
+	--mist: #dcdcdc;
 	--sand: #f0efec;
 	--line: #e4e2dd;
 	--line-strong: #cfccc5;
@@ -64,7 +64,7 @@
 	--graphite: #d2d0ca;
 	--muted: #b7b4ad;
 	--paper: #171716;
-	--mist: #22211f;
+	--mist: #2f2e2c;
 	--sand: #2c2a26;
 	--line: #47443e;
 	--line-strong: #6b665e;
@@ -88,6 +88,48 @@
 
 :root[data-theme="dark"] .hp-hero h1 {
 	color: #1a1a1a;
+}
+
+:root[data-theme="dark"] #beta,
+:root[data-theme="dark"] .letter,
+:root[data-theme="dark"] .trustbox,
+:root[data-theme="dark"] .v-home .st-allbox,
+:root[data-theme="dark"] .v-home .door--ink,
+:root[data-theme="dark"] .v-grants .seg a[aria-current="page"],
+:root[data-theme="dark"] .v-sport .vet-res,
+:root[data-theme="dark"] .v-vob .vb-hero,
+:root[data-theme="dark"] .v-letter-confirmed .lc-tag {
+	background: #323232 !important;
+	color: #f3f3f3;
+}
+
+:root[data-theme="dark"] #beta .beta,
+:root[data-theme="dark"] #beta .iconbtn,
+:root[data-theme="dark"] .letter h2,
+:root[data-theme="dark"] .letter label,
+:root[data-theme="dark"] .trustbox .tb-title,
+:root[data-theme="dark"] .trustbox.is-u .tb-title .ic,
+:root[data-theme="dark"] .v-sport .vet-res span,
+:root[data-theme="dark"] .v-vob .vb-hero h1,
+:root[data-theme="dark"] .v-vob .vb-kicker {
+	color: #f3f3f3;
+}
+
+:root[data-theme="dark"] .letter > p,
+:root[data-theme="dark"] .trustbox .tb-body {
+	color: #e7e3da;
+}
+
+:root[data-theme="dark"] .v-near .nr-k--dot {
+	background: #323232;
+}
+
+:root[data-theme="dark"] [style*="--t:#1A1A1A"] {
+	--t: #323232 !important;
+}
+
+:root[data-theme="dark"] .v-home .hb.is-ink {
+	--hb: #323232 !important;
 }
 
 @media (min-width: 768px) {
@@ -734,8 +776,8 @@ body.ov-open {
 .ov-scrim {
 	position: fixed;
 	inset: 0;
-	z-index: 70;
-	background: rgba(26, 26, 26, 0.42);
+	z-index: 110;
+	background: rgba(26, 26, 26, 0.7);
 }
 
 .ov {
@@ -857,13 +899,19 @@ body.ov-open {
 	hyphens: manual;
 }
 
+.ss-tile .av {
+	transition: opacity var(--ease);
+}
+
 .ss-tile:hover .av {
-	background: color-mix(in srgb, var(--t) 50%, var(--paper));
+	opacity: 0.7;
+	transition: opacity var(--ease);
 }
 
 .ss-tile[aria-pressed="true"] {
-	background: var(--orange-soft);
-	box-shadow: inset 0 0 0 1.5px var(--orange);
+	background: var(--ink);
+	box-shadow: inset 0 0 0 2px #1a1a1a;
+	color: var(--on-ink);
 }
 
 .ss-tile[aria-pressed="true"] span:last-child {
@@ -3164,17 +3212,22 @@ body.has-sticky .ft {
 	}
 }
 
+.ft ul {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .ft-h {
-	font-size: 17px;
+	font-size: 18px;
 	font-weight: 700;
-	margin-bottom: 4px;
+	margin-bottom: 6px;
 }
 
 .ft-cols a,
 .ft-cols button {
 	display: flex;
 	align-items: center;
-	min-height: 48px;
+	min-height: 30px;
 	font-size: 17px;
 	font-weight: 500;
 	color: var(--ink);
@@ -3186,13 +3239,6 @@ body.has-sticky .ft {
 .ft-cols button:hover {
 	text-decoration: underline;
 	text-underline-offset: 3px;
-}
-
-@media (min-width: 600px) {
-	.ft-cols a,
-	.ft-cols button {
-		min-height: 35px;
-	}
 }
 
 .ft-fine:has(.ft-fine) {
@@ -3500,17 +3546,18 @@ h3,
 }
 
 [data-look="sharp"] .v-home .hb h1 {
-	font-size: clamp(60px, 17cqw, 120px);
+	/* font-size: clamp(60px, 17cqw, 120px); */
 	line-height: 0.86;
 	max-width: calc(110% - max(460px, 40cqw));
 	margin-bottom: auto;
+	height: 100%;
 }
 
-@media (min-width: 768px) {
+/* @media (min-width: 768px) {
 	[data-look="sharp"] .v-home .hb h1 {
 		font-size: clamp(64px, 10.5cqw, 128px);
 	}
-}
+} */
 
 /* On phones the drawing sits above the headline, so the headline takes the full
    width. The desktop clamp above goes negative under ~460px of hero, which left
@@ -3521,10 +3568,10 @@ h3,
 	}
 }
 
-[data-look="sharp"] h1 {
+/* [data-look="sharp"] h1 {
 	line-height: 0.92;
 	font-size: calc(var(--fs-h1) * 1.25);
-}
+} */
 
 [data-look="sharp"] .sh {
 	border-top: 4px solid var(--ink);
@@ -3665,3 +3712,6 @@ h3,
 	color: var(--muted);
 }
 
+.uwy img {
+	filter: invert(1);
+}

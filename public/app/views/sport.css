@@ -72,7 +72,7 @@
 }
 
 .v-sport .pchips .chip.is-cur .chip-n {
-	color: var(--ink);
+	color: var(--on-ink);
 	font-weight: 700;
 }
 
