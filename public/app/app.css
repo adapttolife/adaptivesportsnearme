@@ -1427,6 +1427,22 @@ textarea:focus {
 	transition: scale var(--ease);
 }
 
+/* A figure in motion (public/app/motion.js): the same drawing as inline SVG in the
+   mask's exact square, so the swap never shows. Moving parts may leave the square. */
+.fig.fig--live {
+	background: none;
+	-webkit-mask: none;
+	mask: none;
+}
+
+.fig--live > svg {
+	display: block;
+	width: 100%;
+	height: 100%;
+	overflow: visible;
+	fill: currentColor;
+}
+
 .fig--pin {
 	position: absolute;
 	translate: none;
