@@ -76,7 +76,7 @@ function addEvent(D) {
 <fieldset class="fm-set"><legend>The event</legend>
 ${field({ name: "en", label: "Event name", required: true, auto: "off" })}
 ${select({ name: "sport", label: "Sport", options: sportOptions(D), placeholder: "Choose a sport" })}
-<div class="fm-when">${field({ name: "ed", label: "Date", type: "date", required: true, error: "Enter the date of the event." })}${field({ name: "et", label: "Start time", type: "time" })}${field({ name: "ee", label: "End date", type: "date" })}</div>
+<div class="fm-when">${field({ name: "ed", label: "Start date", type: "date", required: true, error: "Enter the date the event starts." })}${field({ name: "et", label: "Start time", type: "time" })}${field({ name: "ee", label: "End date", type: "date", hint: "Only if it runs more than one day." })}</div>
 <div class="fm-two fm-two--place">${field({ name: "city", label: "City", required: true, auto: "address-level2" })}${select({ name: "state", label: "State", options: stateOptions(), required: true, placeholder: "Choose a state" })}</div>
 ${field({ name: "url", label: "Event website", type: "url", required: true, auto: "url", attrs: 'inputmode="url" placeholder="https://"', error: "Enter the event website. It starts with https://" })}
 ${field({ name: "org", label: "Who's running it", auto: "organization" })}
