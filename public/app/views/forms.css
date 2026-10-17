@@ -219,22 +219,18 @@
 	}
 }
 
+/* When: one field per row on phones, like every other field on the form. From 600px the
+   start date and start time share a row and the end date sits under the start date, on
+   the same column lines as City and State below. */
 .v-forms .fm-when {
 	display: grid;
-	grid-template-columns: repeat(2, minmax(0, 1fr));
+	grid-template-columns: minmax(0, 1fr);
 	gap: 0 12px;
-}
-
-.v-forms .fm-when > .field:first-child {
-	grid-column: 1 / -1;
 }
 
 @media (min-width: 600px) {
 	.v-forms .fm-when {
-		grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) minmax(0, 1.2fr);
-	}
-	.v-forms .fm-when > .field:first-child {
-		grid-column: auto;
+		grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
 	}
 }
 
