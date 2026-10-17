@@ -10,6 +10,7 @@
 // (ENV_NAME=production) asks to be indexed.
 import { getOrg, getProgram, getGrant, directorySnapshot } from "./data.js";
 import { SPORT_NAMES } from "./sport-names.js";
+import { GUIDES } from "../public/app/sport-guides.js";
 import { isListable } from "../public/app/listable.js";
 import { HOME_CARD, PAGE_CARDS, sportCard, stateCard, listingCard, CARD_WIDTH, CARD_HEIGHT } from "./share-cards.js";
 
@@ -56,7 +57,9 @@ const ROUTES = [
     const name = SPORT_NAMES[m[1]];
     if (!name) return notFound();
     const low = m[1] === "multi" ? "multi-sport" : name.toLowerCase();
-    return { title: `${name}: adaptive ${low} programs near you`, description: `Find adaptive ${low} programs, grants and events near you. Every listing shows when it was last checked.`, image: sportCard(m[1]) };
+    // The guide's first sentence says what the sport is before the directory line (search snippets).
+    const lead = GUIDES[m[1]] ? GUIDES[m[1]].what.split(/(?<=\.)\s+/)[0] + " " : "";
+    return { title: `${name}: adaptive ${low} programs near you`, description: `${lead}Find adaptive ${low} programs, grants and events near you. Every listing shows when it was last checked.`, image: sportCard(m[1]) };
   }],
   [/^\/states\/?$/, () => ({ title: "Adaptive sports by state", description: "Find adaptive sports programs in every state." })],
   [/^\/states\/([A-Za-z]{2})\/?$/, (m) => {

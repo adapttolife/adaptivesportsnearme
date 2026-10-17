@@ -228,3 +228,94 @@
 	grid-row: 1 / span 2;
 	color: #f6b700;
 }
+
+/* The sport in plain words (sport-guides.js): one paragraph, then "Start here" opens the rest */
+.v-sport .sp-guide {
+	margin-top: 24px;
+	max-width: 68ch;
+}
+
+.v-sport .sp-guide-what {
+	margin: 0;
+	font-size: 18px;
+	line-height: 1.5;
+}
+
+.v-sport .sp-guide-more {
+	margin-top: 16px;
+	border-top: 1px solid var(--line);
+	border-bottom: 1px solid var(--line);
+}
+
+.v-sport .sp-guide-more summary {
+	list-style: none;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	min-height: 48px;
+	cursor: pointer;
+	font-weight: 700;
+}
+
+.v-sport .sp-guide-more summary::-webkit-details-marker {
+	display: none;
+}
+
+.v-sport .sp-guide-more summary svg {
+	flex: none;
+	transition: transform 0.15s ease;
+}
+
+.v-sport .sp-guide-more[open] summary svg {
+	transform: rotate(90deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.v-sport .sp-guide-more summary svg {
+		transition: none;
+	}
+}
+
+.v-sport .sp-guide-in {
+	padding: 4px 0 20px;
+}
+
+.v-sport .sp-guide-dl {
+	margin: 0;
+	display: grid;
+	gap: 14px;
+}
+
+.v-sport .sp-guide-dl dt {
+	font-size: 15px;
+	font-weight: 700;
+}
+
+.v-sport .sp-guide-dl dd {
+	margin: 2px 0 0;
+	color: var(--graphite);
+	line-height: 1.5;
+}
+
+.v-sport .sp-guide-body {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	gap: 4px 10px;
+	margin: 18px 0 0;
+	color: var(--graphite);
+}
+
+@media (min-width: 768px) {
+	.v-sport .sp-guide-dl {
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+		gap: 20px;
+	}
+}
+
+/* The honest caveat under "What you need": general to the sport, not one program */
+.v-sport .sp-guide-dl dd.sp-guide-note {
+	margin-top: 8px;
+	font-size: 15px;
+	font-style: italic;
+}

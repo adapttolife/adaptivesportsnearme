@@ -12,6 +12,7 @@
    - .pg-poster     the 4:5 share poster (an og:image / Instagram export twin, 11.4)
    - .pg-chips      non-interactive text chips, optionally led by a 40px avatar */
 import * as A from "../app.js";
+import { guideFor } from "../sport-guides.js";
 
 const L = window.ListingArt;
 // Group scenes never draw under 56px (3.2), so they get no avatar in a chip.
@@ -187,6 +188,19 @@ function wherePlay(p) {
   }
   return `<section class="pg-sec" aria-labelledby="pg-where"><h2 id="pg-where">${p.meet ? "Where it meets" : "Where you'll play"}</h2>${body}</section>`;
 }
+/* ---------- the sport in plain words, for a reader who has never seen it ----------
+   Fills the page when the organization has no description yet, and gives context when it does. */
+function sportIntro(p) {
+  const key = isTrio(p) ? "multi" : p.key;
+  const g = guideFor(key);
+  if (!g) return "";
+  const multi = key === "multi";
+  const name = lowerFirst(A.sportName(key));
+  const title = multi ? "New to adaptive sports?" : `New to ${name}?`;
+  const all = multi ? "All multi-sport programs" : `All ${name} programs, grants and events`;
+  return `<section class="pg-sec pg-sport" aria-labelledby="pg-sport"><h2 id="pg-sport">${A.esc(title)}</h2><p>${A.esc(g.what)}</p><p>${A.esc(g.start)}</p><p class="pg-quiet">This is about the sport in general. Every organization runs things its own way, so check its website for what it provides and what it costs.</p><a class="tlink" href="/sports/${A.esc(key)}">${A.esc(all)}${A.icon("arrow-right", 18)}</a></section>`;
+}
+
 function links(p) {
   const row = (href, ic, label, sub, attrs = "") => `<li><a class="pg-link" href="${A.esc(href)}" ${attrs}><span class="pg-link-ic">${A.icon(ic, 20)}</span><span class="pg-link-text"><span class="pg-link-label">${A.esc(label)}</span>${sub ? `<span class="pg-link-sub">${A.esc(sub)}</span>` : ""}</span>${A.icon("chevron-right", 20)}</a></li>`;
   const runSub = p.verified ? "Update your listing." : "Confirm your listing to get the Verified check.";
@@ -316,6 +330,7 @@ ${actionRow(p)}
 ${p.meet ? meetup(p) : about(p)}
 ${facts(p)}
 ${wherePlay(p)}
+${sportIntro(p)}
 ${linkedPrograms}
 ${links(p)}
 ${more(p, D)}

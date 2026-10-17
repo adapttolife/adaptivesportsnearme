@@ -9,6 +9,7 @@
      for a chip row.
    (The .grp group heading is shared and lives in app.css.) */
 import * as A from "../app.js";
+import { guideFor } from "../sport-guides.js";
 
 const TABS = ["programs", "grants", "events"];
 const lc = (s) => s.charAt(0).toLowerCase() + s.slice(1);
@@ -38,6 +39,16 @@ function nearestBlock(key, st, pool) {
   return `<section class="sec" aria-labelledby="sp-out">${A.sectionHead({ title: `Nearest ${name} outside ${A.stateName(st)}`, id: "sp-out", sub: "Nearest states first. A program with no single city counts from the middle of its state." })}${groups.map((g) => `<div class="grp"><div class="grp-hd"><h3 class="grp-h">${A.esc(A.stateName(g.state))}</h3></div><div class="rows">${g.items.map((p) => A.programRow(p, { single: true, outside: true })).join("")}</div></div>`).join("")}</section>`;
 }
 
+/** The sport in plain words (public/app/sport-guides.js): what it is always visible, then
+    "New to X? Start here" opens who plays, what you need, how to start and the national body. */
+function guideBlock(key, low) {
+  const g = guideFor(key);
+  if (!g) return "";
+  const row = (dt, dd) => `<div><dt>${dt}</dt><dd>${A.esc(dd)}</dd></div>`;
+  const body = `<a class="tlink" href="${A.esc(g.body.url)}" target="_blank" rel="noopener">${A.esc(g.body.name)}${A.icon("external-link", 18)}<span class="sr"> (opens in a new tab)</span></a>`;
+  return `<section class="sp-guide" aria-labelledby="sp-guide-h"><h2 id="sp-guide-h" class="sr">About ${A.esc(low)}</h2><p class="sp-guide-what">${A.esc(g.what)}</p><details class="sp-guide-more"><summary>${A.icon("chevron-right", 20)}<span>New to ${A.esc(low)}? Start here</span></summary><div class="sp-guide-in"><dl class="sp-guide-dl">${row("Who plays", g.who)}<div><dt>What you need</dt><dd>${A.esc(g.gear)}</dd><dd class="sp-guide-note">Every program is different. Check what yours provides and what it costs.</dd></div>${row("How to start", g.start)}</dl><p class="sp-guide-body"><span>National body</span>${body}</p></div></details></section>`;
+}
+
 function programsTab(key, st, pool) {
   const name = A.sportName(key), low = lc(name);
   const counts = {};
@@ -54,7 +65,8 @@ function programsTab(key, st, pool) {
   const select = `<form class="stsel" data-st-form><label for="sp-st">Choose a state</label><div class="stsel-row"><select id="sp-st" name="st"><option value=""${!st ? " selected" : ""}>All states</option>${listed.length ? `<optgroup label="${A.esc(name)} listed">${listed.map(opt).join("")}</optgroup>` : ""}${rest.length ? `<optgroup label="Not listed yet">${rest.map(opt).join("")}</optgroup>` : ""}</select><button type="submit" class="btn btn--line">Show</button></div></form>`;
 
   // Small tile map (tablet and desktop only). Tiles change the filter, so they replace.
-  const map = ranked.length ? `<div class="sp-map"><h3 class="sp-map-h">Where ${A.esc(low)} is listed</h3>${A.tileMap({ counts, hrefFor: (s) => hrefFor(key, { st: s }), selected: st, list: "none" }).replace(/<a class="tile /g, '<a data-replace class="tile ')}</div>` : "";
+  // Six states or more: fewer than that, the map is mostly zeros and the chips say it better.
+  const map = ranked.length >= 6 ? `<div class="sp-map"><h3 class="sp-map-h">Where ${A.esc(low)} is listed</h3>${A.tileMap({ counts, hrefFor: (s) => hrefFor(key, { st: s }), selected: st, list: "none" }).replace(/<a class="tile /g, '<a data-replace class="tile ')}</div>` : "";
 
   const tools = `<section class="sp-where" aria-labelledby="sp-where-h"><h2 class="sr" id="sp-where-h">Find ${A.esc(low)} by state</h2>${chips}${select}${map}</section>`;
 
@@ -169,7 +181,7 @@ export async function render(ctx) {
   return {
     title,
     description: `Adaptive ${low} programs, grants and events${st ? " in " + A.stateName(st) : ""}. Every listing shows when we last checked it.`,
-    html: `<div class="sp sp--${A.esc(t)}">${head}${body}${A.letterBlock({ source: "sport" })}</div>`,
+    html: `<div class="sp sp--${A.esc(t)}">${head}${t === "programs" ? guideBlock(key, low) : ""}${body}${A.letterBlock({ source: "sport" })}</div>`,
     aside: A.aboutBox(),
     railActive: "sport:" + key,
   };

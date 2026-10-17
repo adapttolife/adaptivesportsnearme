@@ -851,3 +851,12 @@
 		font-size: 16px;
 	}
 }
+
+/* "New to <sport>?": the sport in plain words, from sport-guides.js */
+.v-program .pg-sport p + p {
+	margin-top: 10px;
+}
+
+.v-program .pg-sport .tlink {
+	margin-top: 12px;
+}
