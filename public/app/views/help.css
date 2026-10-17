@@ -497,7 +497,10 @@
 	}
 }
 
-/* Direction C: text on the coral band is black. */
-.v-help .hp-sub {
-	color: #1a1a1a;
+/* Direction C: text on the coral band is black. The band is behind the text from 768px;
+   on phones the text sits on the page and keeps the page's colours. */
+@media (min-width: 768px) {
+	.v-help .hp-sub {
+		color: #1a1a1a;
+	}
 }
