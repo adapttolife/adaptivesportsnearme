@@ -198,7 +198,7 @@ function sportIntro(p) {
   const name = lowerFirst(A.sportName(key));
   const title = multi ? "New to adaptive sports?" : `New to ${name}?`;
   const all = multi ? "All multi-sport programs" : `All ${name} programs, grants and events`;
-  return `<section class="pg-sec pg-sport" aria-labelledby="pg-sport"><h2 id="pg-sport">${A.esc(title)}</h2><p>${A.esc(g.what)}</p><p>${A.esc(g.start)}</p><a class="tlink" href="/sports/${A.esc(key)}">${A.esc(all)}${A.icon("arrow-right", 18)}</a></section>`;
+  return `<section class="pg-sec pg-sport" aria-labelledby="pg-sport"><h2 id="pg-sport">${A.esc(title)}</h2><p>${A.esc(g.what)}</p><p>${A.esc(g.start)}</p><p class="pg-quiet">This is about the sport in general. Every organization runs things its own way, so check its website for what it provides and what it costs.</p><a class="tlink" href="/sports/${A.esc(key)}">${A.esc(all)}${A.icon("arrow-right", 18)}</a></section>`;
 }
 
 function links(p) {

@@ -46,7 +46,7 @@ function guideBlock(key, low) {
   if (!g) return "";
   const row = (dt, dd) => `<div><dt>${dt}</dt><dd>${A.esc(dd)}</dd></div>`;
   const body = `<a class="tlink" href="${A.esc(g.body.url)}" target="_blank" rel="noopener">${A.esc(g.body.name)}${A.icon("external-link", 18)}<span class="sr"> (opens in a new tab)</span></a>`;
-  return `<section class="sp-guide" aria-labelledby="sp-guide-h"><h2 id="sp-guide-h" class="sr">About ${A.esc(low)}</h2><p class="sp-guide-what">${A.esc(g.what)}</p><details class="sp-guide-more"><summary>${A.icon("chevron-right", 20)}<span>New to ${A.esc(low)}? Start here</span></summary><div class="sp-guide-in"><dl class="sp-guide-dl">${row("Who plays", g.who)}${row("What you need", g.gear)}${row("How to start", g.start)}</dl><p class="sp-guide-body"><span>National body</span>${body}</p></div></details></section>`;
+  return `<section class="sp-guide" aria-labelledby="sp-guide-h"><h2 id="sp-guide-h" class="sr">About ${A.esc(low)}</h2><p class="sp-guide-what">${A.esc(g.what)}</p><details class="sp-guide-more"><summary>${A.icon("chevron-right", 20)}<span>New to ${A.esc(low)}? Start here</span></summary><div class="sp-guide-in"><dl class="sp-guide-dl">${row("Who plays", g.who)}<div><dt>What you need</dt><dd>${A.esc(g.gear)}</dd><dd class="sp-guide-note">Every program is different. Check what yours provides and what it costs.</dd></div>${row("How to start", g.start)}</dl><p class="sp-guide-body"><span>National body</span>${body}</p></div></details></section>`;
 }
 
 function programsTab(key, st, pool) {

@@ -312,3 +312,10 @@
 		gap: 20px;
 	}
 }
+
+/* The honest caveat under "What you need": general to the sport, not one program */
+.v-sport .sp-guide-dl dd.sp-guide-note {
+	margin-top: 8px;
+	font-size: 15px;
+	font-style: italic;
+}
