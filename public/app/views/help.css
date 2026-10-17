@@ -391,6 +391,14 @@
 	}
 }
 
+.v-help .rs-lede {
+	margin-top: 8px;
+	max-width: 60ch;
+	font-size: 18px;
+	line-height: 1.5;
+	color: var(--graphite);
+}
+
 .v-help .rs-card {
 	margin-top: 24px;
 	max-width: 880px;

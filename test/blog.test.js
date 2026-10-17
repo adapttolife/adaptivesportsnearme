@@ -219,16 +219,17 @@ test("blogNotFoundTemplate: friendly 404 copy, links back to /blog", () => {
 // (public/index.html) left with the old site; the blog's own columns and links
 // stay locked here.
 
-test("the shared footer keeps its three columns and every destination", () => {
+test("the shared footer keeps its four groups and every destination", () => {
   const html = blogIndexTemplate([], { site: SITE });
-  // The same three columns as the app's footer (footer() in public/app/app.js).
-  for (const col of ["Find", "Help build this", "More"]) {
+  // The same four groups as the app's footer and menu (footer() and drawerList() in public/app/app.js).
+  for (const col of ["Find", "Browse", "Help build this", "About this directory"]) {
     assert.ok(html.includes(`<h2>${col}</h2>`), `footer is missing the ${col} column`);
   }
   for (const label of [
-    "Programs near you", "Sports", "States", "Grants", "Events",
-    "Add a program", "Add an event", "Claim your organization", "How we check listings",
-    "Get the letter", "Resources", "Blog", "Accessibility", "Adapt To Life",
+    "Programs near you", "Grants", "Events", "Guides",
+    "Sports", "States", "Programs", "Organizations",
+    "Add a program", "Add an event", "Claim your organization",
+    "How we check listings", "Get the letter", "Blog", "Accessibility", "Adapt To Life",
   ]) {
     assert.ok(html.includes(`>${label}</a>`), `footer is missing ${label}`);
   }

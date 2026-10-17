@@ -6,6 +6,7 @@
 import * as A from "../app.js";
 
 const DESC = "Find adaptive sports programs, grants and events near you. Free, no account needed.";
+const GUIDES_DESC = "Every adaptive sport explained, and help beyond sports, like veteran-owned business directories by state.";
 const TRIO = ["basketball", "tennis", "skiing"];
 
 /* ---------- /help ---------- */
@@ -49,11 +50,15 @@ function aboutPage() {
   return { title: "How we check listings · Adaptive Sports Near Me", description: DESC, html };
 }
 
-/* ---------- /resources ---------- */
+/* ---------- /resources: Guides ----------
+   Named for what is in it (Alec, 2026-10-17: every page here is a resource, so the
+   word told nobody anything). Grants, programs and events keep their own doors. */
 function resourcesPage() {
-  const html = `<div class="rs"><h1 tabindex="-1">Resources</h1>
-<article class="rs-card" aria-labelledby="rs-vob">${A.plate("veteran-meetup", { kind: "card", wide: true, cls: "rs-plate" })}<div class="rs-body"><h2 id="rs-vob">Veteran-owned business directories by state</h2><p>State lists of veteran-owned businesses, gathered in one place.</p><div class="rs-act">${A.btn("Open the directories", "/resources/veteran-owned-businesses", "ink", { icon: "arrow-right" })}</div></div></article></div>`;
-  return { title: "Resources · Adaptive Sports Near Me", description: DESC, html };
+  const card = (id, key, title, body, label, href) => `<article class="rs-card" aria-labelledby="${id}">${A.plate(key, { kind: "card", wide: true, cls: "rs-plate" })}<div class="rs-body"><h2 id="${id}">${A.esc(title)}</h2><p>${A.esc(body)}</p><div class="rs-act">${A.btn(label, href, "ink", { icon: "arrow-right" })}</div></div></article>`;
+  const html = `<div class="rs"><h1 tabindex="-1">Guides</h1><p class="rs-lede">Getting started, and life beyond sports. New guides join as we write them.</p>
+${card("rs-sports", "multi", "Every sport, explained", "What each sport is, who plays, what you need and how to start.", "Browse the sports", "/sports")}
+${card("rs-vob", "veteran-meetup", "Veteran-owned business directories by state", "State lists of veteran-owned businesses, gathered in one place.", "Open the directories", "/resources/veteran-owned-businesses")}</div>`;
+  return { title: "Guides · Adaptive Sports Near Me", description: GUIDES_DESC, html };
 }
 
 /* ---------- /letter ---------- */
