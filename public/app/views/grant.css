@@ -31,7 +31,7 @@
 	height: 44px;
 	border-radius: 50%;
 	background: #f3f3f3;
-	color: var(--ink);
+	color: #1a1a1a;
 	box-shadow: var(--sh-1);
 }
 

@@ -99,7 +99,7 @@
 	margin: 0;
 	font-size: 18px;
 	font-weight: 500;
-	color: #5e5a52;
+	color: var(--muted);
 	pointer-events: none;
 	transition:
 		font-size var(--ease),
@@ -114,7 +114,7 @@
 	align-items: flex-end;
 	font-size: 15px;
 	font-weight: 700;
-	color: #3c382f;
+	color: var(--graphite);
 }
 
 .v-home .hb .wf-row {
