@@ -34,7 +34,8 @@ link we propose and checked that it loads and names the program or its town.
 - **45 confident links**: the listing's own page, checked.
 - **31 links to look at first**: probably the right group, but something needs a person's eye: the page
   doesn't mention adaptive tennis, looks stale, is a Facebook page, or is a best guess. Each says what to look at.
-- **44 with no page found**: most have only a personal contact email in USTA's list.
+- **44 with no page found**: most have only a personal contact email in USTA's list. Our web searches ran
+  out partway through, so some of these got fewer searches; a few may have a Facebook page worth a look.
 
 ## Your choices
 
