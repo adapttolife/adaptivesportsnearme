@@ -221,6 +221,16 @@ test("sheets opened by a tap get their own Back step", () => {
   assert.match(between(APP, 'window.addEventListener("popstate"', "render();\n  });"), /closeOverlay\(\{ mode: "pop" \}\)/);
 });
 
+test("mobile drawer supports edge swipes without taking over vertical scrolling", () => {
+  const swipes = between(APP, "function installDrawerSwipes()", "/** Search sheet.");
+  assert.match(swipes, /window\.innerWidth <= 767/);
+  assert.match(swipes, /from\.x <= edge/);
+  assert.match(swipes, /menuOpen && dx < 0/);
+  assert.match(swipes, /menuOpen && dx > 0 && isEdge\(from\.x\)/);
+  assert.match(swipes, /Math\.abs\(dx\) < Math\.abs\(dy\) \* slope/);
+  assert.match(APP, /installDrawerSwipes\(\);/);
+});
+
 // The header sticks to the top (#top). Anything else that sticks to the top of the
 // page must sit below it (top uses --top-h), or it slides under the header when you
 // scroll. Sticky parts inside a sheet or the map dialog have their own scroll box.

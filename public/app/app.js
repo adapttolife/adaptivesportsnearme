@@ -1168,6 +1168,38 @@ export function openDrawer() {
   OV = { name: "menu", el: d, release };
 }
 
+function installDrawerSwipes() {
+  const edge = 88, distance = 52, slope = 1.35, duration = 700;
+  let start = null;
+  const mobile = () => window.innerWidth <= 767;
+  const isEdge = (x) => x <= edge || x >= window.innerWidth - edge;
+  document.addEventListener("touchstart", (e) => {
+    if (!mobile() || e.touches.length !== 1) return;
+    const t = e.touches[0];
+    start = { x: t.clientX, y: t.clientY, at: Date.now() };
+  }, { passive: true });
+  document.addEventListener("touchcancel", () => { start = null; }, { passive: true });
+  document.addEventListener("touchend", (e) => {
+    if (!start || !mobile() || e.changedTouches.length !== 1) { start = null; return; }
+    const t = e.changedTouches[0], from = start;
+    start = null;
+    const dx = t.clientX - from.x, dy = t.clientY - from.y;
+    if (Date.now() - from.at > duration || Math.abs(dx) < distance || Math.abs(dx) < Math.abs(dy) * slope) return;
+    const menuOpen = OV && OV.name === "menu";
+    if (menuOpen && dx < 0) { closeOverlay({ restore: false }); return; }
+    if (menuOpen && dx > 0 && isEdge(from.x)) {
+      const hasSheetEntry = OV.pushed && SHEET_ENTRY;
+      closeOverlay({ restore: false, mode: "nav" });
+      if (hasSheetEntry) {
+        SHEET_ENTRY = false;
+        history.go(-2);
+      } else backOr("/");
+      return;
+    }
+    if (!OV && dx > 0 && from.x <= edge) openDrawer();
+  }, { passive: true });
+}
+
 /** Search sheet. preset: { place, sport } */
 export async function openSearch(preset = {}) {
   await loadData();
@@ -1790,6 +1822,7 @@ function boot() {
   while (dr.firstChild) document.body.appendChild(dr.firstChild);
   $("#drawer").inert = true;
   $("#top").innerHTML = header();
+  installDrawerSwipes();
   // The header sticks to the top; its height lets everything else stick below it (app.css --top-h).
   const topEl = $("#top");
   const setTopH = () => document.documentElement.style.setProperty("--top-h", topEl.offsetHeight + "px");
