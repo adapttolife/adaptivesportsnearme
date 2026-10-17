@@ -26,6 +26,7 @@
 	height: calc(3.44 * clamp(60px, 17cqw, 120px));
 	pointer-events: none;
 	color: var(--hb-fg, #1a1a1a);
+	min-height: 85px;
 }
 
 @container (max-width: 359px) {
