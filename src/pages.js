@@ -11,6 +11,7 @@
 import { getOrg, getProgram, getGrant, directorySnapshot } from "./data.js";
 import { SPORT_NAMES } from "./sport-names.js";
 import { isListable } from "../public/app/listable.js";
+import { HOME_CARD, PAGE_CARDS, sportCard, stateCard, listingCard, CARD_WIDTH, CARD_HEIGHT } from "./share-cards.js";
 
 export const SITE_NAME = "Adaptive Sports Near Me";
 const ORIGIN = "https://adaptivesportsnearme.com";
@@ -41,7 +42,8 @@ const REDIRECTS = [
   [/^\/directory(\/[a-z]+)?\/?$/, "/sports"],
 ];
 
-// pattern, builder(match, env, url) -> { title, description, noindex?, status?, jsonld?, canonical? }
+// pattern, builder(match, env, url) -> { title, description, noindex?, status?, jsonld?, canonical?, image? }
+// image: the page's share card (src/share-cards.js); pages without one share the home card.
 // ("/" is usually served straight from the assets; the Worker answers it the same way.)
 const ROUTES = [
   [/^\/$/, () => ({})],
@@ -54,13 +56,13 @@ const ROUTES = [
     const name = SPORT_NAMES[m[1]];
     if (!name) return notFound();
     const low = m[1] === "multi" ? "multi-sport" : name.toLowerCase();
-    return { title: `${name}: adaptive ${low} programs near you`, description: `Find adaptive ${low} programs, grants and events near you. Every listing shows when it was last checked.` };
+    return { title: `${name}: adaptive ${low} programs near you`, description: `Find adaptive ${low} programs, grants and events near you. Every listing shows when it was last checked.`, image: sportCard(m[1]) };
   }],
   [/^\/states\/?$/, () => ({ title: "Adaptive sports by state", description: "Find adaptive sports programs in every state." })],
   [/^\/states\/([A-Za-z]{2})\/?$/, (m) => {
     const st = m[1].toUpperCase(), name = STATE_NAMES[st];
     if (!name) return notFound();
-    return { title: `Adaptive sports in ${name}`, description: `Adaptive sports programs, grants and events in ${name}. Every listing shows when it was last checked.`, canonical: `${ORIGIN}/states/${st}` };
+    return { title: `Adaptive sports in ${name}`, description: `Adaptive sports programs, grants and events in ${name}. Every listing shows when it was last checked.`, canonical: `${ORIGIN}/states/${st}`, image: stateCard(st) };
   }],
   [/^\/organizations\/?$/, () => ({ title: "Adaptive sports organizations", description: "Browse adaptive sports organizations and the programs they run." })],
   [/^\/programs\/?$/, () => ({ title: "Adaptive sports programs", description: "Browse adaptive sports programs across all organizations." })],
@@ -74,6 +76,7 @@ const ROUTES = [
       title: `${p.name}: ${sport}${place ? ` in ${place}` : ""}`,
       description: `${p.name}${place ? ` in ${place}` : ""}. ${sport}. See the organization's website, when we last checked it, and suggest a fix.`,
       jsonld: programJsonLd(p, env),
+      image: listingCard(p),
     };
   }],
   [new RegExp(`^/programs/(${UUID})/?$`, "i"), async (m, env) => {
@@ -81,29 +84,29 @@ const ROUTES = [
     const id = m[1].toLowerCase();
     let p = null;
     try { p = await getProgram(env.DB, id); } catch (_) { p = null; } // a database without the programs table yet
-    if (p) return { title: p.name, description: `${p.name}. ${p.sportLabel || "Adaptive sports"}.`, jsonld: programJsonLd(p, env) };
+    if (p) return { title: p.name, description: `${p.name}. ${p.sportLabel || "Adaptive sports"}.`, jsonld: programJsonLd(p, env), image: listingCard(p) };
     // Listings lived at /programs/<organization id> until 2026-10-15: shared links,
     // receipts and search results move to the organization's page for good.
     const org = await getOrg(env.DB, id);
     if (org && isListable(org)) return { redirect: `/organizations/${id}` };
     return notFound("We couldn't find that program");
   }],
-  [/^\/grants\/?$/, () => ({ title: "Grants for adaptive athletes and programs", description: "Grants that pay for adaptive sports equipment, travel, fees and programs. You apply on the grant maker's site." })],
+  [/^\/grants\/?$/, () => ({ title: "Grants for adaptive athletes and programs", description: "Grants that pay for adaptive sports equipment, travel, fees and programs. You apply on the grant maker's site.", image: PAGE_CARDS.grants })],
   [new RegExp(`^/grants/(${UUID})/?$`, "i"), async (m, env) => {
     if (!env.DB) return { title: "Grant", description: HOME_DESCRIPTION };
     let g = null;
     try { g = await getGrant(env.DB, m[1].toLowerCase()); } catch (_) { g = null; }
     if (!g) return notFound("We couldn't find that grant");
-    return { title: `${g.name}${g.source ? `, from ${g.source}` : ""}`, description: `${g.name}: a grant for adaptive sports. See who it is for, the deadline and how to apply.` };
+    return { title: `${g.name}${g.source ? `, from ${g.source}` : ""}`, description: `${g.name}: a grant for adaptive sports. See who it is for, the deadline and how to apply.`, image: PAGE_CARDS.grants };
   }],
-  [/^\/events\/?$/, () => ({ title: "Adaptive sports events", description: "Clinics, tryouts and game days. Know of one? Add it and a person will check it." })],
+  [/^\/events\/?$/, () => ({ title: "Adaptive sports events", description: "Clinics, tryouts and game days. Know of one? Add it and a person will check it.", image: PAGE_CARDS.events })],
   [/^\/add\/program\/?$/, () => ({ title: "Add a program", description: "Tell us about an adaptive sports program. A person checks every one before it goes up.", noindex: true })],
   [/^\/add\/event\/?$/, () => ({ title: "Add an event", description: "Tell us about an adaptive sports event. A person checks every one before it goes up.", noindex: true })],
   [new RegExp(`^/update/(${UUID})/?$`, "i"), () => ({ title: "Suggest a fix", description: "Tell us what to fix on a listing.", noindex: true })],
   [/^\/help\/?$/, () => ({ title: "Help build this", description: "Add a program or an event, suggest a fix, or confirm the program you run." })],
   [/^\/about\/?$/, () => ({ title: "How we check listings", description: "What Verified means, what Not verified yet means, and how we keep every listing up to date." })],
   [/^\/resources\/?$/, () => ({ title: "Resources", description: "Directories and resources for adaptive athletes, veterans and families." })],
-  [/^\/resources\/veteran-owned-businesses\/?$/, () => ({ title: "Support Veteran-Owned Businesses", description: "Find veteran-owned businesses in your state using these directories." })],
+  [/^\/resources\/veteran-owned-businesses\/?$/, () => ({ title: "Support Veteran-Owned Businesses", description: "Find veteran-owned businesses in your state using these directories.", image: PAGE_CARDS["veteran-owned-businesses"] })],
   [/^\/letter\/confirmed\/?$/, () => ({ title: "You're on the list", description: "New programs, grants and events from Adaptive Sports Near Me, when there's something worth sending.", noindex: true })],
   [/^\/letter\/?$/, () => ({ title: "Get the letter", description: "New programs, grants and events, when there is something worth sending." })],
 ];
@@ -163,6 +166,8 @@ export function injectMeta(html, meta, { url, production, hints = [] }) {
   const description = meta.description || HOME_DESCRIPTION;
   const canonical = meta.canonical || ORIGIN + (url.pathname.replace(/\/+$/, "") || "/");
   const noindex = meta.noindex || !production;
+  // A review copy's previews show its own cards; production's show production's.
+  const image = (production ? ORIGIN : url.origin) + (meta.image || HOME_CARD);
   const tags = [
     `<link rel="canonical" href="${esc(canonical)}">`,
     `<meta property="og:title" content="${esc(meta.title || SITE_NAME)}">`,
@@ -170,7 +175,9 @@ export function injectMeta(html, meta, { url, production, hints = [] }) {
     `<meta property="og:url" content="${esc(canonical)}">`,
     `<meta property="og:type" content="website">`,
     `<meta property="og:site_name" content="${SITE_NAME}">`,
-    `<meta property="og:image" content="${ORIGIN}/og-image.jpg">`,
+    `<meta property="og:image" content="${esc(image)}">`,
+    `<meta property="og:image:width" content="${CARD_WIDTH}">`,
+    `<meta property="og:image:height" content="${CARD_HEIGHT}">`,
     `<meta name="twitter:card" content="summary_large_image">`,
     noindex ? `<meta name="robots" content="noindex">` : "",
     meta.jsonld ? `<script type="application/ld+json">${JSON.stringify(meta.jsonld).replace(/</g, "\\u003c")}</script>` : "",
