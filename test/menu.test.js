@@ -1,6 +1,6 @@
 // The menu (phone drawer and desktop rail, drawerList() in public/app/app.js) and the
 // footer share one shape (Alec, 2026-10-17: "too messy, and dark mode should be last").
-// Four doors first, each with a line saying what is behind it; then Browse, Help build
+// Five doors first, each with a line saying what is behind it; then Browse, Help build
 // this and About this directory; the dark mode switch last. Nothing in it changes from
 // page to page, so it reads the same every time (WCAG 3.2.3).
 import test from "node:test";
@@ -24,11 +24,12 @@ function inOrder(text, marks, what) {
   }
 }
 
-test("the menu leads with four doors, then Browse, Help build this, About, and dark mode last", () => {
+test("the menu leads with five doors, then Browse, Help build this, About, and dark mode last", () => {
   inOrder(menu, [
-    '"Programs near you"', '"Grants", "Money for gear, travel and programs"', '"Events", "Clinics, tryouts and game days"',
+    '"Programs near you"', '"Sports", "Find programs by sport"',
+    '"Grants", "Money for gear, travel and programs"', '"Events", "Clinics, tryouts and game days"',
     '"Guides", "Getting started, and life beyond sports"',
-    'sec("Browse"', '"Sports"', '"States"', '"Programs"', '"Organizations"',
+    'sec("Browse"', '"States"', '"Organizations"',
     'sec("Help build this"', '"Add a program"', '"Add an event"', '"Claim your organization"',
     'sec("About this directory"', '"How we check listings"', '"Get the letter"',
     "data-theme-toggle",
@@ -40,9 +41,15 @@ test("the menu reads the same on every page: no recent or popular lists in it", 
   assert.doesNotMatch(menu, /recall\("recent"\)|topGroups|Recently viewed|avatar\(/);
 });
 
+test("sports is how people find programs: no separate Programs door in the menu or either footer", () => {
+  assert.ok(!menu.includes('"/programs"'), "the menu has no Programs item");
+  assert.ok(!footer.includes('"/programs"'), "the app footer has no Programs link");
+  assert.ok(!read("src/site-chrome.js").includes('href="/programs"'), "the blog footer has no Programs link");
+});
+
 test("the footer has the same four groups in the same order", () => {
-  inOrder(footer, ['"ft-h">Find<', '"Programs near you"', '"Grants"', '"Events"', '"Guides"',
-    '"ft-h">Browse<', '"Sports"', '"States"', '"Programs"', '"Organizations"',
+  inOrder(footer, ['"ft-h">Find<', '"Programs near you"', '"Sports"', '"Grants"', '"Events"', '"Guides"',
+    '"ft-h">Browse<', '"States"', '"Organizations"',
     '"ft-h">Help build this<', '"ft-h">About this directory<', '"How we check listings"', '"Get the letter"', '"Accessibility"'], "footer");
 });
 

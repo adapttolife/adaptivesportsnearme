@@ -996,8 +996,10 @@ export function header() {
 
 const nearHref = () => { const p = recall("place"); return p ? "/near/" + encodeURIComponent(p) : null; };
 export function drawerList(active = "") {
-  // One answer per row: the four things people come for first, each with a line that
-  // says what is behind it, then quieter groups, then the one setting. Nothing in it
+  // One answer per row: the five things people come for first, each with a line that
+  // says what is behind it, then quieter groups, then the one setting. People look for
+  // a program by its sport and its place, so those two doors lead (Alec, 2026-10-17);
+  // the program list itself (/programs) stays at its address but is not a door. Nothing in it
   // changes from page to page (no recent or popular lists), so the menu reads the
   // same every time and nothing shifts under a thumb (WCAG 3.2.3).
   const cur = activeItem(active);
@@ -1016,11 +1018,12 @@ export function drawerList(active = "") {
   return [
     `<div class="dl-sec dl-doors"><h2 class="sr">Find</h2><ul>`
       + door("near", near, "Programs near you", place ? "Near " + place : "Search a city, state or ZIP")
+      + door("sports", "/sports", "Sports", "Find programs by sport")
       + door("grants", "/grants", "Grants", "Money for gear, travel and programs")
       + door("events", "/events", "Events", "Clinics, tryouts and game days")
       + door("resources", "/resources", "Guides", "Getting started, and life beyond sports")
       + `</ul></div>`,
-    sec("Browse", item("sports", "/sports", "Sports") + item("states", "/states", "States") + item("programs", "/programs", "Programs") + item("organizations", "/organizations", "Organizations")),
+    sec("Browse", item("states", "/states", "States") + item("organizations", "/organizations", "Organizations")),
     sec("Help build this", item("add-program", "/add/program", "Add a program") + item("add-event", "/add/event", "Add an event") + item("help", "/help", "Claim your organization")),
     sec("About this directory", item("about", "/about", "How we check listings") + item("letter", "/letter", "Get the letter")),
     `<div class="dl-sec dl-set"><button type="button" class="dl-theme" data-theme-toggle aria-pressed="${dark}"><span>Dark mode</span><span class="dl-switch" aria-hidden="true"></span></button></div>`,
@@ -1042,8 +1045,8 @@ export function footer() {
   const near = nearHref();
   const li = (label, href) => `<li><a href="${esc(href)}">${esc(label)}</a></li>`;
   return `<div class="ft"><div class="ft-brand"><img src="/app/logo.svg" alt="" width="40" height="40"><div class="ft-brand-text"><p class="ft-name">Adaptive Sports Near Me</p><p>A free directory of adaptive sports programs, grants and events. We list programs; we don't run them.</p></div></div>
-<div class="ft-cols"><div><h2 class="ft-h">Find</h2><ul>${near ? li("Programs near you", near) : `<li><button type="button" data-open="search">Programs near you</button></li>`}${li("Grants", "/grants")}${li("Events", "/events")}${li("Guides", "/resources")}</ul></div>
-<div><h2 class="ft-h">Browse</h2><ul>${li("Sports", "/sports")}${li("States", "/states")}${li("Programs", "/programs")}${li("Organizations", "/organizations")}</ul></div>
+<div class="ft-cols"><div><h2 class="ft-h">Find</h2><ul>${near ? li("Programs near you", near) : `<li><button type="button" data-open="search">Programs near you</button></li>`}${li("Sports", "/sports")}${li("Grants", "/grants")}${li("Events", "/events")}${li("Guides", "/resources")}</ul></div>
+<div><h2 class="ft-h">Browse</h2><ul>${li("States", "/states")}${li("Organizations", "/organizations")}</ul></div>
 <div><h2 class="ft-h">Help build this</h2><ul>${li("Add a program", "/add/program")}${li("Add an event", "/add/event")}${li("Claim your organization", "/help")}</ul></div>
 <div><h2 class="ft-h">About this directory</h2><ul>${li("How we check listings", "/about")}${li("Get the letter", "/letter")}${li("Accessibility", "/about")}</ul></div></div>
 <div class="ft-fine"><p class="ft-fine">Adaptive Sports Near Me is a project of <a href="https://adapttolife.org">Adapt To Life</a>. Check with each organization before you go.</p><p class="ft-fine">© 2026 <a href="https://adapttolife.org">Adapt To Life</a></p></div></div>`;

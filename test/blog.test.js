@@ -226,8 +226,8 @@ test("the shared footer keeps its four groups and every destination", () => {
     assert.ok(html.includes(`<h2>${col}</h2>`), `footer is missing the ${col} column`);
   }
   for (const label of [
-    "Programs near you", "Grants", "Events", "Guides",
-    "Sports", "States", "Programs", "Organizations",
+    "Programs near you", "Sports", "Grants", "Events", "Guides",
+    "States", "Organizations",
     "Add a program", "Add an event", "Claim your organization",
     "How we check listings", "Get the letter", "Blog", "Accessibility", "Adapt To Life",
   ]) {
