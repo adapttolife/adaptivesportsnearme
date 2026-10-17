@@ -73,7 +73,7 @@ test("the app's copy of the page data is Karen's, word for word", () => {
 test("the Worker serves the page and the resources door without a database", async () => {
   const shell = readFileSync(new URL("../public/index.html", import.meta.url), "utf8");
   const ASSETS = { fetch: async (request) => new URL(request.url).pathname === "/" ? new Response(shell) : new Response("missing", { status: 404 }) };
-  for (const [path, title] of [[VETERAN_BUSINESS_PATH, COPY.title], [VETERAN_BUSINESS_PATH + "/", COPY.title], ["/resources", "Resources"], ["/resources/", "Resources"]]) {
+  for (const [path, title] of [[VETERAN_BUSINESS_PATH, COPY.title], [VETERAN_BUSINESS_PATH + "/", COPY.title], ["/resources", "Guides"], ["/resources/", "Guides"]]) {
     const response = await worker.fetch(new Request("https://adaptivesportsnearme.com" + path), { ASSETS }, {});
     assert.equal(response.status, 200, path);
     assert.match(response.headers.get("content-type"), /text\/html/);

@@ -50,7 +50,7 @@ export function headerHtml() {
 </header>`;
 }
 
-// Same three columns, same order, same destinations as the app's own footer
+// Same four groups, same order, same destinations as the app's own footer
 // (footer() in public/app/app.js), so the blog and the app never disagree about
 // what the site contains.
 export function footerHtml() {
@@ -61,9 +61,10 @@ export function footerHtml() {
       <p class="tagline">An open directory of adaptive sports programs across the country. No logins, no walls, because it is a free service of <a href="https://adapttolife.org" target="_blank" rel="noopener">Adapt To Life</a>, a recognized 501(c)(3) nonprofit.</p>
     </div>
     <div class="foot-cols">
-      <div class="foot-col"><h2>Find</h2><a href="/">Programs near you</a><a href="/sports">Sports</a><a href="/states">States</a><a href="/grants">Grants</a><a href="/events">Events</a></div>
-      <div class="foot-col"><h2>Help build this</h2><a href="/add/program">Add a program</a><a href="/add/event">Add an event</a><a href="/help">Claim your organization</a><a href="/about">How we check listings</a></div>
-      <div class="foot-col"><h2>More</h2><a href="/letter">Get the letter</a><a href="/resources">Resources</a><a href="/blog">Blog</a><a href="/about">Accessibility</a><a href="https://adapttolife.org" target="_blank" rel="noopener">Adapt To Life</a></div>
+      <div class="foot-col"><h2>Find</h2><a href="/">Programs near you</a><a href="/sports">Sports</a><a href="/grants">Grants</a><a href="/events">Events</a><a href="/resources">Guides</a></div>
+      <div class="foot-col"><h2>Browse</h2><a href="/states">States</a><a href="/organizations">Organizations</a></div>
+      <div class="foot-col"><h2>Help build this</h2><a href="/add/program">Add a program</a><a href="/add/event">Add an event</a><a href="/help">Claim your organization</a></div>
+      <div class="foot-col"><h2>About this directory</h2><a href="/about">How we check listings</a><a href="/letter">Get the letter</a><a href="/blog">Blog</a><a href="/about">Accessibility</a><a href="https://adapttolife.org" target="_blank" rel="noopener">Adapt To Life</a></div>
     </div>
   </div>
 </footer>`;

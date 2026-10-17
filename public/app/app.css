@@ -646,7 +646,7 @@ body.is-home .hd-search {
 .dr-scrim {
 	position: fixed;
 	inset: 0;
-	z-index: 55;
+	z-index: 115;
 	background: rgba(26, 26, 26, 0.42);
 	opacity: 0;
 	pointer-events: none;
@@ -672,11 +672,25 @@ body.is-home .hd-search {
 }
 
 .dr-logo {
-	display: inline-grid;
-	place-items: center;
-	width: 44px;
-	height: 44px;
+	display: inline-flex;
+	align-items: center;
+	gap: 10px;
+	min-height: 44px;
+	padding: 0 8px 0 6px;
 	border-radius: var(--r);
+	color: var(--ink);
+	text-decoration: none;
+}
+
+.dr-word {
+	font-size: 16px;
+	font-weight: 700;
+	line-height: 1.2;
+}
+
+/* The UserWay button floats above everything; it steps aside while the menu is open. */
+body.dr-open .uwy {
+	display: none !important;
 }
 
 .rail-in {
@@ -692,10 +706,10 @@ body.is-home .hd-search {
 }
 
 .dl-h {
-	font-size: 15px;
+	font-size: 14px;
 	font-weight: 700;
 	color: var(--muted);
-	padding: 10px 20px 4px;
+	padding: 12px 20px 4px;
 	line-height: 1.3;
 }
 
@@ -705,10 +719,10 @@ body.is-home .hd-search {
 	align-items: center;
 	gap: 12px;
 	width: 100%;
-	min-height: 48px;
-	padding: 4px 20px;
-	font-size: 17px;
-	font-weight: 600;
+	min-height: 44px;
+	padding: 6px 20px;
+	font-size: 16px;
+	font-weight: 500;
 	line-height: 1.25;
 	text-decoration: none;
 	text-align: left;
@@ -716,15 +730,97 @@ body.is-home .hd-search {
 	transition: background-color var(--ease);
 }
 
-.dl-theme-state {
-	margin-left: auto;
-	color: var(--muted);
-	font-size: 15px;
-	font-weight: 700;
+/* The four doors: what people come for, each with the line that says what is behind it */
+.dl-doors {
+	padding-top: 4px;
 }
 
-.dl-theme[aria-pressed="true"] .dl-theme-state {
-	color: var(--orange);
+.dl-item.dl-door {
+	flex-direction: column;
+	align-items: flex-start;
+	justify-content: center;
+	gap: 2px;
+	min-height: 64px;
+	padding: 10px 20px;
+}
+
+.dl-door-label {
+	font-size: 18px;
+	font-weight: 700;
+	line-height: 1.2;
+}
+
+.dl-door-sub {
+	font-size: 15px;
+	font-weight: 500;
+	line-height: 1.3;
+	color: var(--muted);
+}
+
+/* The one setting, last */
+.dl-set {
+	padding: 4px 0;
+}
+
+.dl-theme {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	width: 100%;
+	min-height: 56px;
+	padding: 6px 20px;
+	font-size: 16px;
+	font-weight: 500;
+	text-align: left;
+	color: var(--ink);
+}
+
+.dl-switch {
+	position: relative;
+	flex: none;
+	width: 44px;
+	height: 26px;
+	border: 2px solid var(--muted);
+	border-radius: 13px;
+	transition: background-color var(--ease), border-color var(--ease);
+}
+
+.dl-switch::after {
+	content: "";
+	position: absolute;
+	top: 3px;
+	left: 3px;
+	width: 16px;
+	height: 16px;
+	border-radius: 50%;
+	background: var(--muted);
+	transition: translate var(--ease), background-color var(--ease);
+}
+
+.dl-theme[aria-pressed="true"] .dl-switch {
+	background: var(--ink);
+	border-color: var(--ink);
+}
+
+.dl-theme[aria-pressed="true"] .dl-switch::after {
+	translate: 18px 0;
+	background: var(--paper);
+}
+
+.dl-theme:hover {
+	background-color: var(--mist);
+}
+
+.dl-theme:focus-visible {
+	box-shadow: inset 0 0 0 3px var(--orange);
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.dl-switch,
+	.dl-switch::after {
+		transition: none;
+	}
 }
 
 :root[data-theme="dark"] .v-home .hb .wf-row .input,
@@ -748,11 +844,6 @@ body.is-home .hd-search {
 .dl-item:hover {
 	background-color: var(--mist);
 	transition: background-color var(--ease);
-}
-
-.dl-item .ic {
-	flex: none;
-	color: var(--graphite);
 }
 
 .dl-item[aria-current="page"] {
@@ -3245,9 +3336,19 @@ body.has-sticky .ft {
 	margin-top: 32px;
 }
 
+/* The same four groups as the menu: two by two on tablets, one row of four on desktops. */
 @media (min-width: 600px) {
 	.ft-cols {
-		grid-template-columns: repeat(3, minmax(0, 1fr));
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+}
+
+@media (min-width: 1000px) {
+	.ft-cols {
+		grid-template-columns: repeat(4, minmax(0, 1fr));
+	}
+	.ft .ft-cols ul {
+		grid-template-columns: minmax(0, 1fr);
 	}
 }
 
@@ -3770,5 +3871,26 @@ h3,
 	.plate--hero,
 	.letter {
 		border-radius: 0 !important;
+	}
+}
+
+/* The desktop rail is always on screen, so it drops the doors' explaining lines and
+   tightens to pointer-sized rows: the whole menu, dark mode included, fits a laptop screen. */
+@media (min-width: 1100px) {
+	#rail .dl-door-sub {
+		display: none;
+	}
+	#rail .dl-item.dl-door {
+		min-height: 44px;
+		padding: 6px 20px;
+	}
+	#rail .dl-door-label {
+		font-size: 17px;
+	}
+	#rail .dl-item {
+		min-height: 40px;
+	}
+	#rail .dl-theme {
+		min-height: 48px;
 	}
 }
