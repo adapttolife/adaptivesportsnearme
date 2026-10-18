@@ -243,7 +243,7 @@ Found along the way. These may be worth removing or changing rather than linking
 ## Also noticed
 
 - **GLASA Wheelchair Tennis** (organization, staging `5b0a97d9`) is placed in Lake Forest, GLASA's office. Its
-  tennis is played at the A.C. Nielsen Tennis Center, 530 Hibbard Rd, Winnetka (GLASA's event pages). Near-me
+  tennis is played at the A.C. Nielsen Tennis Center in Winnetka (GLASA's event pages). Near-me
   searches use the listing's place, so Winnetka may be the better location. Its website,
   `glasa.org/sports-programs/`, is right.
 - Some re-imported rows have different ids in staging and live (Rockland Community Tennis Association: staging
