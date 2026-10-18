@@ -865,9 +865,10 @@ export function emptyState({ title, body, actions = [], image } = {}) {
 }
 
 /** The letter, inline only (id="letter"). */
-export function letterBlock({ source = "page" } = {}) {
+export function letterBlock({ source = "page", heading = true } = {}) {
   const i = uid("em");
-  return `<section class="letter" id="letter" aria-labelledby="${i}-h"><h2 id="${i}-h" tabindex="-1">Get the letter</h2><p>New programs, grants and events, when there is something worth sending. No spam, unsubscribe any time.</p>
+  // heading: false on /letter, where the page's own h1 already says "Get the letter".
+  return `<section class="letter" id="letter" ${heading ? `aria-labelledby="${i}-h"><h2 id="${i}-h" tabindex="-1">Get the letter</h2>` : 'aria-label="Get the letter">'}<p>New programs, grants and events, when there is something worth sending. No spam, unsubscribe any time.</p>
 <form class="letter-form" data-letter data-send="/api/subscribe" data-source="asnm-letter-${esc(source)}" data-done="You're on the list. We'll write when there is something worth sending." novalidate><div class="field"><label for="${i}">Email</label><div class="letter-row"><input id="${i}" name="em" type="email" autocomplete="email" placeholder="name@example.com" required data-error="Enter an email address, like name@example.com."><button class="btn btn--ink" type="submit">Subscribe</button></div></div><input name="company" tabindex="-1" autocomplete="off" class="hpot" aria-hidden="true"><label class="check"><input type="checkbox" name="beta"><span>I want the first look at new features</span></label></form></section>`;
 }
 
@@ -979,7 +980,7 @@ export function communityHeader({ kind = "sport", key, st, title, line, count, a
 
 /** The desktop aside. */
 export function aboutBox() {
-  return `<div class="abox"><h2>About this directory</h2><p>Free to use, no account needed. This directory is new and still growing.</p><a class="tlink" href="/about">How we check listings</a></div><div class="abox"><h2>Help build this</h2><div class="btns btns--stack">${btn("Add a program", "/add/program", "line")}${btn("Claim your organization", "/help", "line")}</div></div>`;
+  return `<div class="abox"><h2>About this directory</h2><p>Free, no account needed. Every listing shows when we last checked it.</p><a class="tlink" href="/about">How we check listings</a></div><div class="abox"><h2>Help build this</h2><div class="btns btns--stack">${btn("Add a program", "/add/program", "line")}${btn("Claim your organization", "/help", "line")}</div></div>`;
 }
 
 /** Inline place search (home, "place not found"): input with type-ahead, Search, Use my location. */
@@ -1026,8 +1027,8 @@ export function drawerList(active = "") {
     `<div class="dl-sec dl-doors"><h2 class="sr">Find</h2><ul>`
       + door("near", near, "Programs near you", place ? "Near " + place : "Search a city, state or ZIP")
       + door("sports", "/sports", "Sports", "Find programs by sport")
-      + door("grants", "/grants", "Grants", "Money for gear, travel and programs")
-      + door("events", "/events", "Events", "Clinics, tryouts and game days")
+      + door("grants", "/grants", "Grants", "Money for gear, travel and fees")
+      + door("events", "/events", "Events", "Clinics, tryouts, games and meetups")
       + door("resources", "/resources", "Guides", "Getting started, and life beyond sports")
       + `</ul></div>`,
     sec("Browse", item("states", "/states", "States") + item("organizations", "/organizations", "Organizations")),
@@ -1055,7 +1056,7 @@ export function footer() {
 <div class="ft-cols"><div><h2 class="ft-h">Find</h2><ul>${near ? li("Programs near you", near) : `<li><button type="button" data-open="search">Programs near you</button></li>`}${li("Sports", "/sports")}${li("Grants", "/grants")}${li("Events", "/events")}${li("Guides", "/resources")}</ul></div>
 <div><h2 class="ft-h">Browse</h2><ul>${li("States", "/states")}${li("Organizations", "/organizations")}</ul></div>
 <div><h2 class="ft-h">Help build this</h2><ul>${li("Add a program", "/add/program")}${li("Add an event", "/add/event")}${li("Claim your organization", "/help")}</ul></div>
-<div><h2 class="ft-h">About this directory</h2><ul>${li("How we check listings", "/about")}${li("Get the letter", "/letter")}${li("Accessibility", "/about")}</ul></div></div>
+<div><h2 class="ft-h">About this directory</h2><ul>${li("How we check listings", "/about")}${li("Get the letter", "/letter")}${li("Accessibility", "/about#accessibility")}</ul></div></div>
 <div class="ft-fine"><p class="ft-fine">Made with <span role="img" aria-label="love">❤️</span> by <a href="https://adapttolife.org">Adapt To Life</a>. © 2026</p></div></div>`;
 }
 
@@ -1502,7 +1503,14 @@ async function render({ force = false } = {}) {
     scrollTo(0, Math.max(0, Math.min(prevY, top - ($("#top") ? $("#top").offsetHeight : 0))));   // below the sticky header
   } else {
     try { sessionStorage.removeItem(moreKey); } catch (_) {}
-    scrollTo(0, 0);
+    // A link to a section (/about#accessibility) lands on that section, below the sticky header.
+    const id = location.hash.length > 1 && !location.hash.startsWith("#/") ? decodeURIComponent(location.hash.slice(1)) : "";
+    const target = id ? document.getElementById(id) : null;
+    if (target && main.contains(target)) {
+      scrollTo(0, Math.max(0, Math.round(target.getBoundingClientRect().top + scrollY) - ($("#top") ? $("#top").offsetHeight : 0) - 16));
+      focusEl = $("h2, h3", target) || target;
+      if (!focusEl.hasAttribute("tabindex")) focusEl.setAttribute("tabindex", "-1");
+    } else scrollTo(0, 0);
   }
 
   if (!FIRST) {

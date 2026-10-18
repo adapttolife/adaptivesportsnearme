@@ -88,16 +88,16 @@ export async function render(ctx) {
     const pool = s ? D.items.filter((p) => p.key === s) : D.items;
     body += `<section class="sec">${A.emptyState(s ? {
       title: `No ${sLow} listed in ${stName} yet.`,
-      body: "This directory is new and still growing. If you know one, tell us and a person will check it.",
+      body: "Know one? Tell us and we'll check it.",
       actions: [{ label: `See every sport in ${stName}`, href: hrefFor(st), attrs: "data-replace" }, { label: "Tell us about one", href: "/add/program" }],
     } : {
       title: `No programs listed in ${stName} yet.`,
-      body: "This directory is new and still growing. If you know one, tell us and a person will check it.",
+      body: "Know one? Tell us and we'll check it.",
       actions: [{ label: "Tell us about one", href: "/add/program" }, { label: "Browse by state", href: "/states" }],
     })}</section>`;
     const groups = A.nearestOutside({ kind: "state", state: st, coords: null, city: null }, pool);
     if (groups.length) {
-      body += `<section class="sec" aria-labelledby="st-out">${A.sectionHead({ title: `Nearest ${s ? sLow : "programs"} outside ${stName}`, id: "st-out", sub: "Nearest states first. A program with no single city counts from the middle of its state." })}${groups.map((g) => grp(A.stateName(g.state), g.items, { single: !!s, outside: true })).join("")}</section>`;
+      body += `<section class="sec" aria-labelledby="st-out">${A.sectionHead({ title: `Nearest ${s ? sLow : "programs"} outside ${stName}`, id: "st-out", sub: "Nearest states first. An organization with no single city counts from the middle of its state." })}${groups.map((g) => grp(A.stateName(g.state), g.items, { single: !!s, outside: true })).join("")}</section>`;
     }
   }
 

@@ -171,7 +171,7 @@ export async function render(ctx) {
     actions.push({ label: "Tell us about one", href: "/add/program" });
     empty = `<div class="nr-empty">${A.emptyState({
       title: `No ${what} near ${city} yet`,
-      body: "This directory is new and still growing.",
+      body: "Know one? Tell us and we'll check it.",
       actions,
     })}</div>`;
     const out = A.nearestOutside(where, pool);

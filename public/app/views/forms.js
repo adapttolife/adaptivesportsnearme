@@ -82,7 +82,7 @@ ${field({ name: "url", label: "Event website", type: "url", required: true, auto
 ${field({ name: "org", label: "Who's running it", auto: "organization" })}
 </fieldset>
 <fieldset class="fm-set"><legend>About you</legend>
-${field({ name: "em", label: "Your email (optional)", type: "email", auto: "email", hint: "Only if you'd like a receipt or we may write with a question. Never shown." })}
+${field({ name: "em", label: "Your email (optional)", type: "email", auto: "email", hint: "Add it for a receipt, or if we may write with a question. Never shown." })}
 ${field({ name: "notes", label: "Notes", type: "textarea" })}
 </fieldset>${honeypot}${submit("Send for review")}</form>`;
   return page({

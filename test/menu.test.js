@@ -27,7 +27,7 @@ function inOrder(text, marks, what) {
 test("the menu leads with five doors, then Browse, Help build this, About, and dark mode last", () => {
   inOrder(menu, [
     '"Programs near you"', '"Sports", "Find programs by sport"',
-    '"Grants", "Money for gear, travel and programs"', '"Events", "Clinics, tryouts and game days"',
+    '"Grants", "Money for gear, travel and fees"', '"Events", "Clinics, tryouts, games and meetups"',
     '"Guides", "Getting started, and life beyond sports"',
     'sec("Browse"', '"States"', '"Organizations"',
     'sec("Help build this"', '"Add a program"', '"Add an event"', '"Claim your organization"',

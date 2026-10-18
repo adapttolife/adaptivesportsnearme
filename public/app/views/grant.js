@@ -39,7 +39,7 @@ export async function render(ctx) {
   const amountText = gi.amount || (isVaries ? "Amount varies" : "Amount: see their site");
   const amountFact = gi.amount || (isVaries ? "Amount varies" : "Not listed. See their site.");
   const deadlineFact = cap(gi.deadlineText.replace(/^Deadline:\s*/, ""));
-  const who = g.audience === "program" ? "Programs" : "Athletes";
+  const who = g.audience === "program" ? "Organizations" : "Athletes";
   const aud = g.audience === "program" ? "program" : "athlete";
   const listHref = aud === "athlete" ? "/grants" : "/grants?a=program";
   const url = g.url && /^https?:\/\//i.test(g.url) ? g.url : null;

@@ -36,7 +36,7 @@ function nearestBlock(key, st, pool) {
   const groups = A.nearestOutside({ kind: "state", state: st, coords: null, city: null }, pool);
   if (!groups.length) return "";
   const name = lc(A.sportName(key));
-  return `<section class="sec" aria-labelledby="sp-out">${A.sectionHead({ title: `Nearest ${name} outside ${A.stateName(st)}`, id: "sp-out", sub: "Nearest states first. A program with no single city counts from the middle of its state." })}${groups.map((g) => `<div class="grp"><div class="grp-hd"><h3 class="grp-h">${A.esc(A.stateName(g.state))}</h3></div><div class="rows">${g.items.map((p) => A.programRow(p, { single: true, outside: true })).join("")}</div></div>`).join("")}</section>`;
+  return `<section class="sec" aria-labelledby="sp-out">${A.sectionHead({ title: `Nearest ${name} outside ${A.stateName(st)}`, id: "sp-out", sub: "Nearest states first. An organization with no single city counts from the middle of its state." })}${groups.map((g) => `<div class="grp"><div class="grp-hd"><h3 class="grp-h">${A.esc(A.stateName(g.state))}</h3></div><div class="rows">${g.items.map((p) => A.programRow(p, { single: true, outside: true })).join("")}</div></div>`).join("")}</section>`;
 }
 
 /** The sport in plain words (public/app/sport-guides.js): what it is always visible, then
@@ -78,14 +78,14 @@ function programsTab(key, st, pool) {
     } else {
       body = `<section class="sec sec--first">${A.emptyState({
         title: `No ${low} listed in ${A.stateName(st)} yet.`,
-        body: "This directory is new and still growing. If you know one, tell us and a person will check it.",
+        body: "Know one? Tell us and we'll check it.",
         actions: [{ label: `See ${low} everywhere`, href: hrefFor(key), attrs: "data-replace" }, { label: "Tell us about one", href: "/add/program" }],
       })}</section>${nearestBlock(key, st, pool)}`;
     }
   } else if (!pool.length) {
     body = `<section class="sec sec--first">${A.emptyState({
       title: `No ${low} listed yet`,
-      body: "This directory is new and still growing. Know a program? Add it and a person will check it before it goes up.",
+      body: "Know one? Tell us and we'll check it.",
       actions: [{ label: "Tell us about one", href: "/add/program" }, { label: "Browse sports", href: "/sports" }],
     })}</section>`;
   } else {
@@ -171,7 +171,7 @@ export async function render(ctx) {
   } else {
     body = `<section class="sec sec--first">${A.emptyState({
       title: `No ${low} events posted yet`,
-      body: "Know of a clinic, tryout or game day coming up? Add it and a person will check it before it goes live.",
+      body: "Know one coming up? Tell us and we'll check it.",
       actions: [{ label: "Add an event", href: "/add/event" }, { label: "Get the letter", href: "", kind: "line", attrs: 'data-jump="letter"' }],
       image: "event",
     })}</section>`;
