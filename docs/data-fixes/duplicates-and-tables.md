@@ -20,7 +20,7 @@ production changes: https://asnm-review.adapt-to-life.workers.dev/near/Brandon%2
 | # | When | Who | Step | Rehearsed on a copy of production |
 |---|---|---|---|---|
 | 1 | Now | Faisal | Run list 1: `duplicates_1_merge_now.sql` | 2,877 to 2,802 organizations, nothing a visitor sees lost but duplicates |
-| 2 | Now | Faisal | Run `staging_only_into_production.sql`: 173 listings that only staging has | +129 organizations, +41 programs |
+| 2 | Done 2026-10-18 | Faisal | Ran `staging_only_into_production.sql`: 173 listings that only staging has. The file was removed afterwards: it carried the private email and phone columns | +129 organizations, +41 programs |
 | 3 | Now | Faisal | Rebuild staging from production: `scripts/rebuild-staging-from-production.sh` (dry run, then `--fire`) | staging matches production exactly; restore tested |
 | 4 | Now | Faisal reviews | Merge PR #68: programs show in search as places | 2,616 listings, 723 of them programs |
 | 5 | Now | Faisal | Assign organizations to the waiting programs, and work list 3 (section 3) | 579 waiting (step 6 attaches 9 more on its own); 97 groups to judge, 91 shown on the site |
@@ -74,7 +74,7 @@ Every other table, column and index is the same in both.
 - **Staging has listings production doesn't.** 164 organizations and 9 programs that can be listed have no twin in
   production. Most were added on 2026-08-23 and 2026-08-21: NFL-team wheelchair football, adaptive pickleball,
   goalball, soccer. They're in `staging-only-worth-keeping.csv`, and
-  `db/maintenance/staging_only_into_production.sql` copies them into production (step 2): 129 as organizations, 41 as
+  `staging_only_into_production.sql` copied them into production (step 2, run 2026-10-18, file since removed because it carried private contact columns): 129 as organizations, 41 as
   programs (34 under the production organization that runs them, like the Kansas City Chiefs team under Midwest
   Adaptive Sports), with the sources they came from. 3 need a person to pick the parent: Lakeshore Demolition
   Wheelchair Rugby, Birmingham Hammers Wheelchair Football and a Challenged Athletes Foundation clinics row. Some of

@@ -1,6 +1,6 @@
 # Organization descriptions
 
-- **Status:** draft
+- **Status:** approved (pilot: Alec read 25, "all good", 2026-10-18)
 - **Owner:** Alec (decides) · Karen (editor, approves batches) · Faisal (data lane: the only writer to production D1)
 - **Depends on:** #80 (notes with contact details hidden without consent)
 

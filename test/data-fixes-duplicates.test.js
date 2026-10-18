@@ -53,14 +53,8 @@ test("the count check only reads", () => {
   for (const x of statements(counts)) assert.match(x, /^SELECT\b/, x.slice(0, 60));
 });
 
-test("the staging import only inserts, and a program whose parent is missing waits under the placeholder", () => {
-  const s = statements(read("db/maintenance/staging_only_into_production.sql"));
-  for (const x of s) assert.match(x, /^INSERT OR IGNORE INTO (data_sources|organizations|programs|organization_data_sources) /, x.slice(0, 70));
-  const programs = s.filter((x) => x.startsWith("INSERT OR IGNORE INTO programs"));
-  assert.equal(programs.length, 41);
-  for (const p of programs) assert.match(p, /COALESCE\(\(SELECT id FROM organizations WHERE id = '[^']+'\), 'a461f29b-0b89-4e17-b879-6a80e0abd101'\)/);
-  assert.equal(s.filter((x) => x.startsWith("INSERT OR IGNORE INTO organizations")).length, 129);
-});
+// The staging import (step 2) ran on 2026-10-18; its file was removed afterwards because it
+// carried private contact columns. test/no-contact-in-data-files.test.js keeps it that way.
 
 test("list 3's mechanical part guards every delete, insert and move", () => {
   const s = statements(read("db/maintenance/duplicates_3_mechanical.sql"));
