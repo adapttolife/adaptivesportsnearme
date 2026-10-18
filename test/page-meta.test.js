@@ -37,22 +37,20 @@ test("the Worker serves the same title and description the page sets", async () 
     ["/about", PAGES.about],
     ["/add/program", PAGES.addProgram],
     ["/states/FL", stateMeta("Florida")],
-    ["/sports/tennis", null],
+    ["/sports/tennis", sportMeta({ key: "tennis", name: "Tennis", low: "tennis" })],
   ];
   for (const [path, meta] of cases) {
     const url = new URL("https://example.com" + path);
     const res = await servePage(new Request(url), env, url);
     const html = await res.text();
     const title = html.match(/<title>([^<]*)<\/title>/)[1].replace(/&#39;/g, "'");
-    if (meta) {
-      assert.equal(title, site(meta.title), path);
-      assert.ok(html.includes(`content="${meta.description.replace(/'/g, "&#39;")}"`), `${path} description`);
-    } else assert.equal(title, site(sportMeta({ name: "Tennis", low: "tennis" }).title), path);
+    assert.equal(title, site(meta.title), path);
+    assert.ok(html.includes(`content="${meta.description.replace(/'/g, "&#39;")}"`), `${path} description`);
   }
 });
 
 test("dynamic pages read as one sentence each, with no dashes", () => {
-  const all = [nearMeta("Tampa, FL", null), nearMeta("Tampa, FL", { name: "Tennis", low: "tennis" }), sportMeta({ name: "Tennis", low: "tennis", lead: "Tennis on a regular court.", state: "Ohio" }),
+  const all = [nearMeta("Tampa, FL", null), nearMeta("Tampa, FL", { name: "Tennis", low: "tennis" }), sportMeta({ key: "tennis", name: "Tennis", low: "tennis", state: "Ohio" }),
     stateMeta("Ohio", "tennis"), organizationMeta({ name: "BORP", sport: "Cycling", place: "Berkeley, CA" }), grantMeta({ name: "Access Grant", source: "Challenged Athletes Foundation" }), ...Object.values(PAGES), HOME];
   for (const m of all) for (const s of [m.title, m.description]) assert.doesNotMatch(s, /[–—]|  |\.\./, s);
 });

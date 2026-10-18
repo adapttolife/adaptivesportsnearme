@@ -10,7 +10,6 @@
 // (ENV_NAME=production) asks to be indexed.
 import { getOrg, getProgram, getGrant, directorySnapshot, programsSnapshot } from "./data.js";
 import { SPORT_NAMES } from "./sport-names.js";
-import { GUIDES } from "../public/app/sport-guides.js";
 import { isListable } from "../public/app/listable.js";
 import { HOME, PAGES, nearMeta, sportMeta, stateMeta, organizationMeta, programMeta, grantMeta } from "../public/app/page-meta.js";
 import { HOME_CARD, PAGE_CARDS, sportCard, stateCard, listingCard, CARD_WIDTH, CARD_HEIGHT } from "./share-cards.js";
@@ -59,8 +58,7 @@ const ROUTES = [
     if (!name) return notFound();
     const low = m[1] === "multi" ? "multi-sport" : name.toLowerCase();
     // The guide's first sentence says what the sport is before the directory line (search snippets).
-    const lead = GUIDES[m[1]] ? GUIDES[m[1]].what.split(/(?<=\.)\s+/)[0] : "";
-    return { ...sportMeta({ name, low, lead }), image: sportCard(m[1]) };
+    return { ...sportMeta({ key: m[1], name, low }), image: sportCard(m[1]) };
   }],
   [/^\/states\/?$/, () => ({ ...PAGES.states })],
   [/^\/states\/([A-Za-z]{2})\/?$/, (m) => {

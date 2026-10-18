@@ -178,7 +178,7 @@ export async function render(ctx) {
     })}</section>`;
   }
 
-  const meta = sportMeta({ name, low, state: st ? A.stateName(st) : "" });
+  const meta = sportMeta({ key, name, low, state: st ? A.stateName(st) : "" });
   return {
     title: site(meta.title),
     description: meta.description,

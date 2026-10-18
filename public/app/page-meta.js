@@ -4,6 +4,8 @@
    Titles here are short; site() adds " · Adaptive Sports Near Me". No DOM, no fetch:
    both sides import this file. */
 
+import { GUIDES } from "./sport-guides.js";
+
 export const SITE = "Adaptive Sports Near Me";
 export const site = (title) => `${title} · ${SITE}`;
 
@@ -44,8 +46,10 @@ export function nearMeta(place, sport) {
   };
 }
 
-/** /sports/<key>, optionally narrowed to a state. lead: the guide's first sentence, or "". */
-export function sportMeta({ name, low, lead = "", state = "" }) {
+/** /sports/<key>, optionally narrowed to a state. The description opens with the first
+    sentence of the sport's guide (public/app/sport-guides.js), when it has one. */
+export function sportMeta({ key, name, low, state = "" }) {
+  const lead = GUIDES[key] ? GUIDES[key].what.split(/(?<=\.)\s+/)[0] : "";
   return {
     title: `${name}${state ? ` in ${state}` : ""}: adaptive programs, grants and events`,
     description: `${lead ? lead + " " : ""}Find adaptive ${low} programs, grants and events ${state ? `in ${state}` : "near you"}. ${CHECKED}`,
