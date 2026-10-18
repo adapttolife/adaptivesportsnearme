@@ -1,0 +1,11 @@
+blank_issues_enabled: true
+contact_links:
+  - name: A listing is wrong or missing
+    url: https://adaptivesportsnearme.com/help
+    about: Use Suggest a fix on the listing, or Add a program. A person checks every one. No GitHub account needed.
+  - name: An idea for a new tool
+    url: https://github.com/adapttolife/adaptivesportsnearme/discussions/categories/ideas
+    about: Tell us the tool you wish existed.
+  - name: A question
+    url: https://github.com/adapttolife/adaptivesportsnearme/discussions/categories/q-a
+    about: Ask anything about the site or the code.
