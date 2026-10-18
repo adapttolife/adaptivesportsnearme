@@ -7,6 +7,7 @@ import { cachedCount } from "./read-cache.js";
 import "../public/listing-art.js";
 import { listingSport } from "../public/app/listing-sport.js";
 import { isListable } from "../public/app/listable.js";
+import { publicText } from "./public-text.js";
 
 const ListingArt = globalThis.ListingArt;
 
@@ -55,8 +56,9 @@ function rowToProgram(r, dist) {
     lng: publicityConsent ? r.lng : null,
     geoPrecision: publicityConsent ? r.geo_precision : null,
     publicityConsent,
-    desc: r.description,
-    cost: r.cost_note,
+    // Contact details in notes show only with the organization's yes (src/public-text.js).
+    desc: publicText(r.description, publicityConsent),
+    cost: publicText(r.cost_note, publicityConsent),
     equipment: r.equipment_provided === 1 ? "Provided" : r.equipment_provided === 0 ? "Bring your own" : null,
     ages: r.ages,
     quality: r.data_quality_rating,
