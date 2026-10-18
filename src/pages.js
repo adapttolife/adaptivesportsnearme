@@ -110,6 +110,7 @@ const ROUTES = [
   [/^\/resources\/veteran-owned-businesses\/?$/, () => ({ ...PAGES.veteranBusinesses, image: PAGE_CARDS["veteran-owned-businesses"] })],
   [/^\/letter\/confirmed\/?$/, () => ({ ...PAGES.letterConfirmed, noindex: true })],
   [/^\/letter\/?$/, () => ({ ...PAGES.letter })],
+  [/^\/build\/?$/, () => ({ ...PAGES.build })],
 ];
 
 function notFound(title = PAGES.notFound.title) {
@@ -148,7 +149,7 @@ const VIEWS = [
   [/^\/states$/, "states"], [/^\/states\/[^/]+$/, "state"], [/^\/organizations$/, "organizations"], [/^\/organizations\/[^/]+$/, "program"], [/^\/programs$/, "programs"], [/^\/programs\/[^/]+$/, "program-detail"],
   [/^\/grants$/, "grants"], [/^\/grants\/[^/]+$/, "grant"], [/^\/events$/, "events"],
   [/^\/(add\/program|add\/event|update\/[^/]+)$/, "forms"], [/^\/resources\/veteran-owned-businesses$/, "vob"],
-  [/^\/letter\/confirmed$/, "letter-confirmed"], [/^\/(help|about|resources|letter)$/, "help"],
+  [/^\/letter\/confirmed$/, "letter-confirmed"], [/^\/(help|about|resources|letter|build)$/, "help"],
 ];
 export function preloadHints(pathname) {
   const path = pathname.length > 1 ? pathname.replace(/\/+$/, "") : "/";

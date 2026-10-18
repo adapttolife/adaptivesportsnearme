@@ -32,7 +32,7 @@
       "</div>";
     var browse = group("Browse", row("/states", "States") + row("/organizations", "Organizations"));
     var build = group("Help build this", row("/add/program", "Add a program") + row("/add/event", "Add an event") + row("/help", "Claim your organization"));
-    var about = group("About this directory", row("/about", "How we check listings") + row("/blog", "Blog") +
+    var about = group("About this directory", row("/about", "How we check listings") + row("/blog", "Blog") + row("/build", "Build with us") +
       '<a class="drawer-row-main" href="https://sign.adapttolife.org/waiver?source=asnm"><span class="drawer-row-label">Sign waiver</span></a>');
     // The letter: the same words as the app's letter block.
     var news =

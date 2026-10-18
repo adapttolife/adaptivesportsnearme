@@ -60,6 +60,47 @@ ${card("rs-vob", "veteran-meetup", "Veteran-owned business directories by state"
   return { title: site(PAGES.guides.title), description: PAGES.guides.description, html };
 }
 
+/* ---------- /build: Build with us ----------
+   The project is open source (MIT). Alec, 2026-10-18: "a project people believe in and
+   want to contribute to... make it easy to contribute." Ideas carry no dates: an idea
+   becomes "Live" when it is on the site, never before. */
+const REPO = "https://github.com/adapttolife/adaptivesportsnearme";
+const TOOLS = [
+  { state: "Live", ic: "search", h: "Find programs, grants and events", body: "Search by place or sport. Every listing shows when we last checked it.", href: "/" },
+  { state: "Live", ic: "book-open", h: "Guides", body: "Every sport explained: who plays, what you need and how to start.", href: "/resources" },
+  { state: "Idea", ic: "file-text", h: "Grant helper", body: "Walk an athlete or an organization through a grant application, start to finish, so it gets sent." },
+  { state: "Idea", ic: "trophy", h: "Tournament brackets", body: "Run a bracket for a clinic, a league or a game day, free and right here." },
+  { state: "Idea", ic: "wrench", h: "Gear", body: "Where to find adaptive equipment, what it costs, and who helps pay for it." },
+];
+const WRITE = (subject) => "mailto:hello@adaptivesportsnearme.com?subject=" + encodeURIComponent(subject);
+const HELP = [
+  { ic: "code", h: "Write code", body: "Pick an issue marked good first issue. A person reviews every change before it goes live.", label: "See open issues", href: REPO + "/issues", ext: true },
+  { ic: "square-pen", h: "Fix a listing", body: "No code needed. Add a program we're missing, or suggest a fix on any listing.", label: "Help build this", href: "/help" },
+  { ic: "pencil", h: "Write a guide", body: "Know a sport well? Help us explain it to someone trying it for the first time.", label: "Write to us", href: WRITE("I'd like to write a guide") },
+  { ic: "accessibility", h: "Test it", body: "Use the site with a screen reader, switch control or voice, and tell us what gets in the way.", label: "Write to us", href: WRITE("Accessibility") },
+];
+const HOW = [
+  { ic: "link", h: "In public", body: "The code, the plans and every change are on GitHub for anyone to read." },
+  { ic: "lock", h: "Free to use", body: "MIT license: take it, change it, build on it." },
+  { ic: "badge-check", h: "Checked by people", body: "A person reviews every change before it goes live, and every listing before it's published." },
+];
+function buildPage() {
+  const sec = ({ ic, h, body }, extra = "", tag = "") => `<section class="ab-sec"><span class="ab-ic" aria-hidden="true">${A.icon(ic, 24)}</span><div class="ab-text"><h3>${tag}${A.esc(h)}</h3><p>${A.esc(body)}</p>${extra}</div></section>`;
+  const go = (label, href, ext) => `<a class="tlink" href="${A.esc(href)}"${ext ? ' target="_blank" rel="noopener"' : ""}>${A.esc(label)}${A.icon(ext ? "external-link" : "arrow-right", 18)}${ext ? '<span class="sr"> (opens in a new tab)</span>' : ""}</a>`;
+  const tools = TOOLS.map((t) => sec(t, t.href ? go("Open it", t.href) : "", `<span class="bw-tag${t.state === "Live" ? " is-live" : ""}">${t.state}</span>`)).join("");
+  const help = HELP.map((t) => sec(t, go(t.label, t.href, t.ext))).join("");
+  const html = `<div class="ab bw"><div class="ab-head"><h1 tabindex="-1">Build this with us</h1>
+<p class="bw-lede">Adaptive Sports Near Me is open source. The code is public and free to use, and anyone can help make it better.</p>
+<div class="btns">${A.btn("See the code on GitHub", REPO, "ink", { external: true })}${A.btn("How to contribute", REPO + "/blob/staging/CONTRIBUTING.md", "line", { external: true })}</div></div>
+<h2 class="bw-h">Where we're going</h2><p class="bw-p">The directory is the first tool. We're building the whole bench of tools the adaptive sports community needs, in the open, one at a time.</p>
+<div class="ab-grid">${tools}</div>
+<h2 class="bw-h">What do you see?</h2><p class="bw-p">Tell us the tool you wish existed. The best ideas come from people who play, coach and run programs.</p>
+<div class="btns">${A.btn("Share an idea", WRITE("An idea for Adaptive Sports Near Me"), "ink", { icon: "mail" })}</div>
+<h2 class="bw-h">How you can help</h2><div class="ab-grid">${help}</div>
+<h2 class="bw-h">How we build</h2><div class="ab-grid">${HOW.map((t) => sec(t)).join("")}</div></div>`;
+  return { title: site(PAGES.build.title), description: PAGES.build.description, html };
+}
+
 /* ---------- /letter ---------- */
 function letterPage() {
   const stack = ["basketball", "grant", "event"].map((k) => A.avatar(k, 64)).join("");
@@ -71,6 +112,7 @@ export async function render(ctx) {
   if (ctx.path === "/about") return aboutPage();
   if (ctx.path === "/resources") return resourcesPage();
   if (ctx.path === "/letter") return letterPage();
+  if (ctx.path === "/build") return buildPage();
   return helpPage();
 }
 

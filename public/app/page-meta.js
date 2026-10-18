@@ -30,6 +30,7 @@ export const PAGES = {
   about: { title: "How we check listings", description: "What Verified, Checked by our team and Not verified yet mean, and how we keep every listing current." },
   guides: { title: "Guides", description: "Every adaptive sport explained, and help beyond sports, like veteran-owned business directories by state." },
   veteranBusinesses: { title: "Support Veteran-Owned Businesses", description: "Find veteran-owned businesses in your state, with directories for all 50 states and nationwide." },
+  build: { title: "Build with us", description: "Adaptive Sports Near Me is open source. See where we're going, share an idea, and help build tools for the adaptive sports community." },
   letter: { title: "Get the letter", description: "New programs, grants and events by email, only when there's something worth sending." },
   letterConfirmed: { title: "You're on the list", description: "New programs, grants and events by email, only when there's something worth sending." },
   placeNotFound: { title: "We couldn't find that place", description: "Search by city and state, or a 5-digit ZIP code." },

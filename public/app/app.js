@@ -1034,7 +1034,7 @@ export function drawerList(active = "") {
       + `</ul></div>`,
     sec("Browse", item("states", "/states", "States") + item("organizations", "/organizations", "Organizations")),
     sec("Help build this", item("add-program", "/add/program", "Add a program") + item("add-event", "/add/event", "Add an event") + item("help", "/help", "Claim your organization")),
-    sec("About this directory", item("about", "/about", "How we check listings") + item("letter", "/letter", "Get the letter")),
+    sec("About this directory", item("about", "/about", "How we check listings") + item("letter", "/letter", "Get the letter") + item("build", "/build", "Build with us")),
     `<div class="dl-sec dl-set"><button type="button" class="dl-theme" data-theme-toggle aria-pressed="${dark}"><span>Dark mode</span><span class="dl-switch" aria-hidden="true"></span></button></div>`,
   ].join("");
 }
@@ -1047,6 +1047,7 @@ function activeItem(active) {
   if (a === "state") return "states";
   if (a === "resources" || a.startsWith("resources/")) return "resources";
   if (a.startsWith("letter")) return "letter";
+  if (a === "build") return "build";
   return a;
 }
 
@@ -1057,7 +1058,7 @@ export function footer() {
 <div class="ft-cols"><div><h2 class="ft-h">Find</h2><ul>${near ? li("Programs near you", near) : `<li><button type="button" data-open="search">Programs near you</button></li>`}${li("Sports", "/sports")}${li("Grants", "/grants")}${li("Events", "/events")}${li("Guides", "/resources")}</ul></div>
 <div><h2 class="ft-h">Browse</h2><ul>${li("States", "/states")}${li("Organizations", "/organizations")}</ul></div>
 <div><h2 class="ft-h">Help build this</h2><ul>${li("Add a program", "/add/program")}${li("Add an event", "/add/event")}${li("Claim your organization", "/help")}</ul></div>
-<div><h2 class="ft-h">About this directory</h2><ul>${li("How we check listings", "/about")}${li("Get the letter", "/letter")}${li("Accessibility", "/about#accessibility")}</ul></div></div>
+<div><h2 class="ft-h">About this directory</h2><ul>${li("How we check listings", "/about")}${li("Get the letter", "/letter")}${li("Build with us", "/build")}${li("Accessibility", "/about#accessibility")}</ul></div></div>
 <div class="ft-fine"><p class="ft-fine">Made with <span role="img" aria-label="love">❤️</span> by <a href="https://adapttolife.org">Adapt To Life</a>. © 2026</p></div></div>`;
 }
 
@@ -1271,7 +1272,7 @@ const ROUTES = [
   ["/states", "states"], ["/states/:st", "state"], ["/organizations", "organizations"], ["/organizations/:id", "program"], ["/programs", "programs"], ["/programs/:id", "program-detail"],
   ["/grants", "grants"], ["/grants/:id", "grant"], ["/events", "events"],
   ["/add/program", "forms"], ["/add/event", "forms"], ["/update/:id", "forms"],
-  ["/help", "help"], ["/about", "help"], ["/resources/veteran-owned-businesses", "vob"], ["/resources", "help"], ["/letter", "help"], ["/letter/confirmed", "letter-confirmed"],
+  ["/help", "help"], ["/about", "help"], ["/resources/veteran-owned-businesses", "vob"], ["/resources", "help"], ["/letter", "help"], ["/build", "help"], ["/letter/confirmed", "letter-confirmed"],
 ];
 const OVERLAY_KEYS = new Set(["map", "open"]);
 const MODS = {}, CSS_DONE = {};
