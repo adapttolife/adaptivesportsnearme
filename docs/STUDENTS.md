@@ -44,7 +44,7 @@ One application Worker, `adaptivesportsnearme`, serves both versions:
 
 Cloudflare Builds should upload staging with
 `npx wrangler versions upload --config wrangler.preview.json --preview-alias staging`.
-Restrict that preview build to the `staging` branch. See [README](../README.md#deploy).
+Restrict that preview build to the `staging` branch. See [README](MAINTAINERS.md#deploy).
 Never run `wrangler deploy --env staging`: both configs now name the same Worker,
 so that command would replace the production deployment. Students must not push to `main`.
 The workflow in `docs/deploy-staging.workflow.yml` is only an inactive historical stub.

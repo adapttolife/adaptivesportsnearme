@@ -1,0 +1,33 @@
+name: Something doesn't work
+description: A page breaks, looks wrong, or gets in the way of a screen reader, keyboard or other assistive technology.
+labels: ["bug"]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What you did, what you expected, and what you got instead.
+    validations:
+      required: true
+  - type: input
+    id: page
+    attributes:
+      label: Which page?
+      placeholder: https://adaptivesportsnearme.com/sports/tennis
+    validations:
+      required: true
+  - type: input
+    id: device
+    attributes:
+      label: Device and browser
+      placeholder: iPhone 15, Safari
+  - type: input
+    id: assistive
+    attributes:
+      label: Assistive technology, if any
+      placeholder: VoiceOver, NVDA, switch control, zoom at 200%...
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots
+      description: Optional. Drag images here.
