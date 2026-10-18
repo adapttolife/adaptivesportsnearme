@@ -40,7 +40,7 @@ export async function render(ctx) {
     : "";
 
   const html = `<div class="gband">
-  <div class="gb-text"><h1 tabindex="-1">Grants</h1><p>Money for adaptive sports from the groups that give it. You apply on their site.</p></div>
+  <div class="gb-text"><h1 tabindex="-1">Grants</h1><p>Money for gear, travel and fees, from the groups that give it. You apply on their site.</p></div>
   <div class="gb-art">${A.plate("grant", { kind: "tile" })}</div>
 </div>
 ${seg}

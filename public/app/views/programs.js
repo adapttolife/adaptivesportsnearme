@@ -16,7 +16,7 @@ export async function render(ctx) {
   return {
     title: site(PAGES.programs.title),
     description: PAGES.programs.description,
-    html: `<section class="sec"><h1 tabindex="-1">Programs</h1><p>Browse the ${(body.total ?? items.length).toLocaleString()} programs across all organizations.</p><label for="program-search">Search programs</label><input id="program-search" type="search" autocomplete="off" placeholder="Program name"><div id="program-results">${rows(items)}</div></section>`,
+    html: `<section class="sec"><h1 tabindex="-1">Programs</h1><p>All ${(body.total ?? items.length).toLocaleString()} programs in the directory, with the organization that runs each one.</p><label for="program-search">Search programs</label><input id="program-search" type="search" autocomplete="off" placeholder="Program name"><div id="program-results">${rows(items)}</div></section>`,
   };
 }
 

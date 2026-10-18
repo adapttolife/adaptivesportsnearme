@@ -869,7 +869,7 @@ export function emptyState({ title, body, actions = [], image } = {}) {
 export function letterBlock({ source = "page", heading = true } = {}) {
   const i = uid("em");
   // heading: false on /letter, where the page's own h1 already says "Get the letter".
-  return `<section class="letter" id="letter" ${heading ? `aria-labelledby="${i}-h"><h2 id="${i}-h" tabindex="-1">Get the letter</h2>` : 'aria-label="Get the letter">'}<p>New programs, grants and events, when there is something worth sending. No spam, unsubscribe any time.</p>
+  return `<section class="letter" id="letter" ${heading ? `aria-labelledby="${i}-h"><h2 id="${i}-h" tabindex="-1">Get the letter</h2>` : 'aria-label="Get the letter">'}<p>New programs, grants and events by email, only when there's something worth sending. Unsubscribe any time.</p>
 <form class="letter-form" data-letter data-send="/api/subscribe" data-source="asnm-letter-${esc(source)}" data-done="You're on the list. We'll write when there is something worth sending." novalidate><div class="field"><label for="${i}">Email</label><div class="letter-row"><input id="${i}" name="em" type="email" autocomplete="email" placeholder="name@example.com" required data-error="Enter an email address, like name@example.com."><button class="btn btn--ink" type="submit">Subscribe</button></div></div><input name="company" tabindex="-1" autocomplete="off" class="hpot" aria-hidden="true"><label class="check"><input type="checkbox" name="beta"><span>I want the first look at new features</span></label></form></section>`;
 }
 

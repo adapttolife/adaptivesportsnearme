@@ -43,7 +43,7 @@ export async function render(ctx) {
 
   const html = `<div class="ehead">
   <h1 tabindex="-1">Events</h1>
-  <p>Clinics, tryouts, games and meetups.</p>
+  <p>Clinics, tryouts, games and meetups, soonest first.</p>
 </div>
 ${body}
 ${A.letterBlock({ source: "events" })}`;
