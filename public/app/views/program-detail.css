@@ -253,3 +253,80 @@
 		grid-template-columns: minmax(0, 680px) 340px;
 	}
 }
+
+
+/* The trust line and the "Suggest a fix" row, the same as an organization's page (program.css). */
+/* ================= 8. Link rows ================= */
+.v-program-detail .pg-links {
+	margin-top: 32px;
+	border-top: 1px solid var(--line);
+}
+
+.v-program-detail .pg-link {
+	display: flex;
+	align-items: center;
+	gap: 14px;
+	min-height: 56px;
+	padding: 10px 4px;
+	border-bottom: 1px solid var(--line);
+	text-decoration: none;
+	color: var(--ink);
+}
+
+.v-program-detail .pg-link:hover .pg-link-label {
+	text-decoration: underline;
+	text-underline-offset: 3px;
+}
+
+.v-program-detail .pg-link:focus-visible {
+	box-shadow: var(--focus);
+	border-radius: var(--r);
+}
+
+.v-program-detail .pg-link-ic {
+	display: grid;
+	place-items: center;
+	width: 40px;
+	height: 40px;
+	border-radius: 50%;
+	background: var(--mist);
+	flex: none;
+	color: var(--graphite);
+}
+
+.v-program-detail .pg-link-text {
+	flex: 1;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+}
+
+.v-program-detail .pg-link-label {
+	font-size: 17px;
+	font-weight: 700;
+	line-height: 1.3;
+}
+
+.v-program-detail .pg-link-sub {
+	font-size: 15px;
+	color: var(--muted);
+	line-height: 1.4;
+	margin-top: 2px;
+}
+
+.v-program-detail .pg-link > .ic:last-child {
+	color: var(--muted);
+}
+
+.v-program-detail .pg-fresh {
+	margin-top: 6px;
+	font-size: 15px;
+	font-weight: 500;
+	line-height: 1.45;
+	color: var(--graphite);
+}
+
+.v-program-detail .pg-fresh span + span::before {
+	content: "\00b7";
+	margin: 0 7px;
+}

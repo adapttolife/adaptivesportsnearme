@@ -292,9 +292,13 @@ test("phones use the whole screen; the 90vw cap starts at 768px", () => {
 test("the claim finder and the fix form use the listing's own address", () => {
   const help = read("public/app/views/help.js"), forms = read("public/app/views/forms.js");
   assert.match(help, /A\.programRow\(x\.p, \{\}\)\.replace\(\/href="\[\^"\]\*"\/, `href="\/update\/\$\{A\.esc\(x\.p\.id\)\}\?rel=run"`\)/);
-  assert.match(forms, /const href = "\/organizations\/" \+ p\.id;/);
+  assert.match(forms, /const href = p\.href \|\| "\/organizations\/" \+ p\.id;/);
   const row = between(APP, "export function programRow(", "\n}\n");
-  assert.match(row, /href="\/organizations\/\$\{esc\(p\.id\)\}"/, "a row links to the organization's page");
+  assert.match(row, /href="\$\{esc\(p\.href \|\| "\/organizations\/" \+ p\.id\)\}"/, "a row links to the listing's own page");
+  // An organization's page is /organizations/<id>; only a real program (prog, from the programs
+  // table) has a /programs/<id> page, so an old /programs/<organization id> link never comes back.
+  assert.match(APP, /p\.href = \(p\.prog \? "\/programs\/" : "\/organizations\/"\) \+ encodeURIComponent\(p\.id\);/);
+  assert.match(APP, /prog: !!r\.prog, orgName: r\.org \|\| null, progs: r\.progs \|\| 0,/, "prog comes only from the server's program rows");
   for (const [file, text] of [["help.js", help], ["forms.js", forms]]) assert.doesNotMatch(text, /["`]\/programs\/["`$]/, `${file} builds no /programs/ link for a listing`);
 });
 

@@ -305,3 +305,39 @@ test('/api/listings carries only what lists need, works out each sport, and leav
     for (const leak of ['tennis.example', 'Sports and activities', 'a@b.test', '555-0100', '33602', 'Free', '27.9,', 'verification_month']) assert.ok(!text.includes(leak), `no ${leak} in the slim directory`);
   } finally { sql.close(); }
 });
+
+// Programs are places of their own in the slim directory (Alec, 2026-10-17: people look
+// for a sport at a place). An organization whose programs are listed is shown through
+// them; the placeholder "Organization not yet assigned" is never named.
+test('/api/listings lists programs as places, says who runs them, and never names the placeholder', async () => {
+  const {sql,db} = database();
+  try {
+    const org = sql.prepare("INSERT INTO organizations (id,name,org_type,is_public,status,created_at,updated_at,city,state,website_url,sport,sport_key) VALUES (?,?,?,1,'active','2026-10-01','2026',?,?,?,?,?)");
+    org.run('aaaaaaaa-0000-4000-8000-000000000001','Empath Health','Nonprofit','St. Petersburg','FL','https://empath.example','Veteran meetups','veteran-meetup');
+    org.run('aaaaaaaa-0000-4000-8000-000000000002','Organization not yet assigned','placeholder',null,null,null,null,null);
+    org.run('aaaaaaaa-0000-4000-8000-000000000003','Tampa Tennis','Nonprofit','Tampa','FL','https://tennis.example','Wheelchair Tennis','tennis');
+    const prog = sql.prepare("INSERT INTO programs (id,organization_id,name,sport,sport_key,city,state,website_url,is_public,status,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,1,'active','2026-10-14','2026')");
+    prog.run('bbbbbbbb-0000-4000-8000-000000000001','aaaaaaaa-0000-4000-8000-000000000001','Veterans Coffee Connection','Veteran meetups','veteran-meetup','Brandon','FL','https://empath.example/coffee');
+    prog.run('program-bay-area-outreach','aaaaaaaa-0000-4000-8000-000000000002','Bay Area Outreach & Recreation Program','Multi-sport',null,'Berkeley','CA','https://borp.example');
+    prog.run('bbbbbbbb-0000-4000-8000-000000000003','aaaaaaaa-0000-4000-8000-000000000002','Programs',null,null,null,null,'/programs/');
+    const { listingsSnapshot, getProgram } = await import('../src/data.js');
+    const snap = await listingsSnapshot(db, { places: {} });
+    const by = Object.fromEntries(snap.items.map(p => [p.name, p]));
+    assert.equal(by['Veterans Coffee Connection'].prog, 1);
+    assert.equal(by['Veterans Coffee Connection'].org, 'Empath Health', 'a program says who runs it');
+    assert.equal(by['Veterans Coffee Connection'].city, 'Brandon');
+    assert.equal(by['Empath Health'].progs, 1, 'an organization with listed programs is shown through them');
+    assert.equal(by['Tampa Tennis'].progs, undefined, 'an organization with no programs lists as itself');
+    assert.equal(by['Bay Area Outreach & Recreation Program'].prog, 1);
+    assert.ok(!('org' in by['Bay Area Outreach & Recreation Program']), 'the placeholder is never named');
+    assert.ok(!by['Organization not yet assigned'], 'the placeholder itself is not a listing');
+    assert.ok(!by['Programs'], 'a link scraped from a site menu never ships');
+    const borp = await getProgram(db, 'program-bay-area-outreach');
+    assert.equal(borp.organization, null, "a program's page never names the placeholder");
+    const coffee = await getProgram(db, 'bbbbbbbb-0000-4000-8000-000000000001');
+    assert.equal(coffee.organization.name, 'Empath Health');
+    const res = await worker.fetch(new Request('https://example.test/api/programs/program-bay-area-outreach'), { DB: db }, {});
+    assert.equal(res.status, 200, 'a readable program id loads');
+    assert.equal((await res.json()).program.name, 'Bay Area Outreach & Recreation Program');
+  } finally { sql.close(); }
+});

@@ -254,6 +254,8 @@ function normalize(raw) {
   p.cityFirst = cityShort(p.city);
   p.placed = isPlaced(p);
   p.cityKey = p.cityFirst ? normCity(p.cityFirst) : null;
+  // A program has its own page; an organization has its page at /organizations.
+  p.href = (p.prog ? "/programs/" : "/organizations/") + encodeURIComponent(p.id);
   return p;
 }
 
@@ -267,6 +269,7 @@ function fromApi(r) {
     id: r.id, name: r.name, key: r.key, trio: r.trio || null, city: r.city || null, state: r.state || null,
     lastChecked: r.checked || null, listedAt: r.listed || null, confirmed: !!r.verified, teamChecked: !!r.team,
     lat: c ? c[0] : null, lng: c ? c[1] : null, geo: c ? "city" : (r.state ? "state" : null),
+    prog: !!r.prog, orgName: r.org || null, progs: r.progs || 0,
   };
 }
 /* A listing's own page adds what the lists leave out: website, description, cost, ages,
@@ -324,7 +327,10 @@ export function loadData() {
 
     // Rows that are not programs (a scraped site menu, donation pages) never reach
     // the browser: /api/listings leaves them out (public/app/listable.js).
-    const items = prog.items.map(normalize);
+    // Programs are places of their own. An organization whose programs are listed is
+    // shown through them (progs), so it leaves the lists and maps but keeps its page.
+    const every = prog.items.map(normalize);
+    const items = every.filter((p) => !p.progs);
     const count = {};
     for (const p of items) count[p.key] = (count[p.key] || 0) + 1;
     // Global popularity: sports.json order (its live counts), the six extras slotted in by their own counts.
@@ -333,12 +339,12 @@ export function loadData() {
     SPORT_ORDER = L.SPORTS.slice().sort((a, b) => (live[b] || 0) - (live[a] || 0) ||
       ((jsonOrder.indexOf(a) + 1 || 99) - (jsonOrder.indexOf(b) + 1 || 99)) || a.localeCompare(b));
     const sports = SPORT_ORDER.map((k) => ({ key: k, name: NAMES[k], note: NOTES[k], count: count[k] || 0, family: familyOf(k), pic: picGroup(k) }));
-    const byId = new Map(items.map((p) => [p.id, p]));
+    const byId = new Map(every.map((p) => [p.id, p]));
     const byState = {};
     for (const p of items) if (p.state) (byState[p.state] = byState[p.state] || []).push(p);
     const grants = (gr.items || []).map(grantFromApi).map((g) => ({ ...g, rawName: g.name, name: displayName(g.name) }));
     D = {
-      items, byId, grants, grantById: new Map(grants.map((g) => [g.id, g])), byState,
+      items, byId, orgs: every.filter((p) => !p.prog), grants, grantById: new Map(grants.map((g) => [g.id, g])), byState,
       sports, sportByKey: Object.fromEntries(sports.map((s) => [s.key, s])),
       shapes: st.shapes, centers: st.centers, fits: st.fits || {}, events: (ev.items || []).map(eventFromApi), countByKey: count,
     };
@@ -788,12 +794,13 @@ function outsidePlace(p) {
   return /statewide/i.test(String(p.city || "")) ? `${stateName(p.state)}, statewide` : `${stateName(p.state)}, no single city listed`;
 }
 const placeFor = (p, ctx) => (ctx && ctx.outside) ? outsidePlace(p) : placeText(p);
-const metaText = (p, ctx) => (ctx && ctx.single) ? placeFor(p, ctx) : `${sportName(p.key)} · ${placeFor(p, ctx)}`;
+const runBy = (p) => (p.prog && p.orgName ? ` · ${p.orgName}` : "");
+const metaText = (p, ctx) => ((ctx && ctx.single) ? placeFor(p, ctx) : `${sportName(p.key)} · ${placeFor(p, ctx)}`) + runBy(p);
 
 /** Card for lists that mix sports. ctx: { where, stamp, wide, sameCity } */
 export function programCard(p, ctx = {}) {
   const d = distText(p, ctx), t = trust(p, "short");
-  return `<a class="pcard${ctx.wide ? " is-wide" : ""}" href="/organizations/${esc(p.id)}">${plate(p, { kind: "card", wide: ctx.wide })}<h3 class="pc-name" title="${esc(p.name)}">${esc(p.name)}${vcheck(p)}</h3><p class="meta">${esc(metaText(p, { single: false }))}</p>${d ? `<p class="dist">${esc(d)}</p>` : ""}${t ? `<p class="pc-trust">${t}</p>` : ""}</a>`;
+  return `<a class="pcard${ctx.wide ? " is-wide" : ""}" href="${esc(p.href || "/organizations/" + p.id)}">${plate(p, { kind: "card", wide: ctx.wide })}<h3 class="pc-name" title="${esc(p.name)}">${esc(p.name)}${vcheck(p)}</h3><p class="meta">${esc(metaText(p, { single: false }))}</p>${d ? `<p class="dist">${esc(d)}</p>` : ""}${t ? `<p class="pc-trust">${t}</p>` : ""}</a>`;
 }
 
 /** Row: tile left, then name, meta, distance and trust. ctx: { where, single, sameCity, outside }
@@ -802,10 +809,10 @@ export function programCard(p, ctx = {}) {
 export function programRow(p, ctx = {}, hidden = false) {
   const d = distText(p, ctx), t = trust(p, "short");
   if (ctx.single) {
-    return `<a class="prow prow--c" href="/organizations/${esc(p.id)}"${hidden ? " hidden" : ""}><div class="pr-body"><h3 class="pr-name">${esc(p.name)}${vcheck(p)}</h3><p class="meta">${esc(placeFor(p, ctx))}${d ? `<span class="pr-dist"> · ${esc(d)}</span>` : ""}</p>${t ? `<p class="pr-line">${t}</p>` : ""}</div></a>`;
+    return `<a class="prow prow--c" href="${esc(p.href || "/organizations/" + p.id)}"${hidden ? " hidden" : ""}><div class="pr-body"><h3 class="pr-name">${esc(p.name)}${vcheck(p)}</h3><p class="meta">${esc(placeFor(p, ctx) + runBy(p))}${d ? `<span class="pr-dist"> · ${esc(d)}</span>` : ""}</p>${t ? `<p class="pr-line">${t}</p>` : ""}</div></a>`;
   }
   const line = [d ? `<span class="pr-dist">${esc(d)}</span>` : "", t].filter(Boolean).join(" · ");
-  return `<a class="prow" href="/organizations/${esc(p.id)}"${hidden ? " hidden" : ""}>${plate(p, { kind: "row" })}<div class="pr-body"><h3 class="pr-name">${esc(p.name)}${vcheck(p)}</h3><p class="meta">${esc(metaText(p, ctx))}</p>${line ? `<p class="pr-line">${line}</p>` : ""}</div></a>`;
+  return `<a class="prow" href="${esc(p.href || "/organizations/" + p.id)}"${hidden ? " hidden" : ""}>${plate(p, { kind: "row" })}<div class="pr-body"><h3 class="pr-name">${esc(p.name)}${vcheck(p)}</h3><p class="meta">${esc(metaText(p, ctx))}</p>${line ? `<p class="pr-line">${line}</p>` : ""}</div></a>`;
 }
 
 let UID = 0;
