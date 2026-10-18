@@ -1056,7 +1056,7 @@ export function footer() {
 <div><h2 class="ft-h">Browse</h2><ul>${li("States", "/states")}${li("Organizations", "/organizations")}</ul></div>
 <div><h2 class="ft-h">Help build this</h2><ul>${li("Add a program", "/add/program")}${li("Add an event", "/add/event")}${li("Claim your organization", "/help")}</ul></div>
 <div><h2 class="ft-h">About this directory</h2><ul>${li("How we check listings", "/about")}${li("Get the letter", "/letter")}${li("Accessibility", "/about")}</ul></div></div>
-<div class="ft-fine"><p class="ft-fine">Made with love from <a href="https://adapttolife.org">Adapt To Life</a>. © 2026</p></div></div>`;
+<div class="ft-fine"><p class="ft-fine">Made with <span role="img" aria-label="love">❤️</span> from <a href="https://adapttolife.org">Adapt To Life</a>. © 2026</p></div></div>`;
 }
 
 /** Render output for any unknown route, id or key. */

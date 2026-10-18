@@ -79,13 +79,13 @@ test("dark mode is a switch with its state in aria-pressed, not words", () => {
 });
 
 // Footer copy (Alec, 2026-10-18): a product line that says how to use the site and
-// what to expect, and one credit line. "Less is more"; "Made with love from Adapt To Life."
+// what to expect, and one credit line. "Less is more"; "Made with ❤️ from Adapt To Life."
 test("both footers say what the site does and credit Adapt To Life the same way", () => {
   const line = "Find adaptive sports programs, grants and events by place or sport. Free, no account needed. Every listing shows when we last checked it.";
   const blog = read("src/site-chrome.js");
   for (const [name, src] of [["app", footer], ["blog", blog]]) {
     assert.ok(src.includes(line), `the ${name} footer has the product line`);
-    assert.match(src, /Made with love from <a href="https:\/\/adapttolife\.org"[^>]*>Adapt To Life<\/a>\./, `the ${name} footer credits Adapt To Life`);
+    assert.match(src, /Made with <span role="img" aria-label="love">❤️<\/span> from <a href="https:\/\/adapttolife\.org"[^>]*>Adapt To Life<\/a>\./, `the ${name} footer credits Adapt To Life`);
     assert.ok(!/we don't run them|a project of|open directory/i.test(src), `the ${name} footer drops the old lines`);
   }
 });
