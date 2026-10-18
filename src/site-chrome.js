@@ -11,7 +11,7 @@
 
 import { PRODUCT_LINE } from "../public/app/page-meta.js";
 
-export const NAV_VERSION = "20261014a";
+export const NAV_VERSION = "20261018a";
 
 // Shared presentation lives in public/styles.css.
 
@@ -46,7 +46,7 @@ export function headerHtml() {
       <input id="q" name="q" type="text" placeholder="City, state or ZIP" aria-label="Find programs near a city, state or ZIP">
     </form>
     <div class="hdr-actions">
-      <a class="hdr-add" href="/add/program" aria-label="Add a program" title="Add a program"><i stroke-width="2.2" data-lucide="plus" aria-hidden="true" focusable="false"></i></a>
+      <a class="hdr-add" href="/help" aria-label="Add" title="Add"><i stroke-width="2.2" data-lucide="plus" aria-hidden="true" focusable="false"></i></a>
     </div>
   </div>
 </header>`;

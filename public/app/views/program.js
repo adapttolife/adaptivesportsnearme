@@ -64,7 +64,7 @@ function hero(p) {
   return `<div class="pg-hero has-vtag${label ? " has-stamp" : ""}">
 ${A.plate(p, { kind: "hero" })}
 <button type="button" class="pg-hb pg-back" data-back="${A.esc(backHref(p))}" aria-label="Back">${A.icon("arrow-left", 22)}</button>
-<a class="pg-hb pg-share" href="/organizations/${A.esc(p.id)}?share=1" data-poster="hero" aria-label="Share this organization">${A.icon("share", 20)}</a>
+<a class="pg-hb pg-share" href="/organizations/${A.esc(p.id)}?share=1" data-poster="hero" aria-label="Share this listing">${A.icon("share", 20)}</a>
 <div class="pg-edge">${stamp}${vtag(p)}</div></div>`;
 }
 

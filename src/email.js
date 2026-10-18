@@ -10,8 +10,8 @@ export async function cfSend(env, message) {
 
 export async function sendOrganizationLoginLink(env, email, link) {
   const subject = "Your Adaptive Sports Near Me sign-in link";
-  const text = `Use this link to manage your program listing:\n\n${link}\n\nThis link expires in 15 minutes and can be used once. If you did not request it, you can ignore this email.`;
-  const html = shell(`<p>Use this link to manage your program listing:</p><p><a href="${esc(link)}">Manage your listing</a></p><p>This link expires in 15 minutes and can be used once. If you did not request it, you can ignore this email.</p>`);
+  const text = `Use this link to manage your organization's listing:\n\n${link}\n\nThis link expires in 15 minutes and can be used once. If you did not request it, you can ignore this email.`;
+  const html = shell(`<p>Use this link to manage your organization's listing:</p><p><a href="${esc(link)}">Manage your listing</a></p><p>This link expires in 15 minutes and can be used once. If you did not request it, you can ignore this email.</p>`);
   return cfSend(env, { from: HOUSE_FROM, to: email, replyTo: HOUSE_REPLY, subject, text, html });
 }
 
@@ -67,7 +67,7 @@ function shell(bodyHtml) {
     `font-size:16px;line-height:1.6;color:#1c1a15;max-width:560px">` +
     bodyHtml +
     `<p style="margin-top:28px;color:#6b6b70;font-size:14px">Adaptive Sports Near Me<br>` +
-    `an Adapt To Life project &middot; 501(c)(3) nonprofit &middot; EIN 41-3213344</p>` +
+    `Made with ❤️ by Adapt To Life &middot; 501(c)(3) nonprofit &middot; EIN 41-3213344</p>` +
     `</div>`
   );
 }
@@ -76,6 +76,15 @@ function shell(bodyHtml) {
 // answers the only three questions a new signup has: did it work, what is
 // this, and what happens next. The words are true before and after the
 // PRELAUNCH flip (2026-10-13), so this Worker never waits on opening day.
+// What the site is and what the letter brings: the same product line as the site
+// (public/app/page-meta.js), and no promise of a schedule.
+const WELCOME = [
+  "Adaptive Sports Near Me helps you find adaptive sports programs, grants and events by place or sport. " +
+  "It's free, there's no account, and nobody here will ever ask you for money.",
+  "Every listing shows when we last checked it. We'll email you only when there's something worth sending: " +
+  "new programs, grants and events.",
+];
+
 export async function sendSignupWelcome(env, email, { name = "", beta = false } = {}) {
   const subject = "You're on the list";
   // The name is a courtesy, never a requirement: an unnamed signup gets the
@@ -92,28 +101,16 @@ export async function sendSignupWelcome(env, email, { name = "", beta = false } 
     : "";
   const text =
     hi + "\n\n" +
-    "Adaptive Sports Near Me is a free national directory of adaptive sports " +
-    "programs: one place to find a program near you, an event to show up to, " +
-    "and grants that help pay for it. No account, no fee, and nobody here " +
-    "will ever ask you for money.\n\n" +
-    "The directory is new and still growing. Every listing shows when we " +
-    "last checked it, and we add and check more every week. We will email " +
-    "you when there is something worth sending: new programs, events and " +
-    "funding near you.\n\n" +
+    WELCOME[0] + "\n\n" + WELCOME[1] + "\n\n" +
     betaText +
     "If you run a program, or know one we should list, just reply to this " +
     "email. A person reads it.\n\n" +
     "Talk soon,\nAlec and Karen\n\n" +
     "Adaptive Sports Near Me\n" +
-    "an Adapt To Life project - 501(c)(3) nonprofit - EIN 41-3213344";
+    "Made with ❤️ by Adapt To Life - 501(c)(3) nonprofit - EIN 41-3213344";
   const html = shell(
     `<p style="margin:0 0 16px"><strong>${esc(hi)}</strong></p>` +
-    `<p style="margin:0 0 16px">Adaptive Sports Near Me is a free national directory of adaptive sports ` +
-    `programs: one place to find a program near you, an event to show up to, and grants that help pay ` +
-    `for it. No account, no fee, and nobody here will ever ask you for money.</p>` +
-    `<p style="margin:0 0 16px">The directory is new and still growing. Every listing shows when we ` +
-    `last checked it, and we add and check more every week. We will email you when there is ` +
-    `something worth sending: new programs, events and funding near you.</p>` +
+    WELCOME.map((t) => `<p style="margin:0 0 16px">${esc(t)}</p>`).join("") +
     betaHtml +
     `<p style="margin:0 0 16px">If you run a program, or know one we should list, just reply to this ` +
     `email. A person reads it.</p>` +
