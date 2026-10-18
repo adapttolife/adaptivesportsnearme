@@ -1,0 +1,255 @@
+.v-program-detail .pg-grid {
+	display: block;
+}
+
+.v-program-detail .pg-main {
+	min-width: 0;
+}
+
+.v-program-detail .pg-book {
+	display: none;
+}
+
+.v-program-detail .pg-hero {
+	position: relative;
+	margin-inline: calc(-1 * var(--gut));
+}
+
+.v-program-detail .pg-hb {
+	position: absolute;
+	top: 12px;
+	left: 12px;
+	z-index: 2;
+	display: grid;
+	place-items: center;
+	width: 44px;
+	height: 44px;
+	border: 0;
+	border-radius: 50%;
+	background: #f3f3f3;
+	color: var(--ink);
+	box-shadow:
+		0 1px 3px rgba(26, 26, 26, 0.18),
+		0 2px 8px rgba(26, 26, 26, 0.1);
+	transition: scale var(--ease);
+}
+
+.v-program-detail .pg-hb:hover {
+	scale: 1.06;
+}
+
+.v-program-detail .pg-edge {
+	position: absolute;
+	z-index: 2;
+	left: var(--gut);
+	right: var(--gut);
+	bottom: -24px;
+	display: flex;
+	pointer-events: none;
+}
+
+.v-program-detail .pg-stamp {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	min-width: 0;
+	height: 56px;
+	padding: 8px 16px 8px 8px;
+	border-radius: var(--r-l);
+	background: #f3f3f3;
+	color: var(--ink);
+	box-shadow: var(--sh-2);
+}
+
+.v-program-detail .pg-stamp-map {
+	display: grid;
+	place-items: center;
+	width: 40px;
+	height: 40px;
+	flex: none;
+}
+
+.v-program-detail .pg-stamp-text {
+	min-width: 0;
+	overflow: hidden;
+	font-size: 17px;
+	font-weight: 700;
+	line-height: 1.25;
+}
+
+.v-program-detail .pg-stamp-text > span {
+	display: block;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.v-program-detail .pg-head {
+	margin-top: 24px;
+}
+
+.v-program-detail .pg-hero.has-stamp + .pg-head {
+	margin-top: 48px;
+}
+
+.v-program-detail .pg-head h1 {
+	overflow-wrap: anywhere;
+}
+
+.v-program-detail .pg-meta {
+	margin-top: 8px;
+	color: var(--graphite);
+	font-size: 17px;
+	font-weight: 500;
+	line-height: 1.45;
+}
+
+.v-program-detail .pg-acts {
+	margin-top: 16px;
+}
+
+.v-program-detail .pg-full {
+	width: 100%;
+}
+
+.v-program-detail .pg-host {
+	margin-top: 8px;
+	color: var(--muted);
+	font-size: 15px;
+	line-height: 1.4;
+	overflow-wrap: anywhere;
+	text-align: center;
+}
+
+.v-program-detail .pg-sec {
+	margin-top: 40px;
+}
+
+.v-program-detail .pg-sec > h2 {
+	margin-bottom: 4px;
+}
+
+.v-program-detail .pg-sec p {
+	margin-top: 8px;
+	color: var(--graphite);
+}
+
+.v-program-detail .pg-sec .tlink {
+	margin-top: 4px;
+}
+
+.v-program-detail .pg-sec p a:not(.btn) {
+	padding-block: 11px;
+}
+
+.v-program-detail .pg-quiet {
+	color: var(--graphite);
+}
+
+.v-program-detail .pg-facts {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	margin-top: 32px;
+	border-top: 1px solid var(--line);
+}
+
+.v-program-detail .pg-facts > div {
+	display: grid;
+	grid-template-columns: 120px minmax(0, 1fr);
+	gap: 12px;
+	padding: 14px 0;
+	border-bottom: 1px solid var(--line);
+}
+
+.v-program-detail .pg-facts dt {
+	font-weight: 700;
+}
+
+.v-program-detail .pg-facts dd {
+	color: var(--graphite);
+}
+
+.v-program-detail .pg-book-in {
+	padding: 24px;
+	border: 1px solid var(--line);
+	border-radius: var(--r-xl);
+	background: var(--paper);
+	box-shadow: var(--sh-2);
+}
+
+.v-program-detail .pg-book-kind {
+	color: var(--graphite);
+	font-size: 16px;
+	font-weight: 600;
+	line-height: 1.4;
+	margin-bottom: 10px;
+}
+
+.v-program-detail .pg-book .pg-host {
+	margin-top: 10px;
+}
+
+.v-program-detail .pg-nf {
+	padding: 48px 0 16px;
+}
+
+.v-program-detail .pg-nf p {
+	margin-top: 10px;
+	color: var(--graphite);
+}
+
+@media (min-width: 600px) and (max-width: 1099px) {
+	.v-program-detail .pg-acts {
+		display: flex;
+		align-items: center;
+		gap: 16px;
+	}
+	.v-program-detail .pg-acts .pg-full {
+		width: auto;
+	}
+	.v-program-detail .pg-acts .pg-host {
+		margin-top: 0;
+		text-align: left;
+	}
+}
+
+@media (min-width: 768px) {
+	.v-program-detail .pg-hero {
+		margin: 24px 0 0;
+	}
+	.v-program-detail .pg-hb {
+		top: 16px;
+		left: 16px;
+	}
+	.v-program-detail .pg-edge {
+		left: 20px;
+		right: 20px;
+	}
+	.v-program-detail .pg-sec {
+		margin-top: 48px;
+	}
+}
+
+@media (min-width: 1100px) {
+	.v-program-detail .pg-grid {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) 300px;
+		gap: 40px;
+		align-items: start;
+	}
+	.v-program-detail .pg-book {
+		display: block;
+		position: sticky;
+		top: calc(var(--top-h, 0px) + 24px);
+		margin-top: 24px;
+	}
+	.v-program-detail .pg-acts {
+		display: none;
+	}
+}
+
+@media (min-width: 1280px) {
+	.v-program-detail .pg-grid {
+		grid-template-columns: minmax(0, 680px) 340px;
+	}
+}

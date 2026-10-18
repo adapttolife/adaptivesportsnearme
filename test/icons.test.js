@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import vm from 'node:vm';
 import { navScriptHtml } from '../src/site-chrome.js';
 
@@ -43,7 +43,8 @@ function setup(initial = []) {
 
 test('all UI placeholders name available Lucide icons and contain no generated SVG', () => {
   const { context } = setup();
-  for (const file of ['public/index.html', 'public/site-nav.js', 'src/site-chrome.js', 'src/map-tray.js']) {
+  // Server-rendered chrome (the blog) and its drawer use <i data-lucide> placeholders.
+  for (const file of ['public/site-nav.js', 'src/site-chrome.js', 'src/map-tray.js']) {
     const source = read(file);
     assert.doesNotMatch(source, /<svg\s/);
     const names = [...source.matchAll(/data-lucide="([^"]+)"/g)];
@@ -53,11 +54,48 @@ test('all UI placeholders name available Lucide icons and contain no generated S
       assert.ok(context.lucide.icons[key], `${file}: ${name}`);
     }
   }
-  for (const page of [read('public/index.html'), navScriptHtml()]) {
-    const library = page.indexOf('/assets/vendor/lucide-1.49.0.min.js');
-    assert.ok(library >= 0 && library < page.indexOf('/icons.js'));
-  }
+  const page = navScriptHtml();
+  const library = page.indexOf('/assets/vendor/lucide-1.49.0.min.js');
+  assert.ok(library >= 0 && library < page.indexOf('/icons.js'));
   assert.equal(JSON.parse(read('package.json')).scripts['icons:sync'], undefined);
+});
+
+// The app (public/app) draws its icons itself from window.lucide.icons, and
+// icon() returns "" for a name the library does not have, so a typo silently
+// drops the icon. Every name it passes, directly or as a component option.
+const ICON_NAME_PATTERNS = [
+  /\bicon\(\s*"([a-z0-9-]+)"/g,                                   // icon("search", 20)
+  /\bicon\([^()"]*\?\s*"([a-z0-9-]+)"\s*:\s*"([a-z0-9-]+)"/g,       // icon(ok ? "badge-check" : "info")
+  /\b(?:ic|icon):\s*"([a-z0-9-]+)"/g,                               // card({ ic: "plus" }), btn(..., { icon: "search" })
+  /\bitem\("[^"]*",\s*[^,]+,\s*"([a-z0-9-]+)",/g,                    // drawer item(id, href, "map-pin", label)
+  /\["(?:is-[a-z]+)?",\s*"([a-z0-9-]+)",/g,                          // /about rows: ["is-v", "badge-check", ...]
+  /\brow\(`[^`]*`,\s*"([a-z0-9-]+)",/g,                              // listing links: row(`/update/${id}`, "pencil", ...)
+  /\blink\(`[^`]*`,[^;]*?,\s*"([a-z0-9-]+)"\)/g,                     // sport counts: link(text, href, "map")
+];
+function appIconNames(source) {
+  const names = new Set();
+  for (const re of ICON_NAME_PATTERNS) for (const m of source.matchAll(re)) for (const n of m.slice(1)) if (n) names.add(n);
+  return names;
+}
+const pascal = (name) => String(name).split('-').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join('');
+
+test('every icon the app names is in public/app/icons.js, built unchanged from the vendored Lucide library', async () => {
+  const { context } = setup();
+  const files = ['public/app/app.js', ...readdirSync(new URL('../public/app/views/', import.meta.url)).filter((f) => f.endsWith('.js')).map((f) => `public/app/views/${f}`)];
+  const names = new Set(files.flatMap((file) => [...appIconNames(read(file))]));
+  assert.ok(names.size >= 25, `found only ${names.size} icon names; the patterns no longer match the app`);
+  const { ICONS } = await import('../public/app/icons.js');
+  for (const name of names) {
+    assert.ok(ICONS[pascal(name)], `public/app names an icon missing from icons.js (run node scripts/build-app-icons.mjs): ${name}`);
+    assert.deepEqual(ICONS[pascal(name)], JSON.parse(JSON.stringify(context.lucide.icons[pascal(name)])), `${name} is the library's own drawing`);
+  }
+  assert.deepEqual([...appIconNames('icon("not-a-real-icon", 20)')], ['not-a-real-icon']);
+  assert.equal(ICONS[pascal('not-a-real-icon')], undefined);
+  // icons.js is exactly what the build script makes from today's app.
+  const { buildIconsModule } = await import('../scripts/build-app-icons.mjs');
+  assert.equal(read('public/app/icons.js'), buildIconsModule(), 'icons.js is stale: run node scripts/build-app-icons.mjs');
+  // The app's pages never load the whole library (109 KB) before drawing.
+  assert.ok(!read('public/index.html').includes('lucide-1.49.0.min.js'));
 });
 
 test('runtime renders initial icons with dimensions, weight, color and classes intact', () => {

@@ -2,6 +2,7 @@
 // location, authentication, or errors. Entries expire within five minutes.
 const PUBLIC_PARAMS = {
   '/api/directory': [],
+  '/api/listings': [],
   '/api/programs': ['sport', 'state', 'q', 'zip', 'city', 'lat', 'lng', 'radius', 'limit', 'offset'],
   '/api/stats': [],
   '/api/grants': ['audience'],
@@ -13,7 +14,7 @@ export async function cachedDirectoryResponse(request, env, load, cache = global
   const params = PUBLIC_PARAMS[url.pathname];
   if (request.method !== 'GET' || !env.DB || !params || !cache) return load();
   const keyUrl = new URL(url.origin);
-  keyUrl.pathname = `/__directory-cache/v1/${encodeURIComponent(env.ENV_NAME || 'production')}${url.pathname}`;
+  keyUrl.pathname = `/__directory-cache/v3/${encodeURIComponent(env.ENV_NAME || 'production')}${url.pathname}`;
   // Ignore irrelevant tracking parameters, preserving the first value just as
   // URLSearchParams.get does in the handlers. Never key on visitor credentials.
   for (const name of params) if (url.searchParams.has(name)) keyUrl.searchParams.set(name, url.searchParams.get(name));

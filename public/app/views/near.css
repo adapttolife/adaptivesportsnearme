@@ -1,0 +1,488 @@
+/* Near results (spec 6.2, WP-C). Scoped under .v-near.
+   .nr-gh (group heading with a pill count) stays here: only results use the pill. */
+
+/* ---------- 1. Results header: Mist band, the state as a postcard stamp ----------
+   Phones: the stamp sits beside the h1, the note and a one-line legend under them,
+   so the first listing starts on the first screen. */
+.v-near .nr-hd {
+	display: grid;
+	grid-template-columns: 88px minmax(0, 1fr);
+	grid-template-areas: "stamp text" "foot foot";
+	align-items: center;
+	gap: 12px 14px;
+	background: var(--mist);
+	margin-inline: calc(-1 * var(--gut));
+	padding: 16px var(--gut);
+	border-bottom: 1px solid var(--line);
+}
+
+.v-near .nr-hd:not(:has(.nr-stamp)) {
+	grid-template-columns: minmax(0, 1fr);
+	grid-template-areas: "text" "foot";
+}
+
+.v-near .nr-stamp {
+	grid-area: stamp;
+	width: 88px;
+	height: 88px;
+	display: grid;
+	place-items: center;
+	align-self: start;
+	background: var(--paper);
+	border: 1px solid var(--line);
+	border-radius: var(--r-l);
+}
+
+.v-near .nr-stamp .so {
+	width: 72px;
+	height: 72px;
+}
+
+.v-near .nr-text {
+	grid-area: text;
+	min-width: 0;
+}
+
+.v-near .nr-text h1 {
+	overflow-wrap: break-word;
+}
+
+.v-near .nr-sum {
+	margin-top: 6px;
+	font-size: 17px;
+	line-height: 1.45;
+	color: var(--ink);
+}
+
+.v-near .nr-sum b {
+	font-weight: 700;
+}
+
+.v-near .nr-foot {
+	grid-area: foot;
+	min-width: 0;
+}
+
+.v-near .nr-note {
+	display: flex;
+	align-items: flex-start;
+	gap: 8px;
+	font-size: 15px;
+	line-height: 1.4;
+	color: var(--muted);
+}
+
+.v-near .nr-note .ic {
+	flex: none;
+	margin-top: 1px;
+}
+
+.v-near .nr-legend {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px 16px;
+	margin-top: 6px;
+	font-size: 15px;
+	font-weight: 500;
+	line-height: 1.35;
+	color: var(--graphite);
+}
+
+.v-near .nr-legend li {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.v-near .nr-k {
+	flex: none;
+	display: inline-block;
+	width: 14px;
+	height: 14px;
+	border-radius: 50%;
+}
+
+.v-near .nr-k--dot {
+	background: var(--orange);
+	box-shadow: 0 0 0 2px #f3f3f3;
+	width: 10px;
+	height: 10px;
+	margin: 0 2px;
+}
+
+.v-near .nr-k--you {
+	background: #f3f3f3;
+	border: 3px solid var(--orange);
+}
+
+@media (min-width: 768px) {
+	.v-near .nr-hd {
+		grid-template-columns: 168px minmax(0, 1fr);
+		grid-template-areas: "stamp text" "stamp foot";
+		align-items: start;
+		gap: 12px 28px;
+		margin: 24px 0 0;
+		padding: 28px;
+		border: 1px solid var(--line);
+		border-radius: var(--r-xl);
+	}
+	.v-near .nr-stamp {
+		width: 168px;
+		height: 168px;
+		grid-row: 1 / span 2;
+		align-self: center;
+	}
+	.v-near .nr-stamp .so {
+		width: 140px;
+		height: 140px;
+	}
+	.v-near .nr-sum {
+		margin-top: 10px;
+	}
+	.v-near .nr-foot {
+		align-self: end;
+	}
+}
+
+/* ---------- 2. Sticky toolbar ---------- */
+.v-near .nr-tools {
+	position: sticky;
+	top: var(--top-h, 0px);
+	z-index: 30;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	min-height: 64px;
+	padding: 9px var(--gut);
+	margin-inline: calc(-1 * var(--gut));
+	background: var(--paper);
+	border-bottom: 1px solid var(--line);
+}
+
+@media (max-height: 500px) {
+	.v-near .nr-tools {
+		position: static;
+	}
+}
+
+.v-near .nr-place {
+	flex: 1 1 auto;
+	min-width: 0;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 6px;
+	min-height: 44px;
+	padding: 3px 8px 3px 12px;
+	border: 1px solid var(--line-strong);
+	border-radius: var(--r);
+	background: var(--paper);
+	text-align: left;
+	font-size: 15px;
+	line-height: 1.25;
+}
+
+.v-near .nr-place:hover {
+	border-color: var(--ink);
+}
+
+.v-near .nr-place .ic {
+	flex: none;
+	color: var(--graphite);
+}
+
+.v-near .nr-place-t {
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+}
+
+.v-near .nr-place-t b {
+	font-size: 16px;
+	font-weight: 700;
+	color: var(--ink);
+	overflow-wrap: break-word;
+}
+
+.v-near .nr-place-s {
+	font-weight: 500;
+	color: var(--graphite);
+}
+
+.v-near .nr-place-sep {
+	display: none;
+}
+
+.v-near .nr-vchip,
+.v-near .nr-mapbtn {
+	flex: none;
+	padding: 0 14px;
+	gap: 6px;
+}
+
+.v-near .nr-vchip .ic {
+	color: var(--teal);
+}
+
+.v-near .nr-vchip[aria-pressed="true"] .ic {
+	color: var(--ink);
+}
+
+.v-near .nr-mapbtn {
+	padding: 0 14px 0 12px;
+}
+
+@media (max-width: 479px) {
+	.v-near .nr-tools {
+		gap: 6px;
+	}
+	.v-near .nr-vchip,
+	.v-near .nr-mapbtn {
+		padding: 0 11px;
+	}
+	.v-near .nr-vchip[aria-pressed="false"] .ic {
+		display: none;
+	}
+}
+
+/* under 360px Map keeps its name for screen readers and shows the icon */
+@media (max-width: 359px) {
+	.v-near .nr-mapbtn {
+		width: 44px;
+		padding: 0;
+		justify-content: center;
+	}
+	.v-near .nr-maplabel {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		overflow: hidden;
+		clip-path: inset(50%);
+		white-space: nowrap;
+	}
+	/* The place never breaks inside a word ("St. Petersb urg"); it truncates on one line (the h1 above has it in full). */
+	.v-near .nr-place-t b,
+	.v-near .nr-place-s {
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		overflow-wrap: normal;
+	}
+}
+
+@media (min-width: 600px) {
+	.v-near .nr-place {
+		flex: 0 1 auto;
+		padding-block: 4px;
+	}
+	.v-near .nr-place-t {
+		flex-direction: row;
+		flex-wrap: wrap;
+		align-items: baseline;
+	}
+	.v-near .nr-place-sep {
+		display: inline;
+		white-space: pre;
+		color: var(--muted);
+	}
+	.v-near .nr-place-t b,
+	.v-near .nr-place-s {
+		font-size: 16px;
+	}
+}
+
+@media (min-width: 768px) {
+	.v-near .nr-tools {
+		margin-inline: 0;
+		padding-inline: 0;
+	}
+}
+
+/* ---------- 3. Sport bar, 4. jump chips ---------- */
+.v-near .nr-bar {
+	margin-top: 16px;
+}
+
+.v-near .nr-jumps {
+	margin-top: 12px;
+}
+
+.v-near .nr-jumps .jumps {
+	flex-wrap: nowrap;
+	overflow-x: auto;
+	scrollbar-width: none;
+	margin-inline: calc(-1 * var(--gut));
+	padding: 2px var(--gut) 6px;
+}
+
+.v-near .nr-jumps .jumps::-webkit-scrollbar {
+	display: none;
+}
+
+@media (min-width: 768px) {
+	.v-near .nr-jumps .jumps {
+		flex-wrap: wrap;
+		margin-inline: 0;
+		padding-inline: 0;
+		overflow: visible;
+	}
+}
+
+/* ---------- 5. Groups ---------- */
+.v-near .nr-group {
+	margin-top: 32px;
+}
+
+.v-near .nr-dym {
+	margin-top: 20px;
+	max-width: 560px;
+}
+
+.v-near .nr-gh {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	flex-wrap: wrap;
+}
+
+.v-near .nr-gh h2 {
+	font-size: var(--fs-h2);
+	line-height: 1.2;
+}
+
+.v-near .nr-n {
+	display: inline-grid;
+	place-items: center;
+	min-width: 32px;
+	height: 32px;
+	padding: 0 10px;
+	border-radius: 15px;
+	background: var(--sand);
+	font-size: 15px;
+	font-weight: 700;
+	color: var(--ink);
+}
+
+.v-near .nr-gsub {
+	margin-top: 4px;
+	font-size: 16px;
+	color: var(--graphite);
+}
+
+.v-near .nr-gh + .cards,
+.v-near .nr-gh + .rows,
+.v-near .nr-gsub + .cards,
+.v-near .nr-gsub + .rows {
+	margin-top: 16px;
+}
+
+.v-near .nr-cards {
+	gap: 24px 16px;
+}
+
+@container main (min-width: 520px) {
+	.v-near .nr-cards {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+}
+
+.v-near .nr-ci {
+	min-width: 0;
+	display: flex;
+}
+
+.v-near .nr-ci > .pcard {
+	flex: 1;
+}
+
+.v-near .nr-after {
+	margin-top: 12px;
+}
+
+.v-near .nr-sth {
+	margin-top: 20px;
+	margin-bottom: 4px;
+	font-size: 18px;
+}
+
+.v-near .nr-empty {
+	margin-top: 32px;
+}
+
+/* phone: the first two as wide cards, then rows. 600+: the card grid, then rows after six. */
+.v-near .nr-desk-only {
+	display: none;
+}
+
+@media (min-width: 600px) {
+	.v-near .nr-desk-only {
+		display: block;
+	}
+	.v-near .nr-ci.nr-desk-only {
+		display: flex;
+	}
+	.v-near .nr-phone-only {
+		display: none;
+	}
+}
+
+/* ---------- 7. Place not found ---------- */
+.v-near .nr-none {
+	padding-top: 32px;
+}
+
+.v-near .nr-none h1 {
+	overflow-wrap: anywhere;
+}
+
+.v-near .nr-none-body {
+	margin-top: 10px;
+	font-size: 17px;
+	color: var(--graphite);
+}
+
+.v-near .nr-none-form {
+	margin-top: 24px;
+	max-width: 560px;
+	padding: 20px;
+	background: var(--mist);
+	border-radius: var(--r-l);
+}
+
+.v-near .nr-none .slist {
+	margin-top: 32px;
+}
+
+@media (max-width: 767px) {
+	.v-near .nr-none-form {
+		margin-inline: calc(-1 * var(--gut));
+		padding: 20px var(--gut);
+	}
+}
+
+/* Direction C: the results header is a coral block with black type. */
+.v-near .nr-hd {
+	background: #ff5c39;
+	border-bottom: 0;
+	color: #1a1a1a;
+	padding-block: 20px;
+}
+
+.v-near .nr-stamp {
+	background: var(--paper);
+	border: 0;
+}
+
+.v-near .nr-sum,
+.v-near .nr-note,
+.v-near .nr-legend {
+	color: #1a1a1a;
+}
+
+.v-near .nr-k--dot {
+	background: #1a1a1a;
+}
+
+.v-near .nr-k--you {
+	border-color: var(--ink);
+}

@@ -1,16 +1,10 @@
 // Region clustering: the Census table, the pill grouping, and the zoom threshold.
 import test from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
-import { fileURLToPath } from "node:url";
-import { dirname, join } from "node:path";
 import {
   CENSUS_REGIONS, REGION_ANCHOR, OFFSHORE_STATES, CLUSTER_MAX_ZOOM, REGION_ZOOM_MARGIN, REGION_MAX_ZOOM,
   regionOf, clusterKeyFor, shouldCluster, regionZoom, groupStatesByRegion,
 } from "../src/map-regions.js";
-
-const root = join(dirname(fileURLToPath(import.meta.url)), "..");
-const index = readFileSync(join(root, "public/index.html"), "utf8");
 
 const ALL = ["AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA", "HI", "ID", "IL", "IN",
   "IA", "KS", "KY", "LA", "ME", "MD", "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ",
@@ -125,29 +119,4 @@ test("tapping a region always lands past the threshold", () => {
   assert.ok(REGION_MAX_ZOOM > floor);
   assert.equal(shouldCluster(regionZoom(2)), false);
   assert.equal(shouldCluster(regionZoom(9)), false);
-});
-
-test("public/index.html mirrors the region logic inline", () => {
-  assert.ok(index.includes("CLUSTER_MAX_ZOOM=4"));
-  assert.ok(index.includes("REGION_ZOOM_MARGIN=.35") || index.includes("REGION_ZOOM_MARGIN=0.35"));
-  assert.ok(index.includes("function clusterKeyFor("));
-  assert.ok(index.includes("function shouldCluster("));
-  assert.ok(index.includes("function regionZoom("));
-  assert.ok(index.includes("CENSUS_REGIONS"));
-  assert.ok(index.includes("REGION_ANCHOR"));
-  assert.ok(index.includes("OFFSHORE_STATES"));
-  assert.ok(index.includes("mpill-region"));
-  assert.ok(index.includes("'zoomend'"));
-  // The mirrored membership has to be the same table, region by region.
-  for (const [region, states] of Object.entries(CENSUS_REGIONS)) {
-    const m = index.match(new RegExp(region + ":\\['([A-Z',]+)'\\]"));
-    assert.ok(m, "no inline list for " + region);
-    assert.deepEqual(m[1].split("','"), states, region + " membership drifted");
-  }
-  for (const [k, a] of Object.entries(REGION_ANCHOR)) {
-    assert.ok(index.includes(k + ":[" + a[0] + "," + a[1] + "]"), k + " anchor drifted");
-  }
-  // Marker swap must be reversible and token-guarded, and dots stay at all zooms.
-  assert.ok(index.includes("token!==mapToken"));
-  assert.ok(index.includes("function applyClusterMode("));
 });

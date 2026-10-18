@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { DatabaseSync } from 'node:sqlite';
+import { readFileSync } from 'node:fs';
 import worker from '../src/index.js';
 
 function setup(t, options = {}) {
@@ -8,40 +9,45 @@ function setup(t, options = {}) {
   sqlite.exec(`CREATE TABLE sports(sport_key TEXT); INSERT INTO sports VALUES ('cycling');
     CREATE TABLE profiles(id TEXT PRIMARY KEY,email TEXT UNIQUE,name TEXT,state TEXT,sports_json TEXT,newsletter INTEGER,created_at TEXT,updated_at TEXT);
     CREATE TABLE submissions(kind TEXT,payload TEXT,contact_email TEXT,status TEXT,created_at TEXT);`);
+  sqlite.exec(readFileSync(new URL('../db/intake-schema.sql', import.meta.url), 'utf8'));
   const DB = {
     prepare(sql) {
       const statement = sqlite.prepare(sql); let values = []; return {
         bind(...args) { values = args; return this; }, async first() { return statement.get(...values) || null; },
         async all() { return { results: statement.all(...values) }; }, async run() { return statement.run(...values); },
       };
-    }
+    },
+    async batch(statements) { sqlite.exec('BEGIN'); try { const r = []; for (const s of statements) r.push(await s.run()); sqlite.exec('COMMIT'); return r; } catch (e) { sqlite.exec('ROLLBACK'); throw e; } }
   };
   const sent = [], calls = [], jobs = [];
+  // The house notice (hello@) and the submitter receipt are separate mail; these
+  // tests are about the receipt.
+  const receipts = () => sent.filter(m => m.to !== 'hello@adapttolife.org');
   const env = {
-    ENV_NAME: 'staging', DB, PROFILE_SIGNING_KEY: 'test-only-key', AIRTABLE_TOKEN: 'fixture', AIRTABLE_BASE_ID: 'base', AIRTABLE_INBOX_TABLE_ID: 'table',
+    ENV_NAME: 'staging', DB, INTAKE: DB, PROFILE_SIGNING_KEY: 'test-only-key',
     SEND_EMAIL: { async send(message) { sent.push(message); if (options.mailFailure) throw Error('uncertain send'); return { id: 'accepted' }; } }
   };
   const original = globalThis.fetch;
   globalThis.fetch = async (url) => {
     calls.push(url);
-    if (url.startsWith('https://api.airtable.com/')) return Response.json({ records: [{ id: 'record' }] }, { status: options.saveFailure ? 500 : 200 });
     if (url.startsWith('https://challenges.cloudflare.com/')) return Response.json({ success: false });
     throw Error('Unexpected network request');
   };
   t.after(() => { globalThis.fetch = original; sqlite.close(); });
   const ctx = { waitUntil: job => jobs.push(job) };
   const post = (path, body, cookie) => worker.fetch(new Request('https://staging-adaptivesportsnearme.adapt-to-life.workers.dev' + path, { method: 'POST', headers: { 'Content-Type': 'application/json', ...(cookie ? { Cookie: cookie } : {}) }, body: JSON.stringify(body) }), env, ctx);
-  return { env, sqlite, sent, calls, jobs, post };
+  return { env, sqlite, sent, receipts, calls, jobs, post };
 }
 test('new program saves and queues one escaped confirmation with the submitted name', async t => {
   const x = setup(t);
   const response = await x.post('/api/submit-program', { pn: 'Youth <basketball>', em: 'person@example.test' });
-  assert.equal(response.status, 200); assert.equal(x.jobs.length, 1); await Promise.all(x.jobs);
+  assert.equal(response.status, 200); assert.equal(x.jobs.length, 2); await Promise.all(x.jobs);
   assert.equal(x.sqlite.prepare('SELECT count(*) AS n FROM submissions').get().n, 1);
-  assert.equal(x.sent.length, 1); assert.equal(x.sent[0].to, 'person@example.test');
-  assert.equal(x.sent[0].replyTo, 'hello@adaptivesportsnearme.com');
-  assert.match(x.sent[0].html, /Youth &lt;basketball&gt;/); assert.doesNotMatch(x.sent[0].html, /<basketball>/);
-  assert.match(x.sent[0].text, /does not mean the program has been approved/);
+  const [receipt] = x.receipts();
+  assert.equal(x.receipts().length, 1); assert.equal(receipt.to, 'person@example.test');
+  assert.equal(receipt.replyTo, 'hello@adaptivesportsnearme.com');
+  assert.match(receipt.html, /Youth &lt;basketball&gt;/); assert.doesNotMatch(receipt.html, /<basketball>/);
+  assert.match(receipt.text, /does not mean the program has been approved/);
 });
 for (const [label, body, status] of [
   ['missing email', { pn: 'Program' }, 422], ['invalid email', { pn: 'Program', em: 'invalid' }, 422],
@@ -50,8 +56,9 @@ for (const [label, body, status] of [
   const x = setup(t); const response = await x.post('/api/submit-program', body);
   assert.equal(response.status, status); assert.equal(x.calls.length, 0); assert.equal(x.sent.length, 0); assert.equal(x.jobs.length, 0);
 });
-test('failed Airtable save does not send confirmation', async t => {
-  const x = setup(t, { saveFailure: true });
+test('failed capture does not send confirmation', async t => {
+  const x = setup(t); x.sqlite.exec('DROP TABLE submissions');
+  const original = console.error; console.error = () => { }; t.after(() => { console.error = original; });
   assert.equal((await x.post('/api/submit-program', { pn: 'Program', em: 'person@example.test' })).status, 502);
   assert.equal(x.sent.length, 0); assert.equal(x.jobs.length, 0);
 });
@@ -63,15 +70,18 @@ test('failed verification does not save or send', async t => {
 test('email failure preserves the saved submission and never retries the send', async t => {
   const x = setup(t, { mailFailure: true });
   assert.equal((await x.post('/api/submit-program', { pn: 'Program', em: 'person@example.test' })).status, 200);
-  await Promise.all(x.jobs); assert.equal(x.sent.length, 1);
+  await Promise.all(x.jobs); assert.equal(x.receipts().length, 1);
   assert.equal(x.sqlite.prepare('SELECT count(*) AS n FROM submissions').get().n, 1);
 });
 test('slow confirmation does not block a saved program response', async t => {
   const x = setup(t); let finish;
-  x.env.SEND_EMAIL.send = () => new Promise(resolve => { finish = resolve; });
+  const pending = [];
+  x.env.SEND_EMAIL.send = () => new Promise(resolve => { pending.push(resolve); });
   const response = await x.post('/api/submit-program', { pn: 'Program', em: 'person@example.test' });
-  assert.equal(response.status, 200); assert.equal(x.jobs.length, 1);
-  finish({ id: 'accepted' }); await Promise.all(x.jobs);
+  assert.equal(response.status, 200); assert.equal(x.jobs.length, 2);
+  // Both sends were still pending when the response returned; release them.
+  let settled = false; Promise.all(x.jobs).then(() => { settled = true; });
+  while (!settled) { pending.splice(0).forEach(finish => finish({ id: 'accepted' })); await new Promise(r => setImmediate(r)); }
 });
 test('missing Gmail credentials log the delivery gap without falling back or losing the submission', async t => {
   const x = setup(t); x.env.MAIL_TRANSPORT = 'gmail'; const logs = [];
@@ -100,5 +110,6 @@ test('program confirmations use Gmail when selected', async t => {
     return network(url, init);
   };
   assert.equal((await x.post('/api/submit-program', { pn: 'Program', em: 'person@example.test' })).status, 200);
-  await Promise.all(x.jobs); assert.equal(gmailSends, 1); assert.equal(x.sent.length, 0);
+  // One Gmail send for the submitter receipt, one for the hello@ house notice.
+  await Promise.all(x.jobs); assert.equal(gmailSends, 2); assert.equal(x.sent.length, 0);
 });

@@ -8,6 +8,13 @@ export async function cfSend(env, message) {
   return sendMail(env, message);
 }
 
+export async function sendOrganizationLoginLink(env, email, link) {
+  const subject = "Your Adaptive Sports Near Me sign-in link";
+  const text = `Use this link to manage your program listing:\n\n${link}\n\nThis link expires in 15 minutes and can be used once. If you did not request it, you can ignore this email.`;
+  const html = shell(`<p>Use this link to manage your program listing:</p><p><a href="${esc(link)}">Manage your listing</a></p><p>This link expires in 15 minutes and can be used once. If you did not request it, you can ignore this email.</p>`);
+  return cfSend(env, { from: HOUSE_FROM, to: email, replyTo: HOUSE_REPLY, subject, text, html });
+}
+
 // Called only after the form's primary save succeeds. One send attempt, with
 // no automatic retry: a lost provider response may still mean mail was sent.
 export async function queueFormConfirmation(env, ctx, { kind, email, program }) {
@@ -18,9 +25,15 @@ export async function queueFormConfirmation(env, ctx, { kind, email, program }) 
         return;
       }
       const subject = kind === 'program' ? 'We received your program submission'
+        : kind === 'listing-update' ? 'We received your suggested update'
+        : kind === 'event' ? 'We received your event'
         : kind === 'profile-created' ? 'Your ASNM profile is ready' : 'Your ASNM profile was updated';
       const body = kind === 'program'
         ? `Thank you for submitting ${program} to Adaptive Sports Near Me. We received your submission and will review it before publishing or updating a listing. This receipt does not mean the program has been approved.`
+        : kind === 'listing-update'
+          ? `Thank you for helping keep ${program} accurate on Adaptive Sports Near Me. A person will read your suggestion before anything on the listing changes. This receipt does not mean the change has been made yet.`
+        : kind === 'event'
+          ? `Thank you for telling us about ${program}. A person will check it before it appears on Adaptive Sports Near Me. This receipt does not mean the event has been listed yet.`
         : kind === 'profile-created'
           ? 'Your Adaptive Sports Near Me profile has been created. You can use it on the device where you signed up to save programs and manage your preferences. This email is not a sign-in or recovery link.'
           : 'Your Adaptive Sports Near Me profile changes have been saved. You can view your updated preferences on the device where you made the changes.';
@@ -59,24 +72,23 @@ function shell(bodyHtml) {
   );
 }
 
-// The signup receipt. Fires once, right after a successful email capture on
-// the prelaunch site. It answers the only three questions a new signup has:
-// did it work, what is this, and what happens next.
+// The signup receipt. Fires once, right after a successful email capture. It
+// answers the only three questions a new signup has: did it work, what is
+// this, and what happens next. The words are true before and after the
+// PRELAUNCH flip (2026-10-13), so this Worker never waits on opening day.
 export async function sendSignupWelcome(env, email, { name = "", beta = false } = {}) {
-  const subject = beta ? "You're on the early list" : "You're on the list";
+  const subject = "You're on the list";
   // The name is a courtesy, never a requirement: an unnamed signup gets the
   // same note without an awkward blank.
   const hi = name ? `You're in, ${name}.` : "You're in.";
   const betaText = beta
-    ? "You asked for the first look, so that is what you get. Your link comes " +
-    "before we open. Tell us what is missing where you live and that is what " +
-    "we work on next, so the next person who searches your town finds " +
-    "something real.\n\n"
+    ? "You asked for a first look. Tell us what is missing where you live and " +
+    "that is what we work on next, so the next person who searches your town " +
+    "finds something real.\n\n"
     : "";
   const betaHtml = beta
-    ? `<p style="margin:0 0 16px">You asked for the first look, so that is what you get. Your link ` +
-    `comes before we open. Tell us what is missing where you live and that is what we work on ` +
-    `next, so the next person who searches your town finds something real.</p>`
+    ? `<p style="margin:0 0 16px">You asked for a first look. Tell us what is missing where you live ` +
+    `and that is what we work on next, so the next person who searches your town finds something real.</p>`
     : "";
   const text =
     hi + "\n\n" +
@@ -84,9 +96,10 @@ export async function sendSignupWelcome(env, email, { name = "", beta = false } 
     "programs: one place to find a program near you, an event to show up to, " +
     "and grants that help pay for it. No account, no fee, and nobody here " +
     "will ever ask you for money.\n\n" +
-    "We are not open yet. We are testing every listing so that when the doors " +
-    "open, what you find is real. You signed up, so you hear the day that " +
-    "happens - before anyone else.\n\n" +
+    "The directory is new and still growing. Every listing shows when we " +
+    "last checked it, and we add and check more every week. We will email " +
+    "you when there is something worth sending: new programs, events and " +
+    "funding near you.\n\n" +
     betaText +
     "If you run a program, or know one we should list, just reply to this " +
     "email. A person reads it.\n\n" +
@@ -98,9 +111,9 @@ export async function sendSignupWelcome(env, email, { name = "", beta = false } 
     `<p style="margin:0 0 16px">Adaptive Sports Near Me is a free national directory of adaptive sports ` +
     `programs: one place to find a program near you, an event to show up to, and grants that help pay ` +
     `for it. No account, no fee, and nobody here will ever ask you for money.</p>` +
-    `<p style="margin:0 0 16px">We are not open yet. We are testing every listing so that when the ` +
-    `doors open, what you find is real. You signed up, so you hear the day that happens, before ` +
-    `anyone else.</p>` +
+    `<p style="margin:0 0 16px">The directory is new and still growing. Every listing shows when we ` +
+    `last checked it, and we add and check more every week. We will email you when there is ` +
+    `something worth sending: new programs, events and funding near you.</p>` +
     betaHtml +
     `<p style="margin:0 0 16px">If you run a program, or know one we should list, just reply to this ` +
     `email. A person reads it.</p>` +

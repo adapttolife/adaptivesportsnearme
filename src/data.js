@@ -2,8 +2,13 @@
 // null if never checked) is computed here rather than in SQL — D1 lacks pow().
 // listPrograms filters: sport, state, q (text), plus nearby via zip / city / lat-lng.
 
-import { loadZcta, resolveOrigin, applyNearby, milesBetween } from "./geo.js";
+import { loadZcta, resolveOrigin, applyNearby, milesBetween, cityCenter } from "./geo.js";
 import { cachedCount } from "./read-cache.js";
+import "../public/listing-art.js";
+import { listingSport } from "../public/app/listing-sport.js";
+import { isListable } from "../public/app/listable.js";
+
+const ListingArt = globalThis.ListingArt;
 
 export function freshness(lastOkAt, now = Date.now()) {
   if (!lastOkAt) return null;
@@ -13,10 +18,26 @@ export function freshness(lastOkAt, now = Date.now()) {
 }
 
 const LIST_COLS = `id, name, org_type, sport, sport_key, website_url, city,
-  state, state_name, zip, lat, lng, geo_precision, description, cost_note,
-  equipment_provided, ages, data_quality_rating, verification_status, last_ok_at`;
+  state, state_name, zip, publicity_consent, lat, lng, geo_precision, description, cost_note,
+  equipment_provided, ages, data_quality_rating, verification_status, verification_method,
+  last_ok_at, created_at`;
+
+// A listing is public only when a person could act on it: a website to visit,
+// a city and state to find, or a way to reach someone. Alec ruled on 2026-09-01
+// that name-only rows stay hidden; production lost that state in the account
+// move (1,069 of 2,465 live rows were name-only on 2026-10-13), so the rule
+// lives here in code, where no data copy can drop it. The row stays in D1 for
+// enrichment and reappears the moment it gains any of these.
+// Email and phone count only when the program said yes to showing them
+// (publicity_consent); a contact nobody can see is nothing to act on.
+export const ACTIONABLE = `((website_url IS NOT NULL AND website_url <> '')
+  OR (city IS NOT NULL AND city <> '' AND state IS NOT NULL AND state <> '')
+  OR (publicity_consent = 1 AND email IS NOT NULL AND email <> '')
+  OR (publicity_consent = 1 AND phone IS NOT NULL AND phone <> ''))`;
+const PUBLIC = `is_public = 1 AND status = 'active' AND ${ACTIONABLE}`;
 
 function rowToProgram(r, dist) {
+  const publicityConsent = r.publicity_consent === 1;
   return {
     id: r.id,
     name: r.name,
@@ -27,19 +48,29 @@ function rowToProgram(r, dist) {
     city: r.city,
     state: r.state,
     stateName: r.state_name,
-    zip: r.zip,
-    lat: r.lat,
-    lng: r.lng,
-    geoPrecision: r.geo_precision,
+    zip: publicityConsent ? r.zip : null,
+    lat: publicityConsent ? r.lat : null,
+    lng: publicityConsent ? r.lng : null,
+    geoPrecision: publicityConsent ? r.geo_precision : null,
+    publicityConsent,
     desc: r.description,
     cost: r.cost_note,
     equipment: r.equipment_provided === 1 ? "Provided" : r.equipment_provided === 0 ? "Bring your own" : null,
     ages: r.ages,
     quality: r.data_quality_rating,
     verification: r.verification_status,
+    // Two separate signals (Alec, 2026-10-14). confirmed: the organization itself gave
+    // permission, which is the Verified check on the site (publicity_consent, the
+    // same flag that lets its contact details show). teamChecked: a person on our
+    // team checked the listing (verification_status 'verified', checkedMonth when).
+    // Neither is a score, and only confirmed earns the word Verified.
+    confirmed: publicityConsent,
+    teamChecked: r.verification_status === "verified",
+    checkedMonth: verifiedMonth(r),
+    listedAt: r.created_at || null,
     freshness: freshness(r.last_ok_at),
     lastChecked: r.last_ok_at,
-    dist: dist == null ? null : Math.round(dist * 10) / 10,
+    dist: publicityConsent && dist != null ? Math.round(dist * 10) / 10 : null,
   };
 }
 
@@ -57,16 +88,47 @@ function nearPayload(origin) {
 
 // The homepage already needs the whole directory for local filters and maps.
 // Read it once rather than repeating COUNT + OFFSET scans for every 200 rows.
-export async function directorySnapshot(db) {
+// places (optional): the city table from loadPlaces(), so each item carries the
+// center of its listed city for maps and "near you".
+export async function directorySnapshot(db, { places = null } = {}) {
   const rows = await db.prepare(`SELECT ${LIST_COLS} FROM organizations
-    WHERE is_public = 1 AND status = 'active'
+    WHERE ${PUBLIC}
     ORDER BY (sport_key IS NULL), (state IS NULL), name`).all();
-  const items = rows.results.map(row => rowToProgram(row));
+  const items = rows.results.map(row => {
+    const p = rowToProgram(row);
+    if (places) p.cityCenter = cityCenter(row.city, row.state, places);
+    return p;
+  });
   return { total: items.length, items };
 }
 
+// The slim directory the site's lists and maps load first (/api/listings): what a
+// card, a row, a map dot and a sport page need, nothing a listing's own page adds.
+// That page loads the rest from /api/orgs/:id. Rows that are not programs
+// (public/app/listable.js) never ship. Dates are days ("2026-10-08").
+export async function listingsSnapshot(db, { places = null } = {}) {
+  const { items } = await directorySnapshot(db, { places });
+  const day = (s) => (s ? String(s).slice(0, 10) : null);
+  const out = [];
+  for (const p of items) {
+    if (!isListable(p)) continue;
+    const { key, trio } = listingSport(p);
+    const o = { id: p.id, name: p.name, key };
+    if (trio) o.trio = trio;
+    if (p.city) o.city = p.city;
+    if (p.state) o.state = p.state;
+    if (p.cityCenter) o.center = p.cityCenter;
+    if (p.lastChecked) o.checked = day(p.lastChecked);
+    else if (p.listedAt) o.listed = day(p.listedAt);
+    if (p.confirmed) o.verified = 1;
+    if (p.teamChecked) o.team = 1;
+    out.push(o);
+  }
+  return { total: out.length, items: out };
+}
+
 export async function listPrograms(db, params, opts = {}) {
-  const where = ["is_public = 1", "status = 'active'"];
+  const where = [PUBLIC];
   const binds = [];
   const sport = (params.get("sport") || "").trim();
   if (sport) {
@@ -109,15 +171,17 @@ export async function listPrograms(db, params, opts = {}) {
   const offset = Math.max(parseInt(params.get("offset") || "0", 10) || 0, 0);
   const cond = where.join(" AND ");
 
+/*
   if (origin && !origin.missing) {
     const rows = await db.prepare(
-      `SELECT ${LIST_COLS} FROM organizations WHERE ${cond} AND lat IS NOT NULL AND lng IS NOT NULL`
+      `SELECT ${LIST_COLS} FROM organizations WHERE ${cond} AND publicity_consent = 1 AND lat IS NOT NULL AND lng IS NOT NULL`
     ).bind(...binds).all();
     const ranked = applyNearby(rows.results, origin);
     const total = ranked.length;
     const items = ranked.slice(offset, offset + limit).map(({ row, dist }) => rowToProgram(row, dist));
     return { total, limit, offset, items, near: nearPayload(origin) };
   }
+*/
 
   const [count, rows] = await Promise.all([
     cachedCount(db, cond, binds),
@@ -126,13 +190,13 @@ export async function listPrograms(db, params, opts = {}) {
        ORDER BY (sport_key IS NULL), (state IS NULL), name LIMIT ? OFFSET ?`
     ).bind(...binds, limit, offset).all(),
   ]);
-  return { total: count?.n ?? 0, limit, offset, items: rows.results.map((r) => rowToProgram(r)), near: null };
+  return { total: count?.n ?? 0, limit, offset, items: rows.results.map((r) => rowToProgram(r)), near: nearPayload(origin) };
 }
 
 export async function getOrg(db, id) {
   const row = await db.prepare(
-    `SELECT ${LIST_COLS}, email, phone, primary_data_source, created_at, updated_at
-     FROM organizations WHERE id = ? AND is_public = 1`
+    `SELECT ${LIST_COLS}, email, phone, primary_data_source, verification_method, created_at, updated_at
+     FROM organizations WHERE id = ? AND ${PUBLIC}`
   ).bind(id).first();
   if (!row) return null;
   const sources = await db.prepare(
@@ -142,21 +206,88 @@ export async function getOrg(db, id) {
   ).bind(id).all();
   return {
     ...rowToProgram(row),
-    email: row.email,
-    phone: row.phone,
-    primarySource: row.primary_data_source,
-    sources: sources.results,
+    // Contact details show only when the program gave permission (publicity_consent, Faisal 2026-10-14).
+    ...(row.publicity_consent === 1 ? { email: row.email, phone: row.phone } : {}),
+    // This is a public API: our own research files (CSV names, Drive links, a
+    // teammate's name) leave as "Adaptive Sports Near Me research", unlinked.
+    primarySource: ListingArt.sourceLabel(row.primary_data_source),
+    sources: publicSources(sources.results),
+    listedAt: row.created_at,
+    verifiedMonth: verifiedMonth(row),
     updatedAt: row.updated_at,
   };
 }
 
+const PROGRAM_COLS = `p.id, p.organization_id, p.name, NULL AS org_type, p.sport, p.sport_key,
+  p.website_url, p.city, p.state, p.state_name, p.zip, p.publicity_consent, p.lat, p.lng,
+  p.geo_precision, p.description, p.cost_note, p.equipment_provided, p.ages,
+  NULL AS data_quality_rating, p.verification_status, p.verification_method, p.last_ok_at, p.created_at`;
+const PROGRAM_PUBLIC = "p.is_public = 1 AND p.status = 'active' AND o.is_public = 1 AND o.status = 'active'";
+function programParent(row) {
+  return { id: row.organization_id, name: row.organization_name, city: row.organization_city,
+    state: row.organization_state, stateName: row.organization_state_name, website: row.organization_website_url };
+}
+export async function listActualPrograms(db, params = new URLSearchParams()) {
+  const where = [PROGRAM_PUBLIC], binds = [];
+  const state = (params.get("state") || "").trim().toUpperCase();
+  if (/^[A-Z]{2}$/.test(state)) { where.push("p.state = ?"); binds.push(state); }
+  const city = (params.get("city") || "").trim().slice(0, 120);
+  if (city) { where.push("LOWER(p.city) = LOWER(?)"); binds.push(city); }
+  const organizationId = (params.get("organization_id") || "").trim();
+  if (organizationId) { where.push("p.organization_id = ?"); binds.push(organizationId); }
+  const q = (params.get("q") || "").trim().slice(0, 120);
+  if (q) { const like = `%${q.replace(/[\\%_]/g, "\\$&")}%`; where.push("(p.name LIKE ? ESCAPE '\\' OR o.name LIKE ? ESCAPE '\\' OR p.sport LIKE ? ESCAPE '\\')"); binds.push(like, like, like); }
+  const limit = Math.min(Math.max(Number.parseInt(params.get("limit") || "60", 10) || 60, 1), 200);
+  const offset = Math.max(Number.parseInt(params.get("offset") || "0", 10) || 0, 0);
+  const condition = where.join(" AND ");
+  const [count, rows] = await Promise.all([
+    db.prepare(`SELECT COUNT(*) AS n FROM programs p JOIN organizations o ON o.id = p.organization_id WHERE ${condition}`).bind(...binds).first(),
+    db.prepare(`SELECT ${PROGRAM_COLS}, o.name AS organization_name, o.city AS organization_city, o.state AS organization_state, o.state_name AS organization_state_name, o.website_url AS organization_website_url FROM programs p JOIN organizations o ON o.id = p.organization_id WHERE ${condition} ORDER BY p.name COLLATE NOCASE LIMIT ? OFFSET ?`).bind(...binds, limit, offset).all(),
+  ]);
+  return { total: count?.n ?? 0, limit, offset, items: (rows.results || []).map((row) => ({ ...rowToProgram(row), organization: programParent(row) })) };
+}
+export async function getProgram(db, id) {
+  const row = await db.prepare(`SELECT ${PROGRAM_COLS}, p.email, p.phone, p.updated_at, o.name AS organization_name, o.city AS organization_city, o.state AS organization_state, o.state_name AS organization_state_name, o.website_url AS organization_website_url FROM programs p JOIN organizations o ON o.id = p.organization_id WHERE p.id = ? AND ${PROGRAM_PUBLIC}`).bind(id).first();
+  if (!row) return null;
+  return { ...rowToProgram(row), ...(row.publicity_consent === 1 ? { email: row.email, phone: row.phone } : {}), organization: programParent(row), updatedAt: row.updated_at };
+}
+
+// Sources as a visitor may see them, once each.
+export function publicSources(rows) {
+  const seen = new Set();
+  const out = [];
+  for (const s of rows || []) {
+    const p = ListingArt.publicSource(s);
+    if (!p) continue;
+    const key = p.name + "\n" + (p.url || "");
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push({ name: p.name, organization: ListingArt.isInternalSource(s) ? null : (s.organization || null), url: p.url });
+  }
+  return out;
+}
+
+// verification_method is a JSON note on rows a person verified
+// ({"status":"verified","verification_month":"2026-09",...}); the month is the
+// only part a visitor needs. Anything else (plain words, broken JSON) gives null.
+export function verifiedMonth(row) {
+  if (!row || row.verification_status !== "verified" || !row.verification_method) return null;
+  try {
+    const m = JSON.parse(row.verification_method);
+    const ym = m && typeof m.verification_month === "string" ? m.verification_month : "";
+    return /^\d{4}-\d{2}$/.test(ym) ? ym : null;
+  } catch {
+    return null;
+  }
+}
+
 export async function stats(db) {
   const [total, bySport, byState, sources, lastRun] = await Promise.all([
-    db.prepare(`SELECT COUNT(*) AS n FROM organizations WHERE is_public = 1 AND status = 'active'`).first(),
+    db.prepare(`SELECT COUNT(*) AS n FROM organizations WHERE ${PUBLIC}`).first(),
     db.prepare(`SELECT sport AS label, sport_key AS key, COUNT(*) AS n FROM organizations
-                WHERE is_public = 1 AND status = 'active' GROUP BY sport ORDER BY n DESC`).all(),
+                WHERE ${PUBLIC} GROUP BY sport ORDER BY n DESC`).all(),
     db.prepare(`SELECT state, state_name AS name, COUNT(*) AS n FROM organizations
-                WHERE is_public = 1 AND status = 'active' AND state IS NOT NULL
+                WHERE ${PUBLIC} AND state IS NOT NULL
                 GROUP BY state ORDER BY n DESC`).all(),
     db.prepare(`SELECT COUNT(*) AS n FROM data_sources WHERE status = 'active'`).first(),
     db.prepare(`SELECT lane, finished_at FROM pipeline_runs ORDER BY run_id DESC LIMIT 1`).first(),
@@ -177,7 +308,7 @@ export async function listSameSportNearby(db, org, limit = 6) {
   const sportKey = org.sport;
   const sportLabel = org.sportLabel;
   if (!org.id || (!sportKey && !sportLabel)) return [];
-  const where = ["is_public = 1", "status = 'active'", "id != ?"];
+  const where = [PUBLIC, "id != ?"];
   const binds = [org.id];
   if (sportKey) {
     where.push("(sport_key = ? OR sport = ?)");

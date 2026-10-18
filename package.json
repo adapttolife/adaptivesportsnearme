@@ -9,5 +9,8 @@
 		"deploy:staging": "npx wrangler versions upload --config wrangler.preview.json --preview-alias staging",
 		"preview": "npm run dev",
 		"test": "node --test"
+	},
+	"dependencies": {
+		"auto-text-size": "^0.2.3"
 	}
 }
