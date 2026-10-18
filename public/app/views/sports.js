@@ -5,6 +5,7 @@
    "Not listed yet" section as a text link, so each picture gets one tile per grid.
    PROMOTE: .v-sports .sx (sport tile: 72px avatar, label, "Also:" links). */
 import * as A from "../app.js";
+import { site, PAGES } from "../page-meta.js";
 
 function tile(g) {
   const also = g.also.length
@@ -32,8 +33,8 @@ export async function render(ctx) {
 <section class="sx-sec" aria-labelledby="sx-listed"><h2 id="sx-listed">Listed so far</h2><ul class="sx-grid">${listed.map(tile).join("")}</ul></section>
 <section class="sx-sec sx-sec--none" aria-labelledby="sx-none"><h2 id="sx-none">Not listed yet</h2><p class="sx-secsub">Know a program? Add it and we'll check it.</p>${unlisted.length ? `<ul class="sx-grid">${unlisted.map(tile).join("")}</ul>` : ""}${sibLine}<div class="btns">${A.btn("Add a program", "/add/program", "ink", { icon: "plus" })}</div></section>`;
   return {
-    title: "Sports · Adaptive Sports Near Me",
-    description: "Adaptive sports by sport: pick one to see programs, grants and events.",
+    title: site(PAGES.sports.title),
+    description: PAGES.sports.description,
     html,
     railActive: "sports",
   };

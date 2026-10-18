@@ -3,6 +3,7 @@
    uses the same shape as .v-events .eband) and .v-grants .seg (segmented
    filter links, 48px, aria-current). Both could become shared components. */
 import * as A from "../app.js";
+import { site, PAGES } from "../page-meta.js";
 
 const AUD = [
   ["athlete", "For athletes"],
@@ -48,8 +49,8 @@ ${shutHtml}
 ${A.letterBlock({ source: "grants" })}`;
 
   return {
-    title: "Grants for adaptive sports · Adaptive Sports Near Me",
-    description: "Money for adaptive sports from the groups that give it: equipment, travel, fees and program support. You apply on their site.",
+    title: site(PAGES.grants.title),
+    description: PAGES.grants.description,
     html,
     aside: A.aboutBox(),
     railActive: "grants",

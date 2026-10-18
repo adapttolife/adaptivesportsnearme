@@ -180,8 +180,8 @@ test("servePage: sport keys and state codes the site does not have are 404s", as
   }
   const tennis = await serve("/sports/tennis", env);
   assert.equal(tennis.status, 200);
-  assert.match(titleOf(await tennis.text()), /^Tennis: adaptive tennis programs/);
-  assert.match(titleOf(await (await serve("/sports/multi", env)).text()), /multi-sport/);
+  assert.match(titleOf(await tennis.text()), /^Tennis: adaptive programs, grants and events/);
+  assert.match(titleOf(await (await serve("/sports/multi", env)).text()), /multi-sport/i);
   assert.equal((await serve("/sports/veteran-meetup", env)).status, 200);
   const lower = await serve("/states/fl", env);
   assert.equal(lower.status, 301, "one spelling per state");

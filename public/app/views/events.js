@@ -1,6 +1,7 @@
 /* Events `/events` (spec 6.11, WP-F).
    No calendar or RSS feed links: there are no events yet, so the page promises no feed. */
 import * as A from "../app.js";
+import { site, PAGES } from "../page-meta.js";
 
 const MONTH = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
@@ -48,8 +49,8 @@ ${body}
 ${A.letterBlock({ source: "events" })}`;
 
   return {
-    title: "Adaptive sports events · Adaptive Sports Near Me",
-    description: "Adaptive sports clinics, tryouts, games and meetups. A person checks every event before it goes live.",
+    title: site(PAGES.events.title),
+    description: PAGES.events.description,
     html,
     aside: A.aboutBox(),
     railActive: "events",

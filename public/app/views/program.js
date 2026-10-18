@@ -12,6 +12,7 @@
    - .pg-poster     the 4:5 share poster (an og:image / Instagram export twin, 11.4)
    - .pg-chips      non-interactive text chips, optionally led by a 40px avatar */
 import * as A from "../app.js";
+import { site, PAGES, organizationMeta } from "../page-meta.js";
 import { guideFor } from "../sport-guides.js";
 
 const L = window.ListingArt;
@@ -283,8 +284,8 @@ function shareHtml(p) {
 
 /* ---------- render ---------- */
 const listingNotFound = () => ({
-  title: "Listing not found · Adaptive Sports Near Me",
-  description: "It may have been removed or merged with another listing.",
+  title: site(PAGES.listingNotFound.title),
+  description: PAGES.listingNotFound.description,
   html: `<section class="pg-nf"><h1 tabindex="-1">We couldn't find that listing</h1><p>It may have been removed or merged with another listing.</p><div class="btns">${A.btn("Find a program", "/", "ink")}${A.btn("Browse sports", "/sports", "line")}</div></section>`,
 });
 
@@ -342,8 +343,8 @@ ${more(p, D)}
   });
 
   return {
-    title: `${p.name}, ${sport}${tp ? " in " + tp : ""} · Adaptive Sports Near Me`,
-    description: `${p.name}: ${lowerFirst(sport)}${tp ? " in " + tp : ""}.${p.verified ? " Verified: the organization confirmed this listing." : ""} Free, no account needed.`,
+    title: site(organizationMeta({ name: p.name, sport, place: tp }).title),
+    description: organizationMeta({ name: p.name, sport, place: tp }).description,
     html: main,
     sticky,
   };

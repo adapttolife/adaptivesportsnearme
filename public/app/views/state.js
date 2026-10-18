@@ -3,6 +3,7 @@
    Counts here are for the state being viewed, which 5.4 allows.
    The group heading (.grp) is shared with the sport page and lives in app.css. */
 import * as A from "../app.js";
+import { site, stateMeta } from "../page-meta.js";
 
 const lc = (s) => s.charAt(0).toLowerCase() + s.slice(1);
 const byName = (a, b) => a.name.localeCompare(b.name);
@@ -109,8 +110,8 @@ export async function render(ctx) {
   }
 
   return {
-    title: s ? `Adaptive ${sLow} in ${stName}` : `Adaptive sports in ${stName}`,
-    description: `Adaptive ${s ? sLow : "sports"} programs in ${stName}, by city. Every listing shows when we last checked it.`,
+    title: site(stateMeta(stName, s ? sLow : "").title),
+    description: stateMeta(stName, s ? sLow : "").description,
     html: `<div class="st">${head}${bar}${body}${A.letterBlock({ source: "state" })}</div>`,
     aside: A.aboutBox(),
     railActive: "states",

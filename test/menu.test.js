@@ -56,7 +56,8 @@ test("the footer has the same four groups in the same order", () => {
 test("Guides is what /resources is called wherever a person reads it", () => {
   const help = read("public/app/views/help.js");
   assert.match(help, /<h1 tabindex="-1">Guides<\/h1>/);
-  assert.match(read("src/pages.js"), /\/\^\\\/resources\\\/\?\$\/, \(\) => \(\{ title: "Guides"/);
+  assert.match(read("public/app/page-meta.js"), /guides: \{ title: "Guides"/);
+  assert.match(read("src/pages.js"), /\/\^\\\/resources\\\/\?\$\/, \(\) => \(\{ \.\.\.PAGES\.guides \}\)/);
   assert.match(read("src/site-chrome.js"), /<a href="\/resources">Guides<\/a>/);
   for (const [file, text] of [["app.js", app], ["views/help.js", help], ["site-chrome.js", read("src/site-chrome.js")]]) {
     assert.doesNotMatch(text, />Resources<|"Resources"|Resources ·/, `${file} still shows the word Resources`);
@@ -81,10 +82,9 @@ test("dark mode is a switch with its state in aria-pressed, not words", () => {
 // Footer copy (Alec, 2026-10-18): a product line that says how to use the site and
 // what to expect, and one credit line. "Less is more"; "Made with ❤️ by Adapt To Life."
 test("both footers say what the site does and credit Adapt To Life the same way", () => {
-  const line = "Find adaptive sports programs, grants and events by place or sport. Free, no account needed. Every listing shows when we last checked it.";
   const blog = read("src/site-chrome.js");
   for (const [name, src] of [["app", footer], ["blog", blog]]) {
-    assert.ok(src.includes(line), `the ${name} footer has the product line`);
+    assert.ok(/PRODUCT_LINE/.test(src), `the ${name} footer says the product line from page-meta.js`);
     assert.match(src, /Made with <span role="img" aria-label="love">❤️<\/span> by <a href="https:\/\/adapttolife\.org"[^>]*>Adapt To Life<\/a>\./, `the ${name} footer credits Adapt To Life`);
     assert.ok(!/we don't run them|a project of|open directory/i.test(src), `the ${name} footer drops the old lines`);
   }

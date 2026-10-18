@@ -9,6 +9,8 @@
 // that file, so bump it on any site-nav.js change (browser caches ignore CDN
 // purges, and that has bitten us three times).
 
+import { PRODUCT_LINE } from "../public/app/page-meta.js";
+
 export const NAV_VERSION = "20261014a";
 
 // Shared presentation lives in public/styles.css.
@@ -58,7 +60,7 @@ export function footerHtml() {
   <div class="foot-in wrap">
     <div class="foot-brand">
       <a class="brand" href="/"><b>Adaptive Sports Near Me</b></a>
-      <p class="tagline">Find adaptive sports programs, grants and events by place or sport. Free, no account needed. Every listing shows when we last checked it.</p>
+      <p class="tagline">${PRODUCT_LINE}</p>
       <p class="tagline">Made with <span role="img" aria-label="love">❤️</span> by <a href="https://adapttolife.org" target="_blank" rel="noopener">Adapt To Life</a>.</p>
     </div>
     <div class="foot-cols">

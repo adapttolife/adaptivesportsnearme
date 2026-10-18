@@ -4,9 +4,8 @@
    PROMOTE: .v-help .hp-figs (a house-tint banner with three athletes) could
    become a shared "banner trio" next to communityHeader(). */
 import * as A from "../app.js";
+import { site, PAGES } from "../page-meta.js";
 
-const DESC = "Find adaptive sports programs, grants and events near you. Free, no account needed.";
-const GUIDES_DESC = "Every adaptive sport explained, and help beyond sports, like veteran-owned business directories by state.";
 const TRIO = ["basketball", "tennis", "skiing"];
 
 /* ---------- /help ---------- */
@@ -30,7 +29,7 @@ ${card({ ic: "calendar-plus", title: "Add an event", body: "Share a clinic, tryo
 ${card({ ic: "square-pen", title: "Suggest a fix", body: "Spot something wrong? Every listing has a Suggest a fix link.", cls: "hp-card--wide", action: A.btn("Find a listing", "", "line", { attrs: 'data-open="search"', icon: "search" }) })}
 </div>
 ${A.letterBlock({ source: "help" })}</div>`;
-  return { title: "Help build this · Adaptive Sports Near Me", description: DESC, html };
+  return { title: site(PAGES.help.title), description: PAGES.help.description, html };
 }
 
 /* ---------- /about ---------- */
@@ -47,7 +46,7 @@ function aboutPage() {
   const a11y = `We aim to meet WCAG 2.2 AA. If something doesn't work for you, tell us through <a href="/help">Suggest a fix</a>.`;
   const secs = ABOUT.map(([cls, ic, h, body], i) => `<section class="ab-sec"${ic === "accessibility" ? ' id="accessibility"' : ""} aria-labelledby="ab-${i}"><span class="ab-ic ${cls}" aria-hidden="true">${A.icon(ic, 24)}</span><div class="ab-text"><h2 id="ab-${i}">${A.esc(h)}</h2><p>${body == null ? a11y : A.esc(body)}</p></div></section>`).join("");
   const html = `<div class="ab"><div class="ab-head"><h1 tabindex="-1">How we check listings</h1></div><div class="ab-grid">${secs}</div>${A.helpBand()}</div>`;
-  return { title: "How we check listings · Adaptive Sports Near Me", description: DESC, html };
+  return { title: site(PAGES.about.title), description: PAGES.about.description, html };
 }
 
 /* ---------- /resources: Guides ----------
@@ -58,14 +57,14 @@ function resourcesPage() {
   const html = `<div class="rs"><h1 tabindex="-1">Guides</h1><p class="rs-lede">Getting started, and life beyond sports. New guides join as we write them.</p>
 ${card("rs-sports", "multi", "Every sport, explained", "What each sport is, who plays, what you need and how to start.", "Browse the sports", "/sports")}
 ${card("rs-vob", "veteran-meetup", "Veteran-owned business directories by state", "State lists of veteran-owned businesses, gathered in one place.", "Open the directories", "/resources/veteran-owned-businesses")}</div>`;
-  return { title: "Guides · Adaptive Sports Near Me", description: GUIDES_DESC, html };
+  return { title: site(PAGES.guides.title), description: PAGES.guides.description, html };
 }
 
 /* ---------- /letter ---------- */
 function letterPage() {
   const stack = ["basketball", "grant", "event"].map((k) => A.avatar(k, 64)).join("");
   const html = `<div class="lt"><div class="lt-stack" aria-hidden="true">${stack}</div><h1 tabindex="-1">Get the letter</h1>${A.letterBlock({ source: "letter", heading: false })}</div>`;
-  return { title: "Get the letter · Adaptive Sports Near Me", description: DESC, html };
+  return { title: site(PAGES.letter.title), description: PAGES.letter.description, html };
 }
 
 export async function render(ctx) {

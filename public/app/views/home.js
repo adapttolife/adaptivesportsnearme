@@ -6,6 +6,7 @@
    Colour follows Laura Lian's identity: each colour is paired with black.
    No national counts on this page. */
 import * as A from "../app.js";
+import { HOME } from "../page-meta.js";
 import { autoTextSize } from "../vendor/auto-text-size.js";
 
 // The hero athlete cycles through these, and the block takes each one's colour.
@@ -96,8 +97,8 @@ export async function render(ctx) {
   const D = ctx.data || await A.loadData();
   const near = await nearRail(D);
   return {
-    title: "Adaptive Sports Near Me: find your place in adaptive sports",
-    description: "Find adaptive sports programs, grants and events near you, each with the date we last checked it. Free, no account needed.",
+    title: HOME.title,
+    description: HOME.description,
     html: hero() + sports(D) + doors() + near + checkedRail(D) + grants(D) + events(D) + states() + A.letterBlock({ source: "home" }) + A.helpBand(),
   };
 }

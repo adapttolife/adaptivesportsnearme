@@ -9,6 +9,7 @@
      for a chip row.
    (The .grp group heading is shared and lives in app.css.) */
 import * as A from "../app.js";
+import { site, sportMeta } from "../page-meta.js";
 import { guideFor } from "../sport-guides.js";
 
 const TABS = ["programs", "grants", "events"];
@@ -177,10 +178,10 @@ export async function render(ctx) {
     })}</section>`;
   }
 
-  const title = st ? `${name} in ${A.stateName(st)}: adaptive programs, grants and events` : `${name}: adaptive programs, grants and events`;
+  const meta = sportMeta({ name, low, state: st ? A.stateName(st) : "" });
   return {
-    title,
-    description: `Adaptive ${low} programs, grants and events${st ? " in " + A.stateName(st) : ""}. Every listing shows when we last checked it.`,
+    title: site(meta.title),
+    description: meta.description,
     html: `<div class="sp sp--${A.esc(t)}">${head}${t === "programs" ? guideBlock(key, low) : ""}${body}${A.letterBlock({ source: "sport" })}</div>`,
     aside: A.aboutBox(),
     railActive: "sport:" + key,
