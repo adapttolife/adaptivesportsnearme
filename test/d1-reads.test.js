@@ -97,6 +97,34 @@ test('concurrent snapshot misses share one database load; failed loads are retri
   assert.equal(await (await cachedDirectoryResponse(req('/api/stats'),other,load,store)).text(),'directory');
 });
 
+test('concurrent misses each get their own Response, never one tied to the loading request',async () => {
+  // On Workers, a Response read from D1 belongs to the request that loaded it: a second request that
+  // clones or reads it throws "Cannot perform I/O on behalf of a different request". Model that by
+  // making the loaded Response refuse clone(), so only its owner may read it, and only once.
+  const env={DB:{}},store=cache(); let reads=0;
+  const load=async()=>{
+    reads++; await new Promise(r=>setTimeout(r,5));
+    const response=new Response(JSON.stringify({ok:true,reads}),{status:200,statusText:'OK',headers:{'Content-Type':'application/json','X-Load':'1'}});
+    response.clone=()=>{throw new TypeError('Cannot perform I/O on behalf of a different request.');};
+    return response;
+  };
+  const results=await Promise.all(Array.from({length:5},()=>cachedDirectoryResponse(req('/api/directory'),env,load,store)));
+  assert.equal(reads,1);
+  assert.equal(new Set(results).size,results.length);
+  for(const response of results) {
+    assert.equal(response.status,200); assert.equal(response.statusText,'OK');
+    assert.equal(response.headers.get('X-Load'),'1');
+    assert.deepEqual(await response.json(),{ok:true,reads:1});
+  }
+  results[0].headers.set('X-Mutated','yes');
+  assert.equal(results[1].headers.get('X-Mutated'),null);
+  const cached=await cachedDirectoryResponse(req('/api/directory'),env,load,store);
+  assert.equal(reads,1); assert.equal(cached.headers.get('Cache-Control'),'public, max-age=300');
+  assert.deepEqual(await cached.json(),{ok:true,reads:1});
+  const empty=await cachedDirectoryResponse(req('/api/stats'),{DB:{}},async()=>new Response(null,{status:204}),store);
+  assert.equal(empty.status,204); assert.equal(empty.body,null);
+});
+
 test('private routes, writes, errors and cache failures remain uncached',async()=>{
   const env={DB:{}},store=cache(); let calls=0;
   const load=async()=>{calls++;return new Response('ok');};
