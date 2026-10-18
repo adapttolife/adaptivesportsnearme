@@ -9,20 +9,26 @@ Every number here comes from read-only queries on 2026-10-18. Your two scripts f
 `merge_staging_duplicate_organizations.sql` on staging (all 31 pairs merged) and
 `normalize_production_organization_programs.sql` on production (5 organizations, 10 programs). Nothing here redoes them.
 
-## Short answers
+## Start here
 
-1. **Production is not missing anything the site needs.** Four of the tables live in production's other database,
-   `atl-intake`, on purpose. The rest are leftovers on staging that nothing reads.
-2. **The duplicates come mostly from the two databases having grown apart.** They are two different versions of the
-   directory, not a copy and its original. Karen's veteran research went into each one separately, by two routes,
-   with different ids.
-3. **Production is the database that matters.** The live site and the release both read it (`wrangler.json`). Today
-   every fix has to be made twice and the two still drift apart. Fix production once, then rebuild staging from it.
-4. **Three scripts and lists are ready**, rehearsed on a copy of production: merge now, places that become programs,
-   and a list for a person's eye.
-5. **One more thing blocks the release, and it's ours:** sport, state, near-you and map pages list organizations only.
-   The programs waiting under "Organization not yet assigned" don't show there, and they're already missing from the
-   live site.
+Three things, in order. Everything after this section is background, or can wait until after the release.
+
+1. **The tables: nothing to do.** Production isn't missing anything the site needs. The four intake tables live in
+   `atl-intake`, production's `INTAKE` database, on purpose. The rest are unused leftovers on staging (section 1).
+2. **Run list 1 on production.** It folds 75 duplicate organizations into the 71 rows they copy. Nothing a visitor
+   can see is lost except the duplicates. Four commands with a restore point are in "Running a script safely" below.
+3. **Then assign organizations to the waiting programs, as you planned.** That's also what brings them back to
+   search: the sport, state, near-you and map pages list organizations only, so the 535 waiting programs that could
+   be listed have been missing from those pages, on the live site too, since they moved to programs. In
+   `waiting-programs-suggested-organizations.csv`:
+   - **Skip 8 rows:** 5 empty copies, like the second BORP row, and 3 links scraped from a site menu
+     ("Programs", "Regional Programs", "Youth Programs").
+   - **When you create an organization, give it the program's web address and city.** An organization with
+     neither stays hidden by the site's rule (`ACTIONABLE` in `src/data.js`).
+   - 28 rows suggest an existing organization. Check the "strong" ones too: a few share a general page.
+
+Later, after the release, and none of it blocks the steps above: list 2 (section 3), list 3 (section 3), the 173
+staging-only listings (section 2), and rebuilding staging from production.
 
 ## 1. The tables
 
@@ -85,7 +91,7 @@ time the script runs, its pair is skipped.
 No organization drops off the site: every group that was listed before is listed after. 12 duplicate listings
 disappear.
 
-### List 2: places become programs (`duplicates-2-places-become-programs.csv`, `db/maintenance/duplicates_2_places_become_programs.sql`)
+### List 2, later: places become programs (`duplicates-2-places-become-programs.csv`, `db/maintenance/duplicates_2_places_become_programs.sql`)
 
 30 organizations listed once per place, almost all from Karen's research. Empath Health is listed 10 times, once for
 each Florida city where it runs a Veterans Coffee Connection. This is your `normalize_production_organization_programs.sql`
@@ -104,7 +110,7 @@ in, and nothing moves onto a kept organization that is gone.
 **Run this one only after the directory lists programs** (section 4). Until then, these 52 listings drop out of
 sport, state and near-you search.
 
-### List 3: look first (`duplicates-3-look-first.csv`)
+### List 3, later: look first (`duplicates-3-look-first.csv`)
 
 156 groups that need a person's judgment, each with a suggested action. 123 have a row the site shows today, so
 start with those.
@@ -130,38 +136,41 @@ across states. It's here rather than in list 2 because which row is the organiza
 
 ### Duplicate programs
 
-Production has no two programs with the same name at the same place. The repeats are real places: ACEing Autism
-in six states, TAPS care groups in four Florida cities, Home Base in three. Staging has two true twins, Pineland Farms
-VAST Program and Adaptive Sports Program of Ohio, and one copy of each is already hidden.
+You were right that there are some. Among the waiting programs, 5 are empty copies of another row: the second BORP,
+Adaptive Sports Program New Mexico, Lounsbury Adaptive Ski Program, Southeastern Wisconsin Adaptive Ski Program and
+Keystone Adaptive Center. They're marked "skip" in the suggestions file. Otherwise the repeated names are real
+places: ACEing Autism in six states, TAPS care groups in four Florida cities, Home Base in three. Staging has two more
+twins, Pineland Farms VAST Program and Adaptive Sports Program of Ohio, with one copy of each already hidden.
 
-## 4. What else blocks the release: the directory reads organizations only
+## 4. Why the waiting programs are missing from search
 
 `listingsSnapshot` in `src/data.js` builds the sport, state, near-you and map pages from the `organizations` table
 alone. Programs appear only on `/programs` and on their organization's page. Checked on the review copy: none of the
 200 programs fetched from `/api/programs` is in `/api/listings`.
 
-- 572 programs wait under "Organization not yet assigned" in production. 540 could be listed, and 538 of those have
-  no listed organization with the same name, so they're missing from search.
-- **They're already missing on the live site**, which reads the same database. For example, Bay Area Outreach &
-  Recreation Program (BORP), Adaptive Sports Program of Ohio and California Adaptive Rowing Program are gone from
-  `adaptivesportsnearme.com/api/directory` since `move_program_rows_to_placeholder.sql` took rows with "program" in
+- 572 programs wait under "Organization not yet assigned" in production. 537 have a web address or a city, and 535 of
+  those have no listed organization with the same name, so they're missing from search.
+- **That's true on the live site too**, which reads the same database. These rows were listings: 440 had their
+  websites checked as listings before 10/15, some since June. Bay Area Outreach & Recreation Program (BORP),
+  Adaptive Sports Program of Ohio and California Adaptive Rowing Program are examples. They left
+  `adaptivesportsnearme.com/api/directory` when `move_program_rows_to_placeholder.sql` took rows with "program" in
   the name out of `organizations`.
 
-Two things bring them back, and both are needed:
+**Your assignment work brings them back:** a program whose organization has a web address or a city is listed again
+through that organization. That covers organizations with one place, which is most of these.
 
-1. **Your assignment work.** A program with a real organization shows again, through that organization.
-   `waiting-programs-suggested-organizations.csv` suggests one for each: 13 strong (same web page), 15 likely, and
-   544 with no match, most of which read as organizations in their own right (BORP is an organization, not a
-   program). Treat the strong ones as a starting point too: a few share a general page, like the USTA South
-   Carolina adaptive tennis page.
-2. **The directory listing programs**, so each place shows up near the people it serves. That's our front-end job,
-   and it changes `/api/listings`, so we'll design it with you. List 2 waits for it.
+Later, the directory can list programs too, so an organization with several places, like ACEing Autism, shows up
+near each of them. That's our front-end follow-up, it changes `/api/listings`, and we'll design it with you. It
+doesn't block your assignment work. List 2 waits for it.
 
 ## 5. The order
 
+Now:
 1. Note a restore point, then run list 1 on production.
-2. Assign organizations to the waiting programs (`waiting-programs-suggested-organizations.csv`).
-3. We ship the directory listing programs.
+2. Assign organizations to the waiting programs.
+
+After the release:
+3. The directory lists programs (our front-end change, designed with you).
 4. Run list 2.
 5. Work list 3, visible groups first.
 6. Copy `staging-only-worth-keeping.csv` into production, then rebuild staging from production so the two match.
