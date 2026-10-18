@@ -35,6 +35,7 @@ const help = `asnm — tester directory tools. Live stays locked.
   ship <card.json>    dry-run tester SQL (add --apply only after a yes)
   discover [file]     propose leftover candidates to tester review_queue (add --apply)
   eval-lanes          prove extract / discover-dry / resolve twins still hold
+  describe <step>     organization descriptions: batch | check | review | file | export
 `;
 
 if (!cmd || cmd === "help" || cmd === "-h") {
@@ -68,6 +69,8 @@ if (cmd === "status") {
   const apply = rest.includes("--apply");
   const file = rest.find((a) => a !== "--apply");
   run("ship-approved.mjs", apply ? ["--file", file, "--apply"] : ["--file", file]);
+} else if (cmd === "describe") {
+  run("describe.mjs", rest);
 } else if (cmd === "discover") {
   const apply = rest.includes("--apply");
   const file = rest.find((a) => a !== "--apply");
