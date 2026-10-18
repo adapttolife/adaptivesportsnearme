@@ -23,7 +23,7 @@ production changes: https://asnm-review.adapt-to-life.workers.dev/near/Brandon%2
 | 2 | Now | Faisal | Run `staging_only_into_production.sql`: 173 listings that only staging has | +129 organizations, +41 programs |
 | 3 | Now | Faisal | Rebuild staging from production: `scripts/rebuild-staging-from-production.sh` (dry run, then `--fire`) | staging matches production exactly; restore tested |
 | 4 | Now | Faisal reviews | Merge PR #68: programs show in search as places | 2,616 listings, 723 of them programs |
-| 5 | Now | Faisal | Assign organizations to the waiting programs, and work list 3 (section 3) | 570 waiting; 97 groups to judge, 91 shown on the site |
+| 5 | Now | Faisal | Assign organizations to the waiting programs, and work list 3 (section 3) | 579 waiting (step 6 attaches 9 more on its own); 97 groups to judge, 91 shown on the site |
 | 6 | The day the new site goes live | Faisal | Run list 2: `duplicates_2_places_become_programs.sql`, then `duplicates_3_mechanical.sql` | 2,750 organizations after list 2; ACEing Autism one organization with 28 programs |
 | 7 | After 6 | Faisal | Rebuild staging again, so it matches | as step 3 |
 
