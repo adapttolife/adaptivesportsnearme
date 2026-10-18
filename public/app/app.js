@@ -795,7 +795,12 @@ function outsidePlace(p) {
   return /statewide/i.test(String(p.city || "")) ? `${stateName(p.state)}, statewide` : `${stateName(p.state)}, no single city listed`;
 }
 const placeFor = (p, ctx) => (ctx && ctx.outside) ? outsidePlace(p) : placeText(p);
-const runBy = (p) => (p.prog && p.orgName ? ` · ${p.orgName}` : "");
+// " · ACEing Autism" names who runs a program, unless the program already carries that name.
+const runBy = (p) => {
+  if (!p.prog || !p.orgName) return "";
+  const name = displayName(p.name).toLowerCase(), org = displayName(p.orgName).toLowerCase();
+  return name === org || name.startsWith(org + " ") || name.startsWith(org + ":") ? "" : ` · ${p.orgName}`;
+};
 const metaText = (p, ctx) => ((ctx && ctx.single) ? placeFor(p, ctx) : `${sportName(p.key)} · ${placeFor(p, ctx)}`) + runBy(p);
 
 /** Card for lists that mix sports. ctx: { where, stamp, wide, sameCity } */
