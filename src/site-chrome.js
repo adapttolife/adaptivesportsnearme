@@ -58,7 +58,8 @@ export function footerHtml() {
   <div class="foot-in wrap">
     <div class="foot-brand">
       <a class="brand" href="/"><b>Adaptive Sports Near Me</b></a>
-      <p class="tagline">An open directory of adaptive sports programs across the country. No logins, no walls, because it is a free service of <a href="https://adapttolife.org" target="_blank" rel="noopener">Adapt To Life</a>, a recognized 501(c)(3) nonprofit.</p>
+      <p class="tagline">Find adaptive sports programs, grants and events by place or sport. Free, no account needed. Every listing shows when we last checked it.</p>
+      <p class="tagline">Made with love from <a href="https://adapttolife.org" target="_blank" rel="noopener">Adapt To Life</a>.</p>
     </div>
     <div class="foot-cols">
       <div class="foot-col"><h2>Find</h2><a href="/">Programs near you</a><a href="/sports">Sports</a><a href="/grants">Grants</a><a href="/events">Events</a><a href="/resources">Guides</a></div>
