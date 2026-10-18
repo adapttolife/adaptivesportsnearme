@@ -21,7 +21,7 @@ These are ideas, not promises. An idea becomes a feature when someone builds it.
 
 - **Grant helper:** walk an athlete or an organization through a grant application, start to finish, so it gets sent.
 - **Tournament brackets:** run a bracket for a clinic, a league or a game day, free and on this site.
-- **Gear:** where to find adaptive equipment, what it costs, and who helps pay for it.
+- **Gear to borrow, try or rent:** one search for adaptive equipment near you, from every program and lending library that has it.
 
 What tool do you wish existed? [Start a discussion](https://github.com/adapttolife/adaptivesportsnearme/discussions/categories/ideas) or email hello@adaptivesportsnearme.com.
 
