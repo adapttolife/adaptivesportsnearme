@@ -70,7 +70,7 @@ const TOOLS = [
   { state: "Live", ic: "book-open", h: "Guides", body: "Every sport explained: who plays, what you need and how to start.", href: "/resources" },
   { state: "Idea", ic: "file-text", h: "Grant helper", body: "Walk an athlete or an organization through a grant application, start to finish, so it gets sent.", issue: 74 },
   { state: "Idea", ic: "trophy", h: "Tournament brackets", body: "Run a bracket for a clinic, a league or a game day, free and right here.", issue: 75 },
-  { state: "Idea", ic: "wrench", h: "Gear", body: "Where to find adaptive equipment, what it costs, and who helps pay for it.", issue: 76 },
+  { state: "Idea", ic: "wrench", h: "Gear to borrow, try or rent", body: "One search for adaptive equipment near you, from every program and lending library that has it. A sit-ski your size, a handcycle to try, before anyone spends thousands.", issue: 76 },
 ];
 const WRITE = (subject) => "mailto:hello@adaptivesportsnearme.com?subject=" + encodeURIComponent(subject);
 const HELP = [
