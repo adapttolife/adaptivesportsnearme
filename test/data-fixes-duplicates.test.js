@@ -9,7 +9,9 @@ const one = read("db/maintenance/duplicates_1_merge_now.sql");
 const two = read("db/maintenance/duplicates_2_places_become_programs.sql");
 const counts = read("db/maintenance/duplicates_check_counts.sql");
 const csvRows = (p) => read(p).trim().split("\n").slice(1).map((line) => line.match(/("([^"]|"")*"|[^,]*)(,|$)/g).map((c) => c.replace(/,$/, "").replace(/^"|"$/g, "").replace(/""/g, '"')));
-const statements = (sql) => sql.replace(/--.*$/gm, "").split(";").map((s) => s.trim()).filter(Boolean);
+import { statements as split } from "../scripts/lib/sql-statements.mjs";
+// Statements without comments or the trailing ";", split the way D1 reads them (quotes and comments respected).
+const statements = (sql) => split(sql).map((s) => s.replace(/^(\s*--[^\n]*\n)+/, "").replace(/;$/, "").trim()).filter((s) => s && !/^--/.test(s));
 
 test("list 1: every duplicate folds into one kept row, and no kept row is ever folded away", () => {
   const pairs = [...one.matchAll(/\('([0-9a-f-]{36})', '([0-9a-f-]{36})'\)/g)].map((m) => [m[1], m[2]]);
@@ -33,7 +35,7 @@ test("list 1: a pair whose kept row is gone is skipped, and the helper table goe
 });
 
 test("list 2: an organization row goes only once its program copy is in, and nothing moves onto a missing row", () => {
-  assert.match(two, /RUN ONLY AFTER the directory lists programs/);
+  assert.match(two, /RUN ONLY ONCE the live site lists programs/);
   const s = statements(two);
   const deletes = s.filter((x) => x.startsWith("DELETE FROM organizations"));
   const inserts = s.filter((x) => /^INSERT\b/.test(x));
@@ -49,4 +51,64 @@ test("list 2: an organization row goes only once its program copy is in, and not
 
 test("the count check only reads", () => {
   for (const x of statements(counts)) assert.match(x, /^SELECT\b/, x.slice(0, 60));
+});
+
+test("the staging import only inserts, and a program whose parent is missing waits under the placeholder", () => {
+  const s = statements(read("db/maintenance/staging_only_into_production.sql"));
+  for (const x of s) assert.match(x, /^INSERT OR IGNORE INTO (data_sources|organizations|programs|organization_data_sources) /, x.slice(0, 70));
+  const programs = s.filter((x) => x.startsWith("INSERT OR IGNORE INTO programs"));
+  assert.equal(programs.length, 41);
+  for (const p of programs) assert.match(p, /COALESCE\(\(SELECT id FROM organizations WHERE id = '[^']+'\), 'a461f29b-0b89-4e17-b879-6a80e0abd101'\)/);
+  assert.equal(s.filter((x) => x.startsWith("INSERT OR IGNORE INTO organizations")).length, 129);
+});
+
+test("list 3's mechanical part guards every delete, insert and move", () => {
+  const s = statements(read("db/maintenance/duplicates_3_mechanical.sql"));
+  assert.match(read("db/maintenance/duplicates_3_mechanical.sql"), /only once the live site lists programs/);
+  for (const d of s.filter((x) => x.startsWith("DELETE FROM organizations "))) assert.match(d, /AND EXISTS \(SELECT 1 FROM (programs|organizations) WHERE id = /, d.slice(0, 90));
+  for (const i of s.filter((x) => /^INSERT\b/.test(x))) assert.match(i, /^INSERT OR IGNORE INTO programs .* AND EXISTS \(SELECT 1 FROM organizations WHERE id = '[^']+'\)$/s);
+  for (const u of s.filter((x) => /^UPDATE\b/.test(x) && !x.startsWith("UPDATE organizations SET description"))) {
+    assert.match(u, /AND EXISTS \(SELECT 1 FROM organizations WHERE id = '[^']+'\)$/, u.slice(0, 90));
+  }
+});
+
+test("the staging rebuild's replace file drops children first, loads parents first, and survives comments and quotes", async () => {
+  const { spawnSync } = await import("node:child_process");
+  const { mkdtempSync, writeFileSync } = await import("node:fs");
+  const { DatabaseSync } = await import("node:sqlite");
+  const dir = mkdtempSync("/tmp/d1-replace-");
+  // A dump in the order D1 can produce: the child table first, a comment with an apostrophe, a ; inside a value.
+  writeFileSync(`${dir}/dump.sql`, [
+    "PRAGMA defer_foreign_keys=TRUE;",
+    "CREATE TABLE child (id TEXT PRIMARY KEY, parent_id TEXT REFERENCES parent(id)); -- the child's row",
+    "INSERT INTO \"child\" VALUES('c1','p1');",
+    "CREATE TABLE parent (id TEXT PRIMARY KEY, note TEXT -- it's the parent",
+    ");",
+    "INSERT INTO \"parent\" VALUES('p1','semi;colon and ''quotes''');",
+    "CREATE INDEX child_parent ON child (parent_id);",
+  ].join("\n"));
+  writeFileSync(`${dir}/target.sql`, "CREATE TABLE parent (id TEXT PRIMARY KEY);\nCREATE TABLE child (id TEXT PRIMARY KEY, parent_id TEXT REFERENCES parent(id));\n");
+  const run = spawnSync(process.execPath, ["scripts/lib/d1-replace-file.mjs", `${dir}/dump.sql`, `${dir}/out.sql`, "parent child", "-", `${dir}/target.sql`], { encoding: "utf8" });
+  assert.equal(run.status, 0, run.stderr);
+  const out = (await import("node:fs")).readFileSync(`${dir}/out.sql`, "utf8");
+  assert.ok(out.indexOf('DROP TABLE IF EXISTS "child"') < out.indexOf('DROP TABLE IF EXISTS "parent"'), "children are dropped first");
+  assert.ok(out.indexOf('INSERT INTO "parent"') < out.indexOf('INSERT INTO "child"'), "parents' rows go in first");
+  // The target as it is now, then the file, every statement checked on its own with foreign keys on.
+  const db = new DatabaseSync(":memory:");
+  db.exec("PRAGMA foreign_keys = ON; CREATE TABLE parent (id TEXT PRIMARY KEY); CREATE TABLE child (id TEXT PRIMARY KEY, parent_id TEXT REFERENCES parent(id)); INSERT INTO parent VALUES ('old'); INSERT INTO child VALUES ('x', 'old');");
+  for (const st of statements(out.replace("PRAGMA defer_foreign_keys = true;", ""))) db.exec(st);
+  assert.equal(db.prepare("SELECT note FROM parent").get().note, "semi;colon and 'quotes'");
+  assert.equal(db.prepare("SELECT COUNT(*) AS n FROM child").get().n, 1);
+  writeFileSync(`${dir}/empty.sql`, "PRAGMA defer_foreign_keys=TRUE;\n");
+  const refuse = spawnSync(process.execPath, ["scripts/lib/d1-replace-file.mjs", `${dir}/empty.sql`, `${dir}/x.sql`, "parent"], { encoding: "utf8" });
+  assert.equal(refuse.status, 3, "a dump with no tables never becomes a file that only drops");
+});
+
+test("the staging rebuild refuses to touch production", async () => {
+  const { spawnSync } = await import("node:child_process");
+  for (const target of ["asnm-db"]) {
+    const r = spawnSync("bash", ["scripts/rebuild-staging-from-production.sh", "--fire"], { encoding: "utf8", env: { ...process.env, TARGET_DB: target, WRANGLER: "false" } });
+    assert.equal(r.status, 2);
+    assert.match(r.stderr, /Refusing: the target would be asnm-db/);
+  }
 });
