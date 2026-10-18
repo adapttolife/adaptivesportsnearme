@@ -158,7 +158,8 @@ const application = {
         if (url.pathname === "/api/programs") {
           return json({ ok: true, ...(await listActualPrograms(env.DB, url.searchParams)) }, 200, API_CACHE);
         }
-        const program = url.pathname.match(/^\/api\/programs\/([0-9a-f-]{36})$/);
+        // Program ids are UUIDs, plus a few readable ones (program-lutz-buddy-up-venice).
+        const program = url.pathname.match(/^\/api\/programs\/([a-z0-9-]{1,80})$/);
         if (program) {
           const record = await getProgram(env.DB, program[1]);
           return record ? json({ ok: true, program: record }, 200, API_CACHE) : json({ ok: false, error: "Not found" }, 404);

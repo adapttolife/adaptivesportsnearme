@@ -104,16 +104,10 @@ export async function render(ctx) {
   for (const list of [full.inCity, full.near, full.elsewhere, full.statewide]) for (const p of list) keys.add(p.key);
   if (s) keys.add(s);
 
-  const h1 = `${s ? A.sportName(s) : "Organizations"} near ${where.label}`;
+  // Programs are listed as places of their own now, so the list says what the menu's
+  // "Programs near you" promised; the separate programs section this replaced is gone.
+  const h1 = `${s ? A.sportName(s) : "Programs"} near ${where.label}`;
   const rctx = { where, single: !!s };
-  let nearbyPrograms = "";
-  try {
-    const query = new URLSearchParams({ state: where.state, city: where.city, limit: "200" });
-    const response = await fetch(`/api/programs?${query}`);
-    const body = response.ok ? await response.json() : null;
-    if (body?.items?.length) nearbyPrograms = `<section class="nr-group"><div class="nr-gh"><h2>Programs near ${A.esc(where.short)}</h2><span class="nr-n num">${body.items.length}</span></div><div class="rows">${body.items.map((item) => `<a class="prow" href="/programs/${A.esc(item.id)}"><div class="pr-body"><h3 class="pr-name">${A.esc(item.name)}</h3><p class="meta">${A.esc(item.organization?.name || "Organization")}</p></div></a>`).join("")}</div></section>`;
-  } catch (_) {}
-
   /* 1. results header */
   const dots = pool.filter((p) => p.state === where.state && p.placed);
   const outline = A.stateOutline(where.state, { dots, you: where.coords, size: 120 });
@@ -187,7 +181,7 @@ export async function render(ctx) {
     }
   }
 
-  const html = `<div class="nr">${header}${toolbar}${bar}${jumps}${empty}${nearbyPrograms}${groups}</div>${A.letterBlock({ source: "near" })}${A.helpBand()}`;
+  const html = `<div class="nr">${header}${toolbar}${bar}${jumps}${empty}${groups}</div>${A.letterBlock({ source: "near" })}${A.helpBand()}`;
   return {
     title: `${h1} · Adaptive Sports Near Me`,
     description: `Adaptive ${s ? sportLow : "sports"} programs near ${where.label}: in ${city}, within about 25 miles, and across ${ST}. Free, no account needed.`,

@@ -8,7 +8,7 @@
 //
 // Previews and staging say noindex (meta robots + X-Robots-Tag); only production
 // (ENV_NAME=production) asks to be indexed.
-import { getOrg, getProgram, getGrant, directorySnapshot } from "./data.js";
+import { getOrg, getProgram, getGrant, directorySnapshot, programsSnapshot } from "./data.js";
 import { SPORT_NAMES } from "./sport-names.js";
 import { GUIDES } from "../public/app/sport-guides.js";
 import { isListable } from "../public/app/listable.js";
@@ -82,7 +82,7 @@ const ROUTES = [
       image: listingCard(p),
     };
   }],
-  [new RegExp(`^/programs/(${UUID})/?$`, "i"), async (m, env) => {
+  [new RegExp(`^/programs/(${UUID}|program-[a-z0-9-]{1,80})/?$`, "i"), async (m, env) => {
     if (!env.DB) return { title: "Program", description: HOME_DESCRIPTION };
     const id = m[1].toLowerCase();
     let p = null;
@@ -249,6 +249,7 @@ export async function sitemapXml(env) {
   if (env.DB) {
     const snap = await directorySnapshot(env.DB);
     for (const p of snap.items) if (isListable(p)) urls.push(`/organizations/${p.id}`);
+    for (const p of (await programsSnapshot(env.DB)).items) if (isListable(p)) urls.push(`/programs/${p.id}`);
     try {
       const g = await env.DB.prepare("SELECT id FROM grants WHERE is_public = 1 AND status = 'active'").all();
       for (const r of g.results || []) urls.push(`/grants/${r.id}`);

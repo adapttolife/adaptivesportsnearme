@@ -35,6 +35,8 @@ export const ACTIONABLE = `((website_url IS NOT NULL AND website_url <> '')
   OR (publicity_consent = 1 AND email IS NOT NULL AND email <> '')
   OR (publicity_consent = 1 AND phone IS NOT NULL AND phone <> ''))`;
 const PUBLIC = `is_public = 1 AND status = 'active' AND ${ACTIONABLE}`;
+// The same rule, for a table under an alias in a join ("p" for programs).
+const actionableOn = (t) => ACTIONABLE.replace(/\b(website_url|city|state|publicity_consent|email|phone)\b/g, `${t}.$1`);
 
 function rowToProgram(r, dist) {
   const publicityConsent = r.publicity_consent === 1;
@@ -90,6 +92,34 @@ function nearPayload(origin) {
 // Read it once rather than repeating COUNT + OFFSET scans for every 200 rows.
 // places (optional): the city table from loadPlaces(), so each item carries the
 // center of its listed city for maps and "near you".
+// Programs are listed as places of their own: a person looks for a sport at a place
+// (Alec, 2026-10-17), and an organization can run it in several. A program shows when it,
+// and the organization that runs it, are public; the placeholder "Organization not yet
+// assigned" is never named. A database without the programs table lists none.
+const PROGRAM_LIST_COLS = `p.id, p.name, NULL AS org_type, p.sport, p.sport_key, p.website_url, p.city,
+  p.state, p.state_name, p.zip, p.publicity_consent, p.lat, p.lng, p.geo_precision, p.description, p.cost_note,
+  p.equipment_provided, p.ages, NULL AS data_quality_rating, p.verification_status, p.verification_method,
+  p.last_ok_at, p.created_at, o.id AS organization_id, o.name AS organization_name, o.org_type AS organization_type`;
+export async function programsSnapshot(db, { places = null } = {}) {
+  let rows;
+  try {
+    rows = await db.prepare(`SELECT ${PROGRAM_LIST_COLS} FROM programs p JOIN organizations o ON o.id = p.organization_id
+      WHERE ${PROGRAM_PUBLIC} AND ${actionableOn("p")}
+      ORDER BY (p.sport_key IS NULL), (p.state IS NULL), p.name`).all();
+  } catch (_) {
+    return { total: 0, items: [] };
+  }
+  const items = rows.results.map((row) => {
+    const p = rowToProgram(row);
+    p.kind = "program";
+    p.organizationId = row.organization_id;
+    p.organization = row.organization_type === "placeholder" ? null : { id: row.organization_id, name: row.organization_name };
+    if (places) p.cityCenter = cityCenter(row.city, row.state, places);
+    return p;
+  });
+  return { total: items.length, items };
+}
+
 export async function directorySnapshot(db, { places = null } = {}) {
   const rows = await db.prepare(`SELECT ${LIST_COLS} FROM organizations
     WHERE ${PUBLIC}
@@ -107,7 +137,12 @@ export async function directorySnapshot(db, { places = null } = {}) {
 // That page loads the rest from /api/orgs/:id. Rows that are not programs
 // (public/app/listable.js) never ship. Dates are days ("2026-10-08").
 export async function listingsSnapshot(db, { places = null } = {}) {
-  const { items } = await directorySnapshot(db, { places });
+  const [{ items: orgs }, { items: programs }] = await Promise.all([directorySnapshot(db, { places }), programsSnapshot(db, { places })]);
+  // An organization whose programs are listed is shown through them (progs: how many),
+  // so the same place is never listed twice; its own page still works.
+  const listedPrograms = new Map();
+  for (const p of programs) if (isListable(p)) listedPrograms.set(p.organizationId, (listedPrograms.get(p.organizationId) || 0) + 1);
+  const items = [...orgs, ...programs];
   const day = (s) => (s ? String(s).slice(0, 10) : null);
   const out = [];
   for (const p of items) {
@@ -122,6 +157,12 @@ export async function listingsSnapshot(db, { places = null } = {}) {
     else if (p.listedAt) o.listed = day(p.listedAt);
     if (p.confirmed) o.verified = 1;
     if (p.teamChecked) o.team = 1;
+    if (p.kind === "program") {
+      o.prog = 1;
+      if (p.organization) o.org = p.organization.name;
+    } else if (listedPrograms.get(p.id)) {
+      o.progs = listedPrograms.get(p.id);
+    }
     out.push(o);
   }
   return { total: out.length, items: out };
@@ -224,6 +265,7 @@ const PROGRAM_COLS = `p.id, p.organization_id, p.name, NULL AS org_type, p.sport
   NULL AS data_quality_rating, p.verification_status, p.verification_method, p.last_ok_at, p.created_at`;
 const PROGRAM_PUBLIC = "p.is_public = 1 AND p.status = 'active' AND o.is_public = 1 AND o.status = 'active'";
 function programParent(row) {
+  if (row.organization_type === "placeholder") return null;   // "Organization not yet assigned" is never shown
   return { id: row.organization_id, name: row.organization_name, city: row.organization_city,
     state: row.organization_state, stateName: row.organization_state_name, website: row.organization_website_url };
 }
@@ -242,12 +284,12 @@ export async function listActualPrograms(db, params = new URLSearchParams()) {
   const condition = where.join(" AND ");
   const [count, rows] = await Promise.all([
     db.prepare(`SELECT COUNT(*) AS n FROM programs p JOIN organizations o ON o.id = p.organization_id WHERE ${condition}`).bind(...binds).first(),
-    db.prepare(`SELECT ${PROGRAM_COLS}, o.name AS organization_name, o.city AS organization_city, o.state AS organization_state, o.state_name AS organization_state_name, o.website_url AS organization_website_url FROM programs p JOIN organizations o ON o.id = p.organization_id WHERE ${condition} ORDER BY p.name COLLATE NOCASE LIMIT ? OFFSET ?`).bind(...binds, limit, offset).all(),
+    db.prepare(`SELECT ${PROGRAM_COLS}, o.name AS organization_name, o.org_type AS organization_type, o.city AS organization_city, o.state AS organization_state, o.state_name AS organization_state_name, o.website_url AS organization_website_url FROM programs p JOIN organizations o ON o.id = p.organization_id WHERE ${condition} ORDER BY p.name COLLATE NOCASE LIMIT ? OFFSET ?`).bind(...binds, limit, offset).all(),
   ]);
   return { total: count?.n ?? 0, limit, offset, items: (rows.results || []).map((row) => ({ ...rowToProgram(row), organization: programParent(row) })) };
 }
 export async function getProgram(db, id) {
-  const row = await db.prepare(`SELECT ${PROGRAM_COLS}, p.email, p.phone, p.updated_at, o.name AS organization_name, o.city AS organization_city, o.state AS organization_state, o.state_name AS organization_state_name, o.website_url AS organization_website_url FROM programs p JOIN organizations o ON o.id = p.organization_id WHERE p.id = ? AND ${PROGRAM_PUBLIC}`).bind(id).first();
+  const row = await db.prepare(`SELECT ${PROGRAM_COLS}, p.email, p.phone, p.updated_at, o.name AS organization_name, o.org_type AS organization_type, o.city AS organization_city, o.state AS organization_state, o.state_name AS organization_state_name, o.website_url AS organization_website_url FROM programs p JOIN organizations o ON o.id = p.organization_id WHERE p.id = ? AND ${PROGRAM_PUBLIC}`).bind(id).first();
   if (!row) return null;
   return { ...rowToProgram(row), ...(row.publicity_consent === 1 ? { email: row.email, phone: row.phone } : {}), organization: programParent(row), updatedAt: row.updated_at };
 }
