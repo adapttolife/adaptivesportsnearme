@@ -6,9 +6,9 @@ Cloudflare settings. Contributors don't need any of this; start with the
 
 
 The canonical site for **adaptivesportsnearme.com**: the Airbnb-style directory design, a
-Cloudflare Worker with a **D1 data plane** (1,544 real organizations), a cron maintenance
-pipeline, and an installable PWA. Production stays a gated pre-launch teaser; staging runs
-the full ungated directory on real data.
+Cloudflare Worker with a **D1 data plane**, a cron maintenance pipeline, and an installable
+PWA. Production runs the full directory (`PRELAUNCH=false`) on `asnm-db`; staging runs the
+same code on `asnm-db-staging`.
 
 ## UI icons
 
@@ -59,7 +59,9 @@ npx wrangler d1 execute asnm-db-staging --config wrangler.preview.json --remote 
 npx wrangler d1 execute asnm-db --config wrangler.json --remote --file db/migrations/0008_organization_access.sql
 ```
 
-Set the `ORG_AUTH_SIGNING_KEY` secret independently on both Workers. Claimants
+Set the `ORG_AUTH_SIGNING_KEY` secret once, on the `adaptivesportsnearme` Worker, the way
+[Deploy](#deploy) describes, never in the Cloudflare dashboard. Staging previews are versions
+of that same Worker, and previews uploaded afterwards carry the secret. Claimants
 request a one-time email link at `POST /api/org-auth/request-link`; authenticated
 sessions can read and update only organizations whose `claim_email` matches the
 verified address through `/api/organizations/:id/manage`.
@@ -160,7 +162,7 @@ the freshness score — half-life 45 days, computed in the Worker).
 
 - `staging` is the student integration branch — closest to the tester. Branch off it. Open pull requests **into `staging`**.
 - `main` is the production recipe and deploys to the live site on every push. Default branch stays `main`. Do not PR into it. Do not merge to it casually.
-- Production remains gated by `PRELAUNCH=true`; a push to `main` deploys the current production recipe.
+- Production runs with `PRELAUNCH=false`; a push to `main` deploys the current production recipe.
 - Students: [docs/STUDENTS.md](STUDENTS.md). Directory tools: [tools/directory/README.md](../tools/directory/README.md).
 
 The front-end hydrates from `/api/config` + `/api/programs`; if the API is absent or errors,
@@ -180,7 +182,9 @@ and an uploaded staging version. In its Cloudflare Settings > Builds configure:
 
 - Production branch: `main`.
 - Production deploy command: `npx wrangler deploy --config wrangler.json`.
-- Preview branch: `staging` only (so other branches cannot move the staging alias).
+- Preview branch: `staging` only (so other branches cannot move the staging alias). Check
+  it: on 2026-10-19 the live setting uploaded every branch except `main`, so each pull
+  request branch moved the alias and became the Worker's newest version.
 - Preview command: `npx wrangler versions upload --config wrangler.preview.json --preview-alias staging`.
 
 The preview URL is https://staging-adaptivesportsnearme.adapt-to-life.workers.dev.
@@ -195,7 +199,26 @@ for staging; `wrangler deploy --env staging` would replace the production deploy
 with staging code and bindings. Release production from `main` using production config,
 not by promoting a staging-configured version.
 
-Production stays gated (`PRELAUNCH=true`). Staging uses `ENV_NAME=staging`,
+**Never change this Worker's variables or secrets in the Cloudflare dashboard.** A dashboard
+edit makes a new version from the Worker's newest upload and deploys it. Branch builds
+upload versions to this Worker, so the newest upload is usually a branch preview with
+staging settings. On 2026-10-18, adding `ORG_AUTH_SIGNING_KEY` in the dashboard deployed
+the staging preview to adaptivesportsnearme.com: `ENV_NAME=staging` (`robots.txt`
+disallowed everything and every page said `noindex`), `asnm-db-staging` for `DB` and
+`INTAKE`, and no cron handler (#87).
+
+- Variables: change them in `wrangler.json` and release from `main`.
+- Secrets: run `npx wrangler secret put NAME` right after a production deploy, while the
+  deployed version is still the newest. If Wrangler says "Secret edit failed ... the latest
+  version of your Worker isn't currently deployed", a branch has uploaded since. Don't use
+  either fix it suggests: both act on that branch's version. Redeploy `main` (re-run its
+  latest build in Cloudflare, or `npx wrangler deploy` from a clean checkout of `main`),
+  then run the command again.
+- After any change to the deployed Worker, open https://adaptivesportsnearme.com/robots.txt:
+  production says `Allow: /`; staging settings say `Disallow: /`.
+
+Production uses `ENV_NAME=production`, `PRELAUNCH=false`, `asnm-db` for `DB` and
+`atl-intake` for `INTAKE`. Staging uses `ENV_NAME=staging`,
 `PRELAUNCH=false`, and `asnm-db-staging` for both `DB` and `INTAKE`. Its entrypoint
 exports only `fetch`. Version uploads do not update the Worker's routes or cron
 triggers; those remain managed by the production deployment.
@@ -249,8 +272,14 @@ settings, DNS, and certificate status must also be checked in Cloudflare.
 
 ## Secrets (per worker, via `wrangler secret put`)
 
-`BEEHIIV_API_KEY`, `BEEHIIV_PUBLICATION_ID`, `TURNSTILE_SECRET_KEY`,
-`ORG_AUTH_SIGNING_KEY`, and `ADMIN_KEY` (enables `/api/admin/*`; unset = admin disabled, 401).
+`BEEHIIV_API_KEY`, `TURNSTILE_SECRET_KEY`, `GMAIL_CLIENT_ID`, `GMAIL_CLIENT_SECRET`,
+`GMAIL_REFRESH_TOKEN`, `PROFILE_SIGNING_KEY`, `ORG_AUTH_SIGNING_KEY`, and `ADMIN_KEY`
+(enables `/api/admin/*`; unset = admin disabled, 401). `BEEHIIV_PUBLICATION_ID` is a
+variable in `wrangler.json`.
+
+`adaptivesportsnearme` is one Worker for production and the staging previews: set its
+secrets the way [Deploy](#deploy) describes, never in the Cloudflare dashboard. `asnm-gate`
+is a separate Worker with no previews: `npx wrangler secret put NAME --config wrangler.gate.json`.
 
 ## Maintaining the data
 
