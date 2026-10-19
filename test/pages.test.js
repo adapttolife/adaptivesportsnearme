@@ -350,7 +350,8 @@ test("/letter/confirmed is a page with its own title, kept out of search and the
 
 test("each page names its own code, and a listing page its details, for the browser to start early", async () => {
   const { preloadHints } = await import("../src/pages.js");
-  const hrefs = (path) => preloadHints(path).map((t) => t.match(/href="([^"]+)"/)[1]);
+  // A link names its file in href; a page's data starts with a script (src/pages.js earlyFetch).
+  const hrefs = (path) => preloadHints(path).map((t) => (t.match(/href="([^"]+)"/) || t.match(/fetch\("([^"]+)"\)/))[1]);
   assert.deepEqual(hrefs("/"), ["/app/views/home.js", "/app/views/home.css"]);
   assert.deepEqual(hrefs("/sports/tennis/"), ["/app/views/sport.js", "/app/views/sport.css"]);
   assert.deepEqual(hrefs("/update/" + PROGRAM), ["/app/views/forms.js", "/app/views/forms.css"]);
@@ -358,7 +359,7 @@ test("each page names its own code, and a listing page its details, for the brow
   assert.deepEqual(hrefs("/programs/" + PROGRAM), ["/app/views/program-detail.js", "/app/views/program-detail.css", "/api/programs/" + PROGRAM]);
   assert.deepEqual(hrefs("/nope"), []);
   // The shell starts the listings for every page, and a missing page names no code.
-  assert.ok(SHELL.includes('<link rel="preload" href="/api/listings" as="fetch" crossorigin>'));
+  assert.match(SHELL, /\["\/api\/listings", "\/data\/states\.json", "\/data\/sports\.json"\]\.forEach/);
   const env = { ASSETS: assets(), DB: undefined, ENV_NAME: "production" };
   const missing = await (await serve("/nope", env)).text();
   assert.ok(!missing.includes("/app/views/"), "a 404 names no page code");
