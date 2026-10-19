@@ -28,9 +28,13 @@ const DISPATCH_ROTATION = ["enrich", "classify", "geocode", "resolve"];
 
 // Also applies to admin-triggered runs. The conditional upsert claims a slot
 // atomically, so overlapping cron/manual requests cannot multiply batch writes.
+const CLAIM_SLACK_MS = 5 * 60000;
+
 export async function claimLane(db, lane, now = new Date()) {
   const hours = lane === "dispatch" ? 1 : lane === "validate" ? 2 : 4;
-  const cutoff = new Date(now.getTime() - hours * 3600000).toISOString();
+  // Cron firings jitter by a few hundred ms; without slack a run that fires a hair
+  // earlier than the last one sees itself inside the cooldown and silently skips.
+  const cutoff = new Date(now.getTime() - hours * 3600000 + CLAIM_SLACK_MS).toISOString();
   return db.prepare(
     `INSERT INTO lane_cursors (lane, cursor, updated_at) VALUES (?, '', ?)
      ON CONFLICT(lane) DO UPDATE SET updated_at = excluded.updated_at
