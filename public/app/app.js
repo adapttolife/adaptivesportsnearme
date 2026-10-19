@@ -272,17 +272,32 @@ function fromApi(r) {
     prog: !!r.prog, orgName: r.org || null, progs: r.progs || 0,
   };
 }
+/* The head starts the data a page needs before this code runs (public/index.html for the
+   listings, src/pages.js preloadHints for a listing's details): a script, not a preload,
+   because Safari, and so every iPhone browser, downloads a preloaded file again when fetch()
+   asks for it. Each early answer is taken once; a retry or the next page asks the network. */
+export function early(url) {
+  const box = window.ASNM_EARLY, p = box && box[url];
+  if (p) delete box[url];
+  return p || fetch(url);
+}
+/* One more try after a short pause before giving up: a phone that drops a request, or a
+   moment's trouble on our side, costs a beat instead of the page. */
+export function retryOnce(load, wait = 800) {
+  return load().catch(() => new Promise((res) => setTimeout(res, wait)).then(load));
+}
+
 /* A listing's own page adds what the lists leave out: website, description, cost, ages,
    equipment, the month our team checked it. Loaded once per listing. */
 const DETAIL = new Map();
 export function loadDetail(id) {
   if (!DETAIL.has(id)) {
-    const p = fetch("/api/organizations/" + encodeURIComponent(id)).then(async (r) => {
+    const p = retryOnce(() => early("/api/organizations/" + encodeURIComponent(id)).then(async (r) => {
       if (r.status === 404) return null;
       if (!r.ok) throw new Error("/api/organizations " + r.status);
       const body = await r.json();
       return body.organization || body.org || null;
-    });
+    }));
     DETAIL.set(id, p);
     p.catch(() => DETAIL.delete(id));   // a failed load is asked again next time
   }
@@ -308,7 +323,7 @@ function eventFromApi(e) {
 export function loadData() {
   if (DATA_P) return DATA_P;
   DATA_P = (async () => {
-    const get = (u) => fetch(u).then((r) => { if (!r.ok) throw new Error(u + " " + r.status); return r.json(); });
+    const get = (u) => retryOnce(() => early(u).then((r) => { if (!r.ok) throw new Error(u + " " + r.status); return r.json(); }));
     // Grants and events are extra: if either is down, the directory still works.
     const soft = (u) => get(u).catch((e) => { console.error(e); return { items: [] }; });
     const [prog, gr, ev, st, sp] = await Promise.all([get("/api/listings"), soft("/api/grants"), soft("/api/events"), get("/data/states.json"), get("/data/sports.json")]);
@@ -1363,11 +1378,14 @@ async function loadView(name) {
     return mod;
   } catch (e) { delete MODS[name]; throw e; }
 }
-/* The page when the directory or a page's code could not load: say so, offer to try again. */
+/* The page when the directory or a page's code could not load, after one quiet retry: say so,
+   offer to try again. Only a device that says it is offline hears about its connection; any
+   other failure is most likely ours, and the page never blames the visitor for it. */
 function loadError() {
+  const why = navigator.onLine === false ? "You're offline. Check your connection and try again." : "Something went wrong on our side. Try again in a moment.";
   return {
     title: "We couldn't load this page · Adaptive Sports Near Me",
-    html: `<section class="nf"><h1 tabindex="-1">We couldn't load this page</h1><p>Check your connection and try again.</p><div class="btns"><button type="button" class="btn btn--ink" data-retry>${icon("refresh-cw", 20)}<span>Try again</span></button>${btn("Go to the home page", "/", "line")}</div></section>`,
+    html: `<section class="nf"><h1 tabindex="-1">We couldn't load this page</h1><p>${why}</p><div class="btns"><button type="button" class="btn btn--ink" data-retry>${icon("refresh-cw", 20)}<span>Try again</span></button>${btn("Go to the home page", "/", "line")}</div></section>`,
   };
 }
 

@@ -158,10 +158,17 @@ export function preloadHints(pathname) {
   if (!hit) return [];
   const tags = [`<link rel="modulepreload" href="/app/views/${hit[1]}.js">`, `<link rel="preload" href="/app/views/${hit[1]}.css" as="style">`];
   const orgId = path.match(new RegExp(`^/organizations/(${UUID})$`, "i"));
-  if (orgId) tags.push(`<link rel="preload" href="/api/organizations/${orgId[1].toLowerCase()}" as="fetch" crossorigin>`);
+  if (orgId) tags.push(earlyFetch(`/api/organizations/${orgId[1].toLowerCase()}`));
   const programId = path.match(new RegExp(`^/programs/(${UUID})$`, "i"));
-  if (programId) tags.push(`<link rel="preload" href="/api/programs/${programId[1].toLowerCase()}" as="fetch" crossorigin>`);
+  if (programId) tags.push(earlyFetch(`/api/programs/${programId[1].toLowerCase()}`));
   return tags;
+}
+// A page's data starts downloading with the page, the way the shell starts the listings
+// (public/index.html). A script, not a preload link: Safari, and so every iPhone browser,
+// downloads a preloaded file again when fetch() asks for it. app.js takes it once (early).
+function earlyFetch(href) {
+  const u = JSON.stringify(href).replace(/</g, "\\u003c");
+  return `<script>(window.ASNM_EARLY=window.ASNM_EARLY||{})[${u}]=fetch(${u});window.ASNM_EARLY[${u}].catch(function(){});</script>`;
 }
 
 export function injectMeta(html, meta, { url, production, hints = [] }) {
