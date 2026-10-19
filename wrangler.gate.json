@@ -43,6 +43,7 @@
 		"crons": ["*/10 * * * *"]
 	},
 	"observability": {
+    "issues": { "enabled": true },
 		"enabled": true
 	}
 }

@@ -41,6 +41,7 @@
 		"crons": []
 	},
 	"observability": {
+    "issues": { "enabled": true },
 		"enabled": true
 	},
 	"ratelimits": [

@@ -49,6 +49,7 @@
 		"crons": ["0 */2 * * *", "0 * * * *"]
 	},
 	"observability": {
+    "issues": { "enabled": true },
 		"enabled": true
 	},
 	"env": {

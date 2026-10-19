@@ -133,6 +133,55 @@ test("the shell's inline scripts and every app file are valid JavaScript", () =>
   for (const file of JS) execFileSync(process.execPath, ["--check", fileURLToPath(new URL(`../${file}`, import.meta.url))], { stdio: "pipe" });
 });
 
+// 2026-10-19: an iPhone opened the home page to "We couldn't load this page". Safari, and so
+// every iPhone browser, does not hand a preloaded (as="fetch") response to fetch(): the shell's
+// preload and app.js each asked for /api/listings, and on a cold edge cache the Worker's read
+// cache crashed the second request (src/read-cache.js, test/d1-reads.test.js). The head now
+// starts each download with a script, app.js takes each answer once, and asks again once.
+test("the head starts each data download once, and the app takes each answer once", async () => {
+  const { preloadHints } = await import("../src/pages.js");
+  const pages = ["/", "/sports/tennis", "/states/IL", "/grants", "/events", "/add/program", "/letter/confirmed",
+    "/organizations/0f8fad5b-d9cb-469f-a165-70867728950e", "/programs/0f8fad5b-d9cb-469f-a165-70867728950e"];
+  for (const html of [SHELL, ...pages.flatMap((p) => preloadHints(p))]) assert.doesNotMatch(html, /<link[^>]*\bas="fetch"/);
+
+  // The shell's script, run as a browser runs it: one request per file, kept for app.js.
+  const asked = [];
+  const shell = vm.createContext({ window: {}, fetch: (u) => { asked.push(u); return Promise.resolve({ ok: true }); } });
+  for (const [, , body] of SHELL.matchAll(/<script(\s[^>]*)?>([\s\S]*?)<\/script>/g)) if (body.includes("ASNM_EARLY")) vm.runInContext(body, shell);
+  assert.deepEqual(asked, ["/api/listings", "/data/states.json", "/data/sports.json"]);
+  assert.deepEqual(Object.keys(shell.window.ASNM_EARLY), asked);
+  // A listing page's head starts its details the same way, ahead of the shell's script.
+  const page = vm.createContext({ window: {}, fetch: (u) => { asked.push(u); return Promise.resolve({ ok: true }); } });
+  for (const tag of preloadHints("/organizations/0F8FAD5B-D9CB-469F-A165-70867728950E")) {
+    const body = tag.match(/^<script>([\s\S]*)<\/script>$/);
+    if (body) vm.runInContext(body[1], page);
+  }
+  assert.deepEqual(Object.keys(page.window.ASNM_EARLY), ["/api/organizations/0f8fad5b-d9cb-469f-a165-70867728950e"]);
+
+  // app.js's early() and retryOnce(), run as written.
+  const net = [];
+  const app = vm.createContext({ window: { ASNM_EARLY: { "/api/listings": "head" } }, fetch: (u) => { net.push(u); return "network"; }, setTimeout });
+  vm.runInContext(between(APP, "export function early(url) {", "\n/* A listing's own page").replace(/^export /gm, ""), app);
+  assert.equal(app.early("/api/listings"), "head");
+  assert.equal(app.early("/api/listings"), "network", "an early answer is taken once; a retry asks the network");
+  assert.deepEqual(net, ["/api/listings"]);
+  let tries = 0;
+  assert.equal(await app.retryOnce(() => (++tries === 1 ? Promise.reject(new Error("dropped")) : Promise.resolve("ok")), 1), "ok");
+  assert.equal(tries, 2);
+  tries = 0;
+  await assert.rejects(app.retryOnce(() => { tries++; return Promise.reject(new Error("down")); }, 1), /down/);
+  assert.equal(tries, 2, "two tries, then the page says it could not load");
+
+  // Every page's data goes through them, and a failure never blames a visitor who is online.
+  assert.match(between(APP, "export function loadData() {", "\n}\n"), /const get = \(u\) => retryOnce\(\(\) => early\(u\)/);
+  assert.match(between(APP, "export function loadDetail(id) {", "\n}\n"), /retryOnce\(\(\) => early\("\/api\/organizations\/"/);
+  const detail = read("public/app/views/program-detail.js");
+  assert.match(detail, /A\.retryOnce\(async \(\) => \{\s*const r = await A\.early\(`\/api\/programs\//);
+  assert.match(detail, /loadFailed: true/);
+  const failed = between(APP, "function loadError() {", "\n}\n");
+  assert.match(failed, /navigator\.onLine === false \? "You're offline\. Check your connection and try again\." : "Something went wrong on our side\. Try again in a moment\."/);
+});
+
 // Field names are the API's (src/index.js handleSubmitProgram); a renamed field
 // on either side silently drops what a person typed.
 function between(src, from, to) {
