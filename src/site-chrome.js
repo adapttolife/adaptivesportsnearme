@@ -9,7 +9,9 @@
 // that file, so bump it on any site-nav.js change (browser caches ignore CDN
 // purges, and that has bitten us three times).
 
-export const NAV_VERSION = "20261014a";
+import { PRODUCT_LINE } from "../public/app/page-meta.js";
+
+export const NAV_VERSION = "20261018a";
 
 // Shared presentation lives in public/styles.css.
 
@@ -44,7 +46,7 @@ export function headerHtml() {
       <input id="q" name="q" type="text" placeholder="City, state or ZIP" aria-label="Find programs near a city, state or ZIP">
     </form>
     <div class="hdr-actions">
-      <a class="hdr-add" href="/add/program" aria-label="Add a program" title="Add a program"><i stroke-width="2.2" data-lucide="plus" aria-hidden="true" focusable="false"></i></a>
+      <a class="hdr-add" href="/help" aria-label="Add" title="Add"><i stroke-width="2.2" data-lucide="plus" aria-hidden="true" focusable="false"></i></a>
     </div>
   </div>
 </header>`;
@@ -58,13 +60,14 @@ export function footerHtml() {
   <div class="foot-in wrap">
     <div class="foot-brand">
       <a class="brand" href="/"><b>Adaptive Sports Near Me</b></a>
-      <p class="tagline">An open directory of adaptive sports programs across the country. No logins, no walls, because it is a free service of <a href="https://adapttolife.org" target="_blank" rel="noopener">Adapt To Life</a>, a recognized 501(c)(3) nonprofit.</p>
+      <p class="tagline">${PRODUCT_LINE}</p>
+      <p class="tagline">Made with <span role="img" aria-label="love">❤️</span> by <a href="https://adapttolife.org" target="_blank" rel="noopener">Adapt To Life</a>.</p>
     </div>
     <div class="foot-cols">
       <div class="foot-col"><h2>Find</h2><a href="/">Programs near you</a><a href="/sports">Sports</a><a href="/grants">Grants</a><a href="/events">Events</a><a href="/resources">Guides</a></div>
       <div class="foot-col"><h2>Browse</h2><a href="/states">States</a><a href="/organizations">Organizations</a></div>
       <div class="foot-col"><h2>Help build this</h2><a href="/add/program">Add a program</a><a href="/add/event">Add an event</a><a href="/help">Claim your organization</a></div>
-      <div class="foot-col"><h2>About this directory</h2><a href="/about">How we check listings</a><a href="/letter">Get the letter</a><a href="/blog">Blog</a><a href="/about">Accessibility</a><a href="https://adapttolife.org" target="_blank" rel="noopener">Adapt To Life</a></div>
+      <div class="foot-col"><h2>About this directory</h2><a href="/about">How we check listings</a><a href="/letter">Get the letter</a><a href="/blog">Blog</a><a href="/build">Build with us</a><a href="/about#accessibility">Accessibility</a><a href="https://adapttolife.org" target="_blank" rel="noopener">Adapt To Life</a></div>
     </div>
   </div>
 </footer>`;

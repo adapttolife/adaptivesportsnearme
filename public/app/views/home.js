@@ -6,6 +6,7 @@
    Colour follows Laura Lian's identity: each colour is paired with black.
    No national counts on this page. */
 import * as A from "../app.js";
+import { HOME } from "../page-meta.js";
 import { autoTextSize } from "../vendor/auto-text-size.js";
 
 // The hero athlete cycles through these, and the block takes each one's colour.
@@ -43,13 +44,13 @@ function sports(D) {
   const tiles = GRID.map((key, order) => ({ key, order, count: counts[key] || 0 }))
     .sort((a, b) => b.count - a.count || a.order - b.order)
     .map(({ key, count }) => `<li><a class="st" href="/sports/${A.esc(key)}" data-hero-sport="${A.esc(key)}">${A.plate(key, { kind: "tile", cls: "st-plate" })}<span class="st-name">${A.esc(A.sportName(key))}</span><span class="st-n num">${count} programs</span></a></li>`).join("");
-  const all = `<li><a class="st st--all" href="/sports"><span class="st-allbox">${A.icon("layout-grid", 34)}<b>All sports</b></span><span class="st-name">See all 45</span><span class="st-n">From archery to water skiing</span></a></li>`;
+  const all = `<li><a class="st st--all" href="/sports"><span class="st-allbox">${A.icon("layout-grid", 34)}<b>All sports</b></span><span class="st-name">See every sport</span><span class="st-n">From archery to water skiing</span></a></li>`;
   return `<section class="sec hs" aria-labelledby="hs-h">${A.sectionHead({ title: "Pick a sport", id: "hs-h" })}<ul class="st-grid">${tiles}${all}</ul></section>`;
 }
 
 function doors() {
   const d = (cls, href, key, title, line) => `<a class="door ${cls}" href="${href}"><span class="door-fig">${A.fig(key, { color: cls === "door--ink" ? "#f3f3f3" : "#1A1A1A", big: true })}</span><b>${title}</b><span>${line}</span></a>`;
-  return `<nav class="doors" aria-label="More ways in">${d("door--sun", "/grants", "grant", "Grants", "Money for gear, travel and programs")}${d("door--sea", "/events", "event", "Events", "Clinics, tryouts and game days")}${d("door--ink", "/sports/veteran-meetup", "veteran-meetup", "Veterans", "Meetups, coffee calls and outdoor days near you")}${d("door--coral", "/add/program", "multi", "Run a program?", "List it free. A person checks it.")}</nav>`;
+  return `<nav class="doors" aria-label="More ways in">${d("door--sun", "/grants", "grant", "Grants", "Money for gear, travel and fees")}${d("door--sea", "/events", "event", "Events", "Clinics, tryouts, games and meetups")}${d("door--ink", "/sports/veteran-meetup", "veteran-meetup", "Veterans", "Meetups, coffee calls and outdoor days")}${d("door--coral", "/add/program", "multi", "Run a program?", "List it free. A person checks it.")}</nav>`;
 }
 
 async function nearRail(D) {
@@ -79,8 +80,13 @@ function grants(D) {
   return `<section class="band band--sun" aria-labelledby="hg-h"><div class="band-in"><div class="band-head"><span class="band-fig">${A.fig("grant", { color: "#1A1A1A", big: true })}</span><div><h2 id="hg-h">Grants for athletes</h2><p>Money for equipment, travel and fees. You apply on the grant maker's site.</p></div></div><div class="grows glist is-one">${list.map(A.grantRow).join("")}</div><a class="btn btn--ink band-all" href="/grants?a=athlete">See all grants</a></div></section>`;
 }
 
-function events() {
-  return `<section class="band band--sea" aria-labelledby="he-h"><div class="band-in"><div class="band-head"><span class="band-fig">${A.fig("event", { color: "#1A1A1A", big: true })}</span><div><h2 id="he-h">Events</h2><p>No events posted yet. Know of a clinic, tryout or game day coming up? Add it and a person will check it before it goes live.</p></div></div><a class="btn btn--ink band-all" href="/add/event">Add an event</a></div></section>`;
+/* Coming events when there are any (the API returns upcoming only); otherwise the ask. */
+function events(D) {
+  const list = (D.events || []).slice(0, 3);
+  const line = list.length ? "Clinics, tryouts, games and meetups coming up." : "Know of a clinic, tryout or game day coming up? Tell us and we'll check it.";
+  const body = list.length ? `<div class="ev-list">${list.map(A.eventCard).join("")}</div>` : "";
+  const btn = list.length ? `<a class="btn btn--ink band-all" href="/events">See all events</a>` : `<a class="btn btn--ink band-all" href="/add/event">Add an event</a>`;
+  return `<section class="band band--sea" aria-labelledby="he-h"><div class="band-in"><div class="band-head"><span class="band-fig">${A.fig("event", { color: "#1A1A1A", big: true })}</span><div><h2 id="he-h">Events</h2><p>${line}</p></div></div>${body}${btn}</div></section>`;
 }
 
 function states() {
@@ -91,9 +97,9 @@ export async function render(ctx) {
   const D = ctx.data || await A.loadData();
   const near = await nearRail(D);
   return {
-    title: "Adaptive Sports Near Me: find your place in adaptive sports",
-    description: "Find adaptive sports programs, grants and events near you, each with the date we last checked it. Free, no account needed.",
-    html: hero() + sports(D) + doors() + near + checkedRail(D) + grants(D) + events() + states() + A.letterBlock({ source: "home" }) + A.helpBand(),
+    title: HOME.title,
+    description: HOME.description,
+    html: hero() + sports(D) + doors() + near + checkedRail(D) + grants(D) + events(D) + states() + A.letterBlock({ source: "home" }) + A.helpBand(),
   };
 }
 

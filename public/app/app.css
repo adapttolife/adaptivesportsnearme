@@ -3290,9 +3290,12 @@ body.stk-away .stk {
 	padding: 48px 0 calc(48px + env(safe-area-inset-bottom));
 }
 /* Phones have no width cap (--max: 100%), so the footer keeps the page's side padding. */
+/* The floating accessibility button sits bottom-left on phones; the extra bottom
+   padding lets the footer's last line scroll clear of it. */
 @media (max-width: 767px) {
 	.ft {
 		padding-inline: var(--gut);
+		padding-bottom: calc(96px + env(safe-area-inset-bottom));
 	}
 }
 body.has-sticky .ft {

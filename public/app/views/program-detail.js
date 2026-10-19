@@ -1,4 +1,5 @@
 import * as A from "../app.js";
+import { site, programMeta } from "../page-meta.js";
 
 const place = (p) => A.placeText(p);
 const host = (url) => { try { return new URL(url).hostname.replace(/^www\./i, ""); } catch (_) { return null; } };
@@ -29,9 +30,9 @@ export async function render(ctx) {
     if (!r.ok && r.status !== 404) throw new Error(`program ${r.status}`);
     return r;
   }).catch((e) => { throw Object.assign(new Error(String(e && e.message || e)), { loadFailed: true }); });
-  if (response.status === 404) return { title: "Program not found · Adaptive Sports Near Me", html: `<section class="pg-nf"><h1 tabindex="-1">We couldn't find that program</h1><p>It may have been removed or merged with another listing.</p></section>` };
+  if (response.status === 404) return { title: site("Program not found"), html: `<section class="pg-nf"><h1 tabindex="-1">We couldn't find that program</h1><p>It may have been removed or merged with another listing.</p></section>` };
   const { program: p } = await response.json();
   const location = place(p);
-  const main = `<div class="pg-grid"><div class="pg-main">${hero(p)}<div class="pg-head"><h1 tabindex="-1">${A.esc(p.name)}</h1><p class="pg-meta">${A.esc(p.sportLabel || "Adaptive sports")}${location ? ` · ${A.esc(location)}` : ""}</p>${fresh(p)}</div>${actions(p)}${about(p)}${facts(p)}${organization(p)}${where(p)}${fix(p)}</div>${booking(p)}</div>`;
-  return { title: `${p.name} · Adaptive Sports Near Me`, description: `${p.name}${location ? ` in ${location}` : ""}.`, html: main, sticky: p.website ? A.stickyBar({ action: { label: "Visit website", href: p.website, kind: "ink", external: true } }) : "" };
+  const main = `<div class="pg-grid"><div class="pg-main">${hero(p)}<div class="pg-head"><h1 tabindex="-1">${A.esc(A.displayName(p.name))}</h1><p class="pg-meta">${A.esc(p.sportLabel || "Adaptive sports")}${location ? ` · ${A.esc(location)}` : ""}</p>${fresh(p)}</div>${actions(p)}${about(p)}${facts(p)}${organization(p)}${where(p)}${fix(p)}</div>${booking(p)}</div>`;
+  return { title: site(A.displayName(p.name)), description: programMeta({ name: A.displayName(p.name), sport: p.sportLabel || "Adaptive sports", place: location }).description, html: main, sticky: p.website ? A.stickyBar({ action: { label: "Visit website", href: p.website, kind: "ink", external: true } }) : "" };
 }

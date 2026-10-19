@@ -7,8 +7,8 @@
    required"); a new program and "I'm with this organization" need one, because we
    write back to confirm. */
 import * as A from "../app.js";
+import { site, PAGES } from "../page-meta.js";
 
-const DESC = "Find adaptive sports programs, grants and events near you. Free, no account needed.";
 let N = 0;
 const id = (s) => `fm-${s}-${++N}`;
 
@@ -42,10 +42,10 @@ function checkBox() {
 <a class="tlink" href="/about">More about how we check${A.icon("arrow-right", 18)}</a></div>`;
 }
 
-function page({ title, h1, intro, tile, top = "", form, back = "" }) {
+function page({ title, description, h1, intro, tile, top = "", form, back = "" }) {
   return {
-    title: title + " · Adaptive Sports Near Me",
-    description: DESC,
+    title: site(title),
+    description,
     html: `<div class="fm">${back}<div class="fm-head">${tile || ""}<div class="fm-htext"><h1 tabindex="-1">${A.esc(h1)}</h1>${intro ? `<p class="fm-intro">${A.esc(intro)}</p>` : ""}</div></div>
 <div class="fm-grid"><div class="fm-main">${top}${form}</div><div class="fm-side">${checkBox()}</div></div></div>`,
   };
@@ -65,7 +65,7 @@ ${field({ name: "em", label: "Your email", type: "email", required: true, auto: 
 ${field({ name: "notes", label: "Anything else we should know", type: "textarea" })}
 </fieldset>${honeypot}${submit("Send for review")}</form>`;
   return page({
-    title: "Add a program", h1: "Add a program",
+    title: PAGES.addProgram.title, description: PAGES.addProgram.description, h1: "Add a program",
     intro: "Tell us about an adaptive sports program. It's free, and a person on our team checks every new listing before it goes live.",
     tile: A.plate("multi", { kind: "row", cls: "fm-tile" }), form,
   });
@@ -82,11 +82,11 @@ ${field({ name: "url", label: "Event website", type: "url", required: true, auto
 ${field({ name: "org", label: "Who's running it", auto: "organization" })}
 </fieldset>
 <fieldset class="fm-set"><legend>About you</legend>
-${field({ name: "em", label: "Your email (optional)", type: "email", auto: "email", hint: "Only if you'd like a receipt or we may write with a question. Never shown." })}
+${field({ name: "em", label: "Your email (optional)", type: "email", auto: "email", hint: "Add it for a receipt, or if we may write with a question. Never shown." })}
 ${field({ name: "notes", label: "Notes", type: "textarea" })}
 </fieldset>${honeypot}${submit("Send for review")}</form>`;
   return page({
-    title: "Add an event", h1: "Add an event",
+    title: PAGES.addEvent.title, description: PAGES.addEvent.description, h1: "Add an event",
     intro: "Share a clinic, tryout, game day or meetup. A person checks every event before it goes live.",
     tile: A.plate("event", { kind: "row", cls: "fm-tile" }), form,
   });
@@ -102,7 +102,7 @@ function update(D, pid, relRaw) {
   const p = D.byId.get(pid);
   if (!p) {
     return {
-      title: "Listing not found · Adaptive Sports Near Me", description: DESC,
+      title: site(PAGES.listingNotFound.title), description: PAGES.listingNotFound.description,
       html: `<section class="nf"><h1 tabindex="-1">We couldn't find that listing</h1><p>It may have been removed or merged with another listing.</p><div class="btns">${A.btn("Find a program", "/", "ink")}${A.btn("Browse sports", "/sports", "line")}</div></section>`,
     };
   }
@@ -123,7 +123,7 @@ ${radios}
 <div class="fm-set fm-set--plain fm-email">
 ${field({ name: "em", label: run ? "Your email" : "Your email (optional)", type: "email", required: run, auto: "email", hint: EMAIL_HINT[run ? "run" : "fix"] })}
 </div>${honeypot}${submit("Send")}</form>`;
-  return page({ title: r.h1 + ": " + p.name, h1: r.h1, intro: r.intro, top, form, back });
+  return page({ title: r.h1 + ": " + p.name, description: PAGES.update.description, h1: r.h1, intro: r.intro, top, form, back });
 }
 
 export async function render(ctx) {

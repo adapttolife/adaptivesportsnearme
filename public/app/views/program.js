@@ -12,6 +12,7 @@
    - .pg-poster     the 4:5 share poster (an og:image / Instagram export twin, 11.4)
    - .pg-chips      non-interactive text chips, optionally led by a 40px avatar */
 import * as A from "../app.js";
+import { site, PAGES, organizationMeta } from "../page-meta.js";
 import { guideFor } from "../sport-guides.js";
 
 const L = window.ListingArt;
@@ -63,7 +64,7 @@ function hero(p) {
   return `<div class="pg-hero has-vtag${label ? " has-stamp" : ""}">
 ${A.plate(p, { kind: "hero" })}
 <button type="button" class="pg-hb pg-back" data-back="${A.esc(backHref(p))}" aria-label="Back">${A.icon("arrow-left", 22)}</button>
-<a class="pg-hb pg-share" href="/organizations/${A.esc(p.id)}?share=1" data-poster="hero" aria-label="Share this organization">${A.icon("share", 20)}</a>
+<a class="pg-hb pg-share" href="/organizations/${A.esc(p.id)}?share=1" data-poster="hero" aria-label="Share this listing">${A.icon("share", 20)}</a>
 <div class="pg-edge">${stamp}${vtag(p)}</div></div>`;
 }
 
@@ -283,8 +284,8 @@ function shareHtml(p) {
 
 /* ---------- render ---------- */
 const listingNotFound = () => ({
-  title: "Listing not found · Adaptive Sports Near Me",
-  description: "It may have been removed or merged with another listing.",
+  title: site(PAGES.listingNotFound.title),
+  description: PAGES.listingNotFound.description,
   html: `<section class="pg-nf"><h1 tabindex="-1">We couldn't find that listing</h1><p>It may have been removed or merged with another listing.</p><div class="btns">${A.btn("Find a program", "/", "ink")}${A.btn("Browse sports", "/sports", "line")}</div></section>`,
 });
 
@@ -342,8 +343,8 @@ ${more(p, D)}
   });
 
   return {
-    title: `${p.name}, ${sport}${tp ? " in " + tp : ""} · Adaptive Sports Near Me`,
-    description: `${p.name}: ${lowerFirst(sport)}${tp ? " in " + tp : ""}.${p.verified ? " Verified: the organization confirmed this listing." : ""} Free, no account needed.`,
+    title: site(organizationMeta({ name: p.name, sport, place: tp }).title),
+    description: organizationMeta({ name: p.name, sport, place: tp }).description,
     html: main,
     sticky,
   };
