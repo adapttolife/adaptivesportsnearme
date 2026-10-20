@@ -7,6 +7,8 @@ import worker from '../src/index.js';
 function setup(t, options = {}) {
   const sqlite = new DatabaseSync(':memory:');
   sqlite.exec(`CREATE TABLE sports(sport_key TEXT); INSERT INTO sports VALUES ('cycling');
+    CREATE TABLE organizations(id TEXT PRIMARY KEY,name TEXT NOT NULL,org_type TEXT,is_public INTEGER,status TEXT,created_at TEXT,updated_at TEXT);
+    CREATE TABLE programs(id TEXT PRIMARY KEY,organization_id TEXT NOT NULL,name TEXT NOT NULL,sport TEXT,sport_key TEXT,website_url TEXT,city TEXT,state TEXT,verification_status TEXT,status TEXT,is_public INTEGER,created_at TEXT,updated_at TEXT);
     CREATE TABLE profiles(id TEXT PRIMARY KEY,email TEXT UNIQUE,name TEXT,state TEXT,sports_json TEXT,newsletter INTEGER,created_at TEXT,updated_at TEXT);
     CREATE TABLE submissions(kind TEXT,payload TEXT,contact_email TEXT,status TEXT,created_at TEXT);`);
   sqlite.exec(readFileSync(new URL('../db/intake-schema.sql', import.meta.url), 'utf8'));

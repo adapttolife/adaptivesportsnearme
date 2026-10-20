@@ -4,18 +4,20 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="light dark">
-<title>Adaptive Sports Near Me: find adaptive sports programs near you</title>
-<meta name="description" content="Find adaptive sports programs, grants and events near you, each with the date we last checked it. Free, no account needed.">
+<title>Adaptive Sports Near Me: find your place in adaptive sports</title>
+<meta name="description" content="Find adaptive sports programs, grants and events by place or sport. Free, no account needed. Every listing shows when we last checked it.">
 <!--asnm:meta-->
 <link rel="modulepreload" href="/app/views/home.js">
 <link rel="preload" href="/app/views/home.css" as="style">
 <link rel="canonical" href="https://adaptivesportsnearme.com/">
 <meta property="og:title" content="Adaptive Sports Near Me">
-<meta property="og:description" content="Find adaptive sports programs, grants and events near you, each with the date we last checked it. Free, no account needed.">
+<meta property="og:description" content="Find adaptive sports programs, grants and events by place or sport. Free, no account needed. Every listing shows when we last checked it.">
 <meta property="og:url" content="https://adaptivesportsnearme.com/">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Adaptive Sports Near Me">
-<meta property="og:image" content="https://adaptivesportsnearme.com/og-image.jpg">
+<meta property="og:image" content="https://adaptivesportsnearme.com/og/home-lineup.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <!--/asnm:meta-->
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
@@ -34,10 +36,15 @@ try {
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sofia+Sans:wght@400..900&family=Sofia+Sans+Extra+Condensed:wght@700..900&display=swap" rel="stylesheet">
 <!-- Every page draws from the listings, so their download starts now, with the page's
-     own code, instead of after the scripts run. -->
-<link rel="preload" href="/api/listings" as="fetch" crossorigin>
-<link rel="preload" href="/data/states.json" as="fetch" crossorigin>
-<link rel="preload" href="/data/sports.json" as="fetch" crossorigin>
+     own code, instead of after the scripts run. A script, not a preload link: Safari, and so
+     every iPhone browser, downloads a preloaded file again when fetch() asks for it. app.js
+     takes each answer once (early). -->
+<script>
+window.ASNM_EARLY = window.ASNM_EARLY || {};
+["/api/listings", "/data/states.json", "/data/sports.json"].forEach(function (u) {
+  (window.ASNM_EARLY[u] = fetch(u)).catch(function () {});
+});
+</script>
 <link rel="modulepreload" href="/app/app.js">
 <link rel="modulepreload" href="/app/icons.js">
 <link rel="modulepreload" href="/app/listing-sport.js">
@@ -54,7 +61,7 @@ try {
 <header id="top"></header>
 <div id="shell" class="shell">
   <nav id="rail" aria-label="Site"></nav>
-  <main id="main" tabindex="-1"><noscript><p>Adaptive Sports Near Me needs JavaScript to show programs. Turn it on and reload this page.</p></noscript></main>
+  <main id="main" tabindex="-1"><noscript><p>Adaptive Sports Near Me needs JavaScript to show listings. Turn it on and reload this page.</p></noscript></main>
   <aside id="aside" aria-label="About this directory"></aside>
 </div>
 <footer id="foot"></footer>

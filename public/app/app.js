@@ -4,13 +4,14 @@
    - Places are city and state only. relation() is the only source of distance
      text, and only when both the visitor's place and the program's city are
      known. Programs with no city are never pinned and never get a distance.
-   - Trust is never a score. Verified (a check) means the program itself confirmed
+   - Trust is never a score. Verified (a check) means the organization itself confirmed
      its listing with us; lists show the check only then and never say
      "unverified". The listing page says when we last checked it.
    - Forms validate in place, then post to the site's API with a Turnstile token. */
 
 import { parseDesc as parseDescText } from "./listing-sport.js";
 import { ICONS } from "./icons.js";
+import { PRODUCT_LINE } from "./page-meta.js";
 
 const L = window.ListingArt, P = window.Proto;
 const $ = (s, r = document) => r.querySelector(s);
@@ -65,8 +66,6 @@ function syncThemeControls() {
   const dark = currentTheme() === "dark";
   for (const control of $$('[data-theme-toggle]')) {
     control.setAttribute("aria-pressed", String(dark));
-    const state = $(".dl-theme-state", control);
-    if (state) state.textContent = dark ? "On" : "Off";
   }
 }
 function setTheme(theme, save = true) {
@@ -163,7 +162,7 @@ const EXTRA_SPORTS = {
 };
 // sports.json leaves some notes empty or internal; these fill the gaps (Clubhouse copy).
 const NOTE_FILL = {
-  multi: "Programs that offer several sports in one place.", sledhockey: "Ice hockey played on a sled.",
+  multi: "Organizations that offer several sports in one place.", sledhockey: "Ice hockey played on a sled.",
   golf: "Adaptive golf lessons and leagues.", archery: "Adaptive archery ranges and clubs.",
   sailing: "Adaptive sailing on lakes and coasts.", trackfield: "Racing, throwing and jumping.",
   climbing: "Adaptive climbing walls and crags.", martialarts: "Martial arts and self-defense.",
@@ -247,7 +246,7 @@ function normalize(raw) {
   if (Array.isArray(raw.trio) && raw.trio.length >= 2) p.trio = raw.trio;
   p.family = familyOf(p.key);
   p.tone = toneOf(p.key);
-  // Verified (the check) means the program itself confirmed its listing with us
+  // Verified (the check) means the organization itself confirmed its listing with us
   // (publicity_consent). A person on our team checking it (teamChecked, with the
   // month) is said on the listing page, never as a badge (Alec, 2026-10-14).
   p.verified = !!p.confirmed;
@@ -256,6 +255,8 @@ function normalize(raw) {
   p.cityFirst = cityShort(p.city);
   p.placed = isPlaced(p);
   p.cityKey = p.cityFirst ? normCity(p.cityFirst) : null;
+  // A program has its own page; an organization has its page at /organizations.
+  p.href = (p.prog ? "/programs/" : "/organizations/") + encodeURIComponent(p.id);
   return p;
 }
 
@@ -269,18 +270,35 @@ function fromApi(r) {
     id: r.id, name: r.name, key: r.key, trio: r.trio || null, city: r.city || null, state: r.state || null,
     lastChecked: r.checked || null, listedAt: r.listed || null, confirmed: !!r.verified, teamChecked: !!r.team,
     lat: c ? c[0] : null, lng: c ? c[1] : null, geo: c ? "city" : (r.state ? "state" : null),
+    prog: !!r.prog, orgName: r.org || null, progs: r.progs || 0,
   };
 }
+/* The head starts the data a page needs before this code runs (public/index.html for the
+   listings, src/pages.js preloadHints for a listing's details): a script, not a preload,
+   because Safari, and so every iPhone browser, downloads a preloaded file again when fetch()
+   asks for it. Each early answer is taken once; a retry or the next page asks the network. */
+export function early(url) {
+  const box = window.ASNM_EARLY, p = box && box[url];
+  if (p) delete box[url];
+  return p || fetch(url);
+}
+/* One more try after a short pause before giving up: a phone that drops a request, or a
+   moment's trouble on our side, costs a beat instead of the page. */
+export function retryOnce(load, wait = 800) {
+  return load().catch(() => new Promise((res) => setTimeout(res, wait)).then(load));
+}
+
 /* A listing's own page adds what the lists leave out: website, description, cost, ages,
    equipment, the month our team checked it. Loaded once per listing. */
 const DETAIL = new Map();
 export function loadDetail(id) {
   if (!DETAIL.has(id)) {
-    const p = fetch("/api/orgs/" + encodeURIComponent(id)).then(async (r) => {
+    const p = retryOnce(() => early("/api/organizations/" + encodeURIComponent(id)).then(async (r) => {
       if (r.status === 404) return null;
-      if (!r.ok) throw new Error("/api/orgs " + r.status);
-      return (await r.json()).org || null;
-    });
+      if (!r.ok) throw new Error("/api/organizations " + r.status);
+      const body = await r.json();
+      return body.organization || body.org || null;
+    }));
     DETAIL.set(id, p);
     p.catch(() => DETAIL.delete(id));   // a failed load is asked again next time
   }
@@ -289,6 +307,8 @@ export function loadDetail(id) {
     if (o && item && !item.detail) {
       Object.assign(item, {
         website: goodUrl(o.website), desc: o.desc || null, cost: o.cost || null, ages: o.ages || null, equipment: o.equipment || null,
+        address: o.address || null, addressPublicityConsent: !!o.addressPublicityConsent, zip: o.zip || null, country: o.country || null,
+        lat: o.lat ?? null, lng: o.lng ?? null, geo: o.geoPrecision || null,
         checkedMonth: o.checkedMonth || null, type: o.type || null, detail: true,
       });
     }
@@ -306,7 +326,7 @@ function eventFromApi(e) {
 export function loadData() {
   if (DATA_P) return DATA_P;
   DATA_P = (async () => {
-    const get = (u) => fetch(u).then((r) => { if (!r.ok) throw new Error(u + " " + r.status); return r.json(); });
+    const get = (u) => retryOnce(() => early(u).then((r) => { if (!r.ok) throw new Error(u + " " + r.status); return r.json(); }));
     // Grants and events are extra: if either is down, the directory still works.
     const soft = (u) => get(u).catch((e) => { console.error(e); return { items: [] }; });
     const [prog, gr, ev, st, sp] = await Promise.all([get("/api/listings"), soft("/api/grants"), soft("/api/events"), get("/data/states.json"), get("/data/sports.json")]);
@@ -325,7 +345,10 @@ export function loadData() {
 
     // Rows that are not programs (a scraped site menu, donation pages) never reach
     // the browser: /api/listings leaves them out (public/app/listable.js).
-    const items = prog.items.map(normalize);
+    // Programs are places of their own. An organization whose programs are listed is
+    // shown through them (progs), so it leaves the lists and maps but keeps its page.
+    const every = prog.items.map(normalize);
+    const items = every.filter((p) => !p.progs);
     const count = {};
     for (const p of items) count[p.key] = (count[p.key] || 0) + 1;
     // Global popularity: sports.json order (its live counts), the six extras slotted in by their own counts.
@@ -334,12 +357,12 @@ export function loadData() {
     SPORT_ORDER = L.SPORTS.slice().sort((a, b) => (live[b] || 0) - (live[a] || 0) ||
       ((jsonOrder.indexOf(a) + 1 || 99) - (jsonOrder.indexOf(b) + 1 || 99)) || a.localeCompare(b));
     const sports = SPORT_ORDER.map((k) => ({ key: k, name: NAMES[k], note: NOTES[k], count: count[k] || 0, family: familyOf(k), pic: picGroup(k) }));
-    const byId = new Map(items.map((p) => [p.id, p]));
+    const byId = new Map(every.map((p) => [p.id, p]));
     const byState = {};
     for (const p of items) if (p.state) (byState[p.state] = byState[p.state] || []).push(p);
     const grants = (gr.items || []).map(grantFromApi).map((g) => ({ ...g, rawName: g.name, name: displayName(g.name) }));
     D = {
-      items, byId, grants, grantById: new Map(grants.map((g) => [g.id, g])), byState,
+      items, byId, orgs: every.filter((p) => !p.prog), grants, grantById: new Map(grants.map((g) => [g.id, g])), byState,
       sports, sportByKey: Object.fromEntries(sports.map((s) => [s.key, s])),
       shapes: st.shapes, centers: st.centers, fits: st.fits || {}, events: (ev.items || []).map(eventFromApi), countByKey: count,
     };
@@ -679,7 +702,7 @@ export function grantInfo(g) {
   else if (yearly) deadlineText = "Next deadline: " + yearly;
   else deadlineText = "Deadline: " + dl.replace(/\s*[\u2013\u2014]\s*/g, " to ");
   const closed = Number(g.open) === 0;
-  return { amount, deadlineText, past, closed, audienceLabel: g.audience === "program" ? "For programs" : "For athletes", open: Number(g.open) === 1 && !past };
+  return { amount, deadlineText, past, closed, audienceLabel: g.audience === "program" ? "For organizations" : "For athletes", open: Number(g.open) === 1 && !past };
 }
 
 /* ======================================================================
@@ -789,12 +812,18 @@ function outsidePlace(p) {
   return /statewide/i.test(String(p.city || "")) ? `${stateName(p.state)}, statewide` : `${stateName(p.state)}, no single city listed`;
 }
 const placeFor = (p, ctx) => (ctx && ctx.outside) ? outsidePlace(p) : placeText(p);
-const metaText = (p, ctx) => (ctx && ctx.single) ? placeFor(p, ctx) : `${sportName(p.key)} · ${placeFor(p, ctx)}`;
+// " · ACEing Autism" names who runs a program, unless the program already carries that name.
+const runBy = (p) => {
+  if (!p.prog || !p.orgName) return "";
+  const name = displayName(p.name).toLowerCase(), org = displayName(p.orgName).toLowerCase();
+  return name === org || name.startsWith(org + " ") || name.startsWith(org + ":") ? "" : ` · ${p.orgName}`;
+};
+const metaText = (p, ctx) => ((ctx && ctx.single) ? placeFor(p, ctx) : `${sportName(p.key)} · ${placeFor(p, ctx)}`) + runBy(p);
 
 /** Card for lists that mix sports. ctx: { where, stamp, wide, sameCity } */
 export function programCard(p, ctx = {}) {
   const d = distText(p, ctx), t = trust(p, "short");
-  return `<a class="pcard${ctx.wide ? " is-wide" : ""}" href="/programs/${esc(p.id)}">${plate(p, { kind: "card", wide: ctx.wide })}<h3 class="pc-name" title="${esc(p.name)}">${esc(p.name)}${vcheck(p)}</h3><p class="meta">${esc(metaText(p, { single: false }))}</p>${d ? `<p class="dist">${esc(d)}</p>` : ""}${t ? `<p class="pc-trust">${t}</p>` : ""}</a>`;
+  return `<a class="pcard${ctx.wide ? " is-wide" : ""}" href="${esc(p.href || "/organizations/" + p.id)}">${plate(p, { kind: "card", wide: ctx.wide })}<h3 class="pc-name" title="${esc(p.name)}">${esc(p.name)}${vcheck(p)}</h3><p class="meta">${esc(metaText(p, { single: false }))}</p>${d ? `<p class="dist">${esc(d)}</p>` : ""}${t ? `<p class="pc-trust">${t}</p>` : ""}</a>`;
 }
 
 /** Row: tile left, then name, meta, distance and trust. ctx: { where, single, sameCity, outside }
@@ -803,10 +832,10 @@ export function programCard(p, ctx = {}) {
 export function programRow(p, ctx = {}, hidden = false) {
   const d = distText(p, ctx), t = trust(p, "short");
   if (ctx.single) {
-    return `<a class="prow prow--c" href="/programs/${esc(p.id)}"${hidden ? " hidden" : ""}><div class="pr-body"><h3 class="pr-name">${esc(p.name)}${vcheck(p)}</h3><p class="meta">${esc(placeFor(p, ctx))}${d ? `<span class="pr-dist"> · ${esc(d)}</span>` : ""}</p>${t ? `<p class="pr-line">${t}</p>` : ""}</div></a>`;
+    return `<a class="prow prow--c" href="${esc(p.href || "/organizations/" + p.id)}"${hidden ? " hidden" : ""}><div class="pr-body"><h3 class="pr-name">${esc(p.name)}${vcheck(p)}</h3><p class="meta">${esc(placeFor(p, ctx) + runBy(p))}${d ? `<span class="pr-dist"> · ${esc(d)}</span>` : ""}</p>${t ? `<p class="pr-line">${t}</p>` : ""}</div></a>`;
   }
   const line = [d ? `<span class="pr-dist">${esc(d)}</span>` : "", t].filter(Boolean).join(" · ");
-  return `<a class="prow" href="/programs/${esc(p.id)}"${hidden ? " hidden" : ""}>${plate(p, { kind: "row" })}<div class="pr-body"><h3 class="pr-name">${esc(p.name)}${vcheck(p)}</h3><p class="meta">${esc(metaText(p, ctx))}</p>${line ? `<p class="pr-line">${line}</p>` : ""}</div></a>`;
+  return `<a class="prow" href="${esc(p.href || "/organizations/" + p.id)}"${hidden ? " hidden" : ""}>${plate(p, { kind: "row" })}<div class="pr-body"><h3 class="pr-name">${esc(p.name)}${vcheck(p)}</h3><p class="meta">${esc(metaText(p, ctx))}</p>${line ? `<p class="pr-line">${line}</p>` : ""}</div></a>`;
 }
 
 let UID = 0;
@@ -859,14 +888,15 @@ export function emptyState({ title, body, actions = [], image } = {}) {
 }
 
 /** The letter, inline only (id="letter"). */
-export function letterBlock({ source = "page" } = {}) {
+export function letterBlock({ source = "page", heading = true } = {}) {
   const i = uid("em");
-  return `<section class="letter" id="letter" aria-labelledby="${i}-h"><h2 id="${i}-h" tabindex="-1">Get the letter</h2><p>New programs, grants and events, when there is something worth sending. No spam, unsubscribe any time.</p>
+  // heading: false on /letter, where the page's own h1 already says "Get the letter".
+  return `<section class="letter" id="letter" ${heading ? `aria-labelledby="${i}-h"><h2 id="${i}-h" tabindex="-1">Get the letter</h2>` : 'aria-label="Get the letter">'}<p>New programs, grants and events by email, only when there's something worth sending. Unsubscribe any time.</p>
 <form class="letter-form" data-letter data-send="/api/subscribe" data-source="asnm-letter-${esc(source)}" data-done="You're on the list. We'll write when there is something worth sending." novalidate><div class="field"><label for="${i}">Email</label><div class="letter-row"><input id="${i}" name="em" type="email" autocomplete="email" placeholder="name@example.com" required data-error="Enter an email address, like name@example.com."><button class="btn btn--ink" type="submit">Subscribe</button></div></div><input name="company" tabindex="-1" autocomplete="off" class="hpot" aria-hidden="true"><label class="check"><input type="checkbox" name="beta"><span>I want the first look at new features</span></label><p class="letter-fine">We use your email only to send the letter. <a href="/privacy">Privacy policy</a></p></form></section>`;
 }
 
 export function helpBand() {
-  return `<section class="helpband" aria-labelledby="hb-h"><h2 id="hb-h">Help build this</h2><p>Know a program we missed, or run one listed here? Tell us.</p><div class="btns">${btn("Add a program", "/add/program", "line")}${btn("Add an event", "/add/event", "line")}${btn("Claim your program", "/help", "line")}</div></section>`;
+  return `<section class="helpband" aria-labelledby="hb-h"><h2 id="hb-h">Help build this</h2><p>Know a program we missed, or run an organization listed here? Tell us.</p><div class="btns">${btn("Add a program", "/add/program", "line")}${btn("Add an event", "/add/event", "line")}${btn("Claim your organization", "/help", "line")}</div></section>`;
 }
 
 /** State outline. dots: programs (px/py), [x, y] in the 100 box, or [lat, lng]. you: [lat, lng]. */
@@ -973,7 +1003,7 @@ export function communityHeader({ kind = "sport", key, st, title, line, count, a
 
 /** The desktop aside. */
 export function aboutBox() {
-  return `<div class="abox"><h2>About this directory</h2><p>Free to use, no account needed. This directory is new and still growing.</p><a class="tlink" href="/about">How we check listings</a></div><div class="abox"><h2>Help build this</h2><div class="btns btns--stack">${btn("Add a program", "/add/program", "line")}${btn("Claim your program", "/help", "line")}</div></div>`;
+  return `<div class="abox"><h2>About this directory</h2><p>Free, no account needed. Every listing shows when we last checked it.</p><a class="tlink" href="/about">How we check listings</a></div><div class="abox"><h2>Help build this</h2><div class="btns btns--stack">${btn("Add a program", "/add/program", "line")}${btn("Claim your organization", "/help", "line")}</div></div>`;
 }
 
 /** Inline place search (home, "place not found"): input with type-ahead, Search, Use my location. */
@@ -997,39 +1027,61 @@ export function header() {
 
 const nearHref = () => { const p = recall("place"); return p ? "/near/" + encodeURIComponent(p) : null; };
 export function drawerList(active = "") {
-  let marked = false;
-  const item = (id, href, ic, label) => {
-    const cur = !marked && active && id === active; if (cur) marked = true;
-    const iconHtml = typeof ic === "string" && ic.startsWith("<") ? ic : icon(ic, 20, ic === 'ellipsis');
+  // One answer per row: the five things people come for first, each with a line that
+  // says what is behind it, then quieter groups, then the one setting. People look for
+  // a program by its sport and its place, so those two doors lead (Alec, 2026-10-17);
+  // the program list itself (/programs) stays at its address but is not a door. Nothing in it
+  // changes from page to page (no recent or popular lists), so the menu reads the
+  // same every time and nothing shifts under a thumb (WCAG 3.2.3).
+  const cur = activeItem(active);
+  const here = (id) => (id === cur ? ' aria-current="page"' : "");
+  const place = recall("place");
+  const near = nearHref();
+  const door = (id, href, label, sub) => {
+    const inner = `<span class="dl-door-label">${esc(label)}</span><span class="dl-door-sub">${esc(sub)}</span>`;
     return href
-      ? `<li><a class="dl-item" href="${esc(href)}"${cur ? ' aria-current="page"' : ""}>${iconHtml}<span>${esc(label)}</span></a></li>`
-      : `<li><button type="button" class="dl-item" data-open="search">${iconHtml}<span>${esc(label)}</span></button></li>`;
+      ? `<li><a class="dl-item dl-door" href="${esc(href)}"${here(id)}>${inner}</a></li>`
+      : `<li><button type="button" class="dl-item dl-door" data-open="search">${inner}</button></li>`;
   };
+  const item = (id, href, label) => `<li><a class="dl-item" href="${esc(href)}"${here(id)}>${esc(label)}</a></li>`;
   const sec = (title, inner) => `<div class="dl-sec"><h2 class="dl-h">${esc(title)}</h2><ul>${inner}</ul></div>`;
-  const recent = D ? recall("recent") : [];
-  // Find, Help build this and More come first, so a phone reaches Resources without
-  // scrolling past every sport; the sports list stops at 8 and links to all of them.
-  const sports = D ? topGroups(8) : [];
   const dark = currentTheme() === "dark";
-  const display = `<div class="dl-sec"><h2 class="dl-h">Display</h2><button type="button" class="dl-item dl-theme" data-theme-toggle aria-pressed="${dark}"><span>Dark mode</span><span class="dl-theme-state">${dark ? "On" : "Off"}</span></button></div>`;
   return [
-    sec("Find", item("near", nearHref(), "map-pin", "Programs near you") + item("sports", "/sports", "layout-grid", "Sports") + item("states", "/states", "map", "States") + item("grants", "/grants", "hand-coins", "Grants") + item("events", "/events", "calendar", "Events")),
-    sec("Help build this", item("add-program", "/add/program", "plus", "Add a program") + item("add-event", "/add/event", "calendar-plus", "Add an event") + item("help", "/help", "badge-check", "Claim your program") + item("about", "/about", "shield-check", "How we check listings")),
-    sec("More", item("letter", "/letter", "mail", "Get the letter") + item("resources", "/resources", "book-open", "Resources")),
-    display,
-    recent.length ? sec("Recently viewed", recent.map((k) => item("sport:" + k, "/sports/" + k, avatar(k, 40), sportName(k))).join("")) : "",
-    sports.length ? sec("Sports", sports.map((g) => item("sport:" + g.key, "/sports/" + g.key, avatar(g.key, 40), sportName(g.key))).join("") + item("sports-all", "/sports", "ellipsis", "All sports")) : "",
+    `<div class="dl-sec dl-doors"><h2 class="sr">Find</h2><ul>`
+      + door("near", near, "Programs near you", place ? "Near " + place : "Search a city, state or ZIP")
+      + door("sports", "/sports", "Sports", "Find programs by sport")
+      + door("grants", "/grants", "Grants", "Money for gear, travel and fees")
+      + door("events", "/events", "Events", "Clinics, tryouts, games and meetups")
+      + door("resources", "/resources", "Guides", "Getting started, and life beyond sports")
+      + `</ul></div>`,
+    sec("Browse", item("states", "/states", "States") + item("organizations", "/organizations", "Organizations")),
+    sec("Help build this", item("add-program", "/add/program", "Add a program") + item("add-organization", "/add/organization", "Add an organization") + item("manage", "/manage", "Manage your organization") + item("add-event", "/add/event", "Add an event") + item("help", "/help", "Claim your organization")),
+    sec("About this directory", item("about", "/about", "How we check listings") + item("letter", "/letter", "Get the letter") + item("build", "/build", "Build with us")),
+    `<div class="dl-sec dl-set"><button type="button" class="dl-theme" data-theme-toggle aria-pressed="${dark}"><span>Dark mode</span><span class="dl-switch" aria-hidden="true"></span></button></div>`,
   ].join("");
+}
+
+/** The menu row a page belongs to: a sport page sits under Sports, a state under States,
+    the veteran-owned business directories under Guides. */
+function activeItem(active) {
+  const a = String(active || "");
+  if (a.startsWith("sport:")) return "sports";
+  if (a === "state") return "states";
+  if (a === "resources" || a.startsWith("resources/")) return "resources";
+  if (a.startsWith("letter")) return "letter";
+  if (a === "build") return "build";
+  return a;
 }
 
 export function footer() {
   const near = nearHref();
   const li = (label, href) => `<li><a href="${esc(href)}">${esc(label)}</a></li>`;
-  return `<div class="ft"><div class="ft-brand"><img src="/app/logo.svg" alt="" width="40" height="40"><div class="ft-brand-text"><p class="ft-name">Adaptive Sports Near Me</p><p>A free directory of adaptive sports programs, grants and events. We list programs; we don't run them.</p></div></div>
-<div class="ft-cols"><div><h2 class="ft-h">Find</h2><ul>${near ? li("Programs near you", near) : `<li><button type="button" data-open="search">Programs near you</button></li>`}${li("Sports", "/sports")}${li("States", "/states")}${li("Grants", "/grants")}${li("Events", "/events")}</ul></div>
-<div><h2 class="ft-h">Help build this</h2><ul>${li("Add a program", "/add/program")}${li("Add an event", "/add/event")}${li("Claim your program", "/help")}${li("How we check listings", "/about")}</ul></div>
-<div><h2 class="ft-h">More</h2><ul>${li("Get the letter", "/letter")}${li("Resources", "/resources")}${li("Accessibility", "/about")}</ul></div></div>
-<div class="ft-fine"><p class="ft-fine">Adaptive Sports Near Me is a project of <a href="https://adapttolife.org">Adapt To Life</a>. Check with each program before you go.</p><p class="ft-fine">© 2026 <a href="https://adapttolife.org">Adapt To Life</a> · <a href="/privacy">Privacy</a> · <a href="/terms">Terms</a></p></div></div>`;
+  return `<div class="ft"><div class="ft-brand"><img src="/app/logo.svg" alt="" width="40" height="40"><div class="ft-brand-text"><p class="ft-name">Adaptive Sports Near Me</p><p>${esc(PRODUCT_LINE)}</p></div></div>
+<div class="ft-cols"><div><h2 class="ft-h">Find</h2><ul>${near ? li("Programs near you", near) : `<li><button type="button" data-open="search">Programs near you</button></li>`}${li("Sports", "/sports")}${li("Grants", "/grants")}${li("Events", "/events")}${li("Guides", "/resources")}</ul></div>
+<div><h2 class="ft-h">Browse</h2><ul>${li("States", "/states")}${li("Organizations", "/organizations")}</ul></div>
+<div><h2 class="ft-h">Help build this</h2><ul>${li("Add a program", "/add/program")}${li("Add an event", "/add/event")}${li("Claim your organization", "/help")}</ul></div>
+<div><h2 class="ft-h">About this directory</h2><ul>${li("How we check listings", "/about")}${li("Get the letter", "/letter")}${li("Build with us", "/build")}${li("Accessibility", "/about#accessibility")}</ul></div></div>
+<div class="ft-fine"><p class="ft-fine">Made with <span role="img" aria-label="love">❤️</span> by <a href="https://adapttolife.org">Adapt To Life</a>. © 2026 · <a href="/privacy">Privacy</a> · <a href="/terms">Terms</a></p></div></div>`;
 }
 
 /** Render output for any unknown route, id or key. */
@@ -1098,7 +1150,7 @@ let OV = null; // { name, el, release, onClose, pushed }
    back off; following a link from inside it reuses the entry, so Back from the next
    page lands on this page in one press. Sheets that live in the address (?map=1,
    ?share=1, ?open=) keep their own handling. */
-let SHEET_ENTRY = false, SKIP_POP = false, CONFIRMED = false;
+let SHEET_ENTRY = false, SKIP_POP = false;
 /** Give the open sheet its own Back step (once per entry; a sheet opened from a sheet shares it). */
 export function pushSheet() {
   if (!OV) return;
@@ -1126,6 +1178,7 @@ export function closeOverlay({ restore = true, mode = "dismiss" } = {}) {
   if (o.name === "menu") {
     const d = $("#drawer"), s = $("#drawer-scrim");
     d.classList.remove("is-on"); s.classList.remove("is-on");
+    document.body.classList.remove("dr-open");
     const hide = () => { if (!d.classList.contains("is-on")) { d.hidden = true; d.inert = true; } };
     if (reduced()) hide(); else setTimeout(hide, 200);
   } else {
@@ -1142,9 +1195,41 @@ export function openDrawer() {
   $(".dr-list", d).innerHTML = drawerList(ACTIVE);
   d.hidden = false; d.inert = false;
   requestAnimationFrame(() => { d.classList.add("is-on"); s.classList.add("is-on"); });
-  document.body.classList.add("ov-open");
+  document.body.classList.add("ov-open", "dr-open");
   const release = trapFocus(d);
   OV = { name: "menu", el: d, release };
+}
+
+function installDrawerSwipes() {
+  const edge = 88, distance = 52, slope = 1.35, duration = 700;
+  let start = null;
+  const mobile = () => window.innerWidth <= 767;
+  const isEdge = (x) => x <= edge || x >= window.innerWidth - edge;
+  document.addEventListener("touchstart", (e) => {
+    if (!mobile() || e.touches.length !== 1) return;
+    const t = e.touches[0];
+    start = { x: t.clientX, y: t.clientY, at: Date.now() };
+  }, { passive: true });
+  document.addEventListener("touchcancel", () => { start = null; }, { passive: true });
+  document.addEventListener("touchend", (e) => {
+    if (!start || !mobile() || e.changedTouches.length !== 1) { start = null; return; }
+    const t = e.changedTouches[0], from = start;
+    start = null;
+    const dx = t.clientX - from.x, dy = t.clientY - from.y;
+    if (Date.now() - from.at > duration || Math.abs(dx) < distance || Math.abs(dx) < Math.abs(dy) * slope) return;
+    const menuOpen = OV && OV.name === "menu";
+    if (menuOpen && dx < 0) { closeOverlay({ restore: false }); return; }
+    if (menuOpen && dx > 0 && isEdge(from.x)) {
+      const hasSheetEntry = OV.pushed && SHEET_ENTRY;
+      closeOverlay({ restore: false, mode: "nav" });
+      if (hasSheetEntry) {
+        SHEET_ENTRY = false;
+        history.go(-2);
+      } else backOr("/");
+      return;
+    }
+    if (!OV && dx > 0 && from.x <= edge) openDrawer();
+  }, { passive: true });
 }
 
 /** Search sheet. preset: { place, sport } */
@@ -1167,6 +1252,7 @@ export async function openSearch(preset = {}) {
     name: "search", cls: "ov--sheet ov--search", labelledby: "ss-h",
     html: `<form class="ss" data-sheet novalidate><div class="ss-top"><button type="button" class="iconbtn" data-close aria-label="Close">${icon("x", 24)}</button><h2 id="ss-h">Search</h2></div>
 <div class="ss-body"><h3 class="ss-q">Where?</h3><label class="ss-label" for="ss-where">City, state or ZIP</label><input id="ss-where" class="input" name="place" value="${esc(preset.place || "")}" autocomplete="off" enterkeyhint="search" data-suggest="ss-list" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="ss-list" aria-describedby="ss-err" data-autofocus><p class="ferr" id="ss-err" hidden></p><div class="dym" hidden></div><div class="suggest" id="ss-list" role="listbox" aria-label="Places" hidden></div>
+<h3 class="ss-q">Organization name <span class="ss-opt">(optional)</span></h3><label class="ss-label" for="ss-organization">Search organizations</label><input id="ss-organization" class="input" name="organization" autocomplete="off" enterkeyhint="search" placeholder="Organization name">
 <button type="button" class="btn btn--text ss-loc" data-locate>${icon("locate", 20)}<span>Use my location</span></button><p class="wf-status" role="status"></p>
 <h3 class="ss-q">Which sport? <span class="ss-opt">(optional)</span></h3><div class="ss-grid" role="group" aria-label="Sport">${grid()}</div>
 <button type="button" class="btn btn--line ss-more" data-showall aria-expanded="${st.all}"${st.all ? " hidden" : ""}>Show all sports</button></div>
@@ -1205,10 +1291,11 @@ export async function openSportsSheet(opts) {
 
 const ROUTES = [
   ["/", "home"], ["/near/:place", "near"], ["/sports", "sports"], ["/sports/:key", "sport"],
-  ["/states", "states"], ["/states/:st", "state"], ["/programs/:id", "program"],
+  ["/states", "states"], ["/states/:st", "state"], ["/organizations", "organizations"], ["/organizations/:id", "program"], ["/programs", "programs"], ["/programs/:id", "program-detail"],
   ["/grants", "grants"], ["/grants/:id", "grant"], ["/events", "events"],
-  ["/add/program", "forms"], ["/add/event", "forms"], ["/update/:id", "forms"],
-  ["/help", "help"], ["/about", "help"], ["/resources/veteran-owned-businesses", "vob"], ["/resources", "help"], ["/letter", "help"], ["/privacy", "help"], ["/terms", "help"],
+  ["/add/program", "forms"], ["/add/organization", "forms"], ["/add/event", "forms"], ["/update/:id", "forms"],
+  ["/manage", "manage"], ["/manage/organizations/:id", "manage"],
+  ["/help", "help"], ["/about", "help"], ["/resources/veteran-owned-businesses", "vob"], ["/resources", "help"], ["/letter", "help"], ["/build", "help"], ["/letter/confirmed", "letter-confirmed"], ["/privacy", "help"], ["/terms", "help"],
 ];
 const OVERLAY_KEYS = new Set(["map", "open"]);
 const MODS = {}, CSS_DONE = {};
@@ -1274,12 +1361,16 @@ export function backOr(fallbackHref = "/") {
 function defaultActive(name, path, params) {
   if (name === "near") return "near";
   if (name === "sports") return "sports";
+  if (name === "organizations") return "organizations";
+  if (name === "programs") return "programs";
   if (name === "sport") return "sport:" + params.key;
   if (name === "states" || name === "state") return "states";
   if (name === "grants" || name === "grant") return "grants";
   if (name === "events") return "events";
   if (path === "/add/program") return "add-program";
+  if (path === "/add/organization") return "add-organization";
   if (path === "/add/event") return "add-event";
+  if (path === "/manage") return "manage";
   if (name === "help") return path.slice(1);
   return "";
 }
@@ -1300,11 +1391,14 @@ async function loadView(name) {
     return mod;
   } catch (e) { delete MODS[name]; throw e; }
 }
-/* The page when the directory or a page's code could not load: say so, offer to try again. */
+/* The page when the directory or a page's code could not load, after one quiet retry: say so,
+   offer to try again. Only a device that says it is offline hears about its connection; any
+   other failure is most likely ours, and the page never blames the visitor for it. */
 function loadError() {
+  const why = navigator.onLine === false ? "You're offline. Check your connection and try again." : "Something went wrong on our side. Try again in a moment.";
   return {
     title: "We couldn't load this page · Adaptive Sports Near Me",
-    html: `<section class="nf"><h1 tabindex="-1">We couldn't load this page</h1><p>Check your connection and try again.</p><div class="btns"><button type="button" class="btn btn--ink" data-retry>${icon("refresh-cw", 20)}<span>Try again</span></button>${btn("Go to the home page", "/", "line")}</div></section>`,
+    html: `<section class="nf"><h1 tabindex="-1">We couldn't load this page</h1><p>${why}</p><div class="btns"><button type="button" class="btn btn--ink" data-retry>${icon("refresh-cw", 20)}<span>Try again</span></button>${btn("Go to the home page", "/", "line")}</div></section>`,
   };
 }
 
@@ -1439,7 +1533,14 @@ async function render({ force = false } = {}) {
     scrollTo(0, Math.max(0, Math.min(prevY, top - ($("#top") ? $("#top").offsetHeight : 0))));   // below the sticky header
   } else {
     try { sessionStorage.removeItem(moreKey); } catch (_) {}
-    scrollTo(0, 0);
+    // A link to a section (/about#accessibility) lands on that section, below the sticky header.
+    const id = location.hash.length > 1 && !location.hash.startsWith("#/") ? decodeURIComponent(location.hash.slice(1)) : "";
+    const target = id ? document.getElementById(id) : null;
+    if (target && main.contains(target)) {
+      scrollTo(0, Math.max(0, Math.round(target.getBoundingClientRect().top + scrollY) - ($("#top") ? $("#top").offsetHeight : 0) - 16));
+      focusEl = $("h2, h3", target) || target;
+      if (!focusEl.hasAttribute("tabindex")) focusEl.setAttribute("tabindex", "-1");
+    } else scrollTo(0, 0);
   }
 
   if (!FIRST) {
@@ -1457,17 +1558,24 @@ async function render({ force = false } = {}) {
     sessionStorage.setItem("asnm.navs", String(n));
   }
   REPLACING = false;
-  if (CONFIRMED) {
-    CONFIRMED = false;
-    main.insertAdjacentHTML("afterbegin", `<div class="done confirm-note" role="status" tabindex="-1"><p class="done-title">${icon("check", 22)}<span>You're confirmed. The letter will come to your inbox when there's something worth sending.</span></p></div>`);
-    setTimeout(() => announce("You're confirmed for the letter."), 300);
-  }
+  sportMotion([main, aside, sticky, $("#rail")], FIRST);
   if (FIRST) {
     const later = window.requestIdleCallback || ((f) => setTimeout(f, 1200));
     later(() => loadScript(USERWAY_SRC, { "data-account": "sFogOSJsXe" }), { timeout: 4000 });
   }
   FIRST = false;
   await handleOverlays(ctx);
+}
+
+/* Alec's sport drawings in motion (public/app/motion.js): each figure plays its sport's
+   move. The player loads after the first page draws, like the widgets, and never for
+   anyone who asks for reduced motion. */
+let MOTION_PLAYER = null;
+function sportMotion(roots, first) {
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const go = () => (MOTION_PLAYER = MOTION_PLAYER || import("./motion.js")).then((m) => m.attach(roots)).catch(() => {});
+  if (first) (window.requestIdleCallback || ((f) => setTimeout(f, 800)))(go, { timeout: 2500 });
+  else go();
 }
 
 /* The page's own place and sport, for the header search. */
@@ -1722,6 +1830,8 @@ async function submitWhere(form, input, sport) {
   if (list) { list.hidden = true; list.innerHTML = ""; input.setAttribute("aria-expanded", "false"); }
   const dym = $(".dym", form); if (dym) { dym.hidden = true; dym.innerHTML = ""; }
   const text = input.value.trim();
+  const organization = String(new FormData(form).get("organization") || "").trim();
+  if (organization) { closeOverlay({ restore: false, mode: "nav" }); nav("/organizations?q=" + encodeURIComponent(organization)); return; }
   if (!text && !sport) { say("Enter a city, state, or ZIP code."); return; }
   if (!text && sport) { closeOverlay({ restore: false, mode: "nav" }); nav("/sports/" + sport); return; }
   const w = await resolvePlace(text);
@@ -1753,10 +1863,11 @@ async function runSuggest(input) {
 function boot() {
   // Persistent drawer (hidden + inert when closed).
   const dr = document.createElement("div");
-  dr.innerHTML = `<div id="drawer-scrim" class="dr-scrim" data-close></div><div id="drawer" class="drawer" role="dialog" aria-modal="true" aria-labelledby="dr-h" hidden><div class="dr-head"><h2 id="dr-h" class="sr" tabindex="-1">Menu</h2><a href="/" class="dr-logo" aria-label="Adaptive Sports Near Me, home"><img src="/app/logo.svg" alt="" width="32" height="32"></a><button type="button" class="iconbtn dr-close" data-close aria-label="Close">${icon("x", 24)}</button></div><nav class="dr-list" aria-label="Menu"></nav></div>`;
+  dr.innerHTML = `<div id="drawer-scrim" class="dr-scrim" data-close></div><div id="drawer" class="drawer" role="dialog" aria-modal="true" aria-labelledby="dr-h" hidden><div class="dr-head"><h2 id="dr-h" class="sr" tabindex="-1">Menu</h2><a href="/" class="dr-logo" aria-label="Adaptive Sports Near Me, home"><img src="/app/logo.svg" alt="" width="32" height="32"><span class="dr-word" aria-hidden="true">Adaptive Sports Near Me</span></a><button type="button" class="iconbtn dr-close" data-close aria-label="Close">${icon("x", 24)}</button></div><nav class="dr-list" aria-label="Menu"></nav></div>`;
   while (dr.firstChild) document.body.appendChild(dr.firstChild);
   $("#drawer").inert = true;
   $("#top").innerHTML = header();
+  installDrawerSwipes();
   // The header sticks to the top; its height lets everything else stick below it (app.css --top-h).
   const topEl = $("#top");
   const setTopH = () => document.documentElement.style.setProperty("--top-h", topEl.offsetHeight + "px");
@@ -1917,11 +2028,11 @@ function boot() {
     if (e.key === "Escape" && OV) { e.preventDefault(); closeOverlay(); }
   });
 
-  // Back from the letter's confirmation email (beehiiv's Opt-in Redirect URL: /?confirmed=1).
-  if (new URLSearchParams(location.search).get("confirmed") === "1") {
+  // Back from the letter's confirmation email (beehiiv's Opt-in Redirect URL, /?confirmed=1):
+  // that moment has its own page, before the first draw.
+  if (location.pathname === "/" && new URLSearchParams(location.search).get("confirmed") === "1") {
     const q = new URLSearchParams(location.search); q.delete("confirmed");
-    history.replaceState(history.state, "", location.pathname + (q.toString() ? "?" + q : "") + location.hash);
-    CONFIRMED = true;
+    history.replaceState(history.state, "", "/letter/confirmed" + (q.toString() ? "?" + q : "") + location.hash);
   }
   window.addEventListener("popstate", () => {
     if (SKIP_POP) { SKIP_POP = false; return; }          // our own step back after a sheet closed

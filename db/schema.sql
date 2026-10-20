@@ -32,6 +32,8 @@ CREATE TABLE IF NOT EXISTS organizations (
   state                TEXT,                    -- USPS 2-letter code
   state_name           TEXT,                    -- display name
   zip                  TEXT,
+  address              TEXT,
+  address_publicity_consent INTEGER NOT NULL DEFAULT 0 CHECK (address_publicity_consent IN (0, 1)),
   publicity_consent    INTEGER NOT NULL DEFAULT 0 CHECK (publicity_consent IN (0, 1)),
   country              TEXT DEFAULT 'United States',
   lat                  REAL,
@@ -57,8 +59,45 @@ CREATE INDEX IF NOT EXISTS organizations_sport_idx ON organizations (sport_key);
 CREATE INDEX IF NOT EXISTS organizations_status_idx ON organizations (status, is_public);
 CREATE INDEX IF NOT EXISTS organizations_claim_email_idx ON organizations (claim_email COLLATE NOCASE);
 
+CREATE TABLE IF NOT EXISTS programs (
+  id TEXT PRIMARY KEY,
+  organization_id TEXT NOT NULL REFERENCES organizations(id),
+  name TEXT NOT NULL,
+  sport TEXT,
+  sport_key TEXT,
+  sports_json TEXT,
+  website_url TEXT,
+  email TEXT,
+  phone TEXT,
+  city TEXT,
+  state TEXT,
+  state_name TEXT,
+  zip TEXT,
+  address TEXT,
+  address_publicity_consent INTEGER NOT NULL DEFAULT 0 CHECK (address_publicity_consent IN (0, 1)),
+  publicity_consent INTEGER NOT NULL DEFAULT 0 CHECK (publicity_consent IN (0, 1)),
+  country TEXT DEFAULT 'United States',
+  lat REAL,
+  lng REAL,
+  geo_precision TEXT,
+  description TEXT,
+  cost_note TEXT,
+  equipment_provided INTEGER,
+  ages TEXT,
+  verification_status TEXT NOT NULL DEFAULT 'unverified' CHECK (verification_status IN ('verified','pending','unverified')),
+  verification_method TEXT,
+  status TEXT NOT NULL DEFAULT 'active',
+  is_public INTEGER NOT NULL DEFAULT 1,
+  last_ok_at TEXT,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS programs_organization_idx ON programs (organization_id);
+CREATE INDEX IF NOT EXISTS programs_status_idx ON programs (status, is_public);
+CREATE INDEX IF NOT EXISTS programs_sport_idx ON programs (sport_key);
+
 CREATE TABLE IF NOT EXISTS organization_data_sources (
-  organization_id      TEXT NOT NULL REFERENCES organizations(id),
+  organization_id      TEXT,
   source_id            TEXT NOT NULL REFERENCES data_sources(source_id),
   source_record_url    TEXT,
   data_quality_rating  TEXT,
@@ -81,7 +120,7 @@ CREATE INDEX IF NOT EXISTS link_checks_org_idx ON link_checks (organization_id, 
 
 CREATE TABLE IF NOT EXISTS review_queue (
   item_id              INTEGER PRIMARY KEY AUTOINCREMENT,
-  organization_id      TEXT REFERENCES organizations(id),
+  organization_id      TEXT,
   lane                 TEXT NOT NULL,            -- 'validate' | 'enrich' | 'submission'
   proposed_change      TEXT NOT NULL,            -- JSON: {field: {from, to}, ...}
   evidence             TEXT,                     -- JSON: source URL, excerpt, etc.

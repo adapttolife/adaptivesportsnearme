@@ -6,6 +6,8 @@
    Colour follows Laura Lian's identity: each colour is paired with black.
    No national counts on this page. */
 import * as A from "../app.js";
+import { HOME } from "../page-meta.js";
+import { autoTextSize } from "../vendor/auto-text-size.js";
 
 // The hero athlete cycles through these, and the block takes each one's colour.
 const HERO = A.LOOK === "hues"
@@ -33,7 +35,7 @@ function hero() {
   const figures = [...new Set([...HERO.map(([k]) => k), ...GRID])];
   const figs = figures.map((k, i) => `<span class="hb-fig${i === 0 ? " is-on" : ""}" data-hero-figure="${A.esc(k)}">${A.fig(k, { big: true, cls: "fig--pin fig--mid" })}</span>`).join("");
   return `<section class="hb" data-hero style="--hb:${HERO[0][1]};--hb-fg:${A.toneOf(HERO[0][0]).d}"><div class="hb-art" aria-hidden="true">${figs}</div>
-<div class="hb-text"><h1 class="display" tabindex="-1">Find your place in adaptive sports.</h1><p class="hb-lede">Programs, grants and events near you. Every listing shows when we last checked it.</p>${A.whereForm({ id: "home-where", after: chip })}</div></section>`;
+<div class="hb-text"><h1 class="display" tabindex="-1"><span class="hb-title">Find your place in adaptive sports.</span></h1><p class="hb-lede">Programs, grants and events near you. Every listing shows when we last checked it.</p>${A.whereForm({ id: "home-where", after: chip })}</div></section>`;
 }
 
 function sports(D) {
@@ -42,13 +44,13 @@ function sports(D) {
   const tiles = GRID.map((key, order) => ({ key, order, count: counts[key] || 0 }))
     .sort((a, b) => b.count - a.count || a.order - b.order)
     .map(({ key, count }) => `<li><a class="st" href="/sports/${A.esc(key)}" data-hero-sport="${A.esc(key)}">${A.plate(key, { kind: "tile", cls: "st-plate" })}<span class="st-name">${A.esc(A.sportName(key))}</span><span class="st-n num">${count} programs</span></a></li>`).join("");
-  const all = `<li><a class="st st--all" href="/sports"><span class="st-allbox">${A.icon("layout-grid", 34)}<b>All sports</b></span><span class="st-name">See all 45</span><span class="st-n">From archery to water skiing</span></a></li>`;
+  const all = `<li><a class="st st--all" href="/sports"><span class="st-allbox">${A.icon("layout-grid", 34)}<b>All sports</b></span><span class="st-name">See every sport</span><span class="st-n">From archery to water skiing</span></a></li>`;
   return `<section class="sec hs" aria-labelledby="hs-h">${A.sectionHead({ title: "Pick a sport", id: "hs-h" })}<ul class="st-grid">${tiles}${all}</ul></section>`;
 }
 
 function doors() {
   const d = (cls, href, key, title, line) => `<a class="door ${cls}" href="${href}"><span class="door-fig">${A.fig(key, { color: cls === "door--ink" ? "#f3f3f3" : "#1A1A1A", big: true })}</span><b>${title}</b><span>${line}</span></a>`;
-  return `<nav class="doors" aria-label="More ways in">${d("door--sun", "/grants", "grant", "Grants", "Money for gear, travel and programs")}${d("door--sea", "/events", "event", "Events", "Clinics, tryouts and game days")}${d("door--ink", "/sports/veteran-meetup", "veteran-meetup", "Veterans", "Meetups, coffee calls and outdoor days near you")}${d("door--coral", "/add/program", "multi", "Run a program?", "List it free. A person checks it.")}</nav>`;
+  return `<nav class="doors" aria-label="More ways in">${d("door--sun", "/grants", "grant", "Grants", "Money for gear, travel and fees")}${d("door--sea", "/events", "event", "Events", "Clinics, tryouts, games and meetups")}${d("door--ink", "/sports/veteran-meetup", "veteran-meetup", "Veterans", "Meetups, coffee calls and outdoor days")}${d("door--coral", "/add/program", "multi", "Run a program?", "List it free. A person checks it.")}</nav>`;
 }
 
 async function nearRail(D) {
@@ -78,8 +80,13 @@ function grants(D) {
   return `<section class="band band--sun" aria-labelledby="hg-h"><div class="band-in"><div class="band-head"><span class="band-fig">${A.fig("grant", { color: "#1A1A1A", big: true })}</span><div><h2 id="hg-h">Grants for athletes</h2><p>Money for equipment, travel and fees. You apply on the grant maker's site.</p></div></div><div class="grows glist is-one">${list.map(A.grantRow).join("")}</div><a class="btn btn--ink band-all" href="/grants?a=athlete">See all grants</a></div></section>`;
 }
 
-function events() {
-  return `<section class="band band--sea" aria-labelledby="he-h"><div class="band-in"><div class="band-head"><span class="band-fig">${A.fig("event", { color: "#1A1A1A", big: true })}</span><div><h2 id="he-h">Events</h2><p>No events posted yet. Know of a clinic, tryout or game day coming up? Add it and a person will check it before it goes live.</p></div></div><a class="btn btn--ink band-all" href="/add/event">Add an event</a></div></section>`;
+/* Coming events when there are any (the API returns upcoming only); otherwise the ask. */
+function events(D) {
+  const list = (D.events || []).slice(0, 3);
+  const line = list.length ? "Clinics, tryouts, games and meetups coming up." : "Know of a clinic, tryout or game day coming up? Tell us and we'll check it.";
+  const body = list.length ? `<div class="ev-list">${list.map(A.eventCard).join("")}</div>` : "";
+  const btn = list.length ? `<a class="btn btn--ink band-all" href="/events">See all events</a>` : `<a class="btn btn--ink band-all" href="/add/event">Add an event</a>`;
+  return `<section class="band band--sea" aria-labelledby="he-h"><div class="band-in"><div class="band-head"><span class="band-fig">${A.fig("event", { color: "#1A1A1A", big: true })}</span><div><h2 id="he-h">Events</h2><p>${line}</p></div></div>${body}${btn}</div></section>`;
 }
 
 function states() {
@@ -90,9 +97,9 @@ export async function render(ctx) {
   const D = ctx.data || await A.loadData();
   const near = await nearRail(D);
   return {
-    title: "Adaptive Sports Near Me: find your place in adaptive sports",
-    description: "Find adaptive sports programs, grants and events near you, each with the date we last checked it. Free, no account needed.",
-    html: hero() + sports(D) + doors() + near + checkedRail(D) + grants(D) + events() + states() + A.letterBlock({ source: "home" }) + A.helpBand(),
+    title: HOME.title,
+    description: HOME.description,
+    html: hero() + sports(D) + doors() + near + checkedRail(D) + grants(D) + events(D) + states() + A.letterBlock({ source: "home" }) + A.helpBand(),
   };
 }
 
@@ -101,41 +108,12 @@ export function mount(root) {
   if (input) input.setAttribute("placeholder", " ");
   const hb = root.querySelector("[data-hero]");
   if (!hb) return () => {};
-  const title = hb.querySelector("h1");
+  const title = hb.querySelector(".hb-title");
   const figs = [...hb.querySelectorAll("[data-hero-figure]")];
   const tiles = [...root.querySelectorAll("[data-hero-sport]")];
+  const canHover = matchMedia("(min-width: 768px)").matches;
   let i = 0, active = null;
-  const fitTitle = () => {
-    title.style.removeProperty("font-size");
-    title.style.removeProperty("max-width");
-    title.style.removeProperty("width");
-    const style = getComputedStyle(title);
-    const canvas = document.createElement("canvas");
-    const context = canvas.getContext("2d");
-    context.font = `${style.fontStyle} ${style.fontVariant} ${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
-    let size = parseFloat(getComputedStyle(title).fontSize);
-    let lineHeight = parseFloat(getComputedStyle(title).lineHeight);
-    while (title.scrollHeight > lineHeight * 3 + 1 && size > 24) {
-      size -= 1;
-      title.style.fontSize = `${size}px`;
-      lineHeight = parseFloat(getComputedStyle(title).lineHeight);
-    }
-  };
-  const setBannerHeight = () => {
-    const current = title.textContent;
-    title.style.setProperty("transition", "none");
-    hb.style.removeProperty("min-height");
-    let height = 0;
-    for (const key of [null, ...new Set([...HERO.map(([sport]) => sport), ...GRID])]) {
-      title.textContent = key ? `Find your place in adaptive ${A.sportName(key)}.` : "Find your place in adaptive sports.";
-      fitTitle();
-      height = Math.max(height, hb.getBoundingClientRect().height);
-    }
-    title.textContent = current;
-    fitTitle();
-    hb.style.minHeight = `${Math.ceil(height)}px`;
-    title.style.removeProperty("transition");
-  };
+  const fitTitle = autoTextSize({ innerEl: title, containerEl: title.parentElement, mode: "box", minFontSizePx: 24, maxFontSizePx: 160, fontSizePrecisionPx: 1 });
   const show = (key, color, foreground, sport) => {
     figs.forEach((f) => f.classList.toggle("is-on", f.dataset.heroFigure === key));
     hb.style.setProperty("--hb", color);
@@ -158,15 +136,13 @@ export function mount(root) {
   const leave = () => end();
   const focus = (event) => begin(event.currentTarget.dataset.heroSport);
   const blur = () => end();
-  const resize = () => setBannerHeight();
-  setBannerHeight();
-  for (const tile of tiles) {
+  fitTitle();
+  if (canHover) for (const tile of tiles) {
     tile.addEventListener("pointerenter", enter);
     tile.addEventListener("pointerleave", leave);
     tile.addEventListener("focus", focus);
     tile.addEventListener("blur", blur);
   }
-  addEventListener("resize", resize);
   const t = matchMedia("(prefers-reduced-motion: reduce)").matches ? null : setInterval(() => {
     if (active) return;
     i = (i + 1) % HERO.length;
@@ -174,12 +150,12 @@ export function mount(root) {
   }, 2600);
   return () => {
     if (t) clearInterval(t);
-    for (const tile of tiles) {
+    if (canHover) for (const tile of tiles) {
       tile.removeEventListener("pointerenter", enter);
       tile.removeEventListener("pointerleave", leave);
       tile.removeEventListener("focus", focus);
       tile.removeEventListener("blur", blur);
     }
-    removeEventListener("resize", resize);
+    fitTitle.disconnect();
   };
 }

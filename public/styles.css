@@ -7,7 +7,7 @@
 	--ink: #1a1a1a;
 	--ink2: #3a3a37;
 	--paper: #f3f3f3;
-	--mist: #f7f7f5;
+	--mist: #dcdcdc;
 	--sand: #f0efec;
 	--sand2: #e8e7e3;
 	--line: #e7e6e2;
@@ -39,9 +39,15 @@
 		0 1px 2px rgba(17, 17, 19, 0.04), 0 1px 3px rgba(17, 17, 19, 0.06);
 	--shadow: 0 6px 20px rgba(17, 17, 19, 0.08);
 	--shadow-lg: 0 12px 34px rgba(17, 17, 19, 0.13);
-	--max: clamp(85vw, 1500px, 100%);
+	--max: 100%; /* phones use the whole screen; 90vw from 768px */
 	--gut: var(--space-page);
 	--ease: cubic-bezier(0.2, 0.6, 0.2, 1);
+}
+
+@media (min-width: 768px) {
+	:root {
+		--max: 90vw;
+	}
 }
 
 * {

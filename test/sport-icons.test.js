@@ -10,7 +10,7 @@ import { readdirSync, readFileSync } from "node:fs";
 const dir = new URL("../public/emblems/sports/", import.meta.url);
 const files = readdirSync(dir);
 const icons = files.filter((f) => f.endsWith(".svg")).map((f) => [f.slice(0, -4), readFileSync(new URL(f, dir), "utf8")]);
-const sources = readFileSync(new URL("SOURCES.tsv", dir), "utf8").trim().split("\n").slice(1).map((l) => l.split("\t"));
+const sources = readFileSync(new URL("SOURCES.tsv", dir), "utf8").trim().split(/\r?\n/).slice(1).map((l) => l.split("\t"));
 const drawing = (svg) => [...svg.matchAll(/\sd="([^"]+)"/g)].map((m) => m[1]).join("");
 
 test("one icon per sport key, each an SVG and a PNG, nothing extra", () => {
@@ -24,7 +24,7 @@ test("every icon is Alec's Drive file, unchanged, and a clean one-colour vector"
   const byKey = Object.fromEntries(icons);
   for (const [key, drive, sha] of sources) {
     const svg = byKey[key];
-    assert.equal(createHash("sha256").update(svg).digest("hex"), sha, `${key}: differs from ${drive} in Drive`);
+    assert.equal(createHash("sha256").update(svg.replace(/\r\n/g, "\n")).digest("hex"), sha, `${key}: differs from ${drive} in Drive`);
     assert.match(svg, /^<svg xmlns="http:\/\/www\.w3\.org\/2000\/svg" viewBox="0 0 512 512"/, key);
     assert.match(svg, /<title>[^<]+<\/title>/, `${key}: needs a title`);
     assert.ok(!/<script|<image|<foreignObject|<style|href=|url\(|@import/i.test(svg), `${key}: no scripts, styles, images or outside references`);

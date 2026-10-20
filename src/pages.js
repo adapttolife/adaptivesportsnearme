@@ -8,9 +8,11 @@
 //
 // Previews and staging say noindex (meta robots + X-Robots-Tag); only production
 // (ENV_NAME=production) asks to be indexed.
-import { getOrg, getGrant, directorySnapshot } from "./data.js";
+import { getOrg, getProgram, getGrant, directorySnapshot, programsSnapshot } from "./data.js";
 import { SPORT_NAMES } from "./sport-names.js";
 import { isListable } from "../public/app/listable.js";
+import { HOME, PAGES, nearMeta, sportMeta, stateMeta, organizationMeta, programMeta, grantMeta } from "../public/app/page-meta.js";
+import { HOME_CARD, PAGE_CARDS, sportCard, stateCard, listingCard, CARD_WIDTH, CARD_HEIGHT } from "./share-cards.js";
 
 export const SITE_NAME = "Adaptive Sports Near Me";
 const ORIGIN = "https://adaptivesportsnearme.com";
@@ -29,7 +31,7 @@ export const STATE_NAMES = {
 };
 
 const UUID = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}";
-const HOME_DESCRIPTION = "Find adaptive sports programs, grants and events near you. Every listing shows when it was last checked. Free, no account needed.";
+const HOME_DESCRIPTION = HOME.description;
 
 // Old URLs from earlier versions of the site, sent somewhere useful.
 const REDIRECTS = [
@@ -41,62 +43,82 @@ const REDIRECTS = [
   [/^\/directory(\/[a-z]+)?\/?$/, "/sports"],
 ];
 
-// pattern, builder(match, env, url) -> { title, description, noindex?, status?, jsonld?, canonical? }
+// pattern, builder(match, env, url) -> { title, description, noindex?, status?, jsonld?, canonical?, image? }
+// image: the page's share card (src/share-cards.js); pages without one share the home card.
 // ("/" is usually served straight from the assets; the Worker answers it the same way.)
 const ROUTES = [
   [/^\/$/, () => ({})],
   [/^\/near\/([^/]+)\/?$/, (m) => {
     const place = safeDecode(m[1]).slice(0, 80);
-    return { title: `Adaptive sports near ${place}`, description: `Adaptive sports programs near ${place}: in town first, then about 25 miles, then the rest of the state.`, noindex: true };
+    return { ...nearMeta(place, null), noindex: true };
   }],
-  [/^\/sports\/?$/, () => ({ title: "Adaptive sports by sport", description: "Browse adaptive sports programs by sport, from tennis and basketball to sled hockey, sailing and veteran meetups." })],
+  [/^\/sports\/?$/, () => ({ ...PAGES.sports })],
   [/^\/sports\/([a-z-]+)\/?$/, (m) => {
     const name = SPORT_NAMES[m[1]];
     if (!name) return notFound();
     const low = m[1] === "multi" ? "multi-sport" : name.toLowerCase();
-    return { title: `${name}: adaptive ${low} programs near you`, description: `Find adaptive ${low} programs, grants and events near you. Every listing shows when it was last checked.` };
+    // The guide's first sentence says what the sport is before the directory line (search snippets).
+    return { ...sportMeta({ key: m[1], name, low }), image: sportCard(m[1]) };
   }],
-  [/^\/states\/?$/, () => ({ title: "Adaptive sports by state", description: "Find adaptive sports programs in every state." })],
+  [/^\/states\/?$/, () => ({ ...PAGES.states })],
   [/^\/states\/([A-Za-z]{2})\/?$/, (m) => {
     const st = m[1].toUpperCase(), name = STATE_NAMES[st];
     if (!name) return notFound();
-    return { title: `Adaptive sports in ${name}`, description: `Adaptive sports programs, grants and events in ${name}. Every listing shows when it was last checked.`, canonical: `${ORIGIN}/states/${st}` };
+    return { ...stateMeta(name), canonical: `${ORIGIN}/states/${st}`, image: stateCard(st) };
   }],
-  [new RegExp(`^/programs/(${UUID})/?$`, "i"), async (m, env) => {
-    if (!env.DB) return { title: "Program", description: HOME_DESCRIPTION };
+  [/^\/organizations\/?$/, () => ({ ...PAGES.organizations })],
+  [/^\/programs\/?$/, () => ({ ...PAGES.programs })],
+  [new RegExp(`^/organizations/(${UUID})/?$`, "i"), async (m, env) => {
+    if (!env.DB) return { title: "Organization", description: HOME_DESCRIPTION };
     const p = await getOrg(env.DB, m[1].toLowerCase());
-    if (!p || !isListable(p)) return notFound("We couldn't find that program");
+    if (!p || !isListable(p)) return notFound(PAGES.listingNotFound.title);
     const place = placeText(p);
     const sport = p.sportLabel || "Adaptive sports";
     return {
-      title: `${p.name}: ${sport}${place ? ` in ${place}` : ""}`,
-      description: `${p.name}${place ? ` in ${place}` : ""}. ${sport}. See the program's website, when we last checked it, and suggest a fix.`,
+      ...organizationMeta({ name: p.name, sport, place }),
       jsonld: programJsonLd(p, env),
+      image: listingCard(p),
     };
   }],
-  [/^\/grants\/?$/, () => ({ title: "Grants for adaptive athletes and programs", description: "Grants that pay for adaptive sports equipment, travel, fees and programs. You apply on the grant maker's site." })],
+  [new RegExp(`^/programs/(${UUID}|program-[a-z0-9-]{1,80})/?$`, "i"), async (m, env) => {
+    if (!env.DB) return { title: "Program", description: HOME_DESCRIPTION };
+    const id = m[1].toLowerCase();
+    let p = null;
+    try { p = await getProgram(env.DB, id); } catch (_) { p = null; } // a database without the programs table yet
+    if (p) return { ...programMeta({ name: p.name, sport: p.sportLabel || "Adaptive sports", place: placeText(p) }), jsonld: programJsonLd(p, env), image: listingCard(p) };
+    // Listings lived at /programs/<organization id> until 2026-10-15: shared links,
+    // receipts and search results move to the organization's page for good.
+    const org = await getOrg(env.DB, id);
+    if (org && isListable(org)) return { redirect: `/organizations/${id}` };
+    return notFound("We couldn't find that program");
+  }],
+  [/^\/grants\/?$/, () => ({ ...PAGES.grants, image: PAGE_CARDS.grants })],
   [new RegExp(`^/grants/(${UUID})/?$`, "i"), async (m, env) => {
     if (!env.DB) return { title: "Grant", description: HOME_DESCRIPTION };
     let g = null;
     try { g = await getGrant(env.DB, m[1].toLowerCase()); } catch (_) { g = null; }
-    if (!g) return notFound("We couldn't find that grant");
-    return { title: `${g.name}${g.source ? `, from ${g.source}` : ""}`, description: `${g.name}: a grant for adaptive sports. See who it is for, the deadline and how to apply.` };
+    if (!g) return notFound(PAGES.grantNotFound.title);
+    return { ...grantMeta({ name: g.name, source: g.source || "" }), image: PAGE_CARDS.grants };
   }],
-  [/^\/events\/?$/, () => ({ title: "Adaptive sports events", description: "Clinics, tryouts and game days. Know of one? Add it and a person will check it." })],
-  [/^\/add\/program\/?$/, () => ({ title: "Add a program", description: "Tell us about an adaptive sports program. A person checks every one before it goes up.", noindex: true })],
-  [/^\/add\/event\/?$/, () => ({ title: "Add an event", description: "Tell us about an adaptive sports event. A person checks every one before it goes up.", noindex: true })],
-  [new RegExp(`^/update/(${UUID})/?$`, "i"), () => ({ title: "Suggest a fix", description: "Tell us what to fix on a listing.", noindex: true })],
-  [/^\/help\/?$/, () => ({ title: "Help build this", description: "Add a program or an event, suggest a fix, or confirm the program you run." })],
-  [/^\/about\/?$/, () => ({ title: "How we check listings", description: "What Verified means, what Not verified yet means, and how we keep every listing up to date." })],
-  [/^\/resources\/?$/, () => ({ title: "Resources", description: "Directories and resources for adaptive athletes, veterans and families." })],
-  [/^\/resources\/veteran-owned-businesses\/?$/, () => ({ title: "Support Veteran-Owned Businesses", description: "Find veteran-owned businesses in your state using these directories." })],
-  [/^\/letter\/?$/, () => ({ title: "Get the letter", description: "New programs, grants and events, when there is something worth sending." })],
-  [/^\/privacy\/?$/, () => ({ title: "Privacy policy", description: "What Adaptive Sports Near Me collects, why, and the choices you have." })],
-  [/^\/terms\/?$/, () => ({ title: "Terms of use", description: "The terms for using Adaptive Sports Near Me, a free directory run by Adapt To Life." })],
+  [/^\/events\/?$/, () => ({ ...PAGES.events, image: PAGE_CARDS.events })],
+  [/^\/add\/program\/?$/, () => ({ ...PAGES.addProgram, noindex: true })],
+  [/^\/add\/organization\/?$/, () => ({ ...PAGES.addOrganization, noindex: true })],
+  [/^\/add\/event\/?$/, () => ({ ...PAGES.addEvent, noindex: true })],
+  [/^\/manage(?:\/organizations\/[^/]+)?\/?$/, () => ({ ...PAGES.manage, noindex: true })],
+  [new RegExp(`^/update/(${UUID})/?$`, "i"), () => ({ ...PAGES.update, noindex: true })],
+  [/^\/help\/?$/, () => ({ ...PAGES.help })],
+  [/^\/about\/?$/, () => ({ ...PAGES.about })],
+  [/^\/resources\/?$/, () => ({ ...PAGES.guides })],
+  [/^\/resources\/veteran-owned-businesses\/?$/, () => ({ ...PAGES.veteranBusinesses, image: PAGE_CARDS["veteran-owned-businesses"] })],
+  [/^\/letter\/confirmed\/?$/, () => ({ ...PAGES.letterConfirmed, noindex: true })],
+  [/^\/letter\/?$/, () => ({ ...PAGES.letter })],
+  [/^\/build\/?$/, () => ({ ...PAGES.build })],
+  [/^\/privacy\/?$/, () => ({ ...PAGES.privacy })],
+  [/^\/terms\/?$/, () => ({ ...PAGES.terms })],
 ];
 
-function notFound(title = "Page not found") {
-  return { title, description: "That page isn't here. Search adaptive sports near you instead.", noindex: true, status: 404 };
+function notFound(title = PAGES.notFound.title) {
+  return { title, description: PAGES.notFound.description, noindex: true, status: 404 };
 }
 
 function safeDecode(s) {
@@ -128,26 +150,37 @@ const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "
 // (/api/orgs/<id>) with the page, so nothing waits for anything else.
 const VIEWS = [
   [/^\/$/, "home"], [/^\/near\/[^/]+$/, "near"], [/^\/sports$/, "sports"], [/^\/sports\/[^/]+$/, "sport"],
-  [/^\/states$/, "states"], [/^\/states\/[^/]+$/, "state"], [/^\/programs\/[^/]+$/, "program"],
+  [/^\/states$/, "states"], [/^\/states\/[^/]+$/, "state"], [/^\/organizations$/, "organizations"], [/^\/organizations\/[^/]+$/, "program"], [/^\/programs$/, "programs"], [/^\/programs\/[^/]+$/, "program-detail"],
   [/^\/grants$/, "grants"], [/^\/grants\/[^/]+$/, "grant"], [/^\/events$/, "events"],
-  [/^\/(add\/program|add\/event|update\/[^/]+)$/, "forms"], [/^\/resources\/veteran-owned-businesses$/, "vob"],
-  [/^\/(help|about|resources|letter|privacy|terms)$/, "help"],
+  [/^\/(add\/program|add\/organization|add\/event|update\/[^/]+)$/, "forms"], [/^\/manage(?:\/organizations\/[^/]+)?$/, "manage"], [/^\/resources\/veteran-owned-businesses$/, "vob"],
+  [/^\/letter\/confirmed$/, "letter-confirmed"], [/^\/(help|about|resources|letter|build|privacy|terms)$/, "help"],
 ];
 export function preloadHints(pathname) {
   const path = pathname.length > 1 ? pathname.replace(/\/+$/, "") : "/";
   const hit = VIEWS.find(([re]) => re.test(path));
   if (!hit) return [];
   const tags = [`<link rel="modulepreload" href="/app/views/${hit[1]}.js">`, `<link rel="preload" href="/app/views/${hit[1]}.css" as="style">`];
-  const id = path.match(new RegExp(`^/programs/(${UUID})$`, "i"));
-  if (id) tags.push(`<link rel="preload" href="/api/orgs/${id[1].toLowerCase()}" as="fetch" crossorigin>`);
+  const orgId = path.match(new RegExp(`^/organizations/(${UUID})$`, "i"));
+  if (orgId) tags.push(earlyFetch(`/api/organizations/${orgId[1].toLowerCase()}`));
+  const programId = path.match(new RegExp(`^/programs/(${UUID})$`, "i"));
+  if (programId) tags.push(earlyFetch(`/api/programs/${programId[1].toLowerCase()}`));
   return tags;
+}
+// A page's data starts downloading with the page, the way the shell starts the listings
+// (public/index.html). A script, not a preload link: Safari, and so every iPhone browser,
+// downloads a preloaded file again when fetch() asks for it. app.js takes it once (early).
+function earlyFetch(href) {
+  const u = JSON.stringify(href).replace(/</g, "\\u003c");
+  return `<script>(window.ASNM_EARLY=window.ASNM_EARLY||{})[${u}]=fetch(${u});window.ASNM_EARLY[${u}].catch(function(){});</script>`;
 }
 
 export function injectMeta(html, meta, { url, production, hints = [] }) {
-  const title = meta.title ? `${meta.title} · ${SITE_NAME}` : `${SITE_NAME}: find adaptive sports programs near you`;
+  const title = meta.title ? `${meta.title} · ${SITE_NAME}` : HOME.title;
   const description = meta.description || HOME_DESCRIPTION;
   const canonical = meta.canonical || ORIGIN + (url.pathname.replace(/\/+$/, "") || "/");
   const noindex = meta.noindex || !production;
+  // A review copy's previews show its own cards; production's show production's.
+  const image = (production ? ORIGIN : url.origin) + (meta.image || HOME_CARD);
   const tags = [
     `<link rel="canonical" href="${esc(canonical)}">`,
     `<meta property="og:title" content="${esc(meta.title || SITE_NAME)}">`,
@@ -155,7 +188,9 @@ export function injectMeta(html, meta, { url, production, hints = [] }) {
     `<meta property="og:url" content="${esc(canonical)}">`,
     `<meta property="og:type" content="website">`,
     `<meta property="og:site_name" content="${SITE_NAME}">`,
-    `<meta property="og:image" content="${ORIGIN}/og-image.jpg">`,
+    `<meta property="og:image" content="${esc(image)}">`,
+    `<meta property="og:image:width" content="${CARD_WIDTH}">`,
+    `<meta property="og:image:height" content="${CARD_HEIGHT}">`,
     `<meta name="twitter:card" content="summary_large_image">`,
     noindex ? `<meta name="robots" content="noindex">` : "",
     meta.jsonld ? `<script type="application/ld+json">${JSON.stringify(meta.jsonld).replace(/</g, "\\u003c")}</script>` : "",
@@ -173,7 +208,7 @@ export function redirectFor(pathname) {
   // One address per page: /states/fl -> /states/FL, an uppercase id -> lowercase.
   const st = pathname.match(/^\/states\/([a-z]{2})\/?$/i);
   if (st && st[1] !== st[1].toUpperCase()) return `/states/${st[1].toUpperCase()}`;
-  const id = pathname.match(new RegExp(`^/(programs|grants|update)/(${UUID})/?$`, "i"));
+  const id = pathname.match(new RegExp(`^/(programs|organizations|grants|update)/(${UUID})/?$`, "i"));
   if (id && /[A-F]/.test(id[2])) return `/${id[1]}/${id[2].toLowerCase()}`;
   return null;
 }
@@ -203,6 +238,7 @@ export async function servePage(request, env, url) {
     console.error("page meta error:", err);
     meta = { title: SITE_NAME, description: HOME_DESCRIPTION };
   }
+  if (meta.redirect) return Response.redirect(new URL(meta.redirect, url).toString(), 301);
   const shell = await env.ASSETS.fetch(new Request(new URL("/", url), { method: "GET" }));
   const hints = meta.status === 404 ? [] : preloadHints(url.pathname);
   const html = injectMeta(await shell.text(), meta, { url, production: env.ENV_NAME === "production", hints });
@@ -222,7 +258,8 @@ export async function sitemapXml(env) {
   for (const st of Object.keys(STATE_NAMES)) urls.push(`/states/${st}`);
   if (env.DB) {
     const snap = await directorySnapshot(env.DB);
-    for (const p of snap.items) if (isListable(p)) urls.push(`/programs/${p.id}`);
+    for (const p of snap.items) if (isListable(p)) urls.push(`/organizations/${p.id}`);
+    for (const p of (await programsSnapshot(env.DB)).items) if (isListable(p)) urls.push(`/programs/${p.id}`);
     try {
       const g = await env.DB.prepare("SELECT id FROM grants WHERE is_public = 1 AND status = 'active'").all();
       for (const r of g.results || []) urls.push(`/grants/${r.id}`);

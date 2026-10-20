@@ -35,7 +35,7 @@
 
 @media (min-width: 1280px) {
 	.v-program .pg-grid {
-		grid-template-columns: minmax(0, 680px) 340px;
+		grid-template-columns: 1fr 340px;
 	}
 }
 
@@ -328,7 +328,7 @@
 	gap: 8px;
 	min-height: 44px;
 	padding: 8px 16px;
-	border-radius: 15px;
+	border-radius: 100px;
 	background: var(--mist);
 	border: 1px solid var(--line);
 	font-size: 15px;
@@ -458,7 +458,15 @@
 }
 
 .v-program .pg-book-trust {
-	margin: 10px 0 18px;
+	margin: 10px 0;
+}
+
+.v-program .pg-book-address {
+	font-size: 16px;
+	font-weight: 600;
+	color: var(--graphite);
+	line-height: 1.4;
+	margin-bottom: 10px;
 }
 
 .v-program .pg-book .pg-host {
@@ -508,7 +516,7 @@
 	min-height: 22px;
 	font-size: 15px;
 	font-weight: 600;
-	color: var(--teal);
+	color: var(--ink);
 	text-align: center;
 	overflow-wrap: anywhere;
 }
@@ -530,7 +538,7 @@
 	overflow: hidden;
 	border-radius: var(--r-xl);
 	background: var(--t);
-	color: var(--ink);
+	color: var(--d, --ink);
 	box-shadow: var(--sh-2);
 }
 
@@ -850,4 +858,32 @@
 	.v-program .pg-edge .pg-stamp-text {
 		font-size: 16px;
 	}
+}
+
+/* "New to <sport>?": the sport in plain words, from sport-guides.js */
+.v-program .pg-sport p + p {
+	margin-top: 10px;
+}
+
+.v-program .pg-sport .tlink {
+	margin-top: 12px;
+}
+
+.v-program .pg-map {
+	position: relative;
+	height: clamp(240px, 42vw, 360px);
+	margin-top: 20px;
+	overflow: hidden;
+	border: 1px solid var(--line);
+	border-radius: var(--r-l);
+	background: var(--mist);
+}
+
+.v-program .pg-map.is-map-unavailable::after {
+	content: "Map unavailable";
+	position: absolute;
+	inset: 0;
+	display: grid;
+	place-items: center;
+	color: var(--graphite);
 }

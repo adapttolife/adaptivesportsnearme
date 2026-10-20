@@ -7,6 +7,7 @@ import { cachedCount } from "./read-cache.js";
 import "../public/listing-art.js";
 import { listingSport } from "../public/app/listing-sport.js";
 import { isListable } from "../public/app/listable.js";
+import { publicText } from "./public-text.js";
 
 const ListingArt = globalThis.ListingArt;
 
@@ -18,7 +19,7 @@ export function freshness(lastOkAt, now = Date.now()) {
 }
 
 const LIST_COLS = `id, name, org_type, sport, sport_key, website_url, city,
-  state, state_name, zip, publicity_consent, lat, lng, geo_precision, description, cost_note,
+  state, state_name, zip, country, publicity_consent, lat, lng, geo_precision, description, cost_note,
   equipment_provided, ages, data_quality_rating, verification_status, verification_method,
   last_ok_at, created_at`;
 
@@ -35,9 +36,13 @@ export const ACTIONABLE = `((website_url IS NOT NULL AND website_url <> '')
   OR (publicity_consent = 1 AND email IS NOT NULL AND email <> '')
   OR (publicity_consent = 1 AND phone IS NOT NULL AND phone <> ''))`;
 const PUBLIC = `is_public = 1 AND status = 'active' AND ${ACTIONABLE}`;
+// The same rule, for a table under an alias in a join ("p" for programs).
+const actionableOn = (t) => ACTIONABLE.replace(/\b(website_url|city|state|publicity_consent|email|phone)\b/g, `${t}.$1`);
 
 function rowToProgram(r, dist) {
   const publicityConsent = r.publicity_consent === 1;
+  const addressPublicityConsent = r.address_publicity_consent === 1;
+  const preciseLocationConsent = publicityConsent || addressPublicityConsent;
   return {
     id: r.id,
     name: r.name,
@@ -48,18 +53,22 @@ function rowToProgram(r, dist) {
     city: r.city,
     state: r.state,
     stateName: r.state_name,
-    zip: publicityConsent ? r.zip : null,
-    lat: publicityConsent ? r.lat : null,
-    lng: publicityConsent ? r.lng : null,
-    geoPrecision: publicityConsent ? r.geo_precision : null,
+    zip: preciseLocationConsent ? r.zip : null,
+    country: addressPublicityConsent ? r.country : null,
+    address: addressPublicityConsent ? r.address : null,
+    lat: preciseLocationConsent ? r.lat : null,
+    lng: preciseLocationConsent ? r.lng : null,
+    geoPrecision: preciseLocationConsent ? r.geo_precision : null,
     publicityConsent,
-    desc: r.description,
-    cost: r.cost_note,
+    addressPublicityConsent,
+    // Contact details in notes show only with the organization's yes (src/public-text.js).
+    desc: publicText(r.description, publicityConsent),
+    cost: publicText(r.cost_note, publicityConsent),
     equipment: r.equipment_provided === 1 ? "Provided" : r.equipment_provided === 0 ? "Bring your own" : null,
     ages: r.ages,
     quality: r.data_quality_rating,
     verification: r.verification_status,
-    // Two separate signals (Alec, 2026-10-14). confirmed: the program itself gave
+    // Two separate signals (Alec, 2026-10-14). confirmed: the organization itself gave
     // permission, which is the Verified check on the site (publicity_consent, the
     // same flag that lets its contact details show). teamChecked: a person on our
     // team checked the listing (verification_status 'verified', checkedMonth when).
@@ -90,6 +99,34 @@ function nearPayload(origin) {
 // Read it once rather than repeating COUNT + OFFSET scans for every 200 rows.
 // places (optional): the city table from loadPlaces(), so each item carries the
 // center of its listed city for maps and "near you".
+// Programs are listed as places of their own: a person looks for a sport at a place
+// (Alec, 2026-10-17), and an organization can run it in several. A program shows when it,
+// and the organization that runs it, are public; the placeholder "Organization not yet
+// assigned" is never named. A database without the programs table lists none.
+const PROGRAM_LIST_COLS = `p.id, p.name, NULL AS org_type, p.sport, p.sport_key, p.website_url, p.city,
+  p.state, p.state_name, p.zip, p.publicity_consent, p.lat, p.lng, p.geo_precision, p.description, p.cost_note,
+  p.equipment_provided, p.ages, NULL AS data_quality_rating, p.verification_status, p.verification_method,
+  p.last_ok_at, p.created_at, o.id AS organization_id, o.name AS organization_name, o.org_type AS organization_type`;
+export async function programsSnapshot(db, { places = null } = {}) {
+  let rows;
+  try {
+    rows = await db.prepare(`SELECT ${PROGRAM_LIST_COLS} FROM programs p JOIN organizations o ON o.id = p.organization_id
+      WHERE ${PROGRAM_PUBLIC} AND ${actionableOn("p")}
+      ORDER BY (p.sport_key IS NULL), (p.state IS NULL), p.name`).all();
+  } catch (_) {
+    return { total: 0, items: [] };
+  }
+  const items = rows.results.map((row) => {
+    const p = rowToProgram(row);
+    p.kind = "program";
+    p.organizationId = row.organization_id;
+    p.organization = row.organization_type === "placeholder" ? null : { id: row.organization_id, name: row.organization_name };
+    if (places) p.cityCenter = cityCenter(row.city, row.state, places);
+    return p;
+  });
+  return { total: items.length, items };
+}
+
 export async function directorySnapshot(db, { places = null } = {}) {
   const rows = await db.prepare(`SELECT ${LIST_COLS} FROM organizations
     WHERE ${PUBLIC}
@@ -107,7 +144,12 @@ export async function directorySnapshot(db, { places = null } = {}) {
 // That page loads the rest from /api/orgs/:id. Rows that are not programs
 // (public/app/listable.js) never ship. Dates are days ("2026-10-08").
 export async function listingsSnapshot(db, { places = null } = {}) {
-  const { items } = await directorySnapshot(db, { places });
+  const [{ items: orgs }, { items: programs }] = await Promise.all([directorySnapshot(db, { places }), programsSnapshot(db, { places })]);
+  // An organization whose programs are listed is shown through them (progs: how many),
+  // so the same place is never listed twice; its own page still works.
+  const listedPrograms = new Map();
+  for (const p of programs) if (isListable(p)) listedPrograms.set(p.organizationId, (listedPrograms.get(p.organizationId) || 0) + 1);
+  const items = [...orgs, ...programs];
   const day = (s) => (s ? String(s).slice(0, 10) : null);
   const out = [];
   for (const p of items) {
@@ -122,6 +164,12 @@ export async function listingsSnapshot(db, { places = null } = {}) {
     else if (p.listedAt) o.listed = day(p.listedAt);
     if (p.confirmed) o.verified = 1;
     if (p.teamChecked) o.team = 1;
+    if (p.kind === "program") {
+      o.prog = 1;
+      if (p.organization) o.org = p.organization.name;
+    } else if (listedPrograms.get(p.id)) {
+      o.progs = listedPrograms.get(p.id);
+    }
     out.push(o);
   }
   return { total: out.length, items: out };
@@ -195,7 +243,7 @@ export async function listPrograms(db, params, opts = {}) {
 
 export async function getOrg(db, id) {
   const row = await db.prepare(
-    `SELECT ${LIST_COLS}, email, phone, primary_data_source, verification_method, created_at, updated_at
+    `SELECT ${LIST_COLS}, address, address_publicity_consent, email, phone, primary_data_source, verification_method, created_at, updated_at
      FROM organizations WHERE id = ? AND ${PUBLIC}`
   ).bind(id).first();
   if (!row) return null;
@@ -216,6 +264,41 @@ export async function getOrg(db, id) {
     verifiedMonth: verifiedMonth(row),
     updatedAt: row.updated_at,
   };
+}
+
+const PROGRAM_COLS = `p.id, p.organization_id, p.name, NULL AS org_type, p.sport, p.sport_key,
+  p.website_url, p.city, p.state, p.state_name, p.zip, p.country, p.publicity_consent, p.lat, p.lng,
+  p.geo_precision, p.address, p.address_publicity_consent, p.description, p.cost_note, p.equipment_provided, p.ages,
+  NULL AS data_quality_rating, p.verification_status, p.verification_method, p.last_ok_at, p.created_at`;
+const PROGRAM_PUBLIC = "p.is_public = 1 AND p.status = 'active' AND o.is_public = 1 AND o.status = 'active'";
+function programParent(row) {
+  if (row.organization_type === "placeholder") return null;   // "Organization not yet assigned" is never shown
+  return { id: row.organization_id, name: row.organization_name, city: row.organization_city,
+    state: row.organization_state, stateName: row.organization_state_name, website: row.organization_website_url };
+}
+export async function listActualPrograms(db, params = new URLSearchParams()) {
+  const where = [PROGRAM_PUBLIC], binds = [];
+  const state = (params.get("state") || "").trim().toUpperCase();
+  if (/^[A-Z]{2}$/.test(state)) { where.push("p.state = ?"); binds.push(state); }
+  const city = (params.get("city") || "").trim().slice(0, 120);
+  if (city) { where.push("LOWER(p.city) = LOWER(?)"); binds.push(city); }
+  const organizationId = (params.get("organization_id") || "").trim();
+  if (organizationId) { where.push("p.organization_id = ?"); binds.push(organizationId); }
+  const q = (params.get("q") || "").trim().slice(0, 120);
+  if (q) { const like = `%${q.replace(/[\\%_]/g, "\\$&")}%`; where.push("(p.name LIKE ? ESCAPE '\\' OR o.name LIKE ? ESCAPE '\\' OR p.sport LIKE ? ESCAPE '\\')"); binds.push(like, like, like); }
+  const limit = Math.min(Math.max(Number.parseInt(params.get("limit") || "60", 10) || 60, 1), 200);
+  const offset = Math.max(Number.parseInt(params.get("offset") || "0", 10) || 0, 0);
+  const condition = where.join(" AND ");
+  const [count, rows] = await Promise.all([
+    db.prepare(`SELECT COUNT(*) AS n FROM programs p JOIN organizations o ON o.id = p.organization_id WHERE ${condition}`).bind(...binds).first(),
+    db.prepare(`SELECT ${PROGRAM_COLS}, o.name AS organization_name, o.org_type AS organization_type, o.city AS organization_city, o.state AS organization_state, o.state_name AS organization_state_name, o.website_url AS organization_website_url FROM programs p JOIN organizations o ON o.id = p.organization_id WHERE ${condition} ORDER BY p.name COLLATE NOCASE LIMIT ? OFFSET ?`).bind(...binds, limit, offset).all(),
+  ]);
+  return { total: count?.n ?? 0, limit, offset, items: (rows.results || []).map((row) => ({ ...rowToProgram(row), organization: programParent(row) })) };
+}
+export async function getProgram(db, id) {
+  const row = await db.prepare(`SELECT ${PROGRAM_COLS}, p.email, p.phone, p.updated_at, o.name AS organization_name, o.org_type AS organization_type, o.city AS organization_city, o.state AS organization_state, o.state_name AS organization_state_name, o.website_url AS organization_website_url FROM programs p JOIN organizations o ON o.id = p.organization_id WHERE p.id = ? AND ${PROGRAM_PUBLIC}`).bind(id).first();
+  if (!row) return null;
+  return { ...rowToProgram(row), ...(row.publicity_consent === 1 ? { email: row.email, phone: row.phone } : {}), organization: programParent(row), updatedAt: row.updated_at };
 }
 
 // Sources as a visitor may see them, once each.

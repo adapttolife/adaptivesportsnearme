@@ -3,6 +3,7 @@
    --sh-2; the listing page needs the same one) and .v-grant .facts (the dl
    fact list). Never shows an email address or a phone number. */
 import * as A from "../app.js";
+import { site, PAGES, grantMeta } from "../page-meta.js";
 
 /** Open now order (same as the grants list): real amount, then any deadline text, then A to Z. */
 function openOrder(a, b) {
@@ -21,8 +22,8 @@ const cap = (s) => s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
 
 function notFoundGrant() {
   return {
-    title: "Grant not found · Adaptive Sports Near Me",
-    description: "This grant may have been removed or renamed.",
+    title: site(PAGES.grantNotFound.title),
+    description: PAGES.grantNotFound.description,
     html: `<section class="nf"><h1 tabindex="-1">We couldn't find that grant</h1><p>It may have been removed or renamed.</p><div class="btns">${A.btn("See all grants", "/grants", "ink")}${A.btn("Find a program", "/", "line")}</div></section>`,
     railActive: "grants",
   };
@@ -39,7 +40,7 @@ export async function render(ctx) {
   const amountText = gi.amount || (isVaries ? "Amount varies" : "Amount: see their site");
   const amountFact = gi.amount || (isVaries ? "Amount varies" : "Not listed. See their site.");
   const deadlineFact = cap(gi.deadlineText.replace(/^Deadline:\s*/, ""));
-  const who = g.audience === "program" ? "Programs" : "Athletes";
+  const who = g.audience === "program" ? "Organizations" : "Athletes";
   const aud = g.audience === "program" ? "program" : "athlete";
   const listHref = aud === "athlete" ? "/grants" : "/grants?a=program";
   const url = g.url && /^https?:\/\//i.test(g.url) ? g.url : null;
@@ -71,7 +72,7 @@ export async function render(ctx) {
   // 6. Other grants, same audience, open.
   const others = D.grants.filter((x) => x.id !== g.id && x.audience === g.audience && A.grantInfo(x).open).sort(openOrder).slice(0, 4);
   const othersHtml = others.length
-    ? `<section class="sec gp-others" aria-labelledby="g-others">${A.sectionHead({ title: aud === "athlete" ? "Other grants for athletes" : "Other grants for programs", id: "g-others", seeAll: { label: "See all grants", href: listHref } })}<div class="glist">${others.map(A.grantRow).join("")}</div></section>`
+    ? `<section class="sec gp-others" aria-labelledby="g-others">${A.sectionHead({ title: aud === "athlete" ? "Other grants for athletes" : "Other grants for organizations", id: "g-others", seeAll: { label: "See all grants", href: listHref } })}<div class="glist">${others.map(A.grantRow).join("")}</div></section>`
     : "";
 
   // 5. Booking box (desktop) and sticky bar (phone).
@@ -100,8 +101,8 @@ export async function render(ctx) {
   });
 
   return {
-    title: `${g.name}: grant from ${source} · Adaptive Sports Near Me`,
-    description: `${g.name}, a grant from ${source}${gi.amount ? ", " + gi.amount : ""}. ${gi.deadlineText}. You apply on their site.`,
+    title: site(grantMeta({ name: g.name, source: g.source || "" }).title),
+    description: grantMeta({ name: g.name, source: g.source || "" }).description,
     html,
     sticky,
     railActive: "grants",

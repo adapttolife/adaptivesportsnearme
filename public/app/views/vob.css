@@ -11,7 +11,7 @@
 
 .v-vob .vb-hero h1 {
 	position: relative;
-	max-width: 9ch;
+	max-width: calc(100% - max(38cqw, 260px));
 	color: #f3f3f3;
 }
 
@@ -89,9 +89,8 @@
 	display: inline-flex;
 	align-items: center;
 	gap: 6px;
-	min-height: 44px;
 	font-weight: 800;
-	color: #1a1a1a;
+	color: var(--ink);
 	text-decoration: underline;
 	text-underline-offset: 3px;
 }
@@ -163,7 +162,7 @@
 	margin-top: 12px;
 	padding: 12px 14px;
 	border-left: 4px solid #f6b700;
-	background: #fff8e1;
+	background: var(--sun-soft);
 	font-size: 16px;
 }
 

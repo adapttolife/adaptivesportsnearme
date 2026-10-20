@@ -1,6 +1,7 @@
 /* Events `/events` (spec 6.11, WP-F).
    No calendar or RSS feed links: there are no events yet, so the page promises no feed. */
 import * as A from "../app.js";
+import { site, PAGES } from "../page-meta.js";
 
 const MONTH = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
@@ -32,7 +33,7 @@ export async function render(ctx) {
 <div class="btns ev-add">${A.btn("Add an event", "/add/event", "orange", { icon: "calendar-plus" })}</div>`
     : `<div class="ev-empty">${A.emptyState({
         title: "No events posted yet",
-        body: "Events are the newest part of this directory. Know of one coming up? Add it and a person will check it before it goes live.",
+        body: "Know one coming up? Tell us and we'll check it.",
         image: "event",
         actions: [
           { label: "Add an event", href: "/add/event", kind: "orange" },
@@ -42,14 +43,14 @@ export async function render(ctx) {
 
   const html = `<div class="ehead">
   <h1 tabindex="-1">Events</h1>
-  <p>Clinics, tryouts, games and meetups.</p>
+  <p>Clinics, tryouts, games and meetups, soonest first.</p>
 </div>
 ${body}
 ${A.letterBlock({ source: "events" })}`;
 
   return {
-    title: "Adaptive sports events · Adaptive Sports Near Me",
-    description: "Adaptive sports clinics, tryouts, games and meetups. A person checks every event before it goes live.",
+    title: site(PAGES.events.title),
+    description: PAGES.events.description,
     html,
     aside: A.aboutBox(),
     railActive: "events",

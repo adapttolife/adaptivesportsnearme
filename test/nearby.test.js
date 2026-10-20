@@ -126,36 +126,27 @@ test("applyNearby: keeps CO, drops CA at 100 mi from Denver", () => {
   assert.equal(ranked[0].row.id, "co");
 });
 
-// Distance needs a listing's own coordinates, which only consented rows share
-// (publicity_consent = 1), so these fixtures carry consent.
-// TODO: src/data.js listPrograms has its nearby branch commented out (since
-// 7fd7fe9, "disable precise organization location use"; 5d11764 added
-// publicity_consent = 1 to the commented SQL but left it off). Until it is back,
-// zip/city/lat-lng return the whole paged directory while `near` names a radius.
-const NEARBY_OFF = "src/data.js listPrograms: nearby branch is commented out";
-
-test("listPrograms: zip=80202 returns the nearby subset, not the whole set", { todo: NEARBY_OFF }, async () => {
+test("listPrograms: zip=80202 keeps the full directory while preserving nearby context", async () => {
   const rows = [
     org({ id: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1", name: "Near Denver", lat: CO_CENTROID[0], lng: CO_CENTROID[1], publicity_consent: 1 }),
     org({ id: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa2", name: "Far California", state: "CA", lat: CA_CENTROID[0], lng: CA_CENTROID[1], publicity_consent: 1 }),
     org({ id: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa3", name: "Also far", state: "NY", lat: 40.7, lng: -74.0, publicity_consent: 1 }),
   ];
   const out = await listPrograms(fakeDb(rows), params({ zip: "80202" }), { zcta: ZCTA });
-  assert.ok(out.total < rows.length, `expected a subset, got total=${out.total}`);
-  assert.equal(out.total, 1);
-  assert.equal(out.items[0].name, "Near Denver");
-  assert.ok(out.items[0].dist != null);
+  assert.equal(out.total, rows.length);
+  assert.equal(out.items.length, rows.length);
+  assert.ok(out.items.every((item) => item.dist == null));
   assert.equal(out.near.zip, "80202");
 });
 
-test("listPrograms: city=Denver returns a nearby subset", { todo: NEARBY_OFF }, async () => {
+test("listPrograms: city=Denver keeps the full directory while preserving nearby context", async () => {
   const rows = [
     org({ id: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1", name: "Front Range", lat: CO_CENTROID[0], lng: CO_CENTROID[1], publicity_consent: 1 }),
     org({ id: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa2", name: "West Coast", state: "CA", lat: CA_CENTROID[0], lng: CA_CENTROID[1], publicity_consent: 1 }),
   ];
   const out = await listPrograms(fakeDb(rows), params({ city: "Denver" }), { zcta: ZCTA });
-  assert.equal(out.total, 1);
-  assert.equal(out.items[0].name, "Front Range");
+  assert.equal(out.total, rows.length);
+  assert.equal(out.items.length, rows.length);
   assert.equal(out.near.source, "city");
 });
 

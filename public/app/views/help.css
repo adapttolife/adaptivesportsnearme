@@ -391,10 +391,17 @@
 	}
 }
 
+.v-help .rs-lede {
+	margin-top: 8px;
+	max-width: 60ch;
+	font-size: 18px;
+	line-height: 1.5;
+	color: var(--graphite);
+}
+
 .v-help .rs-card {
 	margin-top: 24px;
 	max-width: 880px;
-	border: 1px solid var(--line);
 	border-radius: var(--r-l);
 	overflow: hidden;
 	background: var(--paper);
@@ -497,9 +504,51 @@
 	}
 }
 
-/* Direction C: text on the coral band is black. */
-.v-help .hp-sub {
-	color: #1a1a1a;
+/* Direction C: text on the coral band is black. The band is behind the text from 768px;
+   on phones the text sits on the page and keeps the page's colours. */
+@media (min-width: 768px) {
+	.v-help .hp-sub {
+		color: #1a1a1a;
+	}
+}
+
+/* /build: Build with us. Section heads and a Live / Idea tag on each tool. */
+.v-help .bw-lede {
+	margin-top: 12px;
+	font-size: 19px;
+	line-height: 1.5;
+	max-width: 40em;
+}
+.v-help .bw .ab-head .btns {
+	margin-top: 20px;
+}
+.v-help .bw-h {
+	margin: 48px 0 8px;
+}
+.v-help .bw-p {
+	max-width: 40em;
+	margin-bottom: 16px;
+}
+.v-help .bw .ab-text h3 {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+	font-size: 20px;
+}
+.v-help .bw-tag {
+	display: inline-block;
+	padding: 2px 10px;
+	border-radius: 999px;
+	border: 1px solid var(--line);
+	font-size: 14px;
+	font-weight: 600;
+	color: var(--muted);
+}
+.v-help .bw-tag.is-live {
+	border-color: transparent;
+	background: var(--ink);
+	color: var(--paper, #fff);
 }
 
 /* ---------- /privacy and /terms: long reading, one column ---------- */

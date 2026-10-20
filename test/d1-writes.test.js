@@ -105,3 +105,15 @@ test("saving an unchanged profile does not write or change its timestamp", async
     assert.equal(sqlite.prepare("SELECT name FROM profiles").get().name, "Changed");
   } finally { sqlite.close(); }
 });
+
+test("hourly cron jitter does not skip the next slot", async () => {
+  const { sqlite, db } = database();
+  try {
+    // Live 2026-10-12: dispatch claimed at 10:00:04.599Z, next firing at 11:00:04.5Z skipped.
+    assert.ok(await claimLane(db, "dispatch", new Date("2026-10-12T10:00:04.599Z")));
+    assert.equal(await claimLane(db, "dispatch", new Date("2026-10-12T10:30:00Z")), null);
+    assert.ok(await claimLane(db, "dispatch", new Date("2026-10-12T11:00:04.500Z")));
+    assert.ok(await claimLane(db, "enrich", new Date("2026-10-12T10:00:07.121Z")));
+    assert.ok(await claimLane(db, "enrich", new Date("2026-10-12T14:00:05.000Z")));
+  } finally { sqlite.close(); }
+});

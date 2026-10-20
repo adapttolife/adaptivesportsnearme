@@ -3,10 +3,11 @@
    uses the same shape as .v-events .eband) and .v-grants .seg (segmented
    filter links, 48px, aria-current). Both could become shared components. */
 import * as A from "../app.js";
+import { site, PAGES } from "../page-meta.js";
 
 const AUD = [
   ["athlete", "For athletes"],
-  ["program", "For programs"],
+  ["program", "For organizations"],
   ["all", "All grants"],
 ];
 
@@ -39,7 +40,7 @@ export async function render(ctx) {
     : "";
 
   const html = `<div class="gband">
-  <div class="gb-text"><h1 tabindex="-1">Grants</h1><p>Money for adaptive sports from the groups that give it. You apply on their site.</p></div>
+  <div class="gb-text"><h1 tabindex="-1">Grants</h1><p>Money for gear, travel and fees, from the groups that give it. You apply on their site.</p></div>
   <div class="gb-art">${A.plate("grant", { kind: "tile" })}</div>
 </div>
 ${seg}
@@ -48,14 +49,31 @@ ${shutHtml}
 ${A.letterBlock({ source: "grants" })}`;
 
   return {
-    title: "Grants for adaptive sports · Adaptive Sports Near Me",
-    description: "Money for adaptive sports from the groups that give it: equipment, travel, fees and program support. You apply on their site.",
+    title: site(PAGES.grants.title),
+    description: PAGES.grants.description,
     html,
     aside: A.aboutBox(),
     railActive: "grants",
   };
 }
 
-export function mount() {
-  return () => {};
+export function mount(root) {
+  const seg = root.querySelector(".seg");
+  let timer = 0;
+  const move = (event) => {
+    const link = event.target.closest(".seg a");
+    if (!link || !seg.contains(link) || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return;
+    event.preventDefault();
+    event.stopPropagation();
+    const links = [...seg.querySelectorAll("a")];
+    const next = links.indexOf(link);
+    if (link.getAttribute("aria-current") === "page") { A.nav(link.href, { replace: true }); return; }
+    if (timer) clearTimeout(timer);
+    seg.style.setProperty("--seg-pos", next);
+    links.forEach((item) => item.toggleAttribute("aria-current", item === link));
+    const delay = matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 240;
+    timer = window.setTimeout(() => A.nav(link.href, { replace: true }), delay);
+  };
+  if (seg) seg.addEventListener("click", move);
+  return () => { if (timer) clearTimeout(timer); if (seg) seg.removeEventListener("click", move); };
 }

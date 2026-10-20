@@ -10,7 +10,7 @@
 	--graphite: #3a3a37;
 	--muted: #5f5d59;
 	--paper: #f3f3f3;
-	--mist: #f7f7f5;
+	--mist: #dcdcdc;
 	--sand: #f0efec;
 	--line: #e4e2dd;
 	--line-strong: #cfccc5;
@@ -27,6 +27,8 @@
 	--sea: #00c7b1;
 	--teal: #00806f;
 	--teal-soft: #ddf7f3;
+	--sun-soft: #fff8e1;
+	--chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%231A1A1A' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
 	--error: #b42318;
 	--error-soft: #fdecea;
 	--focus: 0 0 0 3px #f3f3f3, 0 0 0 5px #1a1a1a;
@@ -55,7 +57,7 @@
 	--sec: 48px;
 	--rail-w: 272px;
 	--aside-w: 300px;
-	--max: clamp(85vw, 1500px, 100%);
+	--max: 100%; /* phones use the whole screen; 90vw from 768px (below) */
 }
 
 :root[data-theme="dark"] {
@@ -64,7 +66,7 @@
 	--graphite: #d2d0ca;
 	--muted: #b7b4ad;
 	--paper: #171716;
-	--mist: #22211f;
+	--mist: #232323;
 	--sand: #2c2a26;
 	--line: #47443e;
 	--line-strong: #6b665e;
@@ -73,7 +75,10 @@
 	--ink-hover: #d9d7d1;
 	--orange-ink: #ff9a80;
 	--orange-soft: #562b22;
+	--teal: #00c7b1;
 	--teal-soft: #163f39;
+	--sun-soft: #4a3a0f;
+	--chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%23F3F3F3' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
 	--error: #ff8b82;
 	--error-soft: #552724;
 	--focus: 0 0 0 3px #171716, 0 0 0 5px #f3f3f3;
@@ -86,8 +91,62 @@
 	content: url(/app/logo-cream.svg);
 }
 
+/* From 768px the help headline sits on the colour band (black on colour); on phones it
+   sits on the page, so it keeps the page's own ink. */
+@media (min-width: 768px) {
+	:root[data-theme="dark"] .hp-hero h1 {
+		color: #1a1a1a;
+	}
+}
+
+:root[data-theme="dark"] #beta,
+:root[data-theme="dark"] .letter,
+:root[data-theme="dark"] .trustbox,
+:root[data-theme="dark"] .v-home .st-allbox,
+:root[data-theme="dark"] .v-home .door--ink,
+:root[data-theme="dark"] .v-sport .vet-res,
+:root[data-theme="dark"] .v-vob .vb-hero,
+:root[data-theme="dark"] .v-letter-confirmed .lc-tag {
+	background: #232323 !important;
+	color: #f3f3f3;
+}
+
+:root[data-theme="dark"] .v-grants .seg::before {
+	background: #232323;
+}
+
+:root[data-theme="dark"] #beta .beta,
+:root[data-theme="dark"] #beta .iconbtn,
+:root[data-theme="dark"] .letter h2,
+:root[data-theme="dark"] .letter label,
+:root[data-theme="dark"] .trustbox .tb-title,
+:root[data-theme="dark"] .trustbox.is-u .tb-title .ic,
+:root[data-theme="dark"] .v-sport .vet-res span,
+:root[data-theme="dark"] .v-vob .vb-hero h1,
+:root[data-theme="dark"] .v-vob .vb-kicker {
+	color: #f3f3f3;
+}
+
+:root[data-theme="dark"] .letter > p,
+:root[data-theme="dark"] .trustbox .tb-body {
+	color: #e7e3da;
+}
+
+:root[data-theme="dark"] .v-near .nr-k--dot {
+	background: #232323;
+}
+
+:root[data-theme="dark"] [style*="--t:#1A1A1A"] {
+	--t: #232323 !important;
+}
+
+:root[data-theme="dark"] .v-home .hb.is-ink {
+	--hb: #232323 !important;
+}
+
 @media (min-width: 768px) {
 	:root {
+		--max: 90vw;
 		--fs-display: 56px;
 		--fs-h1: 40px;
 		--fs-h2: 28px;
@@ -227,7 +286,7 @@ p a:not(.btn),
 	top: -100px;
 	z-index: 100;
 	background: var(--ink);
-	color: #f3f3f3;
+	color: var(--on-ink);
 	font-weight: 700;
 	padding: 12px 16px;
 	border-radius: var(--r);
@@ -531,10 +590,6 @@ body.has-sticky #main {
 	white-space: nowrap;
 }
 
-body.is-home .hd-search {
-	display: none;
-}
-
 @media (min-width: 1100px) {
 	.hd {
 		padding-left: 20px;
@@ -590,7 +645,7 @@ body.is-home .hd-search {
 .dr-scrim {
 	position: fixed;
 	inset: 0;
-	z-index: 55;
+	z-index: 115;
 	background: rgba(26, 26, 26, 0.42);
 	opacity: 0;
 	pointer-events: none;
@@ -616,11 +671,25 @@ body.is-home .hd-search {
 }
 
 .dr-logo {
-	display: inline-grid;
-	place-items: center;
-	width: 44px;
-	height: 44px;
+	display: inline-flex;
+	align-items: center;
+	gap: 10px;
+	min-height: 44px;
+	padding: 0 8px 0 6px;
 	border-radius: var(--r);
+	color: var(--ink);
+	text-decoration: none;
+}
+
+.dr-word {
+	font-size: 16px;
+	font-weight: 700;
+	line-height: 1.2;
+}
+
+/* The UserWay button floats above everything; it steps aside while the menu is open. */
+body.dr-open .uwy {
+	display: none !important;
 }
 
 .rail-in {
@@ -636,10 +705,10 @@ body.is-home .hd-search {
 }
 
 .dl-h {
-	font-size: 15px;
+	font-size: 14px;
 	font-weight: 700;
 	color: var(--muted);
-	padding: 10px 20px 4px;
+	padding: 12px 20px 4px;
 	line-height: 1.3;
 }
 
@@ -649,10 +718,10 @@ body.is-home .hd-search {
 	align-items: center;
 	gap: 12px;
 	width: 100%;
-	min-height: 48px;
-	padding: 4px 20px;
-	font-size: 17px;
-	font-weight: 600;
+	min-height: 44px;
+	padding: 6px 20px;
+	font-size: 16px;
+	font-weight: 500;
 	line-height: 1.25;
 	text-decoration: none;
 	text-align: left;
@@ -660,15 +729,97 @@ body.is-home .hd-search {
 	transition: background-color var(--ease);
 }
 
-.dl-theme-state {
-	margin-left: auto;
-	color: var(--muted);
-	font-size: 15px;
-	font-weight: 700;
+/* The four doors: what people come for, each with the line that says what is behind it */
+.dl-doors {
+	padding-top: 4px;
 }
 
-.dl-theme[aria-pressed="true"] .dl-theme-state {
-	color: var(--orange);
+.dl-item.dl-door {
+	flex-direction: column;
+	align-items: flex-start;
+	justify-content: center;
+	gap: 2px;
+	min-height: 64px;
+	padding: 10px 20px;
+}
+
+.dl-door-label {
+	font-size: 18px;
+	font-weight: 700;
+	line-height: 1.2;
+}
+
+.dl-door-sub {
+	font-size: 15px;
+	font-weight: 500;
+	line-height: 1.3;
+	color: var(--muted);
+}
+
+/* The one setting, last */
+.dl-set {
+	padding: 4px 0;
+}
+
+.dl-theme {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	width: 100%;
+	min-height: 56px;
+	padding: 6px 20px;
+	font-size: 16px;
+	font-weight: 500;
+	text-align: left;
+	color: var(--ink);
+}
+
+.dl-switch {
+	position: relative;
+	flex: none;
+	width: 44px;
+	height: 26px;
+	border: 2px solid var(--muted);
+	border-radius: 13px;
+	transition: background-color var(--ease), border-color var(--ease);
+}
+
+.dl-switch::after {
+	content: "";
+	position: absolute;
+	top: 3px;
+	left: 3px;
+	width: 16px;
+	height: 16px;
+	border-radius: 50%;
+	background: var(--muted);
+	transition: translate var(--ease), background-color var(--ease);
+}
+
+.dl-theme[aria-pressed="true"] .dl-switch {
+	background: var(--ink);
+	border-color: var(--ink);
+}
+
+.dl-theme[aria-pressed="true"] .dl-switch::after {
+	translate: 18px 0;
+	background: var(--paper);
+}
+
+.dl-theme:hover {
+	background-color: var(--mist);
+}
+
+.dl-theme:focus-visible {
+	box-shadow: inset 0 0 0 3px var(--orange);
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.dl-switch,
+	.dl-switch::after {
+		transition: none;
+	}
 }
 
 :root[data-theme="dark"] .v-home .hb .wf-row .input,
@@ -677,7 +828,9 @@ body.is-home .hd-search {
 :root[data-theme="dark"] .vpill,
 :root[data-theme="dark"] .pstamp,
 :root[data-theme="dark"] .v-program .pg-hb,
+:root[data-theme="dark"] .v-program-detail .pg-hb,
 :root[data-theme="dark"] .v-program .pg-stamp,
+:root[data-theme="dark"] .v-program-detail .pg-stamp,
 :root[data-theme="dark"] .v-program .pg-vtag,
 :root[data-theme="dark"] .pg-poster .pp-disc,
 :root[data-theme="dark"] .v-map .mp-k--you,
@@ -690,11 +843,6 @@ body.is-home .hd-search {
 .dl-item:hover {
 	background-color: var(--mist);
 	transition: background-color var(--ease);
-}
-
-.dl-item .ic {
-	flex: none;
-	color: var(--graphite);
 }
 
 .dl-item[aria-current="page"] {
@@ -727,13 +875,13 @@ body.ov-open {
 .ov-scrim {
 	position: fixed;
 	inset: 0;
-	z-index: 70;
-	background: rgba(26, 26, 26, 0.42);
+	z-index: 110;
+	background: rgba(26, 26, 26, 0.7);
 }
 
 .ov {
 	position: fixed;
-	z-index: 71;
+	z-index: 171;
 	background: var(--paper);
 	display: flex;
 	flex-direction: column;
@@ -850,13 +998,19 @@ body.ov-open {
 	hyphens: manual;
 }
 
+.ss-tile .av {
+	transition: opacity var(--ease);
+}
+
 .ss-tile:hover .av {
-	background: color-mix(in srgb, var(--t) 50%, var(--paper));
+	opacity: 0.7;
+	transition: opacity var(--ease);
 }
 
 .ss-tile[aria-pressed="true"] {
-	background: var(--orange-soft);
-	box-shadow: inset 0 0 0 1.5px var(--orange);
+	background: var(--ink);
+	box-shadow: inset 0 0 0 2px #1a1a1a;
+	color: var(--on-ink);
 }
 
 .ss-tile[aria-pressed="true"] span:last-child {
@@ -1140,11 +1294,12 @@ body.ov-open {
 
 .btn--orange {
 	background: var(--orange);
-	color: var(--ink);
+	color: #1a1a1a;
 }
 
 .btn--orange:hover {
-	background: #b23c0a;
+	background: var(--orange-ink);
+	color: var(--paper);
 }
 
 .btn--line {
@@ -1217,6 +1372,7 @@ body.ov-open {
 .input,
 input[type="text"],
 input[type="email"],
+input[type="tel"],
 input[type="url"],
 input[type="search"],
 input[type="date"],
@@ -1239,13 +1395,40 @@ textarea {
 	line-height: 1.5;
 	resize: vertical;
 }
+/* Date and time boxes look like every other box. iPhones draw them natively otherwise:
+   wider than their field, short whatever min-height says, and with the value centered. */
+input[type="date"],
+input[type="time"] {
+	appearance: none;
+	-webkit-appearance: none;
+	display: block;
+	min-width: 0;
+	max-width: 100%;
+	padding-top: 13px;
+	padding-bottom: 13px;
+	line-height: 26px;
+	text-align: left;
+}
+
+input[type="date"]::-webkit-date-and-time-value,
+input[type="time"]::-webkit-date-and-time-value {
+	min-height: 1.5em;
+	text-align: left;
+}
+
 select {
 	appearance: none;
 	-webkit-appearance: none;
 	padding-right: 44px;
-	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%231A1A1A' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+	background-image: var(--chevron);
 	background-repeat: no-repeat;
 	background-position: right 14px center;
+}
+
+/* Hint text in a field reads at 4.5:1 or better in both themes (the browser's grey does not). */
+::placeholder {
+	color: var(--muted);
+	opacity: 1;
 }
 
 .input:focus,
@@ -1370,6 +1553,22 @@ textarea:focus {
 	mask: var(--src) center / contain no-repeat;
 	translate: clamp(calc(-1 * var(--slack)), 0, var(--slack)) 0;
 	transition: scale var(--ease);
+}
+
+/* A figure in motion (public/app/motion.js): the same drawing as inline SVG in the
+   mask's exact square, so the swap never shows. Moving parts may leave the square. */
+.fig.fig--live {
+	background: none;
+	-webkit-mask: none;
+	mask: none;
+}
+
+.fig--live > svg {
+	display: block;
+	width: 100%;
+	height: 100%;
+	overflow: visible;
+	fill: currentColor;
 }
 
 .fig--pin {
@@ -1512,13 +1711,20 @@ textarea:focus {
 	bottom: calc(var(--pb) - (1 - var(--h)) * var(--B) / 2);
 }
 
+@media (max-width: 768px) {
+	.plate--hero:not(.is-trio) > .fig {
+		right: unset;
+		bottom: unset;
+	}
+}
+
 .plate--hero.is-trio .trio {
 	bottom: var(--pb);
 }
 
 @media (min-width: 768px) {
 	.plate--hero {
-		aspect-ratio: 16 / 9;
+		aspect-ratio: 5 / 2;
 		max-height: 440px;
 		border-radius: var(--r-xl);
 		--pb: 48px;
@@ -2166,7 +2372,7 @@ textarea:focus {
 	height: 64px;
 	border-radius: var(--r);
 	background: #fbe2d8;
-	color: var(--ink);
+	color: #1a1a1a;
 	display: flex;
 	flex-direction: column;
 	align-items: center;
@@ -2392,7 +2598,7 @@ textarea:focus {
 }
 
 .tile.t0 {
-	background: #f3f3f3;
+	background: var(--paper);
 	border-color: var(--line-input);
 	color: var(--muted);
 }
@@ -3083,6 +3289,15 @@ body.stk-away .stk {
 	margin: 0 auto;
 	padding: 48px 0 calc(48px + env(safe-area-inset-bottom));
 }
+/* Phones have no width cap (--max: 100%), so the footer keeps the page's side padding. */
+/* The floating accessibility button sits bottom-left on phones; the extra bottom
+   padding lets the footer's last line scroll clear of it. */
+@media (max-width: 767px) {
+	.ft {
+		padding-inline: var(--gut);
+		padding-bottom: calc(96px + env(safe-area-inset-bottom));
+	}
+}
 body.has-sticky .ft {
 	padding-bottom: calc(var(--stk-h, 96px) + 48px);
 }
@@ -3145,23 +3360,38 @@ body.has-sticky .ft {
 	margin-top: 32px;
 }
 
+/* The same four groups as the menu: two by two on tablets, one row of four on desktops. */
 @media (min-width: 600px) {
 	.ft-cols {
-		grid-template-columns: repeat(3, minmax(0, 1fr));
+		grid-template-columns: repeat(2, minmax(0, 1fr));
 	}
 }
 
+@media (min-width: 1000px) {
+	.ft-cols {
+		grid-template-columns: repeat(4, minmax(0, 1fr));
+	}
+	.ft .ft-cols ul {
+		grid-template-columns: minmax(0, 1fr);
+	}
+}
+
+.ft ul {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .ft-h {
-	font-size: 17px;
+	font-size: 18px;
 	font-weight: 700;
-	margin-bottom: 4px;
+	margin-bottom: 6px;
 }
 
 .ft-cols a,
 .ft-cols button {
 	display: flex;
 	align-items: center;
-	min-height: 48px;
+	min-height: 30px;
 	font-size: 17px;
 	font-weight: 500;
 	color: var(--ink);
@@ -3173,13 +3403,6 @@ body.has-sticky .ft {
 .ft-cols button:hover {
 	text-decoration: underline;
 	text-underline-offset: 3px;
-}
-
-@media (min-width: 600px) {
-	.ft-cols a,
-	.ft-cols button {
-		min-height: 44px;
-	}
 }
 
 .ft-fine:has(.ft-fine) {
@@ -3310,7 +3533,7 @@ h3,
 }
 
 .vpill .ic {
-	color: #1a1a1a;
+	color: var(--ink);
 }
 
 .letter {
@@ -3348,7 +3571,17 @@ h3,
 }
 
 .letter .done {
-	color: #1a1a1a;
+	color: var(--ink);
+}
+
+/* The letter box is dark in both themes: its sending note and errors use light colours. */
+.letter .fm-status {
+	color: #e7e3da;
+}
+
+.letter .fm-status.is-err,
+.letter .ferr {
+	color: #ff8b82;
 }
 
 .helpband {
@@ -3377,6 +3610,7 @@ h3,
 .ss-tile[aria-pressed="true"] {
 	background: #fff1ec;
 	box-shadow: inset 0 0 0 2px #1a1a1a;
+	color: #1a1a1a;
 }
 
 /* Trust box: black, with a yellow check for verified (Laura's yellow + black). */
@@ -3487,22 +3721,32 @@ h3,
 }
 
 [data-look="sharp"] .v-home .hb h1 {
-	font-size: clamp(60px, 17cqw, 120px);
+	/* font-size: clamp(60px, 17cqw, 120px); */
 	line-height: 0.86;
 	max-width: calc(110% - max(460px, 40cqw));
 	margin-bottom: auto;
+	height: 100%;
 }
 
-@media (min-width: 768px) {
+/* @media (min-width: 768px) {
 	[data-look="sharp"] .v-home .hb h1 {
 		font-size: clamp(64px, 10.5cqw, 128px);
 	}
+} */
+
+/* On phones the drawing sits above the headline, so the headline takes the full
+   width. The desktop clamp above goes negative under ~460px of hero, which left
+   the headline 0px wide and the fitter shrank it to one small word per line. */
+@media (max-width: 767px) {
+	[data-look="sharp"] .v-home .hb h1 {
+		max-width: none;
+	}
 }
 
-[data-look="sharp"] h1 {
+/* [data-look="sharp"] h1 {
 	line-height: 0.92;
 	font-size: calc(var(--fs-h1) * 1.25);
-}
+} */
 
 [data-look="sharp"] .sh {
 	border-top: 4px solid var(--ink);
@@ -3594,7 +3838,7 @@ h3,
 }
 
 /* ---------- Verified: the check beside a name, form status, Turnstile (2026-10-14) ---------- */
-/* Verified means the program itself confirmed its listing with us. Lists show the check
+/* Verified means the organization itself confirmed its listing with us. Lists show the check
    only then; nothing in a list ever says "not verified". */
 .vcheck {
 	display: inline-flex;
@@ -3648,7 +3892,34 @@ h3,
 .letter .letter-fine { color: #e7e3da; }   /* the letter block is black: same light text as its intro */
 .letter-fine a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
 
-/* "You're confirmed" after the letter's confirmation email. */
-.confirm-note {
-	margin: 16px 0 0;
+.uwy img {
+	filter: invert(1);
+}
+
+@media (max-width: 768px) {
+	.plate--hero,
+	.letter {
+		border-radius: 0 !important;
+	}
+}
+
+/* The desktop rail is always on screen, so it drops the doors' explaining lines and
+   tightens to pointer-sized rows: the whole menu, dark mode included, fits a laptop screen. */
+@media (min-width: 1100px) {
+	#rail .dl-door-sub {
+		display: none;
+	}
+	#rail .dl-item.dl-door {
+		min-height: 44px;
+		padding: 6px 20px;
+	}
+	#rail .dl-door-label {
+		font-size: 17px;
+	}
+	#rail .dl-item {
+		min-height: 40px;
+	}
+	#rail .dl-theme {
+		min-height: 48px;
+	}
 }

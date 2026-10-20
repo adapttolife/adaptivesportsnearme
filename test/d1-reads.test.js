@@ -48,24 +48,29 @@ test('public organization details expose contacts and precise locations only wit
   const {sql,db} = database();
   try {
     sql.exec(`INSERT INTO organizations
-      (id,name,is_public,status,created_at,updated_at,city,state,zip,lat,lng,email,phone)
-      VALUES ('org','Program',1,'active','2026','2026','Denver','CO','80202',39.75,-104.99,'private@example.test','555-0100')`);
+      (id,name,is_public,status,created_at,updated_at,city,state,address,zip,lat,lng,email,phone)
+      VALUES ('org','Program',1,'active','2026','2026','Denver','CO','100 Private Way','80202',39.75,-104.99,'private@example.test','555-0100')`);
     const org = await getOrg(db, 'org');
     assert.equal(org.city, 'Denver');
     assert.equal(org.state, 'CO');
-    for (const key of ['lat','lng','zip','dist']) assert.equal(org[key], null);
+    for (const key of ['lat','lng','zip','address','dist']) assert.equal(org[key], null);
     for (const key of ['email','phone']) assert.equal(Object.hasOwn(org, key), false);
     sql.exec(`INSERT INTO organizations
-      (id,name,is_public,status,created_at,updated_at,city,state,zip,lat,lng,email,phone,publicity_consent)
-      VALUES ('consented','Program',1,'active','2026','2026','Denver','CO','80202',39.75,-104.99,'public@example.test','555-0101',1)`);
+      (id,name,is_public,status,created_at,updated_at,city,state,address,zip,lat,lng,email,phone,publicity_consent)
+      VALUES ('consented','Program',1,'active','2026','2026','Denver','CO','101 Private Way','80202',39.75,-104.99,'public@example.test','555-0101',1)`);
     const consented = await getOrg(db, 'consented');
     assert.equal(consented.zip, '80202');
     assert.equal(consented.lat, 39.75);
     assert.equal(consented.lng, -104.99);
     assert.equal(consented.email, 'public@example.test');
     assert.equal(consented.phone, '555-0101');
+    assert.equal(consented.address, null);
+    sql.exec(`INSERT INTO organizations
+      (id,name,is_public,status,created_at,updated_at,city,state,address,address_publicity_consent)
+      VALUES ('address-consented','Program',1,'active','2026','2026','Denver','CO','102 Public Way',1)`);
+    assert.equal((await getOrg(db, 'address-consented')).address, '102 Public Way');
     const result = await listPrograms(db, new URLSearchParams({lat:'42.7',lng:'-73.7'}), {zcta:null});
-    assert.equal(result.items.length, 2);
+    assert.equal(result.items.length, 3);
     assert.ok(result.items.every(item => item.dist === null));
   } finally { sql.close(); }
 });
@@ -86,6 +91,22 @@ test('publicity consent migration defaults to zero and accepts only zero or one'
     assert.equal(consent('consented'), 1);
     assert.throws(() => sql.prepare("INSERT INTO organizations (id, publicity_consent) VALUES ('invalid', 2)").run());
     assert.throws(() => sql.prepare("INSERT INTO organizations (id, publicity_consent) VALUES ('unknown', NULL)").run());
+  } finally { sql.close(); }
+});
+
+test('address publicity consent migration defaults to zero and accepts only zero or one', () => {
+  const sql = new DatabaseSync(':memory:');
+  try {
+    sql.exec('CREATE TABLE organizations (id TEXT PRIMARY KEY)');
+    sql.prepare("INSERT INTO organizations (id) VALUES ('existing')").run();
+    sql.exec(read('db/migrations/0012_address_publicity_consent.sql'));
+    sql.prepare("INSERT INTO organizations (id) VALUES ('default')").run();
+    sql.prepare("INSERT INTO organizations (id, address_publicity_consent) VALUES ('consented', 1)").run();
+    const consent = id => sql.prepare('SELECT address_publicity_consent AS consent FROM organizations WHERE id = ?').get(id).consent;
+    assert.equal(consent('existing'), 0);
+    assert.equal(consent('default'), 0);
+    assert.equal(consent('consented'), 1);
+    assert.throws(() => sql.prepare("INSERT INTO organizations (id, address_publicity_consent) VALUES ('invalid', 2)").run());
   } finally { sql.close(); }
 });
 
@@ -114,10 +135,10 @@ test('Worker serves the complete snapshot contract used by homepage hydration',a
     assert.deepEqual(await response.json(),{ok:true,total:0,items:[]});
     assert.equal(queries.length,1);
     // The app (public/app/app.js) loads the slim directory once (/api/listings) and a
-    // listing's details only on its own page (/api/orgs/:id); never the paged API.
+    // listing's details only on its own page (/api/organizations/:id); never the paged API.
     const app=read('public/app/app.js');
     assert.match(app,/"\/api\/listings"/);
-    assert.match(app,/"\/api\/orgs\/"/);
+    assert.match(app,/"\/api\/organizations\/"/);
     assert.doesNotMatch(app,/\/api\/programs/);
   } finally {sql.close();}
 });
@@ -149,6 +170,34 @@ test('concurrent snapshot misses share one database load; failed loads are retri
   const other={DB:{}};
   await assert.rejects(cachedDirectoryResponse(req('/api/stats'),other,async()=>{throw Error('D1 unavailable');},store));
   assert.equal(await (await cachedDirectoryResponse(req('/api/stats'),other,load,store)).text(),'directory');
+});
+
+test('concurrent misses each get their own Response, never one tied to the loading request',async () => {
+  // On Workers, a Response read from D1 belongs to the request that loaded it: a second request that
+  // clones or reads it throws "Cannot perform I/O on behalf of a different request". Model that by
+  // making the loaded Response refuse clone(), so only its owner may read it, and only once.
+  const env={DB:{}},store=cache(); let reads=0;
+  const load=async()=>{
+    reads++; await new Promise(r=>setTimeout(r,5));
+    const response=new Response(JSON.stringify({ok:true,reads}),{status:200,statusText:'OK',headers:{'Content-Type':'application/json','X-Load':'1'}});
+    response.clone=()=>{throw new TypeError('Cannot perform I/O on behalf of a different request.');};
+    return response;
+  };
+  const results=await Promise.all(Array.from({length:5},()=>cachedDirectoryResponse(req('/api/directory'),env,load,store)));
+  assert.equal(reads,1);
+  assert.equal(new Set(results).size,results.length);
+  for(const response of results) {
+    assert.equal(response.status,200); assert.equal(response.statusText,'OK');
+    assert.equal(response.headers.get('X-Load'),'1');
+    assert.deepEqual(await response.json(),{ok:true,reads:1});
+  }
+  results[0].headers.set('X-Mutated','yes');
+  assert.equal(results[1].headers.get('X-Mutated'),null);
+  const cached=await cachedDirectoryResponse(req('/api/directory'),env,load,store);
+  assert.equal(reads,1); assert.equal(cached.headers.get('Cache-Control'),'public, max-age=300');
+  assert.deepEqual(await cached.json(),{ok:true,reads:1});
+  const empty=await cachedDirectoryResponse(req('/api/stats'),{DB:{}},async()=>new Response(null,{status:204}),store);
+  assert.equal(empty.status,204); assert.equal(empty.body,null);
 });
 
 test('private routes, writes, errors and cache failures remain uncached',async()=>{
@@ -303,5 +352,47 @@ test('/api/listings carries only what lists need, works out each sport, and leav
     assert.equal(by['Many Sports Club'].verified, 1, 'the program confirmed its listing');
     const text = JSON.stringify(snap);
     for (const leak of ['tennis.example', 'Sports and activities', 'a@b.test', '555-0100', '33602', 'Free', '27.9,', 'verification_month']) assert.ok(!text.includes(leak), `no ${leak} in the slim directory`);
+  } finally { sql.close(); }
+});
+
+// Programs are places of their own in the slim directory (Alec, 2026-10-17: people look
+// for a sport at a place). An organization whose programs are listed is shown through
+// them; the placeholder "Organization not yet assigned" is never named.
+test('/api/listings lists programs as places, says who runs them, and never names the placeholder', async () => {
+  const {sql,db} = database();
+  try {
+    const org = sql.prepare("INSERT INTO organizations (id,name,org_type,is_public,status,created_at,updated_at,city,state,website_url,sport,sport_key) VALUES (?,?,?,1,'active','2026-10-01','2026',?,?,?,?,?)");
+    org.run('aaaaaaaa-0000-4000-8000-000000000001','Empath Health','Nonprofit','St. Petersburg','FL','https://empath.example','Veteran meetups','veteran-meetup');
+    org.run('aaaaaaaa-0000-4000-8000-000000000002','Organization not yet assigned','placeholder',null,null,null,null,null);
+    org.run('aaaaaaaa-0000-4000-8000-000000000003','Tampa Tennis','Nonprofit','Tampa','FL','https://tennis.example','Wheelchair Tennis','tennis');
+    const prog = sql.prepare("INSERT INTO programs (id,organization_id,name,sport,sport_key,city,state,website_url,is_public,status,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,1,'active','2026-10-14','2026')");
+    prog.run('bbbbbbbb-0000-4000-8000-000000000001','aaaaaaaa-0000-4000-8000-000000000001','Veterans Coffee Connection','Veteran meetups','veteran-meetup','Brandon','FL','https://empath.example/coffee');
+    prog.run('program-bay-area-outreach','aaaaaaaa-0000-4000-8000-000000000002','Bay Area Outreach & Recreation Program','Multi-sport',null,'Berkeley','CA','https://borp.example');
+    prog.run('bbbbbbbb-0000-4000-8000-000000000003','aaaaaaaa-0000-4000-8000-000000000002','Programs',null,null,null,null,'/programs/');
+    const { listingsSnapshot, getProgram } = await import('../src/data.js');
+    const snap = await listingsSnapshot(db, { places: {} });
+    const by = Object.fromEntries(snap.items.map(p => [p.name, p]));
+    assert.equal(by['Veterans Coffee Connection'].prog, 1);
+    assert.equal(by['Veterans Coffee Connection'].org, 'Empath Health', 'a program says who runs it');
+    assert.equal(by['Veterans Coffee Connection'].city, 'Brandon');
+    assert.equal(by['Empath Health'].progs, 1, 'an organization with listed programs is shown through them');
+    assert.equal(by['Tampa Tennis'].progs, undefined, 'an organization with no programs lists as itself');
+    assert.equal(by['Bay Area Outreach & Recreation Program'].prog, 1);
+    assert.ok(!('org' in by['Bay Area Outreach & Recreation Program']), 'the placeholder is never named');
+    assert.ok(!by['Organization not yet assigned'], 'the placeholder itself is not a listing');
+    assert.ok(!by['Programs'], 'a link scraped from a site menu never ships');
+    const borp = await getProgram(db, 'program-bay-area-outreach');
+    assert.equal(borp.organization, null, "a program's page never names the placeholder");
+    const coffee = await getProgram(db, 'bbbbbbbb-0000-4000-8000-000000000001');
+    assert.equal(coffee.organization.name, 'Empath Health');
+    sql.prepare("UPDATE programs SET address = ?, address_publicity_consent = 1, lat = ?, lng = ? WHERE id = ?").run('100 Public Way', 27.94, -82.46, 'bbbbbbbb-0000-4000-8000-000000000001');
+    const mapped = await getProgram(db, 'bbbbbbbb-0000-4000-8000-000000000001');
+    assert.equal(mapped.address, '100 Public Way');
+    assert.equal(mapped.addressPublicityConsent, true);
+    assert.equal(mapped.lat, 27.94);
+    assert.equal(mapped.lng, -82.46);
+    const res = await worker.fetch(new Request('https://example.test/api/programs/program-bay-area-outreach'), { DB: db }, {});
+    assert.equal(res.status, 200, 'a readable program id loads');
+    assert.equal((await res.json()).program.name, 'Bay Area Outreach & Recreation Program');
   } finally { sql.close(); }
 });

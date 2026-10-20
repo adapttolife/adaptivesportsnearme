@@ -20,7 +20,9 @@ nothing else points at images by name.
 2. Download the SVGs folder, then run `python3 scripts/sport-icons-sync.py <folder>`.
    It refuses a set with a missing file, a second colour, a script or outside reference,
    or a shared drawing that drifted apart.
-3. Run the tests, then open a PR.
+3. Rebuild the drawings' moves: `python3 scripts/motion/build.py` (see `scripts/motion/README.md`;
+   a changed drawing may need its motion spec updated).
+4. Run the tests, then open a PR.
 
 ## Which Drive file is which key
 

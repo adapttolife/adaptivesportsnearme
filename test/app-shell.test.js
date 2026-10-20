@@ -10,7 +10,7 @@ import { fileURLToPath } from "node:url";
 import vm from "node:vm";
 import worker from "../src/index.js";
 
-const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), "utf8");
+const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), "utf8").replace(/\r\n/g, "\n");
 const count = (text, needle) => text.split(needle).length - 1;
 const SHELL = read("public/index.html");
 const APP = read("public/app/app.js");
@@ -133,6 +133,55 @@ test("the shell's inline scripts and every app file are valid JavaScript", () =>
   for (const file of JS) execFileSync(process.execPath, ["--check", fileURLToPath(new URL(`../${file}`, import.meta.url))], { stdio: "pipe" });
 });
 
+// 2026-10-19: an iPhone opened the home page to "We couldn't load this page". Safari, and so
+// every iPhone browser, does not hand a preloaded (as="fetch") response to fetch(): the shell's
+// preload and app.js each asked for /api/listings, and on a cold edge cache the Worker's read
+// cache crashed the second request (src/read-cache.js, test/d1-reads.test.js). The head now
+// starts each download with a script, app.js takes each answer once, and asks again once.
+test("the head starts each data download once, and the app takes each answer once", async () => {
+  const { preloadHints } = await import("../src/pages.js");
+  const pages = ["/", "/sports/tennis", "/states/IL", "/grants", "/events", "/add/program", "/letter/confirmed",
+    "/organizations/0f8fad5b-d9cb-469f-a165-70867728950e", "/programs/0f8fad5b-d9cb-469f-a165-70867728950e"];
+  for (const html of [SHELL, ...pages.flatMap((p) => preloadHints(p))]) assert.doesNotMatch(html, /<link[^>]*\bas="fetch"/);
+
+  // The shell's script, run as a browser runs it: one request per file, kept for app.js.
+  const asked = [];
+  const shell = vm.createContext({ window: {}, fetch: (u) => { asked.push(u); return Promise.resolve({ ok: true }); } });
+  for (const [, , body] of SHELL.matchAll(/<script(\s[^>]*)?>([\s\S]*?)<\/script>/g)) if (body.includes("ASNM_EARLY")) vm.runInContext(body, shell);
+  assert.deepEqual(asked, ["/api/listings", "/data/states.json", "/data/sports.json"]);
+  assert.deepEqual(Object.keys(shell.window.ASNM_EARLY), asked);
+  // A listing page's head starts its details the same way, ahead of the shell's script.
+  const page = vm.createContext({ window: {}, fetch: (u) => { asked.push(u); return Promise.resolve({ ok: true }); } });
+  for (const tag of preloadHints("/organizations/0F8FAD5B-D9CB-469F-A165-70867728950E")) {
+    const body = tag.match(/^<script>([\s\S]*)<\/script>$/);
+    if (body) vm.runInContext(body[1], page);
+  }
+  assert.deepEqual(Object.keys(page.window.ASNM_EARLY), ["/api/organizations/0f8fad5b-d9cb-469f-a165-70867728950e"]);
+
+  // app.js's early() and retryOnce(), run as written.
+  const net = [];
+  const app = vm.createContext({ window: { ASNM_EARLY: { "/api/listings": "head" } }, fetch: (u) => { net.push(u); return "network"; }, setTimeout });
+  vm.runInContext(between(APP, "export function early(url) {", "\n/* A listing's own page").replace(/^export /gm, ""), app);
+  assert.equal(app.early("/api/listings"), "head");
+  assert.equal(app.early("/api/listings"), "network", "an early answer is taken once; a retry asks the network");
+  assert.deepEqual(net, ["/api/listings"]);
+  let tries = 0;
+  assert.equal(await app.retryOnce(() => (++tries === 1 ? Promise.reject(new Error("dropped")) : Promise.resolve("ok")), 1), "ok");
+  assert.equal(tries, 2);
+  tries = 0;
+  await assert.rejects(app.retryOnce(() => { tries++; return Promise.reject(new Error("down")); }, 1), /down/);
+  assert.equal(tries, 2, "two tries, then the page says it could not load");
+
+  // Every page's data goes through them, and a failure never blames a visitor who is online.
+  assert.match(between(APP, "export function loadData() {", "\n}\n"), /const get = \(u\) => retryOnce\(\(\) => early\(u\)/);
+  assert.match(between(APP, "export function loadDetail(id) {", "\n}\n"), /retryOnce\(\(\) => early\("\/api\/organizations\/"/);
+  const detail = read("public/app/views/program-detail.js");
+  assert.match(detail, /A\.retryOnce\(async \(\) => \{\s*const r = await A\.early\(`\/api\/programs\//);
+  assert.match(detail, /loadFailed: true/);
+  const failed = between(APP, "function loadError() {", "\n}\n");
+  assert.match(failed, /navigator\.onLine === false \? "You're offline\. Check your connection and try again\." : "Something went wrong on our side\. Try again in a moment\."/);
+});
+
 // Field names are the API's (src/index.js handleSubmitProgram); a renamed field
 // on either side silently drops what a person typed.
 function between(src, from, to) {
@@ -229,9 +278,12 @@ const PRIVACY = between(HELP, "function privacyPage()", "\nfunction termsPage()"
 test("every outside service a visitor's browser contacts is named in the privacy policy", () => {
   const sources = [read("public/index.html"), APP, ...readdirSync(new URL("../public/app/views/", import.meta.url)).filter((f) => f.endsWith(".js")).map((f) => read(`public/app/views/${f}`))].join("\n");
   const hosts = new Set([...sources.matchAll(/https:\/\/([a-z0-9.-]+\.[a-z]{2,})/g)].map((m) => m[1]).filter((h) => !/(^|\.)(adaptivesportsnearme\.com|adapttolife\.org|w3\.org)$/.test(h)));
+  // Links a person chooses to follow, never loaded by the page: /build links to the code on GitHub.
+  hosts.delete("github.com");
   const NAMED = {
     "fonts.googleapis.com": "Google Fonts", "fonts.gstatic.com": "Google Fonts", "tiles.openfreemap.org": "OpenFreeMap",
     "cdn.userway.org": "UserWay", "challenges.cloudflare.com": "Cloudflare Turnstile",
+    "geocoding.geo.census.gov": "U.S. Census Bureau",
   };
   assert.ok(hosts.size >= 4, `found ${[...hosts]}`);
   for (const h of hosts) {
@@ -263,6 +315,25 @@ test("the privacy policy's promises hold in the code", () => {
   assert.match(APP, /\["\/privacy", "help"\], \["\/terms", "help"\]/);
 });
 
+test("organization management is a help-linked app route", () => {
+  const help = read("public/app/views/help.js"), pages = read("src/pages.js");
+  assert.match(help, /"\/manage"/);
+  assert.match(APP, /\["\/manage", "manage"\]/);
+  assert.match(APP, /\["\/manage\/organizations\/:id", "manage"\]/);
+  assert.match(pages, /PAGES\.manage/);
+  assert.match(pages, /"manage"/);
+});
+
+test("mobile drawer supports edge swipes without taking over vertical scrolling", () => {
+  const swipes = between(APP, "function installDrawerSwipes()", "/** Search sheet.");
+  assert.match(swipes, /window\.innerWidth <= 767/);
+  assert.match(swipes, /from\.x <= edge/);
+  assert.match(swipes, /menuOpen && dx < 0/);
+  assert.match(swipes, /menuOpen && dx > 0 && isEdge\(from\.x\)/);
+  assert.match(swipes, /Math\.abs\(dx\) < Math\.abs\(dy\) \* slope/);
+  assert.match(APP, /installDrawerSwipes\(\);/);
+});
+
 // The header sticks to the top (#top). Anything else that sticks to the top of the
 // page must sit below it (top uses --top-h), or it slides under the header when you
 // scroll. Sticky parts inside a sheet or the map dialog have their own scroll box.
@@ -284,11 +355,70 @@ test("everything that sticks to the top of the page sits below the sticky header
   assert.match(read("public/app/app.css"), /scroll-padding-top:\s*calc\(var\(--top-h\)/, "jumps land below the header");
 });
 
+// On phones the home hero's drawing joins the flow above the headline. The hero is a
+// flex container, so the phone rule must stack it; as a row, the drawing took half the
+// width and the search box shrank to a sliver (390px, October 15).
+test("on phones the home hero stacks the drawing above the headline and search", () => {
+  const css = read("public/app/views/home.css").replace(/\/\*[\s\S]*?\*\//g, "");
+  const rule = (src, sel) => (src.match(new RegExp(`(?:^|\\})\\s*${sel.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*\\{([^{}]*)\\}`)) || [])[1] || "";
+  const phone = (css.match(/@media \(max-width: 767px\) \{([\s\S]*?)\n\}/) || [])[1] || "";
+  assert.match(rule(phone, ".v-home .hb-art"), /position:\s*relative/, "the drawing is in the flow on phones");
+  if (/display:\s*flex/.test(rule(css, ".v-home .hb")))
+    assert.match(rule(phone, ".v-home .hb"), /flex-direction:\s*column/, "the flex hero stacks on phones");
+  // The sharp look clamps the headline beside the desktop drawing; on phones that
+  // clamp went negative (0px wide, one word per line), so phones lift it.
+  const app = read("public/app/app.css").replace(/\/\*[\s\S]*?\*\//g, "");
+  if (/max-width:\s*calc\(/.test(rule(app, '[data-look="sharp"] .v-home .hb h1'))) {
+    const phones = [...app.matchAll(/@media \(max-width: 767px\) \{([\s\S]*?)\n\}/g)].map((m) => rule(m[1], '[data-look="sharp"] .v-home .hb h1')).join(" ");
+    assert.match(phones, /max-width:\s*none/, "the headline gets the full width on phones");
+  }
+});
+
+// The page's width cap (--max) gives desktop side room. On phones a vw cap stacked a
+// 20px margin on the page padding and pulled the full-bleed heroes in from the edges.
+test("phones use the whole screen; the 90vw cap starts at 768px", () => {
+  for (const file of ["public/app/app.css", "public/styles.css"]) {
+    const css = read(file).replace(/\/\*[\s\S]*?\*\//g, "");
+    const base = (css.match(/(?:^|\})\s*:root\s*\{([^{}]*)\}/) || [])[1] || "";
+    assert.match(base, /--max:\s*100%/, `${file}: phones get the full width`);
+    const wide = [...css.matchAll(/@media \(min-width: 768px\) \{\s*:root\s*\{([^{}]*)\}/g)].map((m) => m[1]).join(" ");
+    assert.match(wide, /--max:\s*90vw/, `${file}: the 90vw cap applies from 768px`);
+  }
+  // With no cap on phones, the footer brings its own side padding (it touched the edges).
+  const app = read("public/app/app.css").replace(/\/\*[\s\S]*?\*\//g, "");
+  const phoneFt = [...app.matchAll(/@media \(max-width: 767px\) \{([\s\S]*?)\n\}/g)].map((m) => (m[1].match(/(?:^|\})\s*\.ft\s*\{([^{}]*)\}/) || [])[1] || "").join(" ");
+  assert.match(phoneFt, /padding-inline:\s*var\(--gut\)/, "the footer keeps side padding on phones");
+});
+
+// Listings live at /organizations/<id> (2026-10-15). The claim finder sends each row to
+// its fix form whatever the listing's address is, and the fix form links back to it.
+test("the claim finder and the fix form use the listing's own address", () => {
+  const help = read("public/app/views/help.js"), forms = read("public/app/views/forms.js");
+  assert.match(help, /A\.programRow\(x\.p, \{\}\)\.replace\(\/href="\[\^"\]\*"\/, `href="\/update\/\$\{A\.esc\(x\.p\.id\)\}\?rel=run"`\)/);
+  assert.match(forms, /const href = p\.href \|\| "\/organizations\/" \+ p\.id;/);
+  const row = between(APP, "export function programRow(", "\n}\n");
+  assert.match(row, /href="\$\{esc\(p\.href \|\| "\/organizations\/" \+ p\.id\)\}"/, "a row links to the listing's own page");
+  // An organization's page is /organizations/<id>; only a real program (prog, from the programs
+  // table) has a /programs/<id> page, so an old /programs/<organization id> link never comes back.
+  assert.match(APP, /p\.href = \(p\.prog \? "\/programs\/" : "\/organizations\/"\) \+ encodeURIComponent\(p\.id\);/);
+  assert.match(APP, /prog: !!r\.prog, orgName: r\.org \|\| null, progs: r\.progs \|\| 0,/, "prog comes only from the server's program rows");
+  for (const [file, text] of [["help.js", help], ["forms.js", forms]]) assert.doesNotMatch(text, /["`]\/programs\/["`$]/, `${file} builds no /programs/ link for a listing`);
+});
+
 // The letter's thank-you says what happens next: a new signup confirms its email first.
-test("the letter's thank-you asks a new subscriber to confirm, and the confirmation lands on a note", () => {
+test("the letter's thank-you asks a new subscriber to confirm, and the confirmation lands on its own page", () => {
   const send = between(APP, "async function sendForm(", "\n}\n");
   assert.match(send, /out\.confirm \? "Almost done\. Check your inbox for an email from Adaptive Sports Near Me and tap Confirm\."/);
   assert.match(send, /out\.existing \? "You're already on the list/);
-  assert.match(APP, /get\("confirmed"\) === "1"/);
-  assert.match(APP, /You're confirmed\. The letter will come to your inbox/);
+  // beehiiv's Opt-in Redirect URL is /?confirmed=1: before the first draw it becomes /letter/confirmed.
+  assert.match(APP, /location\.pathname === "\/" && new URLSearchParams\(location\.search\)\.get\("confirmed"\) === "1"/);
+  assert.match(APP, /history\.replaceState\(history\.state, "", "\/letter\/confirmed"/);
+  assert.match(APP, /\["\/letter\/confirmed", "letter-confirmed"\]/);
+  assert.doesNotMatch(APP, /confirm-note/, "no note on top of the home page any more");
+  const view = read("public/app/views/letter-confirmed.js");
+  assert.match(view, /<h1 class="display" id="lc-h" tabindex="-1">You're on the list\.<\/h1>/);
+  assert.match(view, /Email confirmed/);
+  assert.match(view, /FROM = "news@mail\.adaptivesportsnearme\.com"/);
+  assert.match(view, /A\.whereForm\(/, "the next step is the directory");
+  assert.match(read("public/app/views/letter-confirmed.css"), /body\[data-view="letter-confirmed"\] \.beta \{\s*display: none;/);
 });

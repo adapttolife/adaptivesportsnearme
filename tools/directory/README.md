@@ -31,6 +31,7 @@ Run from the repo root. You need Wrangler logged in, and you need the Cloudflare
 | `ship <card.json>` | dry-run tester SQL (`--apply` only after a person says yes) |
 | `discover [file]` | leftover candidates → tester `review_queue` (propose only; `--apply` writes staging) |
 | `eval-lanes` | receipt: extractors, discover dry-run does not write live, resolve twins |
+| `describe <step>` | organization descriptions: `batch`, `check`, `review`, `file`, `export` ([guide](../../docs/data-fixes/descriptions.md), [drafting brief](describe-prompt.md)) |
 
 `--apply` writes **tester** (`asnm-db-staging`) only, and only after a person says yes. Dry-run is the default.
 

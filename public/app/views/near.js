@@ -6,6 +6,7 @@
    PROMOTE: (none yet; the results header, toolbar and group head are scoped here
    as .v-near .nr-*. If the state page wants the same group head, lift .nr-gh.) */
 import * as A from "../app.js";
+import { site, PAGES, nearMeta } from "../page-meta.js";
 
 const GROUP_IDS = { inCity: "nr-in", near: "nr-near", elsewhere: "nr-else", statewide: "nr-sw" };
 let LAST = null; // { path, qs } of the previous near render, to announce filter changes
@@ -57,8 +58,8 @@ function legend(where, hasDots, hasYou) {
 function notFoundPlace(ctx, text, dym = []) {
   const shown = text || "that place";
   return {
-    title: "We couldn't find that place · Adaptive Sports Near Me",
-    description: "Find adaptive sports programs near you. Search by city and state, or a 5-digit ZIP code.",
+    title: site(PAGES.placeNotFound.title),
+    description: PAGES.placeNotFound.description,
     html: `<section class="nr-none">
   <h1 tabindex="-1">We couldn't find "${A.esc(shown)}"</h1>
   <p class="nr-none-body">Try a city and state, like Springfield, IL, or a 5\u2011digit ZIP code.</p>
@@ -79,7 +80,7 @@ export async function render(ctx) {
     // A state search shows the state page instead (sport kept).
     const s = ctx.query.s && D.sportByKey[ctx.query.s] ? ctx.query.s : "";
     A.nav("/states/" + where.state + (s ? "?s=" + encodeURIComponent(s) : ""), { replace: true });
-    return { title: A.stateName(where.state) + " · Adaptive Sports Near Me", html: `<section class="nr-none"><h1 tabindex="-1">${A.esc(A.stateName(where.state))}</h1></section>` };
+    return { title: site(A.stateName(where.state)), html: `<section class="nr-none"><h1 tabindex="-1">${A.esc(A.stateName(where.state))}</h1></section>` };
   }
   if (where.kind === "none") {
     const sp = ctx.query.s && D.sportByKey[ctx.query.s] ? ctx.query.s : "";
@@ -104,9 +105,10 @@ export async function render(ctx) {
   for (const list of [full.inCity, full.near, full.elsewhere, full.statewide]) for (const p of list) keys.add(p.key);
   if (s) keys.add(s);
 
+  // Programs are listed as places of their own now, so the list says what the menu's
+  // "Programs near you" promised; the separate programs section this replaced is gone.
   const h1 = `${s ? A.sportName(s) : "Programs"} near ${where.label}`;
   const rctx = { where, single: !!s };
-
   /* 1. results header */
   const dots = pool.filter((p) => p.state === where.state && p.placed);
   const outline = A.stateOutline(where.state, { dots, you: where.coords, size: 120 });
@@ -157,7 +159,7 @@ export async function render(ctx) {
     groups += `<section class="nr-group" aria-labelledby="${GROUP_IDS.elsewhere}">${groupHead({ id: GROUP_IDS.elsewhere, title: "Elsewhere in " + ST, count: g.elsewhere.length, sub: where.coords ? "Closest first." : null })}${A.rowList(g.elsewhere, rctx, { id: "nr-else-rows" })}</section>`;
   }
   if (g.statewide.length) {
-    groups += `<section class="nr-group" aria-labelledby="${GROUP_IDS.statewide}">${groupHead({ id: GROUP_IDS.statewide, title: `Across ${ST}, no single city listed`, count: g.statewide.length, sub: `These programs serve ${ST} but don't list a single city.` })}${A.rowList(g.statewide, rctx, { id: "nr-sw-rows" })}</section>`;
+    groups += `<section class="nr-group" aria-labelledby="${GROUP_IDS.statewide}">${groupHead({ id: GROUP_IDS.statewide, title: `Across ${ST}, no single city listed`, count: g.statewide.length, sub: `These organizations serve ${ST} but don't list a single city.` })}${A.rowList(g.statewide, rctx, { id: "nr-sw-rows" })}</section>`;
   }
 
   /* 6. empty or thin */
@@ -170,20 +172,20 @@ export async function render(ctx) {
     actions.push({ label: "Tell us about one", href: "/add/program" });
     empty = `<div class="nr-empty">${A.emptyState({
       title: `No ${what} near ${city} yet`,
-      body: "This directory is new and still growing.",
+      body: "Know one? Tell us and we'll check it.",
       actions,
     })}</div>`;
     const out = A.nearestOutside(where, pool);
     if (out.length) {
-      empty += `<section class="nr-group nr-outside" aria-labelledby="nr-out">${groupHead({ id: "nr-out", title: `Nearest ${s ? sportLow : "programs"} outside ${ST}`, sub: "Nearest states first. A program with no single city counts from the middle of its state, so it shows no miles." })}${out.map((grp) =>
+      empty += `<section class="nr-group nr-outside" aria-labelledby="nr-out">${groupHead({ id: "nr-out", title: `Nearest ${s ? sportLow : "programs"} outside ${ST}`, sub: "Nearest states first. An organization with no single city counts from the middle of its state, so it shows no miles." })}${out.map((grp) =>
         `<h3 class="nr-sth">${A.esc(A.stateName(grp.state))}</h3><div class="rows">${grp.items.map((p) => A.programRow(p, { ...rctx, outside: true })).join("")}</div>`).join("")}</section>`;
     }
   }
 
   const html = `<div class="nr">${header}${toolbar}${bar}${jumps}${empty}${groups}</div>${A.letterBlock({ source: "near" })}${A.helpBand()}`;
   return {
-    title: `${h1} · Adaptive Sports Near Me`,
-    description: `Adaptive ${s ? sportLow : "sports"} programs near ${where.label}: in ${city}, within about 25 miles, and across ${ST}. Free, no account needed.`,
+    title: site(h1),
+    description: nearMeta(where.label, s ? { name: A.sportName(s), low: sportLow } : null).description,
     html,
     aside: A.aboutBox(),
     railActive: "near",

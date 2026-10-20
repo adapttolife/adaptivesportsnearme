@@ -242,14 +242,14 @@
 	padding: 0 24px 0 20px;
 	border-radius: 15px;
 	background: var(--ink);
-	color: #f3f3f3;
+	color: var(--on-ink);
 	font-size: 16px;
 	font-weight: 700;
 	box-shadow: 0 6px 20px rgba(26, 26, 26, 0.24);
 }
 
 .v-map .mp-list:hover {
-	background: #333331;
+	background: var(--ink-hover);
 }
 
 .v-map .mp-list:focus-visible {

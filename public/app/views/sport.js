@@ -5,10 +5,10 @@
    PROMOTE:
    - .v-sport .pchips: horizontal row of filter chip links with a right fade edge
      (place chips). Same shape the state page could use for city chips.
-   - .v-sport .stsel: compact 48px labelled <select> used as the visible fallback
-     for a chip row.
    (The .grp group heading is shared and lives in app.css.) */
 import * as A from "../app.js";
+import { site, sportMeta } from "../page-meta.js";
+import { guideFor } from "../sport-guides.js";
 
 const TABS = ["programs", "grants", "events"];
 const lc = (s) => s.charAt(0).toLowerCase() + s.slice(1);
@@ -35,11 +35,22 @@ function nearestBlock(key, st, pool) {
   const groups = A.nearestOutside({ kind: "state", state: st, coords: null, city: null }, pool);
   if (!groups.length) return "";
   const name = lc(A.sportName(key));
-  return `<section class="sec" aria-labelledby="sp-out">${A.sectionHead({ title: `Nearest ${name} outside ${A.stateName(st)}`, id: "sp-out", sub: "Nearest states first. A program with no single city counts from the middle of its state." })}${groups.map((g) => `<div class="grp"><div class="grp-hd"><h3 class="grp-h">${A.esc(A.stateName(g.state))}</h3></div><div class="rows">${g.items.map((p) => A.programRow(p, { single: true, outside: true })).join("")}</div></div>`).join("")}</section>`;
+  return `<section class="sec" aria-labelledby="sp-out">${A.sectionHead({ title: `Nearest ${name} outside ${A.stateName(st)}`, id: "sp-out", sub: "Nearest states first. An organization with no single city counts from the middle of its state." })}${groups.map((g) => `<div class="grp"><div class="grp-hd"><h3 class="grp-h">${A.esc(A.stateName(g.state))}</h3></div><div class="rows">${g.items.map((p) => A.programRow(p, { single: true, outside: true })).join("")}</div></div>`).join("")}</section>`;
+}
+
+/** The sport in plain words (public/app/sport-guides.js): what it is always visible, then
+    "New to X? Start here" opens who plays, what you need, how to start and the national body. */
+function guideBlock(key, low) {
+  const g = guideFor(key);
+  if (!g) return "";
+  const row = (dt, dd) => `<div><dt>${dt}</dt><dd>${A.esc(dd)}</dd></div>`;
+  const body = `<a class="tlink" href="${A.esc(g.body.url)}" target="_blank" rel="noopener">${A.esc(g.body.name)}${A.icon("external-link", 18)}<span class="sr"> (opens in a new tab)</span></a>`;
+  return `<section class="sp-guide" aria-labelledby="sp-guide-h"><h2 id="sp-guide-h" class="sr">About ${A.esc(low)}</h2><p class="sp-guide-what">${A.esc(g.what)}</p><details class="sp-guide-more"><summary>${A.icon("chevron-right", 20)}<span>New to ${A.esc(low)}? Start here</span></summary><div class="sp-guide-in"><dl class="sp-guide-dl">${row("Who plays", g.who)}<div><dt>What you need</dt><dd>${A.esc(g.gear)}</dd><dd class="sp-guide-note">Every program is different. Check what yours provides and what it costs.</dd></div>${row("How to start", g.start)}</dl><p class="sp-guide-body"><span>National body</span>${body}</p></div></details></section>`;
 }
 
 function programsTab(key, st, pool) {
   const name = A.sportName(key), low = lc(name);
+  const listedVerb = /\b(?:sports|meetups)$/i.test(name) ? "are" : "is";
   const counts = {};
   for (const p of pool) if (p.state) counts[p.state] = (counts[p.state] || 0) + 1;
   const ranked = Object.keys(counts).sort((a, b) => counts[b] - counts[a] || A.stateName(a).localeCompare(A.stateName(b)));
@@ -48,15 +59,15 @@ function programsTab(key, st, pool) {
   const chip = (label, n, href, cur) => `<a class="chip${cur ? " is-cur" : ""}" href="${A.esc(href)}" data-replace${cur ? ' aria-current="page"' : ""}>${cur ? A.icon("check", 18) : ""}<span>${A.esc(label)}</span>${n != null ? ` <span class="num chip-n">${n}</span>` : ""}</a>`;
   const chips = ranked.length || st ? `<nav class="pchips" aria-label="${A.esc(name)} by state"><div class="pchips-in">${chip("All states", null, hrefFor(key), !st)}${st && !counts[st] ? chip(A.stateName(st), null, hrefFor(key, { st }), true) : ""}${ranked.map((s) => chip(A.stateName(s), counts[s], hrefFor(key, { st: s }), st === s)).join("")}</div></nav>` : "";
 
-  // The visible fallback: a native select of every state (listed ones first).
-  const opt = (s) => `<option value="${s}"${st === s ? " selected" : ""}>${A.esc(A.stateName(s))}${counts[s] ? " " + counts[s] : ""}</option>`;
-  const listed = A.STATE_CODES.filter((s) => counts[s]), rest = A.STATE_CODES.filter((s) => !counts[s]);
-  const select = `<form class="stsel" data-st-form><label for="sp-st">Choose a state</label><div class="stsel-row"><select id="sp-st" name="st"><option value=""${!st ? " selected" : ""}>All states</option>${listed.length ? `<optgroup label="${A.esc(name)} listed">${listed.map(opt).join("")}</optgroup>` : ""}${rest.length ? `<optgroup label="Not listed yet">${rest.map(opt).join("")}</optgroup>` : ""}</select><button type="submit" class="btn btn--line">Show</button></div></form>`;
+  // Where are you? (Alec, 2026-10-18): a place search that keeps this sport, then the
+  // state chips for browsing. It replaced a second state picker (a select).
+  const near = `<div class="sp-near"><h2 class="sp-near-h" id="sp-where-h">Find ${A.esc(low)} near you</h2>${A.whereForm({ sport: key, id: "sp-place" })}</div>`;
 
   // Small tile map (tablet and desktop only). Tiles change the filter, so they replace.
-  const map = ranked.length ? `<div class="sp-map"><h3 class="sp-map-h">Where ${A.esc(low)} is listed</h3>${A.tileMap({ counts, hrefFor: (s) => hrefFor(key, { st: s }), selected: st, list: "none" }).replace(/<a class="tile /g, '<a data-replace class="tile ')}</div>` : "";
+  // Six states or more: fewer than that, the map is mostly zeros and the chips say it better.
+  const map = ranked.length >= 6 ? `<div class="sp-map"><h3 class="sp-map-h">Where ${A.esc(low)} ${listedVerb} listed</h3>${A.tileMap({ counts, hrefFor: (s) => hrefFor(key, { st: s }), selected: st, list: "none" }).replace(/<a class="tile /g, '<a data-replace class="tile ')}</div>` : "";
 
-  const tools = `<section class="sp-where" aria-labelledby="sp-where-h"><h2 class="sr" id="sp-where-h">Find ${A.esc(low)} by state</h2>${chips}${select}${map}</section>`;
+  const tools = `<section class="sp-where" aria-labelledby="sp-where-h">${near}${chips}${map}</section>`;
 
   let body = "";
   if (st) {
@@ -66,14 +77,14 @@ function programsTab(key, st, pool) {
     } else {
       body = `<section class="sec sec--first">${A.emptyState({
         title: `No ${low} listed in ${A.stateName(st)} yet.`,
-        body: "This directory is new and still growing. If you know one, tell us and a person will check it.",
+        body: "Know one? Tell us and we'll check it.",
         actions: [{ label: `See ${low} everywhere`, href: hrefFor(key), attrs: "data-replace" }, { label: "Tell us about one", href: "/add/program" }],
       })}</section>${nearestBlock(key, st, pool)}`;
     }
   } else if (!pool.length) {
     body = `<section class="sec sec--first">${A.emptyState({
       title: `No ${low} listed yet`,
-      body: "This directory is new and still growing. Know a program? Add it and a person will check it before it goes up.",
+      body: "Know one? Tell us and we'll check it.",
       actions: [{ label: "Tell us about one", href: "/add/program" }, { label: "Browse sports", href: "/sports" }],
     })}</section>`;
   } else {
@@ -159,33 +170,26 @@ export async function render(ctx) {
   } else {
     body = `<section class="sec sec--first">${A.emptyState({
       title: `No ${low} events posted yet`,
-      body: "Know of a clinic, tryout or game day coming up? Add it and a person will check it before it goes live.",
+      body: "Know one coming up? Tell us and we'll check it.",
       actions: [{ label: "Add an event", href: "/add/event" }, { label: "Get the letter", href: "", kind: "line", attrs: 'data-jump="letter"' }],
       image: "event",
     })}</section>`;
   }
 
-  const title = st ? `${name} in ${A.stateName(st)}: adaptive programs, grants and events` : `${name}: adaptive programs, grants and events`;
+  const meta = sportMeta({ key, name, low, state: st ? A.stateName(st) : "" });
   return {
-    title,
-    description: `Adaptive ${low} programs, grants and events${st ? " in " + A.stateName(st) : ""}. Every listing shows when we last checked it.`,
-    html: `<div class="sp sp--${A.esc(t)}">${head}${body}${A.letterBlock({ source: "sport" })}</div>`,
+    title: site(meta.title),
+    description: meta.description,
+    html: `<div class="sp sp--${A.esc(t)}">${head}${t === "programs" ? guideBlock(key, low) : ""}${body}${A.letterBlock({ source: "sport" })}</div>`,
     aside: A.aboutBox(),
     railActive: "sport:" + key,
   };
 }
 
 export function mount(root, ctx) {
-  // Touch screens: choosing in the native picker is the whole action. With a keyboard the
-  // select waits for its own button, so arrow keys never navigate by surprise.
-  const form = root.querySelector("[data-st-form]");
-  const go = () => A.nav(hrefFor(ctx.params.key, { st: form.elements.st.value }), { replace: true });
-  const onSubmit = (e) => { e.preventDefault(); go(); };
-  const onChange = () => { if (matchMedia("(pointer: coarse)").matches) go(); };
-  if (form) { form.addEventListener("submit", onSubmit); form.elements.st.addEventListener("change", onChange); }
   // Keep the selected state chip in view.
   const cur = root.querySelector(".pchips .is-cur");
   const row = root.querySelector(".pchips");
   if (cur && row && cur.offsetLeft > row.clientWidth - 40) row.scrollLeft = cur.offsetLeft - 16;
-  return () => { if (form) { form.removeEventListener("submit", onSubmit); form.elements.st.removeEventListener("change", onChange); } };
+  return () => {};
 }

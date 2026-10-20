@@ -12,6 +12,8 @@
    - .pg-poster     the 4:5 share poster (an og:image / Instagram export twin, 11.4)
    - .pg-chips      non-interactive text chips, optionally led by a 40px avatar */
 import * as A from "../app.js";
+import { site, PAGES, organizationMeta } from "../page-meta.js";
+import { guideFor } from "../sport-guides.js";
 
 const L = window.ListingArt;
 // Group scenes never draw under 56px (3.2), so they get no avatar in a chip.
@@ -62,7 +64,7 @@ function hero(p) {
   return `<div class="pg-hero has-vtag${label ? " has-stamp" : ""}">
 ${A.plate(p, { kind: "hero" })}
 <button type="button" class="pg-hb pg-back" data-back="${A.esc(backHref(p))}" aria-label="Back">${A.icon("arrow-left", 22)}</button>
-<a class="pg-hb pg-share" href="/programs/${A.esc(p.id)}?share=1" data-poster="hero" aria-label="Share this program">${A.icon("share", 20)}</a>
+<a class="pg-hb pg-share" href="/organizations/${A.esc(p.id)}?share=1" data-poster="hero" aria-label="Share this listing">${A.icon("share", 20)}</a>
 <div class="pg-edge">${stamp}${vtag(p)}</div></div>`;
 }
 
@@ -83,19 +85,22 @@ function freshLine(p) {
   const bits = freshBits(p);
   return bits.length ? `<p class="pg-fresh num">${bits.map((b) => `<span>${A.esc(b)}</span>`).join("")}</p>` : "";
 }
-function verifyHtml(p) {
+function verifyHtml(p, isManager = false) {
   const fix = A.btn("Suggest a fix", `/update/${p.id}`, "line");
-  const run = A.btn("I run this program", `/update/${p.id}?rel=run`, "ink");
+  const run = A.btn("I'm with this organization", `/update/${p.id}?rel=run`, "ink");
+  const manage = A.btn("Manage your organization", `/manage/organizations/${p.id}`, "ink");
   const bits = freshBits(p);
   const facts = bits.length ? `<ul class="vx-facts">${bits.map((b) => `<li>${A.icon("check", 18)}<span class="num">${A.esc(b)}</span></li>`).join("")}</ul>` : "";
   const body = p.verified
-    ? `<p>The program itself confirmed this listing with us.</p>${facts}<p>Schedules change, so check the program's website before you go.</p>`
-    : `<p>We found this program in public sources, like its own website, and we check that website regularly.</p>${facts}<p><b>Verified</b> means the program itself confirmed its listing with us. We're asking every program.</p><p>Not verified doesn't mean anything is wrong. Check the program's website before you go.</p>`;
+    ? `<p>The organization itself confirmed this listing with us.</p>${facts}<p>Schedules change, so check the organization's website before you go.</p>`
+    : `<p>We found this organization in public sources, like its own website, and we check that website regularly.</p>${facts}<p><b>Verified</b> means the organization itself confirmed its listing with us. We're asking every organization.</p><p>Not verified doesn't mean anything is wrong. Check the organization's website before you go.</p>`;
   return `<div class="ss-top"><button type="button" class="iconbtn" data-close aria-label="Close">${A.icon("x", 24)}</button><h2 id="vx-h" tabindex="-1">${p.verified ? "Verified" : "Not verified yet"}</h2></div>
-<div class="ss-body vx-body">${body}<div class="btns vx-btns">${p.verified ? fix : run + fix}</div><a class="tlink vx-more" href="/about">How we check listings${A.icon("arrow-right", 18)}</a></div>`;
+<div class="ss-body vx-body">${body}<div class="btns vx-btns">${isManager ? manage : p.verified ? fix : run + fix}</div><a class="tlink vx-more" href="/about">How we check listings${A.icon("arrow-right", 18)}</a></div>`;
 }
 
-/* ---------- About: "Who it's for" and "Sports here" (6.8.5) ---------- */
+/* ---------- About this organization: "Who it's for" and its programs ----------
+   Words (Alec and Faisal, 2026-10-15): a listing is an organization, the group that
+   runs things; a program is what it offers, like wheelchair tennis. */
 function sportChips(text) {
   const seen = new Set();
   const parts = String(text).split(/[;,]/).map((s) => s.trim().replace(/\.$/, "")).filter((s) => s && !/^see\b/i.test(s));
@@ -116,10 +121,10 @@ function about(p) {
   let inner = "";
   if (served) inner += `<h3 class="pg-h3">Who it's for</h3><p>${A.esc(upperFirst(served.replace(/\s+/g, " ")))}</p>`;
   const chips = sports ? sportChips(sports) : "";
-  if (chips) inner += `<h3 class="pg-h3">Sports here</h3>${chips}`;
+  if (chips) inner += `<h3 class="pg-h3">Programs</h3>${chips}`;
   if (!inner && p.desc && !/Sports and activities:|Athletes served:/i.test(p.desc)) inner = `<p>${A.esc(p.desc)}</p>`;
-  if (!inner) inner = `<p class="pg-quiet">We don't have a description for this program yet.${p.website ? " The program's website has the details." : ""}</p>`;
-  return `<section class="pg-sec" aria-labelledby="pg-about"><h2 id="pg-about">About this program</h2>${inner}</section>`;
+  if (!inner) inner = `<p class="pg-quiet">We don't have a description for this organization yet.${p.website ? " Its website has the details." : ""}</p>`;
+  return `<section class="pg-sec" aria-labelledby="pg-about"><h2 id="pg-about">About this organization</h2>${inner}</section>`;
 }
 /* Karen's veteran research (meetups, equine therapy, art therapy) carries what
    happens, the approach, when, where (a venue name only), format, cost and who. */
@@ -176,19 +181,42 @@ function facts(p) {
 }
 function wherePlay(p) {
   let body;
-  if (p.placed) {
+  if (p.address) {
+    const state = p.stateName || A.stateName(p.state);
+    const location = [p.city, [state, p.zip].filter(Boolean).join(" ")].filter(Boolean).join(", ");
+    const fullAddress = [p.address, location, p.country].filter(Boolean).join(", ");
+    const near = p.city && p.state ? `<a class="tlink" href="/near/${enc([p.city, p.state].join(", "))}">Programs near ${A.esc(A.placeText(p))}${A.icon("arrow-right", 18)}</a>` : "";
+    body = `<p>${A.esc(fullAddress)}.</p>${near}`;
+  } else if (p.placed) {
     body = `<p>${A.esc(A.placeText(p))}. We show the city only, so check the website for the exact place.</p><a class="tlink" href="/near/${enc(A.placeText(p))}">Programs near ${A.esc(A.placeText(p))}${A.icon("arrow-right", 18)}</a>`;
   } else if (p.state) {
-    body = `<p>This program serves ${A.esc(A.stateName(p.state))} and doesn't list a single city.</p><a class="tlink" href="/states/${A.esc(p.state)}">Programs in ${A.esc(A.stateName(p.state))}${A.icon("arrow-right", 18)}</a>`;
+    body = `<p>This organization serves ${A.esc(A.stateName(p.state))} and doesn't list a single city.</p><a class="tlink" href="/states/${A.esc(p.state)}">Programs in ${A.esc(A.stateName(p.state))}${A.icon("arrow-right", 18)}</a>`;
   } else {
     body = `<p>This listing doesn't say where it is yet. If you know, <a href="/update/${A.esc(p.id)}">suggest a fix</a>.</p>`;
   }
-  return `<section class="pg-sec" aria-labelledby="pg-where"><h2 id="pg-where">${p.meet ? "Where it meets" : "Where you'll play"}</h2>${body}</section>`;
+  const canMap = p.addressPublicityConsent && (p.address || (Number.isFinite(p.lat) && Number.isFinite(p.lng)));
+  const address = [p.address, p.city, p.state, p.zip, p.country].filter(Boolean).join(", ");
+  const map = canMap ? `<div class="pg-map" data-location-map data-lat="${A.esc(p.lat)}" data-lng="${A.esc(p.lng)}" data-address="${A.esc(address)}" aria-label="Map showing ${A.esc(p.name)}"></div>` : "";
+  return `<section class="pg-sec" aria-labelledby="pg-where"><h2 id="pg-where">${p.meet ? "Where it meets" : "Where you'll play"}</h2>${body}${map}</section>`;
 }
-function links(p) {
+/* ---------- the sport in plain words, for a reader who has never seen it ----------
+   Fills the page when the organization has no description yet, and gives context when it does. */
+function sportIntro(p) {
+  const key = isTrio(p) ? "multi" : p.key;
+  const g = guideFor(key);
+  if (!g) return "";
+  const multi = key === "multi";
+  const name = lowerFirst(A.sportName(key));
+  const title = multi ? "New to adaptive sports?" : `New to ${name}?`;
+  const all = multi ? "All multi-sport programs" : `All ${name} programs, grants and events`;
+  return `<section class="pg-sec pg-sport" aria-labelledby="pg-sport"><h2 id="pg-sport">${A.esc(title)}</h2><p>${A.esc(g.what)}</p><p>${A.esc(g.start)}</p><p class="pg-quiet">This is about the sport in general. Every organization runs things its own way, so check its website for what it provides and what it costs.</p><a class="tlink" href="/sports/${A.esc(key)}">${A.esc(all)}${A.icon("arrow-right", 18)}</a></section>`;
+}
+
+function links(p, isManager = false) {
   const row = (href, ic, label, sub, attrs = "") => `<li><a class="pg-link" href="${A.esc(href)}" ${attrs}><span class="pg-link-ic">${A.icon(ic, 20)}</span><span class="pg-link-text"><span class="pg-link-label">${A.esc(label)}</span>${sub ? `<span class="pg-link-sub">${A.esc(sub)}</span>` : ""}</span>${A.icon("chevron-right", 20)}</a></li>`;
   const runSub = p.verified ? "Update your listing." : "Confirm your listing to get the Verified check.";
-  return `<ul class="pg-links">${row(`/update/${p.id}`, "pencil", "Suggest a fix")}${row(`/update/${p.id}?rel=run`, "badge-check", "I run this program", runSub)}${row(`/programs/${p.id}?share=1`, "share", "Share", "", 'data-poster="links"')}</ul>`;
+  if (isManager) return `<ul class="pg-links">${row(`/manage/organizations/${p.id}`, "building-2", "Manage your organization")}${row(`/organizations/${p.id}?share=1`, "share", "Share", "", 'data-poster="links"')}</ul>`;
+  return `<ul class="pg-links">${row(`/update/${p.id}`, "pencil", "Suggest a fix")}${row(`/update/${p.id}?rel=run`, "badge-check", "I'm with this organization", runSub)}${row(`/organizations/${p.id}?share=1`, "share", "Share", "", 'data-poster="links"')}</ul>`;
 }
 
 /* ---------- More of this sport, from the listing's own city (6.8.9) ---------- */
@@ -229,14 +257,23 @@ function visitBtn(p, { full = false } = {}) {
 }
 function hostNote(p) {
   const h = p.website && host(p.website);
-  return h ? `<p class="pg-host">Opens ${A.esc(h)}</p>` : `<p class="pg-host">We don't have a website for this program yet.</p>`;
+  return h ? `<p class="pg-host">Opens ${A.esc(h)}</p>` : `<p class="pg-host">We don't have a website for this organization yet.</p>`;
 }
 function actionRow(p) {
   // data-sticky-twin: the phone sticky bar steps aside while this row is on screen (one ink button at a time).
   return `<div class="pg-acts" data-sticky-twin>${visitBtn(p, { full: true })}${hostNote(p)}</div>`;
 }
 function bookBox(p) {
-  return `<div class="pg-book"><div class="pg-book-in"><p class="pg-book-kind">${A.esc(sportLabel(p))}${stampLabel(p) ? ` · ${A.esc(stampLabel(p))}` : ""}</p>${A.trust(p, "short") ? `<p class="pg-book-trust">${A.trust(p, "short")}</p>` : ""}${visitBtn(p, { full: true })}${hostNote(p)}<a class="tlink pg-book-upd" href="/update/${A.esc(p.id)}">Suggest a fix</a></div></div>`;
+  let address = '';
+  if (p.address) {
+    const state = p.stateName || A.stateName(p.state);
+    const location = [p.city, [state, p.zip].filter(Boolean).join(" ")].filter(Boolean).join(", ");
+    const fullAddress = [p.address, location, p.country].filter(Boolean).join(", ");
+    address = A.esc(fullAddress);
+  } else if (p.placed) {
+    address = A.esc(A.placeText(p));
+  }
+  return `<div class="pg-book"><div class="pg-book-in"><p class="pg-book-kind">${A.esc(sportLabel(p))}${stampLabel(p) ? ` · ${A.esc(stampLabel(p))}` : ""}</p>${A.trust(p, "short") ? `<p class="pg-book-trust">${A.trust(p, "short")}</p>` : ""}${address ? `<p class="pg-book-address">${address}</p>` : ""}${visitBtn(p, { full: true })}${hostNote(p)}</div></div>`;
 }
 
 /* ---------- the share poster (3.2, 6.8.12) ---------- */
@@ -258,7 +295,7 @@ ${place ? `<span class="pp-place">${A.esc(place)}</span>` : ""}
 }
 function shareHtml(p) {
   const native = typeof navigator !== "undefined" && typeof navigator.share === "function";
-  return `<div class="ss-top"><button type="button" class="iconbtn" data-close aria-label="Close">${A.icon("x", 24)}</button><h2 id="pg-sh-h">Share this program</h2></div>
+  return `<div class="ss-top"><button type="button" class="iconbtn" data-close aria-label="Close">${A.icon("x", 24)}</button><h2 id="pg-sh-h">Share this listing</h2></div>
 <div class="ss-body pg-sh-body">${poster(p)}
 <div class="btns pg-sh-btns"><button type="button" class="btn btn--ink" data-copy-link>${A.icon("link", 20)}<span>Copy link</span></button>${native ? `<button type="button" class="btn btn--line" data-native-share>${A.icon("share", 20)}<span>Share</span></button>` : ""}</div>
 <p class="pg-sh-status" role="status"></p>
@@ -267,8 +304,8 @@ function shareHtml(p) {
 
 /* ---------- render ---------- */
 const listingNotFound = () => ({
-  title: "Listing not found · Adaptive Sports Near Me",
-  description: "It may have been removed or merged with another listing.",
+  title: site(PAGES.listingNotFound.title),
+  description: PAGES.listingNotFound.description,
   html: `<section class="pg-nf"><h1 tabindex="-1">We couldn't find that listing</h1><p>It may have been removed or merged with another listing.</p><div class="btns">${A.btn("Find a program", "/", "ink")}${A.btn("Browse sports", "/sports", "line")}</div></section>`,
 });
 
@@ -280,6 +317,19 @@ export async function render(ctx) {
   // lists leave them out). A listing gone since the list loaded is not found.
   const p = await A.loadDetail(listed.id);
   if (!p || !p.detail) return listingNotFound();
+  let isManager = false;
+  try {
+    const response = await fetch("/api/org-auth/session");
+    const body = response.ok ? await response.json() : null;
+    isManager = !!body?.organizations?.some((organization) => String(organization.id).toLowerCase() === String(p.id).toLowerCase());
+  } catch (_) {}
+  p.isManager = isManager;
+  let linkedPrograms = "";
+  try {
+    const response = await fetch(`/api/organizations/${encodeURIComponent(p.id)}/programs`);
+    const body = response.ok ? await response.json() : null;
+    if (body?.items?.length) linkedPrograms = `<section class="pg-sec"><h2>Programs</h2><div class="rows">${body.items.map((item) => `<a class="prow" href="/programs/${A.esc(item.id)}"><div class="pr-body"><h3 class="pr-name">${A.esc(item.name)}</h3><p class="meta">${A.esc(item.sportLabel || "Adaptive sports")}</p></div></a>`).join("")}</div></section>`;
+  } catch (_) {}
 
   if (p.meet === undefined) { const m = meetFrom(p); p.meet = m ? m.meet : null; p.also = m ? m.also : []; }
 
@@ -308,7 +358,9 @@ ${actionRow(p)}
 ${p.meet ? meetup(p) : about(p)}
 ${facts(p)}
 ${wherePlay(p)}
-${links(p)}
+${sportIntro(p)}
+${linkedPrograms}
+${links(p, isManager)}
 ${more(p, D)}
 </div>${bookBox(p)}</div>`;
 
@@ -318,15 +370,15 @@ ${more(p, D)}
   });
 
   return {
-    title: `${p.name}, ${sport}${tp ? " in " + tp : ""} · Adaptive Sports Near Me`,
-    description: `${p.name}: ${lowerFirst(sport)}${tp ? " in " + tp : ""}.${p.verified ? " Verified: the program confirmed this listing." : ""} Free, no account needed.`,
+    title: site(organizationMeta({ name: p.name, sport, place: tp }).title),
+    description: organizationMeta({ name: p.name, sport, place: tp }).description,
     html: main,
     sticky,
   };
 }
 
 /* ---------- mount: share sheet, copy link ---------- */
-function baseHash(id) { return "/programs/" + id; }
+function baseHash(id) { return "/organizations/" + id; }
 function hasShare() { return /[?&]share=1(?:&|$)/.test(A.here()); }
 
 async function copyLink(url) {
@@ -351,7 +403,7 @@ export function mount(root, ctx) {
   const onClick = (e) => {
     if (e.target.closest("[data-verify]")) {
       e.preventDefault();
-      const el = A.showOverlay({ name: "verify", cls: "ov--sheet v-program-verify", labelledby: "vx-h", html: verifyHtml(p) });
+      const el = A.showOverlay({ name: "verify", cls: "ov--sheet v-program-verify", labelledby: "vx-h", html: verifyHtml(p, p.isManager) });
       A.pushSheet();   // phone Back closes the story instead of leaving the listing
       const h = el.querySelector("#vx-h"); if (h) h.focus();
       return;
@@ -364,6 +416,8 @@ export function mount(root, ctx) {
     }
   };
   root.addEventListener("click", onClick);
+  let removeMaps = () => {};
+  if (root.querySelector("[data-location-map]")) import("./map.js").then((maps) => maps.mountLocationMaps(root)).then((remove) => { if (disposed) remove(); else removeMaps = remove; }).catch(() => {});
 
   if (ctx.query.share === "1") {
     // Keep the page behind the sheet where it was.
@@ -401,5 +455,5 @@ export function mount(root, ctx) {
     }, 120);
   }
 
-  return () => { disposed = true; root.removeEventListener("click", onClick); };
+  return () => { disposed = true; removeMaps(); root.removeEventListener("click", onClick); };
 }
