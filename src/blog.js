@@ -6,6 +6,7 @@
 // covered by test/blog.test.js without touching the Cache API.
 
 import { headerHtml, footerHtml, navScriptHtml } from "./site-chrome.js";
+import { HOME_CARD } from "./share-cards.js";
 
 const SITE = "https://adaptivesportsnearme.com";
 const HOT_TTL = 300; // normal serve window — matches API_CACHE/FEED_CACHE elsewhere
@@ -255,7 +256,7 @@ ${posts.length
     title: "Blog · Adaptive Sports Near Me",
     description: "Stories, updates and guides from the adaptive sports community.",
     canonical: `${site}/blog`,
-    ogImage: `${site}/og/home.png`,
+    ogImage: `${site}${HOME_CARD}`,
     bodyHtml: body,
   });
 }
@@ -263,7 +264,7 @@ ${posts.length
 export function blogPostTemplate(post, { site = SITE } = {}) {
   const date = formatPostDate(post.publishDate);
   const canonical = `${site}/blog/${post.slug}`;
-  const ogImage = post.thumbnailUrl || `${site}/og/home.png`;
+  const ogImage = post.thumbnailUrl || `${site}${HOME_CARD}`;
   const description = post.subtitle || "";
   const jsonLd = {
     "@context": "https://schema.org",
@@ -301,7 +302,7 @@ export function blogFallbackTemplate({ site = SITE } = {}) {
     title: "Blog · Adaptive Sports Near Me",
     description: "Stories, updates and guides from the adaptive sports community.",
     canonical: `${site}/blog`,
-    ogImage: `${site}/og/home.png`,
+    ogImage: `${site}${HOME_CARD}`,
     bodyHtml: body,
   });
 }
@@ -314,7 +315,7 @@ export function blogNotFoundTemplate({ site = SITE } = {}) {
     title: "Story not found · Adaptive Sports Near Me",
     description: "That story may have moved or been unpublished.",
     canonical: `${site}/blog`,
-    ogImage: `${site}/og/home.png`,
+    ogImage: `${site}${HOME_CARD}`,
     bodyHtml: body,
   });
 }
