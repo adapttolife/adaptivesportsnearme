@@ -25,7 +25,6 @@ test("data-fix files carry no contact details", () => {
 // Files that hold a contact-like detail on purpose, each read and kept by a person. Tests are left out as a whole:
 // they use made-up details and copies of organizations' own public web pages.
 const REVIEWED = new Map([
-  ["data/grants-seed.sql", "funders' published contacts for applicants; every grant page shows them"],
   ["docs/FIELD-CONTRACTS.md", "an example of a scraped address fragment"],
   ["docs/START-HERE.md", "the team's own contact"],
   ["public/site-nav.js", "a placeholder in the signup box"],
