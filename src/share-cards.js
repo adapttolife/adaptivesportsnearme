@@ -14,7 +14,8 @@ const ListingArt = globalThis.ListingArt;
 
 export const CARD_WIDTH = 1200;
 export const CARD_HEIGHT = 630;
-export const HOME_CARD = "/og/home.png";
+// A new design gets a new file name: apps keep the first image they fetch for a URL.
+export const HOME_CARD = "/og/home-lineup.png";
 export const PAGE_CARDS = {
   grants: "/og/grants.png",
   events: "/og/events.png",
