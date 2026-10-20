@@ -8,7 +8,6 @@ import { join } from "node:path";
 
 const read = (p) => readFileSync(new URL("../" + p, import.meta.url), "utf8");
 const one = read("db/maintenance/duplicates_1_merge_now.sql");
-const two = read("db/maintenance/duplicates_2_places_become_programs.sql");
 const counts = read("db/maintenance/duplicates_check_counts.sql");
 const csvRows = (p) => read(p).trim().split("\n").slice(1).map((line) => line.match(/("([^"]|"")*"|[^,]*)(,|$)/g).map((c) => c.replace(/,$/, "").replace(/^"|"$/g, "").replace(/""/g, '"')));
 import { statements as split } from "../scripts/lib/sql-statements.mjs";
@@ -36,21 +35,6 @@ test("list 1: a pair whose kept row is gone is skipped, and the helper table goe
   for (const x of s) assert.doesNotMatch(x, /^(DROP|ALTER)\b(?! TABLE merge_map_20261018$)/, `unexpected schema change: ${x.slice(0, 60)}`);
 });
 
-test("list 2: an organization row goes only once its program copy is in, and nothing moves onto a missing row", () => {
-  assert.match(two, /RUN ONLY ONCE the live site lists programs/);
-  const s = statements(two);
-  const deletes = s.filter((x) => x.startsWith("DELETE FROM organizations"));
-  const inserts = s.filter((x) => /^INSERT\b/.test(x));
-  assert.ok(deletes.length >= 52 && inserts.length === 80, `${deletes.length} deletes, ${inserts.length} inserts`);
-  for (const d of deletes) assert.match(d, /^DELETE FROM organizations WHERE id = '[^']+' AND EXISTS \(SELECT 1 FROM (programs|organizations) WHERE id = /, d.slice(0, 90));
-  for (const i of inserts) assert.match(i, /^INSERT OR IGNORE INTO programs .* AND EXISTS \(SELECT 1 FROM organizations WHERE id = '[^']+'\)$/s, i.slice(0, 90));
-  for (const u of s.filter((x) => /^UPDATE (organization_data_sources|programs|events|link_checks|review_queue) /.test(x))) {
-    assert.match(u, /AND EXISTS \(SELECT 1 FROM organizations WHERE id = '[^']+'\)$/, u.slice(0, 90));
-  }
-  const listed = csvRows("docs/data-fixes/duplicates-2-places-become-programs.csv").filter((r) => r[1] === "program");
-  assert.equal(listed.length, inserts.length, "the list names every program the script makes");
-});
-
 test("the count check only reads", () => {
   for (const x of statements(counts)) assert.match(x, /^SELECT\b/, x.slice(0, 60));
 });
@@ -58,15 +42,7 @@ test("the count check only reads", () => {
 // The staging import (step 2) ran on 2026-10-18; its file was removed afterwards because it
 // carried private contact columns. test/no-contact-in-data-files.test.js keeps it that way.
 
-test("list 3's mechanical part guards every delete, insert and move", () => {
-  const s = statements(read("db/maintenance/duplicates_3_mechanical.sql"));
-  assert.match(read("db/maintenance/duplicates_3_mechanical.sql"), /only once the live site lists programs/);
-  for (const d of s.filter((x) => x.startsWith("DELETE FROM organizations "))) assert.match(d, /AND EXISTS \(SELECT 1 FROM (programs|organizations) WHERE id = /, d.slice(0, 90));
-  for (const i of s.filter((x) => /^INSERT\b/.test(x))) assert.match(i, /^INSERT OR IGNORE INTO programs .* AND EXISTS \(SELECT 1 FROM organizations WHERE id = '[^']+'\)$/s);
-  for (const u of s.filter((x) => /^UPDATE\b/.test(x) && !x.startsWith("UPDATE organizations SET description"))) {
-    assert.match(u, /AND EXISTS \(SELECT 1 FROM organizations WHERE id = '[^']+'\)$/, u.slice(0, 90));
-  }
-});
+// Lists 2 and 3 never ran; db/maintenance/duplicates_finish.sql replaced them (test/data-fixes-finish.test.js).
 
 test("the staging rebuild's replace file drops children first, loads parents first, and survives comments and quotes", async () => {
   const { spawnSync } = await import("node:child_process");
