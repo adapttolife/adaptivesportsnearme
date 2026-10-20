@@ -6,6 +6,7 @@
    PROMOTE: (none yet; the results header, toolbar and group head are scoped here
    as .v-near .nr-*. If the state page wants the same group head, lift .nr-gh.) */
 import * as A from "../app.js";
+import { site, PAGES, nearMeta } from "../page-meta.js";
 
 const GROUP_IDS = { inCity: "nr-in", near: "nr-near", elsewhere: "nr-else", statewide: "nr-sw" };
 let LAST = null; // { path, qs } of the previous near render, to announce filter changes
@@ -57,8 +58,8 @@ function legend(where, hasDots, hasYou) {
 function notFoundPlace(ctx, text, dym = []) {
   const shown = text || "that place";
   return {
-    title: "We couldn't find that place · Adaptive Sports Near Me",
-    description: "Find adaptive sports programs near you. Search by city and state, or a 5-digit ZIP code.",
+    title: site(PAGES.placeNotFound.title),
+    description: PAGES.placeNotFound.description,
     html: `<section class="nr-none">
   <h1 tabindex="-1">We couldn't find "${A.esc(shown)}"</h1>
   <p class="nr-none-body">Try a city and state, like Springfield, IL, or a 5\u2011digit ZIP code.</p>
@@ -79,7 +80,7 @@ export async function render(ctx) {
     // A state search shows the state page instead (sport kept).
     const s = ctx.query.s && D.sportByKey[ctx.query.s] ? ctx.query.s : "";
     A.nav("/states/" + where.state + (s ? "?s=" + encodeURIComponent(s) : ""), { replace: true });
-    return { title: A.stateName(where.state) + " · Adaptive Sports Near Me", html: `<section class="nr-none"><h1 tabindex="-1">${A.esc(A.stateName(where.state))}</h1></section>` };
+    return { title: site(A.stateName(where.state)), html: `<section class="nr-none"><h1 tabindex="-1">${A.esc(A.stateName(where.state))}</h1></section>` };
   }
   if (where.kind === "none") {
     const sp = ctx.query.s && D.sportByKey[ctx.query.s] ? ctx.query.s : "";
@@ -171,7 +172,7 @@ export async function render(ctx) {
     actions.push({ label: "Tell us about one", href: "/add/program" });
     empty = `<div class="nr-empty">${A.emptyState({
       title: `No ${what} near ${city} yet`,
-      body: "This directory is new and still growing.",
+      body: "Know one? Tell us and we'll check it.",
       actions,
     })}</div>`;
     const out = A.nearestOutside(where, pool);
@@ -183,8 +184,8 @@ export async function render(ctx) {
 
   const html = `<div class="nr">${header}${toolbar}${bar}${jumps}${empty}${groups}</div>${A.letterBlock({ source: "near" })}${A.helpBand()}`;
   return {
-    title: `${h1} · Adaptive Sports Near Me`,
-    description: `Adaptive ${s ? sportLow : "sports"} programs near ${where.label}: in ${city}, within about 25 miles, and across ${ST}. Free, no account needed.`,
+    title: site(h1),
+    description: nearMeta(where.label, s ? { name: A.sportName(s), low: sportLow } : null).description,
     html,
     aside: A.aboutBox(),
     railActive: "near",

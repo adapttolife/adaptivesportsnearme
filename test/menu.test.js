@@ -27,7 +27,7 @@ function inOrder(text, marks, what) {
 test("the menu leads with five doors, then Browse, Help build this, About, and dark mode last", () => {
   inOrder(menu, [
     '"Programs near you"', '"Sports", "Find programs by sport"',
-    '"Grants", "Money for gear, travel and programs"', '"Events", "Clinics, tryouts and game days"',
+    '"Grants", "Money for gear, travel and fees"', '"Events", "Clinics, tryouts, games and meetups"',
     '"Guides", "Getting started, and life beyond sports"',
     'sec("Browse"', '"States"', '"Organizations"',
     'sec("Help build this"', '"Add a program"', '"Add an event"', '"Claim your organization"',
@@ -56,7 +56,8 @@ test("the footer has the same four groups in the same order", () => {
 test("Guides is what /resources is called wherever a person reads it", () => {
   const help = read("public/app/views/help.js");
   assert.match(help, /<h1 tabindex="-1">Guides<\/h1>/);
-  assert.match(read("src/pages.js"), /\/\^\\\/resources\\\/\?\$\/, \(\) => \(\{ title: "Guides"/);
+  assert.match(read("public/app/page-meta.js"), /guides: \{ title: "Guides"/);
+  assert.match(read("src/pages.js"), /\/\^\\\/resources\\\/\?\$\/, \(\) => \(\{ \.\.\.PAGES\.guides \}\)/);
   assert.match(read("src/site-chrome.js"), /<a href="\/resources">Guides<\/a>/);
   for (const [file, text] of [["app.js", app], ["views/help.js", help], ["site-chrome.js", read("src/site-chrome.js")]]) {
     assert.doesNotMatch(text, />Resources<|"Resources"|Resources ·/, `${file} still shows the word Resources`);
@@ -76,4 +77,15 @@ test("dark mode is a switch with its state in aria-pressed, not words", () => {
   assert.match(menu, /<button type="button" class="dl-theme" data-theme-toggle aria-pressed="\$\{dark\}"><span>Dark mode<\/span><span class="dl-switch" aria-hidden="true"><\/span><\/button>/);
   assert.doesNotMatch(app, /dl-theme-state/);
   assert.ok(css.includes(".dl-theme[aria-pressed='true'] .dl-switch::after{translate:18px 0;"), "the knob moves when on");
+});
+
+// Footer copy (Alec, 2026-10-18): a product line that says how to use the site and
+// what to expect, and one credit line. "Less is more"; "Made with ❤️ by Adapt To Life."
+test("both footers say what the site does and credit Adapt To Life the same way", () => {
+  const blog = read("src/site-chrome.js");
+  for (const [name, src] of [["app", footer], ["blog", blog]]) {
+    assert.ok(/PRODUCT_LINE/.test(src), `the ${name} footer says the product line from page-meta.js`);
+    assert.match(src, /Made with <span role="img" aria-label="love">❤️<\/span> by <a href="https:\/\/adapttolife\.org"[^>]*>Adapt To Life<\/a>\./, `the ${name} footer credits Adapt To Life`);
+    assert.ok(!/we don't run them|a project of|open directory/i.test(src), `the ${name} footer drops the old lines`);
+  }
 });

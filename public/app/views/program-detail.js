@@ -1,4 +1,5 @@
 import * as A from "../app.js";
+import { site, programMeta } from "../page-meta.js";
 
 const place = (p) => A.placeText(p);
 const host = (url) => { try { return new URL(url).hostname.replace(/^www\./i, ""); } catch (_) { return null; } };
@@ -32,9 +33,14 @@ function where(p) {
 function booking(p) { const site = host(p.website); return p.website ? `<div class="pg-book"><div class="pg-book-in"><p class="pg-book-kind">${A.esc(p.sportLabel || "Adaptive sports")}${place(p) ? ` · ${A.esc(place(p))}` : ""}</p>${visit(p, { full: true })}${site ? `<p class="pg-host">Opens ${A.esc(site)}</p>` : ""}</div></div>` : ""; }
 
 export async function render(ctx) {
-  const response = await fetch(`/api/programs/${encodeURIComponent(ctx.params.id)}`);
-  if (response.status === 404) return { title: "Program not found · Adaptive Sports Near Me", html: `<section class="pg-nf"><h1 tabindex="-1">We couldn't find that program</h1><p>It may have been removed or merged with another listing.</p></section>` };
-  if (!response.ok) throw new Error(`program ${response.status}`);
+  // A 404 is an answer. A dropped request or a server error is asked once more, then the page
+  // says it could not load (loadFailed), never that the program is gone.
+  const response = await A.retryOnce(async () => {
+    const r = await A.early(`/api/programs/${encodeURIComponent(ctx.params.id)}`);
+    if (!r.ok && r.status !== 404) throw new Error(`program ${r.status}`);
+    return r;
+  }).catch((e) => { throw Object.assign(new Error(String(e && e.message || e)), { loadFailed: true }); });
+  if (response.status === 404) return { title: site("Program not found"), html: `<section class="pg-nf"><h1 tabindex="-1">We couldn't find that program</h1><p>It may have been removed or merged with another listing.</p></section>` };
   const { program: p } = await response.json();
   const location = place(p);
   const main = `<div class="pg-grid"><div class="pg-main">${hero(p)}<div class="pg-head"><h1 tabindex="-1">${A.esc(p.name)}</h1><p class="pg-meta">${A.esc(p.sportLabel || "Adaptive sports")}${location ? ` · ${A.esc(location)}` : ""}</p>${fresh(p)}</div>${actions(p)}${about(p)}${facts(p)}${organization(p)}${where(p)}${fix(p)}</div>${booking(p)}</div>`;

@@ -4,9 +4,8 @@
    PROMOTE: .v-help .hp-figs (a house-tint banner with three athletes) could
    become a shared "banner trio" next to communityHeader(). */
 import * as A from "../app.js";
+import { site, PAGES } from "../page-meta.js";
 
-const DESC = "Find adaptive sports programs, grants and events near you. Free, no account needed.";
-const GUIDES_DESC = "Every adaptive sport explained, and help beyond sports, like veteran-owned business directories by state.";
 const TRIO = ["basketball", "tennis", "skiing"];
 
 /* ---------- /help ---------- */
@@ -22,7 +21,7 @@ function helpPage() {
 <p class="hp-status" id="hp-claim-st" role="status">Type two or more letters of the name.</p>
 <div class="hp-results" id="hp-claim-list" hidden></div></div>`;
   const html = `<div class="hp-page">
-<div class="hp-hero" style="--t:${A.toneOf("multi").t}">${art}<div class="hp-text"><h1 tabindex="-1">Help build this</h1><p class="hp-sub">This directory is new and still growing. Here is how you can help.</p></div></div>
+<div class="hp-hero" style="--t:${A.toneOf("multi").t}">${art}<div class="hp-text"><h1 tabindex="-1">Help build this</h1><p class="hp-sub">Add what's missing, fix what's wrong, or confirm your organization's listing.</p></div></div>
 <div class="hp-cards">
 ${card({ ic: "badge-check", title: "Claim your organization", body: "Run or work for an organization listed here? Sign in with the verified email to manage its details.", action: A.btn("Manage your organization", "/manage", "ink"), cls: "hp-card--claim", extra: finder })}
 ${card({ ic: "plus", title: "Add a program", body: "Know a program we're missing? Tell us and we'll check it.", action: A.btn("Add a program", "/add/program", "ink") })}
@@ -31,7 +30,7 @@ ${card({ ic: "calendar-plus", title: "Add an event", body: "Share a clinic, tryo
 ${card({ ic: "square-pen", title: "Suggest a fix", body: "Spot something wrong? Every listing has a Suggest a fix link.", action: A.btn("Find a listing", "", "line", { attrs: 'data-open="search"', icon: "search" }) })}
 </div>
 ${A.letterBlock({ source: "help" })}</div>`;
-  return { title: "Help build this · Adaptive Sports Near Me", description: DESC, html };
+  return { title: site(PAGES.help.title), description: PAGES.help.description, html };
 }
 
 /* ---------- /about ---------- */
@@ -41,14 +40,14 @@ const ABOUT = [
   ["is-u", "info", "Not verified yet", "We found the organization in public sources, and we check its website regularly. Not verified doesn't mean anything is wrong. Check the website before you go."],
   ["", "calendar-check", "Dates", "Every listing shows the last day we checked that the organization's website works."],
   ["", "lock", "Privacy", "We show the city and state. An organization's address, phone number and email show only when the organization says yes."],
-  ["", "building-2", "We list programs; we don't run them", "Adaptive Sports Near Me is a free directory from Adapt To Life. Each program is run by its own organization."],
+  ["", "building-2", "Who runs each program", "Organizations run their own programs. We help you find them."],
   ["", "accessibility", "Accessibility", null],
 ];
 function aboutPage() {
-  const a11y = `We aim to meet WCAG 2.2 AA. If something doesn't work for you, tell us through <a href="/help">Suggest a fix</a> or <a href="/add/program">the Add a program form</a>.`;
-  const secs = ABOUT.map(([cls, ic, h, body], i) => `<section class="ab-sec" aria-labelledby="ab-${i}"><span class="ab-ic ${cls}" aria-hidden="true">${A.icon(ic, 24)}</span><div class="ab-text"><h2 id="ab-${i}">${A.esc(h)}</h2><p>${body == null ? a11y : A.esc(body)}</p></div></section>`).join("");
+  const a11y = `We aim to meet WCAG 2.2 AA. If something doesn't work for you, tell us through <a href="/help">Suggest a fix</a>.`;
+  const secs = ABOUT.map(([cls, ic, h, body], i) => `<section class="ab-sec"${ic === "accessibility" ? ' id="accessibility"' : ""} aria-labelledby="ab-${i}"><span class="ab-ic ${cls}" aria-hidden="true">${A.icon(ic, 24)}</span><div class="ab-text"><h2 id="ab-${i}">${A.esc(h)}</h2><p>${body == null ? a11y : A.esc(body)}</p></div></section>`).join("");
   const html = `<div class="ab"><div class="ab-head"><h1 tabindex="-1">How we check listings</h1></div><div class="ab-grid">${secs}</div>${A.helpBand()}</div>`;
-  return { title: "How we check listings · Adaptive Sports Near Me", description: DESC, html };
+  return { title: site(PAGES.about.title), description: PAGES.about.description, html };
 }
 
 /* ---------- /resources: Guides ----------
@@ -59,20 +58,62 @@ function resourcesPage() {
   const html = `<div class="rs"><h1 tabindex="-1">Guides</h1><p class="rs-lede">Getting started, and life beyond sports. New guides join as we write them.</p>
 ${card("rs-sports", "multi", "Every sport, explained", "What each sport is, who plays, what you need and how to start.", "Browse the sports", "/sports")}
 ${card("rs-vob", "veteran-meetup", "Veteran-owned business directories by state", "State lists of veteran-owned businesses, gathered in one place.", "Open the directories", "/resources/veteran-owned-businesses")}</div>`;
-  return { title: "Guides · Adaptive Sports Near Me", description: GUIDES_DESC, html };
+  return { title: site(PAGES.guides.title), description: PAGES.guides.description, html };
+}
+
+/* ---------- /build: Build with us ----------
+   The project is open source (MIT). Alec, 2026-10-18: "a project people believe in and
+   want to contribute to... make it easy to contribute." Ideas carry no dates: an idea
+   becomes "Live" when it is on the site, never before. */
+const REPO = "https://github.com/adapttolife/adaptivesportsnearme";
+const TOOLS = [
+  { state: "Live", ic: "search", h: "Find programs, grants and events", body: "Search by place or sport. Every listing shows when we last checked it.", href: "/" },
+  { state: "Live", ic: "book-open", h: "Guides", body: "Every sport explained: who plays, what you need and how to start.", href: "/resources" },
+  { state: "Idea", ic: "file-text", h: "Grant helper", body: "Walk an athlete or an organization through a grant application, start to finish, so it gets sent.", issue: 74 },
+  { state: "Idea", ic: "trophy", h: "Tournament brackets", body: "Run a bracket for a clinic, a league or a game day, free and right here.", issue: 75 },
+  { state: "Idea", ic: "wrench", h: "Gear to borrow, try or rent", body: "One search for adaptive equipment near you, from every program and lending library that has it. A sit-ski your size, a handcycle to try, before anyone spends thousands.", issue: 76 },
+];
+const WRITE = (subject) => "mailto:hello@adaptivesportsnearme.com?subject=" + encodeURIComponent(subject);
+const HELP = [
+  { ic: "code", h: "Write code", body: "Pick an issue marked good first issue. A person reviews every change before it goes live.", label: "See good first issues", href: REPO + "/labels/good%20first%20issue", ext: true },
+  { ic: "square-pen", h: "Fix a listing", body: "No code needed. Add a program we're missing, or suggest a fix on any listing.", label: "Help build this", href: "/help" },
+  { ic: "pencil", h: "Write a guide", body: "Know a sport well? Help us explain it to someone trying it for the first time.", label: "Write to us", href: WRITE("I'd like to write a guide") },
+  { ic: "accessibility", h: "Test it", body: "Use the site with a screen reader, switch control or voice, and tell us what gets in the way.", label: "How to test it", href: REPO + "/issues/77", ext: true },
+];
+const HOW = [
+  { ic: "link", h: "In public", body: "The code, the plans and every change are on GitHub for anyone to read." },
+  { ic: "lock", h: "Free to use", body: "MIT license: take it, change it, build on it." },
+  { ic: "badge-check", h: "Checked by people", body: "A person reviews every change before it goes live, and every listing before it's published." },
+];
+function buildPage() {
+  const sec = ({ ic, h, body }, extra = "", tag = "") => `<section class="ab-sec"><span class="ab-ic" aria-hidden="true">${A.icon(ic, 24)}</span><div class="ab-text"><h3>${tag}${A.esc(h)}</h3><p>${A.esc(body)}</p>${extra}</div></section>`;
+  const go = (label, href, ext) => `<a class="tlink" href="${A.esc(href)}"${ext ? ' target="_blank" rel="noopener"' : ""}>${A.esc(label)}${A.icon(ext ? "external-link" : "arrow-right", 18)}${ext ? '<span class="sr"> (opens in a new tab)</span>' : ""}</a>`;
+  const tools = TOOLS.map((t) => sec(t, t.href ? go("Open it", t.href) : go("Join the conversation", `${REPO}/issues/${t.issue}`, true), `<span class="bw-tag${t.state === "Live" ? " is-live" : ""}">${t.state}</span>`)).join("");
+  const help = HELP.map((t) => sec(t, go(t.label, t.href, t.ext))).join("");
+  const html = `<div class="ab bw"><div class="ab-head"><h1 tabindex="-1">Build this with us</h1>
+<p class="bw-lede">Adaptive Sports Near Me is open source. The code is public and free to use, and anyone can help make it better.</p>
+<div class="btns">${A.btn("See the code on GitHub", REPO, "ink", { external: true })}${A.btn("How to contribute", REPO + "/blob/staging/CONTRIBUTING.md", "line", { external: true })}</div></div>
+<h2 class="bw-h">Where we're going</h2><p class="bw-p">The directory is the first tool. We're building the whole bench of tools the adaptive sports community needs, in the open, one at a time.</p>
+<div class="ab-grid">${tools}</div>
+<h2 class="bw-h">What do you see?</h2><p class="bw-p">Tell us the tool you wish existed. The best ideas come from people who play, coach and run programs.</p>
+<div class="btns">${A.btn("Share an idea", REPO + "/discussions/categories/ideas", "ink", { external: true })}${A.btn("Email us instead", WRITE("An idea for Adaptive Sports Near Me"), "line", { icon: "mail" })}</div>
+<h2 class="bw-h">How you can help</h2><div class="ab-grid">${help}</div>
+<h2 class="bw-h">How we build</h2><div class="ab-grid">${HOW.map((t) => sec(t)).join("")}</div></div>`;
+  return { title: site(PAGES.build.title), description: PAGES.build.description, html };
 }
 
 /* ---------- /letter ---------- */
 function letterPage() {
   const stack = ["basketball", "grant", "event"].map((k) => A.avatar(k, 64)).join("");
-  const html = `<div class="lt"><div class="lt-stack" aria-hidden="true">${stack}</div><h1 tabindex="-1">Get the letter</h1>${A.letterBlock({ source: "letter" })}</div>`;
-  return { title: "Get the letter · Adaptive Sports Near Me", description: DESC, html };
+  const html = `<div class="lt"><div class="lt-stack" aria-hidden="true">${stack}</div><h1 tabindex="-1">Get the letter</h1>${A.letterBlock({ source: "letter", heading: false })}</div>`;
+  return { title: site(PAGES.letter.title), description: PAGES.letter.description, html };
 }
 
 export async function render(ctx) {
   if (ctx.path === "/about") return aboutPage();
   if (ctx.path === "/resources") return resourcesPage();
   if (ctx.path === "/letter") return letterPage();
+  if (ctx.path === "/build") return buildPage();
   return helpPage();
 }
 

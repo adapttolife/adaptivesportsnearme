@@ -31,7 +31,7 @@
 	margin-top: 32px;
 }
 
-/* Place tools: chips, select fallback, small tile map */
+/* Place tools: near-you search, chips, small tile map */
 .v-sport .sp-where {
 	margin-top: 24px;
 }
@@ -85,33 +85,10 @@
 	}
 }
 
-.v-sport .stsel {
-	margin-top: 16px;
-	max-width: 440px;
-}
 
-.v-sport .stsel label {
-	display: block;
-	font-size: 16px;
-	font-weight: 600;
-	color: var(--graphite);
-	margin-bottom: 6px;
-}
 
-.v-sport .stsel-row {
-	display: flex;
-	gap: 8px;
-}
 
-.v-sport .stsel select {
-	min-height: 48px;
-	flex: 1;
-	min-width: 0;
-}
 
-.v-sport .stsel .btn {
-	flex: none;
-}
 
 .v-sport .sp-map {
 	display: none;
@@ -313,4 +290,13 @@
 	margin-top: 8px;
 	font-size: 15px;
 	font-style: italic;
+}
+
+/* "Find tennis near you": the place search at the top of the Programs tab. */
+.v-sport .sp-near {
+	margin: 8px 0 20px;
+}
+.v-sport .sp-near-h {
+	font-size: 20px;
+	margin: 0 0 8px;
 }

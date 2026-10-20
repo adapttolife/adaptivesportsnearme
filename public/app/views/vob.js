@@ -4,6 +4,7 @@
    src/resources/veteran-businesses.js, exported to data/veteran-businesses.json.
    Her ask: say at the top that we don't verify these lists (the note under the intro). */
 import * as A from "../app.js";
+import { site, PAGES } from "../page-meta.js";
 
 let DATA = null;
 async function data() {
@@ -20,8 +21,8 @@ ${s.official ? ext(s.official.url, s.official.name) : `<p class="vb-nv">${A.esc(
 ${ext(s.national.url, s.national.name)}</li>`).join("");
   const opts = d.states.map((s) => `<option value="vb-${A.esc(s.code)}">${A.esc(s.name)}</option>`).join("");
   return {
-    title: `${c.title} · Adaptive Sports Near Me`,
-    description: c.intro[1],
+    title: site(PAGES.veteranBusinesses.title),
+    description: PAGES.veteranBusinesses.description,
     html: `<div class="vb">
 <div class="vb-hero"><span class="vb-art" aria-hidden="true">${A.fig("veteran-meetup", { color: "#f3f3f3", big: true, cls: "fig--pin fig--mid" })}</span><h1 tabindex="-1">${A.esc(c.title)}</h1><p class="vb-kicker">${A.esc(c.kicker)}</p></div>
 <div class="vb-intro">${c.intro.map((t) => `<p>${A.esc(t)}</p>`).join("")}<p class="vb-note">${A.esc(c.disclaimer)}</p></div>

@@ -11,6 +11,7 @@
 
 import { parseDesc as parseDescText } from "./listing-sport.js";
 import { ICONS } from "./icons.js";
+import { PRODUCT_LINE } from "./page-meta.js";
 
 const L = window.ListingArt, P = window.Proto;
 const $ = (s, r = document) => r.querySelector(s);
@@ -272,17 +273,32 @@ function fromApi(r) {
     prog: !!r.prog, orgName: r.org || null, progs: r.progs || 0,
   };
 }
+/* The head starts the data a page needs before this code runs (public/index.html for the
+   listings, src/pages.js preloadHints for a listing's details): a script, not a preload,
+   because Safari, and so every iPhone browser, downloads a preloaded file again when fetch()
+   asks for it. Each early answer is taken once; a retry or the next page asks the network. */
+export function early(url) {
+  const box = window.ASNM_EARLY, p = box && box[url];
+  if (p) delete box[url];
+  return p || fetch(url);
+}
+/* One more try after a short pause before giving up: a phone that drops a request, or a
+   moment's trouble on our side, costs a beat instead of the page. */
+export function retryOnce(load, wait = 800) {
+  return load().catch(() => new Promise((res) => setTimeout(res, wait)).then(load));
+}
+
 /* A listing's own page adds what the lists leave out: website, description, cost, ages,
    equipment, the month our team checked it. Loaded once per listing. */
 const DETAIL = new Map();
 export function loadDetail(id) {
   if (!DETAIL.has(id)) {
-    const p = fetch("/api/organizations/" + encodeURIComponent(id)).then(async (r) => {
+    const p = retryOnce(() => early("/api/organizations/" + encodeURIComponent(id)).then(async (r) => {
       if (r.status === 404) return null;
       if (!r.ok) throw new Error("/api/organizations " + r.status);
       const body = await r.json();
       return body.organization || body.org || null;
-    });
+    }));
     DETAIL.set(id, p);
     p.catch(() => DETAIL.delete(id));   // a failed load is asked again next time
   }
@@ -310,7 +326,7 @@ function eventFromApi(e) {
 export function loadData() {
   if (DATA_P) return DATA_P;
   DATA_P = (async () => {
-    const get = (u) => fetch(u).then((r) => { if (!r.ok) throw new Error(u + " " + r.status); return r.json(); });
+    const get = (u) => retryOnce(() => early(u).then((r) => { if (!r.ok) throw new Error(u + " " + r.status); return r.json(); }));
     // Grants and events are extra: if either is down, the directory still works.
     const soft = (u) => get(u).catch((e) => { console.error(e); return { items: [] }; });
     const [prog, gr, ev, st, sp] = await Promise.all([get("/api/listings"), soft("/api/grants"), soft("/api/events"), get("/data/states.json"), get("/data/sports.json")]);
@@ -796,7 +812,12 @@ function outsidePlace(p) {
   return /statewide/i.test(String(p.city || "")) ? `${stateName(p.state)}, statewide` : `${stateName(p.state)}, no single city listed`;
 }
 const placeFor = (p, ctx) => (ctx && ctx.outside) ? outsidePlace(p) : placeText(p);
-const runBy = (p) => (p.prog && p.orgName ? ` · ${p.orgName}` : "");
+// " · ACEing Autism" names who runs a program, unless the program already carries that name.
+const runBy = (p) => {
+  if (!p.prog || !p.orgName) return "";
+  const name = displayName(p.name).toLowerCase(), org = displayName(p.orgName).toLowerCase();
+  return name === org || name.startsWith(org + " ") || name.startsWith(org + ":") ? "" : ` · ${p.orgName}`;
+};
 const metaText = (p, ctx) => ((ctx && ctx.single) ? placeFor(p, ctx) : `${sportName(p.key)} · ${placeFor(p, ctx)}`) + runBy(p);
 
 /** Card for lists that mix sports. ctx: { where, stamp, wide, sameCity } */
@@ -867,9 +888,10 @@ export function emptyState({ title, body, actions = [], image } = {}) {
 }
 
 /** The letter, inline only (id="letter"). */
-export function letterBlock({ source = "page" } = {}) {
+export function letterBlock({ source = "page", heading = true } = {}) {
   const i = uid("em");
-  return `<section class="letter" id="letter" aria-labelledby="${i}-h"><h2 id="${i}-h" tabindex="-1">Get the letter</h2><p>New programs, grants and events, when there is something worth sending. No spam, unsubscribe any time.</p>
+  // heading: false on /letter, where the page's own h1 already says "Get the letter".
+  return `<section class="letter" id="letter" ${heading ? `aria-labelledby="${i}-h"><h2 id="${i}-h" tabindex="-1">Get the letter</h2>` : 'aria-label="Get the letter">'}<p>New programs, grants and events by email, only when there's something worth sending. Unsubscribe any time.</p>
 <form class="letter-form" data-letter data-send="/api/subscribe" data-source="asnm-letter-${esc(source)}" data-done="You're on the list. We'll write when there is something worth sending." novalidate><div class="field"><label for="${i}">Email</label><div class="letter-row"><input id="${i}" name="em" type="email" autocomplete="email" placeholder="name@example.com" required data-error="Enter an email address, like name@example.com."><button class="btn btn--ink" type="submit">Subscribe</button></div></div><input name="company" tabindex="-1" autocomplete="off" class="hpot" aria-hidden="true"><label class="check"><input type="checkbox" name="beta"><span>I want the first look at new features</span></label></form></section>`;
 }
 
@@ -981,7 +1003,7 @@ export function communityHeader({ kind = "sport", key, st, title, line, count, a
 
 /** The desktop aside. */
 export function aboutBox() {
-  return `<div class="abox"><h2>About this directory</h2><p>Free to use, no account needed. This directory is new and still growing.</p><a class="tlink" href="/about">How we check listings</a></div><div class="abox"><h2>Help build this</h2><div class="btns btns--stack">${btn("Add a program", "/add/program", "line")}${btn("Claim your organization", "/help", "line")}</div></div>`;
+  return `<div class="abox"><h2>About this directory</h2><p>Free, no account needed. Every listing shows when we last checked it.</p><a class="tlink" href="/about">How we check listings</a></div><div class="abox"><h2>Help build this</h2><div class="btns btns--stack">${btn("Add a program", "/add/program", "line")}${btn("Claim your organization", "/help", "line")}</div></div>`;
 }
 
 /** Inline place search (home, "place not found"): input with type-ahead, Search, Use my location. */
@@ -1028,13 +1050,13 @@ export function drawerList(active = "") {
     `<div class="dl-sec dl-doors"><h2 class="sr">Find</h2><ul>`
       + door("near", near, "Programs near you", place ? "Near " + place : "Search a city, state or ZIP")
       + door("sports", "/sports", "Sports", "Find programs by sport")
-      + door("grants", "/grants", "Grants", "Money for gear, travel and programs")
-      + door("events", "/events", "Events", "Clinics, tryouts and game days")
+      + door("grants", "/grants", "Grants", "Money for gear, travel and fees")
+      + door("events", "/events", "Events", "Clinics, tryouts, games and meetups")
       + door("resources", "/resources", "Guides", "Getting started, and life beyond sports")
       + `</ul></div>`,
     sec("Browse", item("states", "/states", "States") + item("organizations", "/organizations", "Organizations")),
     sec("Help build this", item("add-program", "/add/program", "Add a program") + item("add-organization", "/add/organization", "Add an organization") + item("manage", "/manage", "Manage your organization") + item("add-event", "/add/event", "Add an event") + item("help", "/help", "Claim your organization")),
-    sec("About this directory", item("about", "/about", "How we check listings") + item("letter", "/letter", "Get the letter")),
+    sec("About this directory", item("about", "/about", "How we check listings") + item("letter", "/letter", "Get the letter") + item("build", "/build", "Build with us")),
     `<div class="dl-sec dl-set"><button type="button" class="dl-theme" data-theme-toggle aria-pressed="${dark}"><span>Dark mode</span><span class="dl-switch" aria-hidden="true"></span></button></div>`,
   ].join("");
 }
@@ -1047,18 +1069,19 @@ function activeItem(active) {
   if (a === "state") return "states";
   if (a === "resources" || a.startsWith("resources/")) return "resources";
   if (a.startsWith("letter")) return "letter";
+  if (a === "build") return "build";
   return a;
 }
 
 export function footer() {
   const near = nearHref();
   const li = (label, href) => `<li><a href="${esc(href)}">${esc(label)}</a></li>`;
-  return `<div class="ft"><div class="ft-brand"><img src="/app/logo.svg" alt="" width="40" height="40"><div class="ft-brand-text"><p class="ft-name">Adaptive Sports Near Me</p><p>A free directory of adaptive sports programs, grants and events. We list programs; we don't run them.</p></div></div>
+  return `<div class="ft"><div class="ft-brand"><img src="/app/logo.svg" alt="" width="40" height="40"><div class="ft-brand-text"><p class="ft-name">Adaptive Sports Near Me</p><p>${esc(PRODUCT_LINE)}</p></div></div>
 <div class="ft-cols"><div><h2 class="ft-h">Find</h2><ul>${near ? li("Programs near you", near) : `<li><button type="button" data-open="search">Programs near you</button></li>`}${li("Sports", "/sports")}${li("Grants", "/grants")}${li("Events", "/events")}${li("Guides", "/resources")}</ul></div>
 <div><h2 class="ft-h">Browse</h2><ul>${li("States", "/states")}${li("Organizations", "/organizations")}</ul></div>
 <div><h2 class="ft-h">Help build this</h2><ul>${li("Add a program", "/add/program")}${li("Add an event", "/add/event")}${li("Claim your organization", "/help")}</ul></div>
-<div><h2 class="ft-h">About this directory</h2><ul>${li("How we check listings", "/about")}${li("Get the letter", "/letter")}${li("Accessibility", "/about")}</ul></div></div>
-<div class="ft-fine"><p class="ft-fine">Adaptive Sports Near Me is a project of <a href="https://adapttolife.org">Adapt To Life</a>. Check with each organization before you go.</p><p class="ft-fine">© 2026 <a href="https://adapttolife.org">Adapt To Life</a></p></div></div>`;
+<div><h2 class="ft-h">About this directory</h2><ul>${li("How we check listings", "/about")}${li("Get the letter", "/letter")}${li("Build with us", "/build")}${li("Accessibility", "/about#accessibility")}</ul></div></div>
+<div class="ft-fine"><p class="ft-fine">Made with <span role="img" aria-label="love">❤️</span> by <a href="https://adapttolife.org">Adapt To Life</a>. © 2026</p></div></div>`;
 }
 
 /** Render output for any unknown route, id or key. */
@@ -1272,7 +1295,7 @@ const ROUTES = [
   ["/grants", "grants"], ["/grants/:id", "grant"], ["/events", "events"],
   ["/add/program", "forms"], ["/add/organization", "forms"], ["/add/event", "forms"], ["/update/:id", "forms"],
   ["/manage", "manage"], ["/manage/organizations/:id", "manage"],
-  ["/help", "help"], ["/about", "help"], ["/resources/veteran-owned-businesses", "vob"], ["/resources", "help"], ["/letter", "help"], ["/letter/confirmed", "letter-confirmed"],
+  ["/help", "help"], ["/about", "help"], ["/resources/veteran-owned-businesses", "vob"], ["/resources", "help"], ["/letter", "help"], ["/build", "help"], ["/letter/confirmed", "letter-confirmed"],
 ];
 const OVERLAY_KEYS = new Set(["map", "open"]);
 const MODS = {}, CSS_DONE = {};
@@ -1368,11 +1391,14 @@ async function loadView(name) {
     return mod;
   } catch (e) { delete MODS[name]; throw e; }
 }
-/* The page when the directory or a page's code could not load: say so, offer to try again. */
+/* The page when the directory or a page's code could not load, after one quiet retry: say so,
+   offer to try again. Only a device that says it is offline hears about its connection; any
+   other failure is most likely ours, and the page never blames the visitor for it. */
 function loadError() {
+  const why = navigator.onLine === false ? "You're offline. Check your connection and try again." : "Something went wrong on our side. Try again in a moment.";
   return {
     title: "We couldn't load this page · Adaptive Sports Near Me",
-    html: `<section class="nf"><h1 tabindex="-1">We couldn't load this page</h1><p>Check your connection and try again.</p><div class="btns"><button type="button" class="btn btn--ink" data-retry>${icon("refresh-cw", 20)}<span>Try again</span></button>${btn("Go to the home page", "/", "line")}</div></section>`,
+    html: `<section class="nf"><h1 tabindex="-1">We couldn't load this page</h1><p>${why}</p><div class="btns"><button type="button" class="btn btn--ink" data-retry>${icon("refresh-cw", 20)}<span>Try again</span></button>${btn("Go to the home page", "/", "line")}</div></section>`,
   };
 }
 
@@ -1507,7 +1533,14 @@ async function render({ force = false } = {}) {
     scrollTo(0, Math.max(0, Math.min(prevY, top - ($("#top") ? $("#top").offsetHeight : 0))));   // below the sticky header
   } else {
     try { sessionStorage.removeItem(moreKey); } catch (_) {}
-    scrollTo(0, 0);
+    // A link to a section (/about#accessibility) lands on that section, below the sticky header.
+    const id = location.hash.length > 1 && !location.hash.startsWith("#/") ? decodeURIComponent(location.hash.slice(1)) : "";
+    const target = id ? document.getElementById(id) : null;
+    if (target && main.contains(target)) {
+      scrollTo(0, Math.max(0, Math.round(target.getBoundingClientRect().top + scrollY) - ($("#top") ? $("#top").offsetHeight : 0) - 16));
+      focusEl = $("h2, h3", target) || target;
+      if (!focusEl.hasAttribute("tabindex")) focusEl.setAttribute("tabindex", "-1");
+    } else scrollTo(0, 0);
   }
 
   if (!FIRST) {

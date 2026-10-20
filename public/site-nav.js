@@ -13,30 +13,8 @@
 (function () {
   "use strict";
 
-  // 11 sports — mirror of `const SPORTS` in public/index.html. Chip → /?sport=<key>.
-  var SPORTS = [
-    { key: "basketball", label: "Basketball" },
-    { key: "tennis", label: "Tennis" },
-    { key: "pickleball", label: "Pickleball" },
-    { key: "rugby", label: "Rugby" },
-    { key: "football", label: "Football" },
-    { key: "baseball", label: "Baseball" },
-    { key: "cycling", label: "Cycling" },
-    { key: "sledhockey", label: "Sled Hockey" },
-    { key: "skiing", label: "Skiing" },
-    { key: "waterskiing", label: "Water Ski" },
-    { key: "goalball", label: "Goalball" },
-  ];
-
   // Lucide placeholders are rendered automatically by /icons.js.
   var IC = {
-    compass: '<i stroke-width="2" data-lucide="compass" aria-hidden="true" focusable="false"></i>',
-    map: '<i stroke-width="2" data-lucide="map" aria-hidden="true" focusable="false"></i>',
-    calsm: '<i stroke-width="2" data-lucide="calendar-days" aria-hidden="true" focusable="false"></i>',
-    price: '<i stroke-width="2" data-lucide="tag" aria-hidden="true" focusable="false"></i>',
-    book: '<i stroke-width="2" data-lucide="book-open" aria-hidden="true" focusable="false"></i>',
-    plus: '<i stroke-width="2" data-lucide="plus" aria-hidden="true" focusable="false"></i>',
-    user: '<i stroke-width="2" data-lucide="user-round" aria-hidden="true" focusable="false"></i>',
     x: '<i stroke-width="2" data-lucide="x" aria-hidden="true" focusable="false"></i>',
   };
 
@@ -45,52 +23,32 @@
     var head =
       '<div class="drawer-head"><b>Adaptive Sports Near Me</b>' +
       '<button class="drawer-x" type="button" aria-label="Close menu">' + IC.x + "</button></div>";
-    var prof =
-      '<a class="drawer-profile" href="/help">' +
-      '<span class="dp-av">' + IC.user + "</span>" +
-      '<span class="dp-meta"><span class="dp-name">Run a program?</span>' +
-      '<span class="dp-sub">Claim it or add it, free</span></span></a>';
-    // Newsletter CTA — the drawer's top slot (email-first). Standalone form + handler (see wire()).
+    // The same groups, in the same order, as the app's menu (drawerList in public/app/app.js).
+    var row = function (href, label) { return '<a class="drawer-row-main" href="' + href + '"><span class="drawer-row-label">' + label + "</span></a>"; };
+    var group = function (title, rows) { return '<div class="drawer-div"></div><div class="drawer-sec drawer-util"><p class="eyebrow">' + title + "</p>" + rows + "</div>"; };
+    var find =
+      '<div class="drawer-sec drawer-util">' +
+      row("/", "Programs near you") + row("/sports", "Sports") + row("/grants", "Grants") + row("/events", "Events") + row("/resources", "Guides") +
+      "</div>";
+    var browse = group("Browse", row("/states", "States") + row("/organizations", "Organizations"));
+    var build = group("Help build this", row("/add/program", "Add a program") + row("/add/event", "Add an event") + row("/help", "Claim your organization"));
+    var about = group("About this directory", row("/about", "How we check listings") + row("/blog", "Blog") + row("/build", "Build with us") +
+      '<a class="drawer-row-main" href="https://sign.adapttolife.org/waiver?source=asnm"><span class="drawer-row-label">Sign waiver</span></a>');
+    // The letter: the same words as the app's letter block.
     var news =
-      '<div class="drawer-news">' +
-      '<p class="dn-eyebrow">The newsletter</p>' +
-      '<p class="dn-head">Programs, events &amp; funding near you.</p>' +
+      '<div class="drawer-div"></div><div class="drawer-news">' +
+      '<p class="dn-eyebrow">Get the letter</p>' +
+      "<p class=\"dn-head\">New programs, grants and events, only when there's something worth sending.</p>" +
       '<form class="cta-sub" novalidate>' +
       '<input class="hp" name="company" tabindex="-1" autocomplete="off" aria-hidden="true">' +
-      '<input name="em" type="email" autocomplete="email" placeholder="you@email.com" aria-label="Email address">' +
-      '<button class="cta-go" type="submit">Get updates</button>' +
+      '<input name="em" type="email" autocomplete="email" placeholder="name@example.com" aria-label="Email">' +
+      '<button class="cta-go" type="submit">Subscribe</button>' +
       '<div class="cf-turnstile" data-sitekey="0x4AAAAAADr2WPepRgjp8g-R"></div>' +
       '<div class="cta-msg" aria-live="polite"></div>' +
       "</form>" +
-      '<p class="dn-fine">Free. No spam.</p>' +
+      '<p class="dn-fine">Unsubscribe any time.</p>' +
       "</div>";
-    var dest =
-      '<div class="drawer-sec drawer-util">' +
-      '<a class="drawer-row-main" href="/">' + IC.compass + '<span class="drawer-row-label">Programs near you</span></a>' +
-      '<a class="drawer-row-main" href="/states">' + IC.map + '<span class="drawer-row-label">States</span></a>' +
-      '<a class="drawer-row-main" href="/events">' + IC.calsm + '<span class="drawer-row-label">Events</span></a>' +
-      '<a class="drawer-row-main" href="/grants">' + IC.price + '<span class="drawer-row-label">Grants</span></a>' +
-      '<a class="drawer-row-main" href="/blog">' + IC.book + '<span class="drawer-row-label">Blog</span></a>' +
-      "</div>";
-    var contribute =
-      '<div class="drawer-div"></div><div class="drawer-sec drawer-util">' +
-      '<a class="drawer-row-main" href="/add/program">' + IC.plus + '<span class="drawer-row-label">Add a program</span></a>' +
-      "</div>";
-    var chipList = '<a class="drawer-chip" href="/sports">All sports</a>' +
-      SPORTS.map(function (s) {
-        return '<a class="drawer-chip" href="/sports/' + s.key + '">' + s.label + "</a>";
-      }).join("");
-    var chips =
-      '<div class="drawer-div"></div><div class="drawer-sec"><p class="eyebrow">Browse by sport</p>' +
-      '<div class="drawer-chips">' + chipList + "</div></div>";
-    var about =
-      '<div class="drawer-div"></div><div class="drawer-sec drawer-about">' +
-      '<a href="/about">How we check listings</a>' +
-      '<a href="https://sign.adapttolife.org/waiver?source=asnm">Sign waiver</a>' +
-      "</div>";
-    // Profile block moves to the bottom (just above About), fronted by a divider.
-    var profileBlock = '<div class="drawer-div"></div>' + prof;
-    return head + news + dest + chips + contribute + profileBlock + about;
+    return head + find + browse + build + about + news;
   }
 
   // These pages do not load Turnstile up front and the drawer is injected after page
@@ -220,13 +178,13 @@
       var em = (form.em && form.em.value || "").trim().replace(/^mailto:/i, "");
       if (form.em) form.em.value = em;
       if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)) {
-        if (msg) { msg.textContent = "Please enter a valid email."; msg.className = "cta-msg err"; }
+        if (msg) { msg.textContent = "Enter an email address, like name@example.com."; msg.className = "cta-msg err"; }
         return;
       }
-      if (btn) { btn.disabled = true; btn.textContent = "Signing up..."; }
+      if (btn) { btn.disabled = true; btn.textContent = "Sending…"; }
       var body = new URLSearchParams(new FormData(form));
       waitForToken(form, 8000).then(function (tok) {
-        if (!tok) return { ok: false, error: "We couldn’t confirm you’re human. Please try again." };
+        if (!tok) return { ok: false, error: "We couldn't send that. Reload the page and try again." };
         body.set("cf_token", tok);
         return fetch("/api/subscribe", {
           method: "POST",
@@ -239,15 +197,15 @@
           if (res && res.ok) {
             form.innerHTML =
               '<div class="cta-done"><i stroke-width="2.6" data-lucide="check" aria-hidden="true" focusable="false"></i>' +
-              "<span>You’re in — look for a welcome email.</span></div>";
+              "<span>Almost done. Check your inbox and tap Confirm.</span></div>";
           } else {
-            if (btn) { btn.disabled = false; btn.textContent = "Get updates"; }
-            if (msg) { msg.textContent = (res && res.error) || "Something went wrong. Please try again."; msg.className = "cta-msg err"; }
+            if (btn) { btn.disabled = false; btn.textContent = "Subscribe"; }
+            if (msg) { msg.textContent = (res && res.error) || "We couldn't send that. Check your connection and try again."; msg.className = "cta-msg err"; }
           }
         })
         .catch(function () {
-          if (btn) { btn.disabled = false; btn.textContent = "Get updates"; }
-          if (msg) { msg.textContent = "Something went wrong. Please try again."; msg.className = "cta-msg err"; }
+          if (btn) { btn.disabled = false; btn.textContent = "Subscribe"; }
+          if (msg) { msg.textContent = "We couldn't send that. Check your connection and try again."; msg.className = "cta-msg err"; }
         });
     });
   }

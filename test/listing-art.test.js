@@ -162,3 +162,14 @@ test("listing sentences only name a source we know, and say schedules change", (
   assert.equal(L.verifiedText("September 2026"), "A person on our team checked this program against an official source in September 2026. Schedules change, so check the website before you go.");
   assert.ok(!/public directory/.test(L.unverifiedText(null, false)), "never guess where a listing came from");
 });
+
+test("a program row names who runs it only when its own name doesn't already", async () => {
+  const src = (await import("node:fs")).readFileSync(new URL("../public/app/app.js", import.meta.url), "utf8");
+  const body = src.slice(src.indexOf("const runBy = (p) => {"), src.indexOf("};", src.indexOf("const runBy = (p) => {")) + 2);
+  const displayName = (s) => String(s || "").trim();
+  const runBy = new Function("displayName", body + "\nreturn runBy;")(displayName);
+  assert.equal(runBy({ prog: true, name: "ACEing Autism", orgName: "ACEing Autism" }), "");
+  assert.equal(runBy({ prog: true, name: "ACEing Autism Flagstaff", orgName: "ACEing Autism" }), "");
+  assert.equal(runBy({ prog: true, name: "Saturday tennis clinic", orgName: "BORP" }), " · BORP");
+  assert.equal(runBy({ prog: false, name: "BORP", orgName: "BORP" }), "");
+});
