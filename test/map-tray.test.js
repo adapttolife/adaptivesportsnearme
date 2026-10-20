@@ -1,10 +1,6 @@
-import { cssIncludes, compactCss } from './helpers/css.js';
 // Google Maps two-height tray: peek opens, expand, dismiss, second pin updates.
 import test from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
-import { fileURLToPath } from "node:url";
-import { dirname, join } from "node:path";
 import {
   PIN_HIT_PX, TRAY_MS, SWIPE_DISMISS_PX, PEEK_VH, EXPANDED_VH,
   DESKTOP_MIN_PX, DESKTOP_PANEL_WIDTH_PX, DESKTOP_PANEL_INSET_PX, DESKTOP_PANEL_CLASS,
@@ -12,10 +8,6 @@ import {
   swipeDismisses, snapHeight, trayAction, trayPills, trayMetaLine, trayChrome,
   trayPeekHtml, trayExpandedHtml, trayHtml,
 } from "../src/map-tray.js";
-
-const root = join(dirname(fileURLToPath(import.meta.url)), "..");
-const styles = readFileSync(new URL("../public/styles.css", import.meta.url), "utf8");
-const index = readFileSync(join(root, "public/index.html"), "utf8");
 
 const RENO = {
   id: "fc478a1c-b3a0-4828-84bf-3dd45f6dec82",
@@ -31,6 +23,7 @@ const RENO = {
   ages: "Adult",
   phone: "775-467-2025",
   email: "reno@3rdshotpickleball.com",
+  publicityConsent: true,
   verification: "unverified",
   lastChecked: "2026-08-21T19:55:06Z",
 };
@@ -167,10 +160,11 @@ test("peek HTML: title, city · sport, Visit/Call/Email pills, handle — no pho
   assert.deepEqual(trayPills(KANSAS).map((p) => p.label), ["Open listing"]);
 });
 
-test("expanded HTML reuses the listing sheet: photo, title, city, desc, facts, Visit, nearby rail", () => {
+test("expanded HTML reuses the listing sheet: symbol, title, city, desc, facts, Visit, about, nearby rail", () => {
   const html = trayExpandedHtml(RENO, NEARBY);
-  assert.ok(html.includes("/assets/sport-photos/pickleball.jpg"));
-  assert.ok(html.includes("has-dphoto"));
+  assert.ok(html.includes("/emblems/sports/pickleball.svg"));
+  assert.ok(html.includes("has-symbol"));
+  assert.ok(html.includes("About this listing"));
   assert.ok(html.includes("<h1>3rd Shot Pickleball Reno Adaptive</h1>"));
   assert.ok(html.includes("Reno, NV"));
   assert.ok(html.includes("Sunday adaptive"));
@@ -183,7 +177,6 @@ test("expanded HTML reuses the listing sheet: photo, title, city, desc, facts, V
   assert.ok(html.includes("class=\"frow-scroll\""));
   assert.ok(html.includes("Sunflower Adaptive Cycling"));
   assert.ok(!html.includes("Unverified"));
-  assert.ok(!html.includes("Last checked"));
   assert.ok(!html.includes("Overview"));
   assert.ok(!html.includes(">Photos<"));
   assert.ok(!html.includes("← Directory"));
@@ -195,41 +188,13 @@ test("expanded HTML reuses the listing sheet: photo, title, city, desc, facts, V
   assert.ok(full.includes("<h1>3rd Shot Pickleball Reno Adaptive</h1>"));
 });
 
-test("pins are 44px hit targets; tray slides 280ms; two heights are wired on /maps", () => {
+// The old single-page app wired these into public/index.html and styles.css;
+// those wiring checks left with it. The module's own constants stay pinned.
+test("pins are 44px hit targets; tray slides 280ms; desktop is a 420px left column from 721px", () => {
   assert.equal(PIN_HIT_PX, 44);
   assert.equal(TRAY_MS, 280);
   assert.equal(PEEK_VH, 35);
   assert.equal(EXPANDED_VH, 90);
-  assert.ok(cssIncludes(styles, "width:var(--tap)") && cssIncludes(styles, "height:var(--tap)"));
-  assert.ok(cssIncludes(styles, ".mdot-mark") || index.includes("mdot-mark"));
-  assert.ok(index.includes("id=\"mapTray\"") || index.includes("id='mapTray'"));
-  assert.ok(index.includes("function openMapTray("));
-  assert.ok(index.includes("function closeMapTray("));
-  assert.ok(index.includes("function selectMapPin("));
-  assert.ok(index.includes("function expandMapTray("));
-  assert.ok(index.includes("function setMapTrayHeight("));
-  assert.ok(index.includes("function snapMapTray("));
-  assert.ok(index.includes("PEEK_VH=35"));
-  assert.ok(index.includes("EXPANDED_VH=90"));
-  assert.ok(cssIncludes(styles, "height:35%"));
-  assert.ok(cssIncludes(styles, "height:90%"));
-  assert.ok(cssIncludes(styles, "transform") && cssIncludes(styles, "280ms"));
-  assert.ok(index.includes("tray-pills"));
-  assert.ok(index.includes("tray-full sheet"));
-  assert.ok(index.includes("sheetHero(p)"));
-  assert.ok(index.includes("denseRows(p)"));
-  assert.ok(index.includes("relatedRow(p)"));
-  assert.ok(!index.includes("d.addEventListener('click',()=>{ state.section='program'; state.programId=p.id; render(); });"));
-  assert.ok(index.includes("selectMapPin(p"));
-  assert.ok(index.includes("state.section='program'; state.programId=t.getAttribute('data-prog')"));
-  assert.ok(index.includes("function resolveNear("));
-  assert.ok(index.includes("state.nearZip") && index.includes("state.nearCity"));
-  assert.ok(!index.includes("Unverified"));
-  assert.ok(!index.includes("Last checked"));
-  assert.ok(!index.includes("class=\"overview\""));
-});
-
-test("desktop is a full-height left column (420px), phone stays a bottom tray", () => {
   assert.equal(DESKTOP_MIN_PX, 721);
   assert.equal(DESKTOP_PANEL_WIDTH_PX, 420);
   assert.equal(DESKTOP_PANEL_INSET_PX, 24);
@@ -237,47 +202,4 @@ test("desktop is a full-height left column (420px), phone stays a bottom tray", 
   assert.equal(trayChrome(720), "sheet");
   assert.equal(trayChrome(721), "panel");
   assert.equal(trayChrome(1280), "panel");
-
-  assert.ok(index.includes('class="map-tray panel"'));
-  assert.ok(cssIncludes(styles, "width:420px"));
-  assert.ok(index.includes("function isDesktopTray("));
-  assert.ok(index.includes("function resizeLiveMap("));
-  assert.ok(index.includes("class=\"tray-x\"") || index.includes("class='tray-x'") || index.includes('class="tray-x"'));
-  assert.ok(index.includes("tray-pills-full"));
-  assert.ok(index.includes("desktop ? 'expanded' : 'peek'"));
-
-  // Default (phone) rules stay a full-width bottom sheet. Do not change.
-  const mobile = compactCss(styles).match(/\.map-tray\{([^}]+)\}/);
-  assert.ok(mobile, "base .map-tray rule");
-  assert.match(mobile[1], /left:0/);
-  assert.match(mobile[1], /right:0/);
-  assert.match(mobile[1], /bottom:0/);
-  assert.match(mobile[1], /height:35%/);
-  assert.ok(cssIncludes(styles, ".map-tray.expanded{height:90%;}"));
-  assert.ok(cssIncludes(styles, ".map-tray.expanded .tray-peek{display:none;}"));
-  assert.ok(cssIncludes(styles, ".map-tray:not(.expanded) .tray-full{display:none;}"));
-
-  // Desktop media query is a FULL-HEIGHT left sidebar, not a 160px floating card.
-  const deskStart = styles.indexOf("/* Desktop: Google Maps WEB left column.");
-  assert.ok(deskStart >= 0, "desktop column comment");
-  const desk = compactCss(styles.slice(deskStart, deskStart + 4000));
-  assert.ok(desk.includes("@media(min-width:721px)"));
-  assert.ok(desk.includes("width:420px"));
-  assert.ok(desk.includes("height:100%"));
-  assert.ok(desk.includes("left:0"));
-  assert.ok(desk.includes("right:auto"));
-  assert.ok(desk.includes("top:0"));
-  assert.ok(desk.includes("bottom:0"));
-  assert.ok(desk.includes("border-radius:0"));
-  assert.ok(!desk.includes("height:auto"));
-  assert.ok(!desk.includes("max-height:calc(100% - 48px)"));
-  assert.ok(desk.includes(".map-tray .tray-x{display:flex;}"));
-  assert.ok(desk.includes(".map-tray .tray-handle{display:none;}"));
-  assert.ok(desk.includes(".map-tray.open .tray-peek{display:none;}"));
-  assert.ok(desk.includes(".map-tray.open .tray-full"));
-  assert.ok(desk.includes("padding:0 var(--space-page)"));
-  assert.ok(desk.includes("flex-direction:column"));
-  assert.ok(desk.includes("#livemap{left:420px;}"));
-  assert.ok(desk.includes("tray-expanded::after{display:none;}"));
-  assert.ok(!desk.includes("left:0;right:0;bottom:0"));
 });

@@ -1,0 +1,21 @@
+# Every pull request and every push to staging or main runs the tests, so a check like
+# test/no-contact-in-data-files.test.js stops a change before it merges, not after.
+name: Tests
+on:
+  pull_request:
+  push:
+    branches: [staging, main]
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm test

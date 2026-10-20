@@ -1,0 +1,163 @@
+/* Sports index (6.4, WP-B). Scoped under .v-sports.
+   PROMOTE: .v-sports .sx sport tile. */
+.v-sports .sx-head {
+	padding-top: 24px;
+}
+
+.v-sports .sx-sub {
+	margin-top: 8px;
+	font-size: 17px;
+	color: var(--graphite);
+}
+
+@media (min-width: 768px) {
+	.v-sports .sx-head {
+		padding-top: 40px;
+	}
+	.v-sports .sx-sub {
+		font-size: 18px;
+	}
+}
+
+.v-sports .sx-sec {
+	margin-top: 32px;
+}
+
+.v-sports .sx-sec--none {
+	margin-top: var(--sec);
+	padding-top: 32px;
+	border-top: 1px solid var(--line);
+}
+
+.v-sports .sx-sec h2 {
+	font-size: var(--fs-h2);
+}
+
+.v-sports .sx-secsub {
+	margin-top: 4px;
+	font-size: 17px;
+	color: var(--graphite);
+}
+
+.v-sports .sx-grid {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 8px 8px;
+	margin-top: 16px;
+}
+
+@media (min-width: 600px) {
+	.v-sports .sx-grid {
+		grid-template-columns: repeat(4, minmax(0, 1fr));
+	}
+}
+
+@media (min-width: 900px) {
+	.v-sports .sx-grid {
+		grid-template-columns: repeat(5, minmax(0, 1fr));
+	}
+}
+
+@media (min-width: 1100px) {
+	.v-sports .sx-grid {
+		grid-template-columns: repeat(6, minmax(0, 1fr));
+		gap: 12px;
+	}
+}
+
+.v-sports .sx-item {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	min-width: 0;
+}
+
+.v-sports .sx {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 8px;
+	width: 100%;
+	min-height: 44px;
+	padding: 12px 4px 12px;
+	border-radius: var(--r-l);
+	text-decoration: none;
+	color: var(--ink);
+	text-align: center;
+	transition: background-color var(--ease);
+}
+
+@media (hover: hover) {
+	.v-sports .sx:hover {
+		background: color-mix(in srgb, var(--t) 50%, var(--paper));
+	}
+	.v-sports .sx:hover .av {
+		scale: 1.06;
+	}
+}
+
+.v-sports .sx:focus-visible {
+	box-shadow: var(--focus);
+	border-radius: var(--r-l);
+}
+
+.v-sports .sx-name {
+	font-size: 15px;
+	font-weight: 600;
+	line-height: 1.25;
+	overflow-wrap: break-word;
+	text-wrap: balance;
+}
+
+.v-sports .sx-also {
+	margin-top: -6px;
+	padding: 0 4px 12px;
+	font-size: 15px;
+	line-height: 1.6;
+	color: var(--graphite);
+	text-align: center;
+	text-wrap: balance;
+}
+
+.v-sports .sx-also a {
+	white-space: nowrap;
+}
+
+/* 320px: a long sibling name ("Equestrian vaulting") may break, so the grid never scrolls sideways. */
+@media (max-width: 359px) {
+	.v-sports .sx-also {
+		min-width: 0;
+		overflow-wrap: anywhere;
+	}
+	.v-sports .sx-also a {
+		white-space: normal;
+	}
+}
+
+.v-sports .sx-also a,
+.v-sports .sx-sibs a {
+	display: inline;
+	padding: 13px 0;
+	font-weight: 600;
+	color: var(--ink);
+	text-underline-offset: 3px;
+	-webkit-box-decoration-break: clone;
+	box-decoration-break: clone;
+}
+
+.v-sports .sx-sibs {
+	margin-top: 16px;
+	font-size: 17px;
+	line-height: 1.9;
+	color: var(--graphite);
+}
+
+.v-sports .sx-sec--none .btns {
+	margin-top: 20px;
+}
+
+@media (max-width: 599px) {
+	.v-sports .sx-sec--none .btns .btn {
+		width: 100%;
+	}
+}

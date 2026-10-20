@@ -1,0 +1,183 @@
+/* Veteran-owned businesses. Scoped under .v-vob. Black hero, white athletes. */
+.v-vob .vb-hero {
+	position: relative;
+	overflow: hidden;
+	container-type: inline-size;
+	margin-inline: calc(-1 * var(--gut));
+	padding: 28px var(--gut) 26px;
+	background: #1a1a1a;
+	color: #f3f3f3;
+}
+
+.v-vob .vb-hero h1 {
+	position: relative;
+	max-width: calc(100% - max(38cqw, 260px));
+	color: #f3f3f3;
+}
+
+.v-vob .vb-kicker {
+	position: relative;
+	margin-top: 12px;
+	font-size: 18px;
+	color: #e7e3da;
+	max-width: 26ch;
+}
+
+/* The athletes' box: inside the margins, beside the title; drawings pinned to its right edge. */
+.v-vob .vb-art {
+	position: absolute;
+	right: var(--gut);
+	top: 28px;
+	width: 38cqw;
+	max-width: 260px;
+	height: 150px;
+	container-type: size;
+	pointer-events: none;
+	--A: 0.86;
+	--Hm: 0.9;
+	--Wm: 0.98;
+	--pr: 0px;
+}
+
+@media (min-width: 768px) {
+	.v-vob .vb-art {
+		top: 50%;
+		translate: 0 -50%;
+		height: 200px;
+	}
+}
+
+.v-vob .vb-intro {
+	margin-top: 18px;
+}
+
+.v-vob .vb-intro p + p {
+	margin-top: 8px;
+}
+
+.v-vob .vb-cards {
+	display: grid;
+	gap: 10px;
+}
+
+@media (min-width: 768px) {
+	.v-vob .vb-cards {
+		grid-template-columns: repeat(3, 1fr);
+	}
+	.v-vob .vb-states {
+		grid-template-columns: repeat(2, 1fr);
+	}
+}
+
+.v-vob .vb-card {
+	border: 2px solid var(--ink);
+	border-radius: var(--r-l);
+	padding: 16px;
+}
+
+.v-vob .vb-card h3 {
+	font-size: 19px;
+}
+
+.v-vob .vb-card p {
+	margin-top: 4px;
+	color: var(--graphite);
+	font-size: 16px;
+}
+
+.v-vob .vb-link {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	font-weight: 800;
+	color: var(--ink);
+	text-decoration: underline;
+	text-underline-offset: 3px;
+}
+
+.v-vob .vb-pick {
+	margin-top: 6px;
+	max-width: 520px;
+}
+
+.v-vob .vb-pick label {
+	display: block;
+	font-weight: 700;
+	margin-bottom: 6px;
+}
+
+.v-vob .vb-row {
+	display: flex;
+	gap: 8px;
+}
+
+.v-vob .vb-row select {
+	flex: 1;
+	min-width: 0;
+	height: 52px;
+}
+
+.v-vob .vb-row .btn {
+	height: 52px;
+}
+
+.v-vob .vb-states {
+	display: grid;
+	gap: 0 18px;
+	margin-top: 16px;
+}
+
+.v-vob .vb-st {
+	padding: 12px 0;
+	border-top: 1px solid var(--line);
+	scroll-margin-top: 88px;
+}
+
+.v-vob .vb-st h3 {
+	font-size: 18px;
+}
+
+.v-vob .vb-st .vb-link {
+	display: flex;
+}
+
+.v-vob .vb-nv {
+	color: var(--muted);
+	font-size: 15px;
+	margin-top: 4px;
+}
+
+.v-vob .vb-fine {
+	margin-top: 18px;
+	font-size: 15px;
+	color: var(--muted);
+}
+
+.v-vob .vb-back {
+	margin-top: 18px;
+}
+
+/* Karen: "If we don't verify the biz lists... say at the top." */
+.v-vob .vb-note {
+	margin-top: 12px;
+	padding: 12px 14px;
+	border-left: 4px solid #f6b700;
+	background: var(--sun-soft);
+	font-size: 16px;
+}
+
+.v-vob .vb-scope {
+	color: var(--graphite);
+	font-size: 16px;
+	margin-bottom: 12px;
+}
+
+/* Karen's emphasis from her email: the kicker and the state line bold, the note in italics. */
+.v-vob .vb-kicker {
+	font-weight: 800;
+	color: #f3f3f3;
+}
+
+.v-vob .vb-note {
+	font-style: italic;
+}

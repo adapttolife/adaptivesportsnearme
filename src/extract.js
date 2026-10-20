@@ -174,7 +174,7 @@ export function extractContactLinks(html, baseUrl) {
     return [];
   }
 
-  const anchorRe = /<a\b[^>]*href\s*=\s*(["'])(.*?)\1[^>]*>([\s\S]*?)<\/a>/gi;
+  const anchorRe = /<a\b[^>]*href\s*=\s*(["'])(.*?)\1[^>]*>([\s\S]*?)<\/a\s*>/gi;
   const out = [];
   const seen = new Set();
   let m;

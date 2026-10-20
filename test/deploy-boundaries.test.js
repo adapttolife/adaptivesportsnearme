@@ -66,3 +66,19 @@ test('staging alias accepts staging-configured requests but blocks production-co
     const response = await app.fetch(request(), load('wrangler.json').vars, {});
     assert.equal(response.status, 403);
 });
+
+// Moved from map-navigation.test.js (the rest of that file tested the old
+// single-page app's map toggle and is gone with it).
+test('remote development connects only to staging D1 and keeps production config unchanged', () => {
+    const dev = load('wrangler.dev.json'), preview = load('wrangler.preview.json'), prod = load('wrangler.json');
+    assert.deepEqual(dev, { ...preview, d1_databases: preview.d1_databases.map(db => ({ ...db, remote: true })) });
+    for (const db of dev.d1_databases) {
+        assert.equal(db.database_name, 'asnm-db-staging');
+        assert.ok(!prod.d1_databases.some(p => p.database_id === db.database_id));
+    }
+    const { scripts } = load('package.json');
+    assert.match(scripts['dev:staging'], /dev --config wrangler.dev.json/);
+    assert.doesNotMatch(scripts['dev:staging'], /--local\b|--remote\b/);
+    assert.match(scripts['dev:local'], /--local/);
+    assert.match(scripts['deploy:staging'], /versions upload.*--preview-alias staging/);
+});

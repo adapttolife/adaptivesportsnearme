@@ -1,7 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { readdirSync } from "node:fs";
-import { listingVisual, SPORT_PHOTOS } from "../src/visuals.js";
+import { listingVisual } from "../src/visuals.js";
 import { grantPageTemplate } from "../src/grant-page.js";
 import { programPageTemplate } from "../src/program-page.js";
 
@@ -10,26 +9,27 @@ test("listingVisual: real photo wins", () => {
   assert.deepEqual(v, { kind: "photo", src: "/photos/team.jpg" });
 });
 
-test("listingVisual: the launch sports show their action photo, not the scene", () => {
-  assert.deepEqual(listingVisual({ sport: "basketball" }, "program"), { kind: "photo", src: "/assets/sport-photos/basketball.jpg" });
-  assert.deepEqual(listingVisual({ sport: "cycling" }, "program"), { kind: "photo", src: "/assets/sport-photos/cycling.jpg" });
-  assert.deepEqual(listingVisual({ sport: "skiing" }, "program"), { kind: "photo", src: "/assets/sport-photos/skiing.jpg" });
-  // Every sport with a photo on disk resolves to it — no silhouette scene on a launch sport.
-  for (const sport of ["basketball", "tennis", "pickleball", "rugby", "football", "baseball", "cycling", "sledhockey", "skiing", "waterskiing", "goalball"]) {
-    assert.deepEqual(listingVisual({ sport }, "program"), { kind: "photo", src: `/assets/sport-photos/${sport}.jpg` }, sport);
+// Alec, 2026-10-13: launch on symbols and icons, never wait on images. Program
+// listings wear their sport's image from Alec's flat set (2026-10-14); the stock
+// action photos and the silhouette scenes stay off listings.
+test("listingVisual: program sports wear their flat image, not a stock photo or scene", () => {
+  assert.deepEqual(listingVisual({ sport: "basketball" }, "program"), { kind: "symbol", src: "/emblems/sports/basketball.svg", key: "basketball", tone: "court" });
+  assert.deepEqual(listingVisual({ sport: "rowing" }, "program"), { kind: "symbol", src: "/emblems/sports/rowing.svg", key: "rowing", tone: "water" });
+  for (const sport of ["basketball", "tennis", "pickleball", "rugby", "football", "baseball", "sledhockey", "waterskiing", "goalball", "swimming", "climbing", "curling", "sailing"]) {
+    const v = listingVisual({ sport }, "program");
+    assert.equal(v.kind, "symbol", sport);
+    assert.equal(v.src, `/emblems/sports/${sport}.svg`, sport);
   }
+  for (const sport of ["soccer", "skiing", "cycling"]) assert.equal(listingVisual({ sport }, "program").src, `/emblems/sports/${sport}.svg`, sport);
+  assert.equal(listingVisual({ sport: "handcycling" }, "program").src, "/emblems/sports/handcycling.svg");
 });
 
-test("listingVisual: a sport with no photo keeps its scene; no-sport stays a stamp card", () => {
-  assert.deepEqual(listingVisual({ sport: "rowing" }, "program"), { kind: "scene", src: "/scenes/rowing-lake.jpg" });
-  assert.deepEqual(listingVisual({ sport: "swimming" }, "program"), { kind: "scene", src: "/scenes/swimming-pool.jpg" });
-  assert.deepEqual(listingVisual({ sport: "climbing" }, "program"), { kind: "scene", src: "/scenes/climbing-gym.jpg" });
-  // A listing with no sport must still get a picture: the house-mark stamp, never src:null.
-  assert.deepEqual(listingVisual({ sport: null }, "program"), { kind: "stamp", src: "/emblems/adaptive.svg" });
-  assert.deepEqual(listingVisual({ sport: "soccer" }, "program"), { kind: "stamp", src: "/emblems/adaptive.svg" });
-  for (const item of [{}, { sport: null }, { sport: "surfing" }, { sport: "curling" }, { sport: "beepbaseball" }]) {
-    assert.ok(listingVisual(item, "program").src, "every program listing resolves to a visual");
+test("listingVisual: a listing with no sport we can name wears the multi-sport image", () => {
+  for (const item of [{}, { sport: null }, { sport: "frisbee" }, { sportLabel: "Multi-Sport" }]) {
+    assert.deepEqual(listingVisual(item, "program"), { kind: "symbol", src: "/emblems/sports/multi.svg", key: null, tone: "house" });
   }
+  assert.equal(listingVisual({ sport: "beepbaseball" }, "program").src, "/emblems/sports/beepbaseball.svg");
+  assert.equal(listingVisual({ sport: "softball" }, "program").src, "/emblems/sports/softball.svg");
 });
 
 test("listingVisual: athlete grants use grant-track; program grants use program-grant-gym", () => {
@@ -75,16 +75,4 @@ test("grant page keeps Athlete / Program tags on the grant-track hero", () => {
   assert.ok(program.includes("/scenes/program-grant-gym.jpg"));
   assert.ok(program.includes("Program grant"));
   assert.ok(!program.includes("Athlete grant"));
-});
-
-// The set and the disk have to agree: a key with no file gives the card a broken
-// image that falls back to the stamp, which is the look we just took out.
-test("every sport photo the resolver promises exists on disk, and none is orphaned", () => {
-  const onDisk = new Set(
-    readdirSync(new URL("../public/assets/sport-photos/", import.meta.url))
-      .filter((f) => f.endsWith(".jpg"))
-      .map((f) => f.replace(/\.jpg$/, ""))
-  );
-  for (const sport of SPORT_PHOTOS) assert.ok(onDisk.has(sport), `missing photo file for ${sport}`);
-  for (const file of onDisk) assert.ok(SPORT_PHOTOS.has(file), `photo ${file}.jpg is never used`);
 });

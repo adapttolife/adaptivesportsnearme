@@ -2,6 +2,7 @@
 // location, authentication, or errors. Entries expire within five minutes.
 const PUBLIC_PARAMS = {
   '/api/directory': [],
+  '/api/listings': [],
   '/api/programs': ['sport', 'state', 'q', 'zip', 'city', 'lat', 'lng', 'radius', 'limit', 'offset'],
   '/api/stats': [],
   '/api/grants': ['audience'],
@@ -13,7 +14,7 @@ export async function cachedDirectoryResponse(request, env, load, cache = global
   const params = PUBLIC_PARAMS[url.pathname];
   if (request.method !== 'GET' || !env.DB || !params || !cache) return load();
   const keyUrl = new URL(url.origin);
-  keyUrl.pathname = `/__directory-cache/v1/${encodeURIComponent(env.ENV_NAME || 'production')}${url.pathname}`;
+  keyUrl.pathname = `/__directory-cache/v3/${encodeURIComponent(env.ENV_NAME || 'production')}${url.pathname}`;
   // Ignore irrelevant tracking parameters, preserving the first value just as
   // URLSearchParams.get does in the handlers. Never key on visitor credentials.
   for (const name of params) if (url.searchParams.has(name)) keyUrl.searchParams.set(name, url.searchParams.get(name));
@@ -22,27 +23,41 @@ export async function cachedDirectoryResponse(request, env, load, cache = global
     const hit = await cache.match(key);
     if (hit) return hit;
   } catch { /* Cache availability must not break the directory. */ }
+  // Coalesce simultaneous misses on buffered bytes, never on a Response. A Response's body belongs to
+  // the request that loaded it; another request reading or cloning it throws "Cannot perform I/O on
+  // behalf of a different request". Every caller builds its own Response from the shared bytes.
   let pending = inFlight.get(env.DB);
   if (!pending) inFlight.set(env.DB, pending = new Map());
-  if (pending.has(key.url)) return (await pending.get(key.url)).clone();
-  const work = fill();
-  pending.set(key.url, work);
-  try { return (await work).clone(); }
-  finally { pending.delete(key.url); }
+  let work = pending.get(key.url);
+  if (!work) {
+    work = fill();
+    pending.set(key.url, work);
+    work.then(() => pending.delete(key.url), () => pending.delete(key.url));
+  }
+  return toResponse(await work);
 
   async function fill() {
     const response = await load();
+    const buffered = {
+      body: NULL_BODY.has(response.status) ? null : await response.arrayBuffer(),
+      init: { status: response.status, statusText: response.statusText, headers: [...response.headers] },
+    };
     if (response.status === 200 && !response.headers.has('Set-Cookie') &&
         !/private|no-store/i.test(response.headers.get('Cache-Control') || '')) {
       try {
-        const stored = new Response(response.clone().body, response);
+        const stored = toResponse(buffered);
         stored.headers.set('Cache-Control', 'public, max-age=300');
         // Await the put so the next page load sees it; D1 failures are never stored.
         await cache.put(key, stored);
       } catch { /* The origin response remains usable if caching fails. */ }
     }
-    return response;
+    return buffered;
   }
+}
+
+const NULL_BODY = new Set([101, 204, 205, 304]);
+function toResponse({ body, init }) {
+  return new Response(body === null ? null : body.slice(0), init);
 }
 
 // D1 bindings scope counts to their database, including local/staging/prod.

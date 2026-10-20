@@ -1,0 +1,483 @@
+/* Home, direction C. Scoped under .v-home. Each colour block pairs one brand
+   colour with black type and black athletes (Laura Lian's identity). */
+
+/* ---------- 1. Hero block ---------- */
+.v-home .hb {
+	position: relative;
+	overflow: hidden;
+	container-type: inline-size;
+	margin-inline: calc(-1 * var(--gut));
+	padding: 28px var(--gut) 26px;
+	background: var(--hb, #ff5c39);
+	color: #1a1a1a;
+	transition: background-color 700ms ease;
+	height: max(450px, 50vh);
+	display: flex;
+}
+
+/* The athlete's box sits beside the headline, inside the margins: its height is
+   the four headline lines (3.44 x the headline size at line-height .86) and each
+   drawing's right edge sits on the margin line, centered on the headline. */
+.v-home .hb-art {
+	position: absolute;
+	right: 10%;
+	top: 28px;
+	width: 40cqw;
+	height: calc(3.44 * clamp(60px, 17cqw, 120px));
+	pointer-events: none;
+	color: var(--hb-fg, #1a1a1a);
+	min-height: 85px;
+}
+
+@container (max-width: 359px) {
+	.v-home .hb-art {
+		width: 33cqw;
+	}
+}
+
+.v-home .hb-fig {
+	position: absolute;
+	inset: 0;
+	container-type: size;
+	opacity: 0;
+	transition: opacity 500ms ease;
+	--A: 0.86;
+	--Hm: 0.9;
+	--Wm: 0.98;
+	--pr: 0px;
+}
+
+.v-home .hb-fig.is-on {
+	opacity: 1;
+}
+
+.v-home .hb-text {
+	position: relative;
+	z-index: 1;
+	width: 100%;
+	display: flex;
+	flex-direction: column;
+}
+
+.v-home .hb h1 {
+	color: var(--hb-fg, #1a1a1a);
+	/* font-size: clamp(44px, 12.5cqw, 76px); */
+	line-height: 0.94;
+	font-weight: 900;
+	letter-spacing: -0.04em;
+	max-width: 6.4ch;
+	transition:
+		color 280ms ease,
+		font-size 280ms ease,
+		width 280ms ease;
+}
+
+.v-home .hb-lede {
+	margin-top: 14px;
+	font-size: 18px;
+	line-height: 1.4;
+	font-weight: 500;
+	max-width: 560px;
+	color: var(--hb-fg, #1a1a1a);
+	text-wrap: balance;
+}
+
+.v-home .hb .wf {
+	position: relative;
+	margin-top: 22px;
+	max-width: 560px;
+}
+
+.v-home .hb .wf-label {
+	position: absolute;
+	z-index: 1;
+	left: 18px;
+	top: 0;
+	height: 58px;
+	display: flex;
+	align-items: center;
+	margin: 0;
+	font-size: 18px;
+	font-weight: 500;
+	color: var(--muted);
+	pointer-events: none;
+	transition:
+		font-size var(--ease),
+		height var(--ease);
+	max-width: calc(100% - 150px);
+	white-space: nowrap;
+}
+
+.v-home .hb .wf:has(.input:focus) .wf-label,
+.v-home .hb .wf:has(.input:not(:placeholder-shown)) .wf-label {
+	height: 26px;
+	align-items: flex-end;
+	font-size: 15px;
+	font-weight: 700;
+	color: var(--graphite);
+}
+
+.v-home .hb .wf-row {
+	flex-wrap: wrap;
+	gap: 8px;
+}
+
+.v-home .hb .wf-row .input {
+	height: 58px;
+	padding: 22px 18px 4px;
+	border: 0;
+	border-radius: 16px;
+	background: #f3f3f3;
+	box-shadow: 0 2px 0 rgba(0, 0, 0, 0.08);
+}
+
+.v-home .hb .wf-row .input:focus {
+	box-shadow: 0 0 0 3px var(--hb-fg, #1a1a1a);
+}
+
+.v-home .hb .wf-row .btn {
+	height: 58px;
+	padding: 0 20px;
+	border-radius: 16px;
+	background: #1a1a1a;
+	color: #f3f3f3;
+	border: 0;
+}
+
+.v-home .hb.is-ink .wf-row .btn {
+	background: #f3f3f3;
+	color: #1a1a1a;
+}
+
+.v-home .hb .wf-loc {
+	font-weight: 700;
+	color: var(--hb-fg, #1a1a1a);
+}
+
+.v-home .hb .wf-loc .ic {
+	color: var(--hb-fg, #1a1a1a);
+}
+
+.v-home .hb .hb-last {
+	background: rgba(255, 255, 255, 0.85);
+	border-color: transparent;
+	color: #1a1a1a;
+	max-width: 100%;
+	white-space: normal;
+	text-align: left;
+	line-height: 1.25;
+	padding: 6px 12px;
+	gap: 6px;
+	min-height: unset;
+}
+
+@media (min-width: 768px) {
+	.v-home .hb {
+		padding: 56px var(--gut) 32px;
+		border-radius: 0 0 15px 15px;
+	}
+	.v-home .hb-art {
+		top: 50%;
+		translate: 0 -50%;
+		width: 40cqw;
+		max-width: 460px;
+		height: calc(3.44 * clamp(64px, 10.5cqw, 128px));
+	}
+	.v-home .hb h1 {
+		max-width: 11ch;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.v-home .hb,
+	.v-home .hb-fig,
+	.v-home .hb h1 {
+		transition: none;
+	}
+}
+
+/* Phones and small tablets: the athlete gets a full-width band above the headline, so a
+   wide drawing (swimmer, handcycle) is as big as a tall one (basketball, climbing). The
+   band is 46% of the hero's width, never more than 22% of the screen height, and
+   every drawing stands on its bottom line, on the right edge (Alec's pick); ?band=left for the left. */
+@media (max-width: 767px) {
+	/* The hero is a flex row (for its 50vh height); on phones the art joins the
+	   flow, so stack it, or the headline and search share half the width. */
+	.v-home .hb {
+		flex-direction: column;
+	}
+	.v-home .hb-art {
+		position: relative;
+		right: auto;
+		top: auto;
+		width: 100%;
+		height: min(46cqw, 22svh);
+		margin-bottom: 16px;
+	}
+	.v-home .hb-fig {
+		--A: 0.9;
+		--Hm: 0.96;
+		--Wm: 0.9;
+		--pb: 0px;
+	}
+	.v-home .hb-fig .fig--pin.fig--mid {
+		top: auto;
+		bottom: calc(var(--pb) - (1 - var(--h)) * var(--B) / 2);
+		right: auto;
+		left: calc(0px - (1 - var(--w)) * var(--B) / 2);
+	}
+	.v-home .hb h1 {
+		max-width: none;
+	}
+}
+
+/* Short phones (iPhone SE): a smaller headline keeps the search box in the first screen. */
+@media (max-width: 767px) {
+	[data-look="sharp"] .v-home .hb .hb-title {
+		font-size: 10vw !important;
+	}
+}
+
+/* ---------- 2. Sports grid ---------- */
+.v-home .hs {
+	margin-top: 0;
+	padding-top: 30px;
+}
+
+.v-home .st-grid {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 14px 10px;
+}
+
+@media (min-width: 768px) {
+	.v-home .st-grid {
+		grid-template-columns: repeat(5, minmax(0, 1fr));
+		gap: 18px 14px;
+	}
+}
+
+@media (min-width: 1100px) {
+	.v-home .st-grid {
+		grid-template-columns: repeat(9, minmax(0, 1fr));
+	}
+}
+
+.v-home .st {
+	display: block;
+	text-decoration: none;
+	color: inherit;
+	min-width: 0;
+}
+
+.v-home .st .plate {
+	border-radius: 18px;
+}
+
+.v-home .st:hover .fig {
+	scale: 1.05;
+}
+
+.v-home .st-name {
+	display: block;
+	margin-top: 8px;
+	font-weight: 800;
+	font-size: 16px;
+	line-height: 1.15;
+}
+
+.v-home .st-n {
+	display: block;
+	color: var(--muted);
+	font-size: 15px;
+	line-height: 1.25;
+}
+
+.v-home .st-allbox {
+	display: grid;
+	place-items: center;
+	align-content: center;
+	gap: 6px;
+	aspect-ratio: 1;
+	border-radius: 18px;
+	background: #1a1a1a;
+	color: #f3f3f3;
+}
+
+.v-home .st-allbox b {
+	font-size: 16px;
+	font-weight: 800;
+}
+
+/* ---------- 3. Doors ---------- */
+.v-home .doors {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	margin: 34px calc(-1 * var(--gut)) 0;
+}
+
+@media (min-width: 768px) {
+	.v-home .doors {
+		grid-template-columns: repeat(4, minmax(0, 1fr));
+		margin-inline: 0;
+		gap: 14px;
+	}
+	.v-home .door {
+		border-radius: 12px;
+	}
+}
+
+.v-home .door {
+	position: relative;
+	overflow: hidden;
+	display: flex;
+	flex-direction: column;
+	justify-content: flex-start;
+	min-height: 214px;
+	padding: 14px 16px 16px;
+	text-decoration: none;
+	color: #1a1a1a;
+}
+
+.v-home .door-fig {
+	position: relative;
+	align-self: stretch;
+	height: 92px;
+	margin-bottom: 12px;
+	display: grid;
+	place-items: center end;
+	container-type: size;
+	--A: 0.9;
+	--Hm: 0.96;
+	--Wm: 0.96;
+}
+
+.v-home .door-fig .fig {
+	translate: none;
+	margin-right: calc((1 - var(--w)) * var(--B) / -2);
+}
+
+.v-home .door b {
+	margin-top: auto;
+}
+
+.v-home .door b {
+	position: relative;
+	font-size: 27px;
+	line-height: 0.98;
+	font-weight: 900;
+	letter-spacing: -0.03em;
+}
+
+.v-home .door > span:last-child {
+	position: relative;
+	margin-top: 6px;
+	font-size: 15px;
+	line-height: 1.3;
+	font-weight: 600;
+	max-width: 18ch;
+}
+
+.v-home .door--sun {
+	background: #f6b700;
+}
+
+.v-home .door--sea {
+	background: #00c7b1;
+}
+
+.v-home .door--ink {
+	background: #1a1a1a;
+	color: #f3f3f3;
+}
+
+.v-home .door--coral {
+	background: #ff5c39;
+}
+
+.v-home .door:hover .fig {
+	scale: 1.05;
+}
+
+/* ---------- 4. Rails ---------- */
+.v-home .home-near,
+.v-home .home-checked {
+	padding-top: 38px;
+}
+
+/* ---------- 5. Bands (grants yellow, events teal) ---------- */
+.v-home .band {
+	margin: 40px calc(-1 * var(--gut)) 0;
+	padding: 28px var(--gut) 30px;
+	color: #1a1a1a;
+}
+
+@media (min-width: 768px) {
+	.v-home .band {
+		margin-inline: 0;
+		border-radius: 15px;
+		padding: 36px;
+	}
+}
+
+.v-home .band--sun {
+	background: #f6b700;
+}
+
+.v-home .band--sea {
+	background: #00c7b1;
+}
+
+.v-home .band-head {
+	display: flex;
+	align-items: center;
+	gap: 14px;
+}
+
+.v-home .band-fig {
+	flex: none;
+	width: 96px;
+	height: 96px;
+	display: grid;
+	place-items: center;
+	container-type: size;
+	--A: 0.92;
+	--Hm: 0.96;
+	--Wm: 0.96;
+}
+
+.v-home .band h2 {
+	font-size: 30px;
+	line-height: 1;
+	font-weight: 900;
+	letter-spacing: -0.03em;
+}
+
+.v-home .band-head p {
+	margin-top: 6px;
+	font-size: 16px;
+	line-height: 1.4;
+	font-weight: 500;
+}
+
+.v-home .band .glist {
+	margin-top: 18px;
+	display: grid;
+	gap: 10px;
+}
+
+.v-home .band .grow {
+	background: #f3f3f3;
+	border: 0;
+	border-radius: 18px;
+	padding: 14px 16px;
+}
+
+.v-home .band-all {
+	margin-top: 16px;
+}
+
+/* ---------- 6. States, letter, help ---------- */
+.v-home .home-states {
+	padding-top: 40px;
+}

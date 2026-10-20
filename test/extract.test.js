@@ -216,6 +216,19 @@ test("extractContactLinks: same-host filtering excludes a different-host subdoma
   assert.ok(!links.some((l) => l.includes("donate.pathhost.example.org")));
 });
 
+// HTML allows whitespace before the ">" of an end tag ("</a >", or "</a\n>" as
+// code formatters write it). The 2026-10-01 "Format files" commit (b74b779)
+// rewrote the fixture above into that shape, and the anchor regex in
+// src/extract.js, which needs a literal "</a>", stopped seeing those links.
+// The fixture is restored above; this pins the extractor gap itself.
+test("extractContactLinks: an end tag with whitespace before > still closes the link", () => {
+  const html = '<nav><a href="/contact">Contact</a\n\t\t>\n<a href="https://pathhost.example.org/get-involved-today">Get Involved</a ></nav>';
+  assert.deepEqual(extractContactLinks(html, "https://pathhost.example.org/"), [
+    "https://pathhost.example.org/contact",
+    "https://pathhost.example.org/get-involved-today",
+  ]);
+});
+
 test("extractContactLinks: no candidates on a page with none", () => {
   const html = load("synth-zero-contact-info.html");
   const links = extractContactLinks(html, "https://nothinghere.example.org/");

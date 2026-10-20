@@ -1,17 +1,22 @@
+import { servePage, robotsTxt, sitemapXml } from "./pages.js";
 import { safeNewsletterSubscribe } from './newsletter.js';
-import { queueFormConfirmation } from './email.js';
+import { queueFormConfirmation, sendOrganizationLoginLink } from './email.js';
+import { notifyIntake } from './intake.js';
 // Adaptive Sports Near Me — Worker entry.
 // Serves the static site (env.ASSETS), the D1-backed directory API, the admin
 // review surface, and the cron maintenance pipeline (validate + enrich lanes).
 //   POST /api/subscribe        -> beehiiv (email capture, tagged asnm-prelaunch)
-//   POST /api/submit-program   -> Airtable Agent Inbox + D1 submissions
+//   POST /api/submit-program   -> shared intake (hello@ notice) + D1 submissions (new program or a fix to a listing)
+//   POST /api/submit-event     -> the same path for a suggested event
 //   GET  /api/config           -> env name + prelaunch flag (front-end gate)
+//   GET  /api/listings         -> cached slim snapshot the site's lists and maps load first
 //   GET  /api/directory        -> cached full public snapshot for client filters/maps
 //   GET  /api/programs         -> directory list (sport/state/q + zip/city/lat-lng nearby, paged)
-//   GET  /programs/:id         -> shareable program page (photo hero, name, city/state, website, source)
+//   GET  /, /programs/:id, /sports/:key, /states/:st, /grants, /events, ... -> the site's
+//                                 pages: one app shell (public/index.html + public/app/) with
+//                                 each page's own title, description and canonical (src/pages.js)
 //   GET  /api/grants           -> public grant list (athlete + program)
 //   GET  /api/grants/:id       -> one grant
-//   GET  /grants/:id           -> shareable grant page (same listing sheet as programs)
 //   GET  /api/orgs/:id         -> one org with source provenance
 //   GET  /api/stats            -> counts by sport/state
 //   GET  /api/events           -> upcoming public events (json)
@@ -26,19 +31,23 @@ import { queueFormConfirmation } from './email.js';
 //   *    /api/admin/*          -> review queue + lane triggers (ADMIN_KEY bearer)
 // All secrets stay server-side (Worker secrets). Bot defence: honeypot + required Turnstile.
 
-import { directorySnapshot, listPrograms, getOrg, stats, listSameSportNearby, listGrants, getGrant, listOtherGrants } from "./data.js";
-import { programPageTemplate, programNotFoundTemplate, PROGRAM_ID_RE } from "./program-page.js";
-import { grantPageTemplate, grantNotFoundTemplate, GRANT_ID_RE } from "./grant-page.js";
+import { directorySnapshot, listingsSnapshot, listActualPrograms, getProgram, getOrg, stats, listGrants, getGrant } from "./data.js";
 import { listEvents, eventsToRss, eventsToIcs } from "./events.js";
 import { handleAdmin } from "./admin.js";
 import { runLane } from "./pipeline.js";
 import { json, text } from "./http.js";
 import { cachedDirectoryResponse } from "./read-cache.js";
+import { loadPlaces } from "./geo.js";
 import {
   readProfileCookie, signProfileId, serializeProfileCookie, clearProfileCookie,
   getValidSportKeys, getProfileById, getProfileByEmail, createProfile, updateProfile,
   getProfileWithFavorites, orgExists, setFavorite, validState, parseSports,
 } from "./profile.js";
+import {
+  clearOrgCookie, consumeLoginToken, createOrganizationSession, issueLoginToken, serializeOrgCookie,
+  organizationsForClaimEmail, organizationForClaimEmail, readOrganizationSession,
+  updateClaimedOrganization, validEmail,
+} from "./organization-access.js";
 import {
   listPosts, getPostBySlug, blogIndexTemplate, blogPostTemplate, blogFallbackTemplate, blogNotFoundTemplate,
 } from "./blog.js";
@@ -60,26 +69,26 @@ const application = {
     const url = new URL(request.url);
     // Versions uploaded with production config must not accept preview mutations.
     // Staging uploads use ENV_NAME=staging and the staging database bindings.
-    if (env.ENV_NAME === 'production' && !['GET', 'HEAD'].includes(request.method) &&
+    if (env.ENV_NAME === 'production' &&
+      (!['GET', 'HEAD'].includes(request.method) || url.pathname === '/api/org-auth/verify') &&
       !['adaptivesportsnearme.com', 'www.adaptivesportsnearme.com'].includes(url.hostname)) {
       return json({ ok: false, error: 'This preview is read-only. Use the isolated review environment.' }, 403);
     }
 
     if (url.pathname === "/api/subscribe") {
       if (request.method !== "POST") return json({ ok: false, error: "Method not allowed" }, 405);
-      if (env.FORM_LIMITER) {
-        try {
-          const { success } = await env.FORM_LIMITER.limit({ key: request.headers.get('CF-Connecting-IP') || 'unknown' });
-          if (!success) return json({ ok: false, error: 'Too many submissions. Please try again later.' }, 429);
-        } catch { return json({ ok: false, error: 'Sign-up is temporarily unavailable.' }, 503); }
-      } else if (env.REQUIRE_FORM_LIMITER === 'true') {
-        return json({ ok: false, error: 'Sign-up is temporarily unavailable.' }, 503);
-      }
+      const limited = await formLimited(request, env, 'Sign-up is temporarily unavailable.');
+      if (limited) return limited;
       return handleSubscribe(request, env, ctx);
     }
-    if (url.pathname === "/api/submit-program") {
+    if (url.pathname === "/api/submit-program" || url.pathname === "/api/submit-organization" || url.pathname === "/api/submit-event") {
       if (request.method !== "POST") return json({ ok: false, error: "Method not allowed" }, 405);
-      return handleSubmitProgram(request, env, ctx);
+      const limited = await formLimited(request, env, 'Submissions are temporarily unavailable.');
+      if (limited) return limited;
+      return handleSubmitProgram(request, env, ctx, {
+        event: url.pathname === "/api/submit-event",
+        organization: url.pathname === "/api/submit-organization",
+      });
     }
     if (url.pathname === "/api/profile") {
       if (request.method === "POST") return handleProfileUpsert(request, env, ctx);
@@ -93,6 +102,31 @@ const application = {
     if (url.pathname === "/api/profile/signout") {
       if (request.method !== "POST") return json({ ok: false, error: "Method not allowed" }, 405);
       return handleProfileSignout();
+    }
+    if (url.pathname === "/api/org-auth/request-link") {
+      if (request.method !== "POST") return json({ ok: false, error: "Method not allowed" }, 405);
+      const limited = await formLimited(request, env, 'Sign-in is temporarily unavailable.');
+      if (limited) return limited;
+      return handleOrganizationLoginRequest(request, env, url);
+    }
+    if (url.pathname === "/api/org-auth/verify") {
+      if (request.method !== "GET") return json({ ok: false, error: "Method not allowed" }, 405);
+      return handleOrganizationLoginVerify(url, env);
+    }
+    if (url.pathname === "/api/org-auth/session") {
+      if (request.method !== "GET") return json({ ok: false, error: "Method not allowed" }, 405);
+      return handleOrganizationSession(request, env);
+    }
+    if (url.pathname === "/api/org-auth/signout") {
+      if (request.method !== "POST") return json({ ok: false, error: "Method not allowed" }, 405);
+      return new Response(JSON.stringify({ ok: true }), { headers: { "Content-Type": "application/json", "Cache-Control": "no-store", "Set-Cookie": clearOrgCookie() } });
+    }
+    const managedOrganization = url.pathname.match(/^\/api\/organizations\/([0-9a-f-]{36})\/manage$/i);
+    if (managedOrganization) {
+      if (!["GET", "PATCH"].includes(request.method)) return json({ ok: false, error: "Method not allowed" }, 405);
+      return request.method === "GET"
+        ? handleManagedOrganizationGet(request, env, managedOrganization[1])
+        : handleManagedOrganizationUpdate(request, env, managedOrganization[1]);
     }
 
     if (url.pathname === "/api/location") {
@@ -116,17 +150,33 @@ const application = {
     }
     if (env.DB && request.method === "GET") {
       try {
+        if (url.pathname === "/api/listings") {
+          const places = await loadPlaces(env.ASSETS);
+          return json({ ok: true, ...(await listingsSnapshot(env.DB, { places })) }, 200, API_CACHE);
+        }
         if (url.pathname === "/api/directory") {
-          return json({ ok: true, ...(await directorySnapshot(env.DB)) }, 200, API_CACHE);
+          const places = await loadPlaces(env.ASSETS);
+          return json({ ok: true, ...(await directorySnapshot(env.DB, { places })) }, 200, API_CACHE);
         }
         if (url.pathname === "/api/programs") {
-          return json({ ok: true, ...(await listPrograms(env.DB, url.searchParams, { assets: env.ASSETS })) }, 200, API_CACHE);
+          return json({ ok: true, ...(await listActualPrograms(env.DB, url.searchParams)) }, 200, API_CACHE);
         }
-        const org = url.pathname.match(/^\/api\/orgs\/([0-9a-f-]{36})$/);
+        // Program ids are UUIDs, plus a few readable ones (program-lutz-buddy-up-venice).
+        const program = url.pathname.match(/^\/api\/programs\/([a-z0-9-]{1,80})$/);
+        if (program) {
+          const record = await getProgram(env.DB, program[1]);
+          return record ? json({ ok: true, program: record }, 200, API_CACHE) : json({ ok: false, error: "Not found" }, 404);
+        }
+        const org = url.pathname.match(/^\/api\/(?:orgs|organizations)\/([0-9a-f-]{36})$/);
         if (org) {
           const record = await getOrg(env.DB, org[1]);
-          return record ? json({ ok: true, org: record }, 200, API_CACHE)
+          return record ? json({ ok: true, organization: record, org: record }, 200, API_CACHE)
             : json({ ok: false, error: "Not found" }, 404);
+        }
+        const organizationPrograms = url.pathname.match(/^\/api\/organizations\/([0-9a-f-]{36})\/programs$/);
+        if (organizationPrograms) {
+          const items = await listActualPrograms(env.DB, new URLSearchParams({ organization_id: organizationPrograms[1], limit: "200" }));
+          return json({ ok: true, ...items }, 200, API_CACHE);
         }
         if (url.pathname === "/api/stats") {
           return json({ ok: true, ...(await stats(env.DB)) }, 200, API_CACHE);
@@ -169,52 +219,22 @@ const application = {
       return handleBlogPost(url, env, decodeURIComponent(blogSlug[1]));
     }
 
-    // Shareable program page — server-rendered so a curl / a pasted link shows
-    // the same photo-hero sheet as the in-app detail (name, city/state, website, source).
-    const programPath = url.pathname.match(PROGRAM_ID_RE);
-    if (programPath && env.DB) {
+    // The site's pages (the 2026-10 design): one app shell, a real URL per page,
+    // the page's own title, description and canonical, a 404 for a listing that
+    // does not exist. See src/pages.js.
+    if (url.pathname === "/robots.txt") {
+      return text(robotsTxt(env), 200, "text/plain; charset=utf-8", "public, max-age=3600");
+    }
+    if (url.pathname === "/sitemap.xml") {
       try {
-        const record = await getOrg(env.DB, programPath[1]);
-        if (!record) return text(programNotFoundTemplate({ site: url.origin }), 404, "text/html; charset=utf-8");
-        const nearby = await listSameSportNearby(env.DB, record, 6);
-        return text(programPageTemplate(record, { site: url.origin, nearby }), 200, "text/html; charset=utf-8", API_CACHE);
+        return text(await sitemapXml(env), 200, "application/xml; charset=utf-8", "public, max-age=3600");
       } catch (err) {
-        console.error("program page error:", err);
-        return text(programNotFoundTemplate({ site: url.origin }), 500, "text/html; charset=utf-8");
+        console.error("sitemap error:", err);
+        return text("", 503, "application/xml; charset=utf-8");
       }
     }
-
-    const grantPath = url.pathname.match(GRANT_ID_RE);
-    if (grantPath && env.DB) {
-      try {
-        const record = await getGrant(env.DB, grantPath[1]);
-        if (!record) return text(grantNotFoundTemplate({ site: url.origin }), 404, "text/html; charset=utf-8");
-        const nearby = await listOtherGrants(env.DB, record, 6);
-        return text(grantPageTemplate(record, { site: url.origin, nearby }), 200, "text/html; charset=utf-8", API_CACHE);
-      } catch (err) {
-        console.error("grant page error:", err);
-        return text(grantNotFoundTemplate({ site: url.origin }), 500, "text/html; charset=utf-8");
-      }
-    }
-
-    // Sample listings use slugs rather than D1 UUIDs. Load the shell so its
-    // route parser can select them on direct visits, just as it does on clicks.
-    // UUID requests with a DB have already used the server-rendered routes above.
-    if (/^\/(programs|grants)\/[a-z0-9]+(?:-[a-z0-9]+)*\/?$/i.test(url.pathname)) {
-      return env.ASSETS.fetch(new Request(new URL("/", url), request));
-    }
-
-    // /maps is the map explorer's real URL — same app, booted into the map.
-    if (url.pathname === "/maps" || url.pathname === "/maps/") {
-      return env.ASSETS.fetch(new Request(new URL("/", url), request));
-    }
-    // /profile and /events are real URLs for their sections — same mechanism as
-    // /maps. /events is also where the RSS feed's item links land.
-    if (/^\/(profile|events|grants|sports|directory)\/?$/.test(url.pathname) ||
-      /^\/sports\/(basketball|tennis|pickleball|rugby|football|baseball|cycling|sledhockey|skiing|waterskiing|goalball)\/?$/.test(url.pathname) ||
-      /^\/directory\/(sports|programs|providers|events|equipment|grants|resources)\/?$/.test(url.pathname)) {
-      return env.ASSETS.fetch(new Request(new URL("/", url), request));
-    }
+    const page = await servePage(request, env, url);
+    if (page) return page;
 
     // Everything else: the static site.
     return env.ASSETS.fetch(request);
@@ -259,7 +279,8 @@ async function handleSubscribe(request, env, ctx) {
     return json({ ok: false, error: "Verification failed. Please reload the page and try again." }, 403);
   }
 
-  const email = str(data.em);
+  // A pasted "mailto:" prefix is not part of the address (same as the program form).
+  const email = str(data.em).replace(/^mailto:/i, "");
   if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
     return json({ ok: false, error: "Please enter a valid email." }, 422);
   }
@@ -281,7 +302,8 @@ async function handleSubscribe(request, env, ctx) {
     else await result.welcomeJob;
   }
 
-  return json({ ok: true });
+  // A new signup has to confirm its email first; someone already subscribed is told so.
+  return json({ ok: true, ...(result.existing ? { existing: true } : { confirm: true }) });
 }
 
 // Maps our two optional signup answers onto the publication's custom fields.
@@ -302,8 +324,44 @@ async function subscribeToBeehiiv(env, email, campaign, extra = {}) {
   return safeNewsletterSubscribe(env, email, campaign, { ...extra, noWelcome: true });
 }
 
-// ---- Program submission -> Airtable Agent Inbox ------------------------------
-async function handleSubmitProgram(request, env, ctx) {
+// ---- Program submission -> shared intake + D1 submissions -------------------
+// Capture first (the intake contract, src/intake.js): the submission is written
+// to the shared intake and the directory's submissions table BEFORE anything
+// that can fail quietly, and ok:true is returned only once both rows exist.
+// The intake row carries a pending delivery claim, so hello@ is notified by
+// this request (best-effort) or, failing that, by the scheduled sweepIntake.
+// Airtable is retired: nothing reads the old Agent Inbox base, so nothing writes it.
+export const PROGRAM_INTAKE_KIND = "program";
+export const ORGANIZATION_INTAKE_KIND = "organization";
+export const EVENT_INTAKE_KIND = "event";
+const LISTING_ID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const LISTING_RELATIONS = new Set(["run", "attend", "other"]);
+const PROGRAM_SID_RE = /^[A-Za-z0-9-]{8,64}$/;
+const programUnavailable = { ok: false, error: "Could not save right now. Please try again soon." };
+
+// Stable id for one submission. The form sends a per-attempt `sid` that
+// survives a double-click or a retry after an error; the content is hashed in
+// as well, so a corrected resubmission is a new record while an identical
+// retry is the same one. Exported for test.
+export async function programSubmissionId(sid, email, payload) {
+  const material = ["program", PROGRAM_SID_RE.test(sid) ? sid : "", email.toLowerCase(), JSON.stringify(payload)].join("\n");
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(material));
+  return "program:" + Array.from(new Uint8Array(digest), (x) => x.toString(16).padStart(2, "0")).join("");
+}
+
+async function draftProgramId(intakeId) {
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(`draft-program\n${intakeId}`));
+  const hex = Array.from(new Uint8Array(digest), (x) => x.toString(16).padStart(2, "0")).join("");
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-5${hex.slice(13, 16)}-${((parseInt(hex[16], 16) & 3) | 8).toString(16)}${hex.slice(17, 20)}-${hex.slice(20, 32)}`;
+}
+
+async function draftOrganizationId(intakeId) {
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(`draft-organization\n${intakeId}`));
+  const hex = Array.from(new Uint8Array(digest), (x) => x.toString(16).padStart(2, "0")).join("");
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-5${hex.slice(13, 16)}-${((parseInt(hex[16], 16) & 3) | 8).toString(16)}${hex.slice(17, 20)}-${hex.slice(20, 32)}`;
+}
+
+async function handleSubmitProgram(request, env, ctx, opts = {}) {
   const data = await readBody(request);
   if (data === null) return json({ ok: false, error: "Could not read your submission." }, 400);
 
@@ -313,83 +371,134 @@ async function handleSubmitProgram(request, env, ctx) {
     return json({ ok: false, error: "Verification failed. Please reload the page and try again." }, 403);
   }
 
-  const program = str(data.pn);
+  // A suggested update to an existing listing rides the same capture path as a
+  // new program: lid names the listing, rel says who is asking (rel=run is the
+  // organization itself, the route to Verified). A person reads both before anything
+  // in the directory changes; nothing here writes organizations.
+  // A suggested event (kind=event) rides the same path too (opening-day bar:
+  // add-an-event works); a person checks it before it is listed.
+  const isEvent = !!opts.event || str(data.kind) === "event";
+  const isOrganization = !!opts.organization;
+  const listingId = !isEvent && LISTING_ID_RE.test(str(data.lid)) ? str(data.lid).toLowerCase() : "";
+  const relation = LISTING_RELATIONS.has(str(data.rel)) ? str(data.rel) : "";
+  // A fix or a claim names the listing by its id; the receipt and the notice use
+  // the listing's own name from the directory, never text the browser sent.
+  // A new listing names its organization; the program (what they offer) is optional.
+  let program = isEvent ? str(data.en) : isOrganization ? str(data.org) : (str(data.pn) || str(data.org));
+  if (listingId) {
+    let listed = "";
+    try { listed = str((await env.DB?.prepare("SELECT name FROM organizations WHERE id = ?").bind(listingId).first())?.name); } catch { /* the id still names it */ }
+    program = listed || `listing ${listingId}`;
+  }
   const org = str(data.org);
   const sport = str(data.sport);
   const city = str(data.city);
   const stateRegion = str(data.state);
-  const email = str(data.em);
+  const email = str(data.em).replace(/^mailto:/i, "");
   const notes = str(data.notes);
+  const eventDate = str(data.ed);
+  const eventEnd = /^\d{4}-\d{2}-\d{2}$/.test(str(data.ee)) ? str(data.ee) : "";
+  const eventTime = str(data.et).slice(0, 40);
+  const siteUrl = str(data.url).slice(0, 300);
 
-  if (!program) return json({ ok: false, error: "Please add the program name." }, 422);
-  if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+  if (!program) return json({ ok: false, error: isEvent ? "Please add the event name." : "Please add the organization's name." }, 422);
+  if (listingId && !notes) return json({ ok: false, error: "Please tell us what should change." }, 422);
+  if (isEvent && !/^\d{4}-\d{2}-\d{2}$/.test(eventDate)) return json({ ok: false, error: "Please add the date of the event." }, 422);
+  // Email: a fix to a listing or a suggested event may come without one (Alec,
+  // 2026-10-14: "No email required"); a person reviews every one either way.
+  // A program owner confirming its listing (rel=run) and a new program need one,
+  // because we write back to confirm, and that reply is what earns Verified.
+  const emailOptional = isEvent || (listingId && relation !== "run");
+  const emailValid = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email);
+  if (email ? !emailValid : !emailOptional) {
     return json({ ok: false, error: "Please enter a valid email so we can confirm your submission." }, 422);
   }
 
-  if (!env.AIRTABLE_TOKEN || !env.AIRTABLE_BASE_ID || !env.AIRTABLE_INBOX_TABLE_ID) {
-    console.error("Airtable not configured");
+  if (!env.INTAKE || !env.DB) {
+    console.error("Program submission unavailable", { reason: "binding-missing", intake: !!env.INTAKE, db: !!env.DB });
     return json({ ok: false, error: "Submissions are temporarily unavailable. Please try again soon." }, 503);
   }
 
+  const answers = isEvent
+    ? { event: program, date: eventDate, end: eventEnd, time: eventTime, city, state: stateRegion, url: siteUrl, org, sport, notes }
+    : listingId
+      ? { program, update_of: listingId, relation, notes }
+      : isOrganization
+        ? { organization: program, sport, city, state: stateRegion, website: siteUrl, notes }
+        : { program, org, sport, city, state: stateRegion, website: siteUrl, notes };
+  const intakeId = await programSubmissionId(str(data.sid), email, answers);
   const location = [city, stateRegion].filter(Boolean).join(", ");
-  const description = [
-    `Program: ${program}`,
-    org && `Organization: ${org}`,
-    sport && `Sport: ${sport}`,
-    location && `Location: ${location}`,
-    email && `Contact: ${email}`,
-    notes && `Notes: ${notes}`,
-    ``,
-    `Submitted via the adaptivesportsnearme.com pre-launch page.`,
-  ].filter((l) => l !== false && l !== undefined).join("\n");
+  // The summary is the notice's subject line: one line, bounded.
+  const summary = (isEvent
+    ? `New event submission: ${program.slice(0, 120)} (${eventDate}${location ? `, ${location.slice(0, 80)}` : ""})`
+    : listingId
+      ? `${relation === "run" ? "Organization confirming its listing" : "Listing update"}: ${program.slice(0, 120)}`
+      : isOrganization
+        ? `New organization submission: ${program.slice(0, 120)}${location ? ` (${location.slice(0, 80)})` : ""}`
+      : `New program submission: ${program.slice(0, 120)}${location ? ` (${location.slice(0, 80)})` : ""}`).replace(/[\r\n]+/g, " ");
+  const submissionKind = isEvent ? "new_event" : listingId ? "listing_update" : isOrganization ? "new_organization" : "new_program";
+  const source = str(data.source).slice(0, 80) || "asnm-prelaunch";
+  const now = new Date().toISOString();
+  const createProgramDraft = !isEvent && !listingId && !isOrganization;
+  const createOrganizationDraft = isOrganization;
+  const draftId = createProgramDraft ? await draftProgramId(intakeId) : createOrganizationDraft ? await draftOrganizationId(intakeId) : "";
 
-  const fields = {
-    Title: program,
-    Type: "New program",
-    From: "Volunteer / Guest",
-    Status: "New",
-    Priority: "Medium",
-    Description: description,
-    Submitted: new Date().toISOString(),
-  };
-
-  let res;
+  let stage = "intake-capture";
+  let fresh;
   try {
-    res = await fetch(
-      `https://api.airtable.com/v0/${env.AIRTABLE_BASE_ID}/${env.AIRTABLE_INBOX_TABLE_ID}`,
-      {
-        method: "POST",
-        headers: { Authorization: `Bearer ${env.AIRTABLE_TOKEN}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ records: [{ fields }], typecast: true }),
-      }
-    );
-  } catch (err) {
-    console.error("Airtable request failed:", err);
-    return json({ ok: false, error: "Could not save right now. Please try again soon." }, 502);
-  }
-
-  if (!res.ok) {
-    console.error("Airtable error", res.status, await safeText(res));
-    return json({ ok: false, error: "Could not save right now. Please try again soon." }, 502);
-  }
-
-  await queueFormConfirmation(env, ctx, { kind: 'program', email, program });
-
-  // Also record in D1 (the directory's own data plane) — Airtable stays the team surface.
-  if (env.DB) {
-    try {
-      await env.DB.prepare(
-        `INSERT INTO submissions (kind, payload, contact_email, status, created_at)
-         VALUES ('new_program', ?, ?, 'new', ?)`
-      ).bind(
-        JSON.stringify({ program, org, sport, city, state: stateRegion, notes }),
-        email || null,
-        new Date().toISOString()
-      ).run();
-    } catch (err) {
-      console.error("D1 submission mirror failed:", err); // Airtable write already succeeded
+    // Intake row + its pending delivery claim are one transaction, the same
+    // shape the newsletter path writes. INSERT OR IGNORE makes a retry a no-op.
+    await env.INTAKE.batch([
+      env.INTAKE.prepare(`INSERT OR IGNORE INTO intake (id,received_at,site,kind,name,email,summary,payload,source,is_canary) VALUES (?,?,'adaptivesportsnearme.com',?,?,?,?,?,?,0)`)
+        .bind(intakeId, now, isEvent ? EVENT_INTAKE_KIND : isOrganization ? ORGANIZATION_INTAKE_KIND : PROGRAM_INTAKE_KIND, null, email || null, summary, JSON.stringify(answers), source),
+      env.INTAKE.prepare("INSERT OR IGNORE INTO intake_delivery_claims (intake_id,state) VALUES (?,'pending')").bind(intakeId),
+    ]);
+    // In production DB (asnm-db) and INTAKE (atl-intake) are separate D1
+    // databases, so one batch cannot span them. The submissions write is
+    // idempotent on the same id, so a failure here is safe to retry.
+    stage = "submission-capture";
+    const submission = env.DB.prepare(
+      `INSERT INTO submissions (kind, payload, contact_email, status, created_at)
+       SELECT ?, ?, ?, 'new', ?
+       WHERE NOT EXISTS (SELECT 1 FROM submissions WHERE kind = ? AND json_extract(payload, '$.intake_id') = ?)`
+    ).bind(submissionKind, JSON.stringify({ ...answers, intake_id: intakeId }), email || null, now, submissionKind, intakeId);
+    const writes = [submission];
+    if (createOrganizationDraft) {
+      writes.push(
+        env.DB.prepare(`INSERT OR IGNORE INTO organizations
+          (id, name, sport, sport_key, website_url, city, state, verification_status, status, is_public, created_at, updated_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?, 'unverified', 'active', 0, ?, ?)`).bind(
+          draftId, program, sport || null, sport || null, siteUrl || null, city || null, stateRegion || null, now, now
+        )
+      );
+    } else if (createProgramDraft) {
+      writes.push(
+        env.DB.prepare(`INSERT OR IGNORE INTO organizations (id, name, org_type, is_public, status, created_at, updated_at)
+          VALUES ('a461f29b-0b89-4e17-b879-6a80e0abd101', 'Organization not yet assigned', 'placeholder', 1, 'active', ?, ?)`).bind(now, now),
+        env.DB.prepare(`INSERT OR IGNORE INTO programs
+          (id, organization_id, name, sport, sport_key, website_url, city, state, verification_status, status, is_public, created_at, updated_at)
+          VALUES (?, 'a461f29b-0b89-4e17-b879-6a80e0abd101', ?, ?, ?, ?, ?, ?, 'unverified', 'active', 0, ?, ?)`).bind(
+          draftId, program, sport || null, sport || null, siteUrl || null, city || null, stateRegion || null, now, now
+        )
+      );
     }
+    const [result] = await env.DB.batch(writes);
+    fresh = Number(result?.meta?.changes ?? result?.changes ?? 0) > 0;
+  } catch (error) {
+    const message = String(error?.message || "");
+    const reason = /no such table|no such column|has no column named/i.test(message) ? "database-schema-missing"
+      : /constraint failed/i.test(message) ? "database-constraint" : "operation-failed";
+    // Fixed categories only: raw errors can carry the bound email.
+    console.error("Program submission failed closed", { stage, reason });
+    return json(env.ENV_NAME === "staging" ? { ...programUnavailable, diagnostic: { stage, reason } } : programUnavailable, 502);
   }
+
+  // Captured. Correspondence never holds the response and never un-saves it.
+  // The house notice is claim-gated (at most once); the submitter receipt goes
+  // out only for the first capture of this id, so a retry does not mail twice.
+  const notice = notifyIntake(env, intakeId);
+  if (ctx?.waitUntil) ctx.waitUntil(notice); else await notice;
+  if (fresh && email) await queueFormConfirmation(env, ctx, { kind: isEvent ? 'event' : listingId ? 'listing-update' : isOrganization ? 'organization' : 'program', email, program });
 
   return json({ ok: true });
 }
@@ -527,6 +636,107 @@ function handleProfileSignout() {
   });
 }
 
+const ORGANIZATION_AUTH_CACHE = "private, no-store";
+
+function organizationAuthReady(env) {
+  return !!(env.DB && (env.ORG_AUTH_SIGNING_KEY || env.PROFILE_SIGNING_KEY));
+}
+
+function organizationAuthSecret(env) {
+  return env.ORG_AUTH_SIGNING_KEY || env.PROFILE_SIGNING_KEY;
+}
+
+async function handleOrganizationLoginRequest(request, env, url) {
+  if (!organizationAuthReady(env)) {
+    console.error("organization authentication unavailable");
+    return json({ ok: false, error: "Organization sign-in is temporarily unavailable." }, 503, ORGANIZATION_AUTH_CACHE);
+  }
+  const data = await readBody(request);
+  if (data === null) return json({ ok: false, error: "Could not read your request." }, 400, ORGANIZATION_AUTH_CACHE);
+  if (str(data.company)) return json({ ok: true }, 200, ORGANIZATION_AUTH_CACHE);
+  const email = validEmail(data.email || data.em);
+  if (!email) return json({ ok: false, error: "Please enter a valid email." }, 422, ORGANIZATION_AUTH_CACHE);
+  try {
+    const organizations = await organizationsForClaimEmail(env.DB, email);
+    if (!organizations.length) return json({ ok: true }, 200, ORGANIZATION_AUTH_CACHE);
+    const token = await issueLoginToken(env.DB, email);
+    const link = new URL("/api/org-auth/verify", url.origin);
+    link.searchParams.set("token", token);
+    await sendOrganizationLoginLink(env, email, link.toString());
+    return json({ ok: true }, 200, ORGANIZATION_AUTH_CACHE);
+  } catch (err) {
+    console.error("organization login link failed", { reason: err instanceof Error ? err.message : "unknown" });
+    return json({ ok: false, error: "Organization sign-in is temporarily unavailable." }, 503, ORGANIZATION_AUTH_CACHE);
+  }
+}
+
+async function handleOrganizationLoginVerify(url, env) {
+  if (!organizationAuthReady(env)) return json({ ok: false, error: "Organization sign-in is temporarily unavailable." }, 503, ORGANIZATION_AUTH_CACHE);
+  try {
+    const email = await consumeLoginToken(env.DB, url.searchParams.get("token") || "");
+    if (!email) return json({ ok: false, error: "This sign-in link has expired or was already used." }, 401, ORGANIZATION_AUTH_CACHE);
+    const session = await createOrganizationSession(env.DB, email, organizationAuthSecret(env));
+    return new Response(null, {
+      status: 303,
+      headers: { "Cache-Control": "no-store", "Location": "/manage", "Set-Cookie": serializeOrgCookie(session.id, session.signature) },
+    });
+  } catch (err) {
+    console.error("organization login verification failed", { reason: err instanceof Error ? err.message : "unknown" });
+    return json({ ok: false, error: "Organization sign-in is temporarily unavailable." }, 503, ORGANIZATION_AUTH_CACHE);
+  }
+}
+
+async function authorizedOrganizationSession(request, env) {
+  if (!organizationAuthReady(env)) return null;
+  return readOrganizationSession(request, env.DB, organizationAuthSecret(env));
+}
+
+async function handleOrganizationSession(request, env) {
+  const session = await authorizedOrganizationSession(request, env);
+  if (!session) return json({ ok: false, error: "Sign in to manage a program." }, 401, ORGANIZATION_AUTH_CACHE);
+  try {
+    return json({ ok: true, organizations: await organizationsForClaimEmail(env.DB, session.email) }, 200, ORGANIZATION_AUTH_CACHE);
+  } catch (err) {
+    console.error("organization session fetch failed", { reason: err instanceof Error ? err.message : "unknown" });
+    return json({ ok: false, error: "Organization details are temporarily unavailable." }, 503, ORGANIZATION_AUTH_CACHE);
+  }
+}
+
+async function handleManagedOrganizationGet(request, env, id) {
+  const session = await authorizedOrganizationSession(request, env);
+  if (!session) return json({ ok: false, error: "Sign in to manage a program." }, 401, ORGANIZATION_AUTH_CACHE);
+  try {
+    const organization = await organizationForClaimEmail(env.DB, id, session.email);
+    return organization ? json({ ok: true, organization }, 200, ORGANIZATION_AUTH_CACHE)
+      : json({ ok: false, error: "Program not found." }, 404, ORGANIZATION_AUTH_CACHE);
+  } catch (err) {
+    console.error("managed organization fetch failed", { reason: err instanceof Error ? err.message : "unknown" });
+    return json({ ok: false, error: "Organization details are temporarily unavailable." }, 503, ORGANIZATION_AUTH_CACHE);
+  }
+}
+
+async function handleManagedOrganizationUpdate(request, env, id) {
+  const session = await authorizedOrganizationSession(request, env);
+  if (!session) return json({ ok: false, error: "Sign in to manage a program." }, 401, ORGANIZATION_AUTH_CACHE);
+  const data = await readBody(request);
+  if (data === null) return json({ ok: false, error: "Could not read your changes." }, 400, ORGANIZATION_AUTH_CACHE);
+  try {
+    const organization = await updateClaimedOrganization(env.DB, id, session.email, data);
+    return organization ? json({ ok: true, organization }, 200, ORGANIZATION_AUTH_CACHE)
+      : json({ ok: false, error: "Program not found." }, 404, ORGANIZATION_AUTH_CACHE);
+  } catch (err) {
+    const reason = err instanceof Error ? err.message : "";
+    if (reason === "address-not-found") {
+      return json({ ok: false, error: "We couldn't find that address. Check it and try again." }, 422, ORGANIZATION_AUTH_CACHE);
+    }
+    if (["name-required", "website-invalid", "email-invalid", "sports-invalid"].includes(reason)) {
+      return json({ ok: false, error: "Please check the program details and try again." }, 422, ORGANIZATION_AUTH_CACHE);
+    }
+    console.error("managed organization update failed", { reason: reason || "unknown" });
+    return json({ ok: false, error: "Could not save organization details right now." }, 503, ORGANIZATION_AUTH_CACHE);
+  }
+}
+
 // ---- Blog (Beehiiv is the CMS) -----------------------------------------------
 async function handleBlogIndex(url, env) {
   const site = url.origin;
@@ -554,6 +764,20 @@ async function handleBlogPost(url, env, slug) {
 }
 
 // ---- helpers ----------------------------------------------------------------
+// One per-IP limiter for every public form. Fails closed: a limiter error, or
+// a missing limiter where one is required, refuses the submission.
+async function formLimited(request, env, unavailable) {
+  if (env.FORM_LIMITER) {
+    try {
+      const { success } = await env.FORM_LIMITER.limit({ key: request.headers.get('CF-Connecting-IP') || 'unknown' });
+      if (!success) return json({ ok: false, error: 'Too many submissions. Please try again later.' }, 429);
+    } catch { return json({ ok: false, error: unavailable }, 503); }
+  } else if (env.REQUIRE_FORM_LIMITER === 'true') {
+    return json({ ok: false, error: unavailable }, 503);
+  }
+  return null;
+}
+
 async function readBody(request) {
   try {
     const ct = request.headers.get("content-type") || "";
@@ -588,6 +812,3 @@ function str(v) {
   return (typeof v === "string" ? v : "").trim().slice(0, 5000);
 }
 
-async function safeText(res) {
-  try { return await res.text(); } catch { return "(no body)"; }
-}

@@ -1,7 +1,7 @@
 {
 	"name": "Adaptive Sports Near Me",
 	"short_name": "Adaptive Sports",
-	"description": "Find adaptive sports programs, events, equipment and funding across the country.",
+	"description": "Find adaptive sports programs, grants and events by place or sport. Free, no account needed. Every listing shows when we last checked it.",
 	"start_url": "/",
 	"scope": "/",
 	"display": "standalone",

@@ -1,0 +1,148 @@
+/* /letter/confirmed. The hero is a colour block like home's: coral paired with
+   black type and a black athlete (Laura Lian's identity), and a black tag that
+   says what happened. Below it, the next step and how to keep the letter out of spam. */
+
+/* The page is a moment, not the directory: the beta notice steps aside. */
+body[data-view="letter-confirmed"] .beta {
+	display: none;
+}
+
+.v-letter-confirmed .lc {
+	position: relative;
+	overflow: hidden;
+	container-type: inline-size;
+	display: flex;
+	flex-direction: column;
+	margin-inline: calc(-1 * var(--gut));
+	padding: 28px var(--gut) 34px;
+	background: var(--coral);
+	color: #1a1a1a;
+}
+
+/* The athlete stands on its line at the right, above the words (Alec's pick for home). */
+.v-letter-confirmed .lc-art {
+	position: relative;
+	container-type: size;
+	height: min(46cqw, 24svh);
+	margin-bottom: 20px;
+	color: #1a1a1a;
+	--A: 0.9;
+	--Hm: 0.98;
+	--Wm: 0.9;
+	--pr: 0px;
+	--pb: 0px;
+}
+
+.v-letter-confirmed .lc-tag {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	align-self: flex-start;
+	margin: 0 0 16px;
+	padding: 7px 13px 7px 10px;
+	border-radius: 4px;
+	background: #1a1a1a;
+	color: #f3f3f3;
+	font-size: 15px;
+	font-weight: 800;
+	letter-spacing: 0.06em;
+	line-height: 1.2;
+	text-transform: uppercase;
+}
+
+.v-letter-confirmed .lc-tag svg {
+	color: var(--sea);
+}
+
+.v-letter-confirmed .lc h1 {
+	margin: 0;
+	color: #1a1a1a;
+	font-size: clamp(56px, 22cqw, 132px);
+	line-height: 0.86;
+	text-wrap: balance;
+}
+
+.v-letter-confirmed .lc-lede {
+	max-width: 34ch;
+	margin: 18px 0 0;
+	color: #1a1a1a;
+	font-size: 19px;
+	line-height: 1.4;
+}
+
+.v-letter-confirmed .lc-next {
+	display: grid;
+	gap: 36px;
+	padding: 36px 0 var(--sec);
+}
+
+.v-letter-confirmed .lc-from p {
+	max-width: 40ch;
+	margin: 0;
+	color: var(--graphite);
+	font-size: var(--fs-body);
+	line-height: 1.5;
+}
+
+/* The address breaks only after @ and dots (<wbr>), never mid-word. */
+.v-letter-confirmed .lc-from strong {
+	color: var(--ink);
+}
+
+@media (min-width: 768px) {
+	.v-letter-confirmed .lc {
+		justify-content: center;
+		min-height: 52vh;
+		padding: 64px var(--gut) 60px;
+		border-radius: 0 0 15px 15px;
+	}
+	.v-letter-confirmed .lc-art {
+		position: absolute;
+		top: 50%;
+		right: 7%;
+		translate: 0 -50%;
+		width: 38cqw;
+		max-width: 480px;
+		height: min(30cqw, 380px);
+		margin: 0;
+	}
+	.v-letter-confirmed .lc-text {
+		max-width: calc(100% - min(44cqw, 540px));
+	}
+	.v-letter-confirmed .lc h1 {
+		font-size: clamp(72px, 11cqw, 144px);
+	}
+	.v-letter-confirmed .lc-lede {
+		font-size: 21px;
+	}
+	.v-letter-confirmed .lc-next {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		align-items: start;
+		gap: 48px;
+		padding-top: 48px;
+	}
+}
+
+/* Arrival: the athlete steps up and the tag lands, once. */
+@media (prefers-reduced-motion: no-preference) {
+	.v-letter-confirmed .lc-art > .fig {
+		animation: lc-rise 640ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+	}
+	.v-letter-confirmed .lc-tag {
+		animation: lc-land 420ms 160ms ease-out both;
+	}
+}
+
+@keyframes lc-rise {
+	from {
+		opacity: 0;
+		transform: translateY(16px);
+	}
+}
+
+@keyframes lc-land {
+	from {
+		opacity: 0;
+		transform: scale(0.94);
+	}
+}

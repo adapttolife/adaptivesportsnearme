@@ -44,7 +44,7 @@ One application Worker, `adaptivesportsnearme`, serves both versions:
 
 Cloudflare Builds should upload staging with
 `npx wrangler versions upload --config wrangler.preview.json --preview-alias staging`.
-Restrict that preview build to the `staging` branch. See [README](../README.md#deploy).
+Restrict that preview build to the `staging` branch. See [README](MAINTAINERS.md#deploy).
 Never run `wrangler deploy --env staging`: both configs now name the same Worker,
 so that command would replace the production deployment. Students must not push to `main`.
 The workflow in `docs/deploy-staging.workflow.yml` is only an inactive historical stub.
@@ -66,6 +66,6 @@ Only production runs scheduled maintenance. Staging and preview export HTTP only
 ## If you are unsure
 
 The staging website and directory tools use `asnm-db-staging`. Database changes
-stay there, but email, newsletter subscriptions, and Airtable actions use live
+stay there, but email and newsletter subscriptions use live
 production services and have real effects. Check the target before running a
 data-maintenance command.

@@ -255,7 +255,7 @@ ${posts.length
     title: "Blog · Adaptive Sports Near Me",
     description: "Stories, updates and guides from the adaptive sports community.",
     canonical: `${site}/blog`,
-    ogImage: `${site}/og-image.jpg`,
+    ogImage: `${site}/og/home.png`,
     bodyHtml: body,
   });
 }
@@ -263,7 +263,7 @@ ${posts.length
 export function blogPostTemplate(post, { site = SITE } = {}) {
   const date = formatPostDate(post.publishDate);
   const canonical = `${site}/blog/${post.slug}`;
-  const ogImage = post.thumbnailUrl || `${site}/og-image.jpg`;
+  const ogImage = post.thumbnailUrl || `${site}/og/home.png`;
   const description = post.subtitle || "";
   const jsonLd = {
     "@context": "https://schema.org",
@@ -301,7 +301,7 @@ export function blogFallbackTemplate({ site = SITE } = {}) {
     title: "Blog · Adaptive Sports Near Me",
     description: "Stories, updates and guides from the adaptive sports community.",
     canonical: `${site}/blog`,
-    ogImage: `${site}/og-image.jpg`,
+    ogImage: `${site}/og/home.png`,
     bodyHtml: body,
   });
 }
@@ -314,7 +314,7 @@ export function blogNotFoundTemplate({ site = SITE } = {}) {
     title: "Story not found · Adaptive Sports Near Me",
     description: "That story may have moved or been unpublished.",
     canonical: `${site}/blog`,
-    ogImage: `${site}/og-image.jpg`,
+    ogImage: `${site}/og/home.png`,
     bodyHtml: body,
   });
 }

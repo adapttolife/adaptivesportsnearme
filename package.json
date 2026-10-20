@@ -3,11 +3,15 @@
 	"private": true,
 	"type": "module",
 	"scripts": {
+		"setup": "node scripts/setup-local.mjs",
 		"dev": "npx wrangler dev --env staging",
 		"dev:local": "npx wrangler dev --env staging --local",
 		"dev:staging": "npx wrangler@4 dev --config wrangler.dev.json --ip 127.0.0.1 --port 8787",
 		"deploy:staging": "npx wrangler versions upload --config wrangler.preview.json --preview-alias staging",
 		"preview": "npm run dev",
 		"test": "node --test"
+	},
+	"dependencies": {
+		"auto-text-size": "^0.2.3"
 	}
 }
