@@ -38,7 +38,7 @@ function checkBox() {
   return `<div class="fm-check"><h2>How we check listings</h2>
 <div class="fm-ck-item"><span class="fm-ck-badge is-v">${A.icon("badge-check", 18)}Verified</span><p>The organization itself confirmed its listing with us.</p></div>
 <div class="fm-ck-item"><span class="fm-ck-badge is-u">${A.icon("search-check", 18)}Checked by our team</span><p>A person checked the listing against public sources, like the organization's own website.</p></div>
-<div class="fm-ck-item"><span class="fm-ck-badge is-p">${A.icon("lock", 18)}Your email</span><p>Only used to write back to you. Never shown. <a href="/privacy">Privacy policy</a></p></div>
+<div class="fm-ck-item"><span class="fm-ck-badge is-p">${A.icon("lock", 18)}Your email</span><p>Used only for what you sent us. Never shown. <a href="/privacy">Privacy policy</a></p></div>
 <a class="tlink" href="/about">More about how we check${A.icon("arrow-right", 18)}</a></div>`;
 }
 

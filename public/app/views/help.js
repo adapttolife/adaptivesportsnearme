@@ -36,7 +36,7 @@ ${A.letterBlock({ source: "help" })}</div>`;
 /* ---------- /about ---------- */
 const ABOUT = [
   ["is-v", "badge-check", "Verified", "The organization itself confirmed its listing with us. Only then does a listing show the check. We're asking every organization."],
-  ["", "search-check", "Checked by our team", "A person on our team checked the listing against public sources, like the organization's own website. The listing says when."],
+  ["", "search-check", "Checked by our team", "Our team checked the listing against public sources, like the organization's own website. When we know the month, the listing shows it."],
   ["is-u", "info", "Not verified yet", "We found the organization in public sources, and we check its website regularly. Not verified doesn't mean anything is wrong. Check the website before you go."],
   ["", "calendar-check", "Dates", "Every listing shows the last day we checked that the organization's website works."],
   ["", "lock", "Privacy", "We show the city and state. An organization's address, phone number and email show only when the organization says yes."],
@@ -82,8 +82,8 @@ const HELP = [
 ];
 const HOW = [
   { ic: "link", h: "In public", body: "The code, the plans and every change are on GitHub for anyone to read." },
-  { ic: "lock", h: "Free to use", body: "MIT license: take it, change it, build on it." },
-  { ic: "badge-check", h: "Checked by people", body: "A person reviews every change before it goes live, and every listing before it's published." },
+  { ic: "lock", h: "Free to use", body: "The code is MIT licensed: take it, change it, build on it." },
+  { ic: "badge-check", h: "Checked by people", body: "A person reviews every code change before it goes live, and every listing before it's published." },
 ];
 function buildPage() {
   const sec = ({ ic, h, body }, extra = "", tag = "") => `<section class="ab-sec"><span class="ab-ic" aria-hidden="true">${A.icon(ic, 24)}</span><div class="ab-text"><h3>${tag}${A.esc(h)}</h3><p>${A.esc(body)}</p>${extra}</div></section>`;
@@ -110,11 +110,15 @@ function letterPage() {
 }
 
 /* ---------- /privacy and /terms ----------
-   Plain language (October 20, 2026); Adapt To Life's counsel may still refine the wording.
+   Plain language, written from an audit of the code and the live site (October 20, 2026).
    Every sentence describes what the site does today; when the site changes how it
-   handles data, change these pages in the same change. */
+   handles data, change these pages in the same change. test/app-shell.test.js checks
+   the promises it can. Two things live outside this repo: Cloudflare adds its Web
+   Analytics script at the edge (a zone setting), and beehiiv sends the letter's
+   confirmation email. */
 const UPDATED = "October 20, 2026";
 const MAIL = `<a href="mailto:hello@adaptivesportsnearme.com">hello@adaptivesportsnearme.com</a>`;
+const ATL = `<a href="https://adapttolife.org">Adapt To Life NFP</a>`;
 function legalPage({ meta, h1, intro, sections }) {
   const secs = sections.map(([h, body], i) => `<section class="lg-sec" aria-labelledby="lg-${i}"><h2 id="lg-${i}">${h}</h2>${body}</section>`).join("");
   return {
@@ -126,31 +130,43 @@ function legalPage({ meta, h1, intro, sections }) {
 function privacyPage() {
   return legalPage({
     meta: PAGES.privacy, h1: "Privacy policy",
-    intro: `Adaptive Sports Near Me is a free directory of adaptive sports programs, grants and events, run by Adapt To Life, a 501(c)(3) nonprofit. This page explains what we collect, why we collect it, and the choices you have.`,
+    intro: `Adaptive Sports Near Me is a free directory of adaptive sports programs, grants and events. It's run by ${ATL}, a 501(c)(3) nonprofit, and on this page "we" means Adapt To Life. Here's what we collect, why, who helps us run the site, and the choices you have.`,
     sections: [
       ["The short version", `<ul>
-<li>You can use the directory without an account and without telling us anything about yourself.</li>
-<li>We collect only what you choose to send us: your email for the letter, and what you type into our forms.</li>
-<li>We don't sell your information, and we don't use advertising or tracking cookies.</li>
-<li>An organization's street address, phone and email show only when the organization says yes.</li></ul>`],
-      ["What you send us", `<p><b>The letter.</b> When you sign up, we collect your email address and whether you asked for a first look at new features. Our newsletter service, beehiiv, keeps your subscription and sends the letter. We also keep a record of your signup and send you a receipt from hello@adaptivesportsnearme.com.</p>
-<p><b>Forms.</b> When you add a program or event, suggest a fix, or confirm a listing you run, we collect what you type, including your email if you give one. A person on our team reads every submission. If you give your email, we send a receipt and may write to you with a question. We may publish the program or event details you send. We never publish your email.</p>
-<p><b>Managing a listing.</b> If you run or work for an organization and manage its listing, you sign in with a one-time link we email you. We keep that email address with the listing so you can sign in again.</p>`],
-      ["What your browser keeps", `<p>The site remembers your last place search and the sports you looked at recently, in your own browser, so it can show them next time. It also remembers if you closed the beta notice. You can clear this in your browser settings. We don't set cookies while you browse. If you sign in to manage your organization's listing, we set one cookie to keep you signed in, and only for that.</p>
-<p><b>Use my location</b> asks your browser for your position, then finds the nearest city on your device. Your exact position is not sent to us. The city you search for appears in the page address, like any search.</p>`],
-      ["Behind the scenes", `<p>Our host, Cloudflare, delivers and protects the site. Like any web host, it handles technical details such as your IP address and browser, and counts visits in total.</p>
-<p>When you send a form or sign up for the letter, Cloudflare Turnstile checks that you're a person, not a bot, and we use your IP address for a moment to stop floods of submissions. We don't store your IP address with what you sent.</p>
-<p>The letter may record whether it was opened and which links were clicked, so we can tell what's useful. beehiiv provides this.</p>
-<p>The site's fonts load from Google Fonts, so your browser contacts Google's servers to fetch them. When you open a map, its map images load from OpenFreeMap. If a listing's map has no saved location, your browser asks the U.S. Census Bureau's address lookup where the organization's address is. It sends the organization's address, never yours.</p>
-<p>An accessibility tool from UserWay lets you change how the site looks and reads. If you use it, it remembers your settings on your device, and UserWay's own privacy policy applies to it.</p>`],
-      ["Who we share it with", `<p>We don't sell or rent personal information. A few services help us run the site and handle information only to do that work: Cloudflare (hosting, security and form protection), Google (our email and the site's fonts), beehiiv (the letter), UserWay (the accessibility tool), OpenFreeMap (map images, when you open a map) and the U.S. Census Bureau (placing an organization's address on its map). We may also share information when the law requires it, or to protect the site and the people who use it.</p>`],
-      ["Organization information", `<p>Listings describe organizations and the programs they offer, not people. We gather their details from public sources, like an organization's own website and national directories, and from organizations themselves. We show an organization's city and state. Its street address, phone and email show only when the organization confirms its listing and says yes.</p>
-<p>If you run or work for an organization, you can correct its listing, confirm it, or ask us to remove it. <a href="/help">Start here</a>.</p>`],
-      ["How long we keep it", `<p>Your letter subscription stays until you unsubscribe. Form submissions stay as long as we need them to review your note and keep the directory accurate. You can ask us to delete what you sent at any time.</p>`],
-      ["Your choices", `<p>Every letter has an unsubscribe link, and it works right away. To see, correct or delete what you sent us, email ${MAIL}.</p>`],
-      ["Children", `<p>The directory is for everyone, including families. Our forms and the letter are meant for adults. We don't knowingly collect personal information from children under 13. If you think a child has sent us something, email us and we'll delete it.</p>`],
+<li>You can search and browse without an account and without telling us who you are.</li>
+<li>We collect what you choose to send us, like your email for the letter or what you type into a form.</li>
+<li>Like any website, ours receives technical details from each visit, such as your IP address. Our host keeps them for a month at most.</li>
+<li>We don't sell or rent personal information, and we don't run ads or advertising trackers.</li>
+<li>An organization's email, phone and street address show only when the organization says yes.</li></ul>`],
+      ["What you send us", `<p><b>The letter.</b> When you sign up, we collect your email address and whether you asked for a first look at new features. Our newsletter service, beehiiv, keeps your subscription, sends the letter and notes which page you signed up on. You'll get an email from beehiiv with a link to confirm your signup. It opens on beehiiv's site and brings you back here. If you don't confirm, you may get one reminder. We also keep our own record of your signup, and a copy goes to Adapt To Life's team inbox. We use your email only for the letter and, if you asked, a first look at new features.</p>
+<p><b>Forms.</b> When you add an organization, program or event, suggest a fix, or tell us you're with an organization, we collect what you type, including your email. Email is optional when you add an event or suggest a fix, unless you tell us you're with the organization. Each submission goes into our records and to Adapt To Life's team inbox, and a person reads it before anything on the site changes. If you gave your email, we send you a receipt and may write to you with a question. We may publish the organization, program or event details you send. We never publish your email.</p>
+<p><b>Managing an organization's listing.</b> If you're with an organization, our team can connect your email to its listing. You then sign in with a link we email you, which works once and expires after a short time. You stay signed in on that browser for up to 30 days, or until you sign out. Changes you save show on the listing right away, and everywhere else on the site within a few minutes. The email you sign in with stays private. The listing's public email and phone are the ones you enter, and they show only when you choose to show them.</p>`],
+      ["What your browser keeps", `<p>The site saves a few things in your own browser so it works the way you left it: your light or dark setting, the last place you searched, the sports you looked at most recently, and whether you closed the beta notice. While a tab is open, it also keeps track of the pages you've opened and where you were on each, so going back returns you to the same spot. None of this is sent to us, and you can clear it in your browser settings.</p>
+<p><b>Cookies.</b> We don't set cookies while you browse. If you sign in to manage an organization's listing, we set one cookie, only to keep you signed in, for up to 30 days. Cloudflare's security checks may set a cookie of their own if they need to confirm you're a person.</p>
+<p><b>Use my location</b> asks your browser for your position, then finds the nearest city on your device. Your exact position is not sent to us. When you search for a place, it becomes part of the page address, like /near/Chicago, IL, and our host sees it like any page address.</p>`],
+      ["What our host and tools see", `<p><b>Cloudflare</b> hosts and protects the site. Like any web host, it receives the technical details of each visit: your IP address, the page address, your browser and device, the page you came from, your language, and an approximate location worked out from your IP address. It keeps these request logs, and details of any errors, for up to seven days so we can find and fix problems. Its security tools keep a sample of requests for up to 31 days. Your browser may also tell Cloudflare when a page fails to load.</p>
+<p><b>Visit counts.</b> Cloudflare Web Analytics counts visits for us: which pages are opened, where visitors came from, how fast pages load, and visitors' browser, device type and country. It doesn't set cookies.</p>
+<p><b>Spam checks.</b> When you start using one of our forms, or open the blog's menu, a check from Cloudflare Turnstile loads to tell people from bots. When you send a form, we use your IP address for that check and to limit how often one connection can send. We don't save your IP address with what you sent.</p>
+<p><b>Fonts.</b> The site's fonts load from Google Fonts, so your browser contacts Google's servers.</p>
+<p><b>Maps.</b> Map images load from OpenFreeMap when you open a map, and on a listing's page when the organization has said yes to showing its address. If that map has no saved location, your browser asks the U.S. Census Bureau's address lookup where the organization's address is. It sends the organization's address, not yours. We use the same lookup when an organization updates its address.</p>
+<p><b>Accessibility tool.</b> Every page except the blog loads an accessibility tool from UserWay, which lets you change how pages look and read. To work, it saves a random ID and your settings in your browser, and receives that ID with the address of each page you open. UserWay's own privacy policy applies to it.</p>
+<p><b>The letter and the blog.</b> For each letter, beehiiv can record whether it was opened and which links were clicked, so we can tell what's useful. Our blog posts are written in beehiiv too, and pictures in a post may load from beehiiv's servers.</p>`],
+      ["Who we share it with", `<p>We don't sell or rent personal information. Services that help us run the site include Cloudflare (hosting, security, visit counts and spam checks), Google (our email and the site's fonts), beehiiv (the letter and the blog), UserWay (the accessibility tool) and OpenFreeMap (map images). Each has its own privacy policy, and each sees your IP address when your browser contacts it, as any website does. The U.S. Census Bureau's address lookup receives organization addresses, not yours. We may also share information when the law requires it, or to protect the site and the people who use it.</p>`],
+      ["Organization information", `<p>Listings describe organizations and the programs they offer. We gather their details from public sources, like an organization's own website and national directories, from people who send updates, and from organizations themselves. Our tools also read organizations' public websites, including contact pages, to keep listings current.</p>
+<p>An organization's contact details can belong to a person who works there, like a program coordinator. Here's what shows, and when:</p>
+<ul>
+<li>City and state show on the listing.</li>
+<li>Email and phone show only when the organization says yes to showing them. Until then, we also work to keep contact details out of its description and notes.</li>
+<li>The street address, and a map on the listing's page, show only when the organization says yes to showing its address.</li>
+<li>Once it says yes to either, its listing also shows its ZIP code.</li></ul>
+<p>Grant listings show the contact details grant makers publish for their grants.</p>
+<p>If you're with an organization, you can correct its listing, confirm it, or ask us to remove it. Once your email is connected to the listing, you can also hide it yourself. <a href="/help">Start here</a>.</p>`],
+      ["How long we keep it", `<p>Your letter subscription lasts until you unsubscribe. We keep form submissions, signup records and sign-in records, including the emails about them, until we no longer need them or you ask us to delete them. Sign-in links expire after a short time, and a sign-in lasts up to 30 days. Cloudflare deletes its request logs within seven days and its security samples within 31 days.</p>`],
+      ["Your choices", `<p>Every letter has an unsubscribe link. To see, correct or delete what you've sent us, email ${MAIL}. You can clear what your browser keeps in your browser settings. We don't track you across other websites, so there's nothing for a Do Not Track or Global Privacy Control signal to turn off.</p>`],
+      ["Children", `<p>The directory is for everyone, including families. Our forms, the letter and organization sign-in are meant for adults. We don't knowingly collect personal information from children under 13. If you think a child has sent us something, email us and we'll delete it.</p>`],
+      ["Keeping it safe", `<p>The site uses encrypted connections. No website is perfectly secure, so please don't send sensitive details, like health information, through our forms. Our services may handle information in the United States and other countries.</p>`],
       ["Changes to this policy", `<p>If we change this policy, we'll update this page and the date at the top. If a change affects how we use your email, we'll tell subscribers in the letter before it takes effect.</p>`],
-      ["Questions", `<p>Email ${MAIL}. Adaptive Sports Near Me is a project of <a href="https://adapttolife.org">Adapt To Life</a>, a 501(c)(3) nonprofit.</p>`],
+      ["Questions", `<p>Email ${MAIL}. Adaptive Sports Near Me is a project of ${ATL}, a 501(c)(3) nonprofit.</p>`],
     ],
   });
 }
@@ -158,23 +174,33 @@ function privacyPage() {
 function termsPage() {
   return legalPage({
     meta: PAGES.terms, h1: "Terms of use",
-    intro: `These terms cover your use of Adaptive Sports Near Me (adaptivesportsnearme.com), a free directory run by Adapt To Life, a 501(c)(3) nonprofit. By using the site, you agree to them.`,
+    intro: `These terms cover your use of Adaptive Sports Near Me (adaptivesportsnearme.com), a free directory run by ${ATL}, a 501(c)(3) nonprofit. On this page "we" means Adapt To Life. By using the site, you agree to these terms. If you don't agree, please don't use the site.`,
     sections: [
-      ["What this site is", `<p>A free directory of adaptive sports programs, grants and events. We list them; we don't run them. Each program, grant maker and event host is its own organization.</p>
-<p>We build listings from public sources, like program websites and national directories, and from what programs and visitors send us. Information can be incomplete or out of date, and the directory doesn't list every program. We're adding and checking more every week.</p>`],
+      ["What this site is", `<p>A free directory of adaptive sports programs, grants and events. We list them; we don't run them. Apart from Adapt To Life's own Hustle & Heart Fund, every organization, grant maker and event host listed here is independent of us.</p>
+<p>Listings come from public sources, like organizations' websites and national directories, and from what organizations and visitors send us. Information can be incomplete or out of date, and the directory doesn't list every program. We're adding and checking more all the time.</p>`],
       ["What our labels mean", `<ul>
-<li><b>Verified</b> means the organization itself confirmed its listing with us.</li>
-<li><b>Checked by our team</b> means a person on our team checked the listing against public sources in the month shown.</li>
-<li><b>Website checked</b> is the date we last saw the organization's website working.</li></ul>
-<p>None of these is an endorsement, a safety review, or a promise about an organization's or program's quality, staff, facilities or insurance.</p>`],
-      ["Before you go", `<p>Contact the organization to confirm times, costs, eligibility, accessibility and what to bring. Adaptive sports are physical, so talk with your doctor or care team about what's right for you. Taking part is between you and the organization, and many organizations ask participants to sign their own waiver.</p>`],
-      ["Grants", `<p>We list grants offered by grant makers. You apply on the grant maker's site, and the grant maker decides. We can't promise that a grant is open or that you'll receive one.</p>`],
-      ["What you send us", `<p>When you add a program or event or suggest a fix, tell us what you know to be true. A person reviews every submission before anything changes, and we may edit it for clarity or decide not to publish it. By sending program or event details, you allow us to publish, edit and share them as part of the directory.</p>
-<p>Don't send other people's personal information without their permission, and don't send spam, ads or anything unlawful. If you confirm or manage a listing for an organization, you're telling us you can speak for that organization, and you agree to show the details you approve.</p>`],
-      ["Using the site", `<p>Use the site to find and share adaptive sports. Sharing links to listings and pages is welcome. Don't try to break the site, overload it, get around its protections, or copy the directory in bulk with automated tools.</p>`],
-      ["Links to other sites", `<p>Listings link to program and grant maker websites. We don't control those sites and aren't responsible for their content or practices.</p>`],
-      ["Our content", `<p>The site's design, writing and artwork belong to Adapt To Life. Organization and program names and logos belong to their organizations. Please ask before reusing our artwork.</p>`],
-      ["No guarantees", `<p>We work to keep the directory accurate, but we provide it as is, without warranties of any kind. To the fullest extent the law allows, Adapt To Life isn't liable for any loss or injury that comes from using the site or from taking part in a listed program, grant or event.</p>`],
+<li><b>Verified</b> means the organization itself confirmed its listing with us and chose to show its contact details.</li>
+<li><b>Checked by our team</b> means our team checked the listing against public sources, like the organization's website. When we know the month, the listing shows it.</li>
+<li><b>Website checked</b> is the last date our automatic check found the organization's website working.</li></ul>
+<p>None of these is an endorsement, a safety review, or a promise about an organization's programs, staff, facilities or insurance.</p>`],
+      ["Before you go", `<p>Contact the organization to confirm times, costs, eligibility, accessibility and what to bring. For events, check with the host, since dates and places can change. Adaptive sports are physical, so talk with your doctor or care team about what's right for you. Taking part is between you and the organization, which may ask you to sign its own waiver.</p>`],
+      ["Grants", `<p>We list grants from grant makers. You apply on the grant maker's site, and the grant maker decides. We can't promise that a grant is open, that its details are current, or that you'll receive one.</p>`],
+      ["What you send us", `<p>When you add an organization, program or event, or suggest a fix, tell us what you know to be true. A person reviews each one before anything on the site changes, and we may edit it or decide not to publish it. By sending details about an organization, program or event, you let us publish, edit and share them as part of the directory.</p>
+<p>Don't send other people's personal information without their permission, and don't send spam, ads or anything unlawful.</p>`],
+      ["Managing an organization's listing", `<p>If you tell us you're with an organization, or manage its listing, you're telling us you're allowed to speak for it.</p>
+<ul>
+<li>Don't share your sign-in link.</li>
+<li>Changes you save show on the listing right away, and everywhere else on the site within a few minutes. You're responsible for them.</li>
+<li>Show only details the organization agrees to make public. By saving, you let us publish, edit and share them as part of the directory.</li>
+<li>You can hide the listing at any time.</li>
+<li>We may change or hide a listing, or end someone's access, if something looks wrong, unsafe or against these terms.</li></ul>`],
+      ["Using the site", `<p>Use the site to find and share adaptive sports, and link to any page you like. Don't try to break the site, overload it or get around its protections, and don't use contact details from listings to send spam. Please don't copy the directory in bulk with automated tools. If you'd like to build something with the listings, write to us. We may block anyone who misuses the site.</p>`],
+      ["The code is open source", `<p>The code behind the site is open source under the <a href="${REPO}/blob/main/LICENSE">MIT License</a>. You're welcome to use it, change it and build on it under that license.</p>`],
+      ["Our content", `<p>The sport drawings belong to Adapt To Life and aren't covered by the MIT License (see our <a href="${REPO}/blob/main/THIRD_PARTY_NOTICES.md">license notes</a>). Please ask before using them. The Adaptive Sports Near Me and Adapt To Life names and logos belong to Adapt To Life. Names of organizations, programs and grants belong to their owners.</p>
+<p>If you think something on the site uses your work without permission, email us and we'll look into it.</p>`],
+      ["Links to other sites", `<p>The site links to organizations' and grant makers' websites, and to other sites we think are useful. We don't control them and aren't responsible for their content or practices.</p>`],
+      ["No guarantees", `<p>We work to keep the directory accurate, but we provide the site as is, without warranties of any kind. To the fullest extent the law allows, Adapt To Life isn't liable for any loss or injury that comes from using the site, relying on a listing, or taking part in a listed program, grant or event. Some places don't allow these limits, so they may not all apply to you.</p>`],
+      ["Illinois law", `<p>Illinois law governs these terms, without regard to conflict of law rules. Any dispute about these terms or the site will be heard in the state courts of Lake County, Illinois, or the federal court for the Northern District of Illinois, and you agree to those courts.</p>`],
       ["Changes to these terms", `<p>We may update these terms. When we do, we'll change the date at the top. Using the site after a change means you accept the updated terms.</p>`],
       ["Questions", `<p>Email ${MAIL}. Our <a href="/privacy">privacy policy</a> explains what we collect and why.</p>`],
     ],

@@ -273,17 +273,24 @@ test("sheets opened by a tap get their own Back step", () => {
 // The privacy policy and terms (public/app/views/help.js) describe what the site does.
 // These checks keep the two in step: a change that breaks one of the policy's
 // promises fails here first, so the page gets updated in the same change.
+// Cloudflare Web Analytics is not in this repo (Cloudflare adds it at the edge), so
+// the policy names it without a check here.
 const HELP = read("public/app/views/help.js");
 const PRIVACY = between(HELP, "function privacyPage()", "\nfunction termsPage()");
+const TERMS = between(HELP, "function termsPage()", "\nexport async function render(");
 test("every outside service a visitor's browser contacts is named in the privacy policy", () => {
-  const sources = [read("public/index.html"), APP, ...readdirSync(new URL("../public/app/views/", import.meta.url)).filter((f) => f.endsWith(".js")).map((f) => read(`public/app/views/${f}`))].join("\n");
-  const hosts = new Set([...sources.matchAll(/https:\/\/([a-z0-9.-]+\.[a-z]{2,})/g)].map((m) => m[1]).filter((h) => !/(^|\.)(adaptivesportsnearme\.com|adapttolife\.org|w3\.org)$/.test(h)));
+  const views = readdirSync(new URL("../public/app/views/", import.meta.url)).filter((f) => f.endsWith(".js")).map((f) => read(`public/app/views/${f}`));
+  // The app, plus the blog's server-rendered pages and their menu script.
+  const sources = [read("public/index.html"), APP, ...views, read("src/blog.js"), read("src/site-chrome.js"), read("public/site-nav.js")].join("\n");
+  // schema.org is the blog's structured-data vocabulary and *.internal a cache key: neither is fetched.
+  const hosts = new Set([...sources.matchAll(/https:\/\/([a-z0-9.-]+\.[a-z]{2,})/g)].map((m) => m[1]).filter((h) => !/(^|\.)(adaptivesportsnearme\.com|adapttolife\.org|w3\.org|schema\.org)$|\.internal$/.test(h)));
   // Links a person chooses to follow, never loaded by the page: /build links to the code on GitHub.
   hosts.delete("github.com");
   const NAMED = {
     "fonts.googleapis.com": "Google Fonts", "fonts.gstatic.com": "Google Fonts", "tiles.openfreemap.org": "OpenFreeMap",
     "cdn.userway.org": "UserWay", "challenges.cloudflare.com": "Cloudflare Turnstile",
     "geocoding.geo.census.gov": "U.S. Census Bureau",
+    "api.beehiiv.com": "beehiiv",   // the blog's posts, fetched by our server
   };
   assert.ok(hosts.size >= 4, `found ${[...hosts]}`);
   for (const h of hosts) {
@@ -293,21 +300,33 @@ test("every outside service a visitor's browser contacts is named in the privacy
 });
 test("the privacy policy's promises hold in the code", () => {
   const appFiles = readdirSync(new URL("../public/app/", import.meta.url), { recursive: true }).filter((f) => f.endsWith(".js")).map((f) => read(`public/app/${f}`)).join("\n");
-  // "We don't set cookies while you browse" (only organization sign-in sets one, from the server).
-  assert.match(PRIVACY, /We don't set cookies while you browse\. If you sign in to manage your organization's listing, we set one cookie/);
+  // "We don't set cookies while you browse ... one cookie, only to keep you signed in, for up to 30 days."
+  assert.match(PRIVACY, /We don't set cookies while you browse\. If you sign in to manage an organization's listing, we set one cookie, only to keep you signed in, for up to 30 days/);
   assert.ok(!/document\.cookie/.test(appFiles), "the app sets or reads a cookie");
-  assert.match(read("src/organization-access.js"), /HttpOnly; Secure; SameSite=Lax/, "the organization sign-in cookie stays HttpOnly");
+  const access = read("src/organization-access.js");
+  assert.match(access, /HttpOnly; Secure; SameSite=Lax/, "the organization sign-in cookie stays HttpOnly");
+  assert.match(access, /const SESSION_SECONDS = 60 \* 60 \* 24 \* 30;/, "a sign-in no longer lasts 30 days: update the privacy policy");
+  // The policy doesn't cover the unused profile and IP-location endpoints, so nothing on the site may call them.
+  const pages = [appFiles, read("public/index.html"), read("public/site-nav.js"), read("src/site-chrome.js"), read("src/blog.js")].join("\n");
+  assert.ok(!/\/api\/profile|\/api\/location|\/location\.js/.test(pages), "the site now uses /api/profile or /api/location: describe it in the privacy policy first");
+  // "What your browser keeps": every key the app saves is one the policy describes.
+  const saved = [...new Set([...appFiles.matchAll(/store\.set\("([^"]+)"/g)].map((m) => m[1]))].sort();
+  assert.deepEqual(saved, ["asnm.beta", "asnm.place", "asnm.recent", "asnm.theme"], "the app saves something new in the browser: describe it in the privacy policy, then update this list");
+  assert.equal([...appFiles.matchAll(/localStorage\.setItem\(/g)].length, 1, "only the store helper writes localStorage");
   // "Your exact position is not sent to us."
   assert.match(PRIVACY, /Your exact position is not sent to us/);
   const locate = between(APP, "export function locateMe()", "\n}\n");
   assert.ok(!/fetch\(|navigator\.sendBeacon|XMLHttpRequest/.test(locate), "locateMe sends something to a server");
-  // "We don't store your IP address with what you sent."
-  assert.match(PRIVACY, /We don't store your IP address/);
+  // "We don't save your IP address with what you sent."
+  assert.match(PRIVACY, /We don't save your IP address with what you sent/);
   const worker = read("src/index.js");
   const ipUses = [...worker.matchAll(/request\.headers\.get\(['"]CF-Connecting-IP['"]\)/g)].length;
   const allowed = [...worker.matchAll(/verifyTurnstile\(env, str\(data\.cf_token\), request\.headers\.get\("CF-Connecting-IP"\)\)/g)].length + [...worker.matchAll(/FORM_LIMITER\.limit\(\{ key: request\.headers\.get\('CF-Connecting-IP'\)/g)].length;
   assert.equal(ipUses, allowed, "the IP address is used for something other than the spam check and the rate limit");
   for (const m of worker.matchAll(/INSERT[^`"]*INTO (intake|submissions)\s*\(([^)]*)\)/gi)) assert.ok(!/\bip\b|address|user_agent/i.test(m[2]), `${m[1]} stores an IP or browser detail`);
+  // Terms: the sport drawings are outside the MIT license because the license notes say so.
+  assert.match(TERMS, /The sport drawings belong to Adapt To Life and aren't covered by the MIT License/);
+  assert.match(read("THIRD_PARTY_NOTICES.md"), /## Sport drawings\n\nThe sport drawings belong to Adapt To Life NFP and are not licensed under the MIT/);
   // The pages exist where the site links to them.
   assert.match(between(APP, "function footer(", "\n}\n"), /href="\/privacy"[\s\S]*href="\/terms"/);
   assert.match(between(APP, "export function letterBlock(", "\n}\n"), /href="\/privacy"/);
