@@ -51,6 +51,7 @@ function guideBlock(key, low) {
 
 function programsTab(key, st, pool) {
   const name = A.sportName(key), low = lc(name);
+  const listedVerb = /\b(?:sports|meetups)$/i.test(name) ? "are" : "is";
   const counts = {};
   for (const p of pool) if (p.state) counts[p.state] = (counts[p.state] || 0) + 1;
   const ranked = Object.keys(counts).sort((a, b) => counts[b] - counts[a] || A.stateName(a).localeCompare(A.stateName(b)));
@@ -66,7 +67,7 @@ function programsTab(key, st, pool) {
 
   // Small tile map (tablet and desktop only). Tiles change the filter, so they replace.
   // Six states or more: fewer than that, the map is mostly zeros and the chips say it better.
-  const map = ranked.length >= 6 ? `<div class="sp-map"><h3 class="sp-map-h">Where ${A.esc(low)} is listed</h3>${A.tileMap({ counts, hrefFor: (s) => hrefFor(key, { st: s }), selected: st, list: "none" }).replace(/<a class="tile /g, '<a data-replace class="tile ')}</div>` : "";
+  const map = ranked.length >= 6 ? `<div class="sp-map"><h3 class="sp-map-h">Where ${A.esc(low)} ${listedVerb} listed</h3>${A.tileMap({ counts, hrefFor: (s) => hrefFor(key, { st: s }), selected: st, list: "none" }).replace(/<a class="tile /g, '<a data-replace class="tile ')}</div>` : "";
 
   const tools = `<section class="sp-where" aria-labelledby="sp-where-h"><h2 class="sr" id="sp-where-h">Find ${A.esc(low)} by state</h2>${chips}${select}${map}</section>`;
 

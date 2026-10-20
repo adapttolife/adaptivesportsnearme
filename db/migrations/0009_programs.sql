@@ -12,6 +12,8 @@ CREATE TABLE programs (
   state TEXT,
   state_name TEXT,
   zip TEXT,
+  address TEXT,
+  address_publicity_consent INTEGER NOT NULL DEFAULT 0 CHECK (address_publicity_consent IN (0, 1)),
   publicity_consent INTEGER NOT NULL DEFAULT 0 CHECK (publicity_consent IN (0, 1)),
   country TEXT DEFAULT 'United States',
   lat REAL,

@@ -250,7 +250,7 @@
 
 @media (min-width: 1280px) {
 	.v-program-detail .pg-grid {
-		grid-template-columns: minmax(0, 680px) 340px;
+		grid-template-columns: 1fr 340px;
 	}
 }
 
@@ -329,4 +329,23 @@
 .v-program-detail .pg-fresh span + span::before {
 	content: "\00b7";
 	margin: 0 7px;
+}
+
+.v-program-detail .pg-map {
+	position: relative;
+	height: clamp(240px, 42vw, 360px);
+	margin-top: 20px;
+	overflow: hidden;
+	border: 1px solid var(--line);
+	border-radius: var(--r-l);
+	background: var(--mist);
+}
+
+.v-program-detail .pg-map.is-map-unavailable::after {
+	content: "Map unavailable";
+	position: absolute;
+	inset: 0;
+	display: grid;
+	place-items: center;
+	color: var(--graphite);
 }

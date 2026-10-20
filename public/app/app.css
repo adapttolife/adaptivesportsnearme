@@ -66,7 +66,7 @@
 	--graphite: #d2d0ca;
 	--muted: #b7b4ad;
 	--paper: #171716;
-	--mist: #2f2e2c;
+	--mist: #232323;
 	--sand: #2c2a26;
 	--line: #47443e;
 	--line-strong: #6b665e;
@@ -104,12 +104,15 @@
 :root[data-theme="dark"] .trustbox,
 :root[data-theme="dark"] .v-home .st-allbox,
 :root[data-theme="dark"] .v-home .door--ink,
-:root[data-theme="dark"] .v-grants .seg a[aria-current="page"],
 :root[data-theme="dark"] .v-sport .vet-res,
 :root[data-theme="dark"] .v-vob .vb-hero,
 :root[data-theme="dark"] .v-letter-confirmed .lc-tag {
-	background: #323232 !important;
+	background: #232323 !important;
 	color: #f3f3f3;
+}
+
+:root[data-theme="dark"] .v-grants .seg::before {
+	background: #232323;
 }
 
 :root[data-theme="dark"] #beta .beta,
@@ -130,15 +133,15 @@
 }
 
 :root[data-theme="dark"] .v-near .nr-k--dot {
-	background: #323232;
+	background: #232323;
 }
 
 :root[data-theme="dark"] [style*="--t:#1A1A1A"] {
-	--t: #323232 !important;
+	--t: #232323 !important;
 }
 
 :root[data-theme="dark"] .v-home .hb.is-ink {
-	--hb: #323232 !important;
+	--hb: #232323 !important;
 }
 
 @media (min-width: 768px) {
@@ -1373,6 +1376,7 @@ body.ov-open {
 .input,
 input[type="text"],
 input[type="email"],
+input[type="tel"],
 input[type="url"],
 input[type="search"],
 input[type="date"],

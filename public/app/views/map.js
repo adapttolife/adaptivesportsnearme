@@ -49,6 +49,59 @@ function loadLib() {
   });
   return LIB_P;
 }
+
+async function geocodeAddress(address) {
+  if (!address) return null;
+  try {
+    const url = new URL("https://geocoding.geo.census.gov/geocoder/locations/onelineaddress");
+    url.searchParams.set("benchmark", "Public_AR_Current");
+    url.searchParams.set("format", "json");
+    url.searchParams.set("address", address);
+    const response = await fetch(url);
+    if (!response.ok) return null;
+    const match = (await response.json())?.result?.addressMatches?.[0]?.coordinates;
+    return Number.isFinite(match?.y) && Number.isFinite(match?.x) ? [match.y, match.x] : null;
+  } catch (_) {
+    return null;
+  }
+}
+
+export async function mountLocationMaps(root) {
+  const entries = [...root.querySelectorAll("[data-location-map]")];
+  const maps = [];
+  const lib = await loadLib().catch(() => null);
+  if (!lib) {
+    for (const el of entries) el.classList.add("is-map-unavailable");
+    return () => {};
+  }
+  for (const el of entries) {
+    let lat = Number(el.dataset.lat), lng = Number(el.dataset.lng);
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+      const point = await geocodeAddress(el.dataset.address || "");
+      if (!point) { el.classList.add("is-map-unavailable"); continue; }
+      [lat, lng] = point;
+    }
+    const map = new lib.Map({
+      container: el,
+      style: STYLE,
+      center: [lng, lat],
+      zoom: 15,
+      attributionControl: { compact: true },
+      dragRotate: false,
+      pitchWithRotate: false,
+      touchPitch: false,
+      cooperativeGestures: true,
+    });
+    map.touchZoomRotate.disableRotation();
+    map.addControl(new lib.NavigationControl({ showCompass: false }), "top-right");
+    map.once("load", () => {
+      map.addSource("location", { type: "geojson", data: { type: "Feature", properties: {}, geometry: { type: "Point", coordinates: [lng, lat] } } });
+      map.addLayer({ id: "location-ring", type: "circle", source: "location", paint: { "circle-radius": 12, "circle-color": "#C5430C", "circle-stroke-color": "#fff", "circle-stroke-width": 3 } });
+    });
+    maps.push(map);
+  }
+  return () => maps.forEach((map) => map.remove());
+}
 const cityName = (p) => p.cityFirst.replace(/ and more$/, "");
 const cityLabel = (c) => `${c.name}, ${c.state}`;
 

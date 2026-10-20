@@ -19,7 +19,7 @@ export function freshness(lastOkAt, now = Date.now()) {
 }
 
 const LIST_COLS = `id, name, org_type, sport, sport_key, website_url, city,
-  state, state_name, zip, publicity_consent, lat, lng, geo_precision, description, cost_note,
+  state, state_name, zip, country, publicity_consent, lat, lng, geo_precision, description, cost_note,
   equipment_provided, ages, data_quality_rating, verification_status, verification_method,
   last_ok_at, created_at`;
 
@@ -41,6 +41,8 @@ const actionableOn = (t) => ACTIONABLE.replace(/\b(website_url|city|state|public
 
 function rowToProgram(r, dist) {
   const publicityConsent = r.publicity_consent === 1;
+  const addressPublicityConsent = r.address_publicity_consent === 1;
+  const preciseLocationConsent = publicityConsent || addressPublicityConsent;
   return {
     id: r.id,
     name: r.name,
@@ -51,11 +53,14 @@ function rowToProgram(r, dist) {
     city: r.city,
     state: r.state,
     stateName: r.state_name,
-    zip: publicityConsent ? r.zip : null,
-    lat: publicityConsent ? r.lat : null,
-    lng: publicityConsent ? r.lng : null,
-    geoPrecision: publicityConsent ? r.geo_precision : null,
+    zip: preciseLocationConsent ? r.zip : null,
+    country: addressPublicityConsent ? r.country : null,
+    address: addressPublicityConsent ? r.address : null,
+    lat: preciseLocationConsent ? r.lat : null,
+    lng: preciseLocationConsent ? r.lng : null,
+    geoPrecision: preciseLocationConsent ? r.geo_precision : null,
     publicityConsent,
+    addressPublicityConsent,
     // Contact details in notes show only with the organization's yes (src/public-text.js).
     desc: publicText(r.description, publicityConsent),
     cost: publicText(r.cost_note, publicityConsent),
@@ -238,7 +243,7 @@ export async function listPrograms(db, params, opts = {}) {
 
 export async function getOrg(db, id) {
   const row = await db.prepare(
-    `SELECT ${LIST_COLS}, email, phone, primary_data_source, verification_method, created_at, updated_at
+    `SELECT ${LIST_COLS}, address, address_publicity_consent, email, phone, primary_data_source, verification_method, created_at, updated_at
      FROM organizations WHERE id = ? AND ${PUBLIC}`
   ).bind(id).first();
   if (!row) return null;
@@ -262,8 +267,8 @@ export async function getOrg(db, id) {
 }
 
 const PROGRAM_COLS = `p.id, p.organization_id, p.name, NULL AS org_type, p.sport, p.sport_key,
-  p.website_url, p.city, p.state, p.state_name, p.zip, p.publicity_consent, p.lat, p.lng,
-  p.geo_precision, p.description, p.cost_note, p.equipment_provided, p.ages,
+  p.website_url, p.city, p.state, p.state_name, p.zip, p.country, p.publicity_consent, p.lat, p.lng,
+  p.geo_precision, p.address, p.address_publicity_consent, p.description, p.cost_note, p.equipment_provided, p.ages,
   NULL AS data_quality_rating, p.verification_status, p.verification_method, p.last_ok_at, p.created_at`;
 const PROGRAM_PUBLIC = "p.is_public = 1 AND p.status = 'active' AND o.is_public = 1 AND o.status = 'active'";
 function programParent(row) {

@@ -1,0 +1,201 @@
+.v-manage .om {
+	max-width: 720px;
+	padding-top: 24px;
+}
+
+.v-manage .om-head {
+	max-width: 620px;
+}
+
+.v-manage .om-head p {
+	margin-top: 10px;
+	color: var(--graphite);
+	font-size: 17px;
+}
+
+.v-manage .om-card,
+.v-manage .om-list {
+	margin-top: 28px;
+}
+
+.v-manage .om-card {
+	padding: 20px;
+	border: 1px solid var(--line);
+	border-radius: var(--r-l);
+	background: var(--mist);
+}
+
+.v-manage .om-card .field {
+    margin-top: 0;
+    margin-bottom: 16px;
+}
+
+.v-manage .om-card fieldset {
+	min-width: 0;
+	border: 0;
+	margin: 0;
+	padding: 0;
+}
+
+.v-manage .om-card fieldset > .field:last-of-type {
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
+.v-manage .om-card fieldset + fieldset {
+	margin-top: 20px;
+	padding-top: 10px;
+}
+
+.v-manage .om-card legend {
+	font-size: var(--fs-h4);
+	font-weight: 700;
+}
+
+.v-manage .om-card input,
+.v-manage .om-card select,
+.v-manage .om-card textarea {
+	background: var(--paper);
+}
+
+.v-manage .om-two {
+	display: grid;
+	gap: 0 12px;
+}
+
+.v-manage .om-check {
+	display: flex;
+	gap: 10px;
+	align-items: flex-start;
+	margin-top: 16px;
+	line-height: 1.4;
+	font-weight: 600;
+	cursor: pointer;
+}
+
+.v-manage .om-check input {
+	width: 20px;
+	height: 20px;
+	margin: 1px 0 0;
+	accent-color: var(--orange);
+}
+
+.v-manage .om-visibility {
+	display: flex;
+	align-items: center;
+	gap: 16px;
+	margin-top: 16px;
+	font-weight: 600;
+	cursor: pointer;
+}
+
+.v-manage .om-two + .om-visibility {
+	margin-top: 0;
+	margin-bottom: 16px;
+}
+
+.v-manage .om-visibility + .om-two {
+	margin-top: 16px;
+}
+
+.v-manage .om-visibility-copy {
+	line-height: 1.35;
+}
+
+.v-manage .om-visibility-copy small {
+	display: block;
+	margin-top: 3px;
+	color: var(--graphite);
+	font-size: 14px;
+	font-weight: 400;
+}
+
+.v-manage .om-visibility input {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+	clip: rect(0 0 0 0);
+	white-space: nowrap;
+}
+
+.v-manage .om-visibility .dl-switch {
+	margin-left: auto;
+}
+
+.v-manage .om-visibility input:checked + .dl-switch {
+	background: var(--ink);
+	border-color: var(--ink);
+}
+
+.v-manage .om-visibility input:checked + .dl-switch::after {
+	translate: 18px 0;
+	background: var(--paper);
+}
+
+.v-manage .om-visibility input:focus-visible + .dl-switch {
+	box-shadow: var(--focus);
+}
+
+.v-manage .om-status {
+	min-height: 1.5em;
+	margin-top: 10px;
+	margin-bottom: 10px;
+	color: var(--graphite);
+}
+
+.v-manage .om-status:empty {
+    display: none;
+}
+
+.v-manage .om-note {
+	margin-top: 20px;
+	color: var(--graphite);
+}
+
+.v-manage .om-org {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 16px;
+	min-height: 64px;
+	padding: 16px;
+	border: 1px solid var(--line);
+	border-radius: var(--r);
+	color: var(--ink);
+	font-weight: 700;
+	text-decoration: none;
+}
+
+.v-manage .om-org + .om-org {
+	margin-top: 10px;
+}
+
+.v-manage .om-org:hover {
+	border-color: var(--ink);
+}
+
+.v-manage .om-signout {
+	margin-top: 24px;
+}
+
+
+.v-manage .om-back {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	min-height: 44px;
+	margin-bottom: 12px;
+	font-weight: 700;
+	text-decoration: none;
+}
+
+@media (min-width: 600px) {
+	.v-manage .om-card {
+		padding: 28px;
+	}
+
+	.v-manage .om-two {
+		grid-template-columns: 1fr 1fr;
+	}
+}

@@ -104,8 +104,11 @@ const ROUTES = [
   }],
   [/^\/events\/?$/, () => ({ title: "Adaptive sports events", description: "Clinics, tryouts and game days. Know of one? Add it and a person will check it.", image: PAGE_CARDS.events })],
   [/^\/add\/program\/?$/, () => ({ title: "Add a program", description: "Tell us about an adaptive sports program. A person checks every one before it goes up.", noindex: true })],
+  [/^\/add\/organization\/?$/, () => ({ title: "Add an organization", description: "Tell us about an organization that runs adaptive sports programs. A person checks every one before it goes up.", noindex: true })],
   [/^\/add\/event\/?$/, () => ({ title: "Add an event", description: "Tell us about an adaptive sports event. A person checks every one before it goes up.", noindex: true })],
   [new RegExp(`^/update/(${UUID})/?$`, "i"), () => ({ title: "Suggest a fix", description: "Tell us what to fix on a listing.", noindex: true })],
+  [/^\/manage\/?$/, () => ({ title: "Manage your organization", description: "Sign in to review and update your organization's details.", noindex: true })],
+  [new RegExp(`^/manage/organizations/(${UUID})/?$`, "i"), () => ({ title: "Manage your organization", description: "Review and update your organization's details.", noindex: true })],
   [/^\/help\/?$/, () => ({ title: "Help build this", description: "Add a program or an event, suggest a fix, or confirm the program you run." })],
   [/^\/about\/?$/, () => ({ title: "How we check listings", description: "What Verified means, what Not verified yet means, and how we keep every listing up to date." })],
   [/^\/resources\/?$/, () => ({ title: "Guides", description: "Every adaptive sport explained, and help beyond sports, like veteran-owned business directories by state." })],
@@ -149,7 +152,7 @@ const VIEWS = [
   [/^\/$/, "home"], [/^\/near\/[^/]+$/, "near"], [/^\/sports$/, "sports"], [/^\/sports\/[^/]+$/, "sport"],
   [/^\/states$/, "states"], [/^\/states\/[^/]+$/, "state"], [/^\/organizations$/, "organizations"], [/^\/organizations\/[^/]+$/, "program"], [/^\/programs$/, "programs"], [/^\/programs\/[^/]+$/, "program-detail"],
   [/^\/grants$/, "grants"], [/^\/grants\/[^/]+$/, "grant"], [/^\/events$/, "events"],
-  [/^\/(add\/program|add\/event|update\/[^/]+)$/, "forms"], [/^\/resources\/veteran-owned-businesses$/, "vob"],
+  [/^\/(add\/program|add\/organization|add\/event|update\/[^/]+)$/, "forms"], [/^\/manage(?:\/organizations\/[^/]+)?$/, "manage"], [/^\/resources\/veteran-owned-businesses$/, "vob"],
   [/^\/letter\/confirmed$/, "letter-confirmed"], [/^\/(help|about|resources|letter)$/, "help"],
 ];
 export function preloadHints(pathname) {

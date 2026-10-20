@@ -71,6 +71,25 @@ ${field({ name: "notes", label: "Anything else we should know", type: "textarea"
   });
 }
 
+function addOrganization(D) {
+  const form = `<form class="fm-form" data-send="/api/submit-organization" data-source="asnm-add-organization" novalidate data-done-href="/" data-done-label="Back to the directory" data-done="Thanks. A person on our team will check it before it goes live, and we'll write if we have a question.">${reqNote}
+<fieldset class="fm-set"><legend>The organization</legend>
+${field({ name: "org", label: "Organization", required: true, auto: "organization", hint: "The club, parks department, nonprofit, or other group that runs programs." })}
+${select({ name: "sport", label: "Main sport", options: sportOptions(D), placeholder: "Choose a sport" })}
+<div class="fm-two fm-two--place">${field({ name: "city", label: "City", auto: "address-level2" })}${select({ name: "state", label: "State", options: stateOptions(), required: true, placeholder: "Choose a state" })}</div>
+${field({ name: "url", label: "Website", type: "url", auto: "url", attrs: 'inputmode="url" placeholder="https://"' })}
+</fieldset>
+<fieldset class="fm-set"><legend>About you</legend>
+${field({ name: "em", label: "Your email", type: "email", required: true, auto: "email", hint: "We write back to confirm. Never shown." })}
+${field({ name: "notes", label: "Anything else we should know", type: "textarea" })}
+</fieldset>${honeypot}${submit("Send for review")}</form>`;
+  return page({
+    title: "Add an organization", h1: "Add an organization",
+    intro: "Tell us about an organization that runs adaptive sports programs. It's free, and a person on our team checks every new listing before it goes live.",
+    tile: A.plate("multi", { kind: "row", cls: "fm-tile" }), form,
+  });
+}
+
 function addEvent(D) {
   const form = `<form class="fm-form" data-send="/api/submit-event" data-source="asnm-add-event" novalidate data-done-href="/events" data-done-label="Back to events" data-done="Thanks. A person checks every event before it goes live.">${reqNote}
 <fieldset class="fm-set"><legend>The event</legend>
@@ -129,6 +148,7 @@ ${field({ name: "em", label: run ? "Your email" : "Your email (optional)", type:
 export async function render(ctx) {
   const D = ctx.data;
   if (ctx.path === "/add/program") return addProgram(D);
+  if (ctx.path === "/add/organization") return addOrganization(D);
   if (ctx.path === "/add/event") return addEvent(D);
   return update(D, String(ctx.params.id || "").toLowerCase(), ctx.query.rel || "");
 }

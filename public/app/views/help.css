@@ -402,7 +402,6 @@
 .v-help .rs-card {
 	margin-top: 24px;
 	max-width: 880px;
-	border: 1px solid var(--line);
 	border-radius: var(--r-l);
 	overflow: hidden;
 	background: var(--paper);

@@ -48,24 +48,29 @@ test('public organization details expose contacts and precise locations only wit
   const {sql,db} = database();
   try {
     sql.exec(`INSERT INTO organizations
-      (id,name,is_public,status,created_at,updated_at,city,state,zip,lat,lng,email,phone)
-      VALUES ('org','Program',1,'active','2026','2026','Denver','CO','80202',39.75,-104.99,'private@example.test','555-0100')`);
+      (id,name,is_public,status,created_at,updated_at,city,state,address,zip,lat,lng,email,phone)
+      VALUES ('org','Program',1,'active','2026','2026','Denver','CO','100 Private Way','80202',39.75,-104.99,'private@example.test','555-0100')`);
     const org = await getOrg(db, 'org');
     assert.equal(org.city, 'Denver');
     assert.equal(org.state, 'CO');
-    for (const key of ['lat','lng','zip','dist']) assert.equal(org[key], null);
+    for (const key of ['lat','lng','zip','address','dist']) assert.equal(org[key], null);
     for (const key of ['email','phone']) assert.equal(Object.hasOwn(org, key), false);
     sql.exec(`INSERT INTO organizations
-      (id,name,is_public,status,created_at,updated_at,city,state,zip,lat,lng,email,phone,publicity_consent)
-      VALUES ('consented','Program',1,'active','2026','2026','Denver','CO','80202',39.75,-104.99,'public@example.test','555-0101',1)`);
+      (id,name,is_public,status,created_at,updated_at,city,state,address,zip,lat,lng,email,phone,publicity_consent)
+      VALUES ('consented','Program',1,'active','2026','2026','Denver','CO','101 Private Way','80202',39.75,-104.99,'public@example.test','555-0101',1)`);
     const consented = await getOrg(db, 'consented');
     assert.equal(consented.zip, '80202');
     assert.equal(consented.lat, 39.75);
     assert.equal(consented.lng, -104.99);
     assert.equal(consented.email, 'public@example.test');
     assert.equal(consented.phone, '555-0101');
+    assert.equal(consented.address, null);
+    sql.exec(`INSERT INTO organizations
+      (id,name,is_public,status,created_at,updated_at,city,state,address,address_publicity_consent)
+      VALUES ('address-consented','Program',1,'active','2026','2026','Denver','CO','102 Public Way',1)`);
+    assert.equal((await getOrg(db, 'address-consented')).address, '102 Public Way');
     const result = await listPrograms(db, new URLSearchParams({lat:'42.7',lng:'-73.7'}), {zcta:null});
-    assert.equal(result.items.length, 2);
+    assert.equal(result.items.length, 3);
     assert.ok(result.items.every(item => item.dist === null));
   } finally { sql.close(); }
 });
@@ -86,6 +91,22 @@ test('publicity consent migration defaults to zero and accepts only zero or one'
     assert.equal(consent('consented'), 1);
     assert.throws(() => sql.prepare("INSERT INTO organizations (id, publicity_consent) VALUES ('invalid', 2)").run());
     assert.throws(() => sql.prepare("INSERT INTO organizations (id, publicity_consent) VALUES ('unknown', NULL)").run());
+  } finally { sql.close(); }
+});
+
+test('address publicity consent migration defaults to zero and accepts only zero or one', () => {
+  const sql = new DatabaseSync(':memory:');
+  try {
+    sql.exec('CREATE TABLE organizations (id TEXT PRIMARY KEY)');
+    sql.prepare("INSERT INTO organizations (id) VALUES ('existing')").run();
+    sql.exec(read('db/migrations/0012_address_publicity_consent.sql'));
+    sql.prepare("INSERT INTO organizations (id) VALUES ('default')").run();
+    sql.prepare("INSERT INTO organizations (id, address_publicity_consent) VALUES ('consented', 1)").run();
+    const consent = id => sql.prepare('SELECT address_publicity_consent AS consent FROM organizations WHERE id = ?').get(id).consent;
+    assert.equal(consent('existing'), 0);
+    assert.equal(consent('default'), 0);
+    assert.equal(consent('consented'), 1);
+    assert.throws(() => sql.prepare("INSERT INTO organizations (id, address_publicity_consent) VALUES ('invalid', 2)").run());
   } finally { sql.close(); }
 });
 
@@ -336,6 +357,12 @@ test('/api/listings lists programs as places, says who runs them, and never name
     assert.equal(borp.organization, null, "a program's page never names the placeholder");
     const coffee = await getProgram(db, 'bbbbbbbb-0000-4000-8000-000000000001');
     assert.equal(coffee.organization.name, 'Empath Health');
+    sql.prepare("UPDATE programs SET address = ?, address_publicity_consent = 1, lat = ?, lng = ? WHERE id = ?").run('100 Public Way', 27.94, -82.46, 'bbbbbbbb-0000-4000-8000-000000000001');
+    const mapped = await getProgram(db, 'bbbbbbbb-0000-4000-8000-000000000001');
+    assert.equal(mapped.address, '100 Public Way');
+    assert.equal(mapped.addressPublicityConsent, true);
+    assert.equal(mapped.lat, 27.94);
+    assert.equal(mapped.lng, -82.46);
     const res = await worker.fetch(new Request('https://example.test/api/programs/program-bay-area-outreach'), { DB: db }, {});
     assert.equal(res.status, 200, 'a readable program id loads');
     assert.equal((await res.json()).program.name, 'Bay Area Outreach & Recreation Program');

@@ -24,10 +24,11 @@ function helpPage() {
   const html = `<div class="hp-page">
 <div class="hp-hero" style="--t:${A.toneOf("multi").t}">${art}<div class="hp-text"><h1 tabindex="-1">Help build this</h1><p class="hp-sub">This directory is new and still growing. Here is how you can help.</p></div></div>
 <div class="hp-cards">
-${card({ ic: "badge-check", title: "Claim your organization", body: "Run or work for an organization listed here? Find it and confirm the details.", cls: "hp-card--claim", extra: finder })}
+${card({ ic: "badge-check", title: "Claim your organization", body: "Run or work for an organization listed here? Sign in with the verified email to manage its details.", action: A.btn("Manage your organization", "/manage", "ink"), cls: "hp-card--claim", extra: finder })}
 ${card({ ic: "plus", title: "Add a program", body: "Know a program we're missing? Tell us and we'll check it.", action: A.btn("Add a program", "/add/program", "ink") })}
+${card({ ic: "building-2", title: "Add an organization", body: "Know an organization that runs adaptive sports programs? Tell us and we'll check it.", action: A.btn("Add an organization", "/add/organization", "line") })}
 ${card({ ic: "calendar-plus", title: "Add an event", body: "Share a clinic, tryout, game day or meetup.", action: A.btn("Add an event", "/add/event", "line") })}
-${card({ ic: "square-pen", title: "Suggest a fix", body: "Spot something wrong? Every listing has a Suggest a fix link.", cls: "hp-card--wide", action: A.btn("Find a listing", "", "line", { attrs: 'data-open="search"', icon: "search" }) })}
+${card({ ic: "square-pen", title: "Suggest a fix", body: "Spot something wrong? Every listing has a Suggest a fix link.", action: A.btn("Find a listing", "", "line", { attrs: 'data-open="search"', icon: "search" }) })}
 </div>
 ${A.letterBlock({ source: "help" })}</div>`;
   return { title: "Help build this · Adaptive Sports Near Me", description: DESC, html };

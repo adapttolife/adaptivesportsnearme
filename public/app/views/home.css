@@ -11,7 +11,7 @@
 	background: var(--hb, #ff5c39);
 	color: #1a1a1a;
 	transition: background-color 700ms ease;
-	height: max(400px, 50vh);
+	height: max(450px, 50vh);
 	display: flex;
 }
 

@@ -25,11 +25,14 @@ export async function queueFormConfirmation(env, ctx, { kind, email, program }) 
         return;
       }
       const subject = kind === 'program' ? 'We received your program submission'
+        : kind === 'organization' ? 'We received your organization submission'
         : kind === 'listing-update' ? 'We received your suggested update'
         : kind === 'event' ? 'We received your event'
         : kind === 'profile-created' ? 'Your ASNM profile is ready' : 'Your ASNM profile was updated';
       const body = kind === 'program'
         ? `Thank you for submitting ${program} to Adaptive Sports Near Me. We received your submission and will review it before publishing or updating a listing. This receipt does not mean the program has been approved.`
+        : kind === 'organization'
+          ? `Thank you for submitting ${program} to Adaptive Sports Near Me. We received your submission and will review it before publishing the organization. This receipt does not mean the organization has been approved.`
         : kind === 'listing-update'
           ? `Thank you for helping keep ${program} accurate on Adaptive Sports Near Me. A person will read your suggestion before anything on the listing changes. This receipt does not mean the change has been made yet.`
         : kind === 'event'

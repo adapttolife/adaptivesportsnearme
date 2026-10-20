@@ -18,7 +18,17 @@ function organization(p) { if (!p.organization) return ""; const detail = [p.org
 /* The same trust line and fix link as an organization's page. */
 function fresh(p) { const f = A.freshText(p); return f ? `<p class="pg-fresh num"><span>${A.esc(f)}</span></p>` : ""; }
 function fix(p) { return `<ul class="pg-links"><li><a class="pg-link" href="/update/${A.esc(p.id)}"><span class="pg-link-ic">${A.icon("pencil", 20)}</span><span class="pg-link-text"><span class="pg-link-label">Suggest a fix</span></span>${A.icon("chevron-right", 20)}</a></li></ul>`; }
-function where(p) { const label = place(p); return label ? `<section class="pg-sec"><h2>Where you'll play</h2><p>${A.esc(label)}. We show the city only, so check the website for the exact place.</p>${p.city && p.state ? `<a class="tlink" href="/near/${encodeURIComponent(label)}">Programs near ${A.esc(label)}${A.icon("arrow-right", 18)}</a>` : ""}</section>` : ""; }
+function where(p) {
+  const label = place(p);
+  const canMap = p.addressPublicityConsent && (p.address || (Number.isFinite(p.lat) && Number.isFinite(p.lng)));
+  if (!label && !canMap) return "";
+  const address = [p.address, p.city, p.state, p.zip, p.country].filter(Boolean).join(", ");
+  const map = canMap ? `<div class="pg-map" data-location-map data-lat="${A.esc(p.lat)}" data-lng="${A.esc(p.lng)}" data-address="${A.esc(address)}" aria-label="Map showing ${A.esc(p.name)}"></div>` : "";
+  const stateZip = [p.stateName || p.state, p.zip].filter(Boolean).join(" ");
+  const location = [p.city, stateZip].filter(Boolean).join(", ");
+  const fullAddress = [p.address, location, p.country].filter(Boolean).join(", ");
+  return `<section class="pg-sec"><h2>Where you'll play</h2>${p.address ? `<p>${A.esc(fullAddress)}.</p>` : label ? `<p>${A.esc(label)}. We show the city only, so check the website for the exact place.</p>` : ""}${p.city && p.state ? `<a class="tlink" href="/near/${encodeURIComponent(label)}">Programs near ${A.esc(label)}${A.icon("arrow-right", 18)}</a>` : ""}${map}</section>`;
+}
 function booking(p) { const site = host(p.website); return p.website ? `<div class="pg-book"><div class="pg-book-in"><p class="pg-book-kind">${A.esc(p.sportLabel || "Adaptive sports")}${place(p) ? ` · ${A.esc(place(p))}` : ""}</p>${visit(p, { full: true })}${site ? `<p class="pg-host">Opens ${A.esc(site)}</p>` : ""}</div></div>` : ""; }
 
 export async function render(ctx) {
@@ -29,4 +39,11 @@ export async function render(ctx) {
   const location = place(p);
   const main = `<div class="pg-grid"><div class="pg-main">${hero(p)}<div class="pg-head"><h1 tabindex="-1">${A.esc(p.name)}</h1><p class="pg-meta">${A.esc(p.sportLabel || "Adaptive sports")}${location ? ` · ${A.esc(location)}` : ""}</p>${fresh(p)}</div>${actions(p)}${about(p)}${facts(p)}${organization(p)}${where(p)}${fix(p)}</div>${booking(p)}</div>`;
   return { title: `${p.name} · Adaptive Sports Near Me`, description: `${p.name}${location ? ` in ${location}` : ""}.`, html: main, sticky: p.website ? A.stickyBar({ action: { label: "Visit website", href: p.website, kind: "ink", external: true } }) : "" };
+}
+
+export function mount(root) {
+  let removeMaps = () => {};
+  let disposed = false;
+  if (root.querySelector("[data-location-map]")) import("./map.js").then((maps) => maps.mountLocationMaps(root)).then((remove) => { if (disposed) remove(); else removeMaps = remove; }).catch(() => {});
+  return () => { disposed = true; removeMaps(); };
 }

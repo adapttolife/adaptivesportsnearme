@@ -291,6 +291,8 @@ export function loadDetail(id) {
     if (o && item && !item.detail) {
       Object.assign(item, {
         website: goodUrl(o.website), desc: o.desc || null, cost: o.cost || null, ages: o.ages || null, equipment: o.equipment || null,
+        address: o.address || null, addressPublicityConsent: !!o.addressPublicityConsent, zip: o.zip || null, country: o.country || null,
+        lat: o.lat ?? null, lng: o.lng ?? null, geo: o.geoPrecision || null,
         checkedMonth: o.checkedMonth || null, type: o.type || null, detail: true,
       });
     }
@@ -1031,7 +1033,7 @@ export function drawerList(active = "") {
       + door("resources", "/resources", "Guides", "Getting started, and life beyond sports")
       + `</ul></div>`,
     sec("Browse", item("states", "/states", "States") + item("organizations", "/organizations", "Organizations")),
-    sec("Help build this", item("add-program", "/add/program", "Add a program") + item("add-event", "/add/event", "Add an event") + item("help", "/help", "Claim your organization")),
+    sec("Help build this", item("add-program", "/add/program", "Add a program") + item("add-organization", "/add/organization", "Add an organization") + item("manage", "/manage", "Manage your organization") + item("add-event", "/add/event", "Add an event") + item("help", "/help", "Claim your organization")),
     sec("About this directory", item("about", "/about", "How we check listings") + item("letter", "/letter", "Get the letter")),
     `<div class="dl-sec dl-set"><button type="button" class="dl-theme" data-theme-toggle aria-pressed="${dark}"><span>Dark mode</span><span class="dl-switch" aria-hidden="true"></span></button></div>`,
   ].join("");
@@ -1268,7 +1270,8 @@ const ROUTES = [
   ["/", "home"], ["/near/:place", "near"], ["/sports", "sports"], ["/sports/:key", "sport"],
   ["/states", "states"], ["/states/:st", "state"], ["/organizations", "organizations"], ["/organizations/:id", "program"], ["/programs", "programs"], ["/programs/:id", "program-detail"],
   ["/grants", "grants"], ["/grants/:id", "grant"], ["/events", "events"],
-  ["/add/program", "forms"], ["/add/event", "forms"], ["/update/:id", "forms"],
+  ["/add/program", "forms"], ["/add/organization", "forms"], ["/add/event", "forms"], ["/update/:id", "forms"],
+  ["/manage", "manage"], ["/manage/organizations/:id", "manage"],
   ["/help", "help"], ["/about", "help"], ["/resources/veteran-owned-businesses", "vob"], ["/resources", "help"], ["/letter", "help"], ["/letter/confirmed", "letter-confirmed"],
 ];
 const OVERLAY_KEYS = new Set(["map", "open"]);
@@ -1342,7 +1345,9 @@ function defaultActive(name, path, params) {
   if (name === "grants" || name === "grant") return "grants";
   if (name === "events") return "events";
   if (path === "/add/program") return "add-program";
+  if (path === "/add/organization") return "add-organization";
   if (path === "/add/event") return "add-event";
+  if (path === "/manage") return "manage";
   if (name === "help") return path.slice(1);
   return "";
 }

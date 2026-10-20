@@ -81,11 +81,14 @@ const application = {
       if (limited) return limited;
       return handleSubscribe(request, env, ctx);
     }
-    if (url.pathname === "/api/submit-program" || url.pathname === "/api/submit-event") {
+    if (url.pathname === "/api/submit-program" || url.pathname === "/api/submit-organization" || url.pathname === "/api/submit-event") {
       if (request.method !== "POST") return json({ ok: false, error: "Method not allowed" }, 405);
       const limited = await formLimited(request, env, 'Submissions are temporarily unavailable.');
       if (limited) return limited;
-      return handleSubmitProgram(request, env, ctx, { event: url.pathname === "/api/submit-event" });
+      return handleSubmitProgram(request, env, ctx, {
+        event: url.pathname === "/api/submit-event",
+        organization: url.pathname === "/api/submit-organization",
+      });
     }
     if (url.pathname === "/api/profile") {
       if (request.method === "POST") return handleProfileUpsert(request, env, ctx);
@@ -329,6 +332,7 @@ async function subscribeToBeehiiv(env, email, campaign, extra = {}) {
 // this request (best-effort) or, failing that, by the scheduled sweepIntake.
 // Airtable is retired: nothing reads the old Agent Inbox base, so nothing writes it.
 export const PROGRAM_INTAKE_KIND = "program";
+export const ORGANIZATION_INTAKE_KIND = "organization";
 export const EVENT_INTAKE_KIND = "event";
 const LISTING_ID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const LISTING_RELATIONS = new Set(["run", "attend", "other"]);
@@ -343,6 +347,18 @@ export async function programSubmissionId(sid, email, payload) {
   const material = ["program", PROGRAM_SID_RE.test(sid) ? sid : "", email.toLowerCase(), JSON.stringify(payload)].join("\n");
   const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(material));
   return "program:" + Array.from(new Uint8Array(digest), (x) => x.toString(16).padStart(2, "0")).join("");
+}
+
+async function draftProgramId(intakeId) {
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(`draft-program\n${intakeId}`));
+  const hex = Array.from(new Uint8Array(digest), (x) => x.toString(16).padStart(2, "0")).join("");
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-5${hex.slice(13, 16)}-${((parseInt(hex[16], 16) & 3) | 8).toString(16)}${hex.slice(17, 20)}-${hex.slice(20, 32)}`;
+}
+
+async function draftOrganizationId(intakeId) {
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(`draft-organization\n${intakeId}`));
+  const hex = Array.from(new Uint8Array(digest), (x) => x.toString(16).padStart(2, "0")).join("");
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-5${hex.slice(13, 16)}-${((parseInt(hex[16], 16) & 3) | 8).toString(16)}${hex.slice(17, 20)}-${hex.slice(20, 32)}`;
 }
 
 async function handleSubmitProgram(request, env, ctx, opts = {}) {
@@ -362,12 +378,13 @@ async function handleSubmitProgram(request, env, ctx, opts = {}) {
   // A suggested event (kind=event) rides the same path too (opening-day bar:
   // add-an-event works); a person checks it before it is listed.
   const isEvent = !!opts.event || str(data.kind) === "event";
+  const isOrganization = !!opts.organization;
   const listingId = !isEvent && LISTING_ID_RE.test(str(data.lid)) ? str(data.lid).toLowerCase() : "";
   const relation = LISTING_RELATIONS.has(str(data.rel)) ? str(data.rel) : "";
   // A fix or a claim names the listing by its id; the receipt and the notice use
   // the listing's own name from the directory, never text the browser sent.
   // A new listing names its organization; the program (what they offer) is optional.
-  let program = isEvent ? str(data.en) : (str(data.pn) || str(data.org));
+  let program = isEvent ? str(data.en) : isOrganization ? str(data.org) : (str(data.pn) || str(data.org));
   if (listingId) {
     let listed = "";
     try { listed = str((await env.DB?.prepare("SELECT name FROM organizations WHERE id = ?").bind(listingId).first())?.name); } catch { /* the id still names it */ }
@@ -406,7 +423,9 @@ async function handleSubmitProgram(request, env, ctx, opts = {}) {
     ? { event: program, date: eventDate, end: eventEnd, time: eventTime, city, state: stateRegion, url: siteUrl, org, sport, notes }
     : listingId
       ? { program, update_of: listingId, relation, notes }
-      : { program, org, sport, city, state: stateRegion, website: siteUrl, notes };
+      : isOrganization
+        ? { organization: program, sport, city, state: stateRegion, website: siteUrl, notes }
+        : { program, org, sport, city, state: stateRegion, website: siteUrl, notes };
   const intakeId = await programSubmissionId(str(data.sid), email, answers);
   const location = [city, stateRegion].filter(Boolean).join(", ");
   // The summary is the notice's subject line: one line, bounded.
@@ -414,10 +433,15 @@ async function handleSubmitProgram(request, env, ctx, opts = {}) {
     ? `New event submission: ${program.slice(0, 120)} (${eventDate}${location ? `, ${location.slice(0, 80)}` : ""})`
     : listingId
       ? `${relation === "run" ? "Organization confirming its listing" : "Listing update"}: ${program.slice(0, 120)}`
+      : isOrganization
+        ? `New organization submission: ${program.slice(0, 120)}${location ? ` (${location.slice(0, 80)})` : ""}`
       : `New program submission: ${program.slice(0, 120)}${location ? ` (${location.slice(0, 80)})` : ""}`).replace(/[\r\n]+/g, " ");
-  const submissionKind = isEvent ? "new_event" : listingId ? "listing_update" : "new_program";
+  const submissionKind = isEvent ? "new_event" : listingId ? "listing_update" : isOrganization ? "new_organization" : "new_program";
   const source = str(data.source).slice(0, 80) || "asnm-prelaunch";
   const now = new Date().toISOString();
+  const createProgramDraft = !isEvent && !listingId && !isOrganization;
+  const createOrganizationDraft = isOrganization;
+  const draftId = createProgramDraft ? await draftProgramId(intakeId) : createOrganizationDraft ? await draftOrganizationId(intakeId) : "";
 
   let stage = "intake-capture";
   let fresh;
@@ -426,18 +450,39 @@ async function handleSubmitProgram(request, env, ctx, opts = {}) {
     // shape the newsletter path writes. INSERT OR IGNORE makes a retry a no-op.
     await env.INTAKE.batch([
       env.INTAKE.prepare(`INSERT OR IGNORE INTO intake (id,received_at,site,kind,name,email,summary,payload,source,is_canary) VALUES (?,?,'adaptivesportsnearme.com',?,?,?,?,?,?,0)`)
-        .bind(intakeId, now, isEvent ? EVENT_INTAKE_KIND : PROGRAM_INTAKE_KIND, null, email || null, summary, JSON.stringify(answers), source),
+        .bind(intakeId, now, isEvent ? EVENT_INTAKE_KIND : isOrganization ? ORGANIZATION_INTAKE_KIND : PROGRAM_INTAKE_KIND, null, email || null, summary, JSON.stringify(answers), source),
       env.INTAKE.prepare("INSERT OR IGNORE INTO intake_delivery_claims (intake_id,state) VALUES (?,'pending')").bind(intakeId),
     ]);
     // In production DB (asnm-db) and INTAKE (atl-intake) are separate D1
     // databases, so one batch cannot span them. The submissions write is
     // idempotent on the same id, so a failure here is safe to retry.
     stage = "submission-capture";
-    const result = await env.DB.prepare(
+    const submission = env.DB.prepare(
       `INSERT INTO submissions (kind, payload, contact_email, status, created_at)
        SELECT ?, ?, ?, 'new', ?
        WHERE NOT EXISTS (SELECT 1 FROM submissions WHERE kind = ? AND json_extract(payload, '$.intake_id') = ?)`
-    ).bind(submissionKind, JSON.stringify({ ...answers, intake_id: intakeId }), email || null, now, submissionKind, intakeId).run();
+    ).bind(submissionKind, JSON.stringify({ ...answers, intake_id: intakeId }), email || null, now, submissionKind, intakeId);
+    const writes = [submission];
+    if (createOrganizationDraft) {
+      writes.push(
+        env.DB.prepare(`INSERT OR IGNORE INTO organizations
+          (id, name, sport, sport_key, website_url, city, state, verification_status, status, is_public, created_at, updated_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?, 'unverified', 'active', 0, ?, ?)`).bind(
+          draftId, program, sport || null, sport || null, siteUrl || null, city || null, stateRegion || null, now, now
+        )
+      );
+    } else if (createProgramDraft) {
+      writes.push(
+        env.DB.prepare(`INSERT OR IGNORE INTO organizations (id, name, org_type, is_public, status, created_at, updated_at)
+          VALUES ('a461f29b-0b89-4e17-b879-6a80e0abd101', 'Organization not yet assigned', 'placeholder', 1, 'active', ?, ?)`).bind(now, now),
+        env.DB.prepare(`INSERT OR IGNORE INTO programs
+          (id, organization_id, name, sport, sport_key, website_url, city, state, verification_status, status, is_public, created_at, updated_at)
+          VALUES (?, 'a461f29b-0b89-4e17-b879-6a80e0abd101', ?, ?, ?, ?, ?, ?, 'unverified', 'active', 0, ?, ?)`).bind(
+          draftId, program, sport || null, sport || null, siteUrl || null, city || null, stateRegion || null, now, now
+        )
+      );
+    }
+    const [result] = await env.DB.batch(writes);
     fresh = Number(result?.meta?.changes ?? result?.changes ?? 0) > 0;
   } catch (error) {
     const message = String(error?.message || "");
@@ -453,7 +498,7 @@ async function handleSubmitProgram(request, env, ctx, opts = {}) {
   // out only for the first capture of this id, so a retry does not mail twice.
   const notice = notifyIntake(env, intakeId);
   if (ctx?.waitUntil) ctx.waitUntil(notice); else await notice;
-  if (fresh && email) await queueFormConfirmation(env, ctx, { kind: isEvent ? 'event' : listingId ? 'listing-update' : 'program', email, program });
+  if (fresh && email) await queueFormConfirmation(env, ctx, { kind: isEvent ? 'event' : listingId ? 'listing-update' : isOrganization ? 'organization' : 'program', email, program });
 
   return json({ ok: true });
 }
@@ -631,8 +676,9 @@ async function handleOrganizationLoginVerify(url, env) {
     const email = await consumeLoginToken(env.DB, url.searchParams.get("token") || "");
     if (!email) return json({ ok: false, error: "This sign-in link has expired or was already used." }, 401, ORGANIZATION_AUTH_CACHE);
     const session = await createOrganizationSession(env.DB, email, organizationAuthSecret(env));
-    return new Response(JSON.stringify({ ok: true }), {
-      headers: { "Content-Type": "application/json", "Cache-Control": "no-store", "Set-Cookie": serializeOrgCookie(session.id, session.signature) },
+    return new Response(null, {
+      status: 303,
+      headers: { "Cache-Control": "no-store", "Location": "/manage", "Set-Cookie": serializeOrgCookie(session.id, session.signature) },
     });
   } catch (err) {
     console.error("organization login verification failed", { reason: err instanceof Error ? err.message : "unknown" });
@@ -680,6 +726,9 @@ async function handleManagedOrganizationUpdate(request, env, id) {
       : json({ ok: false, error: "Program not found." }, 404, ORGANIZATION_AUTH_CACHE);
   } catch (err) {
     const reason = err instanceof Error ? err.message : "";
+    if (reason === "address-not-found") {
+      return json({ ok: false, error: "We couldn't find that address. Check it and try again." }, 422, ORGANIZATION_AUTH_CACHE);
+    }
     if (["name-required", "website-invalid", "email-invalid", "sports-invalid"].includes(reason)) {
       return json({ ok: false, error: "Please check the program details and try again." }, 422, ORGANIZATION_AUTH_CACHE);
     }

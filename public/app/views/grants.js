@@ -56,6 +56,23 @@ ${A.letterBlock({ source: "grants" })}`;
   };
 }
 
-export function mount() {
-  return () => {};
+export function mount(root) {
+  const seg = root.querySelector(".seg");
+  let timer = 0;
+  const move = (event) => {
+    const link = event.target.closest(".seg a");
+    if (!link || !seg.contains(link) || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return;
+    event.preventDefault();
+    event.stopPropagation();
+    const links = [...seg.querySelectorAll("a")];
+    const next = links.indexOf(link);
+    if (link.getAttribute("aria-current") === "page") { A.nav(link.href, { replace: true }); return; }
+    if (timer) clearTimeout(timer);
+    seg.style.setProperty("--seg-pos", next);
+    links.forEach((item) => item.toggleAttribute("aria-current", item === link));
+    const delay = matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 240;
+    timer = window.setTimeout(() => A.nav(link.href, { replace: true }), delay);
+  };
+  if (seg) seg.addEventListener("click", move);
+  return () => { if (timer) clearTimeout(timer); if (seg) seg.removeEventListener("click", move); };
 }

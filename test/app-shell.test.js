@@ -221,6 +221,15 @@ test("sheets opened by a tap get their own Back step", () => {
   assert.match(between(APP, 'window.addEventListener("popstate"', "render();\n  });"), /closeOverlay\(\{ mode: "pop" \}\)/);
 });
 
+test("organization management is a help-linked app route", () => {
+  const help = read("public/app/views/help.js"), pages = read("src/pages.js");
+  assert.match(help, /"\/manage"/);
+  assert.match(APP, /\["\/manage", "manage"\]/);
+  assert.match(APP, /\["\/manage\/organizations\/:id", "manage"\]/);
+  assert.match(pages, /Manage your organization/);
+  assert.match(pages, /"manage"/);
+});
+
 test("mobile drawer supports edge swipes without taking over vertical scrolling", () => {
   const swipes = between(APP, "function installDrawerSwipes()", "/** Search sheet.");
   assert.match(swipes, /window\.innerWidth <= 767/);

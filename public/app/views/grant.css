@@ -73,7 +73,7 @@
 @media (min-width: 1100px) {
 	.v-grant .gp-grid {
 		display: grid;
-		grid-template-columns: minmax(0, 680px) 340px;
+		grid-template-columns: 1fr 340px;
 		gap: 40px;
 		align-items: start;
 		justify-content: space-between;

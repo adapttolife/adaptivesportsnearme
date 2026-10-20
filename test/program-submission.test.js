@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { DatabaseSync } from 'node:sqlite';
 import { readFileSync } from 'node:fs';
-import worker, { PROGRAM_INTAKE_KIND, EVENT_INTAKE_KIND } from '../src/index.js';
+import worker, { PROGRAM_INTAKE_KIND, ORGANIZATION_INTAKE_KIND, EVENT_INTAKE_KIND } from '../src/index.js';
 import { sweepIntake } from '../src/intake.js';
 
 // Production shape: DB (asnm-db) and INTAKE (atl-intake) are separate databases.
@@ -80,6 +80,11 @@ test('capture first: intake row + claim and submissions row exist before ok, the
   assert.match(row.summary, /^New program submission: Sled Hockey \(Troy, NY\)$/);
   assert.deepEqual(JSON.parse(row.payload), { program: 'Sled Hockey', org: 'Troy Adaptive', sport: 'hockey', city: 'Troy', state: 'NY', website: '', notes: 'Tuesdays' });
   assert.equal(x.submissions(), 1);
+  const draft = x.directory.prepare('SELECT organization_id, name, sport_key, website_url, city, state, verification_status, is_public FROM programs').get();
+  assert.deepEqual({ ...draft }, {
+    organization_id: 'a461f29b-0b89-4e17-b879-6a80e0abd101', name: 'Sled Hockey', sport_key: 'hockey',
+    website_url: null, city: 'Troy', state: 'NY', verification_status: 'unverified', is_public: 0,
+  });
   const sub = x.directory.prepare('SELECT * FROM submissions').get();
   assert.equal(sub.kind, 'new_program'); assert.equal(JSON.parse(sub.payload).intake_id, row.id);
   await Promise.all(x.jobs);
@@ -87,6 +92,22 @@ test('capture first: intake row + claim and submissions row exist before ok, the
   assert.equal(x.receipts().length, 1);
   assert.equal(x.claims()[0].state, 'done'); assert.ok(x.intakeRows()[0].notified_at);
   assert.ok(!x.calls.some(u => u.includes('airtable')), 'Airtable is never called');
+});
+
+test('an organization submission creates a private, unverified organization draft', async t => {
+  const x = setup(t); verified(x);
+  const response = await x.postTo('/api/submit-organization', {
+    org: 'Troy Adaptive', sport: 'hockey', city: 'Troy', state: 'NY', url: 'https://troyadaptive.example',
+    em: 'person@example.test', notes: 'Community nonprofit', sid: '5cd7d424-7c4d-4e1a-9f00-1234567890ab', cf_token: 'ok',
+  });
+  assert.equal(response.status, 200); assert.deepEqual(await response.json(), { ok: true });
+  const organization = x.directory.prepare('SELECT name, sport_key, website_url, city, state, verification_status, is_public FROM organizations WHERE org_type IS NULL').get();
+  assert.deepEqual({ ...organization }, {
+    name: 'Troy Adaptive', sport_key: 'hockey', website_url: 'https://troyadaptive.example', city: 'Troy', state: 'NY',
+    verification_status: 'unverified', is_public: 0,
+  });
+  assert.equal(x.intakeRows()[0].kind, ORGANIZATION_INTAKE_KIND);
+  assert.equal(x.directory.prepare('SELECT kind FROM submissions').get().kind, 'new_organization');
 });
 
 test('intake failure returns an honest 5xx and saves nothing anywhere', async t => {

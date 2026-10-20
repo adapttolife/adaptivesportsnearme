@@ -121,16 +121,11 @@
 	.v-sport .sp-map {
 		display: block;
 		margin-top: 24px;
-		padding: 20px;
-		background: var(--mist);
-		border-radius: var(--r-l);
+		max-width: 640px;
 	}
 	.v-sport .sp-map-h {
 		font-size: 18px;
 		margin-bottom: 14px;
-	}
-	.v-sport .sp-map .tmap {
-		max-width: none;
 	}
 }
 
@@ -226,7 +221,7 @@
 .v-sport .vet-res .ic {
 	grid-column: 2;
 	grid-row: 1 / span 2;
-	color: #f6b700;
+	color: #f3f3f3;
 }
 
 /* The sport in plain words (sport-guides.js): one paragraph, then "Start here" opens the rest */
