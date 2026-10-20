@@ -590,10 +590,6 @@ body.has-sticky #main {
 	white-space: nowrap;
 }
 
-body.is-home .hd-search {
-	display: none;
-}
-
 @media (min-width: 1100px) {
 	.hd {
 		padding-left: 20px;
