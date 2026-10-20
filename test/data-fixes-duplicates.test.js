@@ -3,6 +3,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 
 const read = (p) => readFileSync(new URL("../" + p, import.meta.url), "utf8");
 const one = read("db/maintenance/duplicates_1_merge_now.sql");
@@ -70,7 +72,7 @@ test("the staging rebuild's replace file drops children first, loads parents fir
   const { spawnSync } = await import("node:child_process");
   const { mkdtempSync, writeFileSync } = await import("node:fs");
   const { DatabaseSync } = await import("node:sqlite");
-  const dir = mkdtempSync("/tmp/d1-replace-");
+  const dir = mkdtempSync(join(tmpdir(), "d1-replace-"));
   // A dump in the order D1 can produce: the child table first, a comment with an apostrophe, a ; inside a value.
   writeFileSync(`${dir}/dump.sql`, [
     "PRAGMA defer_foreign_keys=TRUE;",
@@ -98,10 +100,14 @@ test("the staging rebuild's replace file drops children first, loads parents fir
   assert.equal(refuse.status, 3, "a dump with no tables never becomes a file that only drops");
 });
 
-test("the staging rebuild refuses to touch production", async () => {
+test("the staging rebuild refuses to touch production", async (t) => {
   const { spawnSync } = await import("node:child_process");
   for (const target of ["asnm-db"]) {
     const r = spawnSync("bash", ["scripts/rebuild-staging-from-production.sh", "--fire"], { encoding: "utf8", env: { ...process.env, TARGET_DB: target, WRANGLER: "false" } });
+    if (r.error || /Bash\/Service\/CreateInstance\/E_ACCESS/.test(`${r.stdout || ""}${r.stderr || ""}`.replaceAll(String.fromCharCode(0), ""))) {
+      t.skip("Bash is unavailable in this Windows workspace");
+      return;
+    }
     assert.equal(r.status, 2);
     assert.match(r.stderr, /Refusing: the target would be asnm-db/);
   }

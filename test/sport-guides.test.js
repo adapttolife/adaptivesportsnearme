@@ -6,7 +6,7 @@ import { readFileSync } from "node:fs";
 import { GUIDES, guideFor } from "../public/app/sport-guides.js";
 import { SPORT_NAMES } from "../src/sport-names.js";
 
-const read = (p) => readFileSync(new URL("../" + p, import.meta.url), "utf8");
+const read = (p) => readFileSync(new URL("../" + p, import.meta.url), "utf8").replace(/\r\n/g, "\n");
 const FIELDS = ["what", "who", "gear", "start"];
 
 test("every sport key has a guide and every guide is a sport key", () => {

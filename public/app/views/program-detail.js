@@ -44,7 +44,7 @@ export async function render(ctx) {
   const { program: p } = await response.json();
   const location = place(p);
   const main = `<div class="pg-grid"><div class="pg-main">${hero(p)}<div class="pg-head"><h1 tabindex="-1">${A.esc(p.name)}</h1><p class="pg-meta">${A.esc(p.sportLabel || "Adaptive sports")}${location ? ` · ${A.esc(location)}` : ""}</p>${fresh(p)}</div>${actions(p)}${about(p)}${facts(p)}${organization(p)}${where(p)}${fix(p)}</div>${booking(p)}</div>`;
-  return { title: `${p.name} · Adaptive Sports Near Me`, description: `${p.name}${location ? ` in ${location}` : ""}.`, html: main, sticky: p.website ? A.stickyBar({ action: { label: "Visit website", href: p.website, kind: "ink", external: true } }) : "" };
+  return { ...programMeta({ name: p.name, sport: p.sportLabel || "Adaptive sports", place: location }), html: main, sticky: p.website ? A.stickyBar({ action: { label: "Visit website", href: p.website, kind: "ink", external: true } }) : "" };
 }
 
 export function mount(root) {

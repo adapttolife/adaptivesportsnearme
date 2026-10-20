@@ -221,7 +221,7 @@ test("extractContactLinks: same-host filtering excludes a different-host subdoma
 // rewrote the fixture above into that shape, and the anchor regex in
 // src/extract.js, which needs a literal "</a>", stopped seeing those links.
 // The fixture is restored above; this pins the extractor gap itself.
-test("extractContactLinks: an end tag with whitespace before > still closes the link", { todo: "src/extract.js anchor regex requires a literal </a>" }, () => {
+test("extractContactLinks: an end tag with whitespace before > still closes the link", () => {
   const html = '<nav><a href="/contact">Contact</a\n\t\t>\n<a href="https://pathhost.example.org/get-involved-today">Get Involved</a ></nav>';
   assert.deepEqual(extractContactLinks(html, "https://pathhost.example.org/"), [
     "https://pathhost.example.org/contact",

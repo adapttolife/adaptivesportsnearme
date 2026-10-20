@@ -155,6 +155,9 @@ const SEEN_IN_BROWSER = new Map([
   ['app.css .sb-link[aria-current="true"]::after', "a bar, no text"],
   ['app.css [data-look="sharp"] #beta', "the beta bar: its words set light text (#beta .beta)"],
   ['app.css [data-look="sharp"] #top', "the header bar: its words set light text (.hd)"],
+  ['views/grants.css .v-grants .seg::before', "the segmented control backdrop has no text"],
+  ['views/grants.css .v-grants .seg a[aria-current="page"]', "the selected segment sits on the control backdrop"],
+  ['views/manage.css .v-manage .om-visibility input:checked + .dl-switch', "the form switch has no text"],
 ]);
 const where = (r) => `${r.file} ${r.media ? r.media + " " : ""}${r.sel}`;
 // The looks kept for comparison only (?look=today, ?look=hues); sharp is the site.

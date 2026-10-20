@@ -10,7 +10,7 @@ import { fileURLToPath } from "node:url";
 import vm from "node:vm";
 import worker from "../src/index.js";
 
-const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), "utf8");
+const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), "utf8").replace(/\r\n/g, "\n");
 const count = (text, needle) => text.split(needle).length - 1;
 const SHELL = read("public/index.html");
 const APP = read("public/app/app.js");
@@ -275,7 +275,7 @@ test("organization management is a help-linked app route", () => {
   assert.match(help, /"\/manage"/);
   assert.match(APP, /\["\/manage", "manage"\]/);
   assert.match(APP, /\["\/manage\/organizations\/:id", "manage"\]/);
-  assert.match(pages, /Manage your organization/);
+  assert.match(pages, /PAGES\.manage/);
   assert.match(pages, /"manage"/);
 });
 
