@@ -85,8 +85,8 @@
 	content: "";
 	position: absolute;
 	inset: 3px auto 3px 3px;
-	width: calc((100% - 6px) / 3);
-	border-radius: 9px;
+	width: calc((100% - 12px) / 3);
+	border-radius: calc(var(--r) - 3px);
 	background: #1a1a1a;
 	pointer-events: none;
 	transform: translateX(calc(var(--seg-pos) * (100% + 3px)));
