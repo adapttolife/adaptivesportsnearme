@@ -37,6 +37,8 @@ const TONES = vm.runInNewContext("(" + appJs.match(/const TONES = (\{[\s\S]*?\})
 const family = (k) => (k === "grant" || k === "event" ? k : (k && k !== "multi" && FAMILY[k]) || "house");
 const tone = (k) => { const [bg, fg] = TONES[family(k)]; return { bg, fg }; };
 const CREAM = "#F3F3F3";
+// The home lineup's panels, left to right (Alec, 2026-10-20: basketball first, as before).
+const LINEUP_TONES = [C.CORAL, C.YELLOW, C.TEAL, C.ORANGE];
 const art = (k) => read(`public/emblems/sports/${k}.svg`).replace(/<title>[^<]*<\/title>/, "");
 const SHAPES = JSON.parse(read("public/data/states.json")).shapes;
 const MARK = read("public/app/logo-cream.svg").replace(/<!--[\s\S]*?-->/, "");
@@ -51,13 +53,13 @@ const LAYOUTS = {
   banner: ({ title, key, bg, fg, max = 250, textW = 600 }) => `<div class="card" style="background:${bg}">${mark(bg === C.INK)}
     <h1 class="t" data-fit="64,180,${textW},386,${max}" style="color:${fg}">${title}</h1>
     <div data-art data-box="720,52,424,514" style="color:${fg}">${art(key)}</div></div>`,
-  // The home card (Alec's pick, "B: Four colours"): the black header with the promise over
-  // four sports, one per brand colour.
-  lineup: ({ title, keys }) => `<div class="card" style="background:${C.INK}">
-    <div class="mk" style="left:56px;top:56px;width:96px;height:96px">${MARK}</div>
-    <h1 class="t" data-fit="190,52,950,236,140" style="color:${CREAM}">${title}</h1>
-    ${keys.map((k, i) => { const t = tone(k); return `<div class="pane" style="left:${i * 300}px;top:330px;width:300px;height:300px;background:${t.bg}"></div>
-      <div data-art data-box="${i * 300 + 34},366,232,228" style="color:${t.fg}">${art(k)}</div>`; }).join("")}</div>`,
+  // The home card (Alec, 2026-10-17 "B: Four colours"; sharpened 2026-10-20): the mark and
+  // the promise as one lockup on black, over four sports, one per brand colour. Sized in
+  // place() by placeLineup.
+  lineup: ({ title, keys }) => `<div class="card" data-lineup style="background:${C.INK}">
+    <div class="mk lk-mark">${MARK}</div><h1 class="t lk-title" style="color:${CREAM}">${title}</h1>
+    ${keys.map((k, i) => `<div class="pane lk-pane" style="left:${i * 300}px;width:300px;background:${LINEUP_TONES[i]}"></div>
+      <div class="lk-fig" data-key="${k}" style="color:${C.INK}">${art(k)}</div>`).join("")}</div>`,
   // A state: its shape in coral on black, its name in cream.
   state: ({ title, st }) => `<div class="card" style="background:${C.INK}">${mark(true)}
     <h1 class="t" data-fit="64,180,580,386,250" style="color:${CREAM}">${title}</h1>
@@ -67,7 +69,7 @@ const LAYOUTS = {
 // Every card: its file, its layout, and its headline (the page's h1; <br> only where a
 // line must break, ‑ keeps "Veteran-Owned" whole).
 const CARDS = [
-  { path: HOME_CARD, layout: "lineup", headline: "Find your place in adaptive sports.", title: "Find your place in<br>adaptive sports.", keys: ["basketball", "tennis", "swimming", "baseball"] },
+  { path: HOME_CARD, layout: "lineup", headline: "Find your place in adaptive sports.", title: "Find your place in<br>adaptive sports.", keys: ["basketball", "running", "sledhockey", "tennis"] },
   { path: PAGE_CARDS.grants, layout: "banner", headline: "Grants", key: "grant", ...tone("grant") },
   { path: PAGE_CARDS.events, layout: "banner", headline: "Events", key: "event", ...tone("event") },
   { path: PAGE_CARDS["veteran-owned-businesses"], layout: "banner", headline: "Support Veteran-Owned Businesses",
@@ -81,7 +83,50 @@ const CSS = `html,body{margin:0}
 .t{position:absolute;margin:0;font-family:"Sofia Sans Extra Condensed","Sofia Sans",Arial,sans-serif;font-weight:900;text-transform:uppercase;line-height:.86;letter-spacing:-.012em}
 .mk,.shape,.pane{position:absolute}.mk{display:grid;place-items:center}.mk svg{display:block;width:100%;height:100%}`;
 const FONTS = `<link href="https://fonts.googleapis.com/css2?family=Sofia+Sans:wght@400..900&family=Sofia+Sans+Extra+Condensed:wght@700..900&display=swap" rel="stylesheet">`;
+// The home lineup, by these rules (Alec, 2026-10-20, "dial in the sizing ratio"):
+// - one margin (M) at the left, the right, above the headline and below it;
+// - the mark is exactly as tall as the two lines, cap line to baseline (x1.075 for the
+//   empty space inside the logo file), and the headline runs from it to the right margin;
+// - the black header is margin + headline + margin; the panels take the rest;
+// - every athlete is drawn at ONE body size, matched by head width. Each emblem file is
+//   stretched to fill its own square, so a racquet or a ball would otherwise shrink the body
+//   (basketball and tennis share one wheelchair body and must match). Head widths are in
+//   file units, measured from the drawings. Sled hockey sits low and wide, so it may grow
+//   to its panel's width and does not set the shared size.
+function placeLineup(card) {
+  const M = 60, CAP = 0.7, LH = 0.86, GAP = 0.22, CW = card.offsetWidth, CH = card.offsetHeight;
+  const HEAD = { basketball: 70, running: 79, sledhockey: 64, tennis: 67 };
+  const WIDE = new Set(["sledhockey"]);
+  const t = card.querySelector(".lk-title"), mk = card.querySelector(".lk-mark");
+  t.style.whiteSpace = "nowrap";
+  t.style.fontSize = "100px";
+  const perPx = t.scrollWidth / 100, block = (f) => f * LH + f * CAP;
+  let fs = 240;
+  while (M + block(fs) * 1.075 + block(fs) * GAP + perPx * fs > CW - M) fs -= 1;
+  const h = block(fs), mh = h * 1.075;
+  t.style.fontSize = fs + "px";
+  Object.assign(mk.style, { left: M + "px", top: M + h - mh + "px", width: mh + "px", height: mh + "px" });
+  t.style.left = M + mh + h * GAP + "px";
+  t.style.top = M - (fs * LH - fs * CAP) / 2 - fs * 0.02 + "px";
+  const split = Math.round(2 * M + h - 8), ph = CH - split;
+  for (const p of card.querySelectorAll(".lk-pane")) Object.assign(p.style, { top: split + "px", height: ph + "px" });
+  const figs = [...card.querySelectorAll(".lk-fig")].map((el) => {
+    const svg = el.querySelector("svg"), bb = svg.querySelector("path").getBBox(), key = el.dataset.key;
+    return { el, svg, bb, key, unit: 70 / (HEAD[key] || 70) };
+  });
+  const boxW = 300 - 44, boxH = ph - 44;
+  const k = Math.min(...figs.filter((f) => !WIDE.has(f.key)).map((f) => Math.min(boxW / (f.bb.width * f.unit), boxH / (f.bb.height * f.unit))));
+  const scale = (f) => Math.min(k * f.unit, (300 - 28) / f.bb.width);
+  const ground = CH - (ph - Math.max(...figs.map((f) => f.bb.height * scale(f)))) / 2;
+  figs.forEach((f, i) => {
+    const s = scale(f), w = f.bb.width * s, fh = f.bb.height * s;
+    f.svg.setAttribute("viewBox", `${f.bb.x} ${f.bb.y} ${f.bb.width} ${f.bb.height}`);
+    f.svg.removeAttribute("role");
+    Object.assign(f.svg.style, { position: "absolute", width: w + "px", height: fh + "px", left: i * 300 + (300 - w) / 2 + "px", top: ground - fh + "px" });
+  });
+}
 function place() {
+  for (const card of document.querySelectorAll("[data-lineup]")) placeLineup(card);
   for (const el of document.querySelectorAll("[data-fit]")) {
     const [x, y, w, h, max] = el.dataset.fit.split(",").map(Number);
     Object.assign(el.style, { left: x + "px", width: w + "px" });
@@ -118,6 +163,7 @@ for (const card of pick) {
   const html = LAYOUTS[card.layout]({ ...card, title: card.title || card.headline });
   await page.setContent(`<!doctype html><html><head><meta charset="utf-8">${FONTS}<style>${CSS}</style></head><body>${html}</body></html>`, { waitUntil: "networkidle" });
   await page.evaluate(() => document.fonts.ready);
+  await page.addScriptTag({ content: placeLineup.toString() });
   await page.evaluate(place);
   const file = join(root, "public", card.path);
   mkdirSync(dirname(file), { recursive: true });
