@@ -44,7 +44,7 @@ test('homepage snapshot reads the directory once without losing fields or privat
   } finally { sql.close(); }
 });
 
-test('public organization details expose contacts and precise locations only with publicity consent', async () => {
+test('public organization details expose contacts with contact consent and precise locations with address consent', async () => {
   const {sql,db} = database();
   try {
     sql.exec(`INSERT INTO organizations
@@ -59,16 +59,17 @@ test('public organization details expose contacts and precise locations only wit
       (id,name,is_public,status,created_at,updated_at,city,state,address,zip,lat,lng,email,phone,publicity_consent)
       VALUES ('consented','Program',1,'active','2026','2026','Denver','CO','101 Private Way','80202',39.75,-104.99,'public@example.test','555-0101',1)`);
     const consented = await getOrg(db, 'consented');
-    assert.equal(consented.zip, '80202');
-    assert.equal(consented.lat, 39.75);
-    assert.equal(consented.lng, -104.99);
+    for (const key of ['lat','lng','zip','address','dist']) assert.equal(consented[key], null);
     assert.equal(consented.email, 'public@example.test');
     assert.equal(consented.phone, '555-0101');
-    assert.equal(consented.address, null);
     sql.exec(`INSERT INTO organizations
-      (id,name,is_public,status,created_at,updated_at,city,state,address,address_publicity_consent)
-      VALUES ('address-consented','Program',1,'active','2026','2026','Denver','CO','102 Public Way',1)`);
-    assert.equal((await getOrg(db, 'address-consented')).address, '102 Public Way');
+      (id,name,is_public,status,created_at,updated_at,city,state,address,zip,lat,lng,address_publicity_consent)
+      VALUES ('address-consented','Program',1,'active','2026','2026','Denver','CO','102 Public Way','80203',39.76,-104.98,1)`);
+    const addressConsented = await getOrg(db, 'address-consented');
+    assert.equal(addressConsented.address, '102 Public Way');
+    assert.equal(addressConsented.zip, '80203');
+    assert.equal(addressConsented.lat, 39.76);
+    assert.equal(addressConsented.lng, -104.98);
     const result = await listPrograms(db, new URLSearchParams({lat:'42.7',lng:'-73.7'}), {zcta:null});
     assert.equal(result.items.length, 3);
     assert.ok(result.items.every(item => item.dist === null));
@@ -275,11 +276,11 @@ test('getOrg follows the public rule and returns only public sources', async () 
 
 // City centers (src/geo.js cityCenter over public/data/places.json): a listing's
 // city is public text, so the center of that city is public too, and maps and
-// "near you" use it. The listing's own lat/lng/zip stay behind publicity_consent.
+// "near you" use it. The listing's own lat/lng/zip require address publicity consent.
 const PLACES = { 'CO|denver': [39.762, -104.881], 'TN|franklin': [35.914, -86.852] };
 function seedCities(sql) {
   const insert = sql.prepare(`INSERT INTO organizations
-    (id,name,is_public,status,created_at,updated_at,city,state,zip,lat,lng,website_url,publicity_consent)
+    (id,name,is_public,status,created_at,updated_at,city,state,zip,lat,lng,website_url,address_publicity_consent)
     VALUES (?,?,1,'active','2026','2026',?,?,?,?,?,?,?)`);
   insert.run('private','Denver Program','Denver','CO','80202',39.75,-104.99,'https://a.example',0);
   insert.run('consented','Franklin Program','Franklin / Middle Tennessee','TN','37064',35.92,-86.86,'https://b.example',1);
@@ -294,7 +295,7 @@ test('the snapshot carries each listing\'s city center only when given the place
     assert.deepEqual(by.private.cityCenter, [39.762, -104.881]);
     assert.deepEqual(by.consented.cityCenter, [35.914, -86.852]);
     assert.equal(by.statewide.cityCenter, null, 'no city, no center; never a guess');
-    // The center is the city's; the listing's own point needs consent.
+    // The center is the city's; the listing's own point needs address consent.
     for (const key of ['lat','lng','zip','geoPrecision']) assert.equal(by.private[key], null, key);
     assert.equal(by.consented.lat, 35.92); assert.equal(by.consented.lng, -86.86); assert.equal(by.consented.zip, '37064');
     const plain = await directorySnapshot(db);
@@ -336,22 +337,22 @@ test('/api/directory adds city centers from the places table it reads once throu
 test('/api/listings carries only what lists need, works out each sport, and leaves out non-programs', async () => {
   const {sql,db} = database();
   try {
-    const org = sql.prepare("INSERT INTO organizations (id,name,is_public,status,created_at,updated_at,city,state,website_url,sport,sport_key,description,email,phone,zip,lat,lng,publicity_consent,verification_status,verification_method,last_ok_at,cost_note) VALUES (?,?,1,'active','2026-10-14T14:32:17.000Z','2026',?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
-    org.run('11111111-1111-1111-1111-111111111111','Tampa Tennis','Tampa','FL','https://tennis.example','Wheelchair Tennis','tennis','Sports and activities: tennis.','a@b.test','555-0100','33602',27.9,-82.4,0,'verified','{"verification_month":"2026-09"}','2026-10-08T16:01:20.494Z','Free');
-    org.run('22222222-2222-2222-2222-222222222222','Many Sports Club','Denver','CO','https://many.example','Multi-sport',null,'Sports and activities: wheelchair basketball; sled hockey; swimming. Athletes served: all.',null,null,null,null,null,1,'unverified',null,null,null);
-    org.run('33333333-3333-3333-3333-333333333333','Donate','','','',null,null,null,null,null,null,null,null,0,'unverified',null,null,null);
+    const org = sql.prepare("INSERT INTO organizations (id,name,is_public,status,created_at,updated_at,city,state,website_url,sport,sport_key,description,email,phone,zip,lat,lng,publicity_consent,address_publicity_consent,verification_status,verification_method,last_ok_at,cost_note) VALUES (?,?,1,'active','2026-10-14T14:32:17.000Z','2026',?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
+    org.run('11111111-1111-1111-1111-111111111111','Tampa Tennis','Tampa','FL','https://tennis.example','Wheelchair Tennis','tennis','Sports and activities: tennis.','a@b.test','555-0100','33602',27.9,-82.4,0,1,'verified','{"verification_month":"2026-09"}','2026-10-08T16:01:20.494Z','Free');
+    org.run('22222222-2222-2222-2222-222222222222','Many Sports Club','Denver','CO','https://many.example','Multi-sport',null,'Sports and activities: wheelchair basketball; sled hockey; swimming. Athletes served: all.',null,null,null,null,null,1,0,'unverified',null,null,null);
+    org.run('33333333-3333-3333-3333-333333333333','Donate','','','',null,null,null,null,null,null,null,null,0,0,'unverified',null,null,null);
     const places = { 'FL|tampa': [27.95, -82.46], 'CO|denver': [39.76, -104.88] };
     const { listingsSnapshot } = await import('../src/data.js');
     const snap = await listingsSnapshot(db, { places });
     assert.equal(snap.total, 2, 'the scraped menu row never ships');
     const by = Object.fromEntries(snap.items.map(p => [p.name, p]));
-    assert.deepEqual(by['Tampa Tennis'], { id: '11111111-1111-1111-1111-111111111111', name: 'Tampa Tennis', key: 'tennis', city: 'Tampa', state: 'FL', center: [27.95, -82.46], checked: '2026-10-08', team: 1 });
+    assert.deepEqual(by['Tampa Tennis'], { id: '11111111-1111-1111-1111-111111111111', name: 'Tampa Tennis', key: 'tennis', city: 'Tampa', state: 'FL', center: [27.95, -82.46], point: [27.9, -82.4], checked: '2026-10-08', team: 1 });
     assert.deepEqual(by['Many Sports Club'].trio, ['basketball', 'sledhockey', 'swimming']);
     assert.equal(by['Many Sports Club'].key, 'multi');
     assert.equal(by['Many Sports Club'].listed, '2026-10-14', 'no check date yet: the day it was listed');
     assert.equal(by['Many Sports Club'].verified, 1, 'the program confirmed its listing');
     const text = JSON.stringify(snap);
-    for (const leak of ['tennis.example', 'Sports and activities', 'a@b.test', '555-0100', '33602', 'Free', '27.9,', 'verification_month']) assert.ok(!text.includes(leak), `no ${leak} in the slim directory`);
+    for (const leak of ['tennis.example', 'Sports and activities', 'a@b.test', '555-0100', '33602', 'Free', 'verification_month']) assert.ok(!text.includes(leak), `no ${leak} in the slim directory`);
   } finally { sql.close(); }
 });
 

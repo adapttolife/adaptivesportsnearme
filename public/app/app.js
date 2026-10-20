@@ -218,7 +218,7 @@ export function cityShort(c) {
 const UNPLACED = /statewide|multiple|various|throughout|^.*\bcounty$|\bregion\b/i;
 export function isPlaced(p) {
   const cf = p.cityFirst !== undefined ? p.cityFirst : cityShort(p.city);
-  return !!(p.geo === "city" && p.lat != null && p.geoPrecision !== "state" && cf && !UNPLACED.test(cf.replace(/ and more$/, "")));
+  return !!(((p.geo === "city") || (p.geo === "address")) && (p.lat != null) && (p.geoPrecision !== "state") && cf && !UNPLACED.test(cf.replace(/ and more$/, "")));
 }
 /** "Tampa, FL" · "Escambia County, FL" · "Florida, no single city listed" · "Place not listed yet" */
 export function placeText(p) {
@@ -262,14 +262,15 @@ function normalize(raw) {
 
 /* The live API rows, in the shape the views read. */
 // /api/listings is the slim directory: enough for cards, rows, maps and sport pages.
-// A listing's own lat/lng stay private until the program says yes (publicity_consent),
-// so maps and distances use the center of its listed city (center, from the server).
+// Maps use the center of a listing's city unless its full address is public.
 function fromApi(r) {
   const c = Array.isArray(r.center) ? r.center : null;
+  const point = Array.isArray(r.point) ? r.point : null;
+  const coords = point || c;
   return {
     id: r.id, name: r.name, key: r.key, trio: r.trio || null, city: r.city || null, state: r.state || null,
     lastChecked: r.checked || null, listedAt: r.listed || null, confirmed: !!r.verified, teamChecked: !!r.team,
-    lat: c ? c[0] : null, lng: c ? c[1] : null, geo: c ? "city" : (r.state ? "state" : null),
+    lat: coords ? coords[0] : null, lng: coords ? coords[1] : null, geo: point ? "address" : (c ? "city" : (r.state ? "state" : null)),
     prog: !!r.prog, orgName: r.org || null, progs: r.progs || 0,
   };
 }
