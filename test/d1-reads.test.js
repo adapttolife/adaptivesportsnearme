@@ -411,7 +411,7 @@ test('/api/listings says who a listing serves, as codes, only from what it says'
     org.run('cccccccc-0000-4000-8000-000000000003','Front Range Coffee','Veteran meetups','veteran-meetup',"Coffee and talk. Who it's for: Veterans and first responders and their families.");
     const { listingsSnapshot } = await import('../src/data.js');
     const by = Object.fromEntries((await listingsSnapshot(db, { places: {} })).items.map(p => [p.name, p]));
-    assert.deepEqual(by['Rocky Mountain Riders'].who, ['veterans', 'kids', 'adults', 'deaf', 'intellectual', 'physical']);
+    assert.deepEqual(by['Rocky Mountain Riders'].who, ['veterans', 'kids', 'adults', 'blind', 'deaf', 'intellectual', 'physical'], 'visual disabilities is blind or low vision');
     assert.ok(!('who' in by['Blind Hockey Denver']), 'a sport or a name is not who it serves');
     assert.deepEqual(by['Front Range Coffee'].who, ['veterans']);
     assert.ok(!JSON.stringify(by).includes('Athletes served'), 'codes only, never the text');
