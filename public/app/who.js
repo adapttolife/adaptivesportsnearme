@@ -32,7 +32,7 @@ const RULES = {
   // "visual" counts only next to impairment or disability, including inside a list
   // ("visual and hearing disabilities"), so "visual arts" is not blind. A bare "sighted"
   // ("sighted guides") is not blind either; "partially sighted" is.
-  blind: new RegExp("\\b(?:blind(?:ness)?|low vision|vision[ -]impair\\w*|vision loss|sightless|sight loss|loss of sight|partially sighted|visual(?:ly)?" +
+  blind: new RegExp("\\b(?:blind(?:ness)?|low vision|vision[ -]impair\\w*|vision disabilit(?:y|ies)|vision loss|sight[ -]impair\\w*|sightless|sight loss|loss of sight|partially[ -]sighted|visual(?:ly)?" +
     "(?:[ -]|(?:\\s*(?:,\\s*(?:and|or)?|and|or|/|&)\\s*(?:hearing|physical|cognitive|intellectual|developmental|sensory|auditory|speech|mobility|learning|emotional))+\\s+)" +
     "(?:impair\\w*|disabilit(?:y|ies)))\\b", "i"),
   deaf: /\b(?:deaf\w*|hard of hearing|hearing)\b/i,

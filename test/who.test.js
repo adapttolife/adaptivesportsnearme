@@ -77,6 +77,10 @@ test("who it's for: visual or vision next to a disability or impairment is blind
     "Visual, hearing, and physical disabilities",
     "Visual or physical impairments",
     "Partially sighted swimmers",
+    "Partially-sighted swimmers",
+    "Sight impaired swimmers",
+    "Sight-impaired runners",
+    "Vision disabilities",
     "Sight loss support",
   ]) assert.ok(whoTags(t).includes("blind"), t);
   assert.deepEqual(whoTags("Physical, cognitive and hearing disabilities"), ["deaf", "intellectual", "physical"], "no visual, no blind");
@@ -96,7 +100,10 @@ test("who it's for: ?w= takes only the nine codes, never an inherited key", () =
     assert.equal(whoSay(bad), "", String(bad));
     assert.equal(whoLine(bad, 2, 1), "", String(bad));
   }
-  assert.ok(!whoChips({ pool: [{ who: ["kids"] }, { who: [] }], active: "constructor", hrefFor: (c) => "/x?w=" + c }).includes("function"), "an inherited key never shows");
+  const bad = whoChips({ pool: [{ who: ["kids"] }, { who: [] }], active: "constructor", hrefFor: (c) => (c ? "/x?w=" + c : "/x") });
+  assert.ok(!bad.includes("constructor") && !bad.includes("function"), "an inherited key never shows");
+  assert.match(bad, /href="\/x" data-replace aria-current="page"><span>Anyone<\/span>/, "an unknown active code is no filter: Anyone is current");
+  assert.equal((bad.match(/aria-current/g) || []).length, 1);
 });
 
 const pool = [{ who: ["veterans", "kids"] }, { who: ["veterans", "blind"] }, { who: ["veterans"] }];
