@@ -27,8 +27,8 @@ test("phones get one field per row; the start date and time pair up from 600px",
 });
 
 test("date and time boxes take the shared box style on iPhones", () => {
-  assert.ok(cssIncludes(appCss, 'input[type="date"], input[type="time"] { appearance: none; -webkit-appearance: none; display: block; min-width: 0; max-width: 100%; padding-top: 13px; padding-bottom: 13px; line-height: 26px; text-align: left; }'));
-  assert.ok(cssIncludes(appCss, 'input[type="date"]::-webkit-date-and-time-value, input[type="time"]::-webkit-date-and-time-value { min-height: 1.5em; text-align: left; }'));
+  assert.ok(cssIncludes(appCss, 'input[type="date"], input[type="time"], input[type="datetime-local"] { appearance: none; -webkit-appearance: none; display: block; min-width: 0; max-width: 100%; padding-top: 13px; padding-bottom: 13px; line-height: 26px; text-align: left; }'));
+  assert.ok(cssIncludes(appCss, 'input[type="date"]::-webkit-date-and-time-value, input[type="time"]::-webkit-date-and-time-value, input[type="datetime-local"]::-webkit-date-and-time-value { min-height: 1.5em; text-align: left; }'));
   // The shared box rule still sets the height every field shares.
-  assert.ok(cssIncludes(appCss, 'input[type="date"], input[type="time"], input:not([type]), select, textarea { width: 100%; min-height: 56px;'));
+  assert.ok(cssIncludes(appCss, 'input[type="date"], input[type="time"], input[type="datetime-local"], input:not([type]), select, textarea { width: 100%; min-height: 56px;'));
 });

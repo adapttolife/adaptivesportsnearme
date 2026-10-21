@@ -36,7 +36,7 @@ ${A.letterBlock({ source: "help" })}</div>`;
 /* ---------- /about ---------- */
 const ABOUT = [
   ["is-v", "badge-check", "Verified", "The organization itself confirmed its listing with us. Only then does a listing show the check. We're asking every organization."],
-  ["", "search-check", "Checked by our team", "A person on our team checked the listing against public sources, like the organization's own website. The listing says when."],
+  ["", "search-check", "Checked by our team", "Our team checked the listing against public sources, like the organization's own website. When we know the month, the listing shows it."],
   ["is-u", "info", "Not verified yet", "We found the organization in public sources, and we check its website regularly. Not verified doesn't mean anything is wrong. Check the website before you go."],
   ["", "calendar-check", "Dates", "Every listing shows the last day we checked that the organization's website works."],
   ["", "lock", "Privacy", "We show the city and state. An organization's address, phone number and email show only when the organization says yes."],
@@ -46,7 +46,7 @@ const ABOUT = [
 function aboutPage() {
   const a11y = `We aim to meet WCAG 2.2 AA. If something doesn't work for you, tell us through <a href="/help">Suggest a fix</a>.`;
   const secs = ABOUT.map(([cls, ic, h, body], i) => `<section class="ab-sec"${ic === "accessibility" ? ' id="accessibility"' : ""} aria-labelledby="ab-${i}"><span class="ab-ic ${cls}" aria-hidden="true">${A.icon(ic, 24)}</span><div class="ab-text"><h2 id="ab-${i}">${A.esc(h)}</h2><p>${body == null ? a11y : A.esc(body)}</p></div></section>`).join("");
-  const html = `<div class="ab"><div class="ab-head"><h1 tabindex="-1">How we check listings</h1></div><div class="ab-grid">${secs}</div>${A.helpBand()}</div>`;
+  const html = `<div class="ab"><div class="ab-head"><h1 tabindex="-1">How we check listings</h1></div><div class="ab-grid">${secs}</div><p class="ab-legal">Read our <a href="/privacy">privacy policy</a> and <a href="/terms">terms of use</a>.</p>${A.helpBand()}</div>`;
   return { title: site(PAGES.about.title), description: PAGES.about.description, html };
 }
 
@@ -82,8 +82,8 @@ const HELP = [
 ];
 const HOW = [
   { ic: "link", h: "In public", body: "The code, the plans and every change are on GitHub for anyone to read." },
-  { ic: "lock", h: "Free to use", body: "MIT license: take it, change it, build on it." },
-  { ic: "badge-check", h: "Checked by people", body: "A person reviews every change before it goes live, and every listing before it's published." },
+  { ic: "lock", h: "Free to use", body: "The code is MIT licensed: take it, change it, build on it." },
+  { ic: "badge-check", h: "Checked by people", body: "A person reviews every code change before it goes live, and every listing before it's published." },
 ];
 function buildPage() {
   const sec = ({ ic, h, body }, extra = "", tag = "") => `<section class="ab-sec"><span class="ab-ic" aria-hidden="true">${A.icon(ic, 24)}</span><div class="ab-text"><h3>${tag}${A.esc(h)}</h3><p>${A.esc(body)}</p>${extra}</div></section>`;
@@ -109,7 +109,71 @@ function letterPage() {
   return { title: site(PAGES.letter.title), description: PAGES.letter.description, html };
 }
 
+/* ---------- /privacy and /terms ----------
+   Plain and general on purpose. The site changes often (Alec, 2026-10-20: "Less is more.
+   We're constantly changing. I don't want to be too rigid"), so these pages state lasting
+   promises, not mechanisms or numbers. Keep them true: when the site starts collecting
+   something new, or a promise here stops holding, change the page in the same change. */
+const UPDATED = "October 20, 2026";
+const MAIL = `<a href="mailto:hello@adaptivesportsnearme.com">hello@adaptivesportsnearme.com</a>`;
+const ATL = `<a href="https://adapttolife.org">Adapt To Life NFP</a>`;
+function legalPage({ meta, h1, intro, sections }) {
+  const secs = sections.map(([h, body], i) => `<section class="lg-sec" aria-labelledby="lg-${i}"><h2 id="lg-${i}">${h}</h2>${body}</section>`).join("");
+  return {
+    title: site(meta.title), description: meta.description,
+    html: `<article class="lg"><div class="lg-head"><h1 tabindex="-1">${h1}</h1><p class="lg-date">Last updated ${UPDATED}</p><p class="lg-intro">${intro}</p></div>${secs}</article>`,
+  };
+}
+
+function privacyPage() {
+  return legalPage({
+    meta: PAGES.privacy, h1: "Privacy policy",
+    intro: `Adaptive Sports Near Me is a free directory of adaptive sports programs, grants and events, run by ${ATL}, a 501(c)(3) nonprofit. This page explains what we collect and how we use it.`,
+    sections: [
+      ["The short version", `<ul>
+<li>You can search and browse without an account.</li>
+<li>We collect what you choose to send us, like your email for the letter or a note in a form.</li>
+<li>We don't sell personal information, and we don't run ads.</li>
+<li>An organization's email, phone and street address show only when the organization says yes.</li></ul>`],
+      ["What we collect", `<p><b>What you send us.</b> Your email when you sign up for the letter, and what you type into our forms. If you manage an organization's listing, the email you sign in with. Please don't send health details or other sensitive information through our forms.</p>
+<p><b>What any website receives.</b> When you visit, our host receives technical details like your IP address, your browser and the pages you open. We use them to run and protect the site and to count visits, and they're kept for a short time.</p>
+<p><b>What your browser keeps.</b> The site saves a few settings in your browser, like light or dark mode and your last search, so it works the way you left it. Some tools we use, like the accessibility tool, save their own. We use a cookie only to keep organization managers signed in, and our host may set one for its security checks. Use my location finds the nearest city on your device, so your exact position isn't sent to us.</p>`],
+      ["How we use it", `<p>To run the directory, review what you send, write back when you ask us something, and send the letter you signed up for. A person reviews form submissions before anything on the site changes. We never publish your email.</p>`],
+      ["Who helps us", `<p>We use a few services to run the site, such as Cloudflare (hosting, security and visit counts), Google (email and fonts), beehiiv (the letter and the blog), UserWay (an accessibility tool) and OpenFreeMap (maps). They handle information to do that work, and each has its own privacy policy. We may also share information when the law requires it, or to protect the site and the people who use it.</p>`],
+      ["Organization information", `<p>Listings describe organizations and the programs they offer. We gather their details from public sources, like an organization's own website, and from what organizations and visitors send us. City and state show on the listing. Email, phone and street address show only when the organization says yes.</p>
+<p>If you're with an organization, you can update its listing, or ask us to hide or remove it. <a href="/help">Start here</a>.</p>`],
+      ["Your choices", `<p>Every letter has an unsubscribe link. We keep what you send until we no longer need it or you ask us to delete it. To see, correct or delete what you've sent us, email ${MAIL}. You can clear what the site saves in your browser through your browser settings.</p>`],
+      ["Children", `<p>Our forms and the letter are meant for adults. We don't knowingly collect personal information from children under 13. If you think a child has sent us something, email us and we'll delete it.</p>`],
+      ["Changes", `<p>The site is growing and changing, and this page will change with it. When it does, we'll update the date at the top.</p>`],
+      ["Questions", `<p>Email ${MAIL}.</p>`],
+    ],
+  });
+}
+
+function termsPage() {
+  return legalPage({
+    meta: PAGES.terms, h1: "Terms of use",
+    intro: `These terms cover your use of Adaptive Sports Near Me, a free directory run by ${ATL}, a 501(c)(3) nonprofit. By using the site, you agree to them.`,
+    sections: [
+      ["What this site is", `<p>A free directory to help you find adaptive sports programs, grants and events. Organizations run their own programs, and grant makers and event hosts run their own grants and events. We help you find them.</p>
+<p>Listings can be incomplete or out of date. Labels like Verified aren't endorsements or safety reviews. <a href="/about">How we check listings</a> explains what they mean.</p>`],
+      ["Before you go", `<p>Check times, costs, eligibility and accessibility with the organization before you go. Adaptive sports are physical, so talk with your doctor or care team about what's right for you. Taking part is between you and the organization. For grants, you apply on the grant maker's site, and the grant maker decides.</p>`],
+      ["What you send us", `<p>Tell us what you know to be true. We review what you send through our forms, may edit it, and may decide not to publish it. By sending details about an organization, program or event, you let us publish and share them as part of the directory. Don't send other people's personal information without their permission, or anything unlawful or spammy.</p>`],
+      ["Managing a listing", `<p>If you manage an organization's listing, you're telling us you can speak for the organization, and you're responsible for what you post. We may change, hide or remove listings that look wrong or break these terms.</p>`],
+      ["Using the site", `<p>Use the site to find and share adaptive sports. Don't try to break it or overload it, copy the directory in bulk with automated tools, or use it to send spam.</p>`],
+      ["Our code and content", `<p>The site's code is open source under the <a href="${REPO}/blob/main/LICENSE">MIT License</a>. The sport drawings are Alec Tranel's, adapted from his logo with AI tools. They aren't covered by that license, so please ask before using them. Names and logos belong to their owners. If you think something here uses your work without permission, email us.</p>`],
+      ["Links to other sites", `<p>We link to websites we don't control and aren't responsible for.</p>`],
+      ["No guarantees", `<p>We provide the site as is, without warranties. To the fullest extent the law allows, Adapt To Life isn't liable for any loss or injury that comes from using the site or taking part in anything listed here.</p>`],
+      ["Illinois law", `<p>Illinois law governs these terms. Disputes go to the state courts of Lake County, Illinois, or the federal court for the Northern District of Illinois.</p>`],
+      ["Changes", `<p>The site is growing and changing, and these terms may change with it. When they do, we'll update the date at the top. Using the site after a change means you accept the new terms.</p>`],
+      ["Questions", `<p>Email ${MAIL}. Our <a href="/privacy">privacy policy</a> explains what we collect.</p>`],
+    ],
+  });
+}
+
 export async function render(ctx) {
+  if (ctx.path === "/privacy") return privacyPage();
+  if (ctx.path === "/terms") return termsPage();
   if (ctx.path === "/about") return aboutPage();
   if (ctx.path === "/resources") return resourcesPage();
   if (ctx.path === "/letter") return letterPage();

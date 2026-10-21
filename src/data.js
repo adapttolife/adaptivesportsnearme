@@ -19,7 +19,7 @@ export function freshness(lastOkAt, now = Date.now()) {
 }
 
 const LIST_COLS = `id, name, org_type, sport, sport_key, website_url, city,
-  state, state_name, zip, country, publicity_consent, lat, lng, geo_precision, description, cost_note,
+  state, state_name, zip, country, publicity_consent, address_publicity_consent, lat, lng, geo_precision, description, cost_note,
   equipment_provided, ages, data_quality_rating, verification_status, verification_method,
   last_ok_at, created_at`;
 
@@ -42,7 +42,7 @@ const actionableOn = (t) => ACTIONABLE.replace(/\b(website_url|city|state|public
 function rowToProgram(r, dist) {
   const publicityConsent = r.publicity_consent === 1;
   const addressPublicityConsent = r.address_publicity_consent === 1;
-  const preciseLocationConsent = publicityConsent || addressPublicityConsent;
+  const preciseLocationConsent = addressPublicityConsent;
   return {
     id: r.id,
     name: r.name,
@@ -104,7 +104,7 @@ function nearPayload(origin) {
 // and the organization that runs it, are public; the placeholder "Organization not yet
 // assigned" is never named. A database without the programs table lists none.
 const PROGRAM_LIST_COLS = `p.id, p.name, NULL AS org_type, p.sport, p.sport_key, p.website_url, p.city,
-  p.state, p.state_name, p.zip, p.publicity_consent, p.lat, p.lng, p.geo_precision, p.description, p.cost_note,
+  p.state, p.state_name, p.zip, p.publicity_consent, p.address_publicity_consent, p.lat, p.lng, p.geo_precision, p.description, p.cost_note,
   p.equipment_provided, p.ages, NULL AS data_quality_rating, p.verification_status, p.verification_method,
   p.last_ok_at, p.created_at, o.id AS organization_id, o.name AS organization_name, o.org_type AS organization_type`;
 export async function programsSnapshot(db, { places = null } = {}) {
@@ -160,6 +160,9 @@ export async function listingsSnapshot(db, { places = null } = {}) {
     if (p.city) o.city = p.city;
     if (p.state) o.state = p.state;
     if (p.cityCenter) o.center = p.cityCenter;
+    if (p.addressPublicityConsent && Number.isFinite(p.lat) && Number.isFinite(p.lng)) {
+      o.point = [p.lat, p.lng];
+    }
     if (p.lastChecked) o.checked = day(p.lastChecked);
     else if (p.listedAt) o.listed = day(p.listedAt);
     if (p.confirmed) o.verified = 1;

@@ -196,3 +196,120 @@ export async function updateClaimedOrganization(db, id, email, input) {
     value.geo_precision, now(), id, email).run();
   return organizationForClaimEmail(db, id, email);
 }
+
+const PROGRAM_COLUMNS = "id, name, sport, sport_key, website_url, city, state, state_name, description, cost_note, ages, equipment_provided, is_public, created_at, updated_at";
+const EVENT_COLUMNS = "id, title, description, sport_key, venue, city, state, url, starts_at, ends_at, all_day, status, is_public, created_at, updated_at";
+
+async function claimedOrganization(db, id, email) {
+  return organizationForClaimEmail(db, id, email);
+}
+
+const managedBoolean = (value, fallback = 0) => [true, 1, "1", "true", "yes"].includes(value) ? 1
+  : [false, 0, "0", "false", "no"].includes(value) ? 0 : fallback;
+
+function programValues(input, existing = {}) {
+  const text = (key, max) => Object.prototype.hasOwnProperty.call(input, key) ? clean(input[key], max) : clean(existing[key], max);
+  const state = validState(text("state", 2));
+  const name = text("name", 200);
+  if (!name) throw new Error("name-required");
+  const website = text("website_url", 500);
+  if (website) {
+    try { const url = new URL(website); if (!/^https?:$/.test(url.protocol)) throw new Error(); }
+    catch { throw new Error("website-invalid"); }
+  }
+  return { name, sport: text("sport", 120), sport_key: text("sport_key", 80).toLowerCase(), website_url: website,
+    city: text("city", 120), state, state_name: STATE_NAMES[state] || "", description: text("description", 5000),
+    cost_note: text("cost_note", 1000), ages: text("ages", 300),
+    equipment_provided: managedBoolean(input.equipment_provided, existing.equipment_provided == null ? 0 : Number(existing.equipment_provided)),
+    is_public: managedBoolean(input.is_public, existing.is_public == null ? 0 : Number(existing.is_public)) };
+}
+
+export async function managedOrganizationPrograms(db, organizationId, email) {
+  if (!(await claimedOrganization(db, organizationId, email))) return null;
+  const { results } = await db.prepare(`SELECT ${PROGRAM_COLUMNS} FROM programs WHERE organization_id = ? ORDER BY name COLLATE NOCASE`).bind(organizationId).all();
+  return results;
+}
+
+export async function createManagedProgram(db, organizationId, email, input) {
+  if (!(await claimedOrganization(db, organizationId, email))) return null;
+  const value = programValues(input);
+  const timestamp = now();
+  const id = crypto.randomUUID();
+  await db.prepare(`INSERT INTO programs (id, organization_id, name, sport, sport_key, website_url, city, state, state_name, description, cost_note, ages, equipment_provided, is_public, status, verification_status, created_at, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active', 'verified', ?, ?)`)
+    .bind(id, organizationId, value.name, value.sport || null, value.sport_key || null, value.website_url || null,
+      value.city || null, value.state || null, value.state_name || null, value.description || null, value.cost_note || null,
+      value.ages || null, value.equipment_provided, value.is_public, timestamp, timestamp).run();
+  return db.prepare(`SELECT ${PROGRAM_COLUMNS} FROM programs WHERE id = ? AND organization_id = ?`).bind(id, organizationId).first();
+}
+
+export async function updateManagedProgram(db, organizationId, programId, email, input) {
+  if (!(await claimedOrganization(db, organizationId, email))) return null;
+  const existing = await db.prepare(`SELECT ${PROGRAM_COLUMNS} FROM programs WHERE id = ? AND organization_id = ?`).bind(programId, organizationId).first();
+  if (!existing) return false;
+  const value = programValues(input, existing);
+  await db.prepare(`UPDATE programs SET name = ?, sport = ?, sport_key = ?, website_url = ?, city = ?, state = ?, state_name = ?, description = ?, cost_note = ?, ages = ?, equipment_provided = ?, is_public = ?, updated_at = ? WHERE id = ? AND organization_id = ?`)
+    .bind(value.name, value.sport || null, value.sport_key || null, value.website_url || null, value.city || null, value.state || null,
+      value.state_name || null, value.description || null, value.cost_note || null, value.ages || null, value.equipment_provided,
+      value.is_public, now(), programId, organizationId).run();
+  return db.prepare(`SELECT ${PROGRAM_COLUMNS} FROM programs WHERE id = ? AND organization_id = ?`).bind(programId, organizationId).first();
+}
+
+export async function deleteManagedProgram(db, organizationId, programId, email) {
+  if (!(await claimedOrganization(db, organizationId, email))) return null;
+  const result = await db.prepare("DELETE FROM programs WHERE id = ? AND organization_id = ?").bind(programId, organizationId).run();
+  return Number(result?.meta?.changes || 0) > 0;
+}
+
+function eventValues(input, existing = {}) {
+  const text = (key, max) => Object.prototype.hasOwnProperty.call(input, key) ? clean(input[key], max) : clean(existing[key], max);
+  const title = text("title", 200);
+  if (!title) throw new Error("title-required");
+  const start = text("starts_at", 80);
+  if (!start || Number.isNaN(Date.parse(start))) throw new Error("start-invalid");
+  const end = text("ends_at", 80);
+  if (end && Number.isNaN(Date.parse(end))) throw new Error("end-invalid");
+  const url = text("url", 500);
+  if (url) {
+    try { const parsed = new URL(url); if (!/^https?:$/.test(parsed.protocol)) throw new Error(); }
+    catch { throw new Error("website-invalid"); }
+  }
+  const state = validState(text("state", 2));
+  return { title, description: text("description", 5000), sport_key: text("sport_key", 80).toLowerCase(), venue: text("venue", 300),
+    city: text("city", 120), state, url, starts_at: new Date(start).toISOString(), ends_at: end ? new Date(end).toISOString() : null,
+    all_day: managedBoolean(input.all_day, existing.all_day == null ? 0 : Number(existing.all_day)),
+    is_public: managedBoolean(input.is_public, existing.is_public == null ? 0 : Number(existing.is_public)) };
+}
+
+export async function managedOrganizationEvents(db, organizationId, email) {
+  if (!(await claimedOrganization(db, organizationId, email))) return null;
+  const { results } = await db.prepare(`SELECT ${EVENT_COLUMNS} FROM events WHERE org_id = ? ORDER BY starts_at DESC`).bind(organizationId).all();
+  return results;
+}
+
+export async function createManagedEvent(db, organizationId, email, input) {
+  if (!(await claimedOrganization(db, organizationId, email))) return null;
+  const value = eventValues(input); const timestamp = now(); const id = crypto.randomUUID();
+  await db.prepare(`INSERT INTO events (id, title, description, org_id, sport_key, venue, city, state, url, starts_at, ends_at, all_day, status, is_public, source, created_at, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'scheduled', ?, 'organization', ?, ?)`)
+    .bind(id, value.title, value.description, organizationId, value.sport_key || null, value.venue || null, value.city || null,
+      value.state || null, value.url || null, value.starts_at, value.ends_at, value.all_day, value.is_public, timestamp, timestamp).run();
+  return db.prepare(`SELECT ${EVENT_COLUMNS} FROM events WHERE id = ? AND org_id = ?`).bind(id, organizationId).first();
+}
+
+export async function updateManagedEvent(db, organizationId, eventId, email, input) {
+  if (!(await claimedOrganization(db, organizationId, email))) return null;
+  const existing = await db.prepare(`SELECT ${EVENT_COLUMNS} FROM events WHERE id = ? AND org_id = ?`).bind(eventId, organizationId).first();
+  if (!existing) return false;
+  const value = eventValues(input, existing);
+  await db.prepare(`UPDATE events SET title = ?, description = ?, sport_key = ?, venue = ?, city = ?, state = ?, url = ?, starts_at = ?, ends_at = ?, all_day = ?, is_public = ?, updated_at = ? WHERE id = ? AND org_id = ?`)
+    .bind(value.title, value.description, value.sport_key || null, value.venue || null, value.city || null, value.state || null,
+      value.url || null, value.starts_at, value.ends_at, value.all_day, value.is_public, now(), eventId, organizationId).run();
+  return db.prepare(`SELECT ${EVENT_COLUMNS} FROM events WHERE id = ? AND org_id = ?`).bind(eventId, organizationId).first();
+}
+
+export async function deleteManagedEvent(db, organizationId, eventId, email) {
+  if (!(await claimedOrganization(db, organizationId, email))) return null;
+  const result = await db.prepare("DELETE FROM events WHERE id = ? AND org_id = ?").bind(eventId, organizationId).run();
+  return Number(result?.meta?.changes || 0) > 0;
+}

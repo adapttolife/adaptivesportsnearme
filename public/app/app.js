@@ -218,7 +218,7 @@ export function cityShort(c) {
 const UNPLACED = /statewide|multiple|various|throughout|^.*\bcounty$|\bregion\b/i;
 export function isPlaced(p) {
   const cf = p.cityFirst !== undefined ? p.cityFirst : cityShort(p.city);
-  return !!(p.geo === "city" && p.lat != null && p.geoPrecision !== "state" && cf && !UNPLACED.test(cf.replace(/ and more$/, "")));
+  return !!(((p.geo === "city") || (p.geo === "address")) && (p.lat != null) && (p.geoPrecision !== "state") && cf && !UNPLACED.test(cf.replace(/ and more$/, "")));
 }
 /** "Tampa, FL" · "Escambia County, FL" · "Florida, no single city listed" · "Place not listed yet" */
 export function placeText(p) {
@@ -262,14 +262,15 @@ function normalize(raw) {
 
 /* The live API rows, in the shape the views read. */
 // /api/listings is the slim directory: enough for cards, rows, maps and sport pages.
-// A listing's own lat/lng stay private until the program says yes (publicity_consent),
-// so maps and distances use the center of its listed city (center, from the server).
+// Maps use the center of a listing's city unless its full address is public.
 function fromApi(r) {
   const c = Array.isArray(r.center) ? r.center : null;
+  const point = Array.isArray(r.point) ? r.point : null;
+  const coords = point || c;
   return {
     id: r.id, name: r.name, key: r.key, trio: r.trio || null, city: r.city || null, state: r.state || null,
     lastChecked: r.checked || null, listedAt: r.listed || null, confirmed: !!r.verified, teamChecked: !!r.team,
-    lat: c ? c[0] : null, lng: c ? c[1] : null, geo: c ? "city" : (r.state ? "state" : null),
+    lat: coords ? coords[0] : null, lng: coords ? coords[1] : null, geo: point ? "address" : (c ? "city" : (r.state ? "state" : null)),
     prog: !!r.prog, orgName: r.org || null, progs: r.progs || 0,
   };
 }
@@ -892,7 +893,7 @@ export function letterBlock({ source = "page", heading = true } = {}) {
   const i = uid("em");
   // heading: false on /letter, where the page's own h1 already says "Get the letter".
   return `<section class="letter" id="letter" ${heading ? `aria-labelledby="${i}-h"><h2 id="${i}-h" tabindex="-1">Get the letter</h2>` : 'aria-label="Get the letter">'}<p>New programs, grants and events by email, only when there's something worth sending. Unsubscribe any time.</p>
-<form class="letter-form" data-letter data-send="/api/subscribe" data-source="asnm-letter-${esc(source)}" data-done="You're on the list. We'll write when there is something worth sending." novalidate><div class="field"><label for="${i}">Email</label><div class="letter-row"><input id="${i}" name="em" type="email" autocomplete="email" placeholder="name@example.com" required data-error="Enter an email address, like name@example.com."><button class="btn btn--ink" type="submit">Subscribe</button></div></div><input name="company" tabindex="-1" autocomplete="off" class="hpot" aria-hidden="true"><label class="check"><input type="checkbox" name="beta"><span>I want the first look at new features</span></label></form></section>`;
+<form class="letter-form" data-letter data-send="/api/subscribe" data-source="asnm-letter-${esc(source)}" data-done="You're on the list. We'll write when there is something worth sending." novalidate><div class="field"><label for="${i}">Email</label><div class="letter-row"><input id="${i}" name="em" type="email" autocomplete="email" placeholder="name@example.com" required data-error="Enter an email address, like name@example.com."><button class="btn btn--ink" type="submit">Subscribe</button></div></div><input name="company" tabindex="-1" autocomplete="off" class="hpot" aria-hidden="true"><label class="check"><input type="checkbox" name="beta"><span>I want the first look at new features</span></label><p class="letter-fine">We use your email only to send the letter. <a href="/privacy">Privacy policy</a></p></form></section>`;
 }
 
 export function helpBand() {
@@ -1081,7 +1082,7 @@ export function footer() {
 <div><h2 class="ft-h">Browse</h2><ul>${li("States", "/states")}${li("Organizations", "/organizations")}</ul></div>
 <div><h2 class="ft-h">Help build this</h2><ul>${li("Add a program", "/add/program")}${li("Add an event", "/add/event")}${li("Claim your organization", "/help")}</ul></div>
 <div><h2 class="ft-h">About this directory</h2><ul>${li("How we check listings", "/about")}${li("Get the letter", "/letter")}${li("Build with us", "/build")}${li("Accessibility", "/about#accessibility")}</ul></div></div>
-<div class="ft-fine"><p class="ft-fine">Made with <span role="img" aria-label="love">❤️</span> by <a href="https://adapttolife.org">Adapt To Life</a>. © 2026</p></div></div>`;
+<div class="ft-fine"><p class="ft-fine">Made with <span role="img" aria-label="love">❤️</span> by <a href="https://adapttolife.org">Adapt To Life</a>. © 2026 · <a href="/privacy">Privacy</a> · <a href="/terms">Terms</a></p></div></div>`;
 }
 
 /** Render output for any unknown route, id or key. */
@@ -1294,8 +1295,9 @@ const ROUTES = [
   ["/states", "states"], ["/states/:st", "state"], ["/organizations", "organizations"], ["/organizations/:id", "program"], ["/programs", "programs"], ["/programs/:id", "program-detail"],
   ["/grants", "grants"], ["/grants/:id", "grant"], ["/events", "events"],
   ["/add/program", "forms"], ["/add/organization", "forms"], ["/add/event", "forms"], ["/update/:id", "forms"],
-  ["/manage", "manage"], ["/manage/organizations/:id", "manage"],
-  ["/help", "help"], ["/about", "help"], ["/resources/veteran-owned-businesses", "vob"], ["/resources", "help"], ["/letter", "help"], ["/build", "help"], ["/letter/confirmed", "letter-confirmed"],
+  ["/manage", "manage"], ["/manage/organizations", "manage"], ["/manage/organizations/:id/edit", "manage"], ["/manage/organizations/:id/programs/new", "manage"], ["/manage/organizations/:id/events/new", "manage"], ["/manage/organizations/:id/programs", "manage"], ["/manage/organizations/:id/events", "manage"], ["/manage/programs/:id", "manage"], ["/manage/events/:id", "manage"], ["/manage/organizations/:id", "manage"],
+  ["/admin", "admin"], ["/admin/:kind", "admin"], ["/admin/:kind/:id", "admin"],
+  ["/help", "help"], ["/about", "help"], ["/resources/veteran-owned-businesses", "vob"], ["/resources", "help"], ["/letter", "help"], ["/build", "help"], ["/letter/confirmed", "letter-confirmed"], ["/privacy", "help"], ["/terms", "help"],
 ];
 const OVERLAY_KEYS = new Set(["map", "open"]);
 const MODS = {}, CSS_DONE = {};
@@ -1370,7 +1372,7 @@ function defaultActive(name, path, params) {
   if (path === "/add/program") return "add-program";
   if (path === "/add/organization") return "add-organization";
   if (path === "/add/event") return "add-event";
-  if (path === "/manage") return "manage";
+  if (path === "/manage" || path.startsWith("/manage/")) return "manage";
   if (name === "help") return path.slice(1);
   return "";
 }

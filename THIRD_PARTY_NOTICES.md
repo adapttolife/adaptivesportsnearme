@@ -4,6 +4,15 @@ Original project source code is licensed under the MIT license in `LICENSE`.
 Third-party code retains its own license and copyright notices; the project
 license does not replace them.
 
+## Sport drawings
+
+The sport drawings are Alec Tranel's, adapted from his logo with AI tools.
+They are not licensed under the MIT license in
+`LICENSE`. That covers the drawings in `public/emblems/sports/`, their animations
+in `public/emblems/motion/`, and the share cards in `public/og/` that show them.
+All rights reserved: ask hello@adaptivesportsnearme.com before using them. The
+code that draws, animates and places them stays MIT.
+
 ## MapLibre GL JS
 
 `public/assets/vendor/maplibre-gl.js` identifies its version as 5.24.0.

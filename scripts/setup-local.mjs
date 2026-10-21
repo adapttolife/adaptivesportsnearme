@@ -6,13 +6,14 @@ import { execFileSync } from "node:child_process";
 import { readdirSync } from "node:fs";
 
 const DB = "asnm-db-staging"; // the binding name in wrangler.json's staging environment, stored on your machine
+const NPX = process.platform === "win32" ? "npx.cmd" : "npx";
 const files = ["db/schema.sql", "db/intake-schema.sql",
   ...readdirSync("db/migrations").filter((f) => f.endsWith(".sql")).sort().map((f) => "db/migrations/" + f),
   "db/sample/sample.sql"];
 
 for (const file of files) {
   try {
-    execFileSync("npx", ["wrangler", "d1", "execute", DB, "--env", "staging", "--local", "--file", file], { stdio: "pipe", encoding: "utf8" });
+    execFileSync(NPX, ["wrangler", "d1", "execute", DB, "--env", "staging", "--local", "--file", file], { stdio: "pipe", encoding: "utf8", shell: process.platform === "win32" });
     console.log("ok      " + file);
   } catch (e) {
     const out = String(e.stdout || "") + String(e.stderr || "");

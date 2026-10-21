@@ -15,7 +15,19 @@
 
 .v-manage .om-card,
 .v-manage .om-list {
-	margin-top: 28px;
+	margin: 28px 0;
+}
+
+.v-manage .om-managed-group {
+	margin-top: 48px;
+}
+
+.v-manage .om-managed-group .om-card {
+	margin-top: 16px;
+}
+
+.v-manage .om-managed-group .om-card + .om-card {
+	margin-top: 12px;
 }
 
 .v-manage .om-card {
@@ -167,6 +179,11 @@
 	text-decoration: none;
 }
 
+.v-manage .om-org span {
+	display: flex;
+	flex-direction: column;
+}
+
 .v-manage .om-org + .om-org {
 	margin-top: 10px;
 }
@@ -174,11 +191,6 @@
 .v-manage .om-org:hover {
 	border-color: var(--ink);
 }
-
-.v-manage .om-signout {
-	margin-top: 24px;
-}
-
 
 .v-manage .om-back {
 	display: inline-flex;

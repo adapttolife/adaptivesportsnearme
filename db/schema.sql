@@ -59,6 +59,25 @@ CREATE INDEX IF NOT EXISTS organizations_sport_idx ON organizations (sport_key);
 CREATE INDEX IF NOT EXISTS organizations_status_idx ON organizations (status, is_public);
 CREATE INDEX IF NOT EXISTS organizations_claim_email_idx ON organizations (claim_email COLLATE NOCASE);
 
+CREATE TABLE IF NOT EXISTS admin_login_tokens (
+  id TEXT PRIMARY KEY,
+  token_hash TEXT NOT NULL UNIQUE,
+  email TEXT NOT NULL,
+  expires_at TEXT NOT NULL,
+  used_at TEXT,
+  created_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS admin_login_tokens_email_idx ON admin_login_tokens (email COLLATE NOCASE, expires_at);
+
+CREATE TABLE IF NOT EXISTS admin_sessions (
+  id TEXT PRIMARY KEY,
+  email TEXT NOT NULL,
+  expires_at TEXT NOT NULL,
+  revoked_at TEXT,
+  created_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS admin_sessions_email_idx ON admin_sessions (email COLLATE NOCASE, expires_at);
+
 CREATE TABLE IF NOT EXISTS programs (
   id TEXT PRIMARY KEY,
   organization_id TEXT NOT NULL REFERENCES organizations(id),

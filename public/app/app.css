@@ -590,10 +590,6 @@ body.has-sticky #main {
 	white-space: nowrap;
 }
 
-body.is-home .hd-search {
-	display: none;
-}
-
 @media (min-width: 1100px) {
 	.hd {
 		padding-left: 20px;
@@ -1381,6 +1377,7 @@ input[type="url"],
 input[type="search"],
 input[type="date"],
 input[type="time"],
+input[type="datetime-local"],
 input:not([type]),
 select,
 textarea {
@@ -1402,7 +1399,8 @@ textarea {
 /* Date and time boxes look like every other box. iPhones draw them natively otherwise:
    wider than their field, short whatever min-height says, and with the value centered. */
 input[type="date"],
-input[type="time"] {
+input[type="time"],
+input[type="datetime-local"] {
 	appearance: none;
 	-webkit-appearance: none;
 	display: block;
@@ -1415,7 +1413,8 @@ input[type="time"] {
 }
 
 input[type="date"]::-webkit-date-and-time-value,
-input[type="time"]::-webkit-date-and-time-value {
+input[type="time"]::-webkit-date-and-time-value,
+input[type="datetime-local"]::-webkit-date-and-time-value {
 	min-height: 1.5em;
 	text-align: left;
 }
@@ -3890,6 +3889,11 @@ h3,
 	font-weight: 500;
 	color: var(--muted);
 }
+
+/* The privacy line under the letter signup. */
+.letter-fine { margin-top: 10px; font-size: 14px; line-height: 1.4; color: var(--graphite); }
+.letter .letter-fine { color: #e7e3da; }   /* the letter block is black: same light text as its intro */
+.letter-fine a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
 
 .uwy img {
 	filter: invert(1);

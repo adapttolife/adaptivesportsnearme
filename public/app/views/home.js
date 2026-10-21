@@ -77,7 +77,7 @@ function grants(D) {
   const withAmt = open.filter((g) => A.grantInfo(g).amount), rest = open.filter((g) => !A.grantInfo(g).amount);
   const list = [...withAmt, ...rest].slice(0, 3);
   if (!list.length) return "";
-  return `<section class="band band--sun" aria-labelledby="hg-h"><div class="band-in"><div class="band-head"><span class="band-fig">${A.fig("grant", { color: "#1A1A1A", big: true })}</span><div><h2 id="hg-h">Grants for athletes</h2><p>Money for equipment, travel and fees. You apply on the grant maker's site.</p></div></div><div class="grows glist is-one">${list.map(A.grantRow).join("")}</div><a class="btn btn--ink band-all" href="/grants?a=athlete">See all grants</a></div></section>`;
+  return `<section class="band band--sun" aria-labelledby="hg-h"><div class="band-in"><div class="band-head"><span class="band-fig">${A.fig("grant", { color: "#1A1A1A", big: true })}</span><div><h2 id="hg-h">Grants for athletes</h2><p>Money for equipment, travel and fees. You apply on the grant maker's site.</p></div></div><div class="grows glist is-one">${list.map(A.grantRow).join("")}</div><a class="btn band-all" href="/grants?a=athlete">See all grants</a></div></section>`;
 }
 
 /* Coming events when there are any (the API returns upcoming only); otherwise the ask. */
@@ -85,7 +85,7 @@ function events(D) {
   const list = (D.events || []).slice(0, 3);
   const line = list.length ? "Clinics, tryouts, games and meetups coming up." : "Know of a clinic, tryout or game day coming up? Tell us and we'll check it.";
   const body = list.length ? `<div class="ev-list">${list.map(A.eventCard).join("")}</div>` : "";
-  const btn = list.length ? `<a class="btn btn--ink band-all" href="/events">See all events</a>` : `<a class="btn btn--ink band-all" href="/add/event">Add an event</a>`;
+  const btn = list.length ? `<a class="btn band-all" href="/events">See all events</a>` : `<a class="btn band-all" href="/add/event">Add an event</a>`;
   return `<section class="band band--sea" aria-labelledby="he-h"><div class="band-in"><div class="band-head"><span class="band-fig">${A.fig("event", { color: "#1A1A1A", big: true })}</span><div><h2 id="he-h">Events</h2><p>${line}</p></div></div>${body}${btn}</div></section>`;
 }
 
