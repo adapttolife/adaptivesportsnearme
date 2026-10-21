@@ -1,0 +1,27 @@
+-- docs/data-fixes/descriptions-approved.md. Five programs not in the directory, each checked against every existing row by name and website.
+-- INSERT OR IGNORE with a fixed id, and skipped if any row already has the website, so it is safe to run twice.
+
+-- Vail Veterans Program: new listing, from its own site (https://www.vailveteransprogram.org/).
+INSERT OR IGNORE INTO organizations (id, name, sport_key, sports_json, website_url, city, state, state_name, country, description, verification_status, status, is_public, primary_data_source, created_at, updated_at)
+  SELECT 'f034773a-2c25-59e3-98c4-4fbde6604faa', 'Vail Veterans Program', 'multi', '["Alpine skiing", "snowboarding", "rock climbing", "whitewater rafting", "horseback riding", "zip lining", "mountain biking", "fly fishing", "golf", "bowling", "yoga", "meditation"]', 'https://www.vailveteransprogram.org/', 'Vail', 'CO', 'Colorado', 'United States', 'Sports and activities: Alpine skiing; snowboarding; rock climbing; whitewater rafting; horseback riding; zip lining; mountain biking; fly fishing; golf; bowling; yoga; meditation. Athletes served: Wounded veterans with severe military service injuries, their families, and military caregivers.', 'unverified', 'active', 1, 'ASNM research 2026-10-21', strftime('%Y-%m-%dT%H:%M:%SZ','now'), strftime('%Y-%m-%dT%H:%M:%SZ','now')
+  WHERE NOT EXISTS (SELECT 1 FROM organizations WHERE website_url = 'https://www.vailveteransprogram.org/');
+
+-- Double H Ranch - Adaptive Winter Sports Program: new listing, from its own site (https://www.doublehranch.org/adaptive-winter-sports-program/).
+INSERT OR IGNORE INTO organizations (id, name, sport_key, sports_json, website_url, city, state, state_name, country, description, verification_status, status, is_public, primary_data_source, created_at, updated_at)
+  SELECT 'ebba825f-7da0-587e-8d8a-39ee618ff801', 'Double H Ranch - Adaptive Winter Sports Program', 'skiing', '["Alpine skiing", "snowboarding"]', 'https://www.doublehranch.org/adaptive-winter-sports-program/', 'Lake Luzerne', 'NY', 'New York', 'United States', 'Sports and activities: Alpine skiing; snowboarding. Athletes served: Children ages 6 to 16 living with chronic and serious illnesses, including campers on the autism spectrum and those with visual impairments.', 'unverified', 'active', 1, 'ASNM research 2026-10-21', strftime('%Y-%m-%dT%H:%M:%SZ','now'), strftime('%Y-%m-%dT%H:%M:%SZ','now')
+  WHERE NOT EXISTS (SELECT 1 FROM organizations WHERE website_url = 'https://www.doublehranch.org/adaptive-winter-sports-program/');
+
+-- Wachusett Mountain Adaptive Program: new listing, from its own site (https://www.wachusett.com/lessons-rentals/lessons/adaptive-lessons/).
+INSERT OR IGNORE INTO organizations (id, name, sport_key, sports_json, website_url, city, state, state_name, country, description, verification_status, status, is_public, primary_data_source, created_at, updated_at)
+  SELECT '7c1f378a-7043-5a7b-9b20-fb31ed27004f', 'Wachusett Mountain Adaptive Program', 'skiing', '["Winter snow sports"]', 'https://www.wachusett.com/lessons-rentals/lessons/adaptive-lessons/', 'Princeton', 'MA', 'Massachusetts', 'United States', 'Sports and activities: Winter snow sports. Athletes served: People of all ages with physical, cognitive, hearing, visual and developmental disabilities.', 'unverified', 'active', 1, 'ASNM research 2026-10-21', strftime('%Y-%m-%dT%H:%M:%SZ','now'), strftime('%Y-%m-%dT%H:%M:%SZ','now')
+  WHERE NOT EXISTS (SELECT 1 FROM organizations WHERE website_url = 'https://www.wachusett.com/lessons-rentals/lessons/adaptive-lessons/');
+
+-- City of Colorado Springs Therapeutic Recreation Program: new listing, from its own site (https://coloradosprings.gov/trp).
+INSERT OR IGNORE INTO organizations (id, name, sport_key, sports_json, website_url, city, state, state_name, country, description, verification_status, status, is_public, primary_data_source, created_at, updated_at)
+  SELECT '4dd9a05a-bcd6-50c2-a436-ede413d37b82', 'City of Colorado Springs Therapeutic Recreation Program', 'multi', '["Adaptive water skiing", "aquatics", "sports and fitness", "arts and culture", "social outings", "outdoor adventures"]', 'https://coloradosprings.gov/trp', 'Colorado Springs', 'CO', 'Colorado', 'United States', 'Sports and activities: Adaptive water skiing; aquatics; sports and fitness; arts and culture; social outings; outdoor adventures. Athletes served: Youth and adults with disabilities.', 'unverified', 'active', 1, 'ASNM research 2026-10-21', strftime('%Y-%m-%dT%H:%M:%SZ','now'), strftime('%Y-%m-%dT%H:%M:%SZ','now')
+  WHERE NOT EXISTS (SELECT 1 FROM organizations WHERE website_url = 'https://coloradosprings.gov/trp');
+
+-- Judd Goldman Adaptive Sailing Program: new listing, from its own site (https://juddgoldmansailing.org/).
+INSERT OR IGNORE INTO organizations (id, name, sport_key, sports_json, website_url, city, state, state_name, country, description, verification_status, status, is_public, primary_data_source, created_at, updated_at)
+  SELECT 'b8bacab7-2c4b-5202-92c3-d2e3c8860e38', 'Judd Goldman Adaptive Sailing Program', 'sailing', '["Sailing"]', 'https://juddgoldmansailing.org/', 'Chicago', 'IL', 'Illinois', 'United States', 'Sports and activities: Sailing. Athletes served: People with physical disabilities.', 'unverified', 'active', 1, 'ASNM research 2026-10-21', strftime('%Y-%m-%dT%H:%M:%SZ','now'), strftime('%Y-%m-%dT%H:%M:%SZ','now')
+  WHERE NOT EXISTS (SELECT 1 FROM organizations WHERE website_url = 'https://juddgoldmansailing.org/');
