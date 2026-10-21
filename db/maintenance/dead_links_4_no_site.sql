@@ -1,3 +1,4 @@
+-- Waits for Alec's yes (through Chief of Staff). The site reviewer runs it, staging first. 40 rows drop off the site.
 -- docs/data-fixes/dead-links.md. Each UPDATE matches the row's id AND its current link, so it is safe to run twice
 -- and skips a row someone already changed.
 
@@ -55,12 +56,6 @@ UPDATE organizations SET website_url = NULL, last_ok_at = NULL, updated_at = str
 -- One Life to Live Foundation: link is dead and no current site was found. Stays listed by its town. West Palm Beach nonprofit (respite days for women veterans and caregivers). Old Wix-style domain returns 404; no current own site found, only directory listings.
 UPDATE organizations SET website_url = NULL, last_ok_at = NULL, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE id = '6a5efed8-af0c-5c71-9029-92b313674405' AND website_url = 'https://www.onelifetolivefoundation1.org/';
 
--- Horse Empower: link is dead and no current site was found. Stays listed by its town. Same site still serves content, but its SSL certificate expired 2026-04-24, so browsers show a security warning (http redirects to https). Not linkable as-is; recheck later. Durang
-UPDATE organizations SET website_url = NULL, last_ok_at = NULL, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE id = '36fe2fe2-d24c-536f-a005-93181e002ca4' AND website_url = 'https://horseempower.com/';
-
--- Windfall Equine Therapy Center: link is dead and no current site was found. Stays listed by its town. Old domain redirects to windfallequestriancenter.ecpro.us, which returns 503. Org (Stillwater MN, free equine therapy for veterans and foster/adopted kids) appears active via Giveb
-UPDATE organizations SET website_url = NULL, last_ok_at = NULL, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE id = '1edc9e43-ec42-58e5-b682-3b0db863f17a' AND website_url = 'https://www.windfallequestriancenter.com/';
-
 -- Art For All Mississippi: link is dead and no current site was found. Stays listed by its town. artforallms.com shows 'Squarespace - Website Expired'. No replacement site found; org status unclear.
 UPDATE organizations SET website_url = NULL, last_ok_at = NULL, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE id = '6bfeaa1a-c8ca-5beb-a8ca-91df1f3a21e1' AND website_url = 'https://artforallms.com/';
 
@@ -73,26 +68,8 @@ UPDATE programs SET website_url = NULL, last_ok_at = NULL, updated_at = strftime
 -- Miracle League at Town 'N Country: link is dead and no current site was found. Stays listed by its town. townandcountrybaseball.com does not resolve; no Tampa 'Town N Country' Miracle League found. Possible data mix-up: the Miracle League run by the Town and Country Optimist Club is i
 UPDATE programs SET website_url = NULL, last_ok_at = NULL, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE id = '3ea41f76-6285-5d1b-be81-27bedad8135e' AND website_url = 'https://www.townandcountrybaseball.com/';
 
--- Binet School Special Populations Tennis Team: link is dead and no current site was found. Stays listed by its town. Old URL is probably not dead: JCPS school sites (jefferson.kyschools.us / jcpsky.net) return 406 to automated requests from this server, including the fetch tool. Binet School exis
-UPDATE programs SET website_url = NULL, last_ok_at = NULL, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE id = '9982669f-070c-5ac7-8bbb-fc4a293a8a95' AND website_url = 'https://www.jefferson.kyschools.us/o/binet';
-
--- Louisiana Department of Wildlife and Fisheries - Disability Access Programs: link is dead and no current site was found. Stays listed by its town. Probably NOT dead: wlf.louisiana.gov serves a 'Human Verification' bot challenge (405) to both curl and the fetch tool, so the page could not be checked. Verify the old URL in a br
-UPDATE programs SET website_url = NULL, last_ok_at = NULL, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE id = 'ca91cfd4-ac10-537f-9cef-71a5e9cfe92f' AND website_url = 'https://www.wlf.louisiana.gov/page/special-licenses-and-permits';
-
 -- Mandeville Soccer Club TOPSoccer: link is dead and no current site was found. Stays listed by its town. Club site was rebuilt (old /page/show/ URL 404). Current site navigation and program pages have no TOPSoccer or disability program; /topsoccer and /tops return 404. Program may be 
 UPDATE programs SET website_url = NULL, last_ok_at = NULL, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE id = 'd023aad5-e49a-55d2-82d7-9964ac7b1c4d' AND website_url = 'http://www.mscsoccer.org/page/show/273712-tops';
-
--- Sting LA Soccer / BVB International Academy TOPSoccer: link is dead and no current site was found. Stays listed by its town. stinglasoccer.com no longer resolves; guessed BVB International Academy Louisiana domains do not resolve. Web search budget was exhausted before this item, so only domain probes we
-UPDATE programs SET website_url = NULL, last_ok_at = NULL, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE id = 'b09e876b-4559-594d-b324-e5c96a15ef2d' AND website_url = 'https://www.stinglasoccer.com/Default.aspx?tabid=992817';
-
--- Montgomery County Challenger Little League: link is dead and no current site was found. Stays listed by its town. montgomerychallenger.org (and .com variant) do not resolve. Web search budget exhausted before this item; only domain probes done. Worth a manual search.
-UPDATE programs SET website_url = NULL, last_ok_at = NULL, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE id = '9bc6b378-5681-577a-b71b-cea8e1a6fe22' AND website_url = 'http://montgomerychallenger.org/';
-
--- International Development Tennis Program of New York Inc: link is dead and no current site was found. Stays listed by its town. idtidtprogram.org and idtprogram.org do not resolve. Web search budget exhausted before this item; only domain probes done.
-UPDATE programs SET website_url = NULL, last_ok_at = NULL, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE id = '943cdc4a-a307-5ebc-86c4-ccad1b5141d5' AND website_url = 'http://idtidtprogram.org';
-
--- Charleston Warriors Hockey Program: link is dead and no current site was found. Stays listed by its town. The old directory page still loads over plain http (https fails) and lists the Charleston Warriors Hockey Program (veterans' ice hockey) with only a Facebook link. The program has 
-UPDATE programs SET website_url = NULL, last_ok_at = NULL, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE id = '47a36e07-4e78-5f15-8c95-531672c5d7aa' AND website_url = 'https://carolinasledhockey.org/find-a-program-near-you/';
 
 -- Serve a Purpose / The Barns at Blue Mountain: link is dead and no current site was found. Hides until a link turns up. thebarnsatbluemountain.org/.com do not resolve. serveapurpose.org exists but is only a 'Launching Soon' placeholder and cannot be confirmed as the same org.
 UPDATE programs SET website_url = NULL, last_ok_at = NULL, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE id = 'f0094159-88a6-5992-8e28-e32ee3b0505c' AND website_url = 'https://thebarnsatbluemountain.org/';
@@ -105,9 +82,6 @@ UPDATE organizations SET website_url = NULL, last_ok_at = NULL, updated_at = str
 
 -- UCO Sports & Events: link is dead and no current site was found. Hides until a link turns up. usoadaptiverec.com does not resolve. UCO's newsroom links its adaptive event (Endeavor Games) to endeavorgames.org/edmond/, but uco.edu and endeavorgames.org both return 403 to aut
 UPDATE organizations SET website_url = NULL, last_ok_at = NULL, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE id = 'e078cd42-e3d4-49b4-acee-3c509d099e66' AND website_url = 'http://www.usoadaptiverec.com';
-
--- University of Central Oklahoma – Paralympic Sport Oklahoma City: link is dead and no current site was found. Hides until a link turns up. uco.edu returns 403 to all automated fetches (including homepage), so the old URL may not actually be dead; could not verify any replacement page. UCO remains a U.S. Olympic & Para
-UPDATE organizations SET website_url = NULL, last_ok_at = NULL, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE id = 'c02a5d7c-9034-4787-a64d-0001879f8e72' AND website_url = 'https://www.uco.edu/offices/wellness/programs/u.s.-olympic-and-paralympic-training-site';
 
 -- STRIVE4You ARISE Adaptive Sports: link is dead and no current site was found. Stays listed by its town. strive4you.org has Cloudflare nameservers but no address record (site offline). No replacement site found.
 UPDATE organizations SET website_url = NULL, last_ok_at = NULL, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE id = 'febf56b1-b296-5cfd-9a1d-f51ab4a7171d' AND website_url = 'https://strive4you.org/arise/';
@@ -138,9 +112,6 @@ UPDATE programs SET website_url = NULL, last_ok_at = NULL, updated_at = strftime
 
 -- Youth Programs: link is dead and no current site was found. Hides until a link turns up. Old link is a relative fragment (/programs/#youth) with no domain and no state; cannot tell which organization it belongs to. Needs a look at the parent organization record.
 UPDATE programs SET website_url = NULL, last_ok_at = NULL, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE id = '5871745b-04fd-403a-b3ed-3bfd447de985' AND website_url = '/programs/#youth';
-
--- Miracle League of Manasota: link is dead and no current site was found. Stays listed by its town. Same domain is still theirs but currently returns a WordPress 500 error on every page. Search index shows normal pages, so likely a temporary outage; recheck later before replacing
-UPDATE programs SET website_url = NULL, last_ok_at = NULL, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE id = '6ab5261f-faa1-5fcc-9268-d98eac38b686' AND website_url = 'https://www.miracleleaguemanasota.org/';
 
 -- Southern Crescent Wheelchair Tennis: link is dead and no current site was found. Stays listed by its town. Southern Crescent Tennis Association site (ustasoutherncrescent.com) is live, but the /wheelchair-tennis page is gone and no wheelchair tennis page was found on the site.
 UPDATE programs SET website_url = NULL, last_ok_at = NULL, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE id = 'aa1a52d2-3762-5fba-bb1f-d3ae122c738c' AND website_url = 'http://www.ustasoutherncrescent.com/wheelchair-tennis';
@@ -186,9 +157,6 @@ UPDATE organizations SET website_url = NULL, last_ok_at = NULL, updated_at = str
 
 -- Lava Lake Institute for Science & Conservation / NCEFT: link is dead and no current site was found. Stays listed by its town. lavalakeinstitute.org shows 'Squarespace - Website Expired'; institute may be inactive, but no closure notice found. Partner NCEFT (Woodside, CA) is live with a veterans page (http
 UPDATE organizations SET website_url = NULL, last_ok_at = NULL, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE id = '2061acb3-d88c-50a4-b81b-273ed24c37b5' AND website_url = 'https://www.lavalakeinstitute.org/';
-
--- Valor Therapeutics: link is dead and no current site was found. Stays listed by its town. Same domain valortherapeutics.org still exists and was recently indexed (Dayton OH veteran music/art/yoga therapy nonprofit) but its TLS setup is broken (fails even with verificati
-UPDATE organizations SET website_url = NULL, last_ok_at = NULL, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE id = '2bc0e318-2e3f-56f3-a65d-e3d4c2e6f039' AND website_url = 'https://www.valortherapeutics.org/';
 
 -- Shoulder 2 Shoulder Veteran Academy: link is dead and no current site was found. Stays listed by its town. s2sveterans.org domain registration has expired (registrar renewal page). No replacement site found via search (results were unrelated companies with similar names).
 UPDATE organizations SET website_url = NULL, last_ok_at = NULL, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE id = 'e3004171-4a76-5e64-bee7-0bf449197577' AND website_url = 'https://www.s2sveterans.org/';

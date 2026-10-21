@@ -1,3 +1,4 @@
+-- Run only after every line's link has been opened in a browser; delete failing lines from your local copy first.
 -- docs/data-fixes/dead-links.md. Each UPDATE matches the row's id AND its current link, so it is safe to run twice
 -- and skips a row someone already changed.
 
@@ -72,3 +73,33 @@ UPDATE programs SET website_url = 'https://www.ssdofla.org/o/lsvi/page/athletics
 
 -- Knoxville Parks & Recreation Dynamic Recreation: same site, new page; could not load it from our server (blocked) or it is http only. Open it in a browser first. City site moved to CivicEngage page numbers; loads 200 via Firecrawl (Cloudflare blocks plain curl).
 UPDATE programs SET website_url = 'https://www.knoxvilletn.gov/573/Dynamic-Recreation-Program', last_ok_at = NULL, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE id = '634a1af5-d0ce-44e4-a89f-1dc652db4fe0' AND website_url = 'https://www.knoxvilletn.gov/government/city_departments_offices/parks_and_recreation/programs/dynamic_recreation_program';
+
+-- Palm Beach Gardens Veterans' Tennis and Pickleball: moved from the confident file in review. Check it in a browser first: the city homepage, not the program's page. Original note: the old link redirects here (Palm Beach Gardens, FL - Official Website | Official Website)
+UPDATE programs SET website_url = 'https://www.pbgfl.gov/', last_ok_at = NULL, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE id = 'ce0d0394-b36a-5da6-894b-2ec88ccd6d28' AND website_url = 'https://www.pbgfl.com/';
+
+-- Bluegrass Tennis Association Wheelchair Tennis: moved from the confident file in review. Check it in a browser first: fails TLS from our server. Original note: the old link redirects here (Lexington Area Tennis Association)
+UPDATE programs SET website_url = 'https://latasc.com/', last_ok_at = NULL, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE id = 'fc953c88-7675-5195-93ac-1a51732bc4ab' AND website_url = 'https://www.lexington.usta.com/';
+
+-- Freedom Hills Therapeutic Riding Program at Rolling Hills Ranch: moved from the confident file in review. Check it in a browser first: fhtrp.wpengine.com is a hosting name, not the organization's own domain. Original note: the old link redirects here (Home - Freedom Hills Therapeutic Riding)
+UPDATE programs SET website_url = 'https://fhtrp.wpengine.com/', last_ok_at = NULL, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE id = '6e3fbcb2-473a-5e9c-af7b-e2e41e89d2be' AND website_url = 'https://freedomhills.org/';
+
+-- Spina Bifida Association of Kentucky Adaptive Sports Activities: moved from the confident file in review. Check it in a browser first: the link has an encoded slash (%2F) and fails TLS from our server. Original note: same site, new page; loads ("Adaptive Sport/Activities")
+UPDATE organizations SET website_url = 'https://spinabifidakentucky.org/adaptive-sport%2Factivities', last_ok_at = NULL, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE id = 'd5cbf21f-0df2-58fa-9c6a-338c5e804b73' AND website_url = 'https://spinabifidakentucky.org/activities';
+
+-- Suicide Prevention Color Run and Resource Fair: moved from the confident file in review. Check it in a browser first: a one-off "3rd Annual" event page, not a standing program page. Original note: same site, new page; loads ("3rd Annual Veteran Color Run/Walk for Veteran Suicide Awaren")
+UPDATE programs SET website_url = 'https://veterans.nv.gov/3rd-annual-veteran-color-run-walk-for-veteran-suicide-awareness/', last_ok_at = NULL, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE id = '182253f7-fc88-5592-b159-c4ab666e076a' AND website_url = 'https://veterans.nv.gov/message-from-director-oct25/';
+
+-- White County Regional Library System / Cornerstone Caregiving: moved from the confident file in review. Check it in a browser first: a generic library calendar, not this program. Original note: same site, new page; loads ("White County Libraries Calendar - White County Libraries, Ar")
+UPDATE organizations SET website_url = 'https://whitecountylibraries.org/calendar', last_ok_at = NULL, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE id = '0255fbe9-929a-5925-aad9-a8edb747466d' AND website_url = 'https://whitecountylibraries.assabetinteractive.com/calendar/2026-june/event-listing/';
+
+-- Guitars for Vets / VA Sierra Nevada: moved from the confident file in review. Check it in a browser first: archive.veterans.nv.gov is an archive copy, not the live page. Original note: same site, new page; loads ("Guitars for Vets - Nevada Department of Veterans Services")
+UPDATE organizations SET website_url = 'https://archive.veterans.nv.gov/guitars-for-vets/', last_ok_at = NULL, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE id = 'a5a41a0a-1467-565c-bf92-de6097fddd84' AND website_url = 'https://veterans.nv.gov/guitars-for-vets/';
+
+-- Bellarmine University iCan Bike Camp: moved from the confident file in review. Check it in a browser first: a news article, not the program's page. Original note: same site, new page; loads ("Bellarmine physical therapy program helps children with disa")
+UPDATE organizations SET website_url = 'https://bellarmine.edu/news/article/physical-therapy-program-children-disabilities-ride-bike.php', last_ok_at = NULL, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE id = 'd70e91a5-0281-52d7-92d7-67ee42f5fc30' AND website_url = 'https://www.bellarmine.edu/physical-therapy/';
+
+-- Maryland Department of Disabilities - Accessible Boating Fund: moved from the confident file in review. Check it in a browser first: goes to the MDOD careers and procurement page, not the boating fund. Original note: same site, new page; loads ("Careers and Procurement | Department of Disabilities")
+UPDATE programs SET website_url = 'https://mdod.maryland.gov/about-us/careers-and-procurement', last_ok_at = NULL, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE id = '997ca4c0-2f6a-534b-92f8-ced867d9e178' AND website_url = 'https://mdod.maryland.gov/about/Pages/grants.aspx';
+
+-- New Mexico Department of Cultural Affairs / New Mexico Arts: moved from the confident file in review. Check it in a browser first: fails TLS from our server. Original note: new site; loads ("New Mexico Arts and the Military Initiative")
+UPDATE organizations SET website_url = 'https://nmarts.org/all-programs/arts-the-military/', last_ok_at = NULL, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE id = '1a67b135-1d5c-53af-988c-859cfcaa9fbc' AND website_url = 'https://www.newmexicoculture.org/release/1915/29';
