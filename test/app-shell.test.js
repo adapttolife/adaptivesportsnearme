@@ -270,26 +270,6 @@ test("sheets opened by a tap get their own Back step", () => {
   assert.match(between(APP, 'window.addEventListener("popstate"', "render();\n  });"), /closeOverlay\(\{ mode: "pop" \}\)/);
 });
 
-// The privacy policy (public/app/views/help.js) is general on purpose. These checks
-// guard the few promises it makes that a code change could quietly break.
-const HELP = read("public/app/views/help.js");
-const PRIVACY = between(HELP, "function privacyPage()", "\nfunction termsPage()");
-test("the privacy policy's promises hold in the code", () => {
-  const appFiles = readdirSync(new URL("../public/app/", import.meta.url), { recursive: true }).filter((f) => f.endsWith(".js")).map((f) => read(`public/app/${f}`)).join("\n");
-  // "We use a cookie only to keep organization managers signed in."
-  assert.match(PRIVACY, /We use a cookie only to keep organization managers signed in/);
-  assert.ok(!/document\.cookie/.test(appFiles), "the app sets or reads a cookie");
-  // "Use my location finds the nearest city on your device, so your exact position isn't sent to us."
-  assert.match(PRIVACY, /your exact position isn't sent to us/);
-  const locate = between(APP, "export function locateMe()", "\n}\n");
-  assert.ok(!/fetch\(|navigator\.sendBeacon|XMLHttpRequest/.test(locate), "locateMe sends something to a server");
-  // The pages exist where the site links to them.
-  assert.match(between(APP, "function footer(", "\n}\n"), /href="\/privacy"[\s\S]*href="\/terms"/);
-  assert.match(between(APP, "export function letterBlock(", "\n}\n"), /href="\/privacy"/);
-  assert.match(read("public/app/views/forms.js"), /href="\/privacy"/);
-  assert.match(APP, /\["\/privacy", "help"\], \["\/terms", "help"\]/);
-});
-
 test("organization management is a help-linked app route", () => {
   const help = read("public/app/views/help.js"), pages = read("src/pages.js");
   assert.match(help, /"\/manage"/);

@@ -113,8 +113,6 @@ const ROUTES = [
   [/^\/letter\/confirmed\/?$/, () => ({ ...PAGES.letterConfirmed, noindex: true })],
   [/^\/letter\/?$/, () => ({ ...PAGES.letter })],
   [/^\/build\/?$/, () => ({ ...PAGES.build })],
-  [/^\/privacy\/?$/, () => ({ ...PAGES.privacy })],
-  [/^\/terms\/?$/, () => ({ ...PAGES.terms })],
 ];
 
 function notFound(title = PAGES.notFound.title) {
@@ -153,7 +151,7 @@ const VIEWS = [
   [/^\/states$/, "states"], [/^\/states\/[^/]+$/, "state"], [/^\/organizations$/, "organizations"], [/^\/organizations\/[^/]+$/, "program"], [/^\/programs$/, "programs"], [/^\/programs\/[^/]+$/, "program-detail"],
   [/^\/grants$/, "grants"], [/^\/grants\/[^/]+$/, "grant"], [/^\/events$/, "events"],
   [/^\/(add\/program|add\/organization|add\/event|update\/[^/]+)$/, "forms"], [/^\/manage(?:\/organizations\/[^/]+)?$/, "manage"], [/^\/resources\/veteran-owned-businesses$/, "vob"],
-  [/^\/letter\/confirmed$/, "letter-confirmed"], [/^\/(help|about|resources|letter|build|privacy|terms)$/, "help"],
+  [/^\/letter\/confirmed$/, "letter-confirmed"], [/^\/(help|about|resources|letter|build)$/, "help"],
 ];
 export function preloadHints(pathname) {
   const path = pathname.length > 1 ? pathname.replace(/\/+$/, "") : "/";
@@ -253,7 +251,7 @@ export function robotsTxt(env) {
 }
 
 export async function sitemapXml(env) {
-  const urls = ["/", "/sports", "/states", "/grants", "/events", "/help", "/about", "/resources", "/resources/veteran-owned-businesses", "/letter", "/privacy", "/terms"];
+  const urls = ["/", "/sports", "/states", "/grants", "/events", "/help", "/about", "/resources", "/resources/veteran-owned-businesses", "/letter"];
   for (const k of Object.keys(SPORT_NAMES)) urls.push(`/sports/${k}`);
   for (const st of Object.keys(STATE_NAMES)) urls.push(`/states/${st}`);
   if (env.DB) {
