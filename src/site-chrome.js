@@ -67,7 +67,7 @@ export function footerHtml() {
       <div class="foot-col"><h2>Find</h2><a href="/">Programs near you</a><a href="/sports">Sports</a><a href="/grants">Grants</a><a href="/events">Events</a><a href="/resources">Guides</a></div>
       <div class="foot-col"><h2>Browse</h2><a href="/states">States</a><a href="/organizations">Organizations</a></div>
       <div class="foot-col"><h2>Help build this</h2><a href="/add/program">Add a program</a><a href="/add/event">Add an event</a><a href="/help">Claim your organization</a></div>
-      <div class="foot-col"><h2>About this directory</h2><a href="/about">How we check listings</a><a href="/letter">Get the letter</a><a href="/blog">Blog</a><a href="/build">Build with us</a><a href="/about#accessibility">Accessibility</a><a href="/privacy">Privacy</a><a href="/terms">Terms</a><a href="https://adapttolife.org" target="_blank" rel="noopener">Adapt To Life</a></div>
+      <div class="foot-col"><h2>About this directory</h2><a href="/about">How we check listings</a><a href="/letter">Get the letter</a><a href="/blog">Blog</a><a href="/build">Build with us</a><a href="/about#accessibility">Accessibility</a><a href="https://adapttolife.org" target="_blank" rel="noopener">Adapt To Life</a></div>
     </div>
   </div>
 </footer>`;

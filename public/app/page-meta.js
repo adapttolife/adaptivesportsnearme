@@ -35,8 +35,6 @@ export const PAGES = {
   build: { title: "Build with us", description: "Adaptive Sports Near Me is open source. See where we're going, share an idea, and help build tools for the adaptive sports community." },
   letter: { title: "Get the letter", description: "New programs, grants and events by email, only when there's something worth sending." },
   letterConfirmed: { title: "You're on the list", description: "New programs, grants and events by email, only when there's something worth sending." },
-  privacy: { title: "Privacy policy", description: "What Adaptive Sports Near Me collects, why, and the choices you have." },
-  terms: { title: "Terms of use", description: "The terms for using Adaptive Sports Near Me, a free directory run by Adapt To Life." },
   placeNotFound: { title: "We couldn't find that place", description: "Search by city and state, or a 5-digit ZIP code." },
   notFound: { title: "Page not found", description: "That page isn't here. Search adaptive sports near you instead." },
   listingNotFound: { title: "Listing not found", description: "It may have been removed or merged with another listing." },
