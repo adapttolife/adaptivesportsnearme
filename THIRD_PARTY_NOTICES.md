@@ -6,8 +6,8 @@ license does not replace them.
 
 ## Sport drawings
 
-The sport drawings belong to Alec Tranel, who drew them. Adapt To Life NFP uses
-them with his permission. They are not licensed under the MIT license in
+The sport drawings are Alec Tranel's, adapted from his logo with AI tools.
+They are not licensed under the MIT license in
 `LICENSE`. That covers the drawings in `public/emblems/sports/`, their animations
 in `public/emblems/motion/`, and the share cards in `public/og/` that show them.
 All rights reserved: ask hello@adaptivesportsnearme.com before using them. The
