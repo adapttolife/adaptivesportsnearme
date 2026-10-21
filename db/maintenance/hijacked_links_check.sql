@@ -74,7 +74,7 @@ SELECT item_id, organization_id, lane, status, resolved_at, resolved_by,
   CASE WHEN lane = 'enrich' AND status = 'pending' AND (
               (item_id = 461 AND organization_id = 'e0978514-3831-4cd5-8d0f-fb401b73cb96')
            OR (item_id = 301 AND organization_id = '63c9e62b-c605-4b14-bfcd-25a3ccb00078')) THEN 'reject'
-       WHEN item_id IN (461, 301) AND status = 'rejected' THEN 'rejected'
+       WHEN item_id IN (461, 301) AND status = 'rejected' AND resolved_by = 'data fix: source page was hijacked' THEN 'rejected'
        WHEN item_id IN (461, 301) THEN 'clear skips it: find the org''s own item by hand'
        ELSE 'check by hand' END AS plan
 FROM review_queue
