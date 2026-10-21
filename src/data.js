@@ -7,6 +7,7 @@ import { cachedCount } from "./read-cache.js";
 import "../public/listing-art.js";
 import { listingSport } from "../public/app/listing-sport.js";
 import { isListable } from "../public/app/listable.js";
+import { whoTags, whoText } from "../public/app/who.js";
 import { publicText } from "./public-text.js";
 
 const ListingArt = globalThis.ListingArt;
@@ -158,6 +159,9 @@ export async function listingsSnapshot(db, { places = null } = {}) {
     const o = { id: p.id, name: p.name, key };
     if (trio) o.trio = trio;
     if (more) o.more = more;
+    // Who it says it serves, as codes (public/app/who.js); only when it says.
+    const who = whoTags(whoText(p.desc), key);
+    if (who.length) o.who = who;
     if (p.city) o.city = p.city;
     if (p.state) o.state = p.state;
     if (p.cityCenter) o.center = p.cityCenter;

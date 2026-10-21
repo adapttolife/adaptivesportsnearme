@@ -10,6 +10,7 @@
    - Forms validate in place, then post to the site's API with a Turnstile token. */
 
 import { parseDesc as parseDescText, sportsWords } from "./listing-sport.js";
+import { WHO_LABELS, WHO_ORDER } from "./who.js";
 import { ICONS } from "./icons.js";
 import { PRODUCT_LINE } from "./page-meta.js";
 
@@ -244,6 +245,8 @@ function normalize(raw) {
   // server (public/app/listing-sport.js), so the lists need no descriptions.
   p.key = raw.key && NAMES[raw.key] && raw.key !== "grant" && raw.key !== "event" ? raw.key : "multi";
   if (Array.isArray(raw.trio) && raw.trio.length >= 2) { p.trio = raw.trio; p.more = Number(raw.more) || 0; }
+  // Who it says it serves (codes, public/app/who.js); empty when it doesn't say.
+  p.who = Array.isArray(raw.who) ? raw.who.filter((c) => WHO_LABELS[c]) : [];
   p.family = familyOf(p.key);
   p.tone = toneOf(p.key);
   // Verified (the check) means the organization itself confirmed its listing with us
@@ -271,7 +274,7 @@ function fromApi(r) {
     id: r.id, name: r.name, key: r.key, trio: r.trio || null, more: r.more || 0, city: r.city || null, state: r.state || null,
     lastChecked: r.checked || null, listedAt: r.listed || null, confirmed: !!r.verified, teamChecked: !!r.team,
     lat: coords ? coords[0] : null, lng: coords ? coords[1] : null, geo: point ? "address" : (c ? "city" : (r.state ? "state" : null)),
-    prog: !!r.prog, orgName: r.org || null, progs: r.progs || 0,
+    prog: !!r.prog, orgName: r.org || null, progs: r.progs || 0, who: Array.isArray(r.who) ? r.who : [],
   };
 }
 /* The head starts the data a page needs before this code runs (public/index.html for the
@@ -975,6 +978,50 @@ export function jumpChips(groups) {
   const gs = (groups || []).filter((g) => g && (g.count == null || g.count > 0));
   if (!gs.length) return "";
   return `<div class="jumps">${gs.map((g) => `<button type="button" class="chip" data-jump="${esc(g.id)}">${esc(g.label)}${g.count != null ? ` · <span class="num">${g.count}</span>` : ""}</button>`).join("")}</div>`;
+}
+
+/* ---------- Who it's for (public/app/who.js) ----------
+   Only about a third of listings say who they serve, so a filter by who never hides
+   that: the line above the results counts the ones that don't say. */
+export const WHO = { order: WHO_ORDER, labels: WHO_LABELS };
+/** Listings that say they serve `code` (all of them when there is no code). */
+export function whoFilter(list, code) {
+  if (!code) return list;
+  return list.filter((p) => Array.isArray(p.who) && p.who.includes(code));
+}
+/** A ?w= value we know, or "". */
+export function whoCode(w) { return WHO_LABELS[w] ? w : ""; }
+/** Chip row: "Anyone", then each code at least one listing in `pool` has (and the active one).
+    hrefFor(code) builds the link ("" clears it). Chips change the filter, so they replace. */
+export function whoChips({ pool, active = "", hrefFor, label = "Who it's for" } = {}) {
+  // A code every listing here has filters nothing (veterans on the veteran meetups page), so it isn't offered.
+  const n = {};
+  for (const p of pool) for (const c of p.who || []) n[c] = (n[c] || 0) + 1;
+  const have = new Set(Object.keys(n).filter((c) => n[c] < pool.length));
+  if (active) have.add(active);
+  if (!have.size) return "";
+  const chip = (text, code) => {
+    const cur = code === active;
+    return `<a class="chip${cur ? " is-cur" : ""}" href="${esc(hrefFor(code))}" data-replace${cur ? ' aria-current="page"' : ""}>${cur ? icon("check", 18) : ""}<span>${esc(text)}</span></a>`;
+  };
+  return `<nav class="who" aria-label="${esc(label)}"><h2 class="who-h">Who it's for</h2><div class="who-row"><div class="who-in">${chip("Anyone", "")}${WHO_ORDER.filter((c) => have.has(c)).map((c) => chip(WHO_LABELS[c], c)).join("")}</div></div></nav>`;
+}
+/** The honest line above filtered results. shown: how many say they serve `code`; quiet: how many
+    in the same pool don't say who they serve; where: " nearby" or "". */
+// The line says people first ("people who are blind"), not the chip's short label.
+const WHO_SAY = {
+  veterans: "veterans", kids: "kids and teens", adults: "adults",
+  blind: "people who are blind or have low vision", deaf: "people who are deaf or hard of hearing",
+  autism: "people with autism", intellectual: "people with intellectual or developmental disabilities",
+  physical: "people with physical disabilities", brain: "people with brain injuries",
+};
+/** How a line says a code, people first. */
+export function whoSay(code) { return WHO_SAY[code] || (WHO_LABELS[code] || "").toLowerCase(); }
+export function whoLine(code, shown, quiet, where = "") {
+  const say = esc(WHO_SAY[code] || WHO_LABELS[code].toLowerCase());
+  const lead = shown ? `Showing <b class="num">${shown}</b> that ${shown === 1 ? "says it serves" : "say they serve"} ${say}.` : `None${esc(where)} say they serve ${say} yet.`;
+  const tail = quiet ? ` <b class="num">${quiet}</b> more${esc(where)} ${quiet === 1 ? "doesn't" : "don't"} say who they serve yet.` : "";
+  return `<p class="who-line">${lead}${tail}</p>`;
 }
 
 /** Phone bottom bar. action: HTML string or { label, href, kind, external } */

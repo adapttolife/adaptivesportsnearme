@@ -90,6 +90,15 @@
 
 
 
+/* Who it's for chips and the line above filtered results (app.css .who) */
+.v-sport .sp-who {
+	margin-top: 16px;
+}
+
+.v-sport .sp-wholine {
+	margin-top: 20px;
+}
+
 .v-sport .sp-map {
 	display: none;
 }

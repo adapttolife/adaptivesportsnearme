@@ -355,6 +355,15 @@
 	}
 }
 
+/* Who it's for chips and the line above filtered results (app.css .who) */
+.v-near .nr-who {
+	margin-top: 16px;
+}
+
+.v-near .nr-wholine {
+	margin-top: 16px;
+}
+
 /* ---------- 5. Groups ---------- */
 .v-near .nr-group {
 	margin-top: 32px;
