@@ -4,13 +4,11 @@ import { DatabaseSync } from "node:sqlite";
 import { readFileSync } from "node:fs";
 import { claimLane, runLane } from "../src/pipeline.js";
 import { validateLane } from "../src/lanes/validate.js";
-import { updateProfile } from "../src/profile.js";
 
 function database() {
   const sqlite = new DatabaseSync(":memory:");
   sqlite.exec(readFileSync(new URL("../db/schema.sql", import.meta.url), "utf8"));
   sqlite.exec("ALTER TABLE organizations ADD COLUMN last_checked_at TEXT");
-  sqlite.exec("CREATE TABLE profiles (id TEXT PRIMARY KEY, email TEXT, name TEXT, state TEXT, sports_json TEXT, newsletter INTEGER, updated_at TEXT)");
   const db = {
     prepare(sql) {
       let values = [];
@@ -90,20 +88,6 @@ test("validation skips recent checks and combines successful timestamp writes", 
     assert.equal((await validateLane({ db })).processed, 0);
     assert.equal(calls, 1);
   } finally { globalThis.fetch = originalFetch; sqlite.close(); }
-});
-
-test("saving an unchanged profile does not write or change its timestamp", async () => {
-  const { sqlite, db } = database();
-  try {
-    sqlite.exec("INSERT INTO profiles VALUES ('id','a@b.test','A','NY','[]',0,'original')");
-    const data = { email: "a@b.test", name: "A", state: "NY", sports: [], newsletter: false };
-    const before = sqlite.prepare("SELECT total_changes() AS n").get().n;
-    await updateProfile(db, "id", data);
-    assert.equal(sqlite.prepare("SELECT total_changes() AS n").get().n, before);
-    assert.equal(sqlite.prepare("SELECT updated_at FROM profiles").get().updated_at, "original");
-    await updateProfile(db, "id", { ...data, name: "Changed" });
-    assert.equal(sqlite.prepare("SELECT name FROM profiles").get().name, "Changed");
-  } finally { sqlite.close(); }
 });
 
 test("hourly cron jitter does not skip the next slot", async () => {

@@ -27,19 +27,14 @@ export async function queueFormConfirmation(env, ctx, { kind, email, program }) 
       const subject = kind === 'program' ? 'We received your program submission'
         : kind === 'organization' ? 'We received your organization submission'
         : kind === 'listing-update' ? 'We received your suggested update'
-        : kind === 'event' ? 'We received your event'
-        : kind === 'profile-created' ? 'Your ASNM profile is ready' : 'Your ASNM profile was updated';
+        : 'We received your event';
       const body = kind === 'program'
         ? `Thank you for submitting ${program} to Adaptive Sports Near Me. We received your submission and will review it before publishing or updating a listing. This receipt does not mean the program has been approved.`
         : kind === 'organization'
           ? `Thank you for submitting ${program} to Adaptive Sports Near Me. We received your submission and will review it before publishing the organization. This receipt does not mean the organization has been approved.`
         : kind === 'listing-update'
           ? `Thank you for helping keep ${program} accurate on Adaptive Sports Near Me. A person will read your suggestion before anything on the listing changes. This receipt does not mean the change has been made yet.`
-        : kind === 'event'
-          ? `Thank you for telling us about ${program}. A person will check it before it appears on Adaptive Sports Near Me. This receipt does not mean the event has been listed yet.`
-        : kind === 'profile-created'
-          ? 'Your Adaptive Sports Near Me profile has been created. You can use it on the device where you signed up to save programs and manage your preferences. This email is not a sign-in or recovery link.'
-          : 'Your Adaptive Sports Near Me profile changes have been saved. You can view your updated preferences on the device where you made the changes.';
+        : `Thank you for telling us about ${program}. A person will check it before it appears on Adaptive Sports Near Me. This receipt does not mean the event has been listed yet.`;
       const closing = 'If you have questions or did not submit this form, reply to this email.';
       const receipt = await sendMail(env, {
         from: HOUSE_FROM, to: email, replyTo: HOUSE_REPLY, subject,

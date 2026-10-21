@@ -22,10 +22,6 @@ import { notifyIntake } from './intake.js';
 //   GET  /api/events           -> upcoming public events (json)
 //   GET  /events.xml           -> the same feed as RSS 2.0
 //   GET  /events.ics           -> the same feed as an iCalendar subscription
-//   POST /api/profile          -> create/update a no-password profile (signed cookie)
-//   GET  /api/profile          -> the signed-in profile + saved programs
-//   POST /api/profile/favorites-> save/unsave a program
-//   POST /api/profile/signout  -> clear the profile cookie
 //   GET  /blog                 -> beehiiv-backed blog index (server-rendered HTML, SEO)
 //   GET  /blog/:slug           -> beehiiv-backed blog post (server-rendered HTML, SEO)
 //   *    /api/admin/*          -> review queue + lane triggers (ADMIN_KEY bearer)
@@ -38,11 +34,6 @@ import { runLane } from "./pipeline.js";
 import { json, text } from "./http.js";
 import { cachedDirectoryResponse } from "./read-cache.js";
 import { loadPlaces } from "./geo.js";
-import {
-  readProfileCookie, signProfileId, serializeProfileCookie, clearProfileCookie,
-  getValidSportKeys, getProfileById, getProfileByEmail, createProfile, updateProfile,
-  getProfileWithFavorites, orgExists, setFavorite, validState, parseSports,
-} from "./profile.js";
 import {
   clearOrgCookie, consumeLoginToken, createOrganizationSession, issueLoginToken, serializeOrgCookie,
   organizationsForClaimEmail, organizationForClaimEmail, readOrganizationSession,
@@ -89,19 +80,6 @@ const application = {
         event: url.pathname === "/api/submit-event",
         organization: url.pathname === "/api/submit-organization",
       });
-    }
-    if (url.pathname === "/api/profile") {
-      if (request.method === "POST") return handleProfileUpsert(request, env, ctx);
-      if (request.method === "GET") return handleProfileGet(request, env);
-      return json({ ok: false, error: "Method not allowed" }, 405);
-    }
-    if (url.pathname === "/api/profile/favorites") {
-      if (request.method !== "POST") return json({ ok: false, error: "Method not allowed" }, 405);
-      return handleProfileFavorite(request, env);
-    }
-    if (url.pathname === "/api/profile/signout") {
-      if (request.method !== "POST") return json({ ok: false, error: "Method not allowed" }, 405);
-      return handleProfileSignout();
     }
     if (url.pathname === "/api/org-auth/request-link") {
       if (request.method !== "POST") return json({ ok: false, error: "Method not allowed" }, 405);
@@ -317,8 +295,7 @@ export function parseBetaFlag(v) {
 
 export { beehiivCustomFields } from './newsletter.js';
 
-// Shared beehiiv POST, factored out of handleSubscribe so /api/profile's newsletter
-// opt-in reuses the exact same call instead of duplicating it. Returns a plain
+// Shared beehiiv POST, factored out of handleSubscribe. Returns a plain
 // {ok, status, error} shape rather than a Response — callers decide the envelope.
 async function subscribeToBeehiiv(env, email, campaign, extra = {}) {
   return safeNewsletterSubscribe(env, email, campaign, { ...extra, noWelcome: true });
@@ -501,139 +478,6 @@ async function handleSubmitProgram(request, env, ctx, opts = {}) {
   if (fresh && email) await queueFormConfirmation(env, ctx, { kind: isEvent ? 'event' : listingId ? 'listing-update' : isOrganization ? 'organization' : 'program', email, program });
 
   return json({ ok: true });
-}
-
-// ---- Profiles (no passwords) -------------------------------------------------
-const PROFILE_CACHE = "private, no-store"; // a profile is one person's data, never shared
-
-async function handleProfileUpsert(request, env, ctx) {
-  if (!env.DB) return json({ ok: false, error: "Profiles are temporarily unavailable. Please try again soon." }, 503);
-  if (!env.PROFILE_SIGNING_KEY) {
-    console.error("PROFILE_SIGNING_KEY not configured");
-    return json({ ok: false, error: "Profiles are warming up. Please try again soon." }, 503);
-  }
-
-  const data = await readBody(request);
-  if (data === null) return json({ ok: false, error: "Could not read your submission." }, 400);
-
-  // Honeypot — bots fill the hidden "company" field. Accept silently, do nothing.
-  if (str(data.company)) return json({ ok: true });
-
-  if (!(await verifyTurnstile(env, str(data.cf_token), request.headers.get("CF-Connecting-IP")))) {
-    return json({ ok: false, error: "Verification failed. Please reload the page and try again." }, 403);
-  }
-
-  const email = str(data.em);
-  if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
-    return json({ ok: false, error: "Please enter a valid email." }, 422);
-  }
-  const name = str(data.name).slice(0, 200);
-  const stateCode = validState(data.state);
-  const newsletter = data.newsletter === true || data.newsletter === "true" || data.newsletter === "on" || data.newsletter === "1";
-
-  let validKeys;
-  try {
-    validKeys = await getValidSportKeys(env.DB);
-  } catch (err) {
-    console.error("sports lookup failed:", err);
-    return json({ ok: false, error: "Profiles are temporarily unavailable. Please try again soon." }, 503);
-  }
-  const sports = parseSports(data.sports, validKeys);
-
-  const existingId = await readProfileCookie(request, env.PROFILE_SIGNING_KEY);
-  let id, isNew = false;
-
-  try {
-    if (existingId) {
-      const existing = await getProfileById(env.DB, existingId);
-      if (!existing) return json({ ok: false, error: "Your profile could not be found. Please start again." }, 404);
-      await updateProfile(env.DB, existingId, { email, name, state: stateCode, sports, newsletter });
-      id = existingId;
-    } else {
-      const dupe = await getProfileByEmail(env.DB, email);
-      if (dupe) {
-        return json({ ok: false, error: "That email already has a profile on another device. Recovery by email link is coming soon." }, 409);
-      }
-      id = await createProfile(env.DB, { email, name, state: stateCode, sports, newsletter });
-      isNew = true;
-    }
-  } catch (err) {
-    // Covers the UNIQUE(email) race between the read above and the write, on both
-    // create and update (an update can also collide if the new email belongs to
-    // someone else's profile).
-    console.error("profile save failed:", err);
-    return json({ ok: false, error: "That email already has a profile on another device. Recovery by email link is coming soon." }, 409);
-  }
-
-  if (newsletter) {
-    const result = await subscribeToBeehiiv(env, email, "asnm-profile");
-    if (result.welcomeJob) {
-      if (ctx?.waitUntil) ctx.waitUntil(result.welcomeJob);
-      else await result.welcomeJob;
-    }
-    if (!result.ok) console.error("profile newsletter opt-in failed:", result.error); // profile save already succeeded
-  }
-
-  const sig = await signProfileId(id, env.PROFILE_SIGNING_KEY);
-  await queueFormConfirmation(env, ctx, { kind: isNew ? 'profile-created' : 'profile-updated', email });
-  return new Response(JSON.stringify({ ok: true, id, isNew }), {
-    status: isNew ? 201 : 200,
-    headers: { "Content-Type": "application/json", "Cache-Control": "no-store", "Set-Cookie": serializeProfileCookie(id, sig) },
-  });
-}
-
-async function handleProfileGet(request, env) {
-  if (!env.DB) return json({ ok: false }, 503, PROFILE_CACHE);
-  if (!env.PROFILE_SIGNING_KEY) {
-    console.error("PROFILE_SIGNING_KEY not configured");
-    return json({ ok: false }, 503, PROFILE_CACHE);
-  }
-
-  const id = await readProfileCookie(request, env.PROFILE_SIGNING_KEY);
-  if (!id) return json({ ok: false }, 401, PROFILE_CACHE);
-
-  try {
-    const profile = await getProfileWithFavorites(env.DB, id);
-    if (!profile) return json({ ok: false }, 401, PROFILE_CACHE);
-    return json({ ok: true, profile }, 200, PROFILE_CACHE);
-  } catch (err) {
-    console.error("profile fetch failed:", err);
-    return json({ ok: false, error: "Profile temporarily unavailable" }, 500, PROFILE_CACHE);
-  }
-}
-
-async function handleProfileFavorite(request, env) {
-  if (!env.DB) return json({ ok: false, error: "Profiles are temporarily unavailable. Please try again soon." }, 503);
-  if (!env.PROFILE_SIGNING_KEY) {
-    console.error("PROFILE_SIGNING_KEY not configured");
-    return json({ ok: false, error: "Profiles are warming up. Please try again soon." }, 503);
-  }
-
-  const id = await readProfileCookie(request, env.PROFILE_SIGNING_KEY);
-  if (!id) return json({ ok: false, error: "Create a free profile to save programs." }, 401);
-
-  const data = await readBody(request);
-  if (data === null) return json({ ok: false, error: "Could not read your submission." }, 400);
-
-  const orgId = str(data.org_id);
-  if (!orgId) return json({ ok: false, error: "Missing program." }, 422);
-  const on = data.on === true || data.on === "true" || data.on === "1";
-
-  try {
-    if (!(await orgExists(env.DB, orgId))) return json({ ok: false, error: "That program was not found." }, 404);
-    await setFavorite(env.DB, id, orgId, on);
-    return json({ ok: true, org_id: orgId, on });
-  } catch (err) {
-    console.error("favorite toggle failed:", err);
-    return json({ ok: false, error: "Could not save right now. Please try again soon." }, 500);
-  }
-}
-
-function handleProfileSignout() {
-  return new Response(JSON.stringify({ ok: true }), {
-    status: 200,
-    headers: { "Content-Type": "application/json", "Cache-Control": "no-store", "Set-Cookie": clearProfileCookie() },
-  });
 }
 
 const ORGANIZATION_AUTH_CACHE = "private, no-store";

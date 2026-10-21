@@ -93,15 +93,15 @@ test('missing Gmail credentials log the delivery gap without falling back or los
   assert.deepEqual(logs, [['Form confirmation unavailable', { kind: 'program', reason: 'mail-not-configured' }]]);
   assert.equal(x.sqlite.prepare('SELECT count(*) AS n FROM submissions').get().n, 1);
 });
-test('profile create and edit each send their own confirmation without newsletter opt-in', async t => {
-  const x = setup(t); const body = { em: 'person@example.test', name: 'Person', sports: 'cycling' };
-  const created = await x.post('/api/profile', body); assert.equal(created.status, 201);
-  await Promise.all(x.jobs); assert.equal(x.sent.length, 1); assert.match(x.sent[0].subject, /profile is ready/);
-  const cookie = created.headers.get('Set-Cookie').split(';')[0];
-  const updated = await x.post('/api/profile', { ...body, name: 'Updated' }, cookie); assert.equal(updated.status, 200);
-  await Promise.all(x.jobs); assert.equal(x.sent.length, 2); assert.match(x.sent[1].subject, /profile was updated/);
-  const duplicate = await x.post('/api/profile', body); assert.equal(duplicate.status, 409);
-  assert.equal(x.sent.length, 2); assert.equal(x.calls.length, 0);
+test('the profile routes are gone: no profile, no cookie, no email', async t => {
+  const x = setup(t); x.env.ASSETS = { fetch: async () => new Response('Not found', { status: 404 }) };
+  for (const path of ['/api/profile', '/api/profile/favorites', '/api/profile/signout']) {
+    const res = await x.post(path, { em: 'person@example.test', name: 'Person', sports: 'cycling' });
+    assert.notEqual(res.status, 200); assert.notEqual(res.status, 201);
+    assert.equal(res.headers.get('Set-Cookie'), null);
+  }
+  await Promise.all(x.jobs); assert.equal(x.sent.length, 0);
+  assert.equal(x.sqlite.prepare('SELECT count(*) AS n FROM profiles').get().n, 0);
 });
 test('program confirmations use Gmail when selected', async t => {
   const x = setup(t); Object.assign(x.env, { MAIL_TRANSPORT: 'gmail', GMAIL_FROM: 'hello@adaptivesportsnearme.com', GMAIL_CLIENT_ID: 'fixture', GMAIL_CLIENT_SECRET: 'fixture', GMAIL_REFRESH_TOKEN: 'fixture' });

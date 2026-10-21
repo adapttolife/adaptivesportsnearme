@@ -33,7 +33,7 @@ test('staging forwards requests and live bindings without disabling features', a
     t.after(() => { app.fetch = original; });
     const env = { ENV_NAME: 'staging', DB: {}, INTAKE: {} };
     const ctx = { waitUntil() { } };
-    for (const [method, path] of [['GET', '/'], ['POST', '/api/subscribe'], ['POST', '/api/submit-program'], ['POST', '/api/profile/favorites'], ['POST', '/api/admin/queue/example']]) {
+    for (const [method, path] of [['GET', '/'], ['POST', '/api/subscribe'], ['POST', '/api/submit-program'], ['POST', '/api/submit-event'], ['POST', '/api/admin/queue/example']]) {
         const request = new Request('https://staging-adaptivesportsnearme.adapt-to-life.workers.dev' + path, { method });
         const expected = new Response('<input><iframe></iframe><a href="https://example.com">Link</a>', { status: 201 });
         app.fetch = async (req, bindings, context) => { assert.equal(req, request); assert.equal(bindings, env); assert.equal(context, ctx); return expected; };
