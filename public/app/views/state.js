@@ -45,7 +45,7 @@ export async function render(ctx) {
   const sName = s ? A.sportName(s) : "", sLow = s ? lc(sName) : "";
 
   const all = D.byState[st] || [];
-  const list = s ? all.filter((p) => p.key === s) : all;
+  const list = s ? all.filter((p) => A.offers(p, s)) : all;
   const placed = list.filter((p) => p.placed), statewide = list.filter((p) => !p.placed);
 
   // Header
@@ -57,7 +57,7 @@ export async function render(ctx) {
   });
 
   // Sport bar: sports present in the state, plus the chosen one so it stays selected when empty.
-  const keys = new Set(all.map((p) => p.key));
+  const keys = new Set(all.flatMap(A.sportsOf));
   if (s) keys.add(s);
   const bar = keys.size ? `<div class="st-bar">${A.sportBar({ keys: [...keys], active: s, hrefFor: (k) => hrefFor(st, k), label: `Sports in ${stName}` })}</div>` : "";
 
@@ -86,7 +86,7 @@ export async function render(ctx) {
   }
 
   if (!list.length) {
-    const pool = s ? D.items.filter((p) => p.key === s) : D.items;
+    const pool = s ? D.items.filter((p) => A.offers(p, s)) : D.items;
     body += `<section class="sec">${A.emptyState(s ? {
       title: `No ${sLow} listed in ${stName} yet.`,
       body: "Know one? Tell us and we'll check it.",

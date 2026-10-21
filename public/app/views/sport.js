@@ -118,7 +118,7 @@ export async function render(ctx) {
   const t = TABS.includes(ctx.query.t) ? ctx.query.t : "programs";
   const stQ = String(ctx.query.st || "").toUpperCase();
   const st = D.shapes[stQ] && A.stateName(stQ) !== stQ ? stQ : "";
-  const pool = D.items.filter((p) => p.key === key);
+  const pool = D.items.filter((p) => A.offers(p, key));
   A.remember("recent", key);
 
   // Header count: local only. A link to the visitor's own results when there is a remembered place.

@@ -45,10 +45,10 @@ export const PAGES = {
 };
 
 /** /near/<place>. sport: { name, low } or null. */
-export function nearMeta(place, sport) {
+export function nearMeta(place, sport, miles = 25) {
   return {
     title: `${sport ? sport.name : "Programs"} near ${place}`,
-    description: `Adaptive ${sport ? sport.low : "sports"} programs near ${place}: in town first, then within about 25 miles, then across the state.`,
+    description: `Adaptive ${sport ? sport.low : "sports"} programs near ${place}: in town first, then within about ${miles} miles, then across the state.`,
   };
 }
 

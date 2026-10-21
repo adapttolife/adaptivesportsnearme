@@ -351,7 +351,7 @@ export function loadData() {
     const every = prog.items.map(normalize);
     const items = every.filter((p) => !p.progs);
     const count = {};
-    for (const p of items) count[p.key] = (count[p.key] || 0) + 1;
+    for (const p of items) for (const k of sportsOf(p)) count[k] = (count[k] || 0) + 1;
     // Global popularity: sports.json order (its live counts), the six extras slotted in by their own counts.
     const jsonOrder = sp.sports.map((s) => s.key);
     for (const k of L.SPORTS) live[k] = count[k] || 0;   // order every sport by what is listed now (Karen's veteran data included)
@@ -451,7 +451,9 @@ export async function resolvePlace(q) {
   let s = String(q == null ? "" : q).trim().replace(/\s+/g, " ").replace(/,?\s*USA$/i, "").trim();
   if (!s) return NONE("");
   await loadData();
-  const zm = /^(\d{5})(-\d{4})?$/.exec(s);
+  // A ZIP alone, or as the site writes it back ("Lincoln, NH 03251"), or the older
+  // "03251, Lincoln, NH" a returning visitor may still have saved. The ZIP decides.
+  const zm = /^(\d{5})(?:-\d{4})?$/.exec(s) || /^[^\d]+?,?\s+(\d{5})(?:-\d{4})?$/.exec(s) || /^(\d{5})(?:-\d{4})?,\s*[^\d]+$/.exec(s);
   if (zm) {
     await loadGeo();
     const zip = zm[1], c = G.zcta[zip], st = zipState(zip);
@@ -460,7 +462,7 @@ export async function resolvePlace(q) {
     for (const e of G.list) if (e.st === st) { const d = haversine(c, e.c); if (d < bd) { bd = d; best = e; } }
     if (!best) return NONE(s);
     const city = displayCity(best.city);
-    return { kind: "zip", label: `${zip}, ${city}, ${st}`, short: city, city, state: st, coords: c, zip };
+    return { kind: "zip", label: `${city}, ${st} ${zip}`, short: city, city, state: st, coords: c, zip };
   }
   const whole = stateFrom(s);
   if (whole) return { kind: "state", label: stateName(whole), short: stateName(whole), city: null, state: whole, coords: null, zip: null };
@@ -590,8 +592,17 @@ export function aboutMi(miles, { cap = false } = {}) {
 }
 const byTrust = (a, b) => (b.verified - a.verified) || a.name.localeCompare(b.name);
 
-/** In your city, then within about 25 miles, then elsewhere in your state, then statewide. */
-export function ladder(where, pool) {
+/** Every sport a listing offers: its own, plus the ones a multi-sport listing names (its trio).
+    A sport's lists and counts include both, so a multi-sport place that runs skiing shows under Skiing. */
+export function sportsOf(p) { return p.trio ? [p.key, ...p.trio.filter((k) => k !== p.key)] : [p.key]; }
+export function offers(p, key) { return p.key === key || (!!p.trio && p.trio.includes(key)); }
+
+/** How far "near" reaches, in miles: the choices on the results page. 25 is the default. */
+export const RADII = [25, 50, 100, 250];
+export function radiusFrom(v) { const n = Number(v); return RADII.includes(n) ? n : RADII[0]; }
+
+/** In your city, then within about `radius` miles (any state), then elsewhere in your state, then statewide. */
+export function ladder(where, pool, { radius = RADII[0] } = {}) {
   const out = { inCity: [], near: [], elsewhere: [], statewide: [], dist: new Map() };
   if (!where) return out;
   for (const p of pool) {
@@ -599,7 +610,7 @@ export function ladder(where, pool) {
     const r = relation(p, where);
     if (r.miles != null) out.dist.set(p.id, r.miles);
     if (r.inCity) out.inCity.push(p);
-    else if (r.miles != null && r.miles < 25.5) out.near.push(p);
+    else if (r.miles != null && r.miles < radius + 0.5) out.near.push(p);
     else if (p.state === where.state && p.placed) out.elsewhere.push(p);
     else if (p.state === where.state) out.statewide.push(p);
   }
