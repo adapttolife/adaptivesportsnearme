@@ -6,11 +6,12 @@ license does not replace them.
 
 ## Sport drawings
 
-The sport drawings belong to Adapt To Life NFP and are not licensed under the MIT
-license in `LICENSE`. That covers the drawings in `public/emblems/sports/`, their
-animations in `public/emblems/motion/`, and the share cards in `public/og/` that
-show them. All rights reserved: ask hello@adaptivesportsnearme.com before using
-them. The code that draws, animates and places them stays MIT.
+The sport drawings are Alec Tranel's, adapted from his logo with AI tools.
+They are not licensed under the MIT license in
+`LICENSE`. That covers the drawings in `public/emblems/sports/`, their animations
+in `public/emblems/motion/`, and the share cards in `public/og/` that show them.
+All rights reserved: ask hello@adaptivesportsnearme.com before using them. The
+code that draws, animates and places them stays MIT.
 
 ## MapLibre GL JS
 
