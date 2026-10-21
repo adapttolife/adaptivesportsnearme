@@ -31,7 +31,7 @@ const enc = encodeURIComponent;
 const lowerFirst = (s) => s ? s.charAt(0).toLowerCase() + s.slice(1) : s;
 const upperFirst = (s) => s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
 const isTrio = (p) => Array.isArray(p.trio) && p.trio.length >= 2;
-const sportLabel = (p) => isTrio(p) ? "Multi-sport" : A.sportName(p.key);
+const sportLabel = (p) => A.sportsText(p);   // "Basketball, tennis and swimming", not "Multi-sport", when the listing names them
 const sportNoun = (p) => (p.key === "multi" ? "multi-sport programs" : lowerFirst(A.sportName(p.key)));
 const statewideText = (p) => /no single city listed$/.test(A.placeText(p));
 

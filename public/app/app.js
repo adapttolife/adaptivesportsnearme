@@ -819,7 +819,14 @@ const runBy = (p) => {
   const name = displayName(p.name).toLowerCase(), org = displayName(p.orgName).toLowerCase();
   return name === org || name.startsWith(org + " ") || name.startsWith(org + ":") ? "" : ` · ${p.orgName}`;
 };
-const metaText = (p, ctx) => ((ctx && ctx.single) ? placeFor(p, ctx) : `${sportName(p.key)} · ${placeFor(p, ctx)}`) + runBy(p);
+/** The sports a listing names, in words: "Skiing", or for a multi-sport listing that names
+    them, "Basketball, tennis and swimming" (never just "Multi-sport" when we know better). */
+export function sportsText(p) {
+  const ks = p.trio && p.trio.length >= 2 ? p.trio : [p.key];
+  const names = ks.map((k, i) => (i ? sportName(k).toLowerCase() : sportName(k)));
+  return names.length > 1 ? names.slice(0, -1).join(", ") + " and " + names[names.length - 1] : names[0];
+}
+const metaText = (p, ctx) => ((ctx && ctx.single) ? placeFor(p, ctx) : `${sportsText(p)} · ${placeFor(p, ctx)}`) + runBy(p);
 
 /** Card for lists that mix sports. ctx: { where, stamp, wide, sameCity } */
 export function programCard(p, ctx = {}) {
