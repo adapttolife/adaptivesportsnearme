@@ -225,6 +225,10 @@ ${navScriptHtml()}
 // the app's own chrome.
 export function listingInnerHtml(org, { nearby = [] } = {}) {
   const name = org.name || "Adaptive sports program";
+  // The long label ("Baseball, basketball, track and field, and 4 more") is for the
+  // overlay and the description. The nearby strip's heading keeps the listing's own
+  // short label: the strip does not filter on the named sports, and "More baseball,
+  // ..., and 4 more" would read as a count of programs.
   const sport = sportsLabel(org, (k) => SPORT_NAMES[k] || k) || org.sportLabel || "Multi-Sport";
   const loc = locLine(org);
   const v = listingVisual(org, "program");
@@ -248,7 +252,7 @@ ${desc}
 ${action}
 ${denseRows(org)}
 ${aboutListingHtml(org)}
-${nearbyStrip(nearby, sport)}`;
+${nearbyStrip(nearby, org.sportLabel || "Multi-Sport")}`;
 }
 
 export function programPageTemplate(org, { site = SITE, nearby = [] } = {}) {

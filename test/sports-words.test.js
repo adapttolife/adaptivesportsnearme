@@ -28,9 +28,9 @@ test("a multi-sport row that names its sports gets the trio and the count of the
   const row = { name: "All Abilities Sports", desc: "Sports and activities: Baseball; basketball; track and field; soccer; swimming; tennis; golf. Athletes served: Children and adults with disabilities." };
   const { key, trio, more } = listingSport(row);
   assert.equal(key, "multi");
-  assert.equal(trio.length, 3);
-  assert.ok(more >= 1, "the sports beyond three are counted");
-  assert.match(sportsLabel(row, nameOf), / and \d+ more$/);
+  assert.deepEqual(trio, ["baseball", "basketball", "trackfield"]);
+  assert.equal(more, 4, "soccer, swimming, tennis and golf are counted");
+  assert.equal(sportsLabel(row, nameOf), "Baseball, basketball, track and field, and 4 more");
 });
 
 test("one sport, or a multi-sport row that names none, keeps its own label", () => {
