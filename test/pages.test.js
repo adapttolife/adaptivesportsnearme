@@ -194,7 +194,7 @@ test("servePage: sport keys and state codes the site does not have are 404s", as
 test("old URLs redirect permanently to the page that replaced them", async () => {
   const id = "AAAAAAAA-BBBB-4CCC-8DDD-EEEEEEEEEEEE";
   for (const [path, to] of [["/maps", "/"], ["/maps/", "/"], ["/profile", "/"], ["/profile/", "/"], ["/directory", "/sports"], ["/directory/programs", "/sports"],
-    ["/directory/grants/", "/grants"], ["/directory/events", "/events"], ["/directory/resources", "/resources"],
+    ["/directory/grants/", "/grants"], ["/directory/events", "/events"], ["/directory/resources", "/resources"], ["/og/home.png", "/og/home-lineup.png"],
     [`/programs/${id}`, `/programs/${id.toLowerCase()}`], [`/update/${id}`, `/update/${id.toLowerCase()}`], ["/states/wi", "/states/WI"]]) {
     for (const response of [await serve(path, { ASSETS: assets() }), await viaWorker(path, { ASSETS: assets() })]) {
       assert.equal(response.status, 301, path);
@@ -237,12 +237,12 @@ test("the Worker answers page paths with the shell, old paths with a redirect, a
   assert.equal((await viaWorker("/programs/nuggets-youth", guarded)).status, 404);
   // Files and API paths are never pages: they go to the static assets as asked.
   env.ASSETS.requested.length = 0;
-  for (const path of ["/missing.png", "/app/missing.js", "/api/nope"]) {
+  for (const path of ["/missing.png", "/app/missing.js", "/api/nope", "/og/home-lineup.png"]) {
     const response = await viaWorker(path, env);
     assert.equal(response.status, 404, path);
     assert.equal(await response.text(), "missing", path);
   }
-  assert.deepEqual(env.ASSETS.requested, ["/missing.png", "/app/missing.js", "/api/nope"]);
+  assert.deepEqual(env.ASSETS.requested, ["/missing.png", "/app/missing.js", "/api/nope", "/og/home-lineup.png"]);
 });
 
 // In production the asset layer answers "/" with index.html before the Worker

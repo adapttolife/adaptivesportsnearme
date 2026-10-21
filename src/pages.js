@@ -35,6 +35,8 @@ const HOME_DESCRIPTION = HOME.description;
 
 // Old URLs from earlier versions of the site, sent somewhere useful.
 const REDIRECTS = [
+  // The first home card lived at /og/home.png. Links already shared still ask for it.
+  [/^\/og\/home\.png$/, HOME_CARD],
   [/^\/maps\/?$/, "/"],
   [/^\/profile\/?$/, "/"],
   [/^\/directory\/grants\/?$/, "/grants"],

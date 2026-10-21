@@ -13,6 +13,22 @@ const now = () => new Date().toISOString();
 const future = (seconds) => new Date(Date.now() + seconds * 1000).toISOString();
 const clean = (value, length = 5000) => String(value == null ? "" : value).trim().slice(0, length);
 const nullable = (value, length) => clean(value, length) || null;
+const INSTANTS = new Set(["starts_at", "ends_at", "last_ok_at"]);
+const ZONE = /(?:Z|[+-]\d{2}:\d{2})$/i;
+
+// Keep the stored text when the instant did not change, so a load-then-save
+// does not rewrite "2026-11-01T18:30:00Z" as a different spelling of the same moment.
+function instantValue(incoming, current) {
+  if (incoming == null || String(incoming).trim() === "") return null;
+  const text = String(incoming).trim();
+  const parsed = new Date(text);
+  if (Number.isNaN(parsed.getTime())) return text;
+  if (current != null && String(current).trim() !== "") {
+    const prior = new Date(current);
+    if (!Number.isNaN(prior.getTime()) && prior.getTime() === parsed.getTime()) return String(current);
+  }
+  return ZONE.test(text) ? parsed.toISOString() : text;
+}
 const flag = (value, fallback = 0) => [true, 1, "1", "true", "yes", "on"].includes(value) ? 1
   : [false, 0, "0", "false", "no", "off"].includes(value) ? 0 : fallback;
 const number = (value, fallback = null) => {
@@ -112,6 +128,7 @@ function values(entity, input, current = {}) {
     const source = present ? input[field] : current[field];
     if (entity.booleans.includes(field)) value[field] = flag(source, Number(current[field]) || 0);
     else if (entity.numbers.includes(field)) value[field] = number(source, current[field] == null ? null : Number(current[field]));
+    else if (INSTANTS.has(field)) value[field] = instantValue(source, current[field]);
     else value[field] = nullable(source, 5000);
   }
   if (!current.id) {
