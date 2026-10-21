@@ -203,6 +203,13 @@ test("old URLs redirect permanently to the page that replaced them", async () =>
   }
 });
 
+test("the retired home card address redirects to the current card, and can change again", async () => {
+  for (const response of [await serve("/og/home.png", { ASSETS: assets() }), await viaWorker("/og/home.png", { ASSETS: assets() })]) {
+    assert.equal(response.status, 302, "a temporary redirect, so a later home card is not cached forever");
+    assert.equal(response.headers.get("location"), `${ORIGIN}/og/home-lineup.png`);
+  }
+});
+
 // The blog header's search is a plain GET form to /near (it works without script).
 test("a search sent as /near?q= lands on that place's results page", async () => {
   for (const [path, to] of [["/near?q=Tampa%2C+FL", "/near/Tampa%2C%20FL"], ["/near/?q=60614", "/near/60614"], ["/near?q=", "/"], ["/near", "/"]]) {
@@ -237,12 +244,12 @@ test("the Worker answers page paths with the shell, old paths with a redirect, a
   assert.equal((await viaWorker("/programs/nuggets-youth", guarded)).status, 404);
   // Files and API paths are never pages: they go to the static assets as asked.
   env.ASSETS.requested.length = 0;
-  for (const path of ["/missing.png", "/app/missing.js", "/api/nope"]) {
+  for (const path of ["/missing.png", "/app/missing.js", "/api/nope", "/og/home-lineup.png"]) {
     const response = await viaWorker(path, env);
     assert.equal(response.status, 404, path);
     assert.equal(await response.text(), "missing", path);
   }
-  assert.deepEqual(env.ASSETS.requested, ["/missing.png", "/app/missing.js", "/api/nope"]);
+  assert.deepEqual(env.ASSETS.requested, ["/missing.png", "/app/missing.js", "/api/nope", "/og/home-lineup.png"]);
 });
 
 // In production the asset layer answers "/" with index.html before the Worker

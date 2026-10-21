@@ -1,4 +1,5 @@
 import * as A from "../app.js";
+import { fromDateTimeLocal, toDateTimeLocal } from "../local-datetime.js";
 import { PAGES, site } from "../page-meta.js";
 
 const esc = A.esc;
@@ -21,10 +22,8 @@ async function response(path, options) {
   return { result, body };
 }
 
-function dateValue(value) {
-  if (!value) return "";
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? "" : date.toISOString().slice(0, 16);
+function dateValue(stored) {
+  return toDateTimeLocal(stored);
 }
 
 function managedProgram(item, sports) {
@@ -34,7 +33,7 @@ function managedProgram(item, sports) {
 
 function managedEvent(item, sports) {
   const id = item?.id || "";
-  return `<form class="om-card om-managed" data-kind="events"${id ? ` data-id="${esc(id)}"` : ""} novalidate><fieldset><legend>${id ? "Edit event" : "Add an event"}</legend><div class="field"><label>Event name <span class="req" aria-hidden="true">*</span></label><input name="title" required value="${value(item, "title")}"></div><div class="field"><label>Sport</label><select name="sport_key">${sportOptions(sports, item || {})}</select></div><div class="om-two"><div class="field"><label>Starts <span class="req" aria-hidden="true">*</span></label><input name="starts_at" type="datetime-local" required value="${dateValue(item?.starts_at)}"></div><div class="field"><label>Ends</label><input name="ends_at" type="datetime-local" value="${dateValue(item?.ends_at)}"></div></div><div class="field"><label>Venue</label><input name="venue" value="${value(item, "venue")}"></div><div class="om-two"><div class="field"><label>City</label><input name="city" value="${value(item, "city")}"></div><div class="field"><label>State</label><select name="state">${stateOptions(item?.state)}</select></div></div><div class="field"><label>Event URL</label><input name="url" type="url" value="${value(item, "url")}" placeholder="https://"></div><div class="field"><label>Description</label><textarea name="description" rows="3">${value(item, "description")}</textarea></div><label class="om-visibility"><span class="om-visibility-copy">Event visibility<small>Show this event on Adaptive Sports Near Me.</small></span><input name="is_public" type="checkbox" role="switch" value="1"${id ? Number(item?.is_public) === 1 ? " checked" : "" : " checked"}><span class="dl-switch" aria-hidden="true"></span></label></fieldset><p class="om-status" role="status"></p><div class="btns"><button class="btn btn--ink" type="submit">${id ? "Save event" : "Add event"}</button>${id ? `<button class="btn btn--line" type="button" data-delete>Delete event</button>` : ""}</div></form>`;
+  return `<form class="om-card om-managed" data-kind="events"${id ? ` data-id="${esc(id)}"` : ""} novalidate><fieldset><legend>${id ? "Edit event" : "Add an event"}</legend><div class="field"><label>Event name <span class="req" aria-hidden="true">*</span></label><input name="title" required value="${value(item, "title")}"></div><div class="field"><label>Sport</label><select name="sport_key">${sportOptions(sports, item || {})}</select></div><div class="om-two"><div class="field"><label>Starts <span class="req" aria-hidden="true">*</span></label><input name="starts_at" type="datetime-local" required step="1" value="${dateValue(item?.starts_at)}"${item?.starts_at ? ` data-utc="${esc(item.starts_at)}"` : ""}></div><div class="field"><label>Ends</label><input name="ends_at" type="datetime-local" step="1" value="${dateValue(item?.ends_at)}"${item?.ends_at ? ` data-utc="${esc(item.ends_at)}"` : ""}></div></div><div class="field"><label>Venue</label><input name="venue" value="${value(item, "venue")}"></div><div class="om-two"><div class="field"><label>City</label><input name="city" value="${value(item, "city")}"></div><div class="field"><label>State</label><select name="state">${stateOptions(item?.state)}</select></div></div><div class="field"><label>Event URL</label><input name="url" type="url" value="${value(item, "url")}" placeholder="https://"></div><div class="field"><label>Description</label><textarea name="description" rows="3">${value(item, "description")}</textarea></div><label class="om-visibility"><span class="om-visibility-copy">Event visibility<small>Show this event on Adaptive Sports Near Me.</small></span><input name="is_public" type="checkbox" role="switch" value="1"${id ? Number(item?.is_public) === 1 ? " checked" : "" : " checked"}><span class="dl-switch" aria-hidden="true"></span></label></fieldset><p class="om-status" role="status"></p><div class="btns"><button class="btn btn--ink" type="submit">${id ? "Save event" : "Add event"}</button>${id ? `<button class="btn btn--line" type="button" data-delete>Delete event</button>` : ""}</div></form>`;
 }
 
 function withPublicLink(form, href, label) {
@@ -159,6 +158,7 @@ export function mount(root) {
       if (required && !required.checkValidity()) { required.reportValidity(); return; }
       const data = Object.fromEntries(new FormData(form));
       for (const key of ["is_public", "equipment_provided"]) if (form.elements[key]) data[key] = form.elements[key].checked ? 1 : 0;
+      for (const key of ["starts_at", "ends_at"]) if (form.elements[key]) data[key] = fromDateTimeLocal(form.elements[key].value, form.elements[key].dataset.utc);
       const organizationId = form.dataset.org;
       const suffix = form.dataset.id ? `/${encodeURIComponent(form.dataset.id)}` : "";
       const status = form.querySelector(".om-status");
@@ -205,6 +205,7 @@ export function mount(root) {
     if (required && !required.checkValidity()) { required.reportValidity(); return; }
     const data = Object.fromEntries(new FormData(form));
     for (const key of ["is_public", "equipment_provided"]) if (form.elements[key]) data[key] = form.elements[key].checked ? 1 : 0;
+    for (const key of ["starts_at", "ends_at"]) if (form.elements[key]) data[key] = fromDateTimeLocal(form.elements[key].value, form.elements[key].dataset.utc);
     const id = location.pathname.split("/").at(-1);
     const suffix = form.dataset.id ? `/${encodeURIComponent(form.dataset.id)}` : "";
     const status = form.querySelector(".om-status");

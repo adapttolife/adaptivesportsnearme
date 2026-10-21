@@ -261,6 +261,16 @@ export async function deleteManagedProgram(db, organizationId, programId, email)
   return Number(result?.meta?.changes || 0) > 0;
 }
 
+function utcStamp(value, original) {
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return value;
+  if (original != null && String(original).trim() !== "") {
+    const prior = new Date(original);
+    if (!Number.isNaN(prior.getTime()) && prior.getTime() === parsed.getTime()) return String(original);
+  }
+  return parsed.toISOString();
+}
+
 function eventValues(input, existing = {}) {
   const text = (key, max) => Object.prototype.hasOwnProperty.call(input, key) ? clean(input[key], max) : clean(existing[key], max);
   const title = text("title", 200);
@@ -276,7 +286,7 @@ function eventValues(input, existing = {}) {
   }
   const state = validState(text("state", 2));
   return { title, description: text("description", 5000), sport_key: text("sport_key", 80).toLowerCase(), venue: text("venue", 300),
-    city: text("city", 120), state, url, starts_at: new Date(start).toISOString(), ends_at: end ? new Date(end).toISOString() : null,
+    city: text("city", 120), state, url, starts_at: utcStamp(start, existing.starts_at), ends_at: end ? utcStamp(end, existing.ends_at) : null,
     all_day: managedBoolean(input.all_day, existing.all_day == null ? 0 : Number(existing.all_day)),
     is_public: managedBoolean(input.is_public, existing.is_public == null ? 0 : Number(existing.is_public)) };
 }

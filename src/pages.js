@@ -35,6 +35,8 @@ const HOME_DESCRIPTION = HOME.description;
 
 // Old URLs from earlier versions of the site, sent somewhere useful.
 const REDIRECTS = [
+  // The first home card lived at /og/home.png. Links already shared still ask for it.
+  [/^\/og\/home\.png$/, HOME_CARD],
   [/^\/maps\/?$/, "/"],
   [/^\/profile\/?$/, "/"],
   [/^\/directory\/grants\/?$/, "/grants"],
@@ -230,7 +232,8 @@ export async function servePage(request, env, url) {
     return Response.redirect(new URL(q ? `/near/${encodeURIComponent(q)}` : "/", url).toString(), 302);
   }
   const to = redirectFor(url.pathname);
-  if (to) return Response.redirect(new URL(to, url).toString(), 301);
+  // /og/home.png follows the current home card. A 302 so a later card is not cached forever.
+  if (to) return Response.redirect(new URL(to, url).toString(), url.pathname === "/og/home.png" ? 302 : 301);
   const hit = matchPage(url.pathname);
   // Not a page we know and not a file or an API: the app's own "not found" page, as a 404.
   if (!hit && (/\.[a-z0-9]{1,8}$/i.test(url.pathname) || /^\/(api|admin)(\/|$)/.test(url.pathname))) return null;
