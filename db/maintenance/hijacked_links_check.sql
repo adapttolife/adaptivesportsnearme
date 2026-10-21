@@ -5,15 +5,16 @@
 --
 -- Before: 9 rows, every still_hijacked = 1, every shows_publicly = 1.
 --         If the totals row isn't 9 / 9 / 9, STOP: don't run the clear, and report what this shows.
--- After:  9 rows, every still_hijacked = 0, updated_at is the run time, last_ok_at is empty.
+-- After:  9 rows, every still_hijacked = 0, updated_at is the run time, last_ok_at is empty, and
+--         last_checked_at is empty for Alabama and Colorado.
 --         website_url is https://bamaadapted.com/ for Alabama Adapted Athletics, https://cdagj.org/ for
 --         Colorado Discover Ability, and empty for the other 7.
 --         shows_publicly = 0 for 5 rows. It stays 1 for Alabama and Colorado (new links), and for
 --         Helping with Horsepower at Reclamation-Ranch and New Freedom Farm (listed by town, no link).
---         Review items 461 and 301 read rejected; 293, 465, 584 and 657 are unchanged.
+--         Review items 461 and 301 read rejected; 293, 465, 584, 657 and validate 6, 674, 683, 697 are unchanged.
 -- shows_publicly uses the same rule as PUBLIC in src/data.js (is_public, status and ACTIONABLE).
 
-SELECT id, name, website_url, city, state, last_ok_at, updated_at,
+SELECT id, name, website_url, city, state, is_public, status, last_ok_at, last_checked_at, updated_at,
   CASE WHEN website_url IN (
     'http://alabamaadapted.com/',
     'https://www.coastaladaptivesports.org/',
@@ -65,7 +66,7 @@ WHERE id IN (
   'b8e095b5-0d63-44e3-8bae-18dd3a15c905', '2c9cfcbc-1af5-5d8b-acf0-fc6a42cb8486', '3b4a166f-3a2b-51fc-b416-1974cb81a914'
 );
 
--- Review queue items drafted from the hijacked pages. Before: check that 461 is Michigan Adaptive Sports
+-- Review queue items on these orgs: 461 and 301 (the clear rejects them) and the ones left pending for a person. Before: check that 461 is Michigan Adaptive Sports
 -- (e0978514-...) and 301 is Colorado Discover Ability (63c9e62b-...), both lane enrich and pending. If an id
 -- points at another org or lane (staging numbers its items separately), the clear file leaves it alone.
 -- After: 461 and 301 rejected where they matched. 293, 465, 584 and 657 stay as they were, for a person to check.
@@ -77,5 +78,5 @@ SELECT item_id, organization_id, lane, status, resolved_at, resolved_by,
        WHEN item_id IN (461, 301) THEN 'clear skips it: find the org''s own item by hand'
        ELSE 'check by hand' END AS plan
 FROM review_queue
-WHERE item_id IN (461, 301, 293, 465, 584, 657)
+WHERE item_id IN (461, 301, 293, 465, 584, 657, 6, 674, 683, 697)
 ORDER BY item_id;

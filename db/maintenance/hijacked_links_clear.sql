@@ -1,9 +1,11 @@
 -- docs/data-fixes/hijacked-links.md. URGENT: these links send visitors to gambling, spam or unrelated sites today.
 -- Each UPDATE matches the row's id AND the hijacked link, so it is safe to run twice and skips a row someone already fixed.
 -- Each UPDATE also sets updated_at, so the public "updated" date and the admin 24-hour count show the change.
+-- The two new links (Alabama, Colorado) also get last_checked_at = NULL, as in usta_links_3_clear.sql, so the
+-- validate lane checks them first. Rollback: docs/data-fixes/hijacked-links.md, "Rollback".
 --
 -- Result: 5 listings hide, 2 stay listed by town with no link, Alabama gets bamaadapted.com, Colorado gets cdagj.org.
--- This hides 5 public listings, so it waits for Alec's yes. Running it is the site reviewer's step, not an agent's.
+-- This hides 5 public listings, so it waits for Alec's yes through Chief of Staff. The site reviewer (Faisal) runs it, not an agent.
 --
 -- Staging first, then live (docs/MAINTAINERS.md). Run db/maintenance/hijacked_links_check.sql before and after each:
 --   npx wrangler d1 execute asnm-db-staging --remote --config wrangler.preview.json --file db/maintenance/hijacked_links_clear.sql
@@ -11,13 +13,13 @@
 
 -- Alabama Adapted Athletics: the old domain was taken over; its own site is bamaadapted.com ("Alabama Adapted - Official Athletics Website"), checked 2026-10-21.
 -- Move United's directory lists bamaadapted.com for University of Alabama Adapted Athletics, and the site gives the UA Tuscaloosa address.
-UPDATE organizations SET website_url = 'https://bamaadapted.com/', last_ok_at = NULL, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE id = 'f6b95ded-9dba-4a7c-a441-edd5b9c6406b' AND website_url = 'http://alabamaadapted.com/';
+UPDATE organizations SET website_url = 'https://bamaadapted.com/', last_ok_at = NULL, last_checked_at = NULL, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE id = 'f6b95ded-9dba-4a7c-a441-edd5b9c6406b' AND website_url = 'http://alabamaadapted.com/';
 
 -- Coastal Carolina Adaptive Sports & Recreation: https://www.coastaladaptivesports.org/ was taken over (see the doc). No current site of its own was found.
 UPDATE organizations SET website_url = NULL, last_ok_at = NULL, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE id = 'db949607-6858-4d28-86cd-e2897d7adb19' AND website_url = 'https://www.coastaladaptivesports.org/';
 
 -- Colorado Discover Ability: the old domain was taken over; its own site is cdagj.org ("Home - Colorado Discover Ability"), checked 2026-10-21.
-UPDATE organizations SET website_url = 'https://cdagj.org/', last_ok_at = NULL, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE id = '63c9e62b-c605-4b14-bfcd-25a3ccb00078' AND website_url = 'http://www.coloradodiscoverability.org';
+UPDATE organizations SET website_url = 'https://cdagj.org/', last_ok_at = NULL, last_checked_at = NULL, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE id = '63c9e62b-c605-4b14-bfcd-25a3ccb00078' AND website_url = 'http://www.coloradodiscoverability.org';
 
 -- Discovery Blind Sports: http://www.discoveryblindsports.org was taken over (see the doc). No current site of its own was found.
 UPDATE organizations SET website_url = NULL, last_ok_at = NULL, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE id = '2412b1f2-b136-4e90-92bb-9589f71dfcf3' AND website_url = 'http://www.discoveryblindsports.org';
@@ -46,6 +48,7 @@ UPDATE organizations SET website_url = NULL, last_ok_at = NULL, updated_at = str
 UPDATE review_queue SET status = 'rejected', resolved_at = strftime('%Y-%m-%dT%H:%M:%SZ','now'), resolved_by = 'data fix: source page was hijacked' WHERE item_id = 461 AND organization_id = 'e0978514-3831-4cd5-8d0f-fb401b73cb96' AND lane = 'enrich' AND status = 'pending';
 -- Item 301: an email, town and ZIP from a casino review site for Colorado Discover Ability.
 UPDATE review_queue SET status = 'rejected', resolved_at = strftime('%Y-%m-%dT%H:%M:%SZ','now'), resolved_by = 'data fix: source page was hijacked' WHERE item_id = 301 AND organization_id = '63c9e62b-c605-4b14-bfcd-25a3ccb00078' AND lane = 'enrich' AND status = 'pending';
--- Classify items 293, 465, 584 and 657 are NOT changed here. The source pages of 465, 584 and 657 were probably
--- already hijacked; 293's evidence is the org's name. A person checks each against the org's real site before
--- approving or rejecting it (docs/data-fixes/hijacked-links.md).
+-- NOT changed here; a person decides each (docs/data-fixes/hijacked-links.md, "Review items left pending"):
+-- classify 465 (Colorado) and 584 (Michigan), read off the hijacked domains; 657 (Midwest Wheelchair), read off
+-- mdwssc.org on 2026-07-30, hijack date not proven; 293 (Discovery Blind Sports), matched on the listing's name,
+-- not drafted from any page; validate 6, 674, 683 and 697, based on HTTP failures from the hijacked domains.
