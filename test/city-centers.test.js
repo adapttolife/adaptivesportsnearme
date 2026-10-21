@@ -70,3 +70,14 @@ test("loadPlaces reads /data/places.json through ASSETS once; a failure is not r
     assert.deepEqual(seen, Array(3).fill("https://assets.local/data/places.json"), "two misses, then one load reused");
   } finally { _resetPlacesCache(); }
 });
+
+// The shipped table, not a sample: New England lives in towns, which the Census places
+// file leaves out, so towns fill the gaps (scripts/build-places.py, second file).
+test("the shipped city table knows New England ski towns", async () => {
+  const { readFileSync } = await import("node:fs");
+  const table = JSON.parse(readFileSync(new URL("../public/data/places.json", import.meta.url), "utf8"));
+  for (const [city, st] of [["Killington", "VT"], ["Newbury", "NH"], ["Lincoln", "NH"], ["Windham", "NY"], ["Dover", "VT"], ["Glastonbury", "CT"], ["Colchester", "VT"], ["Newry", "ME"]]) {
+    assert.ok(cityCenter(city, st, table), `${city}, ${st}`);
+  }
+  assert.deepEqual(table["CO|denver"], [39.762, -104.881], "a place keeps its own center");
+});
