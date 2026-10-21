@@ -475,6 +475,8 @@
 
 .v-home .band-all {
 	margin-top: 16px;
+	background: #1a1a1a;
+	color: #f3f3f3;
 }
 
 /* ---------- 6. States, letter, help ---------- */
