@@ -114,7 +114,18 @@ async function secondsCleared() {
     const fallMinute = toDateTimeLocal(fall).slice(0, 16);
     assert.equal(fallMinute, "2026-11-01T01:30");
     const fallSaved = fromDateTimeLocal(fallMinute, fall);
-    assert.equal(fallSaved, "2026-11-01T05:30:00.000Z", `fall-back minute form of :45 kept ${fallSaved}`);
+    assert.equal(fallSaved, "2026-11-01T06:30:00.000Z", `fall-back minute form of :45 saved ${fallSaved}`);
+    const editedLater = fromDateTimeLocal("2026-11-01T01:45", "2026-11-01T06:30:00.000Z");
+    assert.equal(editedLater, "2026-11-01T06:45:00.000Z", `editing the second 01:30 to 01:45 saved ${editedLater}`);
+    const editedEarlier = fromDateTimeLocal("2026-11-01T01:45", "2026-11-01T05:30:00.000Z");
+    assert.equal(editedEarlier, "2026-11-01T05:45:00.000Z", `editing the first 01:30 to 01:45 saved ${editedEarlier}`);
+    assert.equal(fromDateTimeLocal("2026-11-01T01:30"), "2026-11-01T05:30:00.000Z", "with no stored instant the earlier 01:30 stands");
+    // 8 Mar 2026 springs forward: 02:30 does not exist, and 01:30 and 03:30 are different hours.
+    assert.equal(fromDateTimeLocal("2026-03-08T01:45", "2026-03-08T06:30:00.000Z"), "2026-03-08T06:45:00.000Z", "spring-forward before the gap stays on EST");
+    assert.equal(fromDateTimeLocal("2026-03-08T03:45", "2026-03-08T07:30:00.000Z"), "2026-03-08T07:45:00.000Z", "spring-forward after the gap stays on EDT");
+    assert.equal(fromDateTimeLocal("2026-03-08T02:30", "2026-03-08T07:30:00.000Z"), "2026-03-08T07:30:00.000Z", "a missing spring-forward time still rolls forward");
+    assert.equal(fromDateTimeLocal("2026-03-08T02:30"), "2026-03-08T07:30:00.000Z");
+    console.log(`ok fall-back ${fall} -> ${fallSaved}; 01:45 -> ${editedLater}; first 01:30 -> ${editedEarlier}`);
   }
   console.log(`ok ${process.env.TZ} ${stored} -> ${saved}`);
 }

@@ -34,9 +34,20 @@ export function fromDateTimeLocal(value, original = "") {
   }
   const parsed = new Date(text);
   if (Number.isNaN(parsed.getTime())) return "";
+  let chosen = parsed;
   if (stored.trim() !== "") {
     const prior = new Date(stored);
-    if (!Number.isNaN(prior.getTime()) && prior.getTime() === parsed.getTime()) return stored;
+    if (!Number.isNaN(prior.getTime())) {
+      // The fall-back hour is the same wall time twice, and Date picks the
+      // earlier one. An edit of the later hour would otherwise move an hour
+      // early. When an hour later is still that wall time, keep the instant
+      // closer to the stored one. With no stored instant, Date's choice stands.
+      const later = new Date(parsed.getTime() + 60 * 60 * 1000);
+      if (toDateTimeLocal(later) === toDateTimeLocal(parsed) && Math.abs(later.getTime() - prior.getTime()) < Math.abs(parsed.getTime() - prior.getTime())) {
+        chosen = later;
+      }
+      if (prior.getTime() === chosen.getTime()) return stored;
+    }
   }
-  return parsed.toISOString();
+  return chosen.toISOString();
 }
