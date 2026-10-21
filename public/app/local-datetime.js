@@ -21,11 +21,20 @@ export function toDateTimeLocal(value) {
  */
 export function fromDateTimeLocal(value, original = "") {
   if (value == null || String(value).trim() === "") return "";
-  const parsed = new Date(value);
+  const text = String(value).trim();
+  const stored = original == null ? "" : String(original);
+  // Compare the field text to the wall time we would display before parsing.
+  // On the DST fall-back hour the same digits name two instants, and Date
+  // picks the earlier one, which would move 06:30Z to 05:30Z on an unchanged save.
+  if (stored.trim() !== "") {
+    const shown = toDateTimeLocal(stored);
+    if (shown && (text === shown || text === shown.slice(0, 16))) return stored;
+  }
+  const parsed = new Date(text);
   if (Number.isNaN(parsed.getTime())) return "";
-  if (original != null && String(original).trim() !== "") {
-    const prior = new Date(original);
-    if (!Number.isNaN(prior.getTime()) && prior.getTime() === parsed.getTime()) return String(original);
+  if (stored.trim() !== "") {
+    const prior = new Date(stored);
+    if (!Number.isNaN(prior.getTime()) && prior.getTime() === parsed.getTime()) return stored;
   }
   return parsed.toISOString();
 }

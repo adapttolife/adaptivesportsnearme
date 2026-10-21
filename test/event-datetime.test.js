@@ -42,6 +42,14 @@ async function runChild() {
   const { toDateTimeLocal, fromDateTimeLocal } = await import("../public/app/local-datetime.js");
   assert.equal(new Date(STARTS).getTimezoneOffset(), 300, "1 Nov 2026 in New York is five hours behind UTC");
 
+  // 06:30Z is 1:30 AM after the clocks fall back. The same wall time also names 05:30Z,
+  // and Date.parse picks that earlier instant. An unchanged field must keep 06:30Z.
+  const fallBack = "2026-11-01T06:30:00.000Z";
+  const fallShown = toDateTimeLocal(fallBack);
+  assert.equal(fallShown, "2026-11-01T01:30:00", "the repeated hour is shown as 1:30");
+  assert.equal(fromDateTimeLocal(fallShown, fallBack), fallBack, `DST fall-back save shifted ${fallBack} to ${fromDateTimeLocal(fallShown, fallBack)} (shown ${fallShown})`);
+  assert.equal(fromDateTimeLocal(fallShown.slice(0, 16), fallBack), fallBack, "the minute form of that field keeps the stored instant");
+
   const shownStart = toDateTimeLocal(STARTS);
   const shownEnd = toDateTimeLocal(ENDS);
   const { sqlite, db } = database();
@@ -78,9 +86,18 @@ async function runChild() {
     });
     assert.equal(managed.starts_at, STARTS);
     assert.equal(managed.ends_at, ENDS);
+
+    const fallId = "33333333-4444-4555-8666-777777777777";
+    sqlite.prepare(`INSERT INTO events (id, title, description, starts_at, ends_at, created_at, updated_at)
+      VALUES (?, 'Repeated hour', 'Clocks fell back', ?, NULL, '2026', '2026')`).run(fallId, fallBack);
+    const fallSaved = await saveAdminItem(db, "events", fallId, { starts_at: fromDateTimeLocal(fallShown, fallBack) });
+    assert.equal(fallSaved.starts_at, fallBack);
+    const fallMinute = await saveAdminItem(db, "events", fallId, { starts_at: fromDateTimeLocal(fallShown.slice(0, 16), fallBack) });
+    assert.equal(fallMinute.starts_at, fallBack);
   } finally {
     sqlite.close();
   }
+  console.log(`ok ${fallBack} stayed put when shown as ${fallShown}`);
   console.log(`ok ${STARTS} stayed put when shown as ${shownStart}`);
 }
 
@@ -96,6 +113,7 @@ if (process.env.EVENT_TIME_TZ_CHILD === "1") {
       encoding: "utf8",
     });
     assert.equal(result.status, 0, `${result.stdout || ""}${result.stderr || ""}`);
+    assert.match(result.stdout, /2026-11-01T06:30:00\.000Z stayed put/);
     assert.match(result.stdout, /2026-11-01T15:00:00\.000Z stayed put/);
   });
 

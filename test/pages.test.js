@@ -194,12 +194,19 @@ test("servePage: sport keys and state codes the site does not have are 404s", as
 test("old URLs redirect permanently to the page that replaced them", async () => {
   const id = "AAAAAAAA-BBBB-4CCC-8DDD-EEEEEEEEEEEE";
   for (const [path, to] of [["/maps", "/"], ["/maps/", "/"], ["/profile", "/"], ["/profile/", "/"], ["/directory", "/sports"], ["/directory/programs", "/sports"],
-    ["/directory/grants/", "/grants"], ["/directory/events", "/events"], ["/directory/resources", "/resources"], ["/og/home.png", "/og/home-lineup.png"],
+    ["/directory/grants/", "/grants"], ["/directory/events", "/events"], ["/directory/resources", "/resources"],
     [`/programs/${id}`, `/programs/${id.toLowerCase()}`], [`/update/${id}`, `/update/${id.toLowerCase()}`], ["/states/wi", "/states/WI"]]) {
     for (const response of [await serve(path, { ASSETS: assets() }), await viaWorker(path, { ASSETS: assets() })]) {
       assert.equal(response.status, 301, path);
       assert.equal(response.headers.get("location"), ORIGIN + to, path);
     }
+  }
+});
+
+test("the retired home card address redirects to the current card, and can change again", async () => {
+  for (const response of [await serve("/og/home.png", { ASSETS: assets() }), await viaWorker("/og/home.png", { ASSETS: assets() })]) {
+    assert.equal(response.status, 302, "a temporary redirect, so a later home card is not cached forever");
+    assert.equal(response.headers.get("location"), `${ORIGIN}/og/home-lineup.png`);
   }
 });
 
