@@ -13,14 +13,14 @@ The full list, one row per listing, is in [`dead-links.csv`](dead-links.csv).
 | `db/maintenance/dead_links_check.sql` | Read-only. Run before each file: shows, per file, how many rows still have the link the file expects. Changes nothing. | – |
 | `db/maintenance/dead_links_rollback.sql` | Puts back every old link (and `is_public = 1` for the closures) where the row still has what the files set. | – |
 
-The CSV also has 20 "keep" rows with no SQL: 9 whose old link works in a browser, and 11 moved out of file 4 in review because their own notes say the link may not be dead (a 406, 403 or bot check to our server, an expired or broken certificate, a 503 or 500 that looks temporary, an old page that still loads, or a search that ran out of budget before the row was researched). Recheck those in a browser before doing anything with them.
+The CSV also has 20 "keep" rows with no SQL: 7 whose old link works in a browser, 2 (TIRR Wheelchair Rugby, ArtsWA) whose old link couldn't be confirmed from our server, and 11 moved out of file 4 in review because their own notes say the link may not be dead (a 406, 403 or bot check to our server, an expired or broken certificate, a 503 or 500 that looks temporary, an old page that still loads, or a search that ran out of budget before the row was researched). Recheck those in a browser before doing anything with them.
 
 Every UPDATE matches the row's id **and** its current link (closures also check `is_public = 1`). That makes each file safe to run twice, and any row someone already changed is skipped. All files were replayed on a local SQLite copy of the repo schema, seeded with each row's current link: the first run changes 146 / 34 / 8 / 66 rows, the second run changes none, and the rollback then puts back all 254.
 
 ## Who runs it, and when
 
 - **The site reviewer runs these files, staging first, then production.** Nobody runs them on merge.
-- **Files 3 and 4 wait for Alec's yes**, given through Chief of Staff, because together they take 48 listings off the site (8 closures and 40 cleared links). Until then only files 1 and 2 may run.
+- **Files 3 and 4 wait for Alec's yes**, given through Chief of Staff, because together they take 48 listings off the site (8 closures and 40 cleared links). The 8 closures also hide every program under those organizations, so the number of pages that go can be higher. The 8 file-4 programs drop out of the lists but stay at `/programs/<id>`. Until then only files 1 and 2 may run.
 - File 2 runs only after every line's link has been opened in a browser. `wrangler --file` runs the whole file, so first delete (in your local copy) any line whose link doesn't check out, then run the file.
 
 ## Run order with the other maintenance files
@@ -41,10 +41,13 @@ DB=asnm-db-staging; CFG=wrangler.preview.json   # then DB=asnm-db; CFG=wrangler.
 npx wrangler d1 time-travel info $DB
 
 # 2. Pre-run check: on a database where none of these has run, matched = 146 / 34 / 8 / 66.
+#    After karen_skiing_1 and karen_skiing_2 have run (the order above), expect 142 / 34 / 8 / 65:
+#    Karen 1 already set 4 file-1 links and Karen 2 already cleared Colorado Vibes, so those show as already_changed.
 #    Stop if matched is much lower than expected, or if row_missing is not 0, and find out why first.
 npx wrangler d1 execute $DB --remote --config $CFG --file db/maintenance/dead_links_check.sql
 
-# 3. Run one file at a time, and re-run the check after each (that file's matched goes to 0)
+# 3. Run one file at a time, and re-run the check after each. For files 1, 2 and 4 that file's matched goes to 0.
+#    File 3 only sets is_public = 0 and keeps the link, so its matched stays 8 and matched_public goes to 0.
 npx wrangler d1 execute $DB --remote --config $CFG --file db/maintenance/dead_links_1_confident.sql
 npx wrangler d1 execute $DB --remote --config $CFG --file db/maintenance/dead_links_check.sql
 # file 2 after the browser check; files 3 and 4 only after Alec's yes
@@ -54,6 +57,7 @@ npx wrangler d1 execute $DB --remote --config $CFG --file db/maintenance/dead_li
 
 - Links only: `npx wrangler d1 execute $DB --remote --config $CFG --file db/maintenance/dead_links_rollback.sql`. It puts back each old link (and `is_public = 1` for the closures) only where the row still holds what these files set. It does not restore `last_ok_at` or `updated_at`.
 - Everything: `npx wrangler d1 time-travel restore $DB --bookmark=<bookmark from step 1>`. This also undoes anything else written to that database since the bookmark, so check first.
+- Shared rows: the rollback's guard can't tell these files' change from the Karen files' identical change, so it also undoes the Karen files' link on 5 rows: the 4 file-1 rows Karen 1 sets (National Ability Center, Challenge Aspen, Wintergreen, Adaptive Ski Program) and Colorado Vibes, which Karen 2 also clears. It doesn't undo the towns Karen sets. If the Karen files' links should stay, delete those 5 lines from your local copy before you run the rollback, or use the Time Travel restore instead.
 - The CSV has every old link, row by row.
 
 ## What drops off the site

@@ -59,10 +59,10 @@ UPDATE organizations SET website_url = NULL, last_ok_at = NULL, updated_at = str
 -- Art For All Mississippi: link is dead and no current site was found. Stays listed by its town. artforallms.com shows 'Squarespace - Website Expired'. No replacement site found; org status unclear.
 UPDATE organizations SET website_url = NULL, last_ok_at = NULL, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE id = '6bfeaa1a-c8ca-5beb-a8ca-91df1f3a21e1' AND website_url = 'https://artforallms.com/';
 
--- Programs: link is dead and no current site was found. Hides until a link turns up. Bad record: name is literally 'Programs', no state, old_url is the relative path '/programs/'. Nothing to research; likely a scraping artifact. Recommend deleting the row.
+-- Programs: link is dead and no current site was found. Drops out of the program lists until a link turns up; its page stays at /programs/<id>. Bad record: name is literally 'Programs', no state, old_url is the relative path '/programs/'. Nothing to research; likely a scraping artifact. Recommend deleting the row.
 UPDATE programs SET website_url = NULL, last_ok_at = NULL, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE id = '9eb7fb00-2cb6-4462-a4fe-66422ba998fa' AND website_url = '/programs/';
 
--- Wood River Ability Program – Sun Valley-Ketchum: link is dead and no current site was found. Hides until a link turns up. woodriverabilityprogram.org no longer resolves; only directory listings and old articles found. Sun Valley Resort runs its own adaptive programs (https://www.sunvalley.com/Lessons/
+-- Wood River Ability Program – Sun Valley-Ketchum: link is dead and no current site was found. Drops out of the program lists until a link turns up; its page stays at /programs/<id>. woodriverabilityprogram.org no longer resolves; only directory listings and old articles found. Sun Valley Resort runs its own adaptive programs (https://www.sunvalley.com/Lessons/
 UPDATE programs SET website_url = NULL, last_ok_at = NULL, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE id = '3bee3d9c-c15c-4e6e-8ec9-e74606311679' AND website_url = 'http://www.woodriverabilityprogram.org';
 
 -- Miracle League at Town 'N Country: link is dead and no current site was found. Stays listed by its town. townandcountrybaseball.com does not resolve; no Tampa 'Town N Country' Miracle League found. Possible data mix-up: the Miracle League run by the Town and Country Optimist Club is i
@@ -71,7 +71,7 @@ UPDATE programs SET website_url = NULL, last_ok_at = NULL, updated_at = strftime
 -- Mandeville Soccer Club TOPSoccer: link is dead and no current site was found. Stays listed by its town. Club site was rebuilt (old /page/show/ URL 404). Current site navigation and program pages have no TOPSoccer or disability program; /topsoccer and /tops return 404. Program may be 
 UPDATE programs SET website_url = NULL, last_ok_at = NULL, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE id = 'd023aad5-e49a-55d2-82d7-9964ac7b1c4d' AND website_url = 'http://www.mscsoccer.org/page/show/273712-tops';
 
--- Serve a Purpose / The Barns at Blue Mountain: link is dead and no current site was found. Hides until a link turns up. thebarnsatbluemountain.org/.com do not resolve. serveapurpose.org exists but is only a 'Launching Soon' placeholder and cannot be confirmed as the same org.
+-- Serve a Purpose / The Barns at Blue Mountain: link is dead and no current site was found. Drops out of the program lists until a link turns up; its page stays at /programs/<id>. thebarnsatbluemountain.org/.com do not resolve. serveapurpose.org exists but is only a 'Launching Soon' placeholder and cannot be confirmed as the same org.
 UPDATE programs SET website_url = NULL, last_ok_at = NULL, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE id = 'f0094159-88a6-5992-8e28-e32ee3b0505c' AND website_url = 'https://thebarnsatbluemountain.org/';
 
 -- Disabled Veterans SCUBA Project: link is dead and no current site was found. Hides until a link turns up. Domain returns 404; no other official site found (only GuideStar and news). Status unknown.
@@ -101,16 +101,16 @@ UPDATE organizations SET website_url = NULL, last_ok_at = NULL, updated_at = str
 -- Athens Inclusive Recreation and Sports (AIRS): link is dead and no current site was found. Stays listed by its town. airs-ga.org is now a Chinese-language lottery/gambling page (TAKEN OVER, not just dead). No replacement official site found; only directory listings.
 UPDATE organizations SET website_url = NULL, last_ok_at = NULL, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE id = 'a6055e57-4fb0-4ddb-8a2a-b620cf292721' AND website_url = 'https://airs-ga.org/';
 
--- California Adaptive Rowing Program: link is dead and no current site was found. Hides until a link turns up. Old tripod site gone. Search index shows carplb.net titled 'California Adaptive Rowing Programs', but carplb.net does not resolve from here; could not confirm.
+-- California Adaptive Rowing Program: link is dead and no current site was found. Drops out of the program lists until a link turns up; its page stays at /programs/<id>. Old tripod site gone. Search index shows carplb.net titled 'California Adaptive Rowing Programs', but carplb.net does not resolve from here; could not confirm.
 UPDATE programs SET website_url = NULL, last_ok_at = NULL, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE id = 'ec9c1db6-2cef-4326-a057-87eb57e21298' AND website_url = 'https://carplb.tripod.com/index.htm';
 
--- Paralympic Alpine Development Program – Aspen: link is dead and no current site was found. Hides until a link turns up. Old link was a directory listing that moved to adaptiveskiing.net/clubs/alpine-skiing/avsc-adaptive-alpine-development-program (directory, not a replacement). Aspen Valley Ski & Sn
+-- Paralympic Alpine Development Program – Aspen: link is dead and no current site was found. Drops out of the program lists until a link turns up; its page stays at /programs/<id>. Old link was a directory listing that moved to adaptiveskiing.net/clubs/alpine-skiing/avsc-adaptive-alpine-development-program (directory, not a replacement). Aspen Valley Ski & Sn
 UPDATE programs SET website_url = NULL, last_ok_at = NULL, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE id = '5b00f6dc-e711-428e-8c6b-56c7837ee6e1' AND website_url = 'https://adaptiveskiing.net/clubs/alpine-skiing/item/avsc-adaptive-alpine-development-program';
 
--- Regional Programs: link is dead and no current site was found. Hides until a link turns up. Old link is a relative fragment (/programs/#regions) with no domain and no state; cannot tell which organization it belongs to. Needs a look at the parent organization record.
+-- Regional Programs: link is dead and no current site was found. Drops out of the program lists until a link turns up; its page stays at /programs/<id>. Old link is a relative fragment (/programs/#regions) with no domain and no state; cannot tell which organization it belongs to. Needs a look at the parent organization record.
 UPDATE programs SET website_url = NULL, last_ok_at = NULL, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE id = '315b9e53-8819-451c-8416-c0ebc0e534dd' AND website_url = '/programs/#regions';
 
--- Youth Programs: link is dead and no current site was found. Hides until a link turns up. Old link is a relative fragment (/programs/#youth) with no domain and no state; cannot tell which organization it belongs to. Needs a look at the parent organization record.
+-- Youth Programs: link is dead and no current site was found. Drops out of the program lists until a link turns up; its page stays at /programs/<id>. Old link is a relative fragment (/programs/#youth) with no domain and no state; cannot tell which organization it belongs to. Needs a look at the parent organization record.
 UPDATE programs SET website_url = NULL, last_ok_at = NULL, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE id = '5871745b-04fd-403a-b3ed-3bfd447de985' AND website_url = '/programs/#youth';
 
 -- Southern Crescent Wheelchair Tennis: link is dead and no current site was found. Stays listed by its town. Southern Crescent Tennis Association site (ustasoutherncrescent.com) is live, but the /wheelchair-tennis page is gone and no wheelchair tennis page was found on the site.
@@ -170,7 +170,7 @@ UPDATE organizations SET website_url = NULL, last_ok_at = NULL, updated_at = str
 -- Adaptive Tennis US (Maryland): link is dead and no current site was found. Stays listed by its town. adaptivetennisus.com no longer resolves; no replacement found. Maryland adaptive tennis is offered by Junior Tennis Champions Center (https://jtcc.org/adaptive/), a different organ
 UPDATE organizations SET website_url = NULL, last_ok_at = NULL, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE id = 'b4fa83a7-a80e-586e-ba1d-c79342026b27' AND website_url = 'https://adaptivetennisus.com/';
 
--- CAMC Para-athletic Program: link is dead and no current site was found. Hides until a link turns up. CAMC (now Vandalia Health) removed the challengedsports page (404). No current CAMC page for the para-athletic program found. Challenged Athletes of West Virginia (https://cawvspor
+-- CAMC Para-athletic Program: link is dead and no current site was found. Drops out of the program lists until a link turns up; its page stays at /programs/<id>. CAMC (now Vandalia Health) removed the challengedsports page (404). No current CAMC page for the para-athletic program found. Challenged Athletes of West Virginia (https://cawvspor
 UPDATE programs SET website_url = NULL, last_ok_at = NULL, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE id = '723fce38-ee2e-4a2f-8919-ee706a209d5f' AND website_url = 'https://camc.org/challengedsports';
 
 -- Hero Horse Therapeutic Riding: link is dead and no current site was found. Stays listed by its town. herohorse.org no longer resolves. Only GuideStar, VolunteerMatch and local news (Frierson, LA) found; no current own site.

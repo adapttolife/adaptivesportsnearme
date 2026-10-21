@@ -1,7 +1,9 @@
 -- Read-only pre-run check for the dead_links_*.sql files: docs/data-fixes/dead-links.md.
 -- Run it on the target database before each file. It changes nothing. For each file it shows how many rows
 -- still have the old link the file expects (expected), how many of those are public today, and how many are
--- missing or already changed. Expected on a database where none of the files has run: 146 / 34 / 8 / 66 matched.
+-- missing or already changed. Expected on a database where none of the files has run: 146 / 34 / 8 / 66 matched;
+-- after karen_skiing_1 and karen_skiing_2 have run: 142 / 34 / 8 / 65. After file 3 runs its matched stays 8 and
+-- matched_public goes to 0 (it changes is_public, not the link).
 WITH expected(file, tbl, id, old_link) AS (VALUES
   ('1', 'organizations', 'b7827006-4eda-47a0-a38d-87ad4d19a73b', 'http://www.spofit.org'),
   ('1', 'organizations', '7b9940cf-d09d-47aa-9dfb-e3f11266d612', 'http://www.accessleisuresac.org'),
