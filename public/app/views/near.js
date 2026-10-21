@@ -14,10 +14,11 @@ let LAST = null; // { path, qs } of the previous near render, to announce filter
 
 /* ---------- address helpers (the path stays exactly as typed, so map=1 stays an overlay-only change) ---------- */
 function hrefFor(ctx, changes = {}) {
-  const q = { s: ctx.query.s || "", mi: ctx.query.mi || "", ...changes };
+  const q = { s: ctx.query.s || "", mi: ctx.query.mi || "", w: A.whoCode(ctx.query.w), ...changes };
   const qs = new URLSearchParams();
   if (q.s) qs.set("s", q.s);
   if (q.mi && String(A.radiusFrom(q.mi)) === String(q.mi) && A.radiusFrom(q.mi) !== A.RADII[0]) qs.set("mi", String(q.mi));
+  if (q.w) qs.set("w", q.w);
   if (q.map === "1") qs.set("map", "1");
   const s = qs.toString();
   return ctx.path + (s ? "?" + s : "");
@@ -97,8 +98,13 @@ export async function render(ctx) {
   const city = where.short;
 
   const mi = A.radiusFrom(ctx.query.mi);
-  const pool = s ? D.items.filter((p) => A.offers(p, s)) : D.items;
-  const g = A.ladder(where, pool, { radius: mi });
+  const w = A.whoCode(ctx.query.w);
+  const sportPool = s ? D.items.filter((p) => A.offers(p, s)) : D.items;
+  // Who it's for: the chips offer only what listings here say; a filter keeps the ones that say it.
+  const sg = A.ladder(where, sportPool, { radius: mi });
+  const here = [...sg.inCity, ...sg.near, ...sg.elsewhere, ...sg.statewide];
+  const pool = A.whoFilter(sportPool, w);
+  const g = w ? A.ladder(where, pool, { radius: mi }) : sg;
   const total = g.inCity.length + g.near.length + g.elsewhere.length + g.statewide.length;
   const more = g.elsewhere.length + g.statewide.length;
 
@@ -150,6 +156,10 @@ export async function render(ctx) {
     { id: GROUP_IDS.elsewhere, label: "Elsewhere in " + ST, count: g.elsewhere.length },
     { id: GROUP_IDS.statewide, label: "Across " + ST, count: g.statewide.length },
   ])}</div>` : "";
+  const who = A.whoChips({ pool: here, active: w, hrefFor: (c) => hrefFor(ctx, { w: c }), label: "Who it's for near " + where.label });
+  const whoBar = who ? `<div class="nr-who">${who}</div>` : "";
+  const quiet = here.filter((p) => !p.who.length).length;
+  const whoLine = w && total ? `<div class="nr-wholine">${A.whoLine(w, total, quiet, " nearby")}</div>` : "";
 
   /* 5. groups */
   let groups = "";
@@ -169,7 +179,13 @@ export async function render(ctx) {
 
   /* 6. empty or thin */
   let empty = "";
-  if (!total) {
+  if (!total && w) {
+    empty = `<div class="nr-empty">${A.emptyState({
+      title: `None near ${city} say they serve ${A.whoSay(w)} yet`,
+      body: quiet ? `${quiet} more nearby ${quiet === 1 ? "doesn't" : "don't"} say who they serve yet. Their websites often do.` : "Know one? Tell us and we'll check it.",
+      actions: [{ label: "See everyone near " + city, href: hrefFor(ctx, { w: "" }), attrs: "data-replace" }, { label: "Tell us about one", href: "/add/program" }],
+    })}</div>`;
+  } else if (!total) {
     const what = s ? sportLow : "programs";
     const actions = [];
     // Offer the nearest distance that finds something; never a button to another empty page.
@@ -190,7 +206,7 @@ export async function render(ctx) {
     }
   }
 
-  const html = `<div class="nr">${header}${toolbar}${bar}${dist}${jumps}${empty}${groups}</div>${A.letterBlock({ source: "near" })}${A.helpBand()}`;
+  const html = `<div class="nr">${header}${toolbar}${bar}${dist}${whoBar}${jumps}${whoLine}${empty}${groups}</div>${A.letterBlock({ source: "near" })}${A.helpBand()}`;
   return {
     title: site(h1),
     description: nearMeta(where.label, s ? { name: A.sportName(s), low: sportLow } : null, mi).description,
@@ -208,7 +224,7 @@ export function mount(root, ctx) {
   const ro = window.ResizeObserver && tools ? new ResizeObserver(setStick) : null;
   if (ro) ro.observe(tools);
   const unstick = () => { if (ro) ro.disconnect(); rootStyle.removeProperty("--stick-h"); };
-  const qs = ctx.query.s || "", mi = A.radiusFrom(ctx.query.mi);
+  const qs = (ctx.query.s || "") + "|" + A.whoCode(ctx.query.w), mi = A.radiusFrom(ctx.query.mi);
   // Announce the new count after a filter change on the same place (spec 6.2 side effects).
   if (LAST && LAST.path === ctx.path && (LAST.qs !== qs || LAST.mi !== mi)) {
     const label = (root.querySelector(".nr-place b") || {}).textContent || "";
