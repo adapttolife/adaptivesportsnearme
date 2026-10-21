@@ -27,6 +27,7 @@ export const PAGES = {
   addOrganization: { title: "Add an organization", description: "Tell us about an organization that runs adaptive sports programs. A person checks it before it goes up." },
   addEvent: { title: "Add an event", description: "Tell us about a clinic, tryout, game or meetup. A person checks it before it goes up." },
   manage: { title: "Manage your organization", description: "Sign in to review and update your organization's details." },
+  admin: { title: "Admin", description: "Administrative tools for Adaptive Sports Near Me." },
   update: { title: "Suggest a fix", description: "Tell us what to fix on a listing. A person reads every note." },
   help: { title: "Help build this", description: "Add a program or an event, suggest a fix, or confirm your organization's listing." },
   about: { title: "How we check listings", description: "What Verified, Checked by our team and Not verified yet mean, and how we keep every listing current." },

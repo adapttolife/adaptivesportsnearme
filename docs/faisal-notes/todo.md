@@ -6,10 +6,10 @@
 - test all links currently in db for broken links
 - ^ automated script for this
 
-admin dashboard to manage all orgs, programs, events, grants, etc.
-
 org-scraper: there is a work tree stash that exists
 
 Beehiiv -> Resend
 
 API for orgs to push new/updated data to our db
+
+Add user profile capability

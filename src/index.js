@@ -1,6 +1,6 @@
 import { servePage, robotsTxt, sitemapXml } from "./pages.js";
 import { safeNewsletterSubscribe } from './newsletter.js';
-import { queueFormConfirmation, sendOrganizationLoginLink } from './email.js';
+import { queueFormConfirmation, sendAdminLoginLink, sendOrganizationLoginLink } from './email.js';
 import { notifyIntake } from './intake.js';
 // Adaptive Sports Near Me — Worker entry.
 // Serves the static site (env.ASSETS), the D1-backed directory API, the admin
@@ -49,6 +49,10 @@ import {
   updateClaimedOrganization, validEmail, managedOrganizationPrograms, createManagedProgram, updateManagedProgram, deleteManagedProgram,
   managedOrganizationEvents, createManagedEvent, updateManagedEvent, deleteManagedEvent,
 } from "./organization-access.js";
+import {
+  acceptAdminQueueItem, clearAdminCookie, consumeAdminLoginToken, createAdminSession, createAdminItem, getAdminItem,
+  getAdminQueueItem, isAdminEmail, issueAdminLoginToken, listAdminItems, listAdminQueue, readAdminSession, saveAdminItem, serializeAdminCookie,
+} from "./admin-access.js";
 import {
   listPosts, getPostBySlug, blogIndexTemplate, blogPostTemplate, blogFallbackTemplate, blogNotFoundTemplate,
 } from "./blog.js";
@@ -122,6 +126,28 @@ const application = {
       if (request.method !== "POST") return json({ ok: false, error: "Method not allowed" }, 405);
       return new Response(JSON.stringify({ ok: true }), { headers: { "Content-Type": "application/json", "Cache-Control": "no-store", "Set-Cookie": clearOrgCookie() } });
     }
+    if (url.pathname === "/api/admin-auth/request-link") {
+      if (request.method !== "POST") return json({ ok: false, error: "Method not allowed" }, 405);
+      const limited = await formLimited(request, env, "Admin sign-in is temporarily unavailable.");
+      if (limited) return limited;
+      return handleAdminLoginRequest(request, env, url);
+    }
+    if (url.pathname === "/api/admin-auth/verify") {
+      if (request.method !== "GET") return json({ ok: false, error: "Method not allowed" }, 405);
+      return handleAdminLoginVerify(url, env);
+    }
+    if (url.pathname === "/api/admin-auth/session") {
+      if (request.method !== "GET") return json({ ok: false, error: "Method not allowed" }, 405);
+      return handleAdminSession(request, env);
+    }
+    if (url.pathname === "/api/admin-auth/signout") {
+      if (request.method !== "POST") return json({ ok: false, error: "Method not allowed" }, 405);
+      return new Response(JSON.stringify({ ok: true }), { headers: { "Content-Type": "application/json", "Cache-Control": "no-store", "Set-Cookie": clearAdminCookie() } });
+    }
+    const adminItem = url.pathname.match(/^\/api\/admin-data\/(organizations|programs|events|grants)(?:\/([0-9a-f-]{36}))?$/i);
+    if (adminItem) return handleAdminData(request, env, url, adminItem[1].toLowerCase(), adminItem[2]);
+    const adminQueue = url.pathname.match(/^\/api\/admin-data\/queue(?:\/(\d+))?$/i);
+    if (adminQueue) return handleAdminQueue(request, env, adminQueue[1]);
     const managedOrganization = url.pathname.match(/^\/api\/organizations\/([0-9a-f-]{36})\/manage$/i);
     if (managedOrganization) {
       if (!["GET", "PATCH"].includes(request.method)) return json({ ok: false, error: "Method not allowed" }, 405);
@@ -781,6 +807,119 @@ async function handleManagedOrganizationItems(request, env, organizationId, kind
     }
     console.error("managed organization item failed", { kind, reason: reason || "unknown" });
     return json({ ok: false, error: "Could not save right now. Please try again." }, 503, ORGANIZATION_AUTH_CACHE);
+  }
+}
+
+const ADMIN_AUTH_CACHE = "private, no-store";
+
+function adminAuthSecret(env) {
+  return env.ADMIN_AUTH_SIGNING_KEY || env.ORG_AUTH_SIGNING_KEY || env.PROFILE_SIGNING_KEY;
+}
+
+function adminAuthReady(env) {
+  return !!(env.DB && adminAuthSecret(env));
+}
+
+async function authorizedAdminSession(request, env) {
+  if (!adminAuthReady(env)) return null;
+  return readAdminSession(request, env.DB, adminAuthSecret(env));
+}
+
+async function handleAdminLoginRequest(request, env, url) {
+  if (!adminAuthReady(env)) return json({ ok: false, error: "Admin sign-in is temporarily unavailable." }, 503, ADMIN_AUTH_CACHE);
+  const data = await readBody(request);
+  if (data === null) return json({ ok: false, error: "Could not read your request." }, 400, ADMIN_AUTH_CACHE);
+  if (str(data.company)) return json({ ok: true }, 200, ADMIN_AUTH_CACHE);
+  const email = isAdminEmail(data.email || data.em);
+  if (!email) return json({ ok: false, error: "Use an @adaptivesportsnearme.com or @faisaln.com email address." }, 403, ADMIN_AUTH_CACHE);
+  try {
+    const token = await issueAdminLoginToken(env.DB, email);
+    const link = new URL("/api/admin-auth/verify", url.origin);
+    link.searchParams.set("token", token);
+    await sendAdminLoginLink(env, email, link.toString());
+    return json({ ok: true }, 200, ADMIN_AUTH_CACHE);
+  } catch (err) {
+    console.error("admin login link failed", { reason: err instanceof Error ? err.message : "unknown" });
+    return json({ ok: false, error: "Admin sign-in is temporarily unavailable." }, 503, ADMIN_AUTH_CACHE);
+  }
+}
+
+async function handleAdminLoginVerify(url, env) {
+  if (!adminAuthReady(env)) return json({ ok: false, error: "Admin sign-in is temporarily unavailable." }, 503, ADMIN_AUTH_CACHE);
+  try {
+    const email = await consumeAdminLoginToken(env.DB, url.searchParams.get("token") || "");
+    if (!email) return json({ ok: false, error: "This sign-in link has expired or was already used." }, 401, ADMIN_AUTH_CACHE);
+    const session = await createAdminSession(env.DB, email, adminAuthSecret(env));
+    return new Response(null, { status: 303, headers: { "Cache-Control": "no-store", "Location": "/admin", "Set-Cookie": serializeAdminCookie(session.id, session.signature) } });
+  } catch (err) {
+    console.error("admin login verification failed", { reason: err instanceof Error ? err.message : "unknown" });
+    return json({ ok: false, error: "Admin sign-in is temporarily unavailable." }, 503, ADMIN_AUTH_CACHE);
+  }
+}
+
+async function handleAdminSession(request, env) {
+  const session = await authorizedAdminSession(request, env);
+  return session ? json({ ok: true, email: session.email }, 200, ADMIN_AUTH_CACHE)
+    : json({ ok: false, error: "Sign in to access the admin dashboard." }, 401, ADMIN_AUTH_CACHE);
+}
+
+async function handleAdminData(request, env, url, kind, id) {
+  const session = await authorizedAdminSession(request, env);
+  if (!session) return json({ ok: false, error: "Sign in to access the admin dashboard." }, 401, ADMIN_AUTH_CACHE);
+  try {
+    if (!id && request.method === "GET") {
+      const result = await listAdminItems(env.DB, kind, { query: url.searchParams.get("q") || "", limit: url.searchParams.get("limit"), offset: url.searchParams.get("offset") });
+      return result ? json({ ok: true, ...result }, 200, ADMIN_AUTH_CACHE) : json({ ok: false, error: "Not found." }, 404, ADMIN_AUTH_CACHE);
+    }
+    if (!id && request.method === "POST") {
+      const data = await readBody(request);
+      if (data === null) return json({ ok: false, error: "Could not read your changes." }, 400, ADMIN_AUTH_CACHE);
+      const item = await createAdminItem(env.DB, kind, data);
+      return item ? json({ ok: true, item }, 201, ADMIN_AUTH_CACHE) : json({ ok: false, error: "Not found." }, 404, ADMIN_AUTH_CACHE);
+    }
+    if (id && request.method === "GET") {
+      const item = await getAdminItem(env.DB, kind, id);
+      return item ? json({ ok: true, item }, 200, ADMIN_AUTH_CACHE) : json({ ok: false, error: "Not found." }, 404, ADMIN_AUTH_CACHE);
+    }
+    if (id && request.method === "PATCH") {
+      const data = await readBody(request);
+      if (data === null) return json({ ok: false, error: "Could not read your changes." }, 400, ADMIN_AUTH_CACHE);
+      const item = await saveAdminItem(env.DB, kind, id, data);
+      return item === false ? json({ ok: false, error: "Not found." }, 404, ADMIN_AUTH_CACHE)
+        : item ? json({ ok: true, item }, 200, ADMIN_AUTH_CACHE) : json({ ok: false, error: "Not found." }, 404, ADMIN_AUTH_CACHE);
+    }
+    return json({ ok: false, error: "Method not allowed" }, 405, ADMIN_AUTH_CACHE);
+  } catch (err) {
+    const reason = err instanceof Error ? err.message : "";
+    if (["name-required", "organization-required", "url-invalid", "email-invalid", "sports-invalid", "start-invalid", "end-invalid"].includes(reason)) {
+      return json({ ok: false, error: "Please check the item details and try again." }, 422, ADMIN_AUTH_CACHE);
+    }
+    console.error("admin data request failed", { kind, operation: request.method, reason: reason || "unknown" });
+    return json({ ok: false, error: "Could not save admin changes right now." }, 503, ADMIN_AUTH_CACHE);
+  }
+}
+
+async function handleAdminQueue(request, env, id) {
+  const session = await authorizedAdminSession(request, env);
+  if (!session) return json({ ok: false, error: "Sign in to access the admin dashboard." }, 401, ADMIN_AUTH_CACHE);
+  try {
+    if (!id && request.method === "GET") return json({ ok: true, items: await listAdminQueue(env.DB) }, 200, ADMIN_AUTH_CACHE);
+    if (id && request.method === "GET") {
+      const item = await getAdminQueueItem(env.DB, id);
+      return item ? json({ ok: true, item }, 200, ADMIN_AUTH_CACHE) : json({ ok: false, error: "Queue item not found." }, 404, ADMIN_AUTH_CACHE);
+    }
+    if (id && request.method === "POST") {
+      const data = await readBody(request);
+      if (!data || data.action !== "accept") return json({ ok: false, error: "Unknown queue action." }, 422, ADMIN_AUTH_CACHE);
+      const accepted = await acceptAdminQueueItem(env.DB, id);
+      return accepted ? json({ ok: true, item: accepted }, 200, ADMIN_AUTH_CACHE) : json({ ok: false, error: "Queue item not found or already handled." }, 404, ADMIN_AUTH_CACHE);
+    }
+    return json({ ok: false, error: "Method not allowed" }, 405, ADMIN_AUTH_CACHE);
+  } catch (err) {
+    const reason = err instanceof Error ? err.message : "";
+    if (["draft-missing", "start-invalid"].includes(reason)) return json({ ok: false, error: "This submission needs an edit before it can be accepted." }, 422, ADMIN_AUTH_CACHE);
+    console.error("admin queue request failed", { operation: request.method, reason: reason || "unknown" });
+    return json({ ok: false, error: "Could not update this queue item right now." }, 503, ADMIN_AUTH_CACHE);
   }
 }
 

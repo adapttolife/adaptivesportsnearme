@@ -1296,6 +1296,7 @@ const ROUTES = [
   ["/grants", "grants"], ["/grants/:id", "grant"], ["/events", "events"],
   ["/add/program", "forms"], ["/add/organization", "forms"], ["/add/event", "forms"], ["/update/:id", "forms"],
   ["/manage", "manage"], ["/manage/organizations", "manage"], ["/manage/organizations/:id/edit", "manage"], ["/manage/organizations/:id/programs/new", "manage"], ["/manage/organizations/:id/events/new", "manage"], ["/manage/organizations/:id/programs", "manage"], ["/manage/organizations/:id/events", "manage"], ["/manage/programs/:id", "manage"], ["/manage/events/:id", "manage"], ["/manage/organizations/:id", "manage"],
+  ["/admin", "admin"], ["/admin/:kind", "admin"], ["/admin/:kind/:id", "admin"],
   ["/help", "help"], ["/about", "help"], ["/resources/veteran-owned-businesses", "vob"], ["/resources", "help"], ["/letter", "help"], ["/build", "help"], ["/letter/confirmed", "letter-confirmed"], ["/privacy", "help"], ["/terms", "help"],
 ];
 const OVERLAY_KEYS = new Set(["map", "open"]);

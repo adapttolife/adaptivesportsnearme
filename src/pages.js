@@ -105,6 +105,7 @@ const ROUTES = [
   [/^\/add\/organization\/?$/, () => ({ ...PAGES.addOrganization, noindex: true })],
   [/^\/add\/event\/?$/, () => ({ ...PAGES.addEvent, noindex: true })],
   [/^\/manage(?:\/(?:organizations\/[^/]+(?:\/(?:edit|programs(?:\/new)?|events(?:\/new)?)?)?|programs\/[^/]+|events\/[^/]+))?\/?$/, () => ({ ...PAGES.manage, noindex: true })],
+  [/^\/admin(?:\/queue(?:\/\d+)?|\/(?:organizations|programs|events|grants)(?:\/(?:[0-9a-f-]{36}|new))?)?\/?$/i, () => ({ ...PAGES.admin, noindex: true })],
   [new RegExp(`^/update/(${UUID})/?$`, "i"), () => ({ ...PAGES.update, noindex: true })],
   [/^\/help\/?$/, () => ({ ...PAGES.help })],
   [/^\/about\/?$/, () => ({ ...PAGES.about })],
@@ -153,6 +154,7 @@ const VIEWS = [
   [/^\/states$/, "states"], [/^\/states\/[^/]+$/, "state"], [/^\/organizations$/, "organizations"], [/^\/organizations\/[^/]+$/, "program"], [/^\/programs$/, "programs"], [/^\/programs\/[^/]+$/, "program-detail"],
   [/^\/grants$/, "grants"], [/^\/grants\/[^/]+$/, "grant"], [/^\/events$/, "events"],
   [/^\/(add\/program|add\/organization|add\/event|update\/[^/]+)$/, "forms"], [/^\/manage(?:\/organizations(?:\/[^/]+(?:\/(?:edit|programs(?:\/new)?|events(?:\/new)?)?)?)?|\/programs\/[^/]+|\/events\/[^/]+)?$/, "manage"], [/^\/resources\/veteran-owned-businesses$/, "vob"],
+  [/^\/admin(?:\/queue(?:\/\d+)?|\/(?:organizations|programs|events|grants)(?:\/(?:[0-9a-f-]{36}|new))?)?$/i, "admin"],
   [/^\/letter\/confirmed$/, "letter-confirmed"], [/^\/(help|about|resources|letter|build|privacy|terms)$/, "help"],
 ];
 export function preloadHints(pathname) {
