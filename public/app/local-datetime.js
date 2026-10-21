@@ -38,13 +38,16 @@ export function fromDateTimeLocal(value, original = "") {
   if (stored.trim() !== "") {
     const prior = new Date(stored);
     if (!Number.isNaN(prior.getTime())) {
-      // The fall-back hour is the same wall time twice, and Date picks the
-      // earlier one. An edit of the later hour would otherwise move an hour
-      // early. When an hour later is still that wall time, keep the instant
-      // closer to the stored one. With no stored instant, Date's choice stands.
-      const later = new Date(parsed.getTime() + 60 * 60 * 1000);
-      if (toDateTimeLocal(later) === toDateTimeLocal(parsed) && Math.abs(later.getTime() - prior.getTime()) < Math.abs(parsed.getTime() - prior.getTime())) {
-        chosen = later;
+      // Date picks the earlier instant of a repeated wall time. The repeat is
+      // an hour in New York and 30 minutes on Lord Howe: the offset here minus
+      // the offset a few hours later. No difference means there is no repeat.
+      const ahead = new Date(parsed.getTime() + 3 * 60 * 60 * 1000);
+      const shiftMin = parsed.getTimezoneOffset() - ahead.getTimezoneOffset();
+      if (shiftMin !== 0) {
+        const later = new Date(parsed.getTime() - shiftMin * 60 * 1000);
+        if (toDateTimeLocal(later) === toDateTimeLocal(parsed) && Math.abs(later.getTime() - prior.getTime()) < Math.abs(parsed.getTime() - prior.getTime())) {
+          chosen = later;
+        }
       }
       if (prior.getTime() === chosen.getTime()) return stored;
     }

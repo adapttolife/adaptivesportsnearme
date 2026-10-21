@@ -127,6 +127,12 @@ async function secondsCleared() {
     assert.equal(fromDateTimeLocal("2026-03-08T02:30"), "2026-03-08T07:30:00.000Z");
     console.log(`ok fall-back ${fall} -> ${fallSaved}; 01:45 -> ${editedLater}; first 01:30 -> ${editedEarlier}`);
   }
+  if (process.env.TZ === "Australia/Lord_Howe") {
+    const howe = "2026-04-04T15:15:00Z";
+    const howeSaved = fromDateTimeLocal("2026-04-05T01:50", howe);
+    assert.equal(howeSaved, "2026-04-04T15:20:00.000Z", `Lord Howe 01:50 saved ${howeSaved}`);
+    console.log(`ok Lord Howe ${howe} edited to 01:50 -> ${howeSaved}`);
+  }
   console.log(`ok ${process.env.TZ} ${stored} -> ${saved}`);
 }
 
@@ -151,9 +157,9 @@ if (process.env.EVENT_SECONDS_CHILD === "1") {
     assert.match(result.stdout, /2026-11-01T15:00:00\.000Z stayed put/);
   });
 
-  test("clearing :45 seconds to the minute form is saved in New York and in UTC", () => {
+  test("clearing :45 seconds to the minute form is saved in New York, UTC, and Lord Howe", () => {
     const failures = [];
-    for (const zone of ["America/New_York", "UTC"]) {
+    for (const zone of ["America/New_York", "UTC", "Australia/Lord_Howe"]) {
       const result = spawnSync(process.execPath, [FILE], {
         env: { ...process.env, TZ: zone, EVENT_SECONDS_CHILD: "1" },
         encoding: "utf8",
