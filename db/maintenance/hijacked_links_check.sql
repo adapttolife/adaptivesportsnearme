@@ -11,7 +11,7 @@
 --         Colorado Discover Ability, and empty for the other 7.
 --         shows_publicly = 0 for 5 rows. It stays 1 for Alabama and Colorado (new links), and for
 --         Helping with Horsepower at Reclamation-Ranch and New Freedom Farm (listed by town, no link).
---         Review items 461 and 301 read rejected; 293, 465, 584, 657 and validate 6, 674, 683, 697 are unchanged.
+--         Review items 461 and 301 read rejected where plan read reject before the run; 293, 465, 584, 657 and validate 6, 674, 683, 697 are unchanged.
 -- shows_publicly uses the same rule as PUBLIC in src/data.js (is_public, status and ACTIONABLE).
 
 SELECT id, name, website_url, city, state, is_public, status, last_ok_at, last_checked_at, updated_at,
@@ -66,7 +66,9 @@ WHERE id IN (
   'b8e095b5-0d63-44e3-8bae-18dd3a15c905', '2c9cfcbc-1af5-5d8b-acf0-fc6a42cb8486', '3b4a166f-3a2b-51fc-b416-1974cb81a914'
 );
 
--- Review queue items on these orgs: 461 and 301 (the clear rejects them) and the ones left pending for a person. Before: check that 461 is Michigan Adaptive Sports
+-- Review queue items with these ids: 461 and 301 (the clear rejects them) and the ones left pending for a person.
+-- The filter is by id only, so a drifted 461 or 301 still shows; on staging the ids may belong to other orgs, so
+-- compare organization_id. Before: check that 461 is Michigan Adaptive Sports
 -- (e0978514-...) and 301 is Colorado Discover Ability (63c9e62b-...), both lane enrich and pending. If an id
 -- points at another org or lane (staging numbers its items separately), the clear file leaves it alone.
 -- After: 461 and 301 rejected where they matched. 293, 465, 584 and 657 stay as they were, for a person to check.
