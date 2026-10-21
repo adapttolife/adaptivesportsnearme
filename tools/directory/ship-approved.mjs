@@ -19,10 +19,10 @@ const WORKER_DIR = join(HERE, "../..");
 const AUDIT_DIR = join(HERE, ".local");
 const NEVER_PATH = join(HERE, "never-touch.json");
 const STAGING_DB = "asnm-db-staging";
-const STAGING_ID = "ae83f752-9f7a-476c-914a-94b9ced0627f";
+const STAGING_ID = "d3f67da7-60a3-44b6-9215-28665492d3f9"; // asnm-db-staging, as in wrangler*.json
 const LIVE_DB = "asnm-db";
 const LIVE_PUBLIC_EXPECTED = 1544;
-const TESTER = "https://asnm-staging.adapt-to-life.workers.dev";
+const TESTER = "https://staging-adaptivesportsnearme.adapt-to-life.workers.dev";
 
 const STATE_NAMES = {
   AL: "Alabama", AK: "Alaska", AZ: "Arizona", AR: "Arkansas", CA: "California",

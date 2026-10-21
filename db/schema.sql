@@ -1,4 +1,6 @@
 -- ASNM data plane — Cloudflare D1 (SQLite) schema.
+-- NOTE: db/migrations/ is the source of truth for the deployed shape. This file may lag
+-- behind (or partly include) the migrations; check them before relying on it.
 -- Ported from the asnm repo's Postgres migration (db/migrations/0001_init.sql):
 --   uuid -> TEXT, text[] -> JSON TEXT, timestamptz -> TEXT (ISO 8601), jsonb -> TEXT.
 -- Freshness decay (half-life 45d) is computed in the Worker from last_ok_at, not in SQL.

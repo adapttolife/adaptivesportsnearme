@@ -130,7 +130,7 @@ public/manifest.json   PWA manifest (installable, mobile + desktop)
 public/sw.js           service worker (offline shell, network-first API)
 src/index.js           Worker: routing, forms (beehiiv, shared intake), config, cron entry
 src/data.js            /api/programs /api/orgs/:id /api/stats (D1 reads + freshness decay)
-src/pipeline.js        cron lanes: validate (link liveness) + enrich (contact scrape)
+src/pipeline.js        cron lanes: validate every 2h; dispatch hourly rotates enrich, classify, geocode, resolve (src/lanes/)
 src/admin.js           /api/admin/* review queue (ADMIN_KEY bearer)
 db/schema.sql          D1 schema (ported from adaptivesportsnearme-data's Postgres design)
 scripts/pg-to-d1.py    one-time migration: local Postgres → cleaned SQL → D1
@@ -145,15 +145,16 @@ stay in the staging database.
 
 **Core invariant (kept from the original Postgres design):** pipeline lanes *propose*
 changes into `review_queue`; a human approves via `/api/admin/queue/:id` before anything
-touches `organizations`. The one direct write is `last_ok_at` (liveness evidence, feeds
-the freshness score — half-life 45 days, computed in the Worker).
+touches `organizations`. The direct writes are two evidence columns, both set by validate:
+`last_ok_at` (liveness evidence, feeds the freshness score — half-life 45 days, computed in
+the Worker) and `last_checked_at` (stale-first ordering). See the `src/pipeline.js` header.
 
 **Environments:**
 
 | | prod (`adaptivesportsnearme`) | staging version (`adaptivesportsnearme`) |
 |---|---|---|
 | URL | adaptivesportsnearme.com | staging-adaptivesportsnearme.adapt-to-life.workers.dev |
-| Gate | `PRELAUNCH=true` (teaser + modal) | `PRELAUNCH=false` (full directory) |
+| Gate | `PRELAUNCH=false` (full directory) | `PRELAUNCH=false` (full directory) |
 | D1 | asnm-db + atl-intake | asnm-db-staging (DB + INTAKE) |
 | Crons | validate every 2h / dispatch hourly | None (HTTP-only entrypoint) |
 | Deploys from | `main`, explicit, locked | `staging` |
@@ -286,7 +287,8 @@ is a separate Worker with no previews: `npx wrangler secret put NAME --config wr
 - Cron lanes run on their own; results land in `pipeline_runs`, evidence in `link_checks`,
   proposals in `review_queue`.
 - Review: `GET /api/admin/queue`, decide with `POST /api/admin/queue/:id {"action":"approve"}`.
-- Manual lane run: `POST /api/admin/run/validate` (or `enrich`).
+- Manual lane run: `POST /api/admin/run/<lane>`, where lane is `validate`, `enrich`, `classify`,
+  `resolve`, `geocode` or `dispatch` (`src/admin.js`).
 - Re-seed from Postgres: `scripts/pg-to-d1.py --out out/d1-seed.sql`, then
   `cfrun wrangler d1 execute asnm-db-staging --remote --file out/d1-seed.sql -y`.
 
@@ -300,7 +302,7 @@ Students: start with [docs/STUDENTS.md](STUDENTS.md). Short version:
 - Branch off `staging`.
 - Open a pull request **into `staging`**.
 - Feature/fix PRs never target `main`. Only the project lead opens a separately approved `staging` → `main` release PR after staging acceptance.
-- Never deploy production (`asnm`). Never write `asnm-db`. Live public count stays 1,544.
+- Never deploy production (`adaptivesportsnearme`). Never write `asnm-db`. Live public count stays 1,544.
 - Tester: https://staging-adaptivesportsnearme.adapt-to-life.workers.dev
 - Live (locked): https://adaptivesportsnearme.com
 
