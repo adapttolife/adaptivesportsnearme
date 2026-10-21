@@ -26,7 +26,7 @@ export const WHO_LABELS = {
 // (children, adults, amputee, paralysis); exact where it would not (hearing, not hearings).
 const RULES = {
   veterans: /\b(?:veterans?|military|service ?members?|wounded warriors?|armed forces)\b/i,
-  kids: /\b(?:child(?:ren)?|kids?|youths?|teens?|teenagers?|juniors?|students?|grades? (?:k|\d)|ages? (?:\d|1\d) ?(?:to|through|-|–) ?1\d)\b/i,
+  kids: /\b(?:child(?:ren)?|kids?|youths?|teens?|teenagers?|juniors?|grades? (?:k|\d)|ages? (?:\d|1\d) ?(?:to|through|-|–) ?1\d)\b/i,
   adults: /\badults?\b/i,
   blind: /\b(?:blind(?:ness)?|low vision|visual(?:ly)?[ -]impair\w*|vision loss|sight(?:ed|less)?)\b/i,
   deaf: /\b(?:deaf\w*|hard of hearing|hearing)\b/i,
