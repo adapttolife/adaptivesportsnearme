@@ -154,9 +154,10 @@ export async function listingsSnapshot(db, { places = null } = {}) {
   const out = [];
   for (const p of items) {
     if (!isListable(p)) continue;
-    const { key, trio } = listingSport(p);
+    const { key, trio, more } = listingSport(p);
     const o = { id: p.id, name: p.name, key };
     if (trio) o.trio = trio;
+    if (more) o.more = more;
     if (p.city) o.city = p.city;
     if (p.state) o.state = p.state;
     if (p.cityCenter) o.center = p.cityCenter;

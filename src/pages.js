@@ -11,6 +11,7 @@
 import { getOrg, getProgram, getGrant, directorySnapshot, programsSnapshot } from "./data.js";
 import { SPORT_NAMES } from "./sport-names.js";
 import { isListable } from "../public/app/listable.js";
+import { sportsLabel } from "../public/app/listing-sport.js";
 import { HOME, PAGES, nearMeta, sportMeta, stateMeta, organizationMeta, programMeta, grantMeta } from "../public/app/page-meta.js";
 import { HOME_CARD, PAGE_CARDS, sportCard, stateCard, listingCard, CARD_WIDTH, CARD_HEIGHT } from "./share-cards.js";
 
@@ -75,7 +76,8 @@ const ROUTES = [
     const p = await getOrg(env.DB, m[1].toLowerCase());
     if (!p || !isListable(p)) return notFound(PAGES.listingNotFound.title);
     const place = placeText(p);
-    const sport = p.sportLabel || "Adaptive sports";
+    // The same words the page shows ("Baseball, basketball, and 5 more"), so search results agree.
+    const sport = sportsLabel(p, (k) => SPORT_NAMES[k] || k) || p.sportLabel || "Adaptive sports";
     return {
       ...organizationMeta({ name: p.name, sport, place }),
       jsonld: programJsonLd(p, env),
