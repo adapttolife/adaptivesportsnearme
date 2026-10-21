@@ -303,6 +303,33 @@
 	margin-top: 16px;
 }
 
+/* How far "near" reaches: 25, 50, 100 or 250 miles. */
+.v-near .nr-dist {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px 12px;
+	margin-top: 12px;
+}
+
+.v-near .nr-dist-t {
+	font-size: var(--fs-label);
+	font-weight: 600;
+	color: var(--graphite);
+}
+
+.v-near .nr-dist ul {
+	display: flex;
+	gap: 8px;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.v-near .nr-dist .chip {
+	padding: 0 14px;
+}
+
 .v-near .nr-jumps {
 	margin-top: 12px;
 }

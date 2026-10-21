@@ -120,13 +120,13 @@ function jumpToEl(el) {
 }
 
 /* ---------- data for this map ---------- */
-function scope(D, { where, state, sport, verifiedOnly }) {
+function scope(D, { where, state, sport, verifiedOnly, radius }) {
   let pool = D.items.filter((p) => p.state);
   if (verifiedOnly) pool = pool.filter((p) => p.verified);
-  if (sport) pool = pool.filter((p) => p.key === sport);
+  if (sport) pool = pool.filter((p) => A.offers(p, sport));
   let placed, statewide, fitTo;
   if (where && where.coords) {
-    const g = A.ladder(where, pool);
+    const g = A.ladder(where, pool, { radius });
     placed = [...g.inCity, ...g.near, ...g.elsewhere];
     statewide = g.statewide;
     fitTo = [...g.inCity, ...g.near];
@@ -180,7 +180,9 @@ export async function openMap(ctx, opts = {}) {
 
   const D = await A.loadData();
   if (!state || !D.shapes[state]) return;
-  const sc = scope(D, { where, state, sport, verifiedOnly });
+  // The distance the results page was set to (?mi=), so the map fits the same "near".
+  const radius = A.radiusFrom(ctx && ctx.query ? ctx.query.mi : null);
+  const sc = scope(D, { where, state, sport, verifiedOnly, radius });
   const title = titleFor({ where, state, sport });
   const base = stripMap(A.here());
   const ST = A.stateName(state);
@@ -285,7 +287,7 @@ function fit(s, lib) {
     pts.push([s.where.coords[1], s.where.coords[0]]);
     for (const p of s.sc.fitTo) pts.push([p.lng, p.lat]);
     if (pts.length < 2) {
-      // Nothing within 25 miles: show the place and its five nearest cities, so the rest is in view.
+      // Nothing within the chosen distance: show the place and its five nearest cities, so the rest is in view.
       const o = s.where.coords;
       const near = s.cities.map((c) => [c, (c.lat - o[0]) ** 2 + ((c.lng - o[1]) * Math.cos(o[0] * Math.PI / 180)) ** 2]).sort((a, b) => a[1] - b[1]).slice(0, 5);
       for (const [c] of near) pts.push([c.lng, c.lat]);

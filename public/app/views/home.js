@@ -40,7 +40,7 @@ function hero() {
 
 function sports(D) {
   const counts = {};
-  for (const p of D.items) counts[p.key] = (counts[p.key] || 0) + 1;
+  for (const p of D.items) for (const k of A.sportsOf(p)) counts[k] = (counts[k] || 0) + 1;
   const tiles = GRID.map((key, order) => ({ key, order, count: counts[key] || 0 }))
     .sort((a, b) => b.count - a.count || a.order - b.order)
     .map(({ key, count }) => `<li><a class="st" href="/sports/${A.esc(key)}" data-hero-sport="${A.esc(key)}">${A.plate(key, { kind: "tile", cls: "st-plate" })}<span class="st-name">${A.esc(A.sportName(key))}</span><span class="st-n num">${count} programs</span></a></li>`).join("");

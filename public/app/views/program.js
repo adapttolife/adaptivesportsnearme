@@ -221,7 +221,7 @@ function links(p, isManager = false) {
 
 /* ---------- More of this sport, from the listing's own city (6.8.9) ---------- */
 function more(p, D) {
-  const pool = D.items.filter((x) => x.id !== p.id && x.key === p.key);
+  const pool = D.items.filter((x) => x.id !== p.id && A.offers(x, p.key));
   if (!pool.length) return "";
   const noun = sportNoun(p);
   const st = p.state ? A.stateName(p.state) : null;
