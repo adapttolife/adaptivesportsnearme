@@ -71,4 +71,4 @@ Students, volunteers and staff. Their names and what each of them built are in [
 
 ## License
 
-[MIT](LICENSE). Take it, change it, build on it.
+The code is [MIT](LICENSE). Take it, change it, build on it. The sport drawings are the exception: they belong to Adapt To Life (see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)).
