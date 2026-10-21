@@ -1295,7 +1295,7 @@ const ROUTES = [
   ["/states", "states"], ["/states/:st", "state"], ["/organizations", "organizations"], ["/organizations/:id", "program"], ["/programs", "programs"], ["/programs/:id", "program-detail"],
   ["/grants", "grants"], ["/grants/:id", "grant"], ["/events", "events"],
   ["/add/program", "forms"], ["/add/organization", "forms"], ["/add/event", "forms"], ["/update/:id", "forms"],
-  ["/manage", "manage"], ["/manage/organizations/:id", "manage"],
+  ["/manage", "manage"], ["/manage/organizations", "manage"], ["/manage/organizations/:id/edit", "manage"], ["/manage/organizations/:id/programs/new", "manage"], ["/manage/organizations/:id/events/new", "manage"], ["/manage/organizations/:id/programs", "manage"], ["/manage/organizations/:id/events", "manage"], ["/manage/programs/:id", "manage"], ["/manage/events/:id", "manage"], ["/manage/organizations/:id", "manage"],
   ["/help", "help"], ["/about", "help"], ["/resources/veteran-owned-businesses", "vob"], ["/resources", "help"], ["/letter", "help"], ["/build", "help"], ["/letter/confirmed", "letter-confirmed"], ["/privacy", "help"], ["/terms", "help"],
 ];
 const OVERLAY_KEYS = new Set(["map", "open"]);
@@ -1371,7 +1371,7 @@ function defaultActive(name, path, params) {
   if (path === "/add/program") return "add-program";
   if (path === "/add/organization") return "add-organization";
   if (path === "/add/event") return "add-event";
-  if (path === "/manage") return "manage";
+  if (path === "/manage" || path.startsWith("/manage/")) return "manage";
   if (name === "help") return path.slice(1);
   return "";
 }

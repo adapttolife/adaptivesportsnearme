@@ -1377,6 +1377,7 @@ input[type="url"],
 input[type="search"],
 input[type="date"],
 input[type="time"],
+input[type="datetime-local"],
 input:not([type]),
 select,
 textarea {
@@ -1398,7 +1399,8 @@ textarea {
 /* Date and time boxes look like every other box. iPhones draw them natively otherwise:
    wider than their field, short whatever min-height says, and with the value centered. */
 input[type="date"],
-input[type="time"] {
+input[type="time"],
+input[type="datetime-local"] {
 	appearance: none;
 	-webkit-appearance: none;
 	display: block;
@@ -1411,7 +1413,8 @@ input[type="time"] {
 }
 
 input[type="date"]::-webkit-date-and-time-value,
-input[type="time"]::-webkit-date-and-time-value {
+input[type="time"]::-webkit-date-and-time-value,
+input[type="datetime-local"]::-webkit-date-and-time-value {
 	min-height: 1.5em;
 	text-align: left;
 }

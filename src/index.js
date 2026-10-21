@@ -46,7 +46,8 @@ import {
 import {
   clearOrgCookie, consumeLoginToken, createOrganizationSession, issueLoginToken, serializeOrgCookie,
   organizationsForClaimEmail, organizationForClaimEmail, readOrganizationSession,
-  updateClaimedOrganization, validEmail,
+  updateClaimedOrganization, validEmail, managedOrganizationPrograms, createManagedProgram, updateManagedProgram, deleteManagedProgram,
+  managedOrganizationEvents, createManagedEvent, updateManagedEvent, deleteManagedEvent,
 } from "./organization-access.js";
 import {
   listPosts, getPostBySlug, blogIndexTemplate, blogPostTemplate, blogFallbackTemplate, blogNotFoundTemplate,
@@ -128,6 +129,8 @@ const application = {
         ? handleManagedOrganizationGet(request, env, managedOrganization[1])
         : handleManagedOrganizationUpdate(request, env, managedOrganization[1]);
     }
+    const managedItems = url.pathname.match(/^\/api\/organizations\/([0-9a-f-]{36})\/manage\/(programs|events)(?:\/([a-z0-9-]{1,80}))?$/i);
+    if (managedItems) return handleManagedOrganizationItems(request, env, managedItems[1], managedItems[2], managedItems[3]);
 
     if (url.pathname === "/api/location") {
       if (request.method !== 'GET') return json({ ok: false, error: 'Method not allowed' }, 405);
@@ -734,6 +737,50 @@ async function handleManagedOrganizationUpdate(request, env, id) {
     }
     console.error("managed organization update failed", { reason: reason || "unknown" });
     return json({ ok: false, error: "Could not save organization details right now." }, 503, ORGANIZATION_AUTH_CACHE);
+  }
+}
+
+async function handleManagedOrganizationItems(request, env, organizationId, kind, itemId) {
+  const session = await authorizedOrganizationSession(request, env);
+  if (!session) return json({ ok: false, error: "Sign in to manage an organization." }, 401, ORGANIZATION_AUTH_CACHE);
+  const operations = kind === "programs"
+    ? { list: managedOrganizationPrograms, create: createManagedProgram, update: updateManagedProgram, remove: deleteManagedProgram }
+    : { list: managedOrganizationEvents, create: createManagedEvent, update: updateManagedEvent, remove: deleteManagedEvent };
+  try {
+    if (!itemId && request.method === "GET") {
+      const items = await operations.list(env.DB, organizationId, session.email);
+      return items === null ? json({ ok: false, error: "Organization not found." }, 404, ORGANIZATION_AUTH_CACHE)
+        : json({ ok: true, items }, 200, ORGANIZATION_AUTH_CACHE);
+    }
+    if (!itemId && request.method === "POST") {
+      const data = await readBody(request);
+      if (data === null) return json({ ok: false, error: "Could not read your changes." }, 400, ORGANIZATION_AUTH_CACHE);
+      const item = await operations.create(env.DB, organizationId, session.email, data);
+      return item === null ? json({ ok: false, error: "Organization not found." }, 404, ORGANIZATION_AUTH_CACHE)
+        : json({ ok: true, item }, 201, ORGANIZATION_AUTH_CACHE);
+    }
+    if (itemId && request.method === "PATCH") {
+      const data = await readBody(request);
+      if (data === null) return json({ ok: false, error: "Could not read your changes." }, 400, ORGANIZATION_AUTH_CACHE);
+      const item = await operations.update(env.DB, organizationId, itemId, session.email, data);
+      return item === null ? json({ ok: false, error: "Organization not found." }, 404, ORGANIZATION_AUTH_CACHE)
+        : item === false ? json({ ok: false, error: `${kind === "programs" ? "Program" : "Event"} not found.` }, 404, ORGANIZATION_AUTH_CACHE)
+          : json({ ok: true, item }, 200, ORGANIZATION_AUTH_CACHE);
+    }
+    if (itemId && request.method === "DELETE") {
+      const removed = await operations.remove(env.DB, organizationId, itemId, session.email);
+      return removed === null ? json({ ok: false, error: "Organization not found." }, 404, ORGANIZATION_AUTH_CACHE)
+        : removed ? json({ ok: true }, 200, ORGANIZATION_AUTH_CACHE)
+          : json({ ok: false, error: `${kind === "programs" ? "Program" : "Event"} not found.` }, 404, ORGANIZATION_AUTH_CACHE);
+    }
+    return json({ ok: false, error: "Method not allowed" }, 405, ORGANIZATION_AUTH_CACHE);
+  } catch (err) {
+    const reason = err instanceof Error ? err.message : "";
+    if (["name-required", "title-required", "start-invalid", "end-invalid", "website-invalid"].includes(reason)) {
+      return json({ ok: false, error: "Please check the details and try again." }, 422, ORGANIZATION_AUTH_CACHE);
+    }
+    console.error("managed organization item failed", { kind, reason: reason || "unknown" });
+    return json({ ok: false, error: "Could not save right now. Please try again." }, 503, ORGANIZATION_AUTH_CACHE);
   }
 }
 

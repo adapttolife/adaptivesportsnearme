@@ -295,6 +295,11 @@ test("organization management is a help-linked app route", () => {
   assert.match(help, /"\/manage"/);
   assert.match(APP, /\["\/manage", "manage"\]/);
   assert.match(APP, /\["\/manage\/organizations\/:id", "manage"\]/);
+  assert.match(APP, /\["\/manage\/organizations\/:id\/edit", "manage"\]/);
+  assert.match(APP, /\["\/manage\/organizations\/:id\/programs", "manage"\]/);
+  assert.match(APP, /\["\/manage\/organizations\/:id\/events", "manage"\]/);
+  assert.match(APP, /\["\/manage\/programs\/:id", "manage"\]/);
+  assert.match(APP, /\["\/manage\/events\/:id", "manage"\]/);
   assert.match(pages, /PAGES\.manage/);
   assert.match(pages, /"manage"/);
 });
