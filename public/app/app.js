@@ -892,7 +892,7 @@ export function letterBlock({ source = "page", heading = true } = {}) {
   const i = uid("em");
   // heading: false on /letter, where the page's own h1 already says "Get the letter".
   return `<section class="letter" id="letter" ${heading ? `aria-labelledby="${i}-h"><h2 id="${i}-h" tabindex="-1">Get the letter</h2>` : 'aria-label="Get the letter">'}<p>New programs, grants and events by email, only when there's something worth sending. Unsubscribe any time.</p>
-<form class="letter-form" data-letter data-send="/api/subscribe" data-source="asnm-letter-${esc(source)}" data-done="You're on the list. We'll write when there is something worth sending." novalidate><div class="field"><label for="${i}">Email</label><div class="letter-row"><input id="${i}" name="em" type="email" autocomplete="email" placeholder="name@example.com" required data-error="Enter an email address, like name@example.com."><button class="btn btn--ink" type="submit">Subscribe</button></div></div><input name="company" tabindex="-1" autocomplete="off" class="hpot" aria-hidden="true"><label class="check"><input type="checkbox" name="beta"><span>I want the first look at new features</span></label></form></section>`;
+<form class="letter-form" data-letter data-send="/api/subscribe" data-source="asnm-letter-${esc(source)}" data-done="You're on the list. We'll write when there is something worth sending." novalidate><div class="field"><label for="${i}">Email</label><div class="letter-row"><input id="${i}" name="em" type="email" autocomplete="email" placeholder="name@example.com" required data-error="Enter an email address, like name@example.com."><button class="btn btn--ink" type="submit">Subscribe</button></div></div><input name="company" tabindex="-1" autocomplete="off" class="hpot" aria-hidden="true"><label class="check"><input type="checkbox" name="beta"><span>I want the first look at new features</span></label><p class="letter-fine">We use your email only to send the letter. <a href="/privacy">Privacy policy</a></p></form></section>`;
 }
 
 export function helpBand() {
@@ -1081,7 +1081,7 @@ export function footer() {
 <div><h2 class="ft-h">Browse</h2><ul>${li("States", "/states")}${li("Organizations", "/organizations")}</ul></div>
 <div><h2 class="ft-h">Help build this</h2><ul>${li("Add a program", "/add/program")}${li("Add an event", "/add/event")}${li("Claim your organization", "/help")}</ul></div>
 <div><h2 class="ft-h">About this directory</h2><ul>${li("How we check listings", "/about")}${li("Get the letter", "/letter")}${li("Build with us", "/build")}${li("Accessibility", "/about#accessibility")}</ul></div></div>
-<div class="ft-fine"><p class="ft-fine">Made with <span role="img" aria-label="love">❤️</span> by <a href="https://adapttolife.org">Adapt To Life</a>. © 2026</p></div></div>`;
+<div class="ft-fine"><p class="ft-fine">Made with <span role="img" aria-label="love">❤️</span> by <a href="https://adapttolife.org">Adapt To Life</a>. © 2026 · <a href="/privacy">Privacy</a> · <a href="/terms">Terms</a></p></div></div>`;
 }
 
 /** Render output for any unknown route, id or key. */
@@ -1295,7 +1295,7 @@ const ROUTES = [
   ["/grants", "grants"], ["/grants/:id", "grant"], ["/events", "events"],
   ["/add/program", "forms"], ["/add/organization", "forms"], ["/add/event", "forms"], ["/update/:id", "forms"],
   ["/manage", "manage"], ["/manage/organizations/:id", "manage"],
-  ["/help", "help"], ["/about", "help"], ["/resources/veteran-owned-businesses", "vob"], ["/resources", "help"], ["/letter", "help"], ["/build", "help"], ["/letter/confirmed", "letter-confirmed"],
+  ["/help", "help"], ["/about", "help"], ["/resources/veteran-owned-businesses", "vob"], ["/resources", "help"], ["/letter", "help"], ["/build", "help"], ["/letter/confirmed", "letter-confirmed"], ["/privacy", "help"], ["/terms", "help"],
 ];
 const OVERLAY_KEYS = new Set(["map", "open"]);
 const MODS = {}, CSS_DONE = {};

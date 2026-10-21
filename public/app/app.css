@@ -3891,6 +3891,11 @@ h3,
 	color: var(--muted);
 }
 
+/* The privacy line under the letter signup. */
+.letter-fine { margin-top: 10px; font-size: 14px; line-height: 1.4; color: var(--graphite); }
+.letter .letter-fine { color: #e7e3da; }   /* the letter block is black: same light text as its intro */
+.letter-fine a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
+
 .uwy img {
 	filter: invert(1);
 }

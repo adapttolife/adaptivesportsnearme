@@ -364,3 +364,13 @@ test("each page names its own code, and a listing page its details, for the brow
   const missing = await (await serve("/nope", env)).text();
   assert.ok(!missing.includes("/app/views/"), "a 404 names no page code");
 });
+
+test("the privacy policy and terms are pages, in the sitemap", async () => {
+  const env = { ASSETS: assets(), ENV_NAME: "production" };
+  const privacy = await serve("/privacy", env), terms = await serve("/terms", env);
+  assert.equal(privacy.status, 200); assert.equal(terms.status, 200);
+  assert.equal(titleOf(await privacy.text()), "Privacy policy · Adaptive Sports Near Me");
+  assert.equal(titleOf(await terms.text()), "Terms of use · Adaptive Sports Near Me");
+  const map = await sitemapXml({ ENV_NAME: "production" });
+  assert.ok(map.includes(`<loc>${ORIGIN}/privacy</loc>`) && map.includes(`<loc>${ORIGIN}/terms</loc>`));
+});
