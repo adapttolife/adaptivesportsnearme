@@ -9,7 +9,7 @@
      "unverified". The listing page says when we last checked it.
    - Forms validate in place, then post to the site's API with a Turnstile token. */
 
-import { parseDesc as parseDescText } from "./listing-sport.js";
+import { parseDesc as parseDescText, sportsWords } from "./listing-sport.js";
 import { ICONS } from "./icons.js";
 import { PRODUCT_LINE } from "./page-meta.js";
 
@@ -243,7 +243,7 @@ function normalize(raw) {
   // The sport (and the trio for a multi-sport listing) comes worked out from the
   // server (public/app/listing-sport.js), so the lists need no descriptions.
   p.key = raw.key && NAMES[raw.key] && raw.key !== "grant" && raw.key !== "event" ? raw.key : "multi";
-  if (Array.isArray(raw.trio) && raw.trio.length >= 2) p.trio = raw.trio;
+  if (Array.isArray(raw.trio) && raw.trio.length >= 2) { p.trio = raw.trio; p.more = Number(raw.more) || 0; }
   p.family = familyOf(p.key);
   p.tone = toneOf(p.key);
   // Verified (the check) means the organization itself confirmed its listing with us
@@ -268,7 +268,7 @@ function fromApi(r) {
   const point = Array.isArray(r.point) ? r.point : null;
   const coords = point || c;
   return {
-    id: r.id, name: r.name, key: r.key, trio: r.trio || null, city: r.city || null, state: r.state || null,
+    id: r.id, name: r.name, key: r.key, trio: r.trio || null, more: r.more || 0, city: r.city || null, state: r.state || null,
     lastChecked: r.checked || null, listedAt: r.listed || null, confirmed: !!r.verified, teamChecked: !!r.team,
     lat: coords ? coords[0] : null, lng: coords ? coords[1] : null, geo: point ? "address" : (c ? "city" : (r.state ? "state" : null)),
     prog: !!r.prog, orgName: r.org || null, progs: r.progs || 0,
@@ -831,11 +831,10 @@ const runBy = (p) => {
   return name === org || name.startsWith(org + " ") || name.startsWith(org + ":") ? "" : ` · ${p.orgName}`;
 };
 /** The sports a listing names, in words: "Skiing", or for a multi-sport listing that names
-    them, "Basketball, tennis and swimming" (never just "Multi-sport" when we know better). */
+    them, "Basketball, swimming, and softball" (and "and N more" past three), never just "Multi-sport". */
 export function sportsText(p) {
-  const ks = p.trio && p.trio.length >= 2 ? p.trio : [p.key];
-  const names = ks.map((k, i) => (i ? sportName(k).toLowerCase() : sportName(k)));
-  return names.length > 1 ? names.slice(0, -1).join(", ") + " and " + names[names.length - 1] : names[0];
+  if (!(p.trio && p.trio.length >= 2)) return sportName(p.key);
+  return sportsWords(p.trio.map(sportName), p.more || 0);
 }
 const metaText = (p, ctx) => ((ctx && ctx.single) ? placeFor(p, ctx) : `${sportsText(p)} · ${placeFor(p, ctx)}`) + runBy(p);
 

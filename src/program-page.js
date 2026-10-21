@@ -10,6 +10,8 @@
 
 import { listingVisual, isCoverVisual, stampAttr, symbolTile } from "./visuals.js";
 import { headerHtml, footerHtml, navScriptHtml } from "./site-chrome.js";
+import { sportsLabel } from "../public/app/listing-sport.js";
+import { SPORT_NAMES } from "./sport-names.js";
 
 const ListingArt = globalThis.ListingArt;
 
@@ -223,7 +225,7 @@ ${navScriptHtml()}
 // the app's own chrome.
 export function listingInnerHtml(org, { nearby = [] } = {}) {
   const name = org.name || "Adaptive sports program";
-  const sport = org.sportLabel || "Multi-Sport";
+  const sport = sportsLabel(org, (k) => SPORT_NAMES[k] || k) || org.sportLabel || "Multi-Sport";
   const loc = locLine(org);
   const v = listingVisual(org, "program");
   const overlay = `<div class="dov"><span class="dov-sport">${esc(sport)}</span><span class="dov-loc">${esc(loc)}</span></div>`;
@@ -251,7 +253,7 @@ ${nearbyStrip(nearby, sport)}`;
 
 export function programPageTemplate(org, { site = SITE, nearby = [] } = {}) {
   const name = org.name || "Adaptive sports program";
-  const sport = org.sportLabel || "Multi-Sport";
+  const sport = sportsLabel(org, (k) => SPORT_NAMES[k] || k) || org.sportLabel || "Multi-Sport";
   const loc = locLine(org);
   const canonical = `${site}/programs/${org.id}`;
   const photo = photoPath(org.sport, org);

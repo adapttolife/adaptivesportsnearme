@@ -16,12 +16,13 @@ export function parseDesc(desc) {
   return { sports, served };
 }
 
-/** row: { sport (key), sportLabel, name, desc } -> { key, trio } (trio only for multi-sport rows naming 2+ sports). */
+/** row: { sport (key), sportLabel, name, desc } -> { key, trio, more } (trio only for multi-sport rows naming
+    2+ sports; more = how many further sports the row names beyond the three in the trio). */
 export function listingSport(row) {
   const L = globalThis.ListingArt;
   const sk = L.symbolKey(row);
   let key = sk && L.SPORTS.includes(sk) && sk !== "grant" && sk !== "event" ? sk : "multi";
-  let trio = null;
+  let trio = null, more = 0;
   if (key === "multi") {
     const s = parseDesc(row.desc).sports;
     const ks = [];
@@ -30,7 +31,28 @@ export function listingSport(row) {
       if (k && k !== "multi" && !ks.includes(k)) ks.push(k);
     }
     if (ks.length === 1) key = ks[0];
-    else if (ks.length >= 2) trio = [...ks.filter((k) => !GROUP_SCENE.has(k)), ...ks.filter((k) => GROUP_SCENE.has(k))].slice(0, 3);
+    else if (ks.length >= 2) {
+      trio = [...ks.filter((k) => !GROUP_SCENE.has(k)), ...ks.filter((k) => GROUP_SCENE.has(k))].slice(0, 3);
+      more = ks.length - trio.length;
+    }
   }
-  return { key, trio };
+  return { key, trio, more };
+}
+
+/** The words for a multi-sport row that names its sports ("Baseball, basketball, and 5 more"), or
+    null when the row has one sport or names none. nameOf: sport key -> display name. */
+export function sportsLabel(row, nameOf) {
+  const { trio, more } = listingSport(row);
+  return trio ? sportsWords(trio.map(nameOf), more) : null;
+}
+
+/** The sports a listing offers, in words: ["Baseball", "Basketball", "Track and field"], 4 ->
+    "Baseball, basketball, track and field, and 4 more". Names after the first are lowercased;
+    the serial comma keeps a name with "and" in it readable. */
+export function sportsWords(names, more = 0) {
+  const n = names.map((x, i) => (i ? String(x).toLowerCase() : String(x)));
+  if (more > 0) n.push(`${more} more`);
+  if (n.length <= 1) return n[0] || "";
+  if (n.length === 2) return `${n[0]} and ${n[1]}`;
+  return `${n.slice(0, -1).join(", ")}, and ${n[n.length - 1]}`;
 }
