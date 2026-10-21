@@ -28,7 +28,9 @@ export function fromDateTimeLocal(value, original = "") {
   // picks the earlier one, which would move 06:30Z to 05:30Z on an unchanged save.
   if (stored.trim() !== "") {
     const shown = toDateTimeLocal(stored);
-    if (shown && (text === shown || text === shown.slice(0, 16))) return stored;
+    // Browsers omit :00 seconds. A minute-only value is unchanged only then.
+    // :45 shown as 11:30 must become :00, not the stored :45.
+    if (shown && (text === shown || (/:00$/.test(shown) && text === shown.slice(0, 16)))) return stored;
   }
   const parsed = new Date(text);
   if (Number.isNaN(parsed.getTime())) return "";

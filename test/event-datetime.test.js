@@ -101,7 +101,30 @@ async function runChild() {
   console.log(`ok ${STARTS} stayed put when shown as ${shownStart}`);
 }
 
-if (process.env.EVENT_TIME_TZ_CHILD === "1") {
+async function secondsCleared() {
+  const { toDateTimeLocal, fromDateTimeLocal } = await import("../public/app/local-datetime.js");
+  const stored = "2026-06-01T15:30:45.000Z";
+  const minute = toDateTimeLocal(stored).slice(0, 16);
+  const saved = fromDateTimeLocal(minute, stored);
+  assert.equal(saved, "2026-06-01T15:30:00.000Z", `${process.env.TZ}: minute form ${minute} of ${stored} kept ${saved}`);
+  const whole = "2026-06-01T15:30:00.000Z";
+  assert.equal(fromDateTimeLocal(toDateTimeLocal(whole).slice(0, 16), whole), whole, "zero seconds still round-trip from the minute form");
+  if (process.env.TZ === "America/New_York") {
+    const fall = "2026-11-01T06:30:45.000Z";
+    const fallMinute = toDateTimeLocal(fall).slice(0, 16);
+    assert.equal(fallMinute, "2026-11-01T01:30");
+    const fallSaved = fromDateTimeLocal(fallMinute, fall);
+    assert.equal(fallSaved, "2026-11-01T05:30:00.000Z", `fall-back minute form of :45 kept ${fallSaved}`);
+  }
+  console.log(`ok ${process.env.TZ} ${stored} -> ${saved}`);
+}
+
+if (process.env.EVENT_SECONDS_CHILD === "1") {
+  secondsCleared().then(() => process.exit(0), (error) => {
+    console.error(error);
+    process.exit(1);
+  });
+} else if (process.env.EVENT_TIME_TZ_CHILD === "1") {
   runChild().then(() => process.exit(0), (error) => {
     console.error(error);
     process.exit(1);
@@ -115,6 +138,18 @@ if (process.env.EVENT_TIME_TZ_CHILD === "1") {
     assert.equal(result.status, 0, `${result.stdout || ""}${result.stderr || ""}`);
     assert.match(result.stdout, /2026-11-01T06:30:00\.000Z stayed put/);
     assert.match(result.stdout, /2026-11-01T15:00:00\.000Z stayed put/);
+  });
+
+  test("clearing :45 seconds to the minute form is saved in New York and in UTC", () => {
+    const failures = [];
+    for (const zone of ["America/New_York", "UTC"]) {
+      const result = spawnSync(process.execPath, [FILE], {
+        env: { ...process.env, TZ: zone, EVENT_SECONDS_CHILD: "1" },
+        encoding: "utf8",
+      });
+      if (result.status !== 0) failures.push(`${zone}\n${result.stdout || ""}${result.stderr || ""}`);
+    }
+    assert.equal(failures.length, 0, failures.join("\n"));
   });
 
   test("the admin and organization forms convert datetime-local instead of slicing the UTC text", () => {
