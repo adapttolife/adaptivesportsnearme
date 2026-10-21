@@ -4,6 +4,7 @@
 --   npx wrangler d1 execute asnm-db --remote --config wrangler.json --file db/maintenance/hijacked_links_check.sql
 --
 -- Before: 9 rows, every still_hijacked = 1, every shows_publicly = 1.
+--         If the totals row isn't 9 / 9 / 9, STOP: don't run the clear, and report what this shows.
 -- After:  9 rows, every still_hijacked = 0, updated_at is the run time, last_ok_at is empty.
 --         website_url is https://bamaadapted.com/ for Alabama Adapted Athletics, https://cdagj.org/ for
 --         Colorado Discover Ability, and empty for the other 7.
@@ -69,8 +70,11 @@ WHERE id IN (
 -- points at another org or lane (staging numbers its items separately), the clear file leaves it alone.
 -- After: 461 and 301 rejected where they matched. 293, 465, 584 and 657 stay as they were, for a person to check.
 SELECT item_id, organization_id, lane, status, resolved_at, resolved_by,
-  CASE WHEN (item_id = 461 AND organization_id = 'e0978514-3831-4cd5-8d0f-fb401b73cb96')
-         OR (item_id = 301 AND organization_id = '63c9e62b-c605-4b14-bfcd-25a3ccb00078') THEN 'reject'
+  CASE WHEN lane = 'enrich' AND status = 'pending' AND (
+              (item_id = 461 AND organization_id = 'e0978514-3831-4cd5-8d0f-fb401b73cb96')
+           OR (item_id = 301 AND organization_id = '63c9e62b-c605-4b14-bfcd-25a3ccb00078')) THEN 'reject'
+       WHEN item_id IN (461, 301) AND status = 'rejected' THEN 'rejected'
+       WHEN item_id IN (461, 301) THEN 'clear skips it: find the org''s own item by hand'
        ELSE 'check by hand' END AS plan
 FROM review_queue
 WHERE item_id IN (461, 301, 293, 465, 584, 657)

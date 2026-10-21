@@ -19,8 +19,8 @@ What the SQL does:
 - **2 stay listed by their town, with no link:** Helping with Horsepower at Reclamation-Ranch (Mitchell, SD) and New Freedom Farm (Buchanan, VA).
 - **5 hide** until a real link turns up: Coastal Carolina Adaptive Sports, Discovery Blind Sports, Michigan Adaptive Sports, Midwest Wheelchair Sport & Social Club and Sailing 4 All. Each one's own domain was taken over, and a search on 2026-10-21 found no current site of its own; directories still point at the hijacked domains. With no link and no town, a listing is a dead end, so the existing rule in `src/data.js` hides it. Hiding is the fallback only where no real site exists.
 - **2 pending review items rejected:** 461 (a betting company's email for Michigan Adaptive Sports) and 301 (an email, town and ZIP from a casino review site for Colorado Discover Ability). Each statement matches the item id, the org, the lane and pending status, because each database numbers its review items separately and these ids were read on live.
-- **4 classify items flagged, not changed:** 293, 465, 584 and 657. Their source pages were probably already hijacked when they were made. A person checks each against the org's real site before approving, or rejects it, in the admin review queue (`/api/admin`, action `reject`).
-- Sets `updated_at` on every changed row and clears `last_ok_at`, so the link checker treats it as not checked yet.
+- **4 classify items flagged, not changed:** 293, 465, 584 and 657. They are pending sport labels for these orgs. The source pages of 465, 584 and 657 were probably already hijacked when they were made. Item 293's evidence is the org's name, not its page, so its label may well be right. A person checks each against the org's real site, then approves or rejects it with `POST /api/admin/queue/<item_id>` and `{"action":"reject"}` (`src/admin.js`; it only acts on pending items).
+- Sets `updated_at` on every changed row and clears `last_ok_at`, so the listing shows no "checked OK" date until the link checker next loads the link.
 
 Alabama's new link: bamaadapted.com loads as "Alabama Adapted - Official Athletics Website" with the University of Alabama's Tuscaloosa address, its wheelchair basketball, wheelchair tennis and para track and field teams, and links to the university's give.ua.edu booster club. Move United's directory lists bamaadapted.com for University of Alabama Adapted Athletics (checked 2026-10-21).
 
@@ -32,11 +32,11 @@ Every organizations UPDATE matches both the row's id and its hijacked link, so a
 
 `db/maintenance/hijacked_links_check.sql` is read-only. Run it before and after on each database and compare: that shows which rows changed, how many hide, that the old links are gone, and what the review items are.
 
-1. Staging, before: run the check. Expect 9 rows, `still_hijacked` = 1 on all 9, and totals `9 / 9 / 9`. Staging's review items may not match the live ids; the `plan` column shows that.
+1. Staging, before: run the check. Expect 9 rows, `still_hijacked` = 1 on all 9, and totals `9 / 9 / 9`. **If the totals aren't 9 / 9 / 9, stop: don't run the clear, and report what the check shows.** Some rows have changed since 2026-10-21, and the guards would skip them silently (Alabama's guard, for one, skips a link that is already empty). Staging's review items may not match the live ids; the `plan` column shows that.
 2. Staging: run the clear.
 3. Staging, after: run the check. Expect `still_hijacked` = 0 on all 9 and totals `9 / 0 / 4`.
 4. Staging: run the clear again. Expect 0 changes.
-5. Live: repeat steps 1 to 3 on `asnm-db`. Before running the clear, check that items 461 and 301 show the expected org, lane `enrich` and `pending`. If one doesn't, the clear leaves it alone; reject it by hand instead.
+5. Live: repeat steps 1 to 3 on `asnm-db`, with the same stop rule: if the before totals aren't 9 / 9 / 9, stop. Before running the clear, check that the `plan` column reads `reject` for items 461 and 301. That means each is pending, in lane `enrich`, and belongs to the expected org (461 to Michigan Adaptive Sports `e0978514-…`, 301 to Colorado Discover Ability `63c9e62b-…`). If one doesn't, the clear leaves it alone. Don't reject that item id by hand, because it may be someone else's item. Instead, find the pending `enrich` item whose `organization_id` is that org and whose proposal came from the hijacked page, and reject that one with `POST /api/admin/queue/<item_id>` and `{"action":"reject"}`.
 
 ```
 npx wrangler d1 execute asnm-db-staging --remote --config wrangler.preview.json --file db/maintenance/hijacked_links_check.sql

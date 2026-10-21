@@ -46,5 +46,6 @@ UPDATE organizations SET website_url = NULL, last_ok_at = NULL, updated_at = str
 UPDATE review_queue SET status = 'rejected', resolved_at = strftime('%Y-%m-%dT%H:%M:%SZ','now'), resolved_by = 'data fix: source page was hijacked' WHERE item_id = 461 AND organization_id = 'e0978514-3831-4cd5-8d0f-fb401b73cb96' AND lane = 'enrich' AND status = 'pending';
 -- Item 301: an email, town and ZIP from a casino review site for Colorado Discover Ability.
 UPDATE review_queue SET status = 'rejected', resolved_at = strftime('%Y-%m-%dT%H:%M:%SZ','now'), resolved_by = 'data fix: source page was hijacked' WHERE item_id = 301 AND organization_id = '63c9e62b-c605-4b14-bfcd-25a3ccb00078' AND lane = 'enrich' AND status = 'pending';
--- Classify items 293, 465, 584 and 657 are NOT changed here. Their source pages were probably already hijacked,
--- so a person checks each against the org's real site before approving, or rejects it (docs/data-fixes/hijacked-links.md).
+-- Classify items 293, 465, 584 and 657 are NOT changed here. The source pages of 465, 584 and 657 were probably
+-- already hijacked; 293's evidence is the org's name. A person checks each against the org's real site before
+-- approving or rejecting it (docs/data-fixes/hijacked-links.md).
