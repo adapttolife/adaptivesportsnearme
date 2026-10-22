@@ -140,7 +140,7 @@ CREATE TABLE IF NOT EXISTS organizations (
   country              TEXT DEFAULT 'United States',
   lat                  REAL,
   lng                  REAL,
-  geo_precision        TEXT,                    -- 'address' | 'city' | 'state' | NULL
+  geo_precision        TEXT,                    -- 'address' | 'zip' | 'city' | 'state' | NULL
   description          TEXT,
   cost_note            TEXT,
   equipment_provided   INTEGER,                 -- boolean 0/1, NULL = unknown

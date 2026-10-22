@@ -132,7 +132,7 @@ src/index.js           Worker: routing, forms (beehiiv, shared intake), config, 
 src/data.js            /api/programs /api/orgs/:id /api/stats (D1 reads + freshness decay)
 src/pipeline.js        cron lanes: validate every 2h; dispatch hourly rotates enrich, classify, geocode, resolve (src/lanes/)
 src/admin.js           /api/admin/* review queue (ADMIN_KEY bearer)
-db/schema.sql          D1 schema (ported from adaptivesportsnearme-data's Postgres design)
+db/schema.sql          D1 schema, dumped from the live asnm-db (regenerate, don't hand-edit)
 scripts/pg-to-d1.py    one-time migration: local Postgres → cleaned SQL → D1
 wrangler.json          production deployment plus named staging environment
 ```
