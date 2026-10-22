@@ -21,11 +21,6 @@ const ORG_ID = "9fd14fc2-5d5d-472d-a0ca-a0a1de7651f6";
 function database() {
   const sqlite = new DatabaseSync(":memory:");
   sqlite.exec(readFileSync(new URL("../db/schema.sql", import.meta.url), "utf8"));
-  sqlite.exec(`CREATE TABLE events (
-    id TEXT PRIMARY KEY, title TEXT NOT NULL, description TEXT NOT NULL DEFAULT '', org_id TEXT, sport_key TEXT,
-    venue TEXT, city TEXT, state TEXT, url TEXT, starts_at TEXT NOT NULL, ends_at TEXT,
-    all_day INTEGER NOT NULL DEFAULT 0, status TEXT NOT NULL DEFAULT 'scheduled', is_public INTEGER NOT NULL DEFAULT 1,
-    source TEXT NOT NULL DEFAULT 'admin', created_at TEXT NOT NULL, updated_at TEXT NOT NULL)`);
   const db = { prepare(sql) {
     let values = []; const statement = sqlite.prepare(sql);
     return {

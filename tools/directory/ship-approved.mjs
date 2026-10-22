@@ -21,7 +21,7 @@ const NEVER_PATH = join(HERE, "never-touch.json");
 const STAGING_DB = "asnm-db-staging";
 const STAGING_ID = "d3f67da7-60a3-44b6-9215-28665492d3f9"; // asnm-db-staging, as in wrangler*.json
 const LIVE_DB = "asnm-db";
-const LIVE_PUBLIC_EXPECTED = 1544;
+const LIVE_PUBLIC_EXPECTED = 2593; // live public count read from asnm-db on 2026-10-22
 const TESTER = "https://staging-adaptivesportsnearme.adapt-to-life.workers.dev";
 
 const STATE_NAMES = {
@@ -245,14 +245,14 @@ function buildSql(card, slug, now) {
 }
 
 function wranglerJson(args) {
-  // LIVE LOCK: refuse asnm-db writes. Public live count must stay 1544.
+  // LIVE LOCK: refuse asnm-db writes. Public live count must stay 2593.
   const cmdIdx = args.indexOf("--command");
   const command = cmdIdx >= 0 ? (args[cmdIdx + 1] || "") : "";
   if (args.includes(LIVE_DB) && command && !/^\s*select/i.test(command)) {
-    die("refusing a non-SELECT against asnm-db (live stays locked; public count must stay 1544)");
+    die("refusing a non-SELECT against asnm-db (live stays locked; public count must stay 2593)");
   }
   if (args.includes(LIVE_DB) && args.includes("--file")) {
-    die("refusing --file against asnm-db (live stays locked; public count must stay 1544)");
+    die("refusing --file against asnm-db (live stays locked; public count must stay 2593)");
   }
   const out = execFileSync("wrangler", args, {
     cwd: WORKER_DIR,

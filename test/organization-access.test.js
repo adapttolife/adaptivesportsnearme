@@ -13,9 +13,6 @@ import {
 function database() {
   const sqlite = new DatabaseSync(":memory:");
   sqlite.exec(readFileSync(new URL("../db/schema.sql", import.meta.url), "utf8"));
-  sqlite.exec(`CREATE TABLE organization_login_tokens (id TEXT PRIMARY KEY, token_hash TEXT UNIQUE, email TEXT, expires_at TEXT, used_at TEXT, created_at TEXT);
-    CREATE TABLE organization_sessions (id TEXT PRIMARY KEY, email TEXT, expires_at TEXT, revoked_at TEXT, created_at TEXT);
-    CREATE TABLE events (id TEXT PRIMARY KEY, title TEXT NOT NULL, description TEXT NOT NULL DEFAULT '', org_id TEXT, sport_key TEXT, venue TEXT, city TEXT, state TEXT, url TEXT, starts_at TEXT NOT NULL, ends_at TEXT, all_day INTEGER NOT NULL DEFAULT 0, status TEXT NOT NULL DEFAULT 'scheduled', is_public INTEGER NOT NULL DEFAULT 1, source TEXT NOT NULL DEFAULT 'admin', created_at TEXT NOT NULL, updated_at TEXT NOT NULL);`);
   const db = { prepare(sql) {
     let values = []; const statement = sqlite.prepare(sql);
     return {
