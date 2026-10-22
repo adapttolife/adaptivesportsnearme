@@ -1,3 +1,4 @@
+-- Waits for Alec's yes (through Chief of Staff). The site reviewer runs it, staging first. Hides each organization and its programs.
 -- docs/data-fixes/dead-links.md. Each UPDATE matches the row's id AND its current link, so it is safe to run twice
 -- and skips a row someone already changed.
 
