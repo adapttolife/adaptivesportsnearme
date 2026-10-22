@@ -1,5 +1,5 @@
 # Historical inactive stub. Current Workers Builds settings are in README.md#deploy.
-# Staging-only. Never deploys the production worker (asnm).
+# Staging-only. Never deploys the production worker (adaptivesportsnearme).
 # Cloudflare secrets are not on this repo yet (gh secret list is empty),
 # so this workflow is a documented dry stub. It will not invent tokens
 # and it will not deploy anything until CLOUDFLARE_API_TOKEN and
@@ -32,7 +32,7 @@ jobs:
       - name: Refuse production
         run: |
           echo "This workflow deploys staging only."
-          echo "It will never wrangler-deploy the production worker (asnm)."
+          echo "It will never wrangler-deploy the production worker (adaptivesportsnearme)."
           echo "Staging keeps asnm-db-staging for DB and INTAKE; other services use production."
 
       - name: Check for Cloudflare secrets

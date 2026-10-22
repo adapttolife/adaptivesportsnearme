@@ -17,7 +17,8 @@ for (const file of files) {
     console.log("ok      " + file);
   } catch (e) {
     const out = String(e.stdout || "") + String(e.stderr || "");
-    // db/schema.sql is the current shape, so older migrations that it already contains say so.
+    // db/schema.sql can fall behind the real database, so the migrations run after it.
+    // A migration whose change is already in schema.sql reports a duplicate and is skipped.
     if (/duplicate column name|already exists/.test(out)) { console.log("skipped " + file + " (already in the schema)"); continue; }
     console.error(out);
     throw new Error("setup stopped at " + file);
