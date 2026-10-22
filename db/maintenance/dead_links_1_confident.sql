@@ -79,9 +79,6 @@ UPDATE programs SET website_url = 'https://buddyupforlife.org/', last_ok_at = NU
 -- Oceans of Hope Foundation: the old link redirects here (Oceans of Hope Foundation – Experience The Thrill of Adaptiv)
 UPDATE programs SET website_url = 'https://oohf.net/', last_ok_at = NULL, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE id = 'c596df9f-92ed-54e6-9559-0356473a32e7' AND website_url = 'https://www.oceansofhopefoundation.org/';
 
--- Palm Beach Gardens Veterans' Tennis and Pickleball: the old link redirects here (Palm Beach Gardens, FL - Official Website | Official Website)
-UPDATE programs SET website_url = 'https://www.pbgfl.gov/', last_ok_at = NULL, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE id = 'ce0d0394-b36a-5da6-894b-2ec88ccd6d28' AND website_url = 'https://www.pbgfl.com/';
-
 -- Decatur-DeKalb YMCA TOPSoccer: the old link redirects here (TOPSoccer | Decatur-DeKalb YMCA Soccer Club)
 UPDATE programs SET website_url = 'https://ddysoccer.ottosport.ai/recreational/topsoccer/topsoccer', last_ok_at = NULL, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE id = '203e314d-9180-5cf1-927b-15469c27d4df' AND website_url = 'https://ddysoccer.demosphere-secure.com/recreational/topsoccer/topsoccer';
 
@@ -94,17 +91,11 @@ UPDATE programs SET website_url = 'https://rushunionsoccer.ottosport.ai/milton-h
 -- Southeast Clarke Park Tennis Center Adaptive Tennis: the old link redirects here (Tennis Center | Athens-Clarke County, GA - Official Website)
 UPDATE programs SET website_url = 'https://www.accgov.com/5694/Tennis-Center', last_ok_at = NULL, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE id = 'c56b61aa-1328-501b-b85c-2e2f9fcfbba5' AND website_url = 'http://www.athensclarkecounty.com/5694/Tennis-Center';
 
--- Bluegrass Tennis Association Wheelchair Tennis: the old link redirects here (Lexington Area Tennis Association)
-UPDATE programs SET website_url = 'https://latasc.com/', last_ok_at = NULL, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE id = 'fc953c88-7675-5195-93ac-1a51732bc4ab' AND website_url = 'https://www.lexington.usta.com/';
-
 -- Kentucky School for the Deaf Physical Education Adaptive Tennis: the old link redirects here (Home - Kentucky School for the Deaf)
 UPDATE programs SET website_url = 'https://www.ksd.kyschools.us/', last_ok_at = NULL, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE id = '8fc5ab8e-8b26-5e24-a86e-3b798d0d9851' AND website_url = 'https://www.ksd.k12.ky.us/';
 
 -- Thibodaux Soccer Association TOPSoccer: the old link redirects here (Home)
 UPDATE programs SET website_url = 'https://www.thibodaux-soccer.org/Default.aspx?tabid=197044', last_ok_at = NULL, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE id = '9c9d0deb-2736-59f9-8524-7f11ad46c42b' AND website_url = 'http://clubs.bluesombrero.com/Default.aspx?tabid=197044';
-
--- Freedom Hills Therapeutic Riding Program at Rolling Hills Ranch: the old link redirects here (Home - Freedom Hills Therapeutic Riding)
-UPDATE programs SET website_url = 'https://fhtrp.wpengine.com/', last_ok_at = NULL, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE id = '6e3fbcb2-473a-5e9c-af7b-e2e41e89d2be' AND website_url = 'https://freedomhills.org/';
 
 -- JTCC Para Standing Tennis: the old link redirects here (Adaptive - Junior Tennis Champions Center)
 UPDATE programs SET website_url = 'https://jtcc.org/adaptive/', last_ok_at = NULL, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE id = '4c9d7cb7-4090-5de9-b01b-4f3915b2c05d' AND website_url = 'https://jtccregister.org/adaptive/';
@@ -178,9 +169,6 @@ UPDATE organizations SET website_url = 'https://www.va.gov/central-iowa-health-c
 -- Tennis Pals: new site; loads ("Summer | Lymes' Youth Service Bureau")
 UPDATE organizations SET website_url = 'https://lysb.org/summer/', last_ok_at = NULL, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE id = '84dcf38e-8c5a-5df6-b152-c21af6a85d40' AND website_url = 'http://tennispals.org/';
 
--- Spina Bifida Association of Kentucky Adaptive Sports Activities: same site, new page; loads ("Adaptive Sport/Activities")
-UPDATE organizations SET website_url = 'https://spinabifidakentucky.org/adaptive-sport%2Factivities', last_ok_at = NULL, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE id = 'd5cbf21f-0df2-58fa-9c6a-338c5e804b73' AND website_url = 'https://spinabifidakentucky.org/activities';
-
 -- Graham Equestrian Center: new site; loads ("Graham Equestrian Center - For the joy of horses.")
 UPDATE organizations SET website_url = 'https://grahameq.org/', last_ok_at = NULL, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE id = '9bac5212-1ff9-5caf-957b-731704f1c354' AND website_url = 'https://www.grahamequestrian.org/';
 
@@ -192,9 +180,6 @@ UPDATE organizations SET website_url = 'https://www.seattle.gov/parks/parks/amy-
 
 -- Steven A. Cohen Military Family Clinic at Centerstone: new site; loads ("Steven A. Cohen Military Family Clinic at Centerstone – Jack")
 UPDATE organizations SET website_url = 'https://centerstone.org/cohen-military-family-clinic/jacksonville/', last_ok_at = NULL, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE id = 'a0bff4b4-94f4-5604-9d3e-919c036c2b6e' AND website_url = 'https://www.cohenveteransnetwork.org/clinic/jacksonville-fl/';
-
--- Suicide Prevention Color Run and Resource Fair: same site, new page; loads ("3rd Annual Veteran Color Run/Walk for Veteran Suicide Awaren")
-UPDATE programs SET website_url = 'https://veterans.nv.gov/3rd-annual-veteran-color-run-walk-for-veteran-suicide-awareness/', last_ok_at = NULL, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE id = '182253f7-fc88-5592-b159-c4ab666e076a' AND website_url = 'https://veterans.nv.gov/message-from-director-oct25/';
 
 -- Sacred Mountain Retreat Center: new site; loads ("Home - Sacred Mountain Retreat Center")
 UPDATE organizations SET website_url = 'https://sacredmtnretreat.org/', last_ok_at = NULL, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE id = '209d56a8-0ccc-5a50-9f81-5a3858cb82f0' AND website_url = 'https://dakotaathome.sd.gov/search/29f9f394-ef25-5734-bb93-46f2b2769af1';
@@ -301,9 +286,6 @@ UPDATE organizations SET website_url = 'https://highlandparktennisclub.org/clini
 -- Magnolia Equine Assisted Therapies: same site, new page; loads ("Our Mission – Magnolia Equine Assisted Therapies")
 UPDATE organizations SET website_url = 'https://magnoliaequine.org/home/', last_ok_at = NULL, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE id = '14142a8f-2f39-5fe5-94fb-b8d9b2d3d3a4' AND website_url = 'https://magnoliaequine.org/';
 
--- White County Regional Library System / Cornerstone Caregiving: same site, new page; loads ("White County Libraries Calendar - White County Libraries, Ar")
-UPDATE organizations SET website_url = 'https://whitecountylibraries.org/calendar', last_ok_at = NULL, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE id = '0255fbe9-929a-5925-aad9-a8edb747466d' AND website_url = 'https://whitecountylibraries.assabetinteractive.com/calendar/2026-june/event-listing/';
-
 -- Coles County Council on Aging: new site; loads ("Coles County Council on Aging - Home")
 UPDATE organizations SET website_url = 'https://lifespancenter.org/', last_ok_at = NULL, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE id = '9f91db75-a8a7-5c9d-a0ba-13081ef0d2bf' AND website_url = 'https://ilaging.illinois.gov/aboutus/calendar/veterans-coffee-hour.html';
 
@@ -315,9 +297,6 @@ UPDATE organizations SET website_url = 'https://operationrevamp.org/', last_ok_a
 
 -- The War Memorial: same site, new page; loads ("Patriotic and Veterans Events — The War Memorial")
 UPDATE organizations SET website_url = 'https://www.warmemorial.org/veterans', last_ok_at = NULL, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE id = '7a9582fb-b04d-5670-a14f-336330d935ac' AND website_url = 'https://www.warmemorial.org/events/veteranwellness';
-
--- Guitars for Vets / VA Sierra Nevada: same site, new page; loads ("Guitars for Vets - Nevada Department of Veterans Services")
-UPDATE organizations SET website_url = 'https://archive.veterans.nv.gov/guitars-for-vets/', last_ok_at = NULL, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE id = 'a5a41a0a-1467-565c-bf92-de6097fddd84' AND website_url = 'https://veterans.nv.gov/guitars-for-vets/';
 
 -- Baltic Street Into Action / Brooklyn VA partners: same site, new page; loads ("Projects — Baltic Street Into Action")
 UPDATE organizations SET website_url = 'https://balticstreetintoaction.com/projects', last_ok_at = NULL, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE id = 'ea62d0ae-34c2-573a-90bd-143d47e64986' AND website_url = 'https://balticstreetintoaction.com/projects/';
@@ -379,9 +358,6 @@ UPDATE organizations SET website_url = 'https://www.usaracquetball.com/military-
 -- Henry County Parks and Recreation Wheelchair Tennis: same site, new page; loads ("Parks | Henry County, GA - Official Website")
 UPDATE organizations SET website_url = 'https://www.henrycountyga.gov/parks', last_ok_at = NULL, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE id = '0f4a5851-f7e2-515e-bf5c-412d1383c1c9' AND website_url = 'https://www.henrycountyga.gov/Departments/M-R/Parks-Recreation';
 
--- Bellarmine University iCan Bike Camp: same site, new page; loads ("Bellarmine physical therapy program helps children with disa")
-UPDATE organizations SET website_url = 'https://bellarmine.edu/news/article/physical-therapy-program-children-disabilities-ride-bike.php', last_ok_at = NULL, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE id = 'd70e91a5-0281-52d7-92d7-67ee42f5fc30' AND website_url = 'https://www.bellarmine.edu/physical-therapy/';
-
 -- InnerCity Tennis' Kidspeed Stations for Children with ASD: same site, new page; loads ("Youth - InnerCity Tennis")
 UPDATE organizations SET website_url = 'https://innercitytennis.org/youth/', last_ok_at = NULL, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE id = '72162f1a-8dde-5fc5-bc9a-1a5a9ed083a9' AND website_url = 'http://www.innercitytennis.org/youth/community-outreach';
 
@@ -424,9 +400,6 @@ UPDATE programs SET website_url = 'https://www.specialpopstennis.org/', last_ok_
 -- Special Olympics Louisiana, Inc., Tennis Program: new site; loads ("Sports & Competition - Special Olympics Louisiana")
 UPDATE programs SET website_url = 'https://specialolympicsla.org/sports-competition/', last_ok_at = NULL, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE id = '4464f38a-a728-5cb2-bdda-c74fdb0c90d4' AND website_url = 'http://www.laso.org/';
 
--- Maryland Department of Disabilities - Accessible Boating Fund: same site, new page; loads ("Careers and Procurement | Department of Disabilities")
-UPDATE programs SET website_url = 'https://mdod.maryland.gov/about-us/careers-and-procurement', last_ok_at = NULL, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE id = '997ca4c0-2f6a-534b-92f8-ced867d9e178' AND website_url = 'https://mdod.maryland.gov/about/Pages/grants.aspx';
-
 -- Wake Forest Parks, Recreation & Cultural Resources - Dream League Baseball: same site, new page; loads ("Dream League | Town of Wake Forest, NC")
 UPDATE programs SET website_url = 'https://www.wakeforestnc.gov/parks-recreation-cultural-resources/specialized-programs-inclusion/dream-league', last_ok_at = NULL, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE id = '92e0590f-12d3-5b55-b8a3-ab17f8392c8f' AND website_url = 'https://www.wakeforestnc.gov/parks-recreation-cultural-resources/athletics';
 
@@ -453,9 +426,6 @@ UPDATE organizations SET website_url = 'https://greaterpottstowntennis.org/', la
 
 -- Arkansas Hospice: new site; loads ("Committed to Veterans — LifeTouch Health")
 UPDATE organizations SET website_url = 'https://www.lifetouchhealth.org/committed-to-veterans', last_ok_at = NULL, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE id = '25c3528d-c555-5c94-baee-59fba6a35d40' AND website_url = 'https://www.arkansashospice.org/patients-families-caregivers/veterans';
-
--- New Mexico Department of Cultural Affairs / New Mexico Arts: new site; loads ("New Mexico Arts and the Military Initiative")
-UPDATE organizations SET website_url = 'https://nmarts.org/all-programs/arts-the-military/', last_ok_at = NULL, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE id = '1a67b135-1d5c-53af-988c-859cfcaa9fbc' AND website_url = 'https://www.newmexicoculture.org/release/1915/29';
 
 -- Oklahoma Arts Council / Oklahoma Department of Veterans Affairs: same site, new page; loads ("Arts and the Military")
 UPDATE organizations SET website_url = 'https://oklahoma.gov/arts/programs/arts_and_military.html', last_ok_at = NULL, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE id = '16b3be1c-e6d8-58af-9c4a-96b77b15b208' AND website_url = 'https://www.arts.ok.gov/our_programs/Art_and_Military.html';
