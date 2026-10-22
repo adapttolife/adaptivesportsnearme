@@ -9,7 +9,7 @@ Plain language for Fall students. If a step would change the live site, stop.
 - **Live** (locked): https://adaptivesportsnearme.com  
   Map is gated. 1,544 programs. Grants are still the old six-name list. Nothing goes live until Alec says, and not until you have done rigorous testing.
 
-Live stays locked. Do not deploy the production worker (`asnm`). Do not write the live database (`asnm-db`). The public live count must stay 1,544.
+Live stays locked. Do not deploy the production worker (`adaptivesportsnearme`). Do not write the live database (`asnm-db`). The public live count must stay 2,593.
 
 ## Two branches
 
