@@ -13,6 +13,7 @@ import { parseDesc as parseDescText, sportsWords } from "./listing-sport.js";
 import { WHO_LABELS, WHO_ORDER, isWho, whoCode as whoCodeOf, whoSay as whoSayOf, whoLine as whoLineOf, whoChips as whoChipsOf } from "./who.js";
 import { ICONS } from "./icons.js";
 import { PRODUCT_LINE } from "./page-meta.js";
+import { ordinal, dayParts } from "./yearly.js";
 
 const L = window.ListingArt, P = window.Proto;
 const $ = (s, r = document) => r.querySelector(s);
@@ -245,6 +246,9 @@ function normalize(raw) {
   // server (public/app/listing-sport.js), so the lists need no descriptions.
   p.key = raw.key && NAMES[raw.key] && raw.key !== "grant" && raw.key !== "event" ? raw.key : "multi";
   if (Array.isArray(raw.trio) && raw.trio.length >= 2) { p.trio = raw.trio; p.more = Number(raw.more) || 0; }
+  // The organization's own sports and seasons ([{ key, seasons }]), only when it told us.
+  const told = Array.isArray(raw.seasons) ? raw.seasons.filter((s) => s && NAMES[s.key] && s.key !== "multi" && s.key !== "grant" && s.key !== "event") : [];
+  p.seasons = told.length ? told.map((s) => ({ key: s.key, seasons: Array.isArray(s.seasons) ? s.seasons : [] })) : null;
   // Who it says it serves (codes, public/app/who.js); empty when it doesn't say.
   p.who = Array.isArray(raw.who) ? raw.who.filter(isWho) : [];
   p.family = familyOf(p.key);
@@ -275,6 +279,7 @@ function fromApi(r) {
     lastChecked: r.checked || null, listedAt: r.listed || null, confirmed: !!r.verified, teamChecked: !!r.team,
     lat: coords ? coords[0] : null, lng: coords ? coords[1] : null, geo: point ? "address" : (c ? "city" : (r.state ? "state" : null)),
     prog: !!r.prog, orgName: r.org || null, progs: r.progs || 0, who: Array.isArray(r.who) ? r.who : [],
+    seasons: Array.isArray(r.seasons) ? r.seasons : null,
   };
 }
 /* The head starts the data a page needs before this code runs (public/index.html for the
@@ -315,6 +320,8 @@ export function loadDetail(id) {
         lat: o.lat ?? null, lng: o.lng ?? null, geo: o.geoPrecision || null,
         checkedMonth: o.checkedMonth || null, type: o.type || null, detail: true,
       });
+      if (o.history && typeof o.history === "object") item.history = { listedSince: o.history.listedSince || null, updatedByOrganization: o.history.updatedByOrganization || null };
+      if (Array.isArray(o.seasons) && o.seasons.length && !item.seasons) item.seasons = o.seasons.filter((s) => s && NAMES[s.key] && s.key !== "multi");
     }
     return item || null;
   }, (e) => { const err = new Error(String(e && e.message || e)); err.loadFailed = true; throw err; });
@@ -323,7 +330,9 @@ function grantFromApi(g) {
   return { ...g, amount: g.amountDisplay || null, deadline: g.deadlineDisplay || null, url: g.applicationUrl || g.sourceUrl || null, open: g.isOpen ? 1 : 0 };
 }
 function eventFromApi(e) {
-  return { id: e.id, title: e.title, desc: e.description, sportKey: e.sport_key || null, venue: e.venue, city: e.city, state: e.state, url: e.url, start: e.starts_at, end: e.ends_at, allDay: e.all_day === 1 };
+  const s = e.series && e.series.slug ? { slug: String(e.series.slug), name: e.series.name || "", firstYear: Number(e.series.first_year) || null } : null;
+  return { id: e.id, title: e.title, desc: e.description, sportKey: e.sport_key || null, venue: e.venue, city: e.city, state: e.state, url: e.url, start: e.starts_at, end: e.ends_at, allDay: e.all_day === 1,
+    programId: e.program_id || null, recapUrl: goodUrl(e.recap_url), series: s };
 }
 
 /** Loads programs, grants, events, state shapes and sports once. */
@@ -597,8 +606,13 @@ const byTrust = (a, b) => (b.verified - a.verified) || a.name.localeCompare(b.na
 
 /** Every sport a listing offers: its own, plus the ones a multi-sport listing names (its trio).
     A sport's lists and counts include both, so a multi-sport place that runs skiing shows under Skiing. */
-export function sportsOf(p) { return p.trio ? [p.key, ...p.trio.filter((k) => k !== p.key)] : [p.key]; }
-export function offers(p, key) { return p.key === key || (!!p.trio && p.trio.includes(key)); }
+export function sportsOf(p) {
+  const out = p.trio ? [p.key, ...p.trio.filter((k) => k !== p.key)] : [p.key];
+  // An organization that told us its sports is found under every one of them, past the three drawn.
+  if (p.seasons) for (const s of p.seasons) if (!out.includes(s.key)) out.push(s.key);
+  return out;
+}
+export function offers(p, key) { return p.key === key || (!!p.trio && p.trio.includes(key)) || (!!p.seasons && p.seasons.some((s) => s.key === key)); }
 
 /** How far "near" reaches, in miles: the choices on the results page. 25 is the default. */
 export const RADII = [25, 50, 100, 250];
@@ -892,7 +906,13 @@ export function eventCard(e) {
   const when = d ? `${["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][d.getDay()]}, ${MON[d.getMonth()]} ${d.getDate()}${/T\d\d:\d\d/.test(e.start || "") ? " · " + d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }) : ""}` : "";
   const place = e.city && e.state ? `${e.city}, ${e.state}` : e.state ? stateName(e.state) : "";
   const url = goodUrl(e.url);
-  return `<article class="ecard"><div class="ec-date num" aria-hidden="true"><span>${d ? MON[d.getMonth()] : ""}</span><b>${d ? d.getDate() : ""}</b></div><div class="ec-body"><h3 class="ec-name">${esc(e.title || e.name || "")}</h3><p class="meta">${esc(sportName(key))}${place ? " · " + esc(place) : ""}</p>${when ? `<p class="ec-when num">${esc(when)}</p>` : ""}${url ? `<a class="tlink" href="${esc(url)}" target="_blank" rel="noopener">Event website${icon("external-link", 16)}</a>` : ""}</div></article>`;
+  // A year of a yearly event links to its page, and says which year it is when we can count it.
+  const series = e.series && e.series.slug ? e.series : null;
+  const startDay = dayParts(e.start || e.date);
+  const nth = series && series.firstYear && startDay ? startDay.y - series.firstYear + 1 : 0;
+  const name = esc(e.title || e.name || "");
+  const title = series ? `<a href="/events/${esc(encodeURIComponent(series.slug))}">${name}</a>` : name;
+  return `<article class="ecard${series ? " is-yearly" : ""}"><div class="ec-date num" aria-hidden="true"><span>${d ? MON[d.getMonth()] : ""}</span><b>${d ? d.getDate() : ""}</b></div><div class="ec-body"><h3 class="ec-name">${title}</h3>${nth > 0 ? `<p class="ec-nth">${esc(ordinal(nth))} annual</p>` : ""}<p class="meta">${esc(sportName(key))}${place ? " · " + esc(place) : ""}</p>${when ? `<p class="ec-when num">${esc(when)}</p>` : ""}${url ? `<a class="tlink" href="${esc(url)}" target="_blank" rel="noopener">Event website${icon("external-link", 16)}</a>` : ""}</div></article>`;
 }
 
 /** Section heading. seeAll: { label, href } */
@@ -1333,7 +1353,7 @@ export async function openSportsSheet(opts) {
 const ROUTES = [
   ["/", "home"], ["/near/:place", "near"], ["/sports", "sports"], ["/sports/:key", "sport"],
   ["/states", "states"], ["/states/:st", "state"], ["/organizations", "organizations"], ["/organizations/:id", "program"], ["/programs", "programs"], ["/programs/:id", "program-detail"],
-  ["/grants", "grants"], ["/grants/:id", "grant"], ["/events", "events"],
+  ["/grants", "grants"], ["/grants/:id", "grant"], ["/events", "events"], ["/events/:slug", "event-series"],
   ["/add/program", "forms"], ["/add/organization", "forms"], ["/add/event", "forms"], ["/update/:id", "forms"],
   ["/manage", "manage"], ["/manage/organizations", "manage"], ["/manage/organizations/:id/edit", "manage"], ["/manage/organizations/:id/programs/new", "manage"], ["/manage/organizations/:id/events/new", "manage"], ["/manage/organizations/:id/programs", "manage"], ["/manage/organizations/:id/events", "manage"], ["/manage/programs/:id", "manage"], ["/manage/events/:id", "manage"], ["/manage/organizations/:id", "manage"],
   ["/admin", "admin"], ["/admin/:kind", "admin"], ["/admin/:kind/:id", "admin"],
@@ -1408,7 +1428,7 @@ function defaultActive(name, path, params) {
   if (name === "sport") return "sport:" + params.key;
   if (name === "states" || name === "state") return "states";
   if (name === "grants" || name === "grant") return "grants";
-  if (name === "events") return "events";
+  if (name === "events" || name === "event-series") return "events";
   if (path === "/add/program") return "add-program";
   if (path === "/add/organization") return "add-organization";
   if (path === "/add/event") return "add-event";

@@ -14,6 +14,7 @@
 import * as A from "../app.js";
 import { site, PAGES, organizationMeta } from "../page-meta.js";
 import { guideFor } from "../sport-guides.js";
+import { seasonsText, seriesState, dateRange, ordinal } from "../yearly.js";
 
 const L = window.ListingArt;
 // Group scenes never draw under 56px (3.2), so they get no avatar in a chip.
@@ -116,11 +117,22 @@ function sportChips(text) {
   }
   return out.length ? `<ul class="pg-chips">${out.join("")}</ul>` : "";
 }
-function about(p) {
+/** The organization's own sports and seasons: "Skiing · Winter", "Tennis · Year-round". */
+function seasonChips(list) {
+  const out = list.map(({ key, seasons }) => {
+    const k = A.picGroup(key);
+    const withAv = k && k !== "multi" && !GROUP_SCENE.has(k);
+    const when = seasonsText(seasons);
+    return `<li class="pg-chip${withAv ? " has-av" : ""}">${withAv ? A.avatar(k, 40) : ""}<span>${A.esc(A.sportName(key))}${when ? ` · ${A.esc(when)}` : ""}</span></li>`;
+  });
+  return out.length ? `<ul class="pg-chips">${out.join("")}</ul>` : "";
+}
+function about(p, { listed = false } = {}) {
   const { sports, served } = A.parseDesc(p);
   let inner = "";
   if (served) inner += `<h3 class="pg-h3">Who it's for</h3><p>${A.esc(upperFirst(served.replace(/\s+/g, " ")))}</p>`;
-  const chips = sports ? sportChips(sports) : "";
+  // When its programs are listed below (each with its seasons), the chips would say it twice.
+  const chips = listed ? "" : p.seasons && p.seasons.length ? seasonChips(p.seasons) : sports ? sportChips(sports) : "";
   if (chips) inner += `<h3 class="pg-h3">Programs</h3>${chips}`;
   if (!inner && p.desc && !/Sports and activities:|Athletes served:/i.test(p.desc)) inner = `<p>${A.esc(p.desc)}</p>`;
   if (!inner) inner = `<p class="pg-quiet">We don't have a description for this organization yet.${p.website ? " Its website has the details." : ""}</p>`;
@@ -302,6 +314,54 @@ function shareHtml(p) {
 <p class="pg-sh-foot">Sized for an Instagram post. The link opens this listing.</p></div>`;
 }
 
+/* ---------- its yearly events: one row each, to the event's own page ---------- */
+function yearlyEvents(items, now) {
+  const rows = items.filter((s) => s && s.slug && s.name).map((s) => {
+    const st = seriesState(s, s.editions || [], now);
+    const when = st.next
+      ? `${st.nth ? ordinal(st.nth) + " annual · " : ""}${dateRange(st.next.starts_at, st.next.ends_at)}`
+      : `${st.usual ? (/^(early|mid|late) /.test(st.usual) ? "Usually " : "Usually in ") + st.usual + ". " : ""}Dates not announced yet`;
+    return `<a class="prow prow--c" href="/events/${A.esc(encodeURIComponent(s.slug))}"><div class="pr-body"><h3 class="pr-name">${A.esc(s.name)}</h3><p class="meta num">${A.esc(when)}</p></div></a>`;
+  }).join("");
+  return rows ? `<section class="pg-sec" aria-labelledby="pg-yearly"><h2 id="pg-yearly">Yearly events</h2><div class="rows">${rows}</div></section>` : "";
+}
+
+/* ---------- its programs, each with when it runs ("Skiing · Winter") ---------- */
+function programsList(items) {
+  if (!items.length) return "";
+  const rows = items.map((item) => {
+    const own = Array.isArray(item.seasons) && item.seasons[0] ? seasonsText(item.seasons[0].seasons) : "";
+    const meta = [item.sportLabel || (item.sport ? A.sportName(item.sport) : "Adaptive sports"), own].filter(Boolean).join(" · ");
+    return `<a class="prow prow--c" href="/programs/${A.esc(item.id)}"><div class="pr-body"><h3 class="pr-name">${A.esc(item.name)}</h3><p class="meta">${A.esc(meta)}</p></div></a>`;
+  }).join("");
+  return `<section class="pg-sec" aria-labelledby="pg-programs"><h2 id="pg-programs">Programs</h2><div class="rows">${rows}</div></section>`;
+}
+
+/* ---------- History: when it joined, when it last updated, the years of its events ----------
+   Nobody writes it: the dates are the record (docs/specs/programs-that-come-back.md). */
+const MONTH_NAMES = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+/** "2025-03" -> "March 2025". */
+export function monthYear(ym) {
+  const m = /^(\d{4})-(\d{2})/.exec(String(ym || ""));
+  return m && +m[2] >= 1 && +m[2] <= 12 ? `${MONTH_NAMES[+m[2] - 1]} ${m[1]}` : "";
+}
+function history(p, series, now) {
+  const h = p.history || {};
+  const lines = [];
+  const since = monthYear(h.listedSince);
+  if (since) lines.push(`<li>On Adaptive Sports Near Me since <span class="num">${A.esc(since)}</span></li>`);
+  const updated = monthYear(h.updatedByOrganization);
+  if (updated) lines.push(`<li>Last updated by the organization, <span class="num">${A.esc(updated)}</span></li>`);
+  for (const s of series) {
+    const st = seriesState(s, s.editions || [], now);
+    const every = st.usualMonth ? `every ${MONTH_NAMES[st.usualMonth - 1]}` : "every year";
+    const years = [...st.past].reverse().map((e) => String(e.starts_at).slice(0, 4));
+    const tail = `${every}${st.since ? ` since ${st.since}` : ""}.${years.length ? ` Past years: ${[...new Set(years)].join(", ")}.` : ""}`;
+    lines.push(`<li><a href="/events/${A.esc(encodeURIComponent(s.slug))}">${A.esc(s.name)}</a>: <span class="num">${A.esc(tail)}</span></li>`);
+  }
+  return lines.length ? `<section class="pg-sec pg-hist" aria-labelledby="pg-hist"><h2 id="pg-hist">History</h2><ul class="pg-hist-list">${lines.join("")}</ul></section>` : "";
+}
+
 /* ---------- render ---------- */
 const listingNotFound = () => ({
   title: site(PAGES.listingNotFound.title),
@@ -328,8 +388,21 @@ export async function render(ctx) {
   try {
     const response = await fetch(`/api/organizations/${encodeURIComponent(p.id)}/programs`);
     const body = response.ok ? await response.json() : null;
-    if (body?.items?.length) linkedPrograms = `<section class="pg-sec"><h2>Programs</h2><div class="rows">${body.items.map((item) => `<a class="prow" href="/programs/${A.esc(item.id)}"><div class="pr-body"><h3 class="pr-name">${A.esc(item.name)}</h3><p class="meta">${A.esc(item.sportLabel || "Adaptive sports")}</p></div></a>`).join("")}</div></section>`;
+    if (body?.items?.length) linkedPrograms = programsList(body.items.filter((item) => item.kind !== "event"));
   } catch (_) {}
+
+  // Its yearly events (docs/specs/programs-that-come-back.md); none, or a server without them yet, shows nothing.
+  let yearly = "", series = [];
+  const now = ctx.now || new Date();
+  if (!p.prog) {
+    try {
+      const response = await fetch(`/api/event-series?org=${encodeURIComponent(p.id)}`);
+      const body = response.ok ? await response.json() : null;
+      series = Array.isArray(body?.items) ? body.items.filter((s) => s && s.slug && s.name) : [];
+      if (series.length) yearly = yearlyEvents(series, now);
+    } catch (_) {}
+  }
+  const past = history(p, series, now);
 
   if (p.meet === undefined) { const m = meetFrom(p); p.meet = m ? m.meet : null; p.also = m ? m.also : []; }
 
@@ -355,12 +428,14 @@ export async function render(ctx) {
 ${hero(p)}
 <div class="pg-head"><h1 tabindex="-1">${A.esc(p.name)}${A.vcheck(p)}</h1><p class="pg-meta">${meta}</p>${freshLine(p)}</div>
 ${actionRow(p)}
-${p.meet ? meetup(p) : about(p)}
+${p.meet ? meetup(p) : about(p, { listed: !!linkedPrograms })}
 ${facts(p)}
 ${wherePlay(p)}
 ${sportIntro(p)}
 ${linkedPrograms}
+${yearly}
 ${links(p, isManager)}
+${past}
 ${more(p, D)}
 </div>${bookBox(p)}</div>`;
 

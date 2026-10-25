@@ -20,6 +20,8 @@ import { notifyIntake } from './intake.js';
 //   GET  /api/orgs/:id         -> one org with source provenance
 //   GET  /api/stats            -> counts by sport/state
 //   GET  /api/events           -> upcoming public events (json)
+//   GET  /api/event-series     -> yearly events with every year's dates (?org=<id> for one host)
+//   GET  /api/event-series/:slug -> one yearly event (docs/specs/programs-that-come-back.md)
 //   GET  /events.xml           -> the same feed as RSS 2.0
 //   GET  /events.ics           -> the same feed as an iCalendar subscription
 //   POST /api/profile          -> create/update a no-password profile (signed cookie)
@@ -32,7 +34,9 @@ import { notifyIntake } from './intake.js';
 // All secrets stay server-side (Worker secrets). Bot defence: honeypot + required Turnstile.
 
 import { directorySnapshot, listingsSnapshot, listActualPrograms, getProgram, getOrg, stats, listGrants, getGrant } from "./data.js";
-import { listEvents, eventsToRss, eventsToIcs } from "./events.js";
+import { listEvents, eventsToRss, eventsToIcs, listSeries, getSeries } from "./events.js";
+import { parseSportsAnswer, parseYearlyAnswer } from "./listing-answers.js";
+import { logActivity, sportsSummary, yearlySummary } from "./offerings.js";
 import { handleAdmin } from "./admin.js";
 import { runLane } from "./pipeline.js";
 import { json, text } from "./http.js";
@@ -52,6 +56,7 @@ import {
 import {
   acceptAdminQueueItem, clearAdminCookie, consumeAdminLoginToken, createAdminSession, createAdminItem, getAdminItem,
   getAdminQueueItem, isAdminEmail, issueAdminLoginToken, listAdminItems, listAdminQueue, readAdminSession, saveAdminItem, serializeAdminCookie,
+  adminOrganizationActivity, addAdminNote,
 } from "./admin-access.js";
 import {
   listPosts, getPostBySlug, blogIndexTemplate, blogPostTemplate, blogFallbackTemplate, blogNotFoundTemplate,
@@ -146,6 +151,8 @@ const application = {
     }
     const adminItem = url.pathname.match(/^\/api\/admin-data\/(organizations|programs|events|grants)(?:\/([0-9a-f-]{36}))?$/i);
     if (adminItem) return handleAdminData(request, env, url, adminItem[1].toLowerCase(), adminItem[2]);
+    const adminActivity = url.pathname.match(/^\/api\/admin-data\/organizations\/([0-9a-f-]{36})\/activity$/i);
+    if (adminActivity) return handleAdminActivity(request, env, adminActivity[1].toLowerCase());
     const adminQueue = url.pathname.match(/^\/api\/admin-data\/queue(?:\/(\d+))?$/i);
     if (adminQueue) return handleAdminQueue(request, env, adminQueue[1]);
     const managedOrganization = url.pathname.match(/^\/api\/organizations\/([0-9a-f-]{36})\/manage$/i);
@@ -221,6 +228,14 @@ const application = {
         }
         if (url.pathname === "/api/events") {
           return json({ ok: true, ...(await listEvents(env.DB, url.searchParams)) }, 200, API_CACHE);
+        }
+        if (url.pathname === "/api/event-series") {
+          return json({ ok: true, ...(await listSeries(env.DB, url.searchParams)) }, 200, API_CACHE);
+        }
+        const seriesApi = url.pathname.match(/^\/api\/event-series\/([a-z0-9-]{1,80})$/);
+        if (seriesApi) {
+          const record = await getSeries(env.DB, seriesApi[1]);
+          return record ? json({ ok: true, series: record }, 200, API_CACHE) : json({ ok: false, error: "Not found" }, 404);
         }
         if (url.pathname === "/events.xml") {
           const { items } = await listEvents(env.DB, url.searchParams);
@@ -430,8 +445,15 @@ async function handleSubmitProgram(request, env, ctx, opts = {}) {
   const eventTime = str(data.et).slice(0, 40);
   const siteUrl = str(data.url).slice(0, 300);
 
+  // An organization confirming its listing can also tell us every sport it runs,
+  // with seasons, and the events it holds every year (docs/specs/programs-that-come-back.md).
+  // A person applies them from the review queue; nothing here writes the listing.
+  const confirming = !!listingId && relation === "run";
+  const sportsAnswer = confirming ? parseSportsAnswer(data.sports) : [];
+  const yearlyAnswer = confirming ? parseYearlyAnswer(data.yearly) : [];
+
   if (!program) return json({ ok: false, error: isEvent ? "Please add the event name." : "Please add the organization's name." }, 422);
-  if (listingId && !notes) return json({ ok: false, error: "Please tell us what should change." }, 422);
+  if (listingId && !notes && !sportsAnswer.length && !yearlyAnswer.length) return json({ ok: false, error: "Please tell us what should change." }, 422);
   if (isEvent && !/^\d{4}-\d{2}-\d{2}$/.test(eventDate)) return json({ ok: false, error: "Please add the date of the event." }, 422);
   // Email: a fix to a listing or a suggested event may come without one (Alec,
   // 2026-10-14: "No email required"); a person reviews every one either way.
@@ -451,7 +473,9 @@ async function handleSubmitProgram(request, env, ctx, opts = {}) {
   const answers = isEvent
     ? { event: program, date: eventDate, end: eventEnd, time: eventTime, city, state: stateRegion, url: siteUrl, org, sport, notes }
     : listingId
-      ? { program, update_of: listingId, relation, notes }
+      ? { program, update_of: listingId, relation, notes,
+        ...(sportsAnswer.length ? { sports: Object.fromEntries(sportsAnswer.map((x) => [x.key, x.seasons])) } : {}),
+        ...(yearlyAnswer.length ? { yearly: yearlyAnswer } : {}) }
       : isOrganization
         ? { organization: program, sport, city, state: stateRegion, website: siteUrl, notes }
         : { program, org, sport, city, state: stateRegion, website: siteUrl, notes };
@@ -520,6 +544,22 @@ async function handleSubmitProgram(request, env, ctx, opts = {}) {
     // Fixed categories only: raw errors can carry the bound email.
     console.error("Program submission failed closed", { stage, reason });
     return json(env.ENV_NAME === "staging" ? { ...programUnavailable, diagnostic: { stage, reason } } : programUnavailable, 502);
+  }
+
+  // The organization's team-only history gets one line (docs/specs/programs-that-come-back.md).
+  // Best effort: the submission is already captured, so a failure here never un-saves it.
+  if (fresh && listingId && program !== `listing ${listingId}`) {   // an organization we found by that id
+    try {
+      const parts = [];
+      if (sportsAnswer.length) parts.push(`sports: ${sportsSummary(sportsAnswer)}`);
+      if (yearlyAnswer.length) parts.push(`yearly events: ${yearlySummary(yearlyAnswer)}`);
+      if (notes) parts.push(`note: ${notes.slice(0, 160)}`);
+      const who = relation === "run" ? "the organization" : relation === "attend" ? "someone who goes there" : "someone";
+      const summary = confirming ? `Confirmation received from the organization${parts.length ? `. ${parts.join("; ")}` : ""}` : `Fix suggested by ${who}: ${notes.slice(0, 200)}`;
+      await logActivity(env.DB, listingId, confirming ? "confirmation" : "fix", summary, { actor: confirming ? "organization" : "visitor", ref: `intake ${intakeId}` });
+    } catch (error) {
+      console.error("activity log failed", { reason: String(error?.message || "").slice(0, 80) });
+    }
   }
 
   // Captured. Correspondence never holds the response and never un-saves it.
@@ -802,7 +842,7 @@ async function handleManagedOrganizationItems(request, env, organizationId, kind
     return json({ ok: false, error: "Method not allowed" }, 405, ORGANIZATION_AUTH_CACHE);
   } catch (err) {
     const reason = err instanceof Error ? err.message : "";
-    if (["name-required", "title-required", "start-invalid", "end-invalid", "website-invalid"].includes(reason)) {
+    if (["name-required", "title-required", "start-invalid", "end-invalid", "website-invalid", "year-invalid", "sports-invalid"].includes(reason)) {
       return json({ ok: false, error: "Please check the details and try again." }, 422, ORGANIZATION_AUTH_CACHE);
     }
     console.error("managed organization item failed", { kind, reason: reason || "unknown" });
@@ -884,18 +924,47 @@ async function handleAdminData(request, env, url, kind, id) {
     if (id && request.method === "PATCH") {
       const data = await readBody(request);
       if (data === null) return json({ ok: false, error: "Could not read your changes." }, 400, ADMIN_AUTH_CACHE);
-      const item = await saveAdminItem(env.DB, kind, id, data);
+      const item = await saveAdminItem(env.DB, kind, id, data, session.email);
       return item === false ? json({ ok: false, error: "Not found." }, 404, ADMIN_AUTH_CACHE)
         : item ? json({ ok: true, item }, 200, ADMIN_AUTH_CACHE) : json({ ok: false, error: "Not found." }, 404, ADMIN_AUTH_CACHE);
     }
     return json({ ok: false, error: "Method not allowed" }, 405, ADMIN_AUTH_CACHE);
   } catch (err) {
     const reason = err instanceof Error ? err.message : "";
-    if (["name-required", "organization-required", "url-invalid", "email-invalid", "sports-invalid", "start-invalid", "end-invalid"].includes(reason)) {
+    if (["name-required", "organization-required", "url-invalid", "email-invalid", "sports-invalid", "start-invalid", "end-invalid", "slug-invalid", "month-invalid", "year-invalid", "status-invalid"].includes(reason)) {
       return json({ ok: false, error: "Please check the item details and try again." }, 422, ADMIN_AUTH_CACHE);
+    }
+    if (["kind-invalid", "listing-invalid"].includes(reason)) {
+      return json({ ok: false, error: "Please check the item details and try again." }, 422, ADMIN_AUTH_CACHE);
+    }
+    if (/UNIQUE constraint failed: programs\.slug/i.test(reason)) {
+      return json({ ok: false, error: "Another yearly event already uses that web address (slug)." }, 422, ADMIN_AUTH_CACHE);
     }
     console.error("admin data request failed", { kind, operation: request.method, reason: reason || "unknown" });
     return json({ ok: false, error: "Could not save admin changes right now." }, 503, ADMIN_AUTH_CACHE);
+  }
+}
+
+// The team-only history of an organization (docs/specs/programs-that-come-back.md), and adding a note.
+async function handleAdminActivity(request, env, id) {
+  const session = await authorizedAdminSession(request, env);
+  if (!session) return json({ ok: false, error: "Sign in to access the admin dashboard." }, 401, ADMIN_AUTH_CACHE);
+  try {
+    if (request.method === "GET") {
+      const items = await adminOrganizationActivity(env.DB, id);
+      return items ? json({ ok: true, items }, 200, ADMIN_AUTH_CACHE) : json({ ok: false, error: "Not found." }, 404, ADMIN_AUTH_CACHE);
+    }
+    if (request.method === "POST") {
+      const data = await readBody(request);
+      const items = await addAdminNote(env.DB, id, data?.note, session.email);
+      return items ? json({ ok: true, items }, 201, ADMIN_AUTH_CACHE) : json({ ok: false, error: "Not found." }, 404, ADMIN_AUTH_CACHE);
+    }
+    return json({ ok: false, error: "Method not allowed" }, 405, ADMIN_AUTH_CACHE);
+  } catch (err) {
+    const reason = err instanceof Error ? err.message : "";
+    if (reason === "note-required") return json({ ok: false, error: "Write the note first." }, 422, ADMIN_AUTH_CACHE);
+    console.error("admin activity request failed", { operation: request.method, reason: reason || "unknown" });
+    return json({ ok: false, error: "Could not load this organization's activity right now." }, 503, ADMIN_AUTH_CACHE);
   }
 }
 
@@ -911,13 +980,14 @@ async function handleAdminQueue(request, env, id) {
     if (id && request.method === "POST") {
       const data = await readBody(request);
       if (!data || data.action !== "accept") return json({ ok: false, error: "Unknown queue action." }, 422, ADMIN_AUTH_CACHE);
-      const accepted = await acceptAdminQueueItem(env.DB, id);
+      const accepted = await acceptAdminQueueItem(env.DB, id, session.email);
       return accepted ? json({ ok: true, item: accepted }, 200, ADMIN_AUTH_CACHE) : json({ ok: false, error: "Queue item not found or already handled." }, 404, ADMIN_AUTH_CACHE);
     }
     return json({ ok: false, error: "Method not allowed" }, 405, ADMIN_AUTH_CACHE);
   } catch (err) {
     const reason = err instanceof Error ? err.message : "";
-    if (["draft-missing", "start-invalid"].includes(reason)) return json({ ok: false, error: "This submission needs an edit before it can be accepted." }, 422, ADMIN_AUTH_CACHE);
+    if (["draft-missing", "start-invalid", "organization-missing"].includes(reason)) return json({ ok: false, error: "This submission needs an edit before it can be accepted." }, 422, ADMIN_AUTH_CACHE);
+    if (/no such (column|table)/i.test(reason)) return json({ ok: false, error: "Run database migration 0015 before applying programs and yearly events." }, 422, ADMIN_AUTH_CACHE);
     console.error("admin queue request failed", { operation: request.method, reason: reason || "unknown" });
     return json({ ok: false, error: "Could not update this queue item right now." }, 503, ADMIN_AUTH_CACHE);
   }

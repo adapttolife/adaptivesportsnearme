@@ -80,3 +80,55 @@
 .v-events .ev-add {
 	margin-top: 24px;
 }
+
+/* No dated events, but yearly ones below: one quiet line, not the big empty panel. */
+.v-events .ev-none {
+	margin-top: 24px;
+	padding-bottom: 24px;
+	border-bottom: 1px solid var(--line);
+}
+
+.v-events .ev-none p {
+	font-size: 17px;
+	color: var(--graphite);
+}
+
+.v-events .ev-none .btns {
+	margin-top: 16px;
+}
+
+/* Yearly events: the same cards, the month tile Sand while the dates aren't out. */
+.v-events .ev-yearly {
+	margin-top: 40px;
+}
+
+.v-events .ev-yearly h2 {
+	padding-bottom: 8px;
+	border-bottom: 1px solid var(--line);
+}
+
+.v-events .ev-ysub {
+	margin-top: 8px;
+	font-size: 16px;
+	color: var(--graphite);
+}
+
+.v-events .ycard .ec-date.is-usual {
+	background: var(--sand);
+	color: var(--ink);
+}
+
+.v-events .ycard .ye-ic {
+	display: grid;
+	place-items: center;
+	margin-top: 4px;
+}
+
+.v-events .ycard .ec-name a {
+	font-size: 18px;
+}
+
+.v-events .ye-wait {
+	font-size: 15px;
+	color: var(--muted);
+}

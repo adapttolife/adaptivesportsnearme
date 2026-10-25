@@ -411,3 +411,22 @@
 		border: 1px solid CanvasText;
 	}
 }
+
+/* Confirm your listing, "I'm with this organization": your sports, then yearly events. */
+.v-forms .fm-run[hidden] {
+	display: none;
+}
+
+.v-forms .fm-run > .fm-set,
+.v-forms .fm-run + .fm-set {
+	margin-top: 16px;
+}
+
+.v-forms .fm-sports .sck,
+.v-forms .fm-yearly .yr {
+	margin-top: 16px;
+}
+
+.v-forms .fm-yearly .yr-row:first-child {
+	margin-top: 0;
+}

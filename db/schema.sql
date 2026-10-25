@@ -49,7 +49,19 @@ CREATE TABLE IF NOT EXISTS events (
   source TEXT NOT NULL DEFAULT 'admin',
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL
+, program_id TEXT, recap_url TEXT);
+CREATE INDEX IF NOT EXISTS events_program_idx ON events (program_id, starts_at);
+
+CREATE TABLE IF NOT EXISTS organization_activity (
+  id              TEXT PRIMARY KEY,
+  organization_id TEXT NOT NULL,
+  kind            TEXT NOT NULL CHECK (kind IN ('confirmation', 'fix', 'applied', 'self_edit', 'admin_edit', 'note')),
+  summary         TEXT NOT NULL,
+  actor           TEXT,
+  ref             TEXT,
+  created_at      TEXT NOT NULL
 );
+CREATE INDEX IF NOT EXISTS organization_activity_org_idx ON organization_activity (organization_id, created_at);
 
 CREATE TABLE IF NOT EXISTS grants (
   id                   TEXT PRIMARY KEY,          -- uuid, same as organizations.id
@@ -215,7 +227,7 @@ CREATE TABLE IF NOT EXISTS programs (
   last_ok_at TEXT,
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL
-, address TEXT, address_publicity_consent INTEGER NOT NULL DEFAULT 0 CHECK (address_publicity_consent IN (0, 1)));
+, address TEXT, address_publicity_consent INTEGER NOT NULL DEFAULT 0 CHECK (address_publicity_consent IN (0, 1)), kind TEXT NOT NULL DEFAULT 'program' CHECK (kind IN ('program', 'event')), seasons_json TEXT, usual_month INTEGER CHECK (usual_month IS NULL OR usual_month BETWEEN 1 AND 12), first_year INTEGER, slug TEXT, listing TEXT NOT NULL DEFAULT 'own' CHECK (listing IN ('own', 'with_org')));
 
 CREATE TABLE IF NOT EXISTS review_queue (
   item_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -289,5 +301,7 @@ CREATE INDEX IF NOT EXISTS programs_sport_idx ON programs (sport_key);
 CREATE INDEX IF NOT EXISTS programs_state_idx ON programs (state);
 
 CREATE INDEX IF NOT EXISTS programs_status_idx ON programs (status, is_public);
+CREATE UNIQUE INDEX IF NOT EXISTS programs_slug_idx ON programs (slug) WHERE slug IS NOT NULL;
+CREATE INDEX IF NOT EXISTS programs_kind_idx ON programs (organization_id, kind, listing);
 
 CREATE INDEX IF NOT EXISTS review_queue_status_idx ON review_queue (status, created_at);

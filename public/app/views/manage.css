@@ -211,3 +211,55 @@
 		grid-template-columns: 1fr 1fr;
 	}
 }
+
+/* Sports and seasons (public/app/sport-checklist.js): inside Program information. */
+.v-manage .om-card .om-sports {
+	margin-bottom: 20px;
+}
+
+.v-manage .om-card .om-sports > legend {
+	font-size: 17px;
+}
+
+.v-manage .om-card .om-sports .sck {
+	margin-top: 12px;
+}
+
+.v-manage .om-card .sck-row,
+.v-manage .om-card .sck-row + .sck-row {
+	margin: 12px 0 0;
+	padding: 12px 0 0;
+	border-top: 1px solid var(--line-strong);
+}
+
+.v-manage .om-card .sck-row > legend {
+	font-size: 16px;
+}
+
+.v-manage .om-card .sck-chip input,
+.v-manage .om-card .sck-sport input {
+	background: none;
+}
+
+.v-manage .om-first-year[hidden] {
+	display: none;
+}
+
+.v-manage .om-card .om-first-year {
+	margin-top: 12px;
+}
+
+.v-manage .om-card .om-first-year input {
+	max-width: 160px;
+}
+
+/* A program's seasons, in the program form. */
+.v-manage .om-card .sck-row.sck-solo {
+	margin: 0 0 16px;
+	padding: 0;
+	border-top: 0;
+}
+
+.v-manage .om-yearly-link {
+	margin-top: 4px;
+}

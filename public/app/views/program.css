@@ -887,3 +887,39 @@
 	place-items: center;
 	color: var(--graphite);
 }
+
+/* History: plain lines, the dates are the record. */
+.v-program .pg-hist-list {
+	margin: 12px 0 0;
+	padding: 0;
+	list-style: none;
+}
+
+.v-program .pg-hist-list li {
+	position: relative;
+	padding: 10px 0 10px 20px;
+	border-bottom: 1px solid var(--line);
+	color: var(--graphite);
+	line-height: 1.45;
+}
+
+.v-program .pg-hist-list li:last-child {
+	border-bottom: 0;
+}
+
+.v-program .pg-hist-list li::before {
+	content: "";
+	position: absolute;
+	left: 2px;
+	top: 19px;
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+	background: var(--line-strong);
+}
+
+.v-program .pg-hist-list a {
+	color: var(--ink);
+	font-weight: 700;
+	padding-block: 0;
+}

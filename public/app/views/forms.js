@@ -8,6 +8,7 @@
    write back to confirm. */
 import * as A from "../app.js";
 import { site, PAGES } from "../page-meta.js";
+import { checklistHtml, readChecklist, sportsValue, wireChecklist, yearlyHtml, readYearly, yearlyValue, wireYearly } from "../sport-checklist.js";
 
 let N = 0;
 const id = (s) => `fm-${s}-${++N}`;
@@ -116,6 +117,18 @@ const REL = {
   fix: { h1: "Suggest a fix", intro: "What's wrong or missing? A person on our team reads every note." },
 };
 const EMAIL_HINT = { run: "We write back to confirm. Never shown.", fix: "Only if you'd like us to write back. Never shown." };
+const NOTES_LABEL = { run: "Anything else to fix? (optional)", fix: "What should we fix?" };
+
+/* "I'm with this organization": your sports and seasons, and the events you hold every year
+   (docs/specs/programs-that-come-back.md). Posted as two fields, sports and yearly, each one
+   JSON string; mount() writes them from the boxes. Organizations only: a program's sports are its own. */
+function runSets(D, p, run) {
+  const keys = D.sports.map((s) => s.key).filter((k) => k !== "multi" && k !== "grant" && k !== "event");
+  const chosen = p.seasons && p.seasons.length ? p.seasons : A.sportsOf(p).filter((k) => keys.includes(k)).map((key) => ({ key, seasons: [] }));
+  const sports = `<fieldset class="fm-set fm-sports"><legend>Your sports</legend><p class="hint">Tick every sport you run, then its seasons. We've ticked the ones your listing shows.</p>${checklistHtml({ keys, nameOf: A.sportName, chosen, esc: A.esc })}</fieldset>`;
+  const yearly = `<fieldset class="fm-set fm-yearly"><legend>Yearly events</legend><p class="hint">Do you hold an event every year, like a tournament or a ski day? Each one gets its own page that stays up between years.</p>${yearlyHtml(A.esc)}</fieldset>`;
+  return `<div class="fm-run" data-run${run ? "" : " hidden"}>${sports}${yearly}<input type="hidden" name="sports" value=""><input type="hidden" name="yearly" value=""></div>`;
+}
 
 function update(D, pid, relRaw) {
   const p = D.byId.get(pid);
@@ -133,12 +146,17 @@ function update(D, pid, relRaw) {
   const opts = [["run", "I'm with this organization"], ["attend", "I've been"], ["other", "Something else"]];
   const radios = `<fieldset class="fm-set fm-rel"><legend class="fm-q">How do you know this organization? <span class="fm-opt-note">(optional)</span></legend><div class="fm-opts">${opts.map(([v, t]) => `<label class="fm-opt"><input type="radio" name="rel" value="${v}"${v === rel ? " checked" : ""}><span>${A.esc(t)}</span></label>`).join("")}</div></fieldset>`;
   const run = rel === "run";
+  const org = !p.prog;
+  // In run mode the note comes after the sports and events, and is optional (mount() moves it as the answer changes).
+  const notes = `<div class="fm-set fm-set--plain fm-notes">
+${field({ name: "notes", label: NOTES_LABEL[run && org ? "run" : "fix"], type: "textarea", required: !(run && org), error: "Tell us what to fix." })}
+</div>`;
   const form = `<form class="fm-form" data-send="/api/submit-program" data-source="asnm-listing-fix" data-update novalidate data-done-href="${A.esc(href)}" data-done-label="Back to the listing" data-done="${run ? "Thanks. We'll write to you to confirm the listing." : "Thanks. A person on our team will read it."}">
 <input type="hidden" name="lid" value="${A.esc(p.id)}">
-<div class="fm-set fm-set--plain">
-${field({ name: "notes", label: "What should we fix?", type: "textarea", required: true, error: "Tell us what to fix." })}
-</div>
+${run && org ? "" : notes}
 ${radios}
+${org ? runSets(D, p, run) : ""}
+${run && org ? notes : ""}
 <div class="fm-set fm-set--plain fm-email">
 ${field({ name: "em", label: run ? "Your email" : "Your email (optional)", type: "email", required: run, auto: "email", hint: EMAIL_HINT[run ? "run" : "fix"] })}
 </div>${honeypot}${submit("Send")}</form>`;
@@ -153,6 +171,30 @@ export async function render(ctx) {
   return update(D, String(ctx.params.id || "").toLowerCase(), ctx.query.rel || "");
 }
 
+/** Run mode on the fix form: show the sports and yearly events, write them into the two posted
+    fields, put the note after them and make it optional once either one says something. */
+function syncRun(form, run) {
+  const box = form.querySelector("[data-run]");
+  if (!box) return;
+  box.hidden = !run;
+  const sports = form.querySelector('input[name="sports"]'), yearly = form.querySelector('input[name="yearly"]');
+  sports.value = run ? sportsValue(readChecklist(box)) : "";
+  yearly.value = run ? yearlyValue(readYearly(box)) : "";
+  const notesSet = form.querySelector(".fm-notes"), ta = notesSet && notesSet.querySelector("textarea");
+  if (!ta) return;
+  const lid = form.querySelector('input[name="lid"]');
+  if (run && box.nextElementSibling !== notesSet) box.after(notesSet);
+  else if (!run && lid.nextElementSibling !== notesSet) lid.after(notesSet);
+  ta.required = !run || (!sports.value && !yearly.value);
+  ta.setAttribute("data-error", run ? "Tick a sport, add a yearly event, or tell us what to fix." : "Tell us what to fix.");
+  const lab = form.querySelector(`label[for="${ta.id}"]`);
+  const text = run ? NOTES_LABEL.run : NOTES_LABEL.fix;
+  if (lab && lab.dataset.mode !== (run ? "run" : "fix")) {
+    lab.dataset.mode = run ? "run" : "fix";
+    lab.innerHTML = A.esc(text) + (run ? "" : '<span class="req" aria-hidden="true">*</span>');
+  }
+}
+
 export function mount(root) {
   // Radio tiles: mirror :checked on the label for browsers without :has().
   // On the fix form, "I'm with this organization" makes the email required (we write back to confirm).
@@ -161,6 +203,7 @@ export function mount(root) {
     const form = root.querySelector("form[data-update]");
     if (!form) return;
     const run = !!form.querySelector('input[name="rel"][value="run"]:checked');
+    syncRun(form, run);
     const em = form.querySelector('input[name="em"]'), lab = em && form.querySelector(`label[for="${em.id}"]`), hint = em && document.getElementById(em.id + "-h");
     if (!em || em.required === run) return;
     em.required = run;
@@ -170,5 +213,10 @@ export function mount(root) {
   };
   sync();
   root.addEventListener("change", sync);
-  return () => root.removeEventListener("change", sync);
+  root.addEventListener("input", sync);
+  // Before app.js checks and sends the form (its listener is on the document), the two fields are current.
+  root.addEventListener("submit", sync);
+  const offChecklist = wireChecklist(root, sync);
+  const offYearly = wireYearly(root, sync);
+  return () => { root.removeEventListener("change", sync); root.removeEventListener("input", sync); root.removeEventListener("submit", sync); offChecklist(); offYearly(); };
 }

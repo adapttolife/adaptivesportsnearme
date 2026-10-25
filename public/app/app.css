@@ -2407,6 +2407,218 @@ textarea:focus {
 	color: var(--graphite);
 }
 
+/* A year of a yearly event: its name links to the event's own page. */
+.ec-name a {
+	color: inherit;
+	text-decoration: underline;
+	text-decoration-thickness: 1px;
+	text-underline-offset: 3px;
+}
+
+.ec-nth {
+	font-size: 15px;
+	font-weight: 700;
+	color: var(--graphite);
+}
+
+/* ================= Sport checklist (public/app/sport-checklist.js) =================
+   Your sports and seasons, on Confirm your listing and in the organization's editor:
+   sport chips with real checkboxes, then each ticked sport's season chips. */
+.sck-group + .sck-group {
+	margin-top: 16px;
+}
+
+.sck-gh {
+	margin-bottom: 8px;
+	font-size: var(--fs-label);
+	font-weight: 700;
+	color: var(--graphite);
+}
+
+.sck-list,
+.sck-chips {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+}
+
+.sck-sport,
+.sck-chip {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	min-height: 44px;
+	padding: 0 14px 0 12px;
+	background: var(--paper);
+	color: var(--ink);
+	border: 1px solid var(--line-strong);
+	border-radius: var(--r);
+	font-size: 16px;
+	font-weight: 500;
+	line-height: 1.2;
+	cursor: pointer;
+}
+
+.sck-chip {
+	border-radius: 999px;
+}
+
+.sck-sport input,
+.sck-chip input {
+	width: 20px;
+	height: 20px;
+	margin: 0;
+	accent-color: var(--orange);
+	flex: none;
+}
+
+.sck-sport input:focus,
+.sck-chip input:focus {
+	box-shadow: none;
+}
+
+.sck-sport:hover,
+.sck-chip:hover {
+	border-color: var(--ink);
+}
+
+.sck-sport.is-on,
+.sck-sport:has(input:checked) {
+	background: var(--orange-soft);
+	border: 1.5px solid var(--orange);
+}
+
+.sck-chip:has(input:checked) {
+	background: var(--teal-soft);
+	border: 1.5px solid var(--teal);
+}
+
+.sck-sport:has(input:focus-visible),
+.sck-chip:has(input:focus-visible) {
+	box-shadow: var(--focus);
+}
+
+.sck-when {
+	margin-top: 24px;
+}
+
+.sck-when[hidden],
+.sck-row[hidden],
+.yr-add[hidden] {
+	display: none;
+}
+
+.sck-wh {
+	font-size: var(--fs-h3);
+	font-weight: 700;
+	line-height: 1.3;
+}
+
+.sck-hint {
+	margin-top: 2px;
+	font-size: 15px;
+	color: var(--graphite);
+}
+
+.sck-row {
+	min-width: 0;
+	margin: 12px 0 0;
+	padding: 12px 0 0;
+	border: 0;
+	border-top: 1px solid var(--line-strong);
+}
+
+.sck-row > legend,
+.yr-row > legend {
+	float: left;
+	width: 100%;
+	padding: 0;
+	font-size: 16px;
+	font-weight: 700;
+}
+
+.sck-row > legend + *,
+.yr-row > legend + * {
+	clear: both;
+}
+
+.sck-row > .sck-chips {
+	padding-top: 8px;
+}
+
+/* A sport with its own program page: ticked and fixed, with a short note why. */
+.sck-sport.is-locked {
+	position: relative;
+	padding-block: 8px;
+	cursor: default;
+}
+
+.sck-sport.is-locked:hover {
+	border-color: var(--orange);
+}
+
+.sck-sport.is-locked input {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+	clip: rect(0 0 0 0);
+	white-space: nowrap;
+}
+
+.sck-lock-ic {
+	flex: none;
+	color: var(--orange-ink);
+}
+
+.sck-sport.is-locked > span {
+	display: flex;
+	flex-direction: column;
+}
+
+.sck-lock {
+	margin-top: 2px;
+	font-size: 13px;
+	font-weight: 500;
+	color: var(--graphite);
+}
+
+/* One program's seasons on its own (the program form) */
+.sck-row.sck-solo {
+	margin-top: 4px;
+	padding-top: 0;
+	border-top: 0;
+}
+
+.sck-solo > .sck-hint {
+	margin-bottom: 8px;
+}
+
+/* Yearly events rows (Confirm your listing) */
+.yr-row {
+	min-width: 0;
+	margin: 16px 0 0;
+	padding: 0;
+	border: 0;
+}
+
+.yr-row + .yr-row {
+	padding-top: 16px;
+	border-top: 1px solid var(--line-strong);
+}
+
+.yr-add {
+	margin-top: 16px;
+}
+
+@media (min-width: 600px) {
+	.yr-two {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr);
+		column-gap: 16px;
+	}
+}
+
 /* ================= Section head ================= */
 .sh {
 	display: flex;

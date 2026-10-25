@@ -42,6 +42,7 @@ export const PAGES = {
   notFound: { title: "Page not found", description: "That page isn't here. Search adaptive sports near you instead." },
   listingNotFound: { title: "Listing not found", description: "It may have been removed or merged with another listing." },
   grantNotFound: { title: "Grant not found", description: "It may have been removed or renamed." },
+  seriesNotFound: { title: "Event not found", description: "It may have been removed or renamed. See every event, dated and yearly." },
 };
 
 /** /near/<place>. sport: { name, low } or null. */
@@ -89,5 +90,15 @@ export function grantMeta({ name, source = "" }) {
   return {
     title: `${name}${source ? `, from ${source}` : ""}`,
     description: `${name}: an adaptive sports grant${source ? ` from ${source}` : ""}. See who can apply, the amount, the deadline and how to apply.`,
+  };
+}
+
+/** /events/<slug>, a yearly event. sport: its name ("Pickleball"); host: who runs it; place: "Cincinnati, OH";
+    usual: "late October" (public/app/yearly.js seriesState). */
+export function seriesMeta({ name, sport = "", host = "", place = "", usual = "" }) {
+  const what = `a yearly ${sport ? `adaptive ${sport.toLowerCase()} ` : "adaptive sports "}event`;
+  return {
+    title: `${name}${place ? `, ${place}` : ""}`,
+    description: `${name} is ${what}${host ? ` hosted by ${host}` : ""}${place ? ` in ${place}` : ""}${usual ? `, usually in ${usual}` : ""}. See the next dates, past years and where to register.`,
   };
 }
