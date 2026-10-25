@@ -20,6 +20,17 @@ export function parseDesc(desc) {
     2+ sports; more = how many further sports the row names beyond the three in the trio). */
 export function listingSport(row) {
   const L = globalThis.ListingArt;
+  // The organization's own word comes first (row.seasons, [{ key, seasons }]): every sport it says it runs.
+  const told = [];
+  for (const s of Array.isArray(row.seasons) ? row.seasons : []) {
+    const k = s && String(s.key || "").toLowerCase();
+    if (k && L.SPORTS.includes(k) && k !== "multi" && k !== "grant" && k !== "event" && !told.includes(k)) told.push(k);
+  }
+  if (told.length === 1) return { key: told[0], trio: null, more: 0 };
+  if (told.length >= 2) {
+    const trio = [...told.filter((k) => !GROUP_SCENE.has(k)), ...told.filter((k) => GROUP_SCENE.has(k))].slice(0, 3);
+    return { key: "multi", trio, more: told.length - trio.length };
+  }
   const sk = L.symbolKey(row);
   let key = sk && L.SPORTS.includes(sk) && sk !== "grant" && sk !== "event" ? sk : "multi";
   let trio = null, more = 0;

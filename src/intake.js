@@ -1,4 +1,6 @@
 import { mailConfigured, sendMail } from './mail-transport.js';
+import { SPORT_NAMES } from "./sport-names.js";
+import { seasonsText, MONTHS } from "../public/app/yearly.js";
 // Intake — every form submission across every Adapt To Life property lands here,
 // and Alec gets an email about it.
 //
@@ -37,6 +39,18 @@ function line(k, v) {
   return s ? `${k}: ${s}\n` : "";
 }
 
+// An organization confirming its listing sends its sports with seasons and its yearly
+// events as data; the notice says them in words ("Skiing: Winter").
+function answerText(k, v) {
+  if (k === "sports" && v && typeof v === "object" && !Array.isArray(v)) {
+    return Object.entries(v).map(([sport, seasons]) => `${SPORT_NAMES[sport] || sport}: ${seasonsText(seasons) || "season not given"}`).join("; ");
+  }
+  if (k === "yearly" && Array.isArray(v)) {
+    return v.map((e) => [e.name, e.month ? `usually ${MONTHS[e.month - 1]}` : "", e.url].filter(Boolean).join(", ")).join("; ");
+  }
+  return typeof v === "object" ? JSON.stringify(v) : v;
+}
+
 /** The notification Alec actually reads. Plain, scannable, reply-to the person. */
 function notificationBody(row) {
   let payload = {};
@@ -53,7 +67,7 @@ function notificationBody(row) {
 
   const extras = Object.entries(payload)
     .filter(([k, v]) => v !== null && v !== undefined && String(v).trim() !== "")
-    .map(([k, v]) => line(k, typeof v === "object" ? JSON.stringify(v) : v))
+    .map(([k, v]) => line(k, answerText(k, v)))
     .join("");
 
   const text =
@@ -74,7 +88,7 @@ function notificationBody(row) {
       .join("") +
     Object.entries(payload)
       .filter(([, v]) => v !== null && v !== undefined && String(v).trim() !== "")
-      .map(([k, v]) => `<tr><td style="padding:2px 14px 2px 0;color:#6b6b70">${esc(k)}</td><td style="padding:2px 0">${esc(typeof v === "object" ? JSON.stringify(v) : v)}</td></tr>`)
+      .map(([k, v]) => `<tr><td style="padding:2px 14px 2px 0;color:#6b6b70">${esc(k)}</td><td style="padding:2px 0">${esc(answerText(k, v))}</td></tr>`)
       .join("") +
     `</table>` +
     `<p style="margin:0 0 14px;color:#6b6b70">Reply to this email to answer them directly.</p>` +

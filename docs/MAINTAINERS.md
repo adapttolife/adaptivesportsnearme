@@ -47,6 +47,27 @@ directory ordering, case-insensitive admin ordering, source linkage and pending
 review ordering. Building indexes consumes some reads/writes once; subsequent
 writes also maintain them.
 
+## Programs that come back
+
+`db/migrations/0015_programs_that_come_back.sql` adds when a program comes back
+(`programs.kind`, `seasons_json`, `usual_month`, `first_year`, `slug`, `listing`),
+links a year's dates to its program (`events.program_id`, `events.recap_url`), and
+the team-only `organization_activity` log
+([docs/specs/programs-that-come-back.md](specs/programs-that-come-back.md)).
+It only adds, and every existing program keeps today's behaviour. The site reads
+the same before and after it runs (`src/schema-probe.js`), so it can go before or
+after the deploy. Run it once per database (a second run stops at "duplicate
+column name", harmlessly):
+
+```sh
+npx wrangler d1 execute asnm-db-staging --config wrangler.preview.json --remote --file db/migrations/0015_programs_that_come_back.sql
+npx wrangler d1 execute asnm-db --config wrangler.json --remote --file db/migrations/0015_programs_that_come_back.sql
+```
+
+`db/maintenance/yearly_spooky_spokes.sql` then adds the first yearly event page
+(`/events/spooky-spokes`: The Pickle Lodge, Spooky Spokes and its three years,
+links only). It is safe to run twice.
+
 ## Organization management access
 
 `db/migrations/0008_organization_access.sql` adds `organizations.claim_email`

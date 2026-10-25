@@ -12,7 +12,9 @@ import { getOrg, getProgram, getGrant, directorySnapshot, programsSnapshot } fro
 import { SPORT_NAMES } from "./sport-names.js";
 import { isListable } from "../public/app/listable.js";
 import { sportsLabel } from "../public/app/listing-sport.js";
-import { HOME, PAGES, nearMeta, sportMeta, stateMeta, organizationMeta, programMeta, grantMeta } from "../public/app/page-meta.js";
+import { HOME, PAGES, nearMeta, sportMeta, stateMeta, organizationMeta, programMeta, grantMeta, seriesMeta } from "../public/app/page-meta.js";
+import { getSeries, listSeries } from "./events.js";
+import { seriesState } from "../public/app/yearly.js";
 import { HOME_CARD, PAGE_CARDS, sportCard, stateCard, listingCard, CARD_WIDTH, CARD_HEIGHT } from "./share-cards.js";
 
 export const SITE_NAME = "Adaptive Sports Near Me";
@@ -89,6 +91,8 @@ const ROUTES = [
     const id = m[1].toLowerCase();
     let p = null;
     try { p = await getProgram(env.DB, id); } catch (_) { p = null; } // a database without the programs table yet
+    // A yearly event has one page, at its own address (docs/specs/programs-that-come-back.md).
+    if (p && p.kind === "event") return { redirect: `/events/${p.slug || p.id}` };
     if (p) return { ...programMeta({ name: p.name, sport: p.sportLabel || "Adaptive sports", place: placeText(p) }), jsonld: programJsonLd(p, env), image: listingCard(p) };
     // Listings lived at /programs/<organization id> until 2026-10-15: shared links,
     // receipts and search results move to the organization's page for good.
@@ -105,6 +109,16 @@ const ROUTES = [
     return { ...grantMeta({ name: g.name, source: g.source || "" }), image: PAGE_CARDS.grants };
   }],
   [/^\/events\/?$/, () => ({ ...PAGES.events, image: PAGE_CARDS.events })],
+  // A yearly event (docs/specs/programs-that-come-back.md): one page that stays true between years.
+  [/^\/events\/([a-z0-9-]{1,80})\/?$/, async (m, env) => {
+    if (!env.DB) return { title: "Event", description: HOME_DESCRIPTION };
+    let s = null;
+    try { s = await getSeries(env.DB, m[1]); } catch (_) { s = null; }
+    if (!s) return notFound("We couldn't find that event");
+    const place = s.city && s.state ? `${s.city}, ${s.state}` : (STATE_NAMES[s.state] || "");
+    const { usual } = seriesState(s, s.editions);
+    return { ...seriesMeta({ name: s.name, sport: s.sport_key ? (SPORT_NAMES[s.sport_key] || "") : "", host: s.host_name || "", place, usual }), image: PAGE_CARDS.events };
+  }],
   [/^\/add\/program\/?$/, () => ({ ...PAGES.addProgram, noindex: true })],
   [/^\/add\/organization\/?$/, () => ({ ...PAGES.addOrganization, noindex: true })],
   [/^\/add\/event\/?$/, () => ({ ...PAGES.addEvent, noindex: true })],
@@ -156,7 +170,7 @@ const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "
 const VIEWS = [
   [/^\/$/, "home"], [/^\/near\/[^/]+$/, "near"], [/^\/sports$/, "sports"], [/^\/sports\/[^/]+$/, "sport"],
   [/^\/states$/, "states"], [/^\/states\/[^/]+$/, "state"], [/^\/organizations$/, "organizations"], [/^\/organizations\/[^/]+$/, "program"], [/^\/programs$/, "programs"], [/^\/programs\/[^/]+$/, "program-detail"],
-  [/^\/grants$/, "grants"], [/^\/grants\/[^/]+$/, "grant"], [/^\/events$/, "events"],
+  [/^\/grants$/, "grants"], [/^\/grants\/[^/]+$/, "grant"], [/^\/events$/, "events"], [/^\/events\/[^/]+$/, "event-series"],
   [/^\/(add\/program|add\/organization|add\/event|update\/[^/]+)$/, "forms"], [/^\/manage(?:\/organizations(?:\/[^/]+(?:\/(?:edit|programs(?:\/new)?|events(?:\/new)?)?)?)?|\/programs\/[^/]+|\/events\/[^/]+)?$/, "manage"], [/^\/resources\/veteran-owned-businesses$/, "vob"],
   [/^\/admin(?:\/queue(?:\/\d+)?|\/(?:organizations|programs|events|grants)(?:\/(?:[0-9a-f-]{36}|new))?)?$/i, "admin"],
   [/^\/letter\/confirmed$/, "letter-confirmed"], [/^\/(help|about|resources|letter|build|privacy|terms)$/, "help"],
@@ -271,6 +285,7 @@ export async function sitemapXml(env) {
       const g = await env.DB.prepare("SELECT id FROM grants WHERE is_public = 1 AND status = 'active'").all();
       for (const r of g.results || []) urls.push(`/grants/${r.id}`);
     } catch (_) { /* no grants table yet */ }
+    for (const s of (await listSeries(env.DB)).items) urls.push(`/events/${s.slug}`);
   }
   return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.map((u) => `<url><loc>${ORIGIN}${u}</loc></url>`).join("\n")}\n</urlset>\n`;
 }

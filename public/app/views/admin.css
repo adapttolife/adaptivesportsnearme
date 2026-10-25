@@ -188,3 +188,110 @@
 	margin: 0;
 	overflow-wrap: anywhere;
 }
+
+.v-admin .adm-bullets {
+	margin: 0;
+	padding-left: 18px;
+}
+
+.v-admin .adm-bullets li + li {
+	margin-top: 4px;
+}
+
+/* Activity: the team-only history on an organization's page. */
+.v-admin .adm-activity {
+	margin-top: 24px;
+}
+
+.v-admin .adm-activity h2 {
+	font-size: var(--fs-h4);
+}
+
+.v-admin .adm-act-lead {
+	margin-top: 4px;
+	color: var(--graphite);
+	font-size: 15px;
+}
+
+.v-admin .adm-note {
+	margin-top: 8px;
+}
+
+.v-admin .adm-note textarea {
+	min-height: 72px;
+}
+
+.v-admin .adm-note .btn {
+	margin-top: 8px;
+}
+
+.v-admin .adm-note-status:empty {
+	display: none;
+}
+
+.v-admin .adm-act-list {
+	margin-top: 20px;
+}
+
+.v-admin .adm-timeline {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	border-left: 2px solid var(--line-strong);
+}
+
+.v-admin .adm-act {
+	position: relative;
+	padding: 0 0 18px 18px;
+}
+
+.v-admin .adm-act::before {
+	content: "";
+	position: absolute;
+	left: -7px;
+	top: 6px;
+	width: 12px;
+	height: 12px;
+	border-radius: 50%;
+	background: var(--line-strong);
+	border: 2px solid var(--mist);
+}
+
+.v-admin .adm-act.is-note::before {
+	background: var(--sun);
+	color: #1a1a1a;
+}
+
+.v-admin .adm-act.is-confirmation::before,
+.v-admin .adm-act.is-applied::before {
+	background: var(--teal);
+	color: #1a1a1a;
+}
+
+.v-admin .adm-act-top {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px 12px;
+	align-items: baseline;
+	font-size: 15px;
+}
+
+.v-admin .adm-act-top time {
+	color: var(--graphite);
+	font-variant-numeric: tabular-nums;
+}
+
+.v-admin .adm-act-sum {
+	margin-top: 2px;
+}
+
+.v-admin .adm-act-who {
+	display: block;
+	margin-top: 2px;
+	font-size: 13px;
+	color: var(--graphite);
+}
+
+.v-admin .adm-act-none {
+	color: var(--graphite);
+}
