@@ -1,6 +1,7 @@
 import { mailConfigured, sendMail } from './mail-transport.js';
 import { SPORT_NAMES } from "./sport-names.js";
 import { seasonsText, MONTHS } from "../public/app/yearly.js";
+import { checkupSummary, FIX_WORDS } from "./offerings.js";
 // Intake — every form submission across every Adapt To Life property lands here,
 // and Alec gets an email about it.
 //
@@ -45,6 +46,8 @@ function answerText(k, v) {
   if (k === "sports" && v && typeof v === "object" && !Array.isArray(v)) {
     return Object.entries(v).map(([sport, seasons]) => `${SPORT_NAMES[sport] || sport}: ${seasonsText(seasons) || "season not given"}`).join("; ");
   }
+  if (k === "checkup" && v && typeof v === "object") return checkupSummary(v);
+  if (k === "reason" && typeof v === "string") return FIX_WORDS[v] || v;
   if (k === "yearly" && Array.isArray(v)) {
     return v.map((e) => [e.name, e.month ? `usually ${MONTHS[e.month - 1]}` : "", e.url].filter(Boolean).join(", ")).join("; ");
   }

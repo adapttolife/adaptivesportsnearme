@@ -15,6 +15,7 @@
 import { newerOrOlder } from "./schema-probe.js";
 import { SPORT_NAMES } from "./sport-names.js";
 import { cleanSeasons, seriesSlug, seasonsText, MONTHS } from "../public/app/yearly.js";
+import { WHO_LABELS } from "../public/app/who.js";
 
 const now = () => new Date().toISOString();
 const oneLine = (v, max) => String(v ?? "").replace(/[\u0000-\u001f\u007f]+/g, " ").replace(/\s+/g, " ").trim().slice(0, max);
@@ -176,6 +177,13 @@ export function yearlySummary(list) {
 
 /** What a person applies from the review queue when an organization confirmed its listing. */
 export async function applyConfirmation(db, organization, payload, { actor = "system", ref = null, timestamp = now() } = {}) {
+  const checkup = payload.checkup && typeof payload.checkup === "object" ? payload.checkup : null;
+  if (checkup && checkup.verdict === "stopped") {
+    const did = await applyCheckup(db, organization, checkup, { timestamp });
+    await logActivity(db, organization.id, "applied", `Applied: ${checkupSummary(checkup)}. The listing is ${did.join(", ")}`, { actor, ref, at: timestamp });
+    return { sports: null, yearly: 0, checkup: did };
+  }
+  const checked = await applyCheckup(db, organization, checkup, { timestamp });
   const sports = [];
   if (payload.sports && typeof payload.sports === "object" && !Array.isArray(payload.sports)) {
     for (const [key, seasons] of Object.entries(payload.sports)) {
@@ -192,11 +200,13 @@ export async function applyConfirmation(db, organization, payload, { actor = "sy
     if (id) started.push(e);
   }
   const parts = [];
+  if (checkup && checkup.verdict === "all_right") parts.push("everything is still right");
+  if (checked.length) parts.push(...checked);
   if (sports.length) parts.push(`sports: ${sportsSummary(sports)}`);
   if (changed && changed.hidden.length) parts.push(`no longer listed: ${changed.hidden.map(sportName).join(", ")}`);
   if (started.length) parts.push(`yearly events: ${yearlySummary(started)}`);
   await logActivity(db, organization.id, "applied", `Applied the organization's confirmation${parts.length ? `. ${parts.join("; ")}` : ""}`, { actor, ref, at: timestamp });
-  return { sports: changed, yearly: started.length };
+  return { sports: changed, yearly: started.length, checkup: checked };
 }
 
 /** The month (1 to 12) an event starts in, on the calendar where it happens. A date written
@@ -208,4 +218,61 @@ export function startMonth(iso) {
   const d = new Date(text);
   if (Number.isNaN(d.getTime())) return null;
   return Number(new Intl.DateTimeFormat("en-US", { timeZone: "America/Chicago", month: "numeric" }).format(d));
+}
+
+// ---- The one-minute check-up (docs/specs/community-kept-directory.md) ----------------------
+export const FIX_WORDS = {
+  website: "Website moved or broken", closed_for_now: "Closed for now", closed_for_good: "Closed for good",
+  place: "Wrong place", sport: "Wrong sport", duplicate: "Listed twice", other: "Something else",
+};
+const STOP_WORDS = { closed_for_now: "closed for now", closed_for_good: "closed for good", merged: "merged with another group", moved: "moved" };
+const COST_WORDS = { free: "Free", fee: "There's a fee", varies: "It varies" };
+const whoWords = (codes) => (codes || []).map((c) => WHO_LABELS[c]).filter(Boolean).join("; ");
+
+/** One line in words for the history and the notice: what the check-up said. */
+export function checkupSummary(c) {
+  if (!c) return "";
+  if (c.verdict === "all_right") return "Everything is still right";
+  if (c.verdict === "stopped") return `They don't run this anymore (${STOP_WORDS[c.stopped.reason]})`;
+  const f = c.facts || {}, parts = [];
+  if (f.website?.status === "change") parts.push(`website: ${f.website.value}`);
+  if (f.place?.status === "change") parts.push(`place: ${[f.place.city, f.place.state].filter(Boolean).join(", ")}`);
+  if (f.who?.status === "change") parts.push(`who it's for: ${whoWords(f.who.value) || "not said"}`);
+  if (f.cost?.status === "change") parts.push(`cost: ${[COST_WORDS[f.cost.value], f.cost.note].filter(Boolean).join(", ")}`);
+  const right = Object.entries(f).filter(([, v]) => v.status === "right").map(([k]) => k);
+  if (right.length) parts.push(`still right: ${right.join(", ")}`);
+  return `Something changed${parts.length ? `: ${parts.join("; ")}` : ""}`;
+}
+
+/** Apply the check-up's own answers to the organization (sports and yearly events are applied by applyConfirmation). */
+export async function applyCheckup(db, organization, c, { timestamp = now() } = {}) {
+  if (!c) return [];
+  const did = [];
+  if (c.verdict === "stopped") {
+    // Never deleted: hidden, with the reason in the history, and it can come back.
+    await db.prepare(`UPDATE organizations SET is_public = 0, updated_at = ? WHERE id = ?`).bind(timestamp, organization.id).run();
+    did.push(`hidden: ${STOP_WORDS[c.stopped.reason]}`);
+    return did;
+  }
+  const f = c.facts || {};
+  if (f.website?.status === "change" && /^https?:\/\//.test(f.website.value)) {
+    await db.prepare(`UPDATE organizations SET website_url = ?, last_ok_at = NULL, updated_at = ? WHERE id = ?`).bind(f.website.value, timestamp, organization.id).run();
+    did.push(`website: ${f.website.value}`);
+  }
+  if (f.place?.status === "change" && STATE_NAMES[f.place.state]) {
+    // A new city has no point yet; the city's center places it (src/geo.js) until an address is public.
+    await db.prepare(`UPDATE organizations SET city = ?, state = ?, state_name = ?, lat = NULL, lng = NULL, geo_precision = NULL, updated_at = ? WHERE id = ?`)
+      .bind(f.place.city || null, f.place.state, STATE_NAMES[f.place.state], timestamp, organization.id).run();
+    did.push(`place: ${[f.place.city, f.place.state].filter(Boolean).join(", ")}`);
+  }
+  if (f.who?.status === "change") {
+    await db.prepare(`UPDATE organizations SET ages = ?, updated_at = ? WHERE id = ?`).bind(whoWords(f.who.value) || null, timestamp, organization.id).run();
+    did.push(`who it's for: ${whoWords(f.who.value) || "not said"}`);
+  }
+  if (f.cost?.status === "change") {
+    const text = [COST_WORDS[f.cost.value], f.cost.note].filter(Boolean).join(". ");
+    await db.prepare(`UPDATE organizations SET cost_note = ?, updated_at = ? WHERE id = ?`).bind(text, timestamp, organization.id).run();
+    did.push(`cost: ${text}`);
+  }
+  return did;
 }

@@ -153,6 +153,31 @@ export function wireChecklist(root, onChange = () => {}) {
   return () => box.removeEventListener("change", change);
 }
 
+/* ---------- The check-up's sports (/update/<id>?rel=run): the sports on file, each with its
+   season chips right under it, then "Add a sport" (type "ski", tap Skiing). No grid of every sport. */
+/** One sport: its name, a remove button and its season chips. The ticked box keeps readChecklist() working. */
+export function pickedRow(key, seasons = [], { nameOf = (k) => k, esc = escHtml } = {}) {
+  const name = nameOf(key);
+  return `<fieldset class="sck-row ck-pick" data-row="${esc(key)}"><legend>${esc(name)}</legend><input type="checkbox" data-sport="${esc(key)}" checked hidden><button type="button" class="ck-x" data-remove="${esc(key)}" aria-label="Remove ${esc(name)}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>${chipsHtml(key, seasons, esc)}</fieldset>`;
+}
+/** The sports on file, then the search. chosen: [{ key, seasons }]. */
+export function pickedHtml(chosen = [], { nameOf = (k) => k, esc = escHtml } = {}) {
+  const uid = "ckq" + (++N);
+  const rows = (chosen || []).filter((c) => c && c.key && !NOT_A_SPORT.has(c.key)).map((c) => pickedRow(c.key, c.seasons, { nameOf, esc })).join("");
+  return `<div class="sck ck-sports" data-sport-checklist><div class="ck-picked" data-picked>${rows}</div><p class="ck-none" data-none${rows ? " hidden" : ""}>No sports on the listing yet. Add one below.</p><div class="field ck-add"><label for="${uid}">Add a sport</label><input id="${uid}" type="search" data-sport-search autocomplete="off" placeholder="Type a sport, like ski" aria-describedby="${uid}-h" aria-controls="${uid}-l"><p class="sr" id="${uid}-h">Matching sports show below as you type.</p><div class="ck-found" id="${uid}-l" data-found role="group" aria-label="Matching sports"></div></div></div>`;
+}
+/** Sports whose name (or a word in it) starts with what was typed, A to Z, past the ones already
+    chosen; up to `limit`. "ski" -> Skiing, Nordic skiing, Water skiing. */
+export function matchSports(keys, text, { nameOf = (k) => k, chosen = [], limit = 6 } = {}) {
+  const q = String(text || "").trim().toLowerCase();
+  if (!q) return [];
+  const have = new Set(chosen);
+  return [...new Set(keys)].filter((k) => k && !NOT_A_SPORT.has(k) && !have.has(k)).map((k) => [k, String(nameOf(k))])
+    .filter(([k, n]) => n.toLowerCase().split(/[\s/,-]+/).some((w) => w.startsWith(q)) || n.toLowerCase().startsWith(q) || k.startsWith(q))
+    .sort((a, b) => (b[1].toLowerCase().startsWith(q) - a[1].toLowerCase().startsWith(q)) || a[1].localeCompare(b[1]))
+    .slice(0, limit).map(([k]) => k);
+}
+
 /* ---------- Yearly events (Confirm your listing): up to three rows ---------- */
 export const YEARLY_MAX = 3;
 

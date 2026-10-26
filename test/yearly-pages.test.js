@@ -175,26 +175,20 @@ test("the checklist is real checkboxes with labels, grouped, each sport's season
   assert.doesNotMatch(html, /\sname="/, "nothing posts on its own");
 });
 
-test("Confirm your listing, run mode: sports and yearly events, two posted fields, the note optional", async () => {
+test("Confirm your listing, run mode: the check-up, its sports with their seasons, and the posted fields", async () => {
+  // The long form became the one-minute check-up (docs/specs/community-kept-directory.md); test/check-up.test.js has the rest.
   const out = await forms.render({ path: `/update/${ORG}`, params: { id: ORG }, query: { rel: "run" }, data: D });
   const h = out.html;
-  assert.match(h, /<input type="radio" name="rel" value="run" checked>/, "?rel=run preselects the answer");
-  assert.match(h, /<fieldset class="fm-set fm-sports"><legend>Your sports<\/legend>/);
-  assert.match(h, /<fieldset class="fm-set fm-yearly"><legend>Yearly events<\/legend>/);
-  assert.match(h, /<div class="fm-run" data-run>/);
-  assert.match(h, /<input type="hidden" name="sports" value=""><input type="hidden" name="yearly" value="">/);
-  assert.match(h, /data-sport="pickleball" checked/, "every sport it told us is ticked");
+  assert.doesNotMatch(h, /How do you know this organization\?/, "rel=run already says it");
+  assert.match(h, /<section class="ck-step" data-step="summary" aria-labelledby="ck-summary-h">/);
+  assert.match(h, /data-sport="pickleball" checked/, "every sport it told us is on the sports screen");
   assert.match(h, /data-of="tennis" data-season="year-round" checked/);
-  assert.match(h, /Anything else to fix\? \(optional\)<\/label>/);
-  assert.doesNotMatch(between(h, "fm-notes", "</textarea>"), /required/);
-  assert.ok(h.indexOf("fm-yearly") < h.indexOf("fm-notes"), "the note comes after the sports and events");
+  assert.match(h, /<input type="hidden" name="checkup" value=""><input type="hidden" name="sports" value=""><input type="hidden" name="yearly" value="">/);
   assert.match(h, /data-yearly-add/);
-  // Without rel=run the fix form is as before, the run sets there but hidden.
-  const fix = (await forms.render({ path: `/update/${ORG}`, params: { id: ORG }, query: {}, data: D })).html;
-  assert.match(fix, /<div class="fm-run" data-run hidden>/);
-  assert.match(between(fix, "fm-notes", "</textarea>"), /required/);
-  assert.match(fix, /What should we fix\?/);
   assert.ok(!DASH.test(text(h)), "no dashes");
+  // Without rel the visitor is asked how they know it first.
+  const ask = (await forms.render({ path: `/update/${ORG}`, params: { id: ORG }, query: {}, data: D })).html;
+  assert.match(ask, /How do you know this organization\?/);
 });
 
 function between(s, a, b) { const i = s.indexOf(a); return s.slice(i, s.indexOf(b, i)); }
@@ -382,8 +376,8 @@ test("a program page says when it runs; a yearly event's program goes to its yea
   assert.equal(programDetail.runsText({ seasons: [{ key: "golf", seasons: [] }] }), "");
   assert.equal(programDetail.runsText({}), "");
   ROUTE = (u) => (u === "/api/programs/p1" ? reply({ program: { id: "p1", name: "Adaptive skiing", sport: "skiing", sportLabel: "Skiing", city: "Lebanon", state: "OH", seasons: [{ key: "skiing", seasons: ["winter"] }], kind: "program" } }) : null);
-  const page = await programDetail.render({ params: { id: "p1" } });
-  assert.match(page.html, /<dt>When<\/dt><dd>Runs in winter<\/dd>/);
+  const page = await programDetail.render({ params: { id: "p1" }, now: new Date(2027, 0, 10) });
+  assert.match(page.html, /<dt>When<\/dt><dd>Winter<\/dd>/, "the facts strip says when it runs");
   const navs = [];
   const prev = g.history;
   g.history = { replaceState: (s, t, to) => navs.push(to), pushState: () => {}, back: () => {} };

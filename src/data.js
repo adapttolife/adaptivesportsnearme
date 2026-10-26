@@ -210,7 +210,8 @@ export async function listingsSnapshot(db, { places = null } = {}) {
     // The organization's own sports and seasons, so every one of them finds it by sport.
     if (p.seasons) o.seasons = p.seasons;
     // Who it says it serves, as codes (public/app/who.js); only when it says.
-    const who = whoTags(whoText(p.desc), key);
+    // Who it serves: what its description says, and what the organization told us (ages, from the check-up).
+    const who = whoTags(`${whoText(p.desc) || ""} ${p.ages || ""}`, key);
     if (who.length) o.who = who;
     if (p.city) o.city = p.city;
     if (p.state) o.state = p.state;

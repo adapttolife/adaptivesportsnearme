@@ -5,6 +5,7 @@
 
 import "../public/listing-art.js";
 import { parseSportSeasons, seriesSlug } from "../public/app/yearly.js";
+import { WHO_ORDER } from "../public/app/who.js";
 
 const ListingArt = globalThis.ListingArt;
 const NOT_SPORTS = new Set(["multi", "grant", "event"]);
@@ -45,4 +46,52 @@ export function parseYearlyAnswer(raw) {
     if (out.length >= 3) break;
   }
   return out;
+}
+
+// ---- The one-minute check-up (docs/specs/community-kept-directory.md) -------------------
+const STATE_CODES = new Set("AL AK AZ AR CA CO CT DE DC FL GA HI ID IL IN IA KS KY LA ME MD MA MI MN MS MO MT NE NV NH NJ NM NY NC ND OH OK OR PA RI SC SD TN TX UT VT VA WA WV WI WY".split(" "));
+const STATUS = new Set(["right", "change"]);
+export const STOP_REASONS = ["closed_for_now", "closed_for_good", "merged", "moved"];
+export const FIX_REASONS = ["website", "closed_for_now", "closed_for_good", "place", "sport", "duplicate", "other"];
+
+/** JSON text from the check-up -> { verdict, facts, stopped } with only known, cleaned answers; null when unreadable. */
+export function parseCheckup(raw) {
+  if (!raw || String(raw).length > 4000) return null;
+  let v;
+  try { v = JSON.parse(String(raw)); } catch { return null; }
+  if (!v || typeof v !== "object" || !["all_right", "changed", "stopped"].includes(v.verdict)) return null;
+  const out = { verdict: v.verdict, facts: {} };
+  const f = v.facts && typeof v.facts === "object" ? v.facts : {};
+  const st = (x) => (x && STATUS.has(x.status) ? x.status : null);
+  if (st(f.website)) {
+    const value = f.website.status === "change" ? webUrl(f.website.value) : "";
+    if (f.website.status === "right" || value) out.facts.website = f.website.status === "right" ? { status: "right" } : { status: "change", value };
+  }
+  if (st(f.place)) {
+    const city = oneLine(f.place.city, 120), state = String(f.place.state || "").toUpperCase();
+    if (f.place.status === "right") out.facts.place = { status: "right" };
+    else if (STATE_CODES.has(state)) out.facts.place = { status: "change", city, state };
+  }
+  for (const k of ["sports", "yearly"]) if (st(f[k])) out.facts[k] = { status: f[k].status };
+  if (st(f.who)) {
+    const value = Array.isArray(f.who.value) ? WHO_ORDER.filter((c) => f.who.value.includes(c)) : [];
+    out.facts.who = f.who.status === "right" ? { status: "right" } : { status: "change", value };
+  }
+  if (st(f.cost)) {
+    const value = ["free", "fee", "varies"].includes(f.cost.value) ? f.cost.value : null;
+    if (f.cost.status === "right") out.facts.cost = { status: "right" };
+    else if (value) out.facts.cost = { status: "change", value, note: oneLine(f.cost.note, 200) };
+  }
+  if (out.verdict === "stopped") {
+    const reason = v.stopped && STOP_REASONS.includes(v.stopped.reason) ? v.stopped.reason : null;
+    if (!reason) return null;
+    out.stopped = { reason };
+  }
+  return out;
+}
+
+/** A "Something's wrong?" reason code, or "". */
+export function parseFixReason(raw) {
+  const r = String(raw || "").trim();
+  return FIX_REASONS.includes(r) ? r : "";
 }
