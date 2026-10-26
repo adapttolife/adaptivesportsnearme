@@ -98,10 +98,16 @@ const DASH = /[–—]/;
 const text = (html) => html.replace(/<[^>]+>/g, (tag) => (/^<\/?(span|b|a|svg|path|small)\b/.test(tag) ? "" : " ")).replace(/&#39;/g, "'").replace(/\s+/g, " ").trim();
 
 test("an organization's own sports pick its picture: one is that sport, two or more draw together", () => {
-  assert.deepEqual(listingSport({ sportLabel: "Multi-Sport", seasons: [{ key: "skiing", seasons: ["winter"] }] }), { key: "skiing", trio: null, more: 0 });
+  assert.deepEqual(listingSport({ sportLabel: "Adaptive Tennis", seasons: [{ key: "tennis", seasons: ["summer"] }] }), { key: "tennis", trio: null, more: 0 });
+  // One added sport doesn't turn a listing whose own sport we don't know into that sport.
+  assert.deepEqual(listingSport({ sportLabel: "Multi-Sport", seasons: [{ key: "skiing", seasons: ["winter"] }] }), { key: "multi", trio: null, more: 0 });
+  assert.deepEqual(listingSport({ seasons: [{ key: "pickleball" }] }), { key: "multi", trio: null, more: 0 });
   // Group scenes go last in the trio, the rest are counted.
   const many = listingSport({ sportLabel: "Tennis", seasons: [{ key: "soccer" }, { key: "skiing" }, { key: "tennis" }, { key: "sailing" }, { key: "golf" }] });
-  assert.deepEqual(many, { key: "multi", trio: ["skiing", "tennis", "sailing"], more: 2 });
+  assert.deepEqual(many, { key: "multi", trio: ["tennis", "skiing", "sailing"], more: 2 });   // its own sport leads
+  // A sport added on the card joins the ones its description already names (Maine Adaptive, 2026-10-26).
+  const maine = listingSport({ sportLabel: "Multi-Sport", desc: "Sports and activities: Alpine skiing; sailing. Athletes served: Adults.", seasons: [{ key: "pickleball", seasons: ["summer"] }] });
+  assert.deepEqual(maine, { key: "multi", trio: ["skiing", "sailing", "pickleball"], more: 0 });
   // Keys we don't know, and Multi-sport itself, are not sports.
   assert.deepEqual(listingSport({ sportLabel: "Adaptive Tennis", seasons: [{ key: "quidditch" }, { key: "multi" }] }), listingSport({ sportLabel: "Adaptive Tennis" }));
   // Without seasons, nothing changes.

@@ -49,8 +49,17 @@ function rowSeasons(r) {
   if (r.program_sports) {
     let list = [];
     try { list = JSON.parse(r.program_sports); } catch { list = []; }
+    if (!Array.isArray(list) || !list.length) return null;
+    // A sport added on the organization's card joins the sports it was already listed under;
+    // it never replaces them (an organization that runs skiing and adds pickleball runs both).
     const map = {};
-    for (const x of Array.isArray(list) ? list : []) if (x && x.key && !(x.key in map)) map[x.key] = x.seasons;
+    const own = [r.sport_key];
+    try { const listed = JSON.parse(r.org_sports_json || "[]"); if (Array.isArray(listed)) own.push(...listed); } catch { /* labels or nothing */ }
+    // A sport with a program card of its own (its own place) is found there, not on this card.
+    let elsewhere = [];
+    try { elsewhere = JSON.parse(r.own_program_sports || "[]"); } catch { elsewhere = []; }
+    for (const k of own) if (typeof k === "string" && isSport(k) && k !== "multi" && !(k in map) && !elsewhere.includes(k)) map[k] = [];
+    for (const x of list) if (x && x.key) map[x.key] = x.seasons;
     return parseSportSeasons(map, isSport);
   }
   if (r.seasons_json != null && r.sport_key && isSport(r.sport_key) && r.sport_key !== "multi") {
@@ -64,7 +73,9 @@ function rowSeasons(r) {
 const ORG_SPORTS = `(SELECT json_group_array(json_object('key', ps.sport_key, 'seasons',
     json(CASE WHEN json_valid(ps.seasons_json) THEN ps.seasons_json ELSE '[]' END)))
   FROM programs ps WHERE ps.organization_id = organizations.id AND ps.kind = 'program' AND ps.listing = 'with_org'
-    AND ps.is_public = 1 AND ps.status = 'active' AND ps.sport_key IS NOT NULL) AS program_sports`;
+    AND ps.is_public = 1 AND ps.status = 'active' AND ps.sport_key IS NOT NULL) AS program_sports, sports_json AS org_sports_json,
+  (SELECT json_group_array(po.sport_key) FROM programs po WHERE po.organization_id = organizations.id AND po.kind = 'program'
+    AND po.listing = 'own' AND po.is_public = 1 AND po.status = 'active' AND po.sport_key IS NOT NULL) AS own_program_sports`;
 // The newer program columns (migration 0015).
 const PROGRAM_NEWER = "p.seasons_json, p.kind, p.listing, p.slug, p.usual_month, p.first_year";
 

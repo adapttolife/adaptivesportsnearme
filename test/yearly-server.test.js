@@ -504,3 +504,17 @@ test("a sport that rides on its organization's card isn't its own row in the pro
     assert.deepEqual((await listActualPrograms(db, new URLSearchParams({ organization_id: ORG }))).items.map((p) => p.name).sort(), ["Adaptive Tennis", "Skiing"]);
   } finally { sqlite.close(); }
 });
+
+test("a sport added on an organization's card joins the sports it was already listed under", async () => {
+  const { sqlite, db } = database({ seed: false });
+  try {
+    addOrg(sqlite, ORG, { sport_key: "skiing", sports_json: '["skiing","sailing","Adaptive kayaking"]' });
+    sqlite.exec(`INSERT INTO programs (id,organization_id,name,sport,sport_key,seasons_json,kind,listing,is_public,status,created_at,updated_at)
+      VALUES ('pk','${ORG}','Pickleball','Pickleball','pickleball','["summer","fall"]','program','with_org',1,'active','2026','2026')`);
+    const seasons = (await getOrg(db, ORG)).seasons;
+    assert.deepEqual(seasons, [{ key: "skiing", seasons: [] }, { key: "sailing", seasons: [] }, { key: "pickleball", seasons: ["summer", "fall"] }]);
+    const card = (await listingsSnapshot(db)).items.find((x) => x.id === ORG);
+    assert.equal(card.key, "multi");
+    assert.deepEqual(card.trio.sort(), ["pickleball", "sailing", "skiing"]);
+  } finally { sqlite.close(); }
+});
