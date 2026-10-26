@@ -105,7 +105,7 @@ function buildPage() {
 /* ---------- /letter ---------- */
 function letterPage() {
   const stack = ["basketball", "grant", "event"].map((k) => A.avatar(k, 64)).join("");
-  const html = `<div class="lt"><div class="lt-stack" aria-hidden="true">${stack}</div><h1 tabindex="-1">Get the letter</h1>${A.letterBlock({ source: "letter", heading: false })}</div>`;
+  const html = `<div class="lt"><div class="lt-stack" aria-hidden="true">${stack}</div><h1 tabindex="-1">Get updates by email</h1>${A.letterBlock({ source: "letter", heading: false })}</div>`;
   return { title: site(PAGES.letter.title), description: PAGES.letter.description, html };
 }
 
@@ -132,18 +132,18 @@ function privacyPage() {
     sections: [
       ["The short version", `<ul>
 <li>You can search and browse without an account.</li>
-<li>We collect what you choose to send us, like your email for the letter or a note in a form.</li>
+<li>We collect what you choose to send us, like your email for our email updates or a note in a form.</li>
 <li>We don't sell personal information, and we don't run ads.</li>
 <li>An organization's email, phone and street address show only when the organization says yes.</li></ul>`],
-      ["What we collect", `<p><b>What you send us.</b> Your email when you sign up for the letter, and what you type into our forms. If you manage an organization's listing, the email you sign in with. Please don't send health details or other sensitive information through our forms.</p>
+      ["What we collect", `<p><b>What you send us.</b> Your email when you sign up for our email updates, and what you type into our forms. If you manage an organization's listing, the email you sign in with. Please don't send health details or other sensitive information through our forms.</p>
 <p><b>What any website receives.</b> When you visit, our host receives technical details like your IP address, your browser and the pages you open. We use them to run and protect the site and to count visits, and they're kept for a short time.</p>
 <p><b>What your browser keeps.</b> The site saves a few settings in your browser, like light or dark mode and your last search, so it works the way you left it. Some tools we use, like the accessibility tool, save their own. We use a cookie only to keep organization managers signed in, and our host may set one for its security checks. Use my location finds the nearest city on your device, so your exact position isn't sent to us.</p>`],
-      ["How we use it", `<p>To run the directory, review what you send, write back when you ask us something, and send the letter you signed up for. A person reviews form submissions before anything on the site changes. We never publish your email.</p>`],
-      ["Who helps us", `<p>We use a few services to run the site, such as Cloudflare (hosting, security and visit counts), Google (email and fonts), beehiiv (the letter and the blog), UserWay (an accessibility tool) and OpenFreeMap (maps). They handle information to do that work, and each has its own privacy policy. We may also share information when the law requires it, or to protect the site and the people who use it.</p>`],
+      ["How we use it", `<p>To run the directory, review what you send, write back when you ask us something, and send the email updates you signed up for. A person reviews form submissions before anything on the site changes. We never publish your email.</p>`],
+      ["Who helps us", `<p>We use a few services to run the site, such as Cloudflare (hosting, security and visit counts), Google (email and fonts), beehiiv (our email updates and the blog), UserWay (an accessibility tool) and OpenFreeMap (maps). They handle information to do that work, and each has its own privacy policy. We may also share information when the law requires it, or to protect the site and the people who use it.</p>`],
       ["Organization information", `<p>Listings describe organizations and the programs they offer. We gather their details from public sources, like an organization's own website, and from what organizations and visitors send us. City and state show on the listing. Email, phone and street address show only when the organization says yes.</p>
 <p>If you're with an organization, you can update its listing, or ask us to hide or remove it. <a href="/help">Start here</a>.</p>`],
       ["Your choices", `<p>Every letter has an unsubscribe link. We keep what you send until we no longer need it or you ask us to delete it. To see, correct or delete what you've sent us, email ${MAIL}. You can clear what the site saves in your browser through your browser settings.</p>`],
-      ["Children", `<p>Our forms and the letter are meant for adults. We don't knowingly collect personal information from children under 13. If you think a child has sent us something, email us and we'll delete it.</p>`],
+      ["Children", `<p>Our forms and email updates are meant for adults. We don't knowingly collect personal information from children under 13. If you think a child has sent us something, email us and we'll delete it.</p>`],
       ["Changes", `<p>The site is growing and changing, and this page will change with it. When it does, we'll update the date at the top.</p>`],
       ["Questions", `<p>Email ${MAIL}.</p>`],
     ],

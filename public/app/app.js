@@ -980,9 +980,9 @@ export function emptyState({ title, body, actions = [], image } = {}) {
 /** The letter, inline only (id="letter"). */
 export function letterBlock({ source = "page", heading = true } = {}) {
   const i = uid("em");
-  // heading: false on /letter, where the page's own h1 already says "Get the letter".
-  return `<section class="letter" id="letter" ${heading ? `aria-labelledby="${i}-h"><h2 id="${i}-h" tabindex="-1">Get the letter</h2>` : 'aria-label="Get the letter">'}<p>New programs, grants and events by email, only when there's something worth sending. Unsubscribe any time.</p>
-<form class="letter-form" data-letter data-send="/api/subscribe" data-source="asnm-letter-${esc(source)}" data-done="You're on the list. We'll write when there is something worth sending." novalidate><div class="field"><label for="${i}">Email</label><div class="letter-row"><input id="${i}" name="em" type="email" autocomplete="email" placeholder="name@example.com" required data-error="Enter an email address, like name@example.com."><button class="btn btn--ink" type="submit">Subscribe</button></div></div><input name="company" tabindex="-1" autocomplete="off" class="hpot" aria-hidden="true"><label class="check"><input type="checkbox" name="beta"><span>I want the first look at new features</span></label><p class="letter-fine">We use your email only to send the letter. <a href="/privacy">Privacy policy</a></p></form></section>`;
+  // heading: false on /letter, where the page's own h1 already says "Get updates by email".
+  return `<section class="letter" id="letter" ${heading ? `aria-labelledby="${i}-h"><h2 id="${i}-h" tabindex="-1">Get updates by email</h2>` : 'aria-label="Email updates">'}<p>New programs, grants and events by email, only when there's something worth sending. Unsubscribe any time.</p>
+<form class="letter-form" data-letter data-send="/api/subscribe" data-source="asnm-letter-${esc(source)}" data-done="You're on the list. We'll write when there is something worth sending." novalidate><div class="field"><label for="${i}">Email</label><div class="letter-row"><input id="${i}" name="em" type="email" autocomplete="email" placeholder="name@example.com" required data-error="Enter an email address, like name@example.com."><button class="btn btn--ink" type="submit">Subscribe</button></div></div><input name="company" tabindex="-1" autocomplete="off" class="hpot" aria-hidden="true"><label class="check"><input type="checkbox" name="beta"><span>I want the first look at new features</span></label><p class="letter-fine">We use your email only to send these updates. <a href="/privacy">Privacy policy</a></p></form></section>`;
 }
 
 export function helpBand() {
@@ -1147,7 +1147,7 @@ export function btn(label, href, kind = "ink", { external = false, attrs = "", i
 
 /** Sport and state community header (4.10). The state banner carries the h1 on the Sand
     ground beside the outline, so the banner is the page's title, not an empty box.
-    "Get the letter" is a line button: the page's one ink button belongs to its task (4.14). */
+    "Email updates" is a line button: the page's one ink button belongs to its task (4.14). */
 export function communityHeader({ kind = "sport", key, st, title, line, count, actions, tabs, dots = [], mapHref, sport } = {}) {
   const h1 = `<h1 tabindex="-1">${esc(title)}</h1>`;
   let banner;
@@ -1163,7 +1163,7 @@ export function communityHeader({ kind = "sport", key, st, title, line, count, a
   if (count) cnt = typeof count === "string" ? `<p class="ch-count num">${count}</p>` : `<p class="ch-count num">${count.href ? `<a href="${esc(count.href)}">${esc(count.text)}</a>` : esc(count.text)}</p>`;
   let acts = actions;
   if (acts == null) {
-    acts = [btn("Get the letter", "", "line", { attrs: 'data-jump="letter"', icon: "mail" }), btn("Share", "", "line", { attrs: "data-share", icon: "share" })];
+    acts = [btn("Email updates", "", "line", { attrs: 'data-jump="letter"', icon: "mail" }), btn("Share", "", "line", { attrs: "data-share", icon: "share" })];
     if (kind === "state") acts.push(btn("Map", mapHref || `/states/${st}?map=1`, "line", { icon: "map" }));
   }
   const actHtml = Array.isArray(acts) ? acts.join("") : acts;
@@ -1226,7 +1226,7 @@ export function drawerList(active = "") {
       + `</ul></div>`,
     sec("Browse", item("states", "/states", "States") + item("organizations", "/organizations", "Organizations")),
     sec("Help build this", item("add-program", "/add/program", "Add a program") + item("add-organization", "/add/organization", "Add an organization") + item("manage", "/manage", "Manage your organization") + item("add-event", "/add/event", "Add an event") + item("help", "/help", "Claim your organization")),
-    sec("About this directory", item("about", "/about", "How we check listings") + item("letter", "/letter", "Get the letter") + item("build", "/build", "Build with us")),
+    sec("About this directory", item("about", "/about", "How we check listings") + item("letter", "/letter", "Email updates") + item("build", "/build", "Build with us")),
     `<div class="dl-sec dl-set"><button type="button" class="dl-theme" data-theme-toggle aria-pressed="${dark}"><span>Dark mode</span><span class="dl-switch" aria-hidden="true"></span></button></div>`,
   ].join("");
 }
@@ -1250,7 +1250,7 @@ export function footer() {
 <div class="ft-cols"><div><h2 class="ft-h">Find</h2><ul>${near ? li("Programs near you", near) : `<li><button type="button" data-open="search">Programs near you</button></li>`}${li("Sports", "/sports")}${li("Grants", "/grants")}${li("Events", "/events")}${li("Guides", "/resources")}</ul></div>
 <div><h2 class="ft-h">Browse</h2><ul>${li("States", "/states")}${li("Organizations", "/organizations")}</ul></div>
 <div><h2 class="ft-h">Help build this</h2><ul>${li("Add a program", "/add/program")}${li("Add an event", "/add/event")}${li("Claim your organization", "/help")}</ul></div>
-<div><h2 class="ft-h">About this directory</h2><ul>${li("How we check listings", "/about")}${li("Get the letter", "/letter")}${li("Build with us", "/build")}${li("Accessibility", "/about#accessibility")}</ul></div></div>
+<div><h2 class="ft-h">About this directory</h2><ul>${li("How we check listings", "/about")}${li("Email updates", "/letter")}${li("Build with us", "/build")}${li("Accessibility", "/about#accessibility")}</ul></div></div>
 <div class="ft-fine"><p class="ft-fine">Made with <span role="img" aria-label="love">❤️</span> by <a href="https://adapttolife.org">Adapt To Life</a>. © 2026 · <a href="/privacy">Privacy</a> · <a href="/terms">Terms</a></p></div></div>`;
 }
 

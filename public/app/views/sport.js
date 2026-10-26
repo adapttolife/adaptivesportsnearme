@@ -195,7 +195,7 @@ export async function render(ctx) {
       body = `<section class="sec sec--first">${A.emptyState({
         title: `No ${low} events posted yet`,
         body: "Know one coming up? Tell us and we'll check it.",
-        actions: [{ label: "Add an event", href: "/add/event" }, { label: "Get the letter", href: "", kind: "line", attrs: 'data-jump="letter"' }],
+        actions: [{ label: "Add an event", href: "/add/event" }, { label: "Email updates", href: "", kind: "line", attrs: 'data-jump="letter"' }],
         image: "event",
       })}</section>${await runningSection({ pool, key, title: name, id: "sp-run", now, to: hrefFor(key, { t: "events" }) })}`;
     }

@@ -229,7 +229,7 @@ test("the shared footer keeps its four groups and every destination", () => {
     "Programs near you", "Sports", "Grants", "Events", "Guides",
     "States", "Organizations",
     "Add a program", "Add an event", "Claim your organization",
-    "How we check listings", "Get the letter", "Blog", "Accessibility", "Adapt To Life",
+    "How we check listings", "Email updates", "Blog", "Accessibility", "Adapt To Life",
   ]) {
     assert.ok(html.includes(`>${label}</a>`), `footer is missing ${label}`);
   }

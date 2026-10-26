@@ -114,7 +114,7 @@ export async function render(ctx) {
         image: "event",
         actions: [
           { label: "Add an event", href: "/add/event", kind: "orange" },
-          { label: "Get the letter", href: "", kind: "line", attrs: 'data-jump="letter"' },
+          { label: "Email updates", href: "", kind: "line", attrs: 'data-jump="letter"' },
         ],
       })}</div>`;
 
