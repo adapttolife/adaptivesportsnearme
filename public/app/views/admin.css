@@ -163,6 +163,48 @@
 	box-shadow: var(--focus);
 }
 
+
+.v-admin .adm-sport-list {
+	display: grid;
+	gap: 8px;
+}
+
+.v-admin .adm-sport-row {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) 44px;
+	gap: 8px;
+	align-items: center;
+}
+
+.v-admin .adm-sport-add,
+.v-admin .adm-sport-remove {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 6px;
+	min-height: 44px;
+	border: 1px solid var(--line-input);
+	border-radius: var(--r);
+	background: var(--paper);
+	color: var(--ink);
+	font: inherit;
+	font-weight: 700;
+	cursor: pointer;
+}
+
+.v-admin .adm-sport-add {
+	margin-top: 8px;
+	padding: 0 12px;
+}
+
+.v-admin .adm-sport-remove {
+	padding: 0;
+}
+
+.v-admin .adm-sport-add:hover,
+.v-admin .adm-sport-remove:hover {
+	border-color: var(--ink);
+}
 @media (max-width: 599px) {
 	.v-admin .adm-grid {
 		grid-template-columns: 1fr;

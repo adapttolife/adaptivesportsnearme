@@ -202,6 +202,48 @@
 	text-decoration: none;
 }
 
+
+.v-manage .om-sport-list {
+	display: grid;
+	gap: 8px;
+}
+
+.v-manage .om-sport-row {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) 44px;
+	gap: 8px;
+	align-items: center;
+}
+
+.v-manage .om-sport-add,
+.v-manage .om-sport-remove {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 6px;
+	min-height: 44px;
+	border: 1px solid var(--line-input);
+	border-radius: var(--r);
+	background: var(--paper);
+	color: var(--ink);
+	font: inherit;
+	font-weight: 700;
+	cursor: pointer;
+}
+
+.v-manage .om-sport-add {
+	margin-top: 8px;
+	padding: 0 12px;
+}
+
+.v-manage .om-sport-remove {
+	padding: 0;
+}
+
+.v-manage .om-sport-add:hover,
+.v-manage .om-sport-remove:hover {
+	border-color: var(--ink);
+}
 @media (min-width: 600px) {
 	.v-manage .om-card {
 		padding: 28px;

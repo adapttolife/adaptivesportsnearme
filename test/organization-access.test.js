@@ -48,12 +48,15 @@ test("a manager can manage only programs and events linked to their organization
     const orgId = "9fd14fc2-5d5d-472d-a0ca-a0a1de7651f6";
     sqlite.prepare("INSERT INTO organizations (id,name,claim_email,created_at,updated_at) VALUES (?,?,?,?,?)")
       .run(orgId, "Example Organization", "manager@example.test", "2026", "2026");
-    const program = await createManagedProgram(db, orgId, "manager@example.test", { name: "Wheelchair Tennis", sport_key: "tennis", city: "Troy", state: "NY", is_public: 1 });
+    const program = await createManagedProgram(db, orgId, "manager@example.test", { name: "Wheelchair Tennis", sport: "Tennis", sport_key: "tennis", sports_json: '["tennis","basketball"]', city: "Troy", state: "NY", is_public: 1 });
     assert.equal(program.state_name, "New York");
+    assert.equal(program.sports_json, '["tennis","basketball"]');
     assert.equal(sqlite.prepare("SELECT verification_status FROM programs WHERE id = ?").get(program.id).verification_status, "verified");
     assert.equal((await managedOrganizationPrograms(db, orgId, "manager@example.test")).length, 1);
-    const changedProgram = await updateManagedProgram(db, orgId, program.id, "manager@example.test", { name: "Tennis clinic", is_public: 0 });
+    const changedProgram = await updateManagedProgram(db, orgId, program.id, "manager@example.test", { name: "Tennis clinic", sport: "Basketball", sport_key: "basketball", sports_json: '["basketball","tennis"]', is_public: 0 });
     assert.equal(changedProgram.name, "Tennis clinic");
+    assert.equal(changedProgram.sport_key, "basketball");
+    assert.equal(changedProgram.sports_json, '["basketball","tennis"]');
     assert.equal(changedProgram.is_public, 0);
     assert.equal(await updateManagedProgram(db, orgId, program.id, "other@example.test", { name: "Nope" }), null);
     assert.equal(await deleteManagedProgram(db, orgId, program.id, "manager@example.test"), true);

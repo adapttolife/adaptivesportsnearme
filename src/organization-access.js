@@ -197,7 +197,7 @@ export async function updateClaimedOrganization(db, id, email, input) {
   return organizationForClaimEmail(db, id, email);
 }
 
-const PROGRAM_COLUMNS = "id, name, sport, sport_key, website_url, city, state, state_name, description, cost_note, ages, equipment_provided, is_public, created_at, updated_at";
+const PROGRAM_COLUMNS = "id, name, sport, sport_key, sports_json, website_url, city, state, state_name, description, cost_note, ages, equipment_provided, is_public, created_at, updated_at";
 const EVENT_COLUMNS = "id, title, description, sport_key, venue, city, state, url, starts_at, ends_at, all_day, status, is_public, created_at, updated_at";
 
 async function claimedOrganization(db, id, email) {
@@ -217,7 +217,12 @@ function programValues(input, existing = {}) {
     try { const url = new URL(website); if (!/^https?:$/.test(url.protocol)) throw new Error(); }
     catch { throw new Error("website-invalid"); }
   }
-  return { name, sport: text("sport", 120), sport_key: text("sport_key", 80).toLowerCase(), website_url: website,
+  const sports_json = text("sports_json", 4000);
+  if (sports_json) {
+    try { if (!Array.isArray(JSON.parse(sports_json))) throw new Error(); }
+    catch { throw new Error("sports-invalid"); }
+  }
+  return { name, sport: text("sport", 120), sport_key: text("sport_key", 80).toLowerCase(), sports_json, website_url: website,
     city: text("city", 120), state, state_name: STATE_NAMES[state] || "", description: text("description", 5000),
     cost_note: text("cost_note", 1000), ages: text("ages", 300),
     equipment_provided: managedBoolean(input.equipment_provided, existing.equipment_provided == null ? 0 : Number(existing.equipment_provided)),
@@ -235,9 +240,9 @@ export async function createManagedProgram(db, organizationId, email, input) {
   const value = programValues(input);
   const timestamp = now();
   const id = crypto.randomUUID();
-  await db.prepare(`INSERT INTO programs (id, organization_id, name, sport, sport_key, website_url, city, state, state_name, description, cost_note, ages, equipment_provided, is_public, status, verification_status, created_at, updated_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active', 'verified', ?, ?)`)
-    .bind(id, organizationId, value.name, value.sport || null, value.sport_key || null, value.website_url || null,
+  await db.prepare(`INSERT INTO programs (id, organization_id, name, sport, sport_key, sports_json, website_url, city, state, state_name, description, cost_note, ages, equipment_provided, is_public, status, verification_status, created_at, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active', 'verified', ?, ?)`)
+    .bind(id, organizationId, value.name, value.sport || null, value.sport_key || null, value.sports_json || null, value.website_url || null,
       value.city || null, value.state || null, value.state_name || null, value.description || null, value.cost_note || null,
       value.ages || null, value.equipment_provided, value.is_public, timestamp, timestamp).run();
   return db.prepare(`SELECT ${PROGRAM_COLUMNS} FROM programs WHERE id = ? AND organization_id = ?`).bind(id, organizationId).first();
@@ -248,8 +253,8 @@ export async function updateManagedProgram(db, organizationId, programId, email,
   const existing = await db.prepare(`SELECT ${PROGRAM_COLUMNS} FROM programs WHERE id = ? AND organization_id = ?`).bind(programId, organizationId).first();
   if (!existing) return false;
   const value = programValues(input, existing);
-  await db.prepare(`UPDATE programs SET name = ?, sport = ?, sport_key = ?, website_url = ?, city = ?, state = ?, state_name = ?, description = ?, cost_note = ?, ages = ?, equipment_provided = ?, is_public = ?, updated_at = ? WHERE id = ? AND organization_id = ?`)
-    .bind(value.name, value.sport || null, value.sport_key || null, value.website_url || null, value.city || null, value.state || null,
+  await db.prepare(`UPDATE programs SET name = ?, sport = ?, sport_key = ?, sports_json = ?, website_url = ?, city = ?, state = ?, state_name = ?, description = ?, cost_note = ?, ages = ?, equipment_provided = ?, is_public = ?, updated_at = ? WHERE id = ? AND organization_id = ?`)
+    .bind(value.name, value.sport || null, value.sport_key || null, value.sports_json || null, value.website_url || null, value.city || null, value.state || null,
       value.state_name || null, value.description || null, value.cost_note || null, value.ages || null, value.equipment_provided,
       value.is_public, now(), programId, organizationId).run();
   return db.prepare(`SELECT ${PROGRAM_COLUMNS} FROM programs WHERE id = ? AND organization_id = ?`).bind(programId, organizationId).first();

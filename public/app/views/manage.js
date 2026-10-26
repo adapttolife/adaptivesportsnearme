@@ -5,16 +5,24 @@ import { PAGES, site } from "../page-meta.js";
 const esc = A.esc;
 const stateOptions = (current) => `<option value="">Choose a state</option>${A.STATE_CODES.map((state) => `<option value="${state}"${state === current ? " selected" : ""}>${esc(A.stateName(state))}</option>`).join("")}`;
 const value = (item, key) => esc(item?.[key] || "");
-const sportOptions = (sports, organization) => {
-  const choices = sports.filter((sport) => sport.key !== "multi")
-    .map((sport) => [sport.key, A.sportName(sport.key)])
-    .sort((a, b) => a[1].localeCompare(b[1]));
-  choices.push(["several", "Several sports"]);
+const sportChoices = (sports) => sports.filter((sport) => sport.key !== "multi")
+  .map((sport) => [sport.key, A.sportName(sport.key)])
+  .sort((a, b) => a[1].localeCompare(b[1]));
+const sportOptions = (sports, current = "") => {
+  const choices = sportChoices(sports);
   const keys = new Set(choices.map(([key]) => key));
-  const current = organization.sport_key || organization.sport || "";
-  if (current && !keys.has(current)) choices.unshift([current, organization.sport || current]);
+  if (current && !keys.has(current)) choices.unshift([current, A.sportName(current) || current]);
   return `<option value="">Choose a sport</option>${choices.map(([key, label]) => `<option value="${esc(key)}"${key === current ? " selected" : ""}>${esc(label)}</option>`).join("")}`;
 };
+const sportKeys = (item = {}) => {
+  let keys = [];
+  try { keys = Array.isArray(JSON.parse(item.sports_json || "")) ? JSON.parse(item.sports_json) : []; } catch {}
+  if (!keys.length && (item.sport_key || item.sport)) keys = [item.sport_key || item.sport];
+  return [...new Set(keys.filter((key) => typeof key === "string" && key.trim()))] || [];
+};
+const sportRows = (sports, item) => (sportKeys(item).length ? sportKeys(item) : [""])
+  .map((key) => `<div class="om-sport-row" data-sport-row><select name="sports">${sportOptions(sports, key)}</select><button class="om-sport-remove" type="button" data-sport-remove aria-label="Remove sport">${A.icon("x", 18)}</button></div>`).join("");
+const sportFields = (sports, item) => `<div class="field om-sports"><label>Sports</label><div class="om-sport-list" data-sports-list>${sportRows(sports, item)}</div><button class="om-sport-add" type="button" data-sport-add>${A.icon("plus", 18)}<span>Add sport</span></button></div>`;
 
 async function response(path, options) {
   const result = await fetch(path, { ...options, headers: { "content-type": "application/json", ...(options?.headers || {}) } });
@@ -28,12 +36,12 @@ function dateValue(stored) {
 
 function managedProgram(item, sports) {
   const id = item?.id || "";
-  return `<form class="om-card om-managed" data-kind="programs"${id ? ` data-id="${esc(id)}"` : ""} novalidate><fieldset><legend>${id ? "Edit program" : "Add a program"}</legend><div class="field"><label>Name <span class="req" aria-hidden="true">*</span></label><input name="name" required value="${value(item, "name")}"></div><div class="field"><label>Sport</label><select name="sport_key">${sportOptions(sports, item || {})}</select></div><div class="field"><label>Website</label><input name="website_url" type="url" value="${value(item, "website_url")}" placeholder="https://"></div><div class="om-two"><div class="field"><label>City</label><input name="city" value="${value(item, "city")}"></div><div class="field"><label>State</label><select name="state">${stateOptions(item?.state)}</select></div></div><div class="field"><label>Description</label><textarea name="description" rows="3">${value(item, "description")}</textarea></div><label class="om-visibility"><span class="om-visibility-copy">Equipment<small>We provide equipment.</small></span><input name="equipment_provided" type="checkbox" role="switch" value="1"${Number(item?.equipment_provided) === 1 ? " checked" : ""}><span class="dl-switch" aria-hidden="true"></span></label><label class="om-visibility"><span class="om-visibility-copy">Program visibility<small>Show this program on Adaptive Sports Near Me.</small></span><input name="is_public" type="checkbox" role="switch" value="1"${id ? Number(item?.is_public) === 1 ? " checked" : "" : " checked"}><span class="dl-switch" aria-hidden="true"></span></label></fieldset><p class="om-status" role="status"></p><div class="btns"><button class="btn btn--ink" type="submit">${id ? "Save program" : "Add program"}</button>${id ? `<button class="btn btn--line" type="button" data-delete>Delete program</button>` : ""}</div></form>`;
+  return `<form class="om-card om-managed" data-kind="programs"${id ? ` data-id="${esc(id)}"` : ""} novalidate><fieldset><legend>${id ? "Edit program" : "Add a program"}</legend><div class="field"><label>Name <span class="req" aria-hidden="true">*</span></label><input name="name" required value="${value(item, "name")}"></div>${sportFields(sports, item || {})}<div class="field"><label>Website</label><input name="website_url" type="url" value="${value(item, "website_url")}" placeholder="https://"></div><div class="om-two"><div class="field"><label>City</label><input name="city" value="${value(item, "city")}"></div><div class="field"><label>State</label><select name="state">${stateOptions(item?.state)}</select></div></div><div class="field"><label>Description</label><textarea name="description" rows="3">${value(item, "description")}</textarea></div><label class="om-visibility"><span class="om-visibility-copy">Equipment<small>We provide equipment.</small></span><input name="equipment_provided" type="checkbox" role="switch" value="1"${Number(item?.equipment_provided) === 1 ? " checked" : ""}><span class="dl-switch" aria-hidden="true"></span></label><label class="om-visibility"><span class="om-visibility-copy">Program visibility<small>Show this program on Adaptive Sports Near Me.</small></span><input name="is_public" type="checkbox" role="switch" value="1"${id ? Number(item?.is_public) === 1 ? " checked" : "" : " checked"}><span class="dl-switch" aria-hidden="true"></span></label></fieldset><p class="om-status" role="status"></p><div class="btns"><button class="btn btn--ink" type="submit">${id ? "Save program" : "Add program"}</button>${id ? `<button class="btn btn--line" type="button" data-delete>Delete program</button>` : ""}</div></form>`;
 }
 
 function managedEvent(item, sports) {
   const id = item?.id || "";
-  return `<form class="om-card om-managed" data-kind="events"${id ? ` data-id="${esc(id)}"` : ""} novalidate><fieldset><legend>${id ? "Edit event" : "Add an event"}</legend><div class="field"><label>Event name <span class="req" aria-hidden="true">*</span></label><input name="title" required value="${value(item, "title")}"></div><div class="field"><label>Sport</label><select name="sport_key">${sportOptions(sports, item || {})}</select></div><div class="om-two"><div class="field"><label>Starts <span class="req" aria-hidden="true">*</span></label><input name="starts_at" type="datetime-local" required step="1" value="${dateValue(item?.starts_at)}"${item?.starts_at ? ` data-utc="${esc(item.starts_at)}"` : ""}></div><div class="field"><label>Ends</label><input name="ends_at" type="datetime-local" step="1" value="${dateValue(item?.ends_at)}"${item?.ends_at ? ` data-utc="${esc(item.ends_at)}"` : ""}></div></div><div class="field"><label>Venue</label><input name="venue" value="${value(item, "venue")}"></div><div class="om-two"><div class="field"><label>City</label><input name="city" value="${value(item, "city")}"></div><div class="field"><label>State</label><select name="state">${stateOptions(item?.state)}</select></div></div><div class="field"><label>Event URL</label><input name="url" type="url" value="${value(item, "url")}" placeholder="https://"></div><div class="field"><label>Description</label><textarea name="description" rows="3">${value(item, "description")}</textarea></div><label class="om-visibility"><span class="om-visibility-copy">Event visibility<small>Show this event on Adaptive Sports Near Me.</small></span><input name="is_public" type="checkbox" role="switch" value="1"${id ? Number(item?.is_public) === 1 ? " checked" : "" : " checked"}><span class="dl-switch" aria-hidden="true"></span></label></fieldset><p class="om-status" role="status"></p><div class="btns"><button class="btn btn--ink" type="submit">${id ? "Save event" : "Add event"}</button>${id ? `<button class="btn btn--line" type="button" data-delete>Delete event</button>` : ""}</div></form>`;
+  return `<form class="om-card om-managed" data-kind="events"${id ? ` data-id="${esc(id)}"` : ""} novalidate><fieldset><legend>${id ? "Edit event" : "Add an event"}</legend><div class="field"><label>Event name <span class="req" aria-hidden="true">*</span></label><input name="title" required value="${value(item, "title")}"></div>${sportFields(sports, item || {})}<div class="om-two"><div class="field"><label>Starts <span class="req" aria-hidden="true">*</span></label><input name="starts_at" type="datetime-local" required step="1" value="${dateValue(item?.starts_at)}"${item?.starts_at ? ` data-utc="${esc(item.starts_at)}"` : ""}></div><div class="field"><label>Ends</label><input name="ends_at" type="datetime-local" step="1" value="${dateValue(item?.ends_at)}"${item?.ends_at ? ` data-utc="${esc(item.ends_at)}"` : ""}></div></div><div class="field"><label>Venue</label><input name="venue" value="${value(item, "venue")}"></div><div class="om-two"><div class="field"><label>City</label><input name="city" value="${value(item, "city")}"></div><div class="field"><label>State</label><select name="state">${stateOptions(item?.state)}</select></div></div><div class="field"><label>Event URL</label><input name="url" type="url" value="${value(item, "url")}" placeholder="https://"></div><div class="field"><label>Description</label><textarea name="description" rows="3">${value(item, "description")}</textarea></div><label class="om-visibility"><span class="om-visibility-copy">Event visibility<small>Show this event on Adaptive Sports Near Me.</small></span><input name="is_public" type="checkbox" role="switch" value="1"${id ? Number(item?.is_public) === 1 ? " checked" : "" : " checked"}><span class="dl-switch" aria-hidden="true"></span></label></fieldset><p class="om-status" role="status"></p><div class="btns"><button class="btn btn--ink" type="submit">${id ? "Save event" : "Add event"}</button>${id ? `<button class="btn btn--line" type="button" data-delete>Delete event</button>` : ""}</div></form>`;
 }
 
 function withPublicLink(form, href, label) {
@@ -81,7 +89,7 @@ function editor(organization, sports, programs = [], events = []) {
   return {
     title: site(`Manage ${organization.name}`),
     description: PAGES.manage.description,
-    html: `<section class="om"><a class="om-back" href="/manage/organizations/${esc(organization.id)}">${A.icon("arrow-left", 20)}<span>${esc(organization.name)}</span></a><div class="om-head"><h1 tabindex="-1">${esc(organization.name)}</h1><p>Changes appear on your organization page after you save.</p></div><form class="om-card om-edit" novalidate><fieldset><legend>Organization details</legend><div class="field"><label for="om-name">Organization name <span class="req" aria-hidden="true">*</span></label><input id="om-name" name="name" required value="${value(organization, "name")}"></div><div class="field"><label for="om-type">Organization type</label><input id="om-type" name="org_type" value="${value(organization, "org_type")}" autocomplete="organization-title"></div><div class="field"><label for="om-website">Website</label><input id="om-website" name="website_url" type="url" inputmode="url" value="${value(organization, "website_url")}" placeholder="https://"></div><div class="field"><label for="om-description">Description</label><textarea id="om-description" name="description" rows="5">${value(organization, "description")}</textarea></div><label class="om-visibility"><span class="om-visibility-copy">Organization visibility<small>Show this organization on Adaptive Sports Near Me.</small></span><input name="is_public" type="checkbox" role="switch" value="1"${checked("is_public")}><span class="dl-switch" aria-hidden="true"></span></label></fieldset><fieldset><legend>Location and contact</legend><div class="field"><label for="om-address">Address</label><input id="om-address" name="address" value="${value(organization, "address")}" autocomplete="street-address"></div><div class="om-two"><div class="field"><label for="om-city">City</label><input id="om-city" name="city" value="${value(organization, "city")}" autocomplete="address-level2"></div><div class="field"><label for="om-state">State</label><select id="om-state" name="state">${stateOptions(organization.state)}</select></div></div><div class="om-two"><div class="field"><label for="om-zip">ZIP code</label><input id="om-zip" name="zip" value="${value(organization, "zip")}" autocomplete="postal-code"></div><div class="field"><label for="om-country">Country</label><input id="om-country" name="country" value="${value(organization, "country") || "United States"}" autocomplete="country-name"></div></div><label class="om-visibility"><span class="om-visibility-copy">Address visibility<small>Show the organization full address publicly.</small></span><input name="address_publicity_consent" type="checkbox" role="switch" value="1"${checked("address_publicity_consent")}><span class="dl-switch" aria-hidden="true"></span></label><div class="field"><label for="om-public-email">Public email</label><input id="om-public-email" name="email" type="email" value="${value(organization, "email")}" autocomplete="email"></div><div class="field"><label for="om-phone">Public phone</label><input id="om-phone" name="phone" type="tel" value="${value(organization, "phone")}" autocomplete="tel"></div><label class="om-visibility"><span class="om-visibility-copy">Contact visibility<small>Show my organization’s email and phone publicly.</small></span><input name="publicity_consent" type="checkbox" role="switch" value="1"${checked("publicity_consent")}><span class="dl-switch" aria-hidden="true"></span></label></fieldset><fieldset><legend>Program information</legend><div class="field"><label for="om-sport">Primary sport</label><select id="om-sport" name="sport">${sportOptions(sports, organization)}</select></div><div class="field"><label for="om-cost">Cost or fee information</label><input id="om-cost" name="cost_note" value="${value(organization, "cost_note")}"></div><div class="field"><label for="om-ages">Who it is for</label><input id="om-ages" name="ages" value="${value(organization, "ages")}"></div><label class="om-visibility"><span class="om-visibility-copy">Equipment<small>We provide equipment.</small></span><input name="equipment_provided" type="checkbox" role="switch" value="1"${checked("equipment_provided")}><span class="dl-switch" aria-hidden="true"></span></label></fieldset><p class="om-status" role="status"></p><div class="btns"><button class="btn btn--ink" type="submit">Save changes</button><a class="btn btn--line" href="/organizations/${esc(organization.id)}">Go to organization</a></div></form></section>`,
+    html: `<section class="om"><a class="om-back" href="/manage/organizations/${esc(organization.id)}">${A.icon("arrow-left", 20)}<span>${esc(organization.name)}</span></a><div class="om-head"><h1 tabindex="-1">${esc(organization.name)}</h1><p>Changes appear on your organization page after you save.</p></div><form class="om-card om-edit" novalidate><fieldset><legend>Organization details</legend><div class="field"><label for="om-name">Organization name <span class="req" aria-hidden="true">*</span></label><input id="om-name" name="name" required value="${value(organization, "name")}"></div><div class="field"><label for="om-type">Organization type</label><input id="om-type" name="org_type" value="${value(organization, "org_type")}" autocomplete="organization-title"></div><div class="field"><label for="om-website">Website</label><input id="om-website" name="website_url" type="url" inputmode="url" value="${value(organization, "website_url")}" placeholder="https://"></div><div class="field"><label for="om-description">Description</label><textarea id="om-description" name="description" rows="5">${value(organization, "description")}</textarea></div><label class="om-visibility"><span class="om-visibility-copy">Organization visibility<small>Show this organization on Adaptive Sports Near Me.</small></span><input name="is_public" type="checkbox" role="switch" value="1"${checked("is_public")}><span class="dl-switch" aria-hidden="true"></span></label></fieldset><fieldset><legend>Location and contact</legend><div class="field"><label for="om-address">Address</label><input id="om-address" name="address" value="${value(organization, "address")}" autocomplete="street-address"></div><div class="om-two"><div class="field"><label for="om-city">City</label><input id="om-city" name="city" value="${value(organization, "city")}" autocomplete="address-level2"></div><div class="field"><label for="om-state">State</label><select id="om-state" name="state">${stateOptions(organization.state)}</select></div></div><div class="om-two"><div class="field"><label for="om-zip">ZIP code</label><input id="om-zip" name="zip" value="${value(organization, "zip")}" autocomplete="postal-code"></div><div class="field"><label for="om-country">Country</label><input id="om-country" name="country" value="${value(organization, "country") || "United States"}" autocomplete="country-name"></div></div><label class="om-visibility"><span class="om-visibility-copy">Address visibility<small>Show the organization full address publicly.</small></span><input name="address_publicity_consent" type="checkbox" role="switch" value="1"${checked("address_publicity_consent")}><span class="dl-switch" aria-hidden="true"></span></label><div class="field"><label for="om-public-email">Public email</label><input id="om-public-email" name="email" type="email" value="${value(organization, "email")}" autocomplete="email"></div><div class="field"><label for="om-phone">Public phone</label><input id="om-phone" name="phone" type="tel" value="${value(organization, "phone")}" autocomplete="tel"></div><label class="om-visibility"><span class="om-visibility-copy">Contact visibility<small>Show my organization’s email and phone publicly.</small></span><input name="publicity_consent" type="checkbox" role="switch" value="1"${checked("publicity_consent")}><span class="dl-switch" aria-hidden="true"></span></label></fieldset><fieldset><legend>Program information</legend>${sportFields(sports, organization)}<div class="field"><label for="om-cost">Cost or fee information</label><input id="om-cost" name="cost_note" value="${value(organization, "cost_note")}"></div><div class="field"><label for="om-ages">Who it is for</label><input id="om-ages" name="ages" value="${value(organization, "ages")}"></div><label class="om-visibility"><span class="om-visibility-copy">Equipment<small>We provide equipment.</small></span><input name="equipment_provided" type="checkbox" role="switch" value="1"${checked("equipment_provided")}><span class="dl-switch" aria-hidden="true"></span></label></fieldset><p class="om-status" role="status"></p><div class="btns"><button class="btn btn--ink" type="submit">Save changes</button><a class="btn btn--line" href="/organizations/${esc(organization.id)}">Go to organization</a></div></form></section>`,
   };
 }
 
@@ -128,6 +136,35 @@ export async function render(ctx) {
   return itemList(kind, managed.body.organization, listed.body.items || []);
 }
 
+function formDataWithSports(form) {
+  const data = Object.fromEntries(new FormData(form));
+  const keys = [...form.querySelectorAll('[data-sports-list] select')].map((select) => select.value).filter(Boolean);
+  data.sports_json = JSON.stringify([...new Set(keys)]);
+  data.sport_key = keys[0] || "";
+  data.sport = keys[0] ? A.sportName(keys[0]) : "";
+  delete data.sports;
+  return data;
+}
+
+function bindSportControls(root) {
+  const options = root.querySelector('[data-sports-list] select')?.innerHTML;
+  if (!options) return () => {};
+  const change = (event) => {
+    const add = event.target.closest('[data-sport-add]');
+    const remove = event.target.closest('[data-sport-remove]');
+    if (!add && !remove) return;
+    const list = (add || remove).closest('.om-sports').querySelector('[data-sports-list]');
+    if (add) list.insertAdjacentHTML('beforeend', `<div class="om-sport-row" data-sport-row><select name="sports">${options}</select><button class="om-sport-remove" type="button" data-sport-remove aria-label="Remove sport">${A.icon("x", 18)}</button></div>`);
+    else {
+      const row = remove.closest('[data-sport-row]');
+      if (list.querySelectorAll('[data-sport-row]').length === 1) row.querySelector('select').value = "";
+      else row.remove();
+    }
+  };
+  root.addEventListener('click', change);
+  return () => root.removeEventListener('click', change);
+}
+
 export function mount(root) {
   const signout = async () => {
     await fetch("/api/org-auth/signout", { method: "POST" });
@@ -151,12 +188,13 @@ export function mount(root) {
   signouts.forEach((button) => button.addEventListener("click", signout));
   if (!edit) {
     const managedForms = [...root.querySelectorAll(".om-managed")];
+    const sportControls = bindSportControls(root);
     const saveManaged = async (event) => {
       event.preventDefault();
       const form = event.currentTarget;
       const required = form.querySelector("[required]");
       if (required && !required.checkValidity()) { required.reportValidity(); return; }
-      const data = Object.fromEntries(new FormData(form));
+      const data = formDataWithSports(form);
       for (const key of ["is_public", "equipment_provided"]) if (form.elements[key]) data[key] = form.elements[key].checked ? 1 : 0;
       for (const key of ["starts_at", "ends_at"]) if (form.elements[key]) data[key] = fromDateTimeLocal(form.elements[key].value, form.elements[key].dataset.utc);
       const organizationId = form.dataset.org;
@@ -178,14 +216,14 @@ export function mount(root) {
     managedForms.forEach((managed) => managed.addEventListener("submit", saveManaged));
     const deletes = [...root.querySelectorAll(".om-managed [data-delete]")];
     deletes.forEach((button) => button.addEventListener("click", deleteManaged));
-    return () => { managedForms.forEach((managed) => managed.removeEventListener("submit", saveManaged)); deletes.forEach((button) => button.removeEventListener("click", deleteManaged)); signouts.forEach((button) => button.removeEventListener("click", signout)); };
+    return () => { sportControls(); managedForms.forEach((managed) => managed.removeEventListener("submit", saveManaged)); deletes.forEach((button) => button.removeEventListener("click", deleteManaged)); signouts.forEach((button) => button.removeEventListener("click", signout)); };
   }
+  const sportControls = bindSportControls(root);
   const save = async (event) => {
     event.preventDefault();
     const name = edit.elements.name, status = root.querySelector(".om-status");
     if (!name.checkValidity()) { name.reportValidity(); return; }
-    const data = Object.fromEntries(new FormData(edit));
-    data.sport_key = data.sport;
+    const data = formDataWithSports(edit);
     data.is_public = edit.elements.is_public.checked ? 1 : 0;
     data.publicity_consent = edit.elements.publicity_consent.checked ? 1 : 0;
     data.address_publicity_consent = edit.elements.address_publicity_consent.checked ? 1 : 0;
@@ -226,5 +264,5 @@ export function mount(root) {
   managedForms.forEach((form) => form.addEventListener("submit", saveManaged));
   const deletes = [...root.querySelectorAll(".om-managed [data-delete]")];
   deletes.forEach((button) => button.addEventListener("click", deleteManaged));
-  return () => { edit.removeEventListener("submit", save); managedForms.forEach((form) => form.removeEventListener("submit", saveManaged)); deletes.forEach((button) => button.removeEventListener("click", deleteManaged)); signouts.forEach((button) => button.removeEventListener("click", signout)); };
+  return () => { sportControls(); edit.removeEventListener("submit", save); managedForms.forEach((form) => form.removeEventListener("submit", saveManaged)); deletes.forEach((button) => button.removeEventListener("click", deleteManaged)); signouts.forEach((button) => button.removeEventListener("click", signout)); };
 }
