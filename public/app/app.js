@@ -317,7 +317,9 @@ export function loadDetail(id) {
       Object.assign(item, {
         website: goodUrl(o.website), desc: o.desc || null, cost: o.cost || null, ages: o.ages || null, equipment: o.equipment || null,
         address: o.address || null, addressPublicityConsent: !!o.addressPublicityConsent, zip: o.zip || null, country: o.country || null,
-        lat: o.lat ?? null, lng: o.lng ?? null, geo: o.geoPrecision || null,
+        // The exact point only when the organization made its address public; otherwise keep
+        // the center of its city from the list, so distances stay city to city, never from 0,0.
+        ...(Number.isFinite(o.lat) && Number.isFinite(o.lng) ? { lat: o.lat, lng: o.lng } : {}), geo: o.geoPrecision || null,
         checkedMonth: o.checkedMonth || null, type: o.type || null, detail: true,
       });
       if (o.history && typeof o.history === "object") item.history = { listedSince: o.history.listedSince || null, updatedByOrganization: o.history.updatedByOrganization || null };
@@ -586,13 +588,16 @@ export function locateMe() {
 /** A Where centered on a listing's own city (for "more near this listing"). */
 export function whereFromProgram(p) {
   const city = p.placed ? p.cityFirst.replace(/ and more$/, "") : null;
-  return { kind: city ? "city" : "state", label: placeText(p), short: city || stateName(p.state), city, state: p.state || null, coords: p.placed ? [p.lat, p.lng] : null, zip: null };
+  const coords = p.placed && Number.isFinite(p.lat) && Number.isFinite(p.lng) ? [p.lat, p.lng] : null;
+  return { kind: city ? "city" : "state", label: placeText(p), short: city || stateName(p.state), city, state: p.state || null, coords, zip: null };
 }
 
 /** The only source of distance. */
 export function relation(p, where) {
   if (!p || !where) return { inCity: false, miles: null };
-  const miles = where.coords && p.placed && p.lat != null ? haversine(where.coords, [p.lat, p.lng]) : null;
+  // Miles only between two real points: an empty point is not 0,0 (2026-10-26: "About 6620 mi" on every listing page).
+  const real = (c) => Array.isArray(c) && Number.isFinite(c[0]) && Number.isFinite(c[1]);
+  const miles = real(where.coords) && p.placed && real([p.lat, p.lng]) ? haversine(where.coords, [p.lat, p.lng]) : null;
   const inCity = !!(where.city && p.state === where.state && p.placed && (p.cityKey === normCity(where.city) || (miles != null && miles < 1)));
   return { inCity, miles };
 }

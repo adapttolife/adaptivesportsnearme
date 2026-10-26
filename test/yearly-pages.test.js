@@ -426,3 +426,16 @@ test("the yearly event page on its own days: happening now, no Register (Alec, 2
   const past = between(out.html, '<ol class="es-years">', "</ol>");
   assert.deepEqual([...past.matchAll(/<b class="es-y num">(\d{4})<\/b>/g)].map((m) => m[1]), ["2025", "2024"]);
 });
+
+test("distances are measured between two real points, never from 0,0 (2026-10-26: 'About 6620 mi' on listing pages)", () => {
+  const wichita = { placed: true, cityFirst: "Wichita", city: "Wichita", state: "KS", lat: 37.69, lng: -97.34 };
+  // A listing page whose organization keeps its address private has no exact point.
+  const page = { placed: true, cityFirst: "Overland Park", city: "Overland Park", state: "KS", lat: null, lng: null };
+  const where = A.whereFromProgram(page);
+  assert.equal(where.coords, null);
+  assert.equal(A.relation(wichita, where).miles, null);
+  assert.equal(A.relation(wichita, { city: "Overland Park", state: "KS", coords: [null, null] }).miles, null);
+  // With the city's center the distance is real: Overland Park to Wichita is about 165 miles.
+  const miles = A.relation(wichita, A.whereFromProgram({ ...page, lat: 38.98, lng: -94.67 })).miles;
+  assert.ok(miles > 150 && miles < 180, String(miles));
+});
