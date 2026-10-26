@@ -1745,7 +1745,8 @@ async function doShare(el) {
   announce("Link copied");
 }
 
-function showFieldError(input, msg) {
+/** Field errors in the form's own words; views with their own steps use them too (views/forms.js). */
+export function showFieldError(input, msg) {
   const field = input.closest(".field") || input.parentElement;
   input.setAttribute("aria-invalid", "true");
   let id = input.getAttribute("data-err-id");
@@ -1764,7 +1765,7 @@ function showFieldError(input, msg) {
   p.hidden = false;
   p.innerHTML = icon("circle-alert", 18) + `<span>${esc(msg)}</span>`;
 }
-function clearFieldError(input) {
+export function clearFieldError(input) {
   input.removeAttribute("aria-invalid");
   const id = input.getAttribute("data-err-id"); const p = id && document.getElementById(id);
   if (p) { p.hidden = true; p.textContent = ""; }
@@ -1775,7 +1776,8 @@ function labelOf(input) {
 }
 function validate(form) {
   let first = null;
-  const fields = $$("input, select, textarea", form).filter((x) => !x.classList.contains("hp") && !x.classList.contains("hpot") && x.type !== "hidden" && x.type !== "submit");
+  // A field on a screen that isn't showing (the check-up's steps, views/forms.js), or switched off, is never the one in error.
+  const fields = $$("input, select, textarea", form).filter((x) => !x.classList.contains("hp") && !x.classList.contains("hpot") && x.type !== "hidden" && x.type !== "submit" && !x.disabled && !(x.closest && x.closest("[hidden]")));
   const seenRadio = new Set();
   for (const f of fields) {
     let msg = null;
@@ -1833,23 +1835,51 @@ function turnstileApi() {
     (function wait() { if (window.turnstile) return res(window.turnstile); if (Date.now() - t0 > 8000) return res(null); setTimeout(wait, 100); })();
   });
 }
+/* Audit finding 13 (2026-10-26): the challenge used to appear only after Send, below the button.
+   Now a form starts its check as it opens (warmTurnstile), above the Send button, so a challenge,
+   when Cloudflare asks for one, is there from the start and Send just uses the ready token. */
+function tsBox(form) {
+  let box = $(".ts-box", form);
+  if (!box) {
+    box = document.createElement("div"); box.className = "ts-box";
+    const sub = $(".fm-submit", form);
+    if (sub) sub.insertAdjacentElement("beforebegin", box); else form.appendChild(box);
+  }
+  return box;
+}
+function tsRender(ts, box) {
+  if (box._wid != null) return;
+  const settle = (t) => { const d = box._done; box._done = null; if (d) d(t || ""); else if (t) { box._token = t; box._at = Date.now(); } };
+  box._wid = ts.render(box, {
+    sitekey: TS_KEY, appearance: "interaction-only", execution: "execute", size: "flexible",
+    callback: (t) => settle(t), "error-callback": () => { box._token = null; settle(""); return true; },
+    "timeout-callback": () => { box._token = null; settle(""); }, "expired-callback": () => { box._token = null; },
+  });
+}
+/** Start the spam check as the form opens. Safe to call more than once. */
+export async function warmTurnstile(form) {
+  if (!form || form._tsWarm) return;
+  form._tsWarm = true;
+  const ts = await turnstileApi();
+  if (!ts || !form.isConnected) return;
+  const box = tsBox(form);
+  if (box._wid != null) return;
+  try { tsRender(ts, box); ts.execute(box._wid); } catch (_) { box._wid = null; }
+}
 /** The form's Turnstile token. It only shows a challenge when Cloudflare asks for one.
+    A token made as the form opened is used once (tokens last five minutes); otherwise a fresh one.
     "" when the check could not run; the server then decides (production refuses). */
 async function turnstileToken(form) {
   const ts = await turnstileApi();
   if (!ts) return "";
+  const box = tsBox(form);
+  if (box._token && Date.now() - (box._at || 0) < 240000) { const t = box._token; box._token = null; return t; }
   return new Promise((resolve) => {
-    let box = $(".ts-box", form);
-    if (!box) { box = document.createElement("div"); box.className = "ts-box"; form.appendChild(box); }
     let settled = false;
     const done = (t) => { if (!settled) { settled = true; resolve(t || ""); } };
     box._done = done;
-    if (box._wid == null) {
-      box._wid = ts.render(box, {
-        sitekey: TS_KEY, appearance: "interaction-only", execution: "execute", size: "flexible",
-        callback: (t) => box._done(t), "error-callback": () => { box._done(""); return true; }, "timeout-callback": () => box._done(""),
-      });
-    } else ts.reset(box._wid);
+    if (box._wid == null) tsRender(ts, box);
+    else ts.reset(box._wid);
     ts.execute(box._wid);
     setTimeout(() => done(""), 30000);
   });

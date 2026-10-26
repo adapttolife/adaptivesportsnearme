@@ -3,7 +3,7 @@ import { parseCookieHeader, signProfileId, verifyProfileCookie, validState } fro
 import { newerOrOlder } from "./schema-probe.js";
 import { cleanSeasons } from "../public/app/yearly.js";
 import { SLUG_RE } from "./events.js";
-import { applyConfirmation, logActivity, organizationActivity } from "./offerings.js";
+import { applyConfirmation, logActivity, organizationActivity, organizationSports, FIX_WORDS } from "./offerings.js";
 
 export const ADMIN_COOKIE_NAME = "asnm_admin";
 const SESSION_SECONDS = 60 * 60 * 12;
@@ -258,8 +258,7 @@ async function draftId(kind, intakeId) {
 
 export async function listAdminQueue(db) {
   const { results } = await db.prepare(`SELECT submission_id, kind, payload, created_at FROM submissions
-    WHERE status = 'new' AND (kind IN ('new_organization', 'new_program', 'new_event')
-      OR (kind = 'listing_update' AND json_extract(payload, '$.relation') = 'run'))
+    WHERE status = 'new' AND kind IN ('new_organization', 'new_program', 'new_event', 'listing_update')
     ORDER BY created_at ASC`).all();
   return (results || []).map(queueRow);
 }
@@ -271,11 +270,13 @@ export async function getAdminQueueItem(db, id) {
   if (!row || !QUEUE_KINDS.has(row.kind)) return null;
   const item = { ...queueRow(row), contact_email: row.contact_email, status: row.status };
   if (row.kind === "listing_update") {
-    // Only an organization confirming its own listing is queued; other fixes stay email-only, as before.
-    if (item.payload.relation !== "run") return null;
+    // Organizations confirming their listing (Apply) and "Something's wrong?" reports (Done) share the queue,
+    // so the team works in one place (docs/specs/community-kept-directory.md).
     const id = String(item.payload.update_of || "");
-    const org = ID_RE.test(id) ? await db.prepare(`SELECT id, name, city, state FROM organizations WHERE id = ?`).bind(id).first() : null;
-    if (org) item.organization = { id: org.id, name: org.name, city: org.city, state: org.state };
+    const org = ID_RE.test(id) ? await db.prepare(`SELECT id, name, city, state, website_url, ages, cost_note FROM organizations WHERE id = ?`).bind(id).first() : null;
+    if (org) item.organization = { id: org.id, name: org.name, city: org.city, state: org.state, website: org.website_url || null, ages: org.ages || null, cost: org.cost_note || null,
+      // What it runs now, so the queue can say "Adds Skiing (winter)" rather than list everything.
+      sports: (await organizationSports(db, org.id)).map(({ key, seasons }) => ({ key, seasons })) };
   }
   if (row.kind === "new_organization") {
     const id = await draftId("organization", item.payload.intake_id);
@@ -318,6 +319,12 @@ async function acceptClaimed(db, item, actor) {
     recordId = row.id;
     await db.prepare(`UPDATE programs SET is_public = 1, verification_status = 'verified', verification_method = ?, updated_at = ? WHERE id = ?`)
       .bind("admin-accepted", timestamp, recordId).run();
+  } else if (kind === "listing_update" && item.payload.relation !== "run") {
+    // A report from a visitor: a person fixes the listing by hand in the dashboard; Done closes it.
+    if (!item.organization) throw new Error("organization-missing");
+    recordId = item.organization.id;
+    const what = [FIX_WORDS[item.payload.reason], String(item.payload.notes || "").slice(0, 120)].filter(Boolean).join(". ");
+    await logActivity(db, recordId, "admin_edit", `Report handled${what ? `: ${what}` : ""}`, { actor, ref: `submission ${item.id}`, at: timestamp });
   } else if (kind === "listing_update") {
     if (!item.organization) throw new Error("organization-missing");
     recordId = item.organization.id;

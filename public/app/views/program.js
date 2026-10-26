@@ -15,6 +15,7 @@ import * as A from "../app.js";
 import { site, PAGES, organizationMeta } from "../page-meta.js";
 import { guideFor } from "../sport-guides.js";
 import { seasonsText, seriesState, dateRange, ordinal } from "../yearly.js";
+import { factsStrip, freshness } from "../listing-facts.js";
 
 const L = window.ListingArt;
 // Group scenes never draw under 56px (3.2), so they get no avatar in a chip.
@@ -71,7 +72,8 @@ ${A.plate(p, { kind: "hero" })}
 
 /* ---------- Verified: the corner tag, the date line and the story (Alec, 2026-10-14) ---------- */
 function vtag(p) {
-  return `<button type="button" class="pg-vtag${p.verified ? " is-v" : ""}" data-verify aria-haspopup="dialog">${A.icon(p.verified ? "badge-check" : "info", 18)}<span>${p.verified ? "Verified" : "Not verified yet"}</span></button>`;
+  // "Not verified yet" is quiet: small and plain, never a warning (audit finding 22).
+  return `<button type="button" class="pg-vtag${p.verified ? " is-v" : " is-u"}" data-verify aria-haspopup="dialog">${A.icon(p.verified ? "badge-check" : "info", 18)}<span>${p.verified ? "Verified" : "Not verified yet"}</span></button>`;
 }
 /** "Website checked Oct 8" (or "Listed Oct 14") and "Checked by our team, September 2026". */
 function freshBits(p) {
@@ -82,12 +84,15 @@ function freshBits(p) {
   if (ml) out.push("Checked by our team, " + ml);
   return out;
 }
+/** One freshness line (docs/specs/community-kept-directory.md): "Confirmed by the organization · Oct 2026",
+    else "Website checked Oct 12", else "Listed Oct 2026". */
 function freshLine(p) {
-  const bits = freshBits(p);
-  return bits.length ? `<p class="pg-fresh num">${bits.map((b) => `<span>${A.esc(b)}</span>`).join("")}</p>` : "";
+  const f = freshness(p);
+  return f ? `<p class="pg-fresh num"><span>${A.esc(f)}</span></p>` : "";
 }
+const fixHref = (p) => `/update/${p.id}?fix=1`;
 function verifyHtml(p, isManager = false) {
-  const fix = A.btn("Suggest a fix", `/update/${p.id}`, "line");
+  const fix = A.btn("Something's wrong?", fixHref(p), "line");
   const run = A.btn("I'm with this organization", `/update/${p.id}?rel=run`, "ink");
   const manage = A.btn("Manage your organization", `/manage/organizations/${p.id}`, "ink");
   const bits = freshBits(p);
@@ -185,12 +190,6 @@ function meetup(p) {
 ${meetDl(m)}${also}
 <p class="pg-quiet">Times change, so confirm the next date with them before you go.</p></section>`;
 }
-function facts(p) {
-  if (p.meet) return "";
-  const rows = [["Ages", p.ages], ["Cost", p.cost], ["Equipment", p.equipment]].filter(([, v]) => v != null && String(v).trim());
-  if (!rows.length) return "";
-  return `<dl class="pg-facts">${rows.map(([k, v]) => `<div><dt>${k}</dt><dd>${A.esc(String(v).trim())}</dd></div>`).join("")}</dl>`;
-}
 function wherePlay(p) {
   let body;
   if (p.address) {
@@ -204,7 +203,7 @@ function wherePlay(p) {
   } else if (p.state) {
     body = `<p>This organization serves ${A.esc(A.stateName(p.state))} and doesn't list a single city.</p><a class="tlink" href="/states/${A.esc(p.state)}">Programs in ${A.esc(A.stateName(p.state))}${A.icon("arrow-right", 18)}</a>`;
   } else {
-    body = `<p>This listing doesn't say where it is yet. If you know, <a href="/update/${A.esc(p.id)}">suggest a fix</a>.</p>`;
+    body = `<p>This listing doesn't say where it is yet. If you know, <a href="${A.esc(fixHref(p))}">tell us</a>.</p>`;
   }
   const canMap = p.addressPublicityConsent && (p.address || (Number.isFinite(p.lat) && Number.isFinite(p.lng)));
   const address = [p.address, p.city, p.state, p.zip, p.country].filter(Boolean).join(", ");
@@ -228,7 +227,8 @@ function links(p, isManager = false) {
   const row = (href, ic, label, sub, attrs = "") => `<li><a class="pg-link" href="${A.esc(href)}" ${attrs}><span class="pg-link-ic">${A.icon(ic, 20)}</span><span class="pg-link-text"><span class="pg-link-label">${A.esc(label)}</span>${sub ? `<span class="pg-link-sub">${A.esc(sub)}</span>` : ""}</span>${A.icon("chevron-right", 20)}</a></li>`;
   const runSub = p.verified ? "Update your listing." : "Confirm your listing to get the Verified check.";
   if (isManager) return `<ul class="pg-links">${row(`/manage/organizations/${p.id}`, "building-2", "Manage your organization")}${row(`/organizations/${p.id}?share=1`, "share", "Share", "", 'data-poster="links"')}</ul>`;
-  return `<ul class="pg-links">${row(`/update/${p.id}`, "pencil", "Suggest a fix")}${row(`/update/${p.id}?rel=run`, "badge-check", "I'm with this organization", runSub)}${row(`/organizations/${p.id}?share=1`, "share", "Share", "", 'data-poster="links"')}</ul>`;
+  // "Something's wrong?" sits beside Visit website now; this list keeps the organization's own door.
+  return `<ul class="pg-links">${row(`/update/${p.id}?rel=run`, "badge-check", "I'm with this organization", runSub)}${row(`/organizations/${p.id}?share=1`, "share", "Share", "", 'data-poster="links"')}</ul>`;
 }
 
 /* ---------- More of this sport, from the listing's own city (6.8.9) ---------- */
@@ -265,7 +265,11 @@ function visitBtn(p, { full = false } = {}) {
   const cls = full ? "pg-full" : "";
   return p.website
     ? A.btn("Visit website", p.website, "ink", { external: true, cls })
-    : A.btn("Suggest a website", `/update/${p.id}`, "line", { cls });
+    : A.btn("Suggest a website", fixHref(p), "line", { cls });
+}
+/** The second action, beside Visit website: one tap to the reasons (docs/specs/community-kept-directory.md). */
+function wrongBtn(p, cls = "") {
+  return p.website ? A.btn("Something's wrong?", fixHref(p), "line", { cls: "pg-wrong" + (cls ? " " + cls : "") }) : "";
 }
 function hostNote(p) {
   const h = p.website && host(p.website);
@@ -273,7 +277,7 @@ function hostNote(p) {
 }
 function actionRow(p) {
   // data-sticky-twin: the phone sticky bar steps aside while this row is on screen (one ink button at a time).
-  return `<div class="pg-acts" data-sticky-twin>${visitBtn(p, { full: true })}${hostNote(p)}</div>`;
+  return `<div class="pg-acts" data-sticky-twin><div class="pg-act-row">${visitBtn(p, { full: true })}${wrongBtn(p)}</div>${hostNote(p)}</div>`;
 }
 function bookBox(p) {
   let address = '';
@@ -285,7 +289,7 @@ function bookBox(p) {
   } else if (p.placed) {
     address = A.esc(A.placeText(p));
   }
-  return `<div class="pg-book"><div class="pg-book-in"><p class="pg-book-kind">${A.esc(sportLabel(p))}${stampLabel(p) ? ` · ${A.esc(stampLabel(p))}` : ""}</p>${A.trust(p, "short") ? `<p class="pg-book-trust">${A.trust(p, "short")}</p>` : ""}${address ? `<p class="pg-book-address">${address}</p>` : ""}${visitBtn(p, { full: true })}${hostNote(p)}</div></div>`;
+  return `<div class="pg-book"><div class="pg-book-in"><p class="pg-book-kind">${A.esc(sportLabel(p))}${stampLabel(p) ? ` · ${A.esc(stampLabel(p))}` : ""}</p>${A.trust(p, "short") ? `<p class="pg-book-trust">${A.trust(p, "short")}</p>` : ""}${address ? `<p class="pg-book-address">${address}</p>` : ""}${visitBtn(p, { full: true })}${hostNote(p)}${wrongBtn(p, "pg-full")}</div></div>`;
 }
 
 /* ---------- the share poster (3.2, 6.8.12) ---------- */
@@ -430,8 +434,8 @@ export async function render(ctx) {
 ${hero(p)}
 <div class="pg-head"><h1 tabindex="-1">${A.esc(p.name)}${A.vcheck(p)}</h1><p class="pg-meta">${meta}</p>${freshLine(p)}</div>
 ${actionRow(p)}
+${factsStrip(p, now, A.esc)}
 ${p.meet ? meetup(p) : about(p, { listed: !!linkedPrograms })}
-${facts(p)}
 ${wherePlay(p)}
 ${sportIntro(p)}
 ${linkedPrograms}
@@ -443,7 +447,7 @@ ${more(p, D)}
 
   const sticky = A.stickyBar({
     left: A.trust(p, "sticky"),
-    action: p.website ? { label: "Visit website", href: p.website, kind: "ink", external: true } : A.btn("Suggest a website", `/update/${p.id}`, "line"),
+    action: p.website ? { label: "Visit website", href: p.website, kind: "ink", external: true } : A.btn("Suggest a website", fixHref(p), "line"),
   });
 
   return {

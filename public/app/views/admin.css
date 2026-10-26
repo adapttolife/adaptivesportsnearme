@@ -337,3 +337,28 @@
 .v-admin .adm-act-none {
 	color: var(--graphite);
 }
+
+/* What a check-up or a "Something's wrong?" would change, in plain lines (docs/specs/community-kept-directory.md). */
+.v-admin .adm-change {
+	padding: 10px 14px 10px 30px;
+	border-radius: var(--r);
+	background: var(--sand);
+	border: 1px solid var(--line);
+	font-weight: 600;
+}
+
+.v-admin .adm-allright {
+	margin-bottom: 16px;
+}
+
+.v-admin .adm-allright p {
+	margin: 0 0 8px;
+}
+
+.v-admin .adm-apply-all[hidden] {
+	display: none;
+}
+
+.v-admin .adm-details .adm-wide {
+	grid-column: 1 / -1;
+}

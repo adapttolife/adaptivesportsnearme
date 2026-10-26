@@ -272,12 +272,13 @@ test("Apply writes the organization's programs and seasons, starts its yearly ev
   await x.post({ ...confirm, notes: "Please add our sailing.",
     sports: JSON.stringify({ skiing: ["winter"], sailing: ["summer"] }),
     yearly: JSON.stringify([{ name: "Winter Ski Festival", month: 2, url: "https://example.org/festival" }, { name: "Regatta Day", month: 7 }]) });
-  await x.post({ ...confirm, rel: "attend", notes: "Wrong phone", em: "", sid: "6c2e8b1a-1d4f-4b7e-8a00-abcdefabcdef" });   // stays email-only
+  await x.post({ ...confirm, rel: "attend", notes: "Wrong phone", em: "", sid: "6c2e8b1a-1d4f-4b7e-8a00-abcdefabcdef" });   // a report: in the queue too, closed with Done
 
-  const queue = await listAdminQueue(x.db);
-  assert.deepEqual(queue.map((q) => [q.kind, q.title]), [["listing_update", "Mountain Adaptive"]]);
+  const all = await listAdminQueue(x.db);
+  assert.deepEqual(all.map((q) => [q.kind, q.payload.relation]), [["listing_update", "run"], ["listing_update", "attend"]]);
+  const queue = all.filter((q) => q.payload.relation === "run");
   const item = await getAdminQueueItem(x.db, queue[0].id);
-  assert.deepEqual(item.organization, { id: ORG, name: "Mountain Adaptive", city: "Lincoln", state: "NH" });
+  assert.deepEqual(item.organization, { id: ORG, name: "Mountain Adaptive", city: "Lincoln", state: "NH", website: "https://example.org", ages: null, cost: null, sports: [] });
 
   assert.deepEqual(await acceptAdminQueueItem(x.db, queue[0].id, "team@adaptivesportsnearme.com"), { kind: "listing_update", record_id: ORG });
   const programs = x.directory.prepare("SELECT name, sport_key, kind, listing, seasons_json, slug, usual_month, website_url, is_public FROM programs WHERE organization_id = ? ORDER BY kind, name").all(ORG);
@@ -301,9 +302,9 @@ test("Apply writes the organization's programs and seasons, starts its yearly ev
   assert.equal(applied.actor, "team@adaptivesportsnearme.com");
   assert.equal((await getOrg(x.db, ORG)).history.updatedByOrganization, new Date().toISOString().slice(0, 7));
   assert.match(applied.summary, /^Applied the organization's confirmation\. sports: Skiing \(winter\), Sailing \(summer\); yearly events: Winter Ski Festival \(usually February\), Regatta Day \(usually July\)$/);
-  // It is handled once.
+  // It is handled once; the report is still waiting for its Done.
   assert.equal(await acceptAdminQueueItem(x.db, queue[0].id), null);
-  assert.equal((await listAdminQueue(x.db)).length, 0);
+  assert.deepEqual((await listAdminQueue(x.db)).map((q) => q.payload.relation), ["attend"]);
 });
 
 test("the team adds notes to an organization's history; the admin dashboard edits a program's seasons and yearly fields and logs it", async () => {

@@ -1,6 +1,7 @@
 import * as A from "../app.js";
 import { site, programMeta } from "../page-meta.js";
 import { seasonsText } from "../yearly.js";
+import { factsStrip, freshness } from "../listing-facts.js";
 
 const place = (p) => A.placeText(p);
 const host = (url) => { try { return new URL(url).hostname.replace(/^www\./i, ""); } catch (_) { return null; } };
@@ -13,7 +14,10 @@ function hero(p) {
   return `<div class="pg-hero${stamp ? " has-stamp" : ""}">${A.plate(p.sport || "multi", { kind: "hero" })}<button type="button" class="pg-hb pg-back" data-back="${A.esc(backTo(p))}" aria-label="Back">${A.icon("arrow-left", 22)}</button><div class="pg-edge">${stamp}</div></div>`;
 }
 function visit(p, { full = false } = {}) { return p.website ? A.btn("Visit website", p.website, "ink", { external: true, cls: full ? "pg-full" : "" }) : ""; }
-function actions(p) { const site = host(p.website); return p.website ? `<div class="pg-acts">${visit(p, { full: true })}${site ? `<p class="pg-host">Opens ${A.esc(site)}</p>` : ""}</div>` : ""; }
+const fixHref = (p) => `/update/${p.id}?fix=1`;
+const wrong = (p, cls = "") => A.btn("Something's wrong?", fixHref(p), "line", { cls: "pg-wrong" + (cls ? " " + cls : "") });
+/* Visit website, and beside it "Something's wrong?" (docs/specs/community-kept-directory.md). */
+function actions(p) { const site = host(p.website); return `<div class="pg-acts"><div class="pg-act-row">${visit(p, { full: true })}${wrong(p, p.website ? "" : "pg-full")}</div>${site ? `<p class="pg-host">Opens ${A.esc(site)}</p>` : ""}</div>`; }
 function about(p) { return `<section class="pg-sec"><h2>About this program</h2>${p.desc ? `<p>${A.esc(p.desc)}</p>` : `<p class="pg-quiet">We don't have a description for this program yet.${p.website ? " Its website has the details." : ""}</p>`}</section>`; }
 /** "Runs in winter", "Runs in summer and fall", "Runs year-round"; "" when it hasn't said. */
 export function runsText(p) {
@@ -22,11 +26,11 @@ export function runsText(p) {
   if (!t) return "";
   return t === "Year-round" ? "Runs year-round" : `Runs in ${t.toLowerCase()}`;
 }
-function facts(p) { const rows = [["When", runsText(p)], ["Ages", p.ages], ["Cost", p.cost], ["Equipment", p.equipment]].filter(([, value]) => value != null && String(value).trim()); return rows.length ? `<dl class="pg-facts">${rows.map(([label, value]) => `<div><dt>${A.esc(label)}</dt><dd>${A.esc(String(value).trim())}</dd></div>`).join("")}</dl>` : ""; }
+/* The facts strip: When (or "Off season · back in winter"), Cost, Ages, Who it's for, Equipment. */
+function facts(p, now) { return factsStrip(p, now, A.esc); }
 function organization(p) { if (!p.organization) return ""; const detail = [p.organization.city, p.organization.state].filter(Boolean).join(", "); return `<section class="pg-sec"><h2>Organization</h2><p>This program is run by <a href="/organizations/${A.esc(p.organization.id)}">${A.esc(p.organization.name)}</a>${detail ? ` in ${A.esc(detail)}` : ""}.</p></section>`; }
 /* The same trust line and fix link as an organization's page. */
-function fresh(p) { const f = A.freshText(p); return f ? `<p class="pg-fresh num"><span>${A.esc(f)}</span></p>` : ""; }
-function fix(p) { return `<ul class="pg-links"><li><a class="pg-link" href="/update/${A.esc(p.id)}"><span class="pg-link-ic">${A.icon("pencil", 20)}</span><span class="pg-link-text"><span class="pg-link-label">Suggest a fix</span></span>${A.icon("chevron-right", 20)}</a></li></ul>`; }
+function fresh(p) { const f = freshness(p); return f ? `<p class="pg-fresh num"><span>${A.esc(f)}</span></p>` : ""; }
 function where(p) {
   const label = place(p);
   const canMap = p.addressPublicityConsent && (p.address || (Number.isFinite(p.lat) && Number.isFinite(p.lng)));
@@ -38,7 +42,7 @@ function where(p) {
   const fullAddress = [p.address, location, p.country].filter(Boolean).join(", ");
   return `<section class="pg-sec"><h2>Where you'll play</h2>${p.address ? `<p>${A.esc(fullAddress)}.</p>` : label ? `<p>${A.esc(label)}. We show the city only, so check the website for the exact place.</p>` : ""}${p.city && p.state ? `<a class="tlink" href="/near/${encodeURIComponent(label)}">Programs near ${A.esc(label)}${A.icon("arrow-right", 18)}</a>` : ""}${map}</section>`;
 }
-function booking(p) { const site = host(p.website); return p.website ? `<div class="pg-book"><div class="pg-book-in"><p class="pg-book-kind">${A.esc(p.sportLabel || "Adaptive sports")}${place(p) ? ` · ${A.esc(place(p))}` : ""}</p>${visit(p, { full: true })}${site ? `<p class="pg-host">Opens ${A.esc(site)}</p>` : ""}</div></div>` : ""; }
+function booking(p) { const site = host(p.website); return p.website ? `<div class="pg-book"><div class="pg-book-in"><p class="pg-book-kind">${A.esc(p.sportLabel || "Adaptive sports")}${place(p) ? ` · ${A.esc(place(p))}` : ""}</p>${visit(p, { full: true })}${site ? `<p class="pg-host">Opens ${A.esc(site)}</p>` : ""}${wrong(p, "pg-full")}</div></div>` : ""; }
 
 export async function render(ctx) {
   // A 404 is an answer. A dropped request or a server error is asked once more, then the page
@@ -56,7 +60,8 @@ export async function render(ctx) {
     return { title: site(p.name), html: "" };
   }
   const location = place(p);
-  const main = `<div class="pg-grid"><div class="pg-main">${hero(p)}<div class="pg-head"><h1 tabindex="-1">${A.esc(p.name)}</h1><p class="pg-meta">${A.esc(p.sportLabel || "Adaptive sports")}${location ? ` · ${A.esc(location)}` : ""}</p>${fresh(p)}</div>${actions(p)}${about(p)}${facts(p)}${organization(p)}${where(p)}${fix(p)}</div>${booking(p)}</div>`;
+  const now = ctx.now || new Date();
+  const main = `<div class="pg-grid"><div class="pg-main">${hero(p)}<div class="pg-head"><h1 tabindex="-1">${A.esc(p.name)}</h1><p class="pg-meta">${A.esc(p.sportLabel || "Adaptive sports")}${location ? ` · ${A.esc(location)}` : ""}</p>${fresh(p)}</div>${actions(p)}${facts(p, now)}${about(p)}${organization(p)}${where(p)}</div>${booking(p)}</div>`;
   return { ...programMeta({ name: p.name, sport: p.sportLabel || "Adaptive sports", place: location }), html: main, sticky: p.website ? A.stickyBar({ action: { label: "Visit website", href: p.website, kind: "ink", external: true } }) : "" };
 }
 

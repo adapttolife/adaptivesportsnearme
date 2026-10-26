@@ -35,8 +35,8 @@ import { notifyIntake } from './intake.js';
 
 import { directorySnapshot, listingsSnapshot, listActualPrograms, getProgram, getOrg, stats, listGrants, getGrant } from "./data.js";
 import { listEvents, eventsToRss, eventsToIcs, listSeries, getSeries } from "./events.js";
-import { parseSportsAnswer, parseYearlyAnswer } from "./listing-answers.js";
-import { logActivity, sportsSummary, yearlySummary } from "./offerings.js";
+import { parseSportsAnswer, parseYearlyAnswer, parseCheckup, parseFixReason } from "./listing-answers.js";
+import { logActivity, sportsSummary, yearlySummary, checkupSummary, FIX_WORDS } from "./offerings.js";
 import { handleAdmin } from "./admin.js";
 import { runLane } from "./pipeline.js";
 import { json, text } from "./http.js";
@@ -451,9 +451,14 @@ async function handleSubmitProgram(request, env, ctx, opts = {}) {
   const confirming = !!listingId && relation === "run";
   const sportsAnswer = confirming ? parseSportsAnswer(data.sports) : [];
   const yearlyAnswer = confirming ? parseYearlyAnswer(data.yearly) : [];
+  // The one-minute check-up (docs/specs/community-kept-directory.md): the organization's answer to
+  // "here's what families see", and for everyone else a one-tap reason for what's wrong.
+  const checkup = confirming ? parseCheckup(data.checkup) : null;
+  const fixReason = listingId && !confirming ? parseFixReason(data.reason) : "";
 
   if (!program) return json({ ok: false, error: isEvent ? "Please add the event name." : "Please add the organization's name." }, 422);
-  if (listingId && !notes && !sportsAnswer.length && !yearlyAnswer.length) return json({ ok: false, error: "Please tell us what should change." }, 422);
+  const answered = !!checkup || sportsAnswer.length > 0 || yearlyAnswer.length > 0 || (fixReason && fixReason !== "other");
+  if (listingId && !notes && !answered) return json({ ok: false, error: "Please tell us what should change." }, 422);
   if (isEvent && !/^\d{4}-\d{2}-\d{2}$/.test(eventDate)) return json({ ok: false, error: "Please add the date of the event." }, 422);
   // Email: a fix to a listing or a suggested event may come without one (Alec,
   // 2026-10-14: "No email required"); a person reviews every one either way.
@@ -475,7 +480,9 @@ async function handleSubmitProgram(request, env, ctx, opts = {}) {
     : listingId
       ? { program, update_of: listingId, relation, notes,
         ...(sportsAnswer.length ? { sports: Object.fromEntries(sportsAnswer.map((x) => [x.key, x.seasons])) } : {}),
-        ...(yearlyAnswer.length ? { yearly: yearlyAnswer } : {}) }
+        ...(yearlyAnswer.length ? { yearly: yearlyAnswer } : {}),
+        ...(checkup ? { checkup } : {}),
+        ...(fixReason ? { reason: fixReason } : {}) }
       : isOrganization
         ? { organization: program, sport, city, state: stateRegion, website: siteUrl, notes }
         : { program, org, sport, city, state: stateRegion, website: siteUrl, notes };
@@ -555,7 +562,10 @@ async function handleSubmitProgram(request, env, ctx, opts = {}) {
       if (yearlyAnswer.length) parts.push(`yearly events: ${yearlySummary(yearlyAnswer)}`);
       if (notes) parts.push(`note: ${notes.slice(0, 160)}`);
       const who = relation === "run" ? "the organization" : relation === "attend" ? "someone who goes there" : "someone";
-      const summary = confirming ? `Confirmation received from the organization${parts.length ? `. ${parts.join("; ")}` : ""}` : `Fix suggested by ${who}: ${notes.slice(0, 200)}`;
+      if (checkup) parts.unshift(checkupSummary(checkup));
+      const reasonWords = fixReason ? FIX_WORDS[fixReason] : "";
+      const summary = confirming ? `Confirmation received from the organization${parts.length ? `. ${parts.join("; ")}` : ""}`
+        : `Fix suggested by ${who}: ${[reasonWords, notes.slice(0, 200)].filter(Boolean).join(". ")}`;
       await logActivity(env.DB, listingId, confirming ? "confirmation" : "fix", summary, { actor: confirming ? "organization" : "visitor", ref: `intake ${intakeId}` });
     } catch (error) {
       console.error("activity log failed", { reason: String(error?.message || "").slice(0, 80) });
