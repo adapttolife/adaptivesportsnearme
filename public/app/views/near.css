@@ -522,3 +522,67 @@
 .v-near .nr-k--you {
 	border-color: var(--ink);
 }
+
+/* ---------- Phase 2, finding (docs/specs/community-kept-directory.md) ----------
+   No state outline or map legend in the header (there is no map on this page), and one row:
+   Filters (How far, Who it's for) then the jump chips, wrapping, never scrolling sideways. */
+.v-near .nr-hd {
+	grid-template-columns: minmax(0, 1fr);
+	grid-template-areas: "text" "foot";
+	gap: 10px;
+	padding-block: 16px;
+}
+
+@media (min-width: 768px) {
+	.v-near .nr-hd {
+		grid-template-columns: minmax(0, 1fr);
+		grid-template-areas: "text" "foot";
+		padding: 24px 28px;
+	}
+}
+
+.v-near .nr-bar {
+	margin-top: 12px;
+}
+
+.v-near .nr-row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+	margin-top: 8px;
+}
+
+.v-near .nr-row .nr-jumps,
+.v-near .nr-row .jumps {
+	display: contents;
+}
+
+.v-near .nr-row .fx {
+	display: contents;
+}
+
+.v-near .nr-row .fx-panel {
+	flex: 1 0 100%;
+	order: 9;
+}
+
+.v-near .fx-panel .nr-dist {
+	margin-top: 4px;
+}
+
+.v-near .fx-panel .nr-dist ul {
+	flex-wrap: wrap;
+}
+
+.v-near .nr-group {
+	margin-top: 24px;
+}
+
+/* Phones: the jump chips step aside (the group headings follow right below, and the summary line
+   already counts each group), so the Filters button is one short row and the first result shows. */
+@media (max-width: 599px) {
+	.v-near .nr-row .nr-jumps {
+		display: none;
+	}
+}

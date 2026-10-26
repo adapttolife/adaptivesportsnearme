@@ -808,10 +808,11 @@ export function avatar(key, size = 56) {
   return `<span class="av av--${s}" style="${toneStyle(key)}${wide}" aria-hidden="true">${fig(key)}</span>`;
 }
 
-/** When the listing was last looked at: "Website checked Oct 8", else "Listed Oct 14", else "". */
+/** When the listing was last looked at, one word everywhere (audit finding 22): "Checked Oct 8" when its
+    website was checked; a listing never checked says only when it was listed ("Listed Oct 3"), never more. */
 export function freshText(p) {
   const checked = shortDate(p.lastChecked);
-  if (checked) return "Website checked\u00a0" + checked;
+  if (checked) return "Checked\u00a0" + checked;
   const listed = shortDate(p.listedAt);
   return listed ? "Listed\u00a0" + listed : "";
 }
@@ -823,7 +824,7 @@ export function vcheck(p) {
 export function trust(p, mode = "short") {
   const v = !!p.verified, rest = freshText(p);
   if (mode === "sticky") {
-    const short = rest.replace(/^Website checked/, "Checked");
+    const short = rest;
     return `<span class="trust trust--stk${v ? " is-v" : ""}">${v ? `<span class="ts-a">${icon("badge-check", 18)}<b>Verified</b></span>` : ""}${rest ? `<span class="ts-b num"><span class="ts-long">${esc(rest)}</span><span class="ts-short" aria-hidden="true">${esc(short)}</span></span>` : ""}</span>`;
   }
   return rest ? `<span class="trust num">${esc(rest)}</span>` : "";
@@ -920,6 +921,49 @@ export function eventCard(e) {
   return `<article class="ecard${series ? " is-yearly" : ""}"><div class="ec-date num" aria-hidden="true"><span>${d ? MON[d.getMonth()] : ""}</span><b>${d ? d.getDate() : ""}</b></div><div class="ec-body"><h3 class="ec-name">${title}</h3>${nth > 0 ? `<p class="ec-nth">${esc(ordinal(nth))} annual</p>` : ""}<p class="meta">${esc(sportName(key))}${place ? " · " + esc(place) : ""}</p>${when ? `<p class="ec-when num">${esc(when)}</p>` : ""}${url ? `<a class="tlink" href="${esc(url)}" target="_blank" rel="noopener">Event website${icon("external-link", 16)}</a>` : ""}</div></article>`;
 }
 
+/** Dated events that haven't ended by `now` (a past date never shows as upcoming), soonest first. */
+export function upcomingEvents(events, now = new Date()) {
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  return (events || []).map((e) => [e, eventDay(e.start || e.date), eventDay(e.end || e.start || e.date)])
+    .filter(([, a, b]) => a && (b || a).getTime() >= today)
+    .sort((x, y) => x[1] - y[1]).map(([e]) => e);
+}
+
+/* ---------- Running this season (audit finding 3: events with no dates had no fallback) ---------- */
+/** The season `now` falls in: spring (Mar to May), summer, fall, winter. */
+export function seasonOf(now = new Date()) {
+  const m = now.getMonth();
+  return m >= 2 && m <= 4 ? "spring" : m >= 5 && m <= 7 ? "summer" : m >= 8 && m <= 10 ? "fall" : "winter";
+}
+/** Whether a listing says it runs in `season` (or all year), for sport `key` when given. */
+export function runsIn(p, season, key = "") {
+  if (!p || !Array.isArray(p.seasons)) return false;
+  const all = ["spring", "summer", "fall", "winter"];
+  return p.seasons.some((x) => (!key || x.key === key) && Array.isArray(x.seasons) && (x.seasons.includes(season) || x.seasons.includes("year-round") || all.every((s) => x.seasons.includes(s))));
+}
+/** Listings near `where` that run this season (closest first, then the rest of the state), max `limit`.
+    known: false when none say their seasons, and the list is simply the nearest ones. */
+export function runningNow({ where, pool, now = new Date(), limit = 8, key = "", radius = 50 } = {}) {
+  const season = seasonOf(now);
+  if (!where) return { season, list: [], known: true };
+  const g = ladder(where, pool || D.items, { radius });
+  const near = [...g.inCity, ...g.near, ...g.elsewhere, ...g.statewide];
+  const on = near.filter((p) => runsIn(p, season, key));
+  return on.length ? { season, list: on.slice(0, limit), known: true } : { season, list: near.slice(0, limit), known: false };
+}
+/** The section: "Running this season near you" (or, when no listing here says its seasons, the
+    nearest ones, honestly titled). title: what the fallback list is called ("Programs near you"). */
+export function runningBlock({ where, list, known, season, id = "run", title = "Programs near you", place = null } = {}) {
+  if (!where) {
+    return `<section class="sec run" aria-labelledby="${esc(id)}">${sectionHead({ title: "Running this season near you", id, sub: "Tell us where you are, and we'll show programs near you." })}<div class="run-form">${whereForm({ id: id + "-where", to: place || location.pathname })}</div></section>`;
+  }
+  if (!list.length) return "";
+  const head = known
+    ? sectionHead({ title: "Running this season near you", id, sub: `Programs near ${where.short} that run in the ${season} or all year. Check the next date with them before you go.` })
+    : sectionHead({ title: `${title} near ${where.short}`, id, sub: "They haven't told us their seasons yet. Check the next date with them before you go." });
+  return `<section class="sec run" aria-labelledby="${esc(id)}">${head}${rowList(list, { where }, { id: id + "-rows", first: 8 })}</section>`;
+}
+
 /** Section heading. seeAll: { label, href } */
 export function sectionHead({ title, sub, id, seeAll, level = 2 } = {}) {
   const h = `h${level}`;
@@ -972,7 +1016,9 @@ export function stateList({ hrefFor, mode = "open", title = "Choose a state" } =
 export function tileMap({ counts, hrefFor, selected, list = "open" } = {}) {
   const c = counts || Object.fromEntries(Object.entries(D.byState).map(([k, v]) => [k, v.length]));
   const href = hrefFor || ((st) => "/states/" + st);
-  const tiles = Object.entries(GRID).map(([st, [x, y]]) => {
+  // A to Z by name in the page (screen readers, and phones, where the tiles wrap at 44px);
+  // tablets and up place each tile on the map by its grid position.
+  const tiles = Object.entries(GRID).sort((a, b) => stateName(a[0]).localeCompare(stateName(b[0]))).map(([st, [x, y]]) => {
     const n = c[st] || 0;
     return `<a class="tile t${tier(n)}" style="grid-column:${x + 1};grid-row:${y + 1}" href="${esc(href(st))}" aria-label="${esc(stateName(st))}"${selected === st ? ' aria-current="page"' : ""}><span class="tile-code">${st}</span><span class="tile-n num" aria-hidden="true">${n}</span></a>`;
   }).join("");
@@ -985,17 +1031,61 @@ const nbh = (t) => String(t).replace(/-/g, "\u2011");
 /** Horizontal sport scroller. keys: sports present in this pool. hrefFor(""): the "All" link. sheet: adds "All sports".
     Siblings that share a picture (3.5) sit right after their tile as a text item ("Also: Surfing"),
     so they never make the whole bar taller. */
-export function sportBar({ keys, active = "", hrefFor, label = "Sports", sheet = false } = {}) {
-  const groups = pictureGroups(keys ? [...keys] : undefined);
+export function sportBar({ keys, active = "", hrefFor, label = "Sports", sheet = false, counts = null, phone = SB_PHONE, desk = SB_DESK } = {}) {
+  const groups = sportRow({ keys, active, counts });
   if (sheet) BAR_HREF = { hrefFor, present: keys ? [...keys] : null, active };
   const all = `<li class="sb-item"><a class="sb-link" href="${esc(hrefFor(""))}" data-bar-link${!active ? ' aria-current="true"' : ""}><span class="av av--bar av--all" aria-hidden="true">${icon("layout-grid", 26)}</span><span class="sb-label">All</span></a></li>`;
-  const items = groups.map((g) => {
+  // The row wraps (no sideways scroll, audit finding 11): phones show the first `phone` sports,
+  // wider screens the first `desk`; "More sports" opens every sport, the ones here first.
+  const cut = (i) => (i >= desk ? " is-more is-more-d" : i >= phone ? " is-more" : "");
+  const items = groups.map((g, i) => {
     const cur = active === g.key;
-    const also = g.also.length ? `<li class="sb-item sb-item--also"><span class="sb-also">Also: ${g.also.map((k) => `<a href="${esc(hrefFor(k))}" data-bar-link${active === k ? ' aria-current="true"' : ""}>${esc(sportName(k))}</a>`).join(", ")}</span></li>` : "";
-    return `<li class="sb-item"><a class="sb-link" href="${esc(hrefFor(g.key))}" data-bar-link${cur ? ' aria-current="true"' : ""}>${avatar(g.key, "bar")}<span class="sb-label">${esc(nbh(sportName(g.key)))}</span></a></li>${also}`;
-  }).join("");
-  const more = sheet ? `<li class="sb-item"><button type="button" class="sb-link" data-open="sports" data-sheet-bar><span class="av av--bar av--all" aria-hidden="true">${icon("ellipsis", 26)}</span><span class="sb-label">All sports</span></button></li>` : "";
-  return `<nav class="sbar" aria-label="${esc(label)}"><ul class="sb-list">${all}${items}${more}</ul></nav>`;
+    const also = g.also.length ? `<li class="sb-item sb-item--also${cut(i)}"><span class="sb-also">Also: ${g.also.map((k) => `<a href="${esc(hrefFor(k))}" data-bar-link${active === k ? ' aria-current="true"' : ""}>${esc(sportName(k))}</a>`).join(", ")}</span></li>` : "";
+    return `<li class="sb-item${cut(i)}"><a class="sb-link" href="${esc(hrefFor(g.key))}" data-bar-link${cur ? ' aria-current="true"' : ""}>${avatar(g.key, "bar")}<span class="sb-label">${esc(nbh(sportName(g.key)))}</span></a></li>${also}`;
+  });
+  // The chosen sport leads; "All" (to clear it) comes right after it.
+  const lead = active && items.length && groups[0].key === active ? items.shift() + all : all;
+  const more = sheet ? `<li class="sb-item sb-item--more"><button type="button" class="sb-link" data-open="sports" data-sheet-bar><span class="av av--bar av--all" aria-hidden="true">${icon("ellipsis", 26)}</span><span class="sb-label">More sports</span></button></li>` : "";
+  return `<nav class="sbar is-wrap" aria-label="${esc(label)}"><ul class="sb-list">${lead}${items.join("")}${more}</ul></nav>`;
+}
+/** How many sports the wrapped row shows before "More sports": phones (two rows of four with All
+    and More sports), wider screens. */
+export const SB_PHONE = 6, SB_DESK = 8;
+/** The sport row's order: the chosen sport first, then the sports listed here by how many
+    listings offer each (counts: key -> n), then by the site-wide order. */
+export function sportRow({ keys, active = "", counts = null } = {}) {
+  const groups = pictureGroups(keys ? [...keys] : undefined);
+  const n = (g) => (counts ? [g.key, ...g.also].reduce((t, k) => t + (counts[k] || 0), 0) : 0);
+  const pos = new Map(groups.map((g, i) => [g.key, i]));
+  const has = (g) => g.key === active || g.also.includes(active);
+  return groups.slice().sort((a, b) => (has(b) - has(a)) || (n(b) - n(a)) || (pos.get(a.key) - pos.get(b.key)));
+}
+/** Sport counts for a pool (every sport each listing offers): key -> n. */
+export function sportCounts(pool) {
+  const c = {};
+  for (const p of pool) for (const k of sportsOf(p)) c[k] = (c[k] || 0) + 1;
+  return c;
+}
+
+/** Multi-sport organizations that may run `key` but haven't said which sports they run
+    (key multi, no trio, no seasons): in `state`, or within `radius` miles of `where`. Max `limit`. */
+export function mayOffer(key, { state = "", where = null, radius = RADII[0], limit = 6, pool = null } = {}) {
+  if (!D || !key) return [];
+  const real = (c) => Array.isArray(c) && Number.isFinite(c[0]) && Number.isFinite(c[1]);
+  const quiet = (pool || D.items).filter((p) => p.key === "multi" && !p.trio && !p.seasons);
+  const out = [];
+  for (const p of quiet) {
+    const miles = where && real(where.coords) && p.placed && real([p.lat, p.lng]) ? haversine(where.coords, [p.lat, p.lng]) : null;
+    if ((state && p.state === state) || (miles != null && miles < radius + 0.5)) out.push([p, miles]);
+  }
+  out.sort((a, b) => ((a[1] ?? 1e9) - (b[1] ?? 1e9)) || (b[0].verified - a[0].verified) || a[0].name.localeCompare(b[0].name));
+  return out.slice(0, limit).map(([p]) => p);
+}
+/** The block under an honest "No skiing ... yet": multi-sport organizations nearby that may offer it. */
+export function mayOfferBlock(key, list, { id = "may", where = null, level = 2 } = {}) {
+  if (!list || !list.length) return "";
+  const low = sportName(key).toLowerCase();
+  return `<section class="sec may" aria-labelledby="${esc(id)}">${sectionHead({ title: `Multi-sport organizations nearby that may offer ${low}`, id, level, sub: "Their websites list what they run; check before you go." })}<div class="rows">${list.map((p) => programRow(p, { where, single: true })).join("")}</div></section>`;
 }
 
 /** Buttons that jump to result groups. groups: [{ id, label, count }] */
@@ -1019,11 +1109,25 @@ export function whoFilter(list, code) {
 /** A ?w= value we know, or "". */
 export function whoCode(w) { return whoCodeOf(w); }
 /** Chip row (see whoChips in who.js). */
-export function whoChips(opts = {}) { return whoChipsOf({ ...opts, check: icon("check", 18) }); }
+export function whoChips(opts = {}) { return whoChipsOf({ always: AGES, ...opts, check: icon("check", 18) }); }
+/** The ages question is always offered (the data tags kids and teens, and adults). */
+export const AGES = ["kids", "adults"];
 /** How a line says a code, people first. */
 export function whoSay(code) { return whoSayOf(code); }
 /** The honest line above filtered results (see whoLine in who.js). */
 export function whoLine(code, shown, quiet, where = "") { return whoLineOf(code, shown, quiet, where); }
+
+/** "Filters" (audit finding 8): How far and Who it's for fold into one button with the number of
+    filters on, so the first result reaches the first phone screen. The panel opens in place and
+    stays open while a chip inside it changes the page. body: the controls' HTML; on: filters on. */
+export function filtersPanel({ id = "fx", body = "", on = 0, path = location.pathname } = {}) {
+  if (!body) return "";
+  const open = filtersOpen(path);
+  const n = on ? `<span class="fx-n num" aria-hidden="true">${on}</span><span class="sr">, ${on} on</span>` : "";
+  return `<div class="fx${open ? " is-open" : ""}"><button type="button" class="chip fx-btn" aria-expanded="${open}" aria-controls="${esc(id)}" data-filters="${esc(path)}"><span>Filters</span>${n}${icon("chevron-down", 18)}</button><div class="fx-panel" id="${esc(id)}"${open ? "" : " hidden"}>${body}</div></div>`;
+}
+/** Whether the reader left the Filters panel open on this page. */
+export function filtersOpen(path) { try { return sessionStorage.getItem("asnm.fx." + path) === "1"; } catch (_) { return false; } }
 
 /** Phone bottom bar. action: HTML string or { label, href, kind, external } */
 export function stickyBar({ left = "", action = "" } = {}) {
@@ -1073,9 +1177,9 @@ export function aboutBox() {
 }
 
 /** Inline place search (home, "place not found"): input with type-ahead, Search, Use my location. */
-export function whereForm({ value = "", sport = "", id, after = "" } = {}) {
+export function whereForm({ value = "", sport = "", id, after = "", to = "" } = {}) {
   const i = id || uid("wf");
-  return `<form class="wf" data-where${sport ? ` data-sport="${esc(sport)}"` : ""} novalidate role="search"><label class="wf-label" for="${i}">City, state or ZIP</label><div class="wf-row"><input id="${i}" class="input" name="place" value="${esc(value)}" autocomplete="off" enterkeyhint="search" data-suggest="${i}-list" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="${i}-list" aria-describedby="${i}-err"><button class="btn btn--orange" type="submit">${icon("search", 20)}<span>Search</span></button></div><p class="ferr" id="${i}-err" hidden></p><div class="dym" hidden></div><div class="suggest" id="${i}-list" role="listbox" aria-label="Places" hidden></div><div class="wf-after"><button type="button" class="btn btn--text wf-loc" data-locate>${icon("locate", 20)}<span>Use my location</span></button>${after}</div><p class="wf-status" role="status"></p></form>`;
+  return `<form class="wf" data-where${sport ? ` data-sport="${esc(sport)}"` : ""}${to ? ` data-to="${esc(to)}"` : ""} novalidate role="search"><label class="wf-label" for="${i}">City, state or ZIP</label><div class="wf-row"><input id="${i}" class="input" name="place" value="${esc(value)}" autocomplete="off" enterkeyhint="search" data-suggest="${i}-list" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="${i}-list" aria-describedby="${i}-err"><button class="btn btn--orange" type="submit">${icon("search", 20)}<span>Search</span></button></div><p class="ferr" id="${i}-err" hidden></p><div class="dym" hidden></div><div class="suggest" id="${i}-list" role="listbox" aria-label="Places" hidden></div><div class="wf-after"><button type="button" class="btn btn--text wf-loc" data-locate>${icon("locate", 20)}<span>Use my location</span></button>${after}</div><p class="wf-status" role="status"></p></form>`;
 }
 
 /* ======================================================================
@@ -1628,7 +1732,7 @@ async function render({ force = false } = {}) {
   sportMotion([main, aside, sticky, $("#rail")], FIRST);
   if (FIRST) {
     const later = window.requestIdleCallback || ((f) => setTimeout(f, 1200));
-    later(() => loadScript(USERWAY_SRC, { "data-account": "sFogOSJsXe" }), { timeout: 4000 });
+    later(() => { keepSkipFirst(); loadScript(USERWAY_SRC, USERWAY_ATTRS); }, { timeout: 4000 });
   }
   FIRST = false;
   await handleOverlays(ctx);
@@ -1820,6 +1924,11 @@ const TS_KEY = "0x4AAAAAADr2WPepRgjp8g-R";
    spam check (Turnstile) when someone starts a form, or at the latest on send. */
 const TURNSTILE_SRC = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
 const USERWAY_SRC = "https://cdn.userway.org/widget.js";
+/* Audit finding 18: the button sat over text at the bottom left and was the first Tab stop.
+   It sits bottom right now, small, lifted above the phone's sticky bar (app.css .uwy), and it
+   loads after the page (appended last), so "Skip to content" is the first stop.
+   data-position 3 = bottom right; data-size "small". */
+export const USERWAY_ATTRS = { "data-account": "sFogOSJsXe", "data-position": "3", "data-size": "small" };
 function loadScript(src, attrs = {}) {
   if (document.querySelector(`script[src="${src}"]`)) return;
   const s = document.createElement("script");
@@ -1828,6 +1937,14 @@ function loadScript(src, attrs = {}) {
   document.head.appendChild(s);
 }
 const ensureTurnstile = () => loadScript(TURNSTILE_SRC);
+/* UserWay puts its button first in <body>, ahead of "Skip to content". Whenever something lands
+   before the skip link, the skip link moves back to the front, so it is always the first Tab stop. */
+function keepSkipFirst() {
+  const skip = $(".skip");
+  if (!skip || !window.MutationObserver) return;
+  const fix = () => { if (document.body.firstElementChild !== skip) document.body.insertBefore(skip, document.body.firstChild); };
+  new MutationObserver(fix).observe(document.body, { childList: true });
+}
 function turnstileApi() {
   ensureTurnstile();
   return new Promise((res) => {
@@ -1940,6 +2057,9 @@ async function submitWhere(form, input, sport) {
   }
   say(null);
   closeOverlay({ restore: false, mode: "nav" });
+  // A place picker on a page that uses the place (the events page) remembers it and stays put.
+  const to = form.getAttribute("data-to");
+  if (to && w.kind !== "state") { remember("place", w.label); nav(to, { replace: true }); return; }
   if (w.kind === "state") nav("/states/" + w.state + (sport ? "?s=" + encodeURIComponent(sport) : ""));
   else nav("/near/" + encodeURIComponent(w.label) + (sport ? "?s=" + encodeURIComponent(sport) : ""));
 }
@@ -2010,6 +2130,16 @@ function boot() {
       }
       return;
     }
+    const fx = t.closest("[data-filters]");
+    if (fx) {
+      const panel = document.getElementById(fx.getAttribute("aria-controls"));
+      const open = fx.getAttribute("aria-expanded") !== "true";
+      fx.setAttribute("aria-expanded", String(open));
+      if (panel) panel.hidden = !open;
+      fx.parentElement.classList.toggle("is-open", open);
+      try { if (open) sessionStorage.setItem("asnm.fx." + fx.getAttribute("data-filters"), "1"); else sessionStorage.removeItem("asnm.fx." + fx.getAttribute("data-filters")); } catch (_) {}
+      return;
+    }
     const tl = t.closest("[data-toggle-list]");
     if (tl) {
       const box = tl.closest(".slist"); const open = !box.classList.contains("is-open");
@@ -2020,7 +2150,13 @@ function boot() {
     const sg = t.closest("[data-sg]");
     if (sg) {
       const input = document.getElementById(sg.getAttribute("data-for"));
-      if (input) { input.value = sg.getAttribute("data-sg"); clearFieldError(input); const list = sg.parentElement; list.hidden = true; list.innerHTML = ""; input.setAttribute("aria-expanded", "false"); input.focus(); }
+      if (input) {
+        input.value = sg.getAttribute("data-sg"); clearFieldError(input); const list = sg.parentElement; list.hidden = true; list.innerHTML = ""; input.setAttribute("aria-expanded", "false");
+        // Choosing a place is the search (audit finding 10): no second tap on Search.
+        const form = input.form;
+        if (form && (form.matches("[data-sheet]") || form.matches("[data-where]"))) { e.preventDefault(); submitWhere(form, input, form._sheet ? form._sheet.sport : form.getAttribute("data-sport") || ""); }
+        else input.focus();
+      }
       return;
     }
     const loc = t.closest("[data-locate]");

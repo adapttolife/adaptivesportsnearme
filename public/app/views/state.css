@@ -24,3 +24,16 @@
 .v-state .st-cards {
 	align-items: start;
 }
+
+/* Filters (Who it's for, ages included) and the honest line under it. */
+.v-state .st-fx {
+	margin-top: 8px;
+}
+
+.v-state .st-fx .fx-panel {
+	margin-top: 8px;
+}
+
+.v-state .st-wholine {
+	margin-top: 12px;
+}

@@ -35,6 +35,9 @@ function hostHtml(s) {
   return name ? A.esc(name) : "";
 }
 
+/** A yearly event we know no dates for at all: no editions and no usual month. */
+export const noDates = (s, st) => !(s.editions || []).length && !st.usualMonth;
+
 /** The top of the page: the next dates, or when it usually happens. */
 function stateBlock(s, st) {
   const home = good(s.url);
@@ -54,7 +57,8 @@ function stateBlock(s, st) {
   }
   const since = st.since ? `Every year since <span class="num">${st.since}</span>.` : "";
   const usual = st.usual ? `${A.esc(usualText(st.usual))}.` : "";
-  const wait = st.nextYear ? `The <span class="num">${st.nextYear}</span> dates aren't announced yet.` : "The next dates aren't announced yet.";
+  // Never a year we can't stand behind: with no dates ever and no usual month, just "the next dates".
+  const wait = st.nextYear && !noDates(s, st) ? `The <span class="num">${st.nextYear}</span> dates aren't announced yet.` : "The next dates aren't announced yet.";
   return `<section class="es-state is-wait" aria-labelledby="es-wait-h"><p class="es-lab" id="es-wait-h">${A.icon("history", 18)}<span>Yearly event</span></p><p class="es-say">${[since, usual].filter(Boolean).join(" ")}</p><p class="es-say">${wait}</p>${home ? `<div class="btns">${A.btn("Visit their website", home, "ink", { external: true })}</div>` : ""}</section>`;
 }
 
@@ -81,7 +85,7 @@ export function seriesHtml(s, D, now = new Date()) {
   const back = `<a class="es-back" href="/events" data-back="/events">${A.icon("arrow-left", 20)}<span>Events</span></a>`;
   const head = `<div class="es-head">${A.plate(key || "event", { kind: "row", cls: "es-tile" })}<div class="es-htext"><h1 tabindex="-1">${A.esc(s.name)}</h1>${meta ? `<p class="es-meta">${meta}</p>` : ""}</div></div>`;
   const about = s.description ? `<section class="es-sec" aria-labelledby="es-about-h"><h2 id="es-about-h">About</h2><p>${A.esc(s.description)}</p></section>` : "";
-  const tell = `<p class="es-tell">Know about next year's dates? <a href="/add/event">Tell us</a></p>`;
+  const tell = `<p class="es-tell">${noDates(s, st) ? "Know the dates?" : "Know about next year's dates?"} <a href="/add/event">Tell us</a></p>`;
   const html = `<article class="es">${back}${head}${stateBlock(s, st)}${about}${pastYears(st)}${tell}</article>
 ${A.letterBlock({ source: "event-series" })}`;
   const m = seriesMeta({ name: s.name, sport, host: (s.organization && s.organization.name) || s.host_name || "", place: at, usual: st.usual });

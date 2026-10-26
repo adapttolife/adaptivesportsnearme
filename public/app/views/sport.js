@@ -49,7 +49,7 @@ function guideBlock(key, low) {
   return `<section class="sp-guide" aria-labelledby="sp-guide-h"><h2 id="sp-guide-h" class="sr">About ${A.esc(low)}</h2><p class="sp-guide-what">${A.esc(g.what)}</p><details class="sp-guide-more"><summary>${A.icon("chevron-right", 20)}<span>New to ${A.esc(low)}? Start here</span></summary><div class="sp-guide-in"><dl class="sp-guide-dl">${row("Who plays", g.who)}<div><dt>What you need</dt><dd>${A.esc(g.gear)}</dd><dd class="sp-guide-note">Every program is different. Check what yours provides and what it costs.</dd></div>${row("How to start", g.start)}</dl><p class="sp-guide-body"><span>National body</span>${body}</p></div></details></section>`;
 }
 
-function programsTab(key, st, all, w = "") {
+function programsTab(key, st, all, w = "", path = "") {
   // Who it's for: chips offer what listings in this view say (the state, when one is
   // chosen); a filter keeps the ones that say it, and the line counts the ones that don't.
   const scope = st ? all.filter((p) => p.state === st) : all;
@@ -76,7 +76,8 @@ function programsTab(key, st, all, w = "") {
   const shownN = w ? (st ? pool.filter((p) => p.state === st) : pool).length : 0;
   const quiet = scope.filter((p) => !p.who.length).length;
   const whoLine = w && shownN ? `<div class="sp-wholine">${A.whoLine(w, shownN, quiet)}</div>` : "";
-  const tools = `<section class="sp-where" aria-labelledby="sp-where-h">${near}${chips}${who ? `<div class="sp-who">${who}</div>` : ""}${map}</section>${whoLine}`;
+  const filters = who ? `<div class="sp-who">${A.filtersPanel({ id: "sp-fx", path, on: w ? 1 : 0, body: who })}</div>` : "";
+  const tools = `<section class="sp-where" aria-labelledby="sp-where-h">${near}${chips}${filters}${map}</section>${whoLine}`;
 
   let body = "";
   if (w && !shownN) {
@@ -94,7 +95,7 @@ function programsTab(key, st, all, w = "") {
         title: `No ${low} listed in ${A.stateName(st)} yet.`,
         body: "Know one? Tell us and we'll check it.",
         actions: [{ label: `See ${low} everywhere`, href: hrefFor(key), attrs: "data-replace" }, { label: "Tell us about one", href: "/add/program" }],
-      })}</section>${nearestBlock(key, st, pool)}`;
+      })}</section>${A.mayOfferBlock(key, A.mayOffer(key, { state: st }), { id: "sp-may" })}${nearestBlock(key, st, pool)}`;
     }
   } else if (!pool.length) {
     body = `<section class="sec sec--first">${A.emptyState({
@@ -173,7 +174,7 @@ export async function render(ctx) {
 
   let body = "";
   if (t === "programs") {
-    body = programsTab(key, st, pool, w);
+    body = programsTab(key, st, pool, w, ctx.path);
     // Veterans: the meetups, plus Karen's state-by-state veteran-owned business directories.
     if (key === "veteran-meetup") body = `<a class="vet-res" href="/resources/veteran-owned-businesses"><b>Veteran-owned businesses</b><span>Directories for all 50 states</span>${A.icon("arrow-right", 22)}</a>` + body;
   } else if (t === "grants") {
@@ -184,12 +185,20 @@ export async function render(ctx) {
       ${open.length ? `<h3 class="grp-h grp-h--g">Open now</h3><div class="glist">${open.map(([g]) => A.grantRow(g)).join("")}</div>` : ""}
       ${shut.length ? `<h3 class="grp-h grp-h--g">Past deadlines and closed for now</h3><p class="grp-sub">Check their site for the next round.</p><div class="glist">${shut.map(([g]) => A.grantRow(g)).join("")}</div>` : ""}</section>`;
   } else {
-    body = `<section class="sec sec--first">${A.emptyState({
-      title: `No ${low} events posted yet`,
-      body: "Know one coming up? Tell us and we'll check it.",
-      actions: [{ label: "Add an event", href: "/add/event" }, { label: "Get the letter", href: "", kind: "line", attrs: 'data-jump="letter"' }],
-      image: "event",
-    })}</section>`;
+    const now = ctx.now || new Date();
+    const evs = A.upcomingEvents(D.events || [], now).filter((e) => (e.sportKey || e.key) === key);
+    if (evs.length) {
+      body = `<section class="sec sec--first" aria-labelledby="sp-ev">${A.sectionHead({ title: `Coming ${low} events`, id: "sp-ev" })}<div class="ev-list">${evs.map(A.eventCard).join("")}</div></section>`;
+    } else {
+      // No dates posted: the ones near you that run this season, so the tab is never a dead end (audit finding 3).
+      const { runningSection } = await import("./events.js");
+      body = `<section class="sec sec--first">${A.emptyState({
+        title: `No ${low} events posted yet`,
+        body: "Know one coming up? Tell us and we'll check it.",
+        actions: [{ label: "Add an event", href: "/add/event" }, { label: "Get the letter", href: "", kind: "line", attrs: 'data-jump="letter"' }],
+        image: "event",
+      })}</section>${await runningSection({ pool, key, title: name, id: "sp-run", now, to: hrefFor(key, { t: "events" }) })}`;
+    }
   }
 
   const meta = sportMeta({ key, name, low, state: st ? A.stateName(st) : "" });

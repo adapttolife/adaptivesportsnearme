@@ -82,7 +82,7 @@ function grants(D) {
 
 /* Coming events when there are any (the API returns upcoming only); otherwise the ask. */
 function events(D) {
-  const list = (D.events || []).slice(0, 3);
+  const list = A.upcomingEvents(D.events || []).slice(0, 3);
   const line = list.length ? "Clinics, tryouts, games and meetups coming up." : "Know of a clinic, tryout or game day coming up? Tell us and we'll check it.";
   const body = list.length ? `<div class="ev-list">${list.map(A.eventCard).join("")}</div>` : "";
   const btn = list.length ? `<a class="btn band-all" href="/events">See all events</a>` : `<a class="btn band-all" href="/add/event">Add an event</a>`;
