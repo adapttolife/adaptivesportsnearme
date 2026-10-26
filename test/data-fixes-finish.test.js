@@ -96,7 +96,6 @@ test("the report only reads", () => {
 test("on real rows: Achilles becomes one organization with its chapters, a menu page goes, and a second run changes nothing", () => {
   const db = new DatabaseSync(":memory:");
   db.exec(read("db/schema.sql"));
-  for (const f of ["0002_taxonomy", "0003_next_level", "0004_grants", "0005_description_contract", "0006_read_indexes", "0010_polymorphic_links"]) db.exec(read(`db/migrations/${f}.sql`));
   db.exec("PRAGMA foreign_keys = ON");
   db.prepare("INSERT INTO data_sources (source_id, source_name) VALUES ('club-finder', 'US Paralympics Club Finder')").run();
   const org = db.prepare("INSERT INTO organizations (id, name, city, state, website_url, lat, lng, geo_precision, primary_data_source, is_public, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, 'state', ?, 1, 'active', '2026-06-10T05:06:05Z', '2026-06-10T05:06:05Z')");

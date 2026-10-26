@@ -10,8 +10,8 @@ export const WORKER_DIR = join(HERE, "../..");
 export const AUDIT_DIR = join(HERE, ".local");
 export const STAGING_DB = "asnm-db-staging";
 export const LIVE_DB = "asnm-db";
-export const LIVE_PUBLIC_EXPECTED = 1544;
-export const TESTER = "https://asnm-staging.adapt-to-life.workers.dev";
+export const LIVE_PUBLIC_EXPECTED = 2593; // live public count read from asnm-db on 2026-10-22
+export const TESTER = "https://staging-adaptivesportsnearme.adapt-to-life.workers.dev";
 export const LIVE = "https://adaptivesportsnearme.com";
 
 export function sqlQuote(v) {
@@ -45,7 +45,7 @@ export function staging(sql) {
 }
 
 export function live(sql) {
-  if (!/^\s*select/i.test(sql)) throw new Error("refusing asnm-db write — live stays locked; public count must stay 1544");
+  if (!/^\s*select/i.test(sql)) throw new Error("refusing asnm-db write — live stays locked; public count must stay 2593");
   return d1(LIVE_DB, sql);
 }
 

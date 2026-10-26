@@ -47,6 +47,27 @@ directory ordering, case-insensitive admin ordering, source linkage and pending
 review ordering. Building indexes consumes some reads/writes once; subsequent
 writes also maintain them.
 
+## Programs that come back
+
+`db/migrations/0015_programs_that_come_back.sql` adds when a program comes back
+(`programs.kind`, `seasons_json`, `usual_month`, `first_year`, `slug`, `listing`),
+links a year's dates to its program (`events.program_id`, `events.recap_url`), and
+the team-only `organization_activity` log
+([docs/specs/programs-that-come-back.md](specs/programs-that-come-back.md)).
+It only adds, and every existing program keeps today's behaviour. The site reads
+the same before and after it runs (`src/schema-probe.js`), so it can go before or
+after the deploy. Run it once per database (a second run stops at "duplicate
+column name", harmlessly):
+
+```sh
+npx wrangler d1 execute asnm-db-staging --config wrangler.preview.json --remote --file db/migrations/0015_programs_that_come_back.sql
+npx wrangler d1 execute asnm-db --config wrangler.json --remote --file db/migrations/0015_programs_that_come_back.sql
+```
+
+`db/maintenance/yearly_spooky_spokes.sql` then adds the first yearly event page
+(`/events/spooky-spokes`: The Pickle Lodge, Spooky Spokes and its three years,
+links only). It is safe to run twice.
+
 ## Organization management access
 
 `db/migrations/0008_organization_access.sql` adds `organizations.claim_email`
@@ -130,9 +151,9 @@ public/manifest.json   PWA manifest (installable, mobile + desktop)
 public/sw.js           service worker (offline shell, network-first API)
 src/index.js           Worker: routing, forms (beehiiv, shared intake), config, cron entry
 src/data.js            /api/programs /api/orgs/:id /api/stats (D1 reads + freshness decay)
-src/pipeline.js        cron lanes: validate (link liveness) + enrich (contact scrape)
+src/pipeline.js        cron lanes: validate every 2h; dispatch hourly rotates enrich, classify, geocode, resolve (src/lanes/)
 src/admin.js           /api/admin/* review queue (ADMIN_KEY bearer)
-db/schema.sql          D1 schema (ported from adaptivesportsnearme-data's Postgres design)
+db/schema.sql          D1 schema, dumped from the live asnm-db (regenerate, don't hand-edit)
 scripts/pg-to-d1.py    one-time migration: local Postgres → cleaned SQL → D1
 wrangler.json          production deployment plus named staging environment
 ```
@@ -145,15 +166,16 @@ stay in the staging database.
 
 **Core invariant (kept from the original Postgres design):** pipeline lanes *propose*
 changes into `review_queue`; a human approves via `/api/admin/queue/:id` before anything
-touches `organizations`. The one direct write is `last_ok_at` (liveness evidence, feeds
-the freshness score — half-life 45 days, computed in the Worker).
+touches `organizations`. The direct writes are two evidence columns, both set by validate:
+`last_ok_at` (liveness evidence, feeds the freshness score — half-life 45 days, computed in
+the Worker) and `last_checked_at` (stale-first ordering). See the `src/pipeline.js` header.
 
 **Environments:**
 
 | | prod (`adaptivesportsnearme`) | staging version (`adaptivesportsnearme`) |
 |---|---|---|
 | URL | adaptivesportsnearme.com | staging-adaptivesportsnearme.adapt-to-life.workers.dev |
-| Gate | `PRELAUNCH=true` (teaser + modal) | `PRELAUNCH=false` (full directory) |
+| Gate | `PRELAUNCH=false` (full directory) | `PRELAUNCH=false` (full directory) |
 | D1 | asnm-db + atl-intake | asnm-db-staging (DB + INTAKE) |
 | Crons | validate every 2h / dispatch hourly | None (HTTP-only entrypoint) |
 | Deploys from | `main`, explicit, locked | `staging` |
@@ -286,7 +308,8 @@ is a separate Worker with no previews: `npx wrangler secret put NAME --config wr
 - Cron lanes run on their own; results land in `pipeline_runs`, evidence in `link_checks`,
   proposals in `review_queue`.
 - Review: `GET /api/admin/queue`, decide with `POST /api/admin/queue/:id {"action":"approve"}`.
-- Manual lane run: `POST /api/admin/run/validate` (or `enrich`).
+- Manual lane run: `POST /api/admin/run/<lane>`, where lane is `validate`, `enrich`, `classify`,
+  `resolve`, `geocode` or `dispatch` (`src/admin.js`).
 - Re-seed from Postgres: `scripts/pg-to-d1.py --out out/d1-seed.sql`, then
   `cfrun wrangler d1 execute asnm-db-staging --remote --file out/d1-seed.sql -y`.
 
@@ -300,7 +323,7 @@ Students: start with [docs/STUDENTS.md](STUDENTS.md). Short version:
 - Branch off `staging`.
 - Open a pull request **into `staging`**.
 - Feature/fix PRs never target `main`. Only the project lead opens a separately approved `staging` → `main` release PR after staging acceptance.
-- Never deploy production (`asnm`). Never write `asnm-db`. Live public count stays 1,544.
+- Never deploy production (`adaptivesportsnearme`). Never write `asnm-db`. Live public count stays 2,593.
 - Tester: https://staging-adaptivesportsnearme.adapt-to-life.workers.dev
 - Live (locked): https://adaptivesportsnearme.com
 
