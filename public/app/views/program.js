@@ -318,7 +318,9 @@ function shareHtml(p) {
 function yearlyEvents(items, now) {
   const rows = items.filter((s) => s && s.slug && s.name).map((s) => {
     const st = seriesState(s, s.editions || [], now);
-    const when = st.next
+    const when = st.now
+      ? `Happening now · ${dateRange(st.now.starts_at, st.now.ends_at)}`
+      : st.next
       ? `${st.nth ? ordinal(st.nth) + " annual · " : ""}${dateRange(st.next.starts_at, st.next.ends_at)}`
       : `${st.usual ? (/^(early|mid|late) /.test(st.usual) ? "Usually " : "Usually in ") + st.usual + ". " : ""}Dates not announced yet`;
     return `<a class="prow prow--c" href="/events/${A.esc(encodeURIComponent(s.slug))}"><div class="pr-body"><h3 class="pr-name">${A.esc(s.name)}</h3><p class="meta num">${A.esc(when)}</p></div></a>`;

@@ -126,12 +126,14 @@ export function seriesSlug(name) {
     editions: events rows of this series ({ starts_at, ends_at, url, recap_url, status, ... }), any order
     now:      Date (defaults to today)
     Returns {
-      next      the soonest edition that hasn't ended (null when the next dates aren't out),
+      next      the soonest edition that hasn't started (null when the next dates aren't out),
+      now       the edition happening today (between its first and last day), else null,
       past      editions that have ended, newest first,
       usual     "late October" (from the newest edition, else the series' usual month),
       usualMonth 1-12 or null,
       since     the first year (series.first_year, else the oldest edition's year),
       nth       the next edition's number ("4th annual") when we can count it, else null,
+      nowNth    the same for the edition happening now,
       lastNth   the newest past edition's number, else null,
       nextYear  the year the next edition should fall in (for "The 2027 dates aren't out yet"),
     } */
@@ -141,10 +143,14 @@ export function seriesState(series, editions, now = new Date()) {
   const key = (iso) => { const p = dayParts(iso); return p ? `${p.y}-${String(p.m + 1).padStart(2, "0")}-${String(p.d).padStart(2, "0")}` : ""; };
   const endDay = (e) => key(e.ends_at) || key(e.starts_at);
   const startDay = (e) => key(e.starts_at);
-  const upcoming = live.filter((e) => endDay(e) >= today).sort((a, b) => startDay(a).localeCompare(startDay(b)));
+  // Next: hasn't started (sign-ups may be open). Now: between its first and last day (too late to
+  // register; Alec, 2026-10-25, "this event already passed"). Past: its last day is over.
+  const byStart = (a, b) => startDay(a).localeCompare(startDay(b));
+  const upcoming = live.filter((e) => startDay(e) > today).sort(byStart);
+  const current = live.filter((e) => startDay(e) <= today && endDay(e) >= today).sort(byStart)[0] || null;
   const past = live.filter((e) => endDay(e) < today).sort((a, b) => startDay(b).localeCompare(startDay(a)));
   const next = upcoming[0] || null;
-  const newest = next || past[0] || null;
+  const newest = next || current || past[0] || null;
   const firstYear = Number(series && series.first_year) || null;
   const oldest = [...live].sort((a, b) => startDay(a).localeCompare(startDay(b)))[0];
   const since = firstYear || (oldest ? dayParts(oldest.starts_at).y : null);
@@ -154,13 +160,16 @@ export function seriesState(series, editions, now = new Date()) {
   // Count by year only when we know the first year; "4th annual" is a promise about every year since.
   const nthOf = (e) => (firstYear && e ? dayParts(e.starts_at).y - firstYear + 1 : null);
   const nth = next ? nthOf(next) : null;
+  const nowNth = current ? nthOf(current) : null;
   const lastNth = past[0] ? nthOf(past[0]) : null;
   let nextYear = null;
-  if (!next) {
+  if (!next && current) nextYear = dayParts(current.starts_at).y + 1;
+  else if (!next) {
     const thisYear = now.getFullYear();
     if (past[0] && dayParts(past[0].starts_at).y >= thisYear) nextYear = thisYear + 1;
     else if (usualMonth) nextYear = usualMonth - 1 >= now.getMonth() ? thisYear : thisYear + 1;
     else nextYear = thisYear + (past[0] ? 1 : 0);
   }
-  return { next, past, usual, usualMonth, since, nth: nth && nth > 0 ? nth : null, lastNth: lastNth && lastNth > 0 ? lastNth : null, nextYear };
+  return { next, now: current, past, usual, usualMonth, since, nth: nth && nth > 0 ? nth : null, nowNth: nowNth && nowNth > 0 ? nowNth : null,
+    lastNth: lastNth && lastNth > 0 ? lastNth : null, nextYear };
 }

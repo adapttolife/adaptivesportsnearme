@@ -35,7 +35,8 @@ const MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct
 /** When a yearly event comes round next, as a day number for sorting: its next dates when
     they're set, else its usual part of the month this year or next. Unknown goes last. */
 function nextTime(st, now) {
-  if (st.next) { const p = dayParts(st.next.starts_at); return new Date(p.y, p.m, p.d).getTime(); }
+  const lead = st.now || st.next;
+  if (lead) { const p = dayParts(lead.starts_at); return new Date(p.y, p.m, p.d).getTime(); }
   if (!st.usualMonth) return Infinity;
   const day = /^early /.test(st.usual) ? 5 : /^mid /.test(st.usual) ? 15 : /^late /.test(st.usual) ? 25 : 1;
   // seriesState works out the year the next dates should fall in (this year, or next once this year's has run).
@@ -44,12 +45,15 @@ function nextTime(st, now) {
 
 /** One yearly event card: the month it falls in, its name (to its page), and its next dates or usual time. */
 function yearlyCard(s, st) {
-  const p = st.next ? dayParts(st.next.starts_at) : null;
+  const lead = st.now || st.next;
+  const p = lead ? dayParts(lead.starts_at) : null;
   const mon = p ? MON[p.m] : st.usualMonth ? MON[st.usualMonth - 1] : "";
   const at = s.city && s.state ? `${s.city}, ${s.state}` : s.state ? A.stateName(s.state) : "";
   const sport = s.sport_key && s.sport_key !== "multi" ? A.sportName(s.sport_key) : "";
   const meta = [sport, at].filter(Boolean).join(" · ");
-  const when = st.next
+  const when = st.now
+    ? `<p class="ec-when num">Happening now · ${A.esc(dateRange(st.now.starts_at, st.now.ends_at))}</p>`
+    : st.next
     ? `<p class="ec-when num">${st.nth ? `${A.esc(ordinal(st.nth))} annual · ` : ""}${A.esc(dateRange(st.next.starts_at, st.next.ends_at))}</p>`
     : `<p class="ec-when">${A.esc(st.usual ? usualText(st.usual) : "Every year")}</p><p class="ye-wait">Dates not announced yet</p>`;
   return `<article class="ecard ycard"><div class="ec-date num${p ? "" : " is-usual"}" aria-hidden="true"><span>${A.esc(mon)}</span>${p ? `<b>${p.d}</b>` : `<b class="ye-ic">${A.icon("history", 22)}</b>`}</div><div class="ec-body"><h3 class="ec-name"><a href="/events/${A.esc(encodeURIComponent(s.slug))}">${A.esc(s.name)}</a></h3>${meta ? `<p class="meta">${A.esc(meta)}</p>` : ""}${when}</div></article>`;

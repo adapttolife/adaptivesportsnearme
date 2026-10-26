@@ -75,8 +75,18 @@ test("once next year's dates are set, they lead and the count goes on", () => {
   assert.equal(s.past.length, 3);
 });
 
-test("an event in progress is still next until its last day ends; a cancelled year is skipped", () => {
-  assert.equal(seriesState(SPOKES, YEARS, new Date(2026, 9, 24)).next.starts_at, "2026-10-23");
+test("on its days an event is happening, not next: no Register; then it's a past year; a cancelled year is skipped", () => {
+  // Alec, 2026-10-25 evening, the last day: "This event already passed".
+  const during = seriesState(SPOKES, YEARS, new Date(2026, 9, 25, 19, 51));
+  assert.equal(during.next, null);
+  assert.equal(during.now.starts_at, "2026-10-23");
+  assert.equal(during.nowNth, 3);
+  assert.equal(during.nextYear, 2027);
+  assert.deepEqual(during.past.map((e) => e.starts_at.slice(0, 4)), ["2025", "2024"]);
+  // The day before it starts, it is next.
+  assert.equal(seriesState(SPOKES, YEARS, new Date(2026, 9, 22)).next.starts_at, "2026-10-23");
+  // The day after, it's history.
+  assert.equal(seriesState(SPOKES, YEARS, new Date(2026, 9, 26)).past[0].starts_at, "2026-10-23");
   const cancelled = seriesState(SPOKES, [...YEARS, { starts_at: "2027-10-22", status: "cancelled" }], new Date(2027, 2, 1));
   assert.equal(cancelled.next, null);
   assert.equal(cancelled.nextYear, 2027);

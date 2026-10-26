@@ -413,3 +413,16 @@ test("admin: an organization's activity reads as a timeline, team only", () => {
   // The activity never reaches a public page.
   for (const f of ["program.js", "program-detail.js", "event-series.js", "events.js"]) assert.doesNotMatch(readFileSync(file(`public/app/views/${f}`), "utf8"), /\/activity/);
 });
+
+test("the yearly event page on its own days: happening now, no Register (Alec, 2026-10-25)", async () => {
+  ROUTE = (u) => (u === "/api/event-series/spooky-spokes" ? reply({ ok: true, series: SPOOKY() }) : null);
+  const out = await series.render({ params: { slug: "spooky-spokes" }, data: D, now: new Date(2026, 9, 25, 19, 51) });
+  const t = text(out.html);
+  assert.match(t, /Happening now/);
+  assert.match(t, /3rd annual · Oct 23 to 25, 2026/);
+  assert.doesNotMatch(out.html, /Register/);
+  assert.doesNotMatch(String(out.sticky || ""), /Register/);
+  assert.match(String(out.sticky || ""), /Event website/);
+  const past = between(out.html, '<ol class="es-years">', "</ol>");
+  assert.deepEqual([...past.matchAll(/<b class="es-y num">(\d{4})<\/b>/g)].map((m) => m[1]), ["2025", "2024"]);
+});

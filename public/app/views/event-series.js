@@ -38,6 +38,13 @@ function hostHtml(s) {
 /** The top of the page: the next dates, or when it usually happens. */
 function stateBlock(s, st) {
   const home = good(s.url);
+  // On its days it's happening, not next: too late to register, and the results come from the host.
+  if (st.now) {
+    const e = st.now;
+    const at = where(e) || place(s);
+    const site = good(e.url) || home;
+    return `<section class="es-state is-next" aria-labelledby="es-now-h"><p class="es-lab" id="es-now-h">${A.icon("calendar-check", 18)}<span>Happening now</span></p><p class="es-when num">${st.nowNth ? `<span class="es-nth">${A.esc(ordinal(st.nowNth))} annual</span><span class="es-dot" aria-hidden="true"> · </span>` : ""}${A.esc(dateRange(e.starts_at, e.ends_at))}</p>${at ? `<p class="es-at">${A.esc(at)}</p>` : ""}${site ? `<div class="btns">${A.btn("Event website", site, "ink", { external: true })}</div>` : ""}</section>`;
+  }
   if (st.next) {
     const e = st.next;
     const when = dateRange(e.starts_at, e.ends_at);
@@ -68,7 +75,7 @@ export function seriesHtml(s, D, now = new Date()) {
   const st = seriesState(s, s.editions || [], now);
   const key = s.sport_key && s.sport_key !== "multi" ? s.sport_key : "";
   const sport = key ? A.sportName(key) : "";
-  const at = place(s) || (st.next ? place(st.next) : st.past[0] ? place(st.past[0]) : "");
+  const at = place(s) || ((st.now || st.next) ? place(st.now || st.next) : st.past[0] ? place(st.past[0]) : "");
   const host = hostHtml(s);
   const meta = [sport ? A.esc(sport) : "", at ? A.esc(at) : "", host ? `Hosted by ${host}` : ""].filter(Boolean).join(" · ");
   const back = `<a class="es-back" href="/events" data-back="/events">${A.icon("arrow-left", 20)}<span>Events</span></a>`;
@@ -78,10 +85,11 @@ export function seriesHtml(s, D, now = new Date()) {
   const html = `<article class="es">${back}${head}${stateBlock(s, st)}${about}${pastYears(st)}${tell}</article>
 ${A.letterBlock({ source: "event-series" })}`;
   const m = seriesMeta({ name: s.name, sport, host: (s.organization && s.organization.name) || s.host_name || "", place: at, usual: st.usual });
-  const reg = st.next ? good(st.next.url) || good(s.url) : good(s.url);
+  const lead = st.now || st.next;
+  const reg = lead ? good(lead.url) || good(s.url) : good(s.url);
   const sticky = reg ? A.stickyBar({
-    left: st.next ? `<b class="num">${A.esc(dateRange(st.next.starts_at, st.next.ends_at))}</b>` : `<span>${A.esc(st.usual ? cap(usualText(st.usual)) : "Yearly event")}</span>`,
-    action: { label: st.next ? "Register" : "Visit their website", href: reg, external: true },
+    left: lead ? `<b class="num">${A.esc(dateRange(lead.starts_at, lead.ends_at))}</b>` : `<span>${A.esc(st.usual ? cap(usualText(st.usual)) : "Yearly event")}</span>`,
+    action: { label: st.now ? "Event website" : st.next ? "Register" : "Visit their website", href: reg, external: true },
   }) : "";
   return { title: site(m.title), description: m.description, html, sticky, railActive: "events" };
 }
