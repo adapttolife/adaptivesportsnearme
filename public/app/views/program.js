@@ -75,7 +75,7 @@ function vtag(p) {
   // "Not verified yet" is quiet: small and plain, never a warning (audit finding 22).
   return `<button type="button" class="pg-vtag${p.verified ? " is-v" : " is-u"}" data-verify aria-haspopup="dialog">${A.icon(p.verified ? "badge-check" : "info", 18)}<span>${p.verified ? "Verified" : "Not verified yet"}</span></button>`;
 }
-/** "Website checked Oct 8" (or "Listed Oct 14") and "Checked by our team, September 2026". */
+/** "Checked Oct 8" and "Checked by our team, September 2026". */
 function freshBits(p) {
   const out = [];
   const f = A.freshText(p);
@@ -85,7 +85,7 @@ function freshBits(p) {
   return out;
 }
 /** One freshness line (docs/specs/community-kept-directory.md): "Confirmed by the organization · Oct 2026",
-    else "Website checked Oct 12", else "Listed Oct 2026". */
+    else "Checked Oct 12". */
 function freshLine(p) {
   const f = freshness(p);
   return f ? `<p class="pg-fresh num"><span>${A.esc(f)}</span></p>` : "";

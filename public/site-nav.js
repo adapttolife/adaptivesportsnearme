@@ -37,7 +37,7 @@
     // The letter: the same words as the app's letter block.
     var news =
       '<div class="drawer-div"></div><div class="drawer-news">' +
-      '<p class="dn-eyebrow">Get the letter</p>' +
+      '<p class="dn-eyebrow">Email updates</p>' +
       "<p class=\"dn-head\">New programs, grants and events, only when there's something worth sending.</p>" +
       '<form class="cta-sub" novalidate>' +
       '<input class="hp" name="company" tabindex="-1" autocomplete="off" aria-hidden="true">' +

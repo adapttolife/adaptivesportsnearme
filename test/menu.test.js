@@ -31,7 +31,7 @@ test("the menu leads with five doors, then Browse, Help build this, About, and d
     '"Guides", "Getting started, and life beyond sports"',
     'sec("Browse"', '"States"', '"Organizations"',
     'sec("Help build this"', '"Add a program"', '"Add an event"', '"Claim your organization"',
-    'sec("About this directory"', '"How we check listings"', '"Get the letter"',
+    'sec("About this directory"', '"How we check listings"', '"Email updates"',
     "data-theme-toggle",
   ], "menu");
   assert.equal(menu.lastIndexOf("sec("), menu.indexOf('sec("About this directory"'), "no group after About this directory");
@@ -50,7 +50,7 @@ test("sports is how people find programs: no separate Programs door in the menu 
 test("the footer has the same four groups in the same order", () => {
   inOrder(footer, ['"ft-h">Find<', '"Programs near you"', '"Sports"', '"Grants"', '"Events"', '"Guides"',
     '"ft-h">Browse<', '"States"', '"Organizations"',
-    '"ft-h">Help build this<', '"ft-h">About this directory<', '"How we check listings"', '"Get the letter"', '"Accessibility"'], "footer");
+    '"ft-h">Help build this<', '"ft-h">About this directory<', '"How we check listings"', '"Email updates"', '"Accessibility"'], "footer");
 });
 
 test("Guides is what /resources is called wherever a person reads it", () => {

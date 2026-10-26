@@ -201,8 +201,8 @@ test("the facts strip: when it runs, and Off season isn't closed", () => {
 
 test("one freshness line: confirmed by the organization, else the website check, else when it was listed", () => {
   assert.equal(F.freshness({ history: { updatedByOrganization: "2026-10" }, lastChecked: "2026-10-12", listedAt: "2025-03-01" }), "Confirmed by the organization · Oct 2026");
-  assert.equal(F.freshness({ history: { updatedByOrganization: null }, lastChecked: "2026-10-12T08:00:00Z", listedAt: "2025-03-01" }), "Website checked Oct 12");
-  assert.equal(F.freshness({ listedAt: "2026-10-03" }), "Listed Oct 2026");
+  assert.equal(F.freshness({ history: { updatedByOrganization: null }, lastChecked: "2026-10-12T08:00:00Z", listedAt: "2025-03-01" }), "Checked Oct 12");
+  assert.equal(F.freshness({ listedAt: "2026-10-03" }), "Listed Oct 3");
   assert.equal(F.freshness({}), "");
 });
 
@@ -213,7 +213,7 @@ test("a program page leads with the facts, and Something's wrong? sits beside Vi
   assert.match(h, /<div class="pg-act-row"><a class="btn btn--ink pg-full" href="https:\/\/example\.org\/sail"[\s\S]*?<a class="btn btn--line pg-wrong" href="\/update\/p9\?fix=1" ><span>Something&#39;s wrong\?<\/span><\/a><\/div>/);
   assert.ok(h.indexOf("pg-strip") < h.indexOf("About this program"), "the facts come before the description");
   assert.match(text(h), /When Off season · back in summer Cost \$20/);
-  assert.match(text(h), /Website checked Oct 12/);
+  assert.match(text(h), /Checked Oct 12/);
   assert.doesNotMatch(h, /Suggest a fix/);
   ROUTE = () => null;
 });

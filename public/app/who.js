@@ -85,13 +85,16 @@ function esc(s) {
 
 /** Chip row: "Anyone", then each code at least one listing in `pool` has (and the active one).
     hrefFor(code) builds the link ("" clears it). Chips change the filter, so they replace.
-    check: the HTML for the current chip's check icon (the page passes its icon). */
-export function whoChips({ pool = [], active = "", hrefFor, label = "Who it's for", check = "" } = {}) {
+    check: the HTML for the current chip's check icon (the page passes its icon).
+    always: codes offered even when no listing here says them (ages: "Kids and teens", "Adults"),
+    so the question is always askable; the line and the empty state then say honestly how many do. */
+export function whoChips({ pool = [], active = "", hrefFor, label = "Who it's for", check = "", always = [] } = {}) {
   const on = whoCode(active);
   // A code every listing here has filters nothing (veterans on the veteran meetups page), so it isn't offered.
   const n = {};
   for (const p of pool) for (const c of p.who || []) if (isWho(c)) n[c] = (n[c] || 0) + 1;
   const have = new Set(Object.keys(n).filter((c) => n[c] < pool.length));
+  if (pool.length) for (const c of always) if (isWho(c) && (n[c] || 0) < pool.length) have.add(c);
   if (on) have.add(on);
   if (!have.size) return "";
   const chip = (text, code) => {

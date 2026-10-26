@@ -12,7 +12,13 @@ const checkedT = (p) => { const t = Date.parse(p.lastChecked || ""); return Numb
 const cityKey = (p) => String(p.cityFirst || "").replace(/ and more$/, "");
 const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
 
-function hrefFor(st, s) { return "/states/" + st + (s ? "?s=" + encodeURIComponent(s) : ""); }
+function hrefFor(st, s, w = "") {
+  const q = new URLSearchParams();
+  if (s) q.set("s", s);
+  if (w) q.set("w", w);
+  const qs = q.toString();
+  return "/states/" + st + (qs ? "?" + qs : "");
+}
 
 /** 8 cards taking turns by sport: verified first, then the latest check date. */
 function around(all) {
@@ -45,7 +51,10 @@ export async function render(ctx) {
   const sName = s ? A.sportName(s) : "", sLow = s ? lc(sName) : "";
 
   const all = D.byState[st] || [];
-  const list = s ? all.filter((p) => A.offers(p, s)) : all;
+  const w = A.whoCode(ctx.query.w);
+  const sportList = s ? all.filter((p) => A.offers(p, s)) : all;
+  // Who it's for (ages included): chips offer what listings here say; a filter keeps the ones that say it.
+  const list = A.whoFilter(sportList, w);
   const placed = list.filter((p) => p.placed), statewide = list.filter((p) => !p.placed);
 
   // Header
@@ -57,12 +66,17 @@ export async function render(ctx) {
   });
 
   // Sport bar: sports present in the state, plus the chosen one so it stays selected when empty.
-  const keys = new Set(all.flatMap(A.sportsOf));
+  const counts = A.sportCounts(all);
+  const keys = new Set(Object.keys(counts));
   if (s) keys.add(s);
-  const bar = keys.size ? `<div class="st-bar">${A.sportBar({ keys: [...keys], active: s, hrefFor: (k) => hrefFor(st, k), label: `Sports in ${stName}` })}</div>` : "";
+  const bar = keys.size ? `<div class="st-bar">${A.sportBar({ keys: [...keys], counts, active: s, hrefFor: (k) => hrefFor(st, k, w), label: `Sports in ${stName}`, sheet: true })}</div>` : "";
+  const who = A.whoChips({ pool: sportList, active: w, hrefFor: (c) => hrefFor(st, s, c), label: `Who it's for in ${stName}` });
+  const quiet = sportList.filter((p) => !p.who.length).length;
+  const filters = who ? `<div class="st-fx">${A.filtersPanel({ id: "st-fx", path: ctx.path, on: w ? 1 : 0, body: who })}</div>` : "";
+  const whoLine = w && list.length ? `<div class="st-wholine">${A.whoLine(w, list.length, quiet)}</div>` : "";
 
   let body = "";
-  if (!s && all.length) {
+  if (!s && !w && all.length) {
     const cards = around(all);
     body += `<section class="sec st-around" aria-labelledby="st-ar">${A.sectionHead({ title: `Around ${stName}`, id: "st-ar", sub: "A few programs from across the state, one sport at a time." })}<div class="cards is-rail cols-4 st-cards">${cards.map((p) => A.programCard(p, {})).join("")}</div></section>`;
   }
@@ -85,7 +99,13 @@ export async function render(ctx) {
     body += `<section class="sec" aria-labelledby="st-wide">${A.sectionHead({ title: `Across ${stName}, no single city listed`, id: "st-wide", sub: `These organizations serve ${stName} but don't list a single city.` })}${A.rowList(statewide.sort(byTrust), { single: !!s }, { id: "st-wide-rows" })}</section>`;
   }
 
-  if (!list.length) {
+  if (!list.length && w) {
+    body += `<section class="sec">${A.emptyState({
+      title: `None in ${stName} say they serve ${A.whoSay(w)} yet`,
+      body: quiet ? `${quiet} more ${quiet === 1 ? "doesn't" : "don't"} say who they serve yet. Their websites often do.` : "Know one? Tell us and we'll check it.",
+      actions: [{ label: `See everyone in ${stName}`, href: hrefFor(st, s), attrs: "data-replace" }, { label: "Tell us about one", href: "/add/program" }],
+    })}</section>`;
+  } else if (!list.length) {
     const pool = s ? D.items.filter((p) => A.offers(p, s)) : D.items;
     body += `<section class="sec">${A.emptyState(s ? {
       title: `No ${sLow} listed in ${stName} yet.`,
@@ -96,6 +116,8 @@ export async function render(ctx) {
       body: "Know one? Tell us and we'll check it.",
       actions: [{ label: "Tell us about one", href: "/add/program" }, { label: "Browse by state", href: "/states" }],
     })}</section>`;
+    // Multi-sport organizations here that haven't said which sports they run may well run it (audit finding 2).
+    if (s) body += A.mayOfferBlock(s, A.mayOffer(s, { state: st }), { id: "st-may" });
     const groups = A.nearestOutside({ kind: "state", state: st, coords: null, city: null }, pool);
     if (groups.length) {
       body += `<section class="sec" aria-labelledby="st-out">${A.sectionHead({ title: `Nearest ${s ? sLow : "programs"} outside ${stName}`, id: "st-out", sub: "Nearest states first. An organization with no single city counts from the middle of its state." })}${groups.map((g) => grp(A.stateName(g.state), g.items, { single: !!s, outside: true })).join("")}</section>`;
@@ -112,7 +134,7 @@ export async function render(ctx) {
   return {
     title: site(stateMeta(stName, s ? sLow : "").title),
     description: stateMeta(stName, s ? sLow : "").description,
-    html: `<div class="st">${head}${bar}${body}${A.letterBlock({ source: "state" })}</div>`,
+    html: `<div class="st">${head}${bar}${filters}${whoLine}${body}${A.letterBlock({ source: "state" })}</div>`,
     aside: A.aboutBox(),
     railActive: "states",
   };

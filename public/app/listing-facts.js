@@ -70,13 +70,13 @@ export function factsStrip(p, now = new Date(), esc = escHtml) {
 const monYear = (ym) => { const m = /^(\d{4})-(\d{2})/.exec(String(ym || "")); return m && +m[2] >= 1 && +m[2] <= 12 ? `${MON[+m[2] - 1]} ${m[1]}` : ""; };
 const monDay = (iso) => { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(iso || "")); return m && +m[2] >= 1 && +m[2] <= 12 ? `${MON[+m[2] - 1]} ${+m[3]}` : ""; };
 
-/** One freshness line: "Confirmed by the organization · Oct 2026", else "Website checked Oct 12",
-    else "Listed Oct 2026", else "". */
+/** One freshness line: "Confirmed by the organization · Oct 2026", else "Checked Oct 12" (the word the
+    cards use too), else "Listed Oct 3" for a listing nobody has checked yet, else "". */
 export function freshness(p) {
   const confirmed = monYear(p && p.history && p.history.updatedByOrganization);
   if (confirmed) return `Confirmed by the organization · ${confirmed}`;
   const checked = monDay(p && p.lastChecked);
-  if (checked) return `Website checked ${checked}`;
-  const listed = monYear(p && p.listedAt);
+  if (checked) return `Checked ${checked}`;
+  const listed = monDay(p && p.listedAt);
   return listed ? `Listed ${listed}` : "";
 }

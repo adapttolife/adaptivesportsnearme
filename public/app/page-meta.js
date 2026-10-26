@@ -34,7 +34,7 @@ export const PAGES = {
   guides: { title: "Guides", description: "Every adaptive sport explained, and help beyond sports, like veteran-owned business directories by state." },
   veteranBusinesses: { title: "Support Veteran-Owned Businesses", description: "Find veteran-owned businesses in your state, with directories for all 50 states and nationwide." },
   build: { title: "Build with us", description: "Adaptive Sports Near Me is open source. See where we're going, share an idea, and help build tools for the adaptive sports community." },
-  letter: { title: "Get the letter", description: "New programs, grants and events by email, only when there's something worth sending." },
+  letter: { title: "Get updates by email", description: "New programs, grants and events by email, only when there's something worth sending." },
   letterConfirmed: { title: "You're on the list", description: "New programs, grants and events by email, only when there's something worth sending." },
   privacy: { title: "Privacy policy", description: "What Adaptive Sports Near Me collects, why, and the choices you have." },
   terms: { title: "Terms of use", description: "The terms for using Adaptive Sports Near Me, a free directory run by Adapt To Life." },

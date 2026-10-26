@@ -63,6 +63,8 @@ function yearlyCard(s, st) {
 export function yearlySection(series, now = new Date()) {
   const rows = (series || []).filter((s) => s && s.slug && s.name)
     .map((s) => { const st = seriesState(s, s.editions || [], now); return { s, st, t: nextTime(st, now) }; })
+    // No dates ever and no usual month says nothing about when: its own page still works (audit finding 6).
+    .filter(({ s, st }) => (s.editions || []).length || st.usualMonth)
     .sort((a, b) => (a.t - b.t) || a.s.name.localeCompare(b.s.name));
   if (!rows.length) return "";
   return `<section class="ev-yearly" aria-labelledby="ev-yearly-h"><h2 id="ev-yearly-h">Yearly events</h2><p class="ev-ysub">Held every year, in the order they come round next.</p><div class="ev-list">${rows.map(({ s, st }) => yearlyCard(s, st)).join("")}</div></section>`;
@@ -78,9 +80,28 @@ async function loadSeries() {
   } catch (_) { return []; }
 }
 
+/** Where the visitor said they are (the place the site remembers), or null. */
+export async function savedWhere() {
+  const label = A.recall("place");
+  if (!label) return null;
+  try { const w = await A.resolvePlace(label); return w && w.kind !== "none" && w.state ? w : null; } catch (_) { return null; }
+}
+
+/** "Running this season near you": programs whose seasons include this one, near the saved place;
+    with no saved place, the place picker (it stays on this page). */
+export async function runningSection({ pool, key = "", title = "Programs", id = "ev-run", now = new Date(), to = "/events" } = {}) {
+  const where = await savedWhere();
+  if (!where) return A.runningBlock({ where: null, id, place: to });
+  const r = A.runningNow({ where, pool, now, key });
+  return A.runningBlock({ where, list: r.list, known: r.known, season: r.season, id, title });
+}
+
 export async function render(ctx) {
-  const events = ctx.data.events || [];
-  const yearly = yearlySection(await loadSeries(), ctx.now || new Date());
+  const now = ctx.now || new Date();
+  // A past date never shows as upcoming.
+  const events = A.upcomingEvents(ctx.data.events || [], now);
+  const yearly = yearlySection(await loadSeries(), now);
+  const running = events.length ? "" : await runningSection({ pool: ctx.data.items, now });
 
   const body = events.length
     ? `<div class="ev-groups">${monthGroups(events)}</div>
@@ -93,7 +114,7 @@ export async function render(ctx) {
         image: "event",
         actions: [
           { label: "Add an event", href: "/add/event", kind: "orange" },
-          { label: "Get the letter", href: "", kind: "line", attrs: 'data-jump="letter"' },
+          { label: "Email updates", href: "", kind: "line", attrs: 'data-jump="letter"' },
         ],
       })}</div>`;
 
@@ -103,6 +124,7 @@ export async function render(ctx) {
 </div>
 ${body}
 ${yearly}
+${running}
 ${A.letterBlock({ source: "events" })}`;
 
   return {

@@ -50,13 +50,6 @@ function cardsThenRows(list, rctx, { deskCards, phoneCards = 2, id }) {
     (deskRest.length ? `<div class="nr-desk-only nr-after">${A.rowList(deskRest, rctx, { id: id + "-dr" })}</div>` : "");
 }
 
-function legend(where, hasDots, hasYou) {
-  const bits = [];
-  if (hasYou) bits.push(`<li><i class="nr-k nr-k--you" aria-hidden="true"></i>Where you searched</li>`);
-  if (hasDots) bits.push(`<li><i class="nr-k nr-k--dot" aria-hidden="true"></i>Cities with programs</li>`);
-  return bits.length ? `<ul class="nr-legend">${bits.join("")}</ul>` : "";
-}
-
 /* ---------- views ---------- */
 function notFoundPlace(ctx, text, dym = []) {
   const shown = text || "that place";
@@ -108,33 +101,31 @@ export async function render(ctx) {
   const total = g.inCity.length + g.near.length + g.elsewhere.length + g.statewide.length;
   const more = g.elsewhere.length + g.statewide.length;
 
-  // Sport bar: sports present anywhere in this place's ladder, plus the active one.
+  // Sport bar: sports present anywhere in this place's ladder, most listings first, plus the active one.
   const full = A.ladder(where, D.items, { radius: mi });
-  const keys = new Set();
-  for (const list of [full.inCity, full.near, full.elsewhere, full.statewide]) for (const p of list) for (const k of A.sportsOf(p)) keys.add(k);
+  const fullList = [...full.inCity, ...full.near, ...full.elsewhere, ...full.statewide];
+  // Order: the most listings close by (in the city and within the distance), then across the state.
+  const close = A.sportCounts([...full.inCity, ...full.near]), wide = A.sportCounts(fullList);
+  const counts = Object.fromEntries(Object.keys(wide).map((k) => [k, (close[k] || 0) * 10000 + wide[k]]));
+  const keys = new Set(Object.keys(counts));
   if (s) keys.add(s);
 
   // Programs are listed as places of their own now, so the list says what the menu's
   // "Programs near you" promised; the separate programs section this replaced is gone.
   const h1 = `${s ? A.sportName(s) : "Programs"} near ${where.label}`;
   const rctx = { where, single: !!s };
-  /* 1. results header */
-  const dots = pool.filter((p) => p.state === where.state && p.placed);
-  const outline = A.stateOutline(where.state, { dots, you: where.coords, size: 120 });
-  const hasYou = /class="so-you"/.test(outline);
+  /* 1. results header (no state outline or map legend: there is no map here; Map opens one) */
   const sum = [];
   if (g.inCity.length) sum.push(`<b class="num">${g.inCity.length}</b> in ${A.esc(city)}`);
   if (g.near.length) sum.push(`<b class="num">${g.near.length}</b> within about ${mi} miles`);
   if (more) sum.push(`<b class="num">${more}</b> more in ${A.esc(ST)}`);
   const header = `<div class="nr-hd">
-  ${outline ? `<div class="nr-stamp" aria-hidden="true">${outline}</div>` : ""}
   <div class="nr-text">
     <h1 tabindex="-1">${A.esc(h1)}</h1>
     ${sum.length ? `<p class="nr-sum">${sum.join(" · ")}</p>` : ""}
   </div>
   <div class="nr-foot">
     <p class="nr-note">${A.icon("info", 18)}<span>Distances are city to city, so they are close, not exact.</span></p>
-    ${outline ? legend(where, dots.length > 0, hasYou) : ""}
   </div>
 </div>`;
 
@@ -147,7 +138,7 @@ export async function render(ctx) {
 </div>`;
 
   /* 3. sport bar, 3b. how far, 4. jump chips */
-  const bar = `<div class="nr-bar">${A.sportBar({ keys: [...keys], active: s, hrefFor: (k) => hrefFor(ctx, { s: k }), label: "Sports near " + where.label, sheet: true })}</div>`;
+  const bar = `<div class="nr-bar">${A.sportBar({ keys: [...keys], counts, active: s, hrefFor: (k) => hrefFor(ctx, { s: k }), label: "Sports near " + where.label, sheet: true })}</div>`;
   const dist = `<nav class="nr-dist" aria-label="How far from ${A.esc(where.short)}"><span class="nr-dist-t" aria-hidden="true">How far</span><ul>${A.RADII.map((r) =>
     `<li><a class="chip" href="${A.esc(hrefFor(ctx, { mi: String(r) }))}" data-replace${r === mi ? ' aria-current="true"' : ""}><span><span class="num">${r}</span> mi</span></a></li>`).join("")}</ul></nav>`;
   const jumps = total ? `<div class="nr-jumps">${A.jumpChips([
@@ -157,7 +148,8 @@ export async function render(ctx) {
     { id: GROUP_IDS.statewide, label: "Across " + ST, count: g.statewide.length },
   ])}</div>` : "";
   const who = A.whoChips({ pool: here, active: w, hrefFor: (c) => hrefFor(ctx, { w: c }), label: "Who it's for near " + where.label });
-  const whoBar = who ? `<div class="nr-who">${who}</div>` : "";
+  // How far and Who it's for live behind one Filters button (audit finding 8).
+  const filters = A.filtersPanel({ id: "nr-fx", path: ctx.path, on: (mi !== A.RADII[0] ? 1 : 0) + (w ? 1 : 0), body: dist + (who ? `<div class="nr-who">${who}</div>` : "") });
   const quiet = here.filter((p) => !p.who.length).length;
   const whoLine = w && total ? `<div class="nr-wholine">${A.whoLine(w, total, quiet, " nearby")}</div>` : "";
 
@@ -177,7 +169,9 @@ export async function render(ctx) {
     groups += `<section class="nr-group" aria-labelledby="${GROUP_IDS.statewide}">${groupHead({ id: GROUP_IDS.statewide, title: `Across ${ST}, no single city listed`, count: g.statewide.length, sub: `These organizations serve ${ST} but don't list a single city.` })}${A.rowList(g.statewide, rctx, { id: "nr-sw-rows" })}</section>`;
   }
 
-  /* 6. empty or thin */
+  /* 6. empty or thin. An empty sport also offers multi-sport organizations nearby that haven't said
+     which sports they run (audit finding 2): they may well run it. */
+  const maybe = s && !total && !w ? A.mayOfferBlock(s, A.mayOffer(s, { state: where.state, where, radius: mi }), { id: "nr-may", where }) : "";
   let empty = "";
   if (!total && w) {
     empty = `<div class="nr-empty">${A.emptyState({
@@ -198,7 +192,7 @@ export async function render(ctx) {
       title: `No ${what} near ${city} yet`,
       body: "Know one? Tell us and we'll check it.",
       actions,
-    })}</div>`;
+    })}</div>${maybe}`;
     const out = A.nearestOutside(where, pool);
     if (out.length) {
       empty += `<section class="nr-group nr-outside" aria-labelledby="nr-out">${groupHead({ id: "nr-out", title: `Nearest ${s ? sportLow : "programs"} outside ${ST}`, sub: "Nearest states first. An organization with no single city counts from the middle of its state, so it shows no miles." })}${out.map((grp) =>
@@ -206,7 +200,8 @@ export async function render(ctx) {
     }
   }
 
-  const html = `<div class="nr">${header}${toolbar}${bar}${dist}${whoBar}${jumps}${whoLine}${empty}${groups}</div>${A.letterBlock({ source: "near" })}${A.helpBand()}`;
+  const tools = `<div class="nr-row">${filters}${jumps}</div>`;
+  const html = `<div class="nr">${header}${toolbar}${bar}${tools}${whoLine}${empty}${groups}</div>${A.letterBlock({ source: "near" })}${A.helpBand()}`;
   return {
     title: site(h1),
     description: nearMeta(where.label, s ? { name: A.sportName(s), low: sportLow } : null, mi).description,
