@@ -20,34 +20,32 @@ export function parseDesc(desc) {
     2+ sports; more = how many further sports the row names beyond the three in the trio). */
 export function listingSport(row) {
   const L = globalThis.ListingArt;
-  // The organization's own word comes first (row.seasons, [{ key, seasons }]): every sport it says it runs.
-  const told = [];
-  for (const s of Array.isArray(row.seasons) ? row.seasons : []) {
-    const k = s && String(s.key || "").toLowerCase();
-    if (k && L.SPORTS.includes(k) && k !== "multi" && k !== "grant" && k !== "event" && !told.includes(k)) told.push(k);
-  }
-  if (told.length === 1) return { key: told[0], trio: null, more: 0 };
-  if (told.length >= 2) {
-    const trio = [...told.filter((k) => !GROUP_SCENE.has(k)), ...told.filter((k) => GROUP_SCENE.has(k))].slice(0, 3);
-    return { key: "multi", trio, more: told.length - trio.length };
-  }
+  const isKey = (k) => k && L.SPORTS.includes(k) && k !== "multi" && k !== "grant" && k !== "event";
+  // What the listing already says: its sport, or for a multi-sport row the sports its description names.
+  const listed = [];
   const sk = L.symbolKey(row);
-  let key = sk && L.SPORTS.includes(sk) && sk !== "grant" && sk !== "event" ? sk : "multi";
-  let trio = null, more = 0;
-  if (key === "multi") {
+  if (isKey(sk)) listed.push(sk);
+  else {
     const s = parseDesc(row.desc).sports;
-    const ks = [];
     if (s) for (const part of s.split(/[;,]/)) {
       const k = L.symbolKey({ sportLabel: part.trim() });
-      if (k && k !== "multi" && !ks.includes(k)) ks.push(k);
-    }
-    if (ks.length === 1) key = ks[0];
-    else if (ks.length >= 2) {
-      trio = [...ks.filter((k) => !GROUP_SCENE.has(k)), ...ks.filter((k) => GROUP_SCENE.has(k))].slice(0, 3);
-      more = ks.length - trio.length;
+      if (isKey(k) && !listed.includes(k)) listed.push(k);
     }
   }
-  return { key, trio, more };
+  // The organization's own word (row.seasons, [{ key, seasons }]) adds every sport it says it runs;
+  // a sport added this way joins the ones the listing already shows, it never replaces them.
+  const all = [...listed];
+  for (const s of Array.isArray(row.seasons) ? row.seasons : []) {
+    const k = s && String(s.key || "").toLowerCase();
+    if (isKey(k) && !all.includes(k)) all.push(k);
+  }
+  if (all.length === 0) return { key: "multi", trio: null, more: 0 };
+  // A listing whose own sport we don't know keeps the multi-sport picture until there are two to
+  // draw: one added sport says "they also run pickleball", not "this is a pickleball club".
+  // Search still finds it under that sport (row.seasons).
+  if (all.length === 1) return listed.length ? { key: all[0], trio: null, more: 0 } : { key: "multi", trio: null, more: 0 };
+  const trio = [...all.filter((k) => !GROUP_SCENE.has(k)), ...all.filter((k) => GROUP_SCENE.has(k))].slice(0, 3);
+  return { key: "multi", trio, more: all.length - trio.length };
 }
 
 /** The words for a multi-sport row that names its sports ("Baseball, basketball, and 5 more"), or
