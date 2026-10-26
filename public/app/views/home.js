@@ -43,7 +43,7 @@ function sports(D) {
   for (const p of D.items) for (const k of A.sportsOf(p)) counts[k] = (counts[k] || 0) + 1;
   const tiles = GRID.map((key, order) => ({ key, order, count: counts[key] || 0 }))
     .sort((a, b) => b.count - a.count || a.order - b.order)
-    .map(({ key, count }) => `<li><a class="st" href="/sports/${A.esc(key)}" data-hero-sport="${A.esc(key)}">${A.plate(key, { kind: "tile", cls: "st-plate" })}<span class="st-name">${A.esc(A.sportName(key))}</span><span class="st-n num">${count} programs</span></a></li>`).join("");
+    .map(({ key, count }) => `<li><a class="st" href="/sports/${A.esc(key)}" data-hero-sport="${A.esc(key)}">${A.plate(key, { kind: "tile", cls: "st-plate" })}<span class="st-name">${A.esc(A.sportName(key))}</span><span class="st-n num">${count === 1 ? "1 program" : count + " programs"}</span></a></li>`).join("");
   const all = `<li><a class="st st--all" href="/sports"><span class="st-allbox">${A.icon("layout-grid", 34)}<b>All sports</b></span><span class="st-name">See every sport</span><span class="st-n">From archery to water skiing</span></a></li>`;
   return `<section class="sec hs" aria-labelledby="hs-h">${A.sectionHead({ title: "Pick a sport", id: "hs-h" })}<ul class="st-grid">${tiles}${all}</ul></section>`;
 }
