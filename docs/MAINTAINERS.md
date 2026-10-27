@@ -68,6 +68,27 @@ npx wrangler d1 execute asnm-db --config wrangler.json --remote --file db/migrat
 (`/events/spooky-spokes`: The Pickle Lodge, Spooky Spokes and its three years,
 links only). It is safe to run twice.
 
+## Accounts and saved items
+
+`db/migrations/0016_profile_saved_items.sql` adds `profile_login_tokens` (one-time
+email sign-in links for profiles) and `profile_saved_items` (saved organizations,
+programs, events and grants), and copies every existing row from
+`profile_favorites` into `profile_saved_items`.
+`db/migrations/0017_profile_saved_sports.sql` adds `profile_saved_sports`.
+
+Both only add, and both are safe to run twice (`IF NOT EXISTS`, `INSERT OR IGNORE`).
+**Run both on a database before the code that serves `/account` reaches it.** There is
+no fallback: without these tables a signed-in `GET /api/profile` (and
+`/api/profile-auth/session`) returns 500, and sign-in links and saving fail. Run 0016
+before 0017, staging first, then production:
+
+```sh
+npx wrangler d1 execute asnm-db-staging --config wrangler.preview.json --remote --file db/migrations/0016_profile_saved_items.sql
+npx wrangler d1 execute asnm-db-staging --config wrangler.preview.json --remote --file db/migrations/0017_profile_saved_sports.sql
+npx wrangler d1 execute asnm-db --config wrangler.json --remote --file db/migrations/0016_profile_saved_items.sql
+npx wrangler d1 execute asnm-db --config wrangler.json --remote --file db/migrations/0017_profile_saved_sports.sql
+```
+
 ## Organization management access
 
 `db/migrations/0008_organization_access.sql` adds `organizations.claim_email`
@@ -164,8 +185,11 @@ actions have real effects while directory, profile, and intake database writes
 stay in the staging database.
 
 **Core invariant (kept from the original Postgres design):** pipeline lanes *propose*
-changes into `review_queue`; a human reviews and approves them in `/admin` before anything
-touches `organizations`. The direct writes are two evidence columns, both set by validate:
+changes into `review_queue`; a human approves them before anything touches `organizations`.
+The old approve screen (`src/admin.js`, `/api/admin/*`) was removed in October 2026, and
+nothing replaces it yet: `/admin` today reviews user submissions, not lane proposals. Until a
+replacement ships, nothing can approve `review_queue` proposals, so they pile up as `pending`.
+The direct writes are two evidence columns, both set by validate:
 `last_ok_at` (liveness evidence, feeds the freshness score — half-life 45 days, computed in
 the Worker) and `last_checked_at` (stale-first ordering). See the `src/pipeline.js` header.
 
@@ -304,7 +328,8 @@ is a separate Worker with no previews: `npx wrangler secret put NAME --config wr
 ## Maintaining the data
 
 - Cron lanes run on their own; results land in `pipeline_runs`, evidence in `link_checks`,
-  proposals in `review_queue`.
+  proposals in `review_queue`. There is no screen to approve those proposals since the old
+  `/api/admin/*` API was removed, so they accumulate until a replacement ships.
 - Review user submissions in `/admin`; admins sign in with an `@adaptivesportsnearme.com`
   or `@faisaln.com` passwordless link.
 - Cron lanes run on schedule; the retired bearer-key API no longer exposes manual lane triggers.
