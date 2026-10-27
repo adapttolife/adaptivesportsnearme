@@ -22,14 +22,12 @@
 		gap: 40px;
 		align-items: start;
 	}
+
 	.v-program .pg-book {
 		display: block;
 		position: sticky;
 		top: calc(var(--top-h, 0px) + 24px);
 		margin-top: 24px;
-	}
-	.v-program .pg-acts {
-		display: none;
 	}
 }
 
@@ -938,7 +936,7 @@
 .v-program .pg-strip > div {
 	min-width: 0;
 	max-width: 100%;
-	padding: 5px 12px 6px;
+	padding: 8px 12px 6px;
 	border-radius: var(--r);
 	background: var(--sand);
 	border: 1px solid var(--line);

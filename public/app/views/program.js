@@ -277,7 +277,7 @@ function hostNote(p) {
 }
 function actionRow(p) {
   // data-sticky-twin: the phone sticky bar steps aside while this row is on screen (one ink button at a time).
-  return `<div class="pg-acts" data-sticky-twin><div class="pg-act-row">${visitBtn(p, { full: true })}${wrongBtn(p)}</div>${hostNote(p)}</div>`;
+  return `<div class="pg-acts" data-sticky-twin><div class="pg-act-row">${visitBtn(p, { full: true })}${A.saveButton("organizations", p.id)}${wrongBtn(p)}</div>${hostNote(p)}</div>`;
 }
 function bookBox(p) {
   let address = '';
@@ -475,6 +475,7 @@ async function copyLink(url) {
 }
 
 export function mount(root, ctx) {
+  A.mountSaveButtons(root);
   const p = ctx.data.byId.get(String(ctx.params.id || "").toLowerCase());
   if (!p) return () => {};
   let disposed = false;

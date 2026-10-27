@@ -84,9 +84,11 @@ export function seriesHtml(s, D, now = new Date()) {
   const meta = [sport ? A.esc(sport) : "", at ? A.esc(at) : "", host ? `Hosted by ${host}` : ""].filter(Boolean).join(" · ");
   const back = `<a class="es-back" href="/events" data-back="/events">${A.icon("arrow-left", 20)}<span>Events</span></a>`;
   const head = `<div class="es-head">${A.plate(key || "event", { kind: "row", cls: "es-tile" })}<div class="es-htext"><h1 tabindex="-1">${A.esc(s.name)}</h1>${meta ? `<p class="es-meta">${meta}</p>` : ""}</div></div>`;
+  const saveId = (st.now || st.next || st.past[0])?.id || "";
+  const save = saveId ? `<div class="btns">${A.saveButton("events", saveId)}</div>` : "";
   const about = s.description ? `<section class="es-sec" aria-labelledby="es-about-h"><h2 id="es-about-h">About</h2><p>${A.esc(s.description)}</p></section>` : "";
   const tell = `<p class="es-tell">${noDates(s, st) ? "Know the dates?" : "Know about next year's dates?"} <a href="/add/event">Tell us</a></p>`;
-  const html = `<article class="es">${back}${head}${stateBlock(s, st)}${about}${pastYears(st)}${tell}</article>
+  const html = `<article class="es">${back}${head}${save}${stateBlock(s, st)}${about}${pastYears(st)}${tell}</article>
 ${A.letterBlock({ source: "event-series" })}`;
   const m = seriesMeta({ name: s.name, sport, host: (s.organization && s.organization.name) || s.host_name || "", place: at, usual: st.usual });
   const lead = st.now || st.next;
@@ -112,6 +114,7 @@ export async function render(ctx) {
   return seriesHtml(s, ctx.data, ctx.now || new Date());
 }
 
-export function mount() {
+export function mount(root) {
+  A.mountSaveButtons(root);
   return () => {};
 }

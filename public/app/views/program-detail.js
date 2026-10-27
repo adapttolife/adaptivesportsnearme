@@ -17,7 +17,7 @@ function visit(p, { full = false } = {}) { return p.website ? A.btn("Visit websi
 const fixHref = (p) => `/update/${p.id}?fix=1`;
 const wrong = (p, cls = "") => A.btn("Something's wrong?", fixHref(p), "line", { cls: "pg-wrong" + (cls ? " " + cls : "") });
 /* Visit website, and beside it "Something's wrong?" (docs/specs/community-kept-directory.md). */
-function actions(p) { const site = host(p.website); return `<div class="pg-acts"><div class="pg-act-row">${visit(p, { full: true })}${wrong(p, p.website ? "" : "pg-full")}</div>${site ? `<p class="pg-host">Opens ${A.esc(site)}</p>` : ""}</div>`; }
+function actions(p) { const site = host(p.website); return `<div class="pg-acts"><div class="pg-act-row">${visit(p, { full: true })}${A.saveButton("programs", p.id)}${wrong(p, p.website ? "" : "pg-full")}</div>${site ? `<p class="pg-host">Opens ${A.esc(site)}</p>` : ""}</div>`; }
 function about(p) { return `<section class="pg-sec"><h2>About this program</h2>${p.desc ? `<p>${A.esc(p.desc)}</p>` : `<p class="pg-quiet">We don't have a description for this program yet.${p.website ? " Its website has the details." : ""}</p>`}</section>`; }
 /** "Runs in winter", "Runs in summer and fall", "Runs year-round"; "" when it hasn't said. */
 export function runsText(p) {
@@ -66,6 +66,7 @@ export async function render(ctx) {
 }
 
 export function mount(root) {
+  A.mountSaveButtons(root);
   let removeMaps = () => {};
   let disposed = false;
   if (root.querySelector("[data-location-map]")) import("./map.js").then((maps) => maps.mountLocationMaps(root)).then((remove) => { if (disposed) remove(); else removeMaps = remove; }).catch(() => {});

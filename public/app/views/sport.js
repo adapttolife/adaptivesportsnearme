@@ -170,7 +170,14 @@ export async function render(ctx) {
     { label: "Grants", href: hrefFor(key, { st, t: "grants" }), current: t === "grants" },
     { label: "Events", href: hrefFor(key, { st, t: "events" }), current: t === "events" },
   ];
-  const head = A.communityHeader({ kind: "sport", key, title: name, line: A.sportNote(key), count, tabs });
+  const head = A.communityHeader({
+    kind: "sport", key, title: name, line: A.sportNote(key), count, tabs,
+    actions: [
+      A.saveButton("sports", key),
+      A.btn("Email updates", "", "line", { attrs: 'data-jump="letter"', icon: "mail" }),
+      A.btn("Share", "", "line", { attrs: "data-share", icon: "share" }),
+    ],
+  });
 
   let body = "";
   if (t === "programs") {
@@ -212,6 +219,7 @@ export async function render(ctx) {
 }
 
 export function mount(root, ctx) {
+  A.mountSaveButtons(root);
   // Keep the selected state chip in view.
   const cur = root.querySelector(".pchips .is-cur");
   const row = root.querySelector(".pchips");

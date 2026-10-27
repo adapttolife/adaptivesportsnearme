@@ -1145,6 +1145,42 @@ export function btn(label, href, kind = "ink", { external = false, attrs = "", i
   return `<a class="${c}" href="${esc(href)}"${external ? ' target="_blank" rel="noopener"' : ""} ${attrs}>${lead}<span>${esc(label)}</span>${tail}</a>`;
 }
 
+export function saveButton(kind, id) {
+  return `<button type="button" class="btn btn--line save-btn" data-save-kind="${esc(kind)}" data-save-id="${esc(id)}" hidden><span class="save-btn-plus">${icon("plus", 18)}</span><span class="save-btn-check">${icon("check", 18)}</span><span class="save-btn-label">Save</span></button>`;
+}
+
+export async function mountSaveButtons(root) {
+  const buttons = $$('[data-save-kind][data-save-id]', root);
+  if (!buttons.length) return;
+  let profile;
+  try { const response = await fetch('/api/profile-auth/session'); const body = await response.json(); profile = response.ok && body?.profile ? body.profile : null; } catch (_) { return; }
+  if (!profile) {
+    for (const button of buttons) {
+      button.hidden = false;
+      button.querySelector('.save-btn-label').textContent = 'Sign in to save';
+      button.addEventListener('click', () => nav('/account'));
+    }
+    return;
+  }
+  const saved = new Set((profile.saved || []).map((item) => `${item.kind}:${item.id}`));
+  for (const button of buttons) {
+    const key = `${button.dataset.saveKind}:${button.dataset.saveId}`;
+    button.hidden = false;
+    const draw = (on) => {
+      button.dataset.saved = on ? 'true' : 'false';
+      button.classList.toggle('is-saved', on);
+      button.querySelector('.save-btn-label').textContent = on ? 'Saved' : 'Save';
+    };
+    draw(saved.has(key));
+    button.addEventListener('click', async () => {
+      const on = button.dataset.saved !== 'true'; button.disabled = true;
+      try { const response = await fetch('/api/profile/saved', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ kind: button.dataset.saveKind, item_id: button.dataset.saveId, on }) }); if (!response.ok) throw new Error(); draw(on); }
+      catch (_) { button.querySelector('.save-btn-label').textContent = 'Try again'; }
+      finally { button.disabled = false; }
+    });
+  }
+}
+
 /** Sport and state community header (4.10). The state banner carries the h1 on the Sand
     ground beside the outline, so the banner is the page's title, not an empty box.
     "Email updates" is a line button: the page's one ink button belongs to its task (4.14). */
@@ -1226,6 +1262,7 @@ export function drawerList(active = "") {
       + `</ul></div>`,
     sec("Browse", item("states", "/states", "States") + item("organizations", "/organizations", "Organizations")),
     sec("Help build this", item("add-program", "/add/program", "Add a program") + item("add-organization", "/add/organization", "Add an organization") + item("manage", "/manage", "Manage your organization") + item("add-event", "/add/event", "Add an event") + item("help", "/help", "Claim your organization")),
+    sec("Your account", item("account", "/account", "Saved items")),
     sec("About this directory", item("about", "/about", "How we check listings") + item("letter", "/letter", "Email updates") + item("build", "/build", "Build with us")),
     `<div class="dl-sec dl-set"><button type="button" class="dl-theme" data-theme-toggle aria-pressed="${dark}"><span>Dark mode</span><span class="dl-switch" aria-hidden="true"></span></button></div>`,
   ].join("");
@@ -1465,7 +1502,7 @@ const ROUTES = [
   ["/grants", "grants"], ["/grants/:id", "grant"], ["/events", "events"], ["/events/:slug", "event-series"],
   ["/add/program", "forms"], ["/add/organization", "forms"], ["/add/event", "forms"], ["/update/:id", "forms"],
   ["/manage", "manage"], ["/manage/organizations", "manage"], ["/manage/organizations/:id/edit", "manage"], ["/manage/organizations/:id/programs/new", "manage"], ["/manage/organizations/:id/events/new", "manage"], ["/manage/organizations/:id/programs", "manage"], ["/manage/organizations/:id/events", "manage"], ["/manage/programs/:id", "manage"], ["/manage/events/:id", "manage"], ["/manage/organizations/:id", "manage"],
-  ["/admin", "admin"], ["/admin/:kind", "admin"], ["/admin/:kind/:id", "admin"],
+  ["/admin", "admin"], ["/admin/:kind", "admin"], ["/admin/:kind/:id", "admin"], ["/account", "account"],
   ["/help", "help"], ["/about", "help"], ["/resources/veteran-owned-businesses", "vob"], ["/resources", "help"], ["/letter", "help"], ["/build", "help"], ["/letter/confirmed", "letter-confirmed"], ["/privacy", "help"], ["/terms", "help"],
 ];
 const OVERLAY_KEYS = new Set(["map", "open"]);
@@ -1542,6 +1579,7 @@ function defaultActive(name, path, params) {
   if (path === "/add/organization") return "add-organization";
   if (path === "/add/event") return "add-event";
   if (path === "/manage" || path.startsWith("/manage/")) return "manage";
+  if (path === "/account") return "account";
   if (name === "help") return path.slice(1);
   return "";
 }

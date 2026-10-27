@@ -197,6 +197,30 @@ CREATE TABLE IF NOT EXISTS profiles (
   updated_at    TEXT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS profile_login_tokens (
+  id TEXT PRIMARY KEY,
+  token_hash TEXT NOT NULL UNIQUE,
+  email TEXT NOT NULL COLLATE NOCASE,
+  expires_at TEXT NOT NULL,
+  used_at TEXT,
+  created_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS profile_saved_items (
+  profile_id TEXT NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  item_kind TEXT NOT NULL CHECK (item_kind IN ('organizations', 'programs', 'events', 'grants')),
+  item_id TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  PRIMARY KEY (profile_id, item_kind, item_id)
+);
+
+CREATE TABLE IF NOT EXISTS profile_saved_sports (
+  profile_id TEXT NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  sport_key TEXT NOT NULL REFERENCES sports(sport_key),
+  created_at TEXT NOT NULL,
+  PRIMARY KEY (profile_id, sport_key)
+);
+
 CREATE TABLE IF NOT EXISTS programs (
   id TEXT PRIMARY KEY,
   organization_id TEXT NOT NULL REFERENCES organizations(id),
@@ -293,6 +317,9 @@ CREATE INDEX IF NOT EXISTS organizations_state_idx ON organizations (state);
 CREATE INDEX IF NOT EXISTS organizations_status_idx ON organizations (status, is_public);
 
 CREATE INDEX IF NOT EXISTS idx_profile_favorites_org ON profile_favorites (org_id);
+CREATE INDEX IF NOT EXISTS profile_login_tokens_expires_idx ON profile_login_tokens(expires_at);
+CREATE INDEX IF NOT EXISTS profile_saved_items_profile_idx ON profile_saved_items(profile_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS profile_saved_sports_profile_idx ON profile_saved_sports(profile_id, created_at DESC);
 
 CREATE INDEX IF NOT EXISTS programs_organization_idx ON programs (organization_id);
 

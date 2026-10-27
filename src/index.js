@@ -1,6 +1,6 @@
 import { servePage, robotsTxt, sitemapXml } from "./pages.js";
 import { safeNewsletterSubscribe } from './newsletter.js';
-import { queueFormConfirmation, sendAdminLoginLink, sendOrganizationLoginLink } from './email.js';
+import { queueFormConfirmation, sendAdminLoginLink, sendOrganizationLoginLink, sendProfileLoginLink } from './email.js';
 import { notifyIntake } from './intake.js';
 // Adaptive Sports Near Me — Worker entry.
 // Serves the static site (env.ASSETS), the D1-backed directory API, the admin
@@ -44,6 +44,7 @@ import {
   readProfileCookie, signProfileId, serializeProfileCookie, clearProfileCookie,
   getValidSportKeys, getProfileById, getProfileByEmail, createProfile, updateProfile,
   getProfileWithFavorites, orgExists, setFavorite, validState, parseSports,
+  issueProfileLoginToken, consumeProfileLoginToken, findOrCreateProfile, setSavedItem,
 } from "./profile.js";
 import {
   clearOrgCookie, consumeLoginToken, createOrganizationSession, issueLoginToken, serializeOrgCookie,
@@ -102,6 +103,24 @@ const application = {
       if (request.method === "POST") return handleProfileUpsert(request, env, ctx);
       if (request.method === "GET") return handleProfileGet(request, env);
       return json({ ok: false, error: "Method not allowed" }, 405);
+    }
+    if (url.pathname === "/api/profile-auth/request-link") {
+      if (request.method !== "POST") return json({ ok: false, error: "Method not allowed" }, 405);
+      const limited = await formLimited(request, env, "Sign-in is temporarily unavailable.");
+      if (limited) return limited;
+      return handleProfileLoginRequest(request, env, url);
+    }
+    if (url.pathname === "/api/profile-auth/verify") {
+      if (request.method !== "GET") return json({ ok: false, error: "Method not allowed" }, 405);
+      return handleProfileLoginVerify(url, env);
+    }
+    if (url.pathname === "/api/profile-auth/session") {
+      if (request.method !== "GET") return json({ ok: false, error: "Method not allowed" }, 405);
+      return handleProfileGet(request, env);
+    }
+    if (url.pathname === "/api/profile/saved") {
+      if (request.method !== "POST") return json({ ok: false, error: "Method not allowed" }, 405);
+      return handleProfileSaved(request, env);
     }
     if (url.pathname === "/api/profile/favorites") {
       if (request.method !== "POST") return json({ ok: false, error: "Method not allowed" }, 405);
@@ -655,6 +674,36 @@ async function handleProfileUpsert(request, env, ctx) {
   });
 }
 
+async function handleProfileLoginRequest(request, env, url) {
+  if (!env.DB || !env.PROFILE_SIGNING_KEY) return json({ ok: false, error: "Sign-in is temporarily unavailable." }, 503, PROFILE_CACHE);
+  const data = await readBody(request);
+  const email = validEmail(data?.email);
+  if (!email) return json({ ok: false, error: "Enter a valid email address." }, 422, PROFILE_CACHE);
+  try {
+    const token = await issueProfileLoginToken(env.DB, email);
+    const link = new URL("/api/profile-auth/verify", url.origin); link.searchParams.set("token", token);
+    await sendProfileLoginLink(env, email, link.toString());
+    return json({ ok: true }, 200, PROFILE_CACHE);
+  } catch (err) {
+    console.error("profile login request failed", { reason: err instanceof Error ? err.message : "unknown" });
+    return json({ ok: false, error: "We could not send a sign-in link. Please try again." }, 503, PROFILE_CACHE);
+  }
+}
+
+async function handleProfileLoginVerify(url, env) {
+  if (!env.DB || !env.PROFILE_SIGNING_KEY) return json({ ok: false, error: "Sign-in is temporarily unavailable." }, 503, PROFILE_CACHE);
+  try {
+    const email = await consumeProfileLoginToken(env.DB, url.searchParams.get("token") || "");
+    if (!email) return json({ ok: false, error: "This sign-in link has expired or was already used." }, 401, PROFILE_CACHE);
+    const id = await findOrCreateProfile(env.DB, email);
+    const signature = await signProfileId(id, env.PROFILE_SIGNING_KEY);
+    return new Response(null, { status: 303, headers: { "Cache-Control": "no-store", "Location": "/account", "Set-Cookie": serializeProfileCookie(id, signature) } });
+  } catch (err) {
+    console.error("profile login verification failed", { reason: err instanceof Error ? err.message : "unknown" });
+    return json({ ok: false, error: "We could not sign you in. Please request a new link." }, 503, PROFILE_CACHE);
+  }
+}
+
 async function handleProfileGet(request, env) {
   if (!env.DB) return json({ ok: false }, 503, PROFILE_CACHE);
   if (!env.PROFILE_SIGNING_KEY) {
@@ -700,6 +749,17 @@ async function handleProfileFavorite(request, env) {
     console.error("favorite toggle failed:", err);
     return json({ ok: false, error: "Could not save right now. Please try again soon." }, 500);
   }
+}
+
+async function handleProfileSaved(request, env) {
+  if (!env.DB || !env.PROFILE_SIGNING_KEY) return json({ ok: false, error: "Saved items are temporarily unavailable." }, 503, PROFILE_CACHE);
+  const profileId = await readProfileCookie(request, env.PROFILE_SIGNING_KEY);
+  if (!profileId) return json({ ok: false, error: "Sign in to save items." }, 401, PROFILE_CACHE);
+  const data = await readBody(request);
+  const kind = String(data?.kind || "").toLowerCase(), itemId = str(data?.item_id);
+  const on = data?.on === true || data?.on === "true" || data?.on === "1";
+  const saved = await setSavedItem(env.DB, profileId, kind, itemId, on);
+  return saved ? json({ ok: true, kind, item_id: itemId, on }, 200, PROFILE_CACHE) : json({ ok: false, error: "That item was not found." }, 404, PROFILE_CACHE);
 }
 
 function handleProfileSignout() {

@@ -11,5 +11,3 @@ org-scraper: there is a work tree stash that exists
 Beehiiv -> Resend
 
 API for orgs to push new/updated data to our db
-
-Add user profile capability
