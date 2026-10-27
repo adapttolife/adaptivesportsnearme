@@ -126,10 +126,14 @@ export async function listAdminItems(db, kind, options = {}) {
   return listItems(db, entity, options);
 }
 
+const ADMIN_LIST_LIMIT = 5000;
+
 async function listItems(db, entity, { query = "", limit = 100, offset = 0 } = {}) {
   const needle = clean(query, 120);
   const where = needle ? ` WHERE ${entity.name} LIKE ? COLLATE NOCASE` : "";
-  const binds = needle ? [`%${needle}%`, Math.min(Math.max(Number(limit) || 100, 1), 200), Math.max(Number(offset) || 0, 0)] : [Math.min(Math.max(Number(limit) || 100, 1), 200), Math.max(Number(offset) || 0, 0)];
+  const boundedLimit = Math.min(Math.max(Number(limit) || 100, 1), ADMIN_LIST_LIMIT);
+  const boundedOffset = Math.max(Number(offset) || 0, 0);
+  const binds = needle ? [`%${needle}%`, boundedLimit, boundedOffset] : [boundedLimit, boundedOffset];
   const count = await db.prepare(`SELECT count(*) AS total FROM ${entity.table}${where}`).bind(...(needle ? [`%${needle}%`] : [])).first();
   const rows = await db.prepare(`SELECT id, ${entity.name} AS name, is_public, status, updated_at FROM ${entity.table}${where} ORDER BY ${entity.name} COLLATE NOCASE LIMIT ? OFFSET ?`).bind(...binds).all();
   return { total: Number(count?.total || 0), items: rows.results || [] };
