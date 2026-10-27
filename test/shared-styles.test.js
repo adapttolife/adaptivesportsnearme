@@ -5,12 +5,10 @@ import { blogIndexTemplate, blogPostTemplate, blogFallbackTemplate, blogNotFound
 
 const read = path => readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
 
-// The server-rendered pages that are still served (the blog and the admin
-// review page) share public/styles.css. The site itself is the app shell
+// The server-rendered blog pages share public/styles.css. The site itself is the app shell
 // (public/index.html + public/app/), which carries its own stylesheet.
 test("static and nested server-rendered pages load the same public stylesheet", () => {
   const pages = [
-    read("public/admin/index.html"),
     blogIndexTemplate([]), blogPostTemplate({ slug: "story", title: "Story" }),
     blogFallbackTemplate(), blogNotFoundTemplate(),
   ];

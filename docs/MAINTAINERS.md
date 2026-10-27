@@ -87,9 +87,8 @@ request a one-time email link at `POST /api/org-auth/request-link`; authenticate
 sessions can read and update only organizations whose `claim_email` matches the
 verified address through `/api/organizations/:id/manage`.
 
-Staff assign or clear a verified claim address with the existing admin bearer key:
-`PATCH /api/admin/organizations/:id/claim-email` and a JSON body containing
-`claim_email`. This is intentionally separate from the public organization email.
+Staff assign or clear a verified claim address in the passwordless `/admin`
+dashboard. This is intentionally separate from the public organization email.
 
 Cloudflare's free allowance is **5 million rows read per day per account**,
 shared across databases, not five million for each staging/production database.
@@ -152,7 +151,7 @@ public/sw.js           service worker (offline shell, network-first API)
 src/index.js           Worker: routing, forms (beehiiv, shared intake), config, cron entry
 src/data.js            /api/programs /api/orgs/:id /api/stats (D1 reads + freshness decay)
 src/pipeline.js        cron lanes: validate every 2h; dispatch hourly rotates enrich, classify, geocode, resolve (src/lanes/)
-src/admin.js           /api/admin/* review queue (ADMIN_KEY bearer)
+src/admin-access.js    /api/admin-auth/* and /api/admin-data/* passwordless admin dashboard
 db/schema.sql          D1 schema, dumped from the live asnm-db (regenerate, don't hand-edit)
 scripts/pg-to-d1.py    one-time migration: local Postgres → cleaned SQL → D1
 wrangler.json          production deployment plus named staging environment
@@ -165,7 +164,7 @@ actions have real effects while directory, profile, and intake database writes
 stay in the staging database.
 
 **Core invariant (kept from the original Postgres design):** pipeline lanes *propose*
-changes into `review_queue`; a human approves via `/api/admin/queue/:id` before anything
+changes into `review_queue`; a human reviews and approves them in `/admin` before anything
 touches `organizations`. The direct writes are two evidence columns, both set by validate:
 `last_ok_at` (liveness evidence, feeds the freshness score — half-life 45 days, computed in
 the Worker) and `last_checked_at` (stale-first ordering). See the `src/pipeline.js` header.
@@ -295,9 +294,8 @@ settings, DNS, and certificate status must also be checked in Cloudflare.
 ## Secrets (per worker, via `wrangler secret put`)
 
 `BEEHIIV_API_KEY`, `TURNSTILE_SECRET_KEY`, `GMAIL_CLIENT_ID`, `GMAIL_CLIENT_SECRET`,
-`GMAIL_REFRESH_TOKEN`, `PROFILE_SIGNING_KEY`, `ORG_AUTH_SIGNING_KEY`, and `ADMIN_KEY`
-(enables `/api/admin/*`; unset = admin disabled, 401). `BEEHIIV_PUBLICATION_ID` is a
-variable in `wrangler.json`.
+`GMAIL_REFRESH_TOKEN`, `PROFILE_SIGNING_KEY`, `ORG_AUTH_SIGNING_KEY`.
+`BEEHIIV_PUBLICATION_ID` is a variable in `wrangler.json`.
 
 `adaptivesportsnearme` is one Worker for production and the staging previews: set its
 secrets the way [Deploy](#deploy) describes, never in the Cloudflare dashboard. `asnm-gate`
@@ -307,9 +305,9 @@ is a separate Worker with no previews: `npx wrangler secret put NAME --config wr
 
 - Cron lanes run on their own; results land in `pipeline_runs`, evidence in `link_checks`,
   proposals in `review_queue`.
-- Review: `GET /api/admin/queue`, decide with `POST /api/admin/queue/:id {"action":"approve"}`.
-- Manual lane run: `POST /api/admin/run/<lane>`, where lane is `validate`, `enrich`, `classify`,
-  `resolve`, `geocode` or `dispatch` (`src/admin.js`).
+- Review user submissions in `/admin`; admins sign in with an `@adaptivesportsnearme.com`
+  or `@faisaln.com` passwordless link.
+- Cron lanes run on schedule; the retired bearer-key API no longer exposes manual lane triggers.
 - Re-seed from Postgres: `scripts/pg-to-d1.py --out out/d1-seed.sql`, then
   `cfrun wrangler d1 execute asnm-db-staging --remote --file out/d1-seed.sql -y`.
 

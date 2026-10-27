@@ -30,14 +30,12 @@ import { notifyIntake } from './intake.js';
 //   POST /api/profile/signout  -> clear the profile cookie
 //   GET  /blog                 -> beehiiv-backed blog index (server-rendered HTML, SEO)
 //   GET  /blog/:slug           -> beehiiv-backed blog post (server-rendered HTML, SEO)
-//   *    /api/admin/*          -> review queue + lane triggers (ADMIN_KEY bearer)
 // All secrets stay server-side (Worker secrets). Bot defence: honeypot + required Turnstile.
 
 import { directorySnapshot, listingsSnapshot, listActualPrograms, getProgram, getOrg, stats, listGrants, getGrant } from "./data.js";
 import { listEvents, eventsToRss, eventsToIcs, listSeries, getSeries } from "./events.js";
 import { parseSportsAnswer, parseYearlyAnswer, parseCheckup, parseFixReason } from "./listing-answers.js";
 import { logActivity, sportsSummary, yearlySummary, checkupSummary, FIX_WORDS } from "./offerings.js";
-import { handleAdmin } from "./admin.js";
 import { runLane } from "./pipeline.js";
 import { json, text } from "./http.js";
 import { cachedDirectoryResponse } from "./read-cache.js";
@@ -250,10 +248,6 @@ const application = {
         return json({ ok: false, error: "Data temporarily unavailable" }, 500);
       }
     }
-    if (url.pathname.startsWith("/api/admin/") && env.DB) {
-      return handleAdmin(request, env, url);
-    }
-
     // Blog — server-rendered (SEO), not a SPA branch. Beehiiv is the CMS.
     if (url.pathname === "/blog" || url.pathname === "/blog/") {
       return handleBlogIndex(url, env);

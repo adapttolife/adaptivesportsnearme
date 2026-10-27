@@ -4,6 +4,7 @@ import { newerOrOlder } from "./schema-probe.js";
 import { cleanSeasons } from "../public/app/yearly.js";
 import { SLUG_RE } from "./events.js";
 import { applyConfirmation, logActivity, organizationActivity, organizationSports, FIX_WORDS } from "./offerings.js";
+import { checkPublicDescription, looksLikeNavigationLabel } from "./description-contract.js";
 
 export const ADMIN_COOKIE_NAME = "asnm_admin";
 const SESSION_SECONDS = 60 * 60 * 12;
@@ -175,6 +176,12 @@ function values(entity, input, current = {}) {
     }
   }
   if (!value[entity.name]) throw new Error("name-required");
+  if ((entity.table === "organizations" || entity.table === "programs") && looksLikeNavigationLabel(value[entity.name])) {
+    throw new Error("name-navigation-label");
+  }
+  if ((entity.table === "organizations" || entity.table === "programs") && value.description && !checkPublicDescription(value.description).ok) {
+    throw new Error("description-is-operator-note");
+  }
   if (entity.table === "programs" && !value.organization_id) throw new Error("organization-required");
   if (entity.states) {
     value.state = validState(value.state);

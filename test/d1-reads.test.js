@@ -204,7 +204,7 @@ test('concurrent misses each get their own Response, never one tied to the loadi
 test('private routes, writes, errors and cache failures remain uncached',async()=>{
   const env={DB:{}},store=cache(); let calls=0;
   const load=async()=>{calls++;return new Response('ok');};
-  for(const path of ['/api/profile','/api/admin/queue','/api/location','/api/subscribe']) {
+  for(const path of ['/api/profile','/api/admin-data/queue','/api/location','/api/subscribe']) {
     await cachedDirectoryResponse(req(path),env,load,store); await cachedDirectoryResponse(req(path),env,load,store);
   }
   assert.equal(calls,8);

@@ -35,7 +35,7 @@ Only 461 and 301 are rejected, because they were scraped from the hijacked pages
 - **293 (Discovery Blind Sports, classify):** matched on the listing's name ("blind sports"), not on any page. It wasn't drafted from a hijacked page, and its label is likely right.
 - **Validate items 6, 674, 683 and 697:** based on HTTP failures from the hijacked domains. If approved, they would mark these orgs dead or inactive. A person decides each one. After the clear, the old links are gone, so these no longer describe the listing's current link.
 
-To decide one: `POST /api/admin/queue/<item_id>` with the admin bearer key (`Authorization: Bearer <ADMIN_KEY>`) and `{"action":"approve","by":"<your name>"}` or `{"action":"reject","by":"<your name>"}` (`src/admin.js`; it only acts on pending items).
+The retired bearer-key review API cannot decide these legacy pipeline items. Use a reviewed, targeted D1 maintenance statement when a decision is necessary.
 
 ## How to run it: staging first
 
@@ -47,7 +47,7 @@ Every organizations UPDATE matches both the row's id and its hijacked link, so a
 2. Staging: run the clear.
 3. Staging, after: run the check. Expect `still_hijacked` = 0 on all 9 and totals `9 / 0 / 4`.
 4. Staging: run the clear again. Expect 0 changes.
-5. Live: repeat steps 1 to 3 on `asnm-db`, with the same stop rule: if the before totals aren't 9 / 9 / 9, stop. Before running the clear, check that the `plan` column reads `reject` for items 461 and 301. That means each is pending, in lane `enrich`, and belongs to the expected org (461 to Michigan Adaptive Sports `e0978514-…`, 301 to Colorado Discover Ability `63c9e62b-…`). If one doesn't, the clear leaves it alone. Don't reject that item id by hand, because it may be someone else's item. Instead, find the pending `enrich` item whose `organization_id` is that org and whose proposal came from the hijacked page, and reject that one with `POST /api/admin/queue/<item_id>`, the admin bearer key (`Authorization: Bearer <ADMIN_KEY>`) and `{"action":"reject","by":"<your name>"}`.
+5. Live: repeat steps 1 to 3 on `asnm-db`, with the same stop rule: if the before totals aren't 9 / 9 / 9, stop. Before running the clear, check that the `plan` column reads `reject` for items 461 and 301. That means each is pending, in lane `enrich`, and belongs to the expected org (461 to Michigan Adaptive Sports `e0978514-…`, 301 to Colorado Discover Ability `63c9e62b-…`). If one doesn't, the clear leaves it alone. Don't reject that item id by hand, because it may be someone else's item. Instead, use a reviewed maintenance statement that also matches the organization, lane, and source page.
 
 ```
 npx wrangler d1 execute asnm-db-staging --remote --config wrangler.preview.json --file db/maintenance/hijacked_links_check.sql
