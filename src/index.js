@@ -1,6 +1,6 @@
 import { servePage, robotsTxt, sitemapXml } from "./pages.js";
 import { safeNewsletterSubscribe } from './newsletter.js';
-import { queueFormConfirmation, sendAdminLoginLink, sendOrganizationLoginLink } from './email.js';
+import { queueFormConfirmation, sendAdminLoginLink, sendOrganizationLoginLink, sendProfileLoginLink } from './email.js';
 import { notifyIntake } from './intake.js';
 // Adaptive Sports Near Me — Worker entry.
 // Serves the static site (env.ASSETS), the D1-backed directory API, the admin
@@ -20,6 +20,8 @@ import { notifyIntake } from './intake.js';
 //   GET  /api/orgs/:id         -> one org with source provenance
 //   GET  /api/stats            -> counts by sport/state
 //   GET  /api/events           -> upcoming public events (json)
+//   GET  /api/event-series     -> yearly events with every year's dates (?org=<id> for one host)
+//   GET  /api/event-series/:slug -> one yearly event (docs/specs/programs-that-come-back.md)
 //   GET  /events.xml           -> the same feed as RSS 2.0
 //   GET  /events.ics           -> the same feed as an iCalendar subscription
 //   POST /api/profile          -> create/update a no-password profile (signed cookie)
@@ -28,12 +30,12 @@ import { notifyIntake } from './intake.js';
 //   POST /api/profile/signout  -> clear the profile cookie
 //   GET  /blog                 -> beehiiv-backed blog index (server-rendered HTML, SEO)
 //   GET  /blog/:slug           -> beehiiv-backed blog post (server-rendered HTML, SEO)
-//   *    /api/admin/*          -> review queue + lane triggers (ADMIN_KEY bearer)
 // All secrets stay server-side (Worker secrets). Bot defence: honeypot + required Turnstile.
 
 import { directorySnapshot, listingsSnapshot, listActualPrograms, getProgram, getOrg, stats, listGrants, getGrant } from "./data.js";
-import { listEvents, eventsToRss, eventsToIcs } from "./events.js";
-import { handleAdmin } from "./admin.js";
+import { listEvents, eventsToRss, eventsToIcs, listSeries, getSeries } from "./events.js";
+import { parseSportsAnswer, parseYearlyAnswer, parseCheckup, parseFixReason } from "./listing-answers.js";
+import { logActivity, sportsSummary, yearlySummary, checkupSummary, FIX_WORDS } from "./offerings.js";
 import { runLane } from "./pipeline.js";
 import { json, text } from "./http.js";
 import { cachedDirectoryResponse } from "./read-cache.js";
@@ -42,6 +44,7 @@ import {
   readProfileCookie, signProfileId, serializeProfileCookie, clearProfileCookie,
   getValidSportKeys, getProfileById, getProfileByEmail, createProfile, updateProfile,
   getProfileWithFavorites, orgExists, setFavorite, validState, parseSports,
+  issueProfileLoginToken, consumeProfileLoginToken, findOrCreateProfile, setSavedItem,
 } from "./profile.js";
 import {
   clearOrgCookie, consumeLoginToken, createOrganizationSession, issueLoginToken, serializeOrgCookie,
@@ -52,6 +55,7 @@ import {
 import {
   acceptAdminQueueItem, clearAdminCookie, consumeAdminLoginToken, createAdminSession, createAdminItem, getAdminItem,
   getAdminQueueItem, isAdminEmail, issueAdminLoginToken, listAdminItems, listAdminQueue, readAdminSession, saveAdminItem, serializeAdminCookie,
+  adminOrganizationActivity, addAdminNote,
 } from "./admin-access.js";
 import {
   listPosts, getPostBySlug, blogIndexTemplate, blogPostTemplate, blogFallbackTemplate, blogNotFoundTemplate,
@@ -100,6 +104,24 @@ const application = {
       if (request.method === "GET") return handleProfileGet(request, env);
       return json({ ok: false, error: "Method not allowed" }, 405);
     }
+    if (url.pathname === "/api/profile-auth/request-link") {
+      if (request.method !== "POST") return json({ ok: false, error: "Method not allowed" }, 405);
+      const limited = await formLimited(request, env, "Sign-in is temporarily unavailable.");
+      if (limited) return limited;
+      return handleProfileLoginRequest(request, env, url);
+    }
+    if (url.pathname === "/api/profile-auth/verify") {
+      if (request.method !== "GET") return json({ ok: false, error: "Method not allowed" }, 405);
+      return handleProfileLoginVerify(url, env);
+    }
+    if (url.pathname === "/api/profile-auth/session") {
+      if (request.method !== "GET") return json({ ok: false, error: "Method not allowed" }, 405);
+      return handleProfileGet(request, env);
+    }
+    if (url.pathname === "/api/profile/saved") {
+      if (request.method !== "POST") return json({ ok: false, error: "Method not allowed" }, 405);
+      return handleProfileSaved(request, env);
+    }
     if (url.pathname === "/api/profile/favorites") {
       if (request.method !== "POST") return json({ ok: false, error: "Method not allowed" }, 405);
       return handleProfileFavorite(request, env);
@@ -146,6 +168,8 @@ const application = {
     }
     const adminItem = url.pathname.match(/^\/api\/admin-data\/(organizations|programs|events|grants)(?:\/([0-9a-f-]{36}))?$/i);
     if (adminItem) return handleAdminData(request, env, url, adminItem[1].toLowerCase(), adminItem[2]);
+    const adminActivity = url.pathname.match(/^\/api\/admin-data\/organizations\/([0-9a-f-]{36})\/activity$/i);
+    if (adminActivity) return handleAdminActivity(request, env, adminActivity[1].toLowerCase());
     const adminQueue = url.pathname.match(/^\/api\/admin-data\/queue(?:\/(\d+))?$/i);
     if (adminQueue) return handleAdminQueue(request, env, adminQueue[1]);
     const managedOrganization = url.pathname.match(/^\/api\/organizations\/([0-9a-f-]{36})\/manage$/i);
@@ -222,6 +246,14 @@ const application = {
         if (url.pathname === "/api/events") {
           return json({ ok: true, ...(await listEvents(env.DB, url.searchParams)) }, 200, API_CACHE);
         }
+        if (url.pathname === "/api/event-series") {
+          return json({ ok: true, ...(await listSeries(env.DB, url.searchParams)) }, 200, API_CACHE);
+        }
+        const seriesApi = url.pathname.match(/^\/api\/event-series\/([a-z0-9-]{1,80})$/);
+        if (seriesApi) {
+          const record = await getSeries(env.DB, seriesApi[1]);
+          return record ? json({ ok: true, series: record }, 200, API_CACHE) : json({ ok: false, error: "Not found" }, 404);
+        }
         if (url.pathname === "/events.xml") {
           const { items } = await listEvents(env.DB, url.searchParams);
           return text(eventsToRss(items, url.origin), 200, "application/rss+xml; charset=utf-8", FEED_CACHE);
@@ -235,10 +267,6 @@ const application = {
         return json({ ok: false, error: "Data temporarily unavailable" }, 500);
       }
     }
-    if (url.pathname.startsWith("/api/admin/") && env.DB) {
-      return handleAdmin(request, env, url);
-    }
-
     // Blog — server-rendered (SEO), not a SPA branch. Beehiiv is the CMS.
     if (url.pathname === "/blog" || url.pathname === "/blog/") {
       return handleBlogIndex(url, env);
@@ -430,8 +458,20 @@ async function handleSubmitProgram(request, env, ctx, opts = {}) {
   const eventTime = str(data.et).slice(0, 40);
   const siteUrl = str(data.url).slice(0, 300);
 
+  // An organization confirming its listing can also tell us every sport it runs,
+  // with seasons, and the events it holds every year (docs/specs/programs-that-come-back.md).
+  // A person applies them from the review queue; nothing here writes the listing.
+  const confirming = !!listingId && relation === "run";
+  const sportsAnswer = confirming ? parseSportsAnswer(data.sports) : [];
+  const yearlyAnswer = confirming ? parseYearlyAnswer(data.yearly) : [];
+  // The one-minute check-up (docs/specs/community-kept-directory.md): the organization's answer to
+  // "here's what families see", and for everyone else a one-tap reason for what's wrong.
+  const checkup = confirming ? parseCheckup(data.checkup) : null;
+  const fixReason = listingId && !confirming ? parseFixReason(data.reason) : "";
+
   if (!program) return json({ ok: false, error: isEvent ? "Please add the event name." : "Please add the organization's name." }, 422);
-  if (listingId && !notes) return json({ ok: false, error: "Please tell us what should change." }, 422);
+  const answered = !!checkup || sportsAnswer.length > 0 || yearlyAnswer.length > 0 || (fixReason && fixReason !== "other");
+  if (listingId && !notes && !answered) return json({ ok: false, error: "Please tell us what should change." }, 422);
   if (isEvent && !/^\d{4}-\d{2}-\d{2}$/.test(eventDate)) return json({ ok: false, error: "Please add the date of the event." }, 422);
   // Email: a fix to a listing or a suggested event may come without one (Alec,
   // 2026-10-14: "No email required"); a person reviews every one either way.
@@ -451,7 +491,11 @@ async function handleSubmitProgram(request, env, ctx, opts = {}) {
   const answers = isEvent
     ? { event: program, date: eventDate, end: eventEnd, time: eventTime, city, state: stateRegion, url: siteUrl, org, sport, notes }
     : listingId
-      ? { program, update_of: listingId, relation, notes }
+      ? { program, update_of: listingId, relation, notes,
+        ...(sportsAnswer.length ? { sports: Object.fromEntries(sportsAnswer.map((x) => [x.key, x.seasons])) } : {}),
+        ...(yearlyAnswer.length ? { yearly: yearlyAnswer } : {}),
+        ...(checkup ? { checkup } : {}),
+        ...(fixReason ? { reason: fixReason } : {}) }
       : isOrganization
         ? { organization: program, sport, city, state: stateRegion, website: siteUrl, notes }
         : { program, org, sport, city, state: stateRegion, website: siteUrl, notes };
@@ -520,6 +564,25 @@ async function handleSubmitProgram(request, env, ctx, opts = {}) {
     // Fixed categories only: raw errors can carry the bound email.
     console.error("Program submission failed closed", { stage, reason });
     return json(env.ENV_NAME === "staging" ? { ...programUnavailable, diagnostic: { stage, reason } } : programUnavailable, 502);
+  }
+
+  // The organization's team-only history gets one line (docs/specs/programs-that-come-back.md).
+  // Best effort: the submission is already captured, so a failure here never un-saves it.
+  if (fresh && listingId && program !== `listing ${listingId}`) {   // an organization we found by that id
+    try {
+      const parts = [];
+      if (sportsAnswer.length) parts.push(`sports: ${sportsSummary(sportsAnswer)}`);
+      if (yearlyAnswer.length) parts.push(`yearly events: ${yearlySummary(yearlyAnswer)}`);
+      if (notes) parts.push(`note: ${notes.slice(0, 160)}`);
+      const who = relation === "run" ? "the organization" : relation === "attend" ? "someone who goes there" : "someone";
+      if (checkup) parts.unshift(checkupSummary(checkup));
+      const reasonWords = fixReason ? FIX_WORDS[fixReason] : "";
+      const summary = confirming ? `Confirmation received from the organization${parts.length ? `. ${parts.join("; ")}` : ""}`
+        : `Fix suggested by ${who}: ${[reasonWords, notes.slice(0, 200)].filter(Boolean).join(". ")}`;
+      await logActivity(env.DB, listingId, confirming ? "confirmation" : "fix", summary, { actor: confirming ? "organization" : "visitor", ref: `intake ${intakeId}` });
+    } catch (error) {
+      console.error("activity log failed", { reason: String(error?.message || "").slice(0, 80) });
+    }
   }
 
   // Captured. Correspondence never holds the response and never un-saves it.
@@ -611,6 +674,36 @@ async function handleProfileUpsert(request, env, ctx) {
   });
 }
 
+async function handleProfileLoginRequest(request, env, url) {
+  if (!env.DB || !env.PROFILE_SIGNING_KEY) return json({ ok: false, error: "Sign-in is temporarily unavailable." }, 503, PROFILE_CACHE);
+  const data = await readBody(request);
+  const email = validEmail(data?.email);
+  if (!email) return json({ ok: false, error: "Enter a valid email address." }, 422, PROFILE_CACHE);
+  try {
+    const token = await issueProfileLoginToken(env.DB, email);
+    const link = new URL("/api/profile-auth/verify", url.origin); link.searchParams.set("token", token);
+    await sendProfileLoginLink(env, email, link.toString());
+    return json({ ok: true }, 200, PROFILE_CACHE);
+  } catch (err) {
+    console.error("profile login request failed", { reason: err instanceof Error ? err.message : "unknown" });
+    return json({ ok: false, error: "We could not send a sign-in link. Please try again." }, 503, PROFILE_CACHE);
+  }
+}
+
+async function handleProfileLoginVerify(url, env) {
+  if (!env.DB || !env.PROFILE_SIGNING_KEY) return json({ ok: false, error: "Sign-in is temporarily unavailable." }, 503, PROFILE_CACHE);
+  try {
+    const email = await consumeProfileLoginToken(env.DB, url.searchParams.get("token") || "");
+    if (!email) return json({ ok: false, error: "This sign-in link has expired or was already used." }, 401, PROFILE_CACHE);
+    const id = await findOrCreateProfile(env.DB, email);
+    const signature = await signProfileId(id, env.PROFILE_SIGNING_KEY);
+    return new Response(null, { status: 303, headers: { "Cache-Control": "no-store", "Location": "/account", "Set-Cookie": serializeProfileCookie(id, signature) } });
+  } catch (err) {
+    console.error("profile login verification failed", { reason: err instanceof Error ? err.message : "unknown" });
+    return json({ ok: false, error: "We could not sign you in. Please request a new link." }, 503, PROFILE_CACHE);
+  }
+}
+
 async function handleProfileGet(request, env) {
   if (!env.DB) return json({ ok: false }, 503, PROFILE_CACHE);
   if (!env.PROFILE_SIGNING_KEY) {
@@ -656,6 +749,17 @@ async function handleProfileFavorite(request, env) {
     console.error("favorite toggle failed:", err);
     return json({ ok: false, error: "Could not save right now. Please try again soon." }, 500);
   }
+}
+
+async function handleProfileSaved(request, env) {
+  if (!env.DB || !env.PROFILE_SIGNING_KEY) return json({ ok: false, error: "Saved items are temporarily unavailable." }, 503, PROFILE_CACHE);
+  const profileId = await readProfileCookie(request, env.PROFILE_SIGNING_KEY);
+  if (!profileId) return json({ ok: false, error: "Sign in to save items." }, 401, PROFILE_CACHE);
+  const data = await readBody(request);
+  const kind = String(data?.kind || "").toLowerCase(), itemId = str(data?.item_id);
+  const on = data?.on === true || data?.on === "true" || data?.on === "1";
+  const saved = await setSavedItem(env.DB, profileId, kind, itemId, on);
+  return saved ? json({ ok: true, kind, item_id: itemId, on }, 200, PROFILE_CACHE) : json({ ok: false, error: "That item was not found." }, 404, PROFILE_CACHE);
 }
 
 function handleProfileSignout() {
@@ -802,7 +906,7 @@ async function handleManagedOrganizationItems(request, env, organizationId, kind
     return json({ ok: false, error: "Method not allowed" }, 405, ORGANIZATION_AUTH_CACHE);
   } catch (err) {
     const reason = err instanceof Error ? err.message : "";
-    if (["name-required", "title-required", "start-invalid", "end-invalid", "website-invalid"].includes(reason)) {
+    if (["name-required", "title-required", "start-invalid", "end-invalid", "website-invalid", "year-invalid", "sports-invalid"].includes(reason)) {
       return json({ ok: false, error: "Please check the details and try again." }, 422, ORGANIZATION_AUTH_CACHE);
     }
     console.error("managed organization item failed", { kind, reason: reason || "unknown" });
@@ -884,18 +988,47 @@ async function handleAdminData(request, env, url, kind, id) {
     if (id && request.method === "PATCH") {
       const data = await readBody(request);
       if (data === null) return json({ ok: false, error: "Could not read your changes." }, 400, ADMIN_AUTH_CACHE);
-      const item = await saveAdminItem(env.DB, kind, id, data);
+      const item = await saveAdminItem(env.DB, kind, id, data, session.email);
       return item === false ? json({ ok: false, error: "Not found." }, 404, ADMIN_AUTH_CACHE)
         : item ? json({ ok: true, item }, 200, ADMIN_AUTH_CACHE) : json({ ok: false, error: "Not found." }, 404, ADMIN_AUTH_CACHE);
     }
     return json({ ok: false, error: "Method not allowed" }, 405, ADMIN_AUTH_CACHE);
   } catch (err) {
     const reason = err instanceof Error ? err.message : "";
-    if (["name-required", "organization-required", "url-invalid", "email-invalid", "sports-invalid", "start-invalid", "end-invalid"].includes(reason)) {
+    if (["name-required", "organization-required", "url-invalid", "email-invalid", "sports-invalid", "start-invalid", "end-invalid", "slug-invalid", "month-invalid", "year-invalid", "status-invalid"].includes(reason)) {
       return json({ ok: false, error: "Please check the item details and try again." }, 422, ADMIN_AUTH_CACHE);
+    }
+    if (["kind-invalid", "listing-invalid"].includes(reason)) {
+      return json({ ok: false, error: "Please check the item details and try again." }, 422, ADMIN_AUTH_CACHE);
+    }
+    if (/UNIQUE constraint failed: programs\.slug/i.test(reason)) {
+      return json({ ok: false, error: "Another yearly event already uses that web address (slug)." }, 422, ADMIN_AUTH_CACHE);
     }
     console.error("admin data request failed", { kind, operation: request.method, reason: reason || "unknown" });
     return json({ ok: false, error: "Could not save admin changes right now." }, 503, ADMIN_AUTH_CACHE);
+  }
+}
+
+// The team-only history of an organization (docs/specs/programs-that-come-back.md), and adding a note.
+async function handleAdminActivity(request, env, id) {
+  const session = await authorizedAdminSession(request, env);
+  if (!session) return json({ ok: false, error: "Sign in to access the admin dashboard." }, 401, ADMIN_AUTH_CACHE);
+  try {
+    if (request.method === "GET") {
+      const items = await adminOrganizationActivity(env.DB, id);
+      return items ? json({ ok: true, items }, 200, ADMIN_AUTH_CACHE) : json({ ok: false, error: "Not found." }, 404, ADMIN_AUTH_CACHE);
+    }
+    if (request.method === "POST") {
+      const data = await readBody(request);
+      const items = await addAdminNote(env.DB, id, data?.note, session.email);
+      return items ? json({ ok: true, items }, 201, ADMIN_AUTH_CACHE) : json({ ok: false, error: "Not found." }, 404, ADMIN_AUTH_CACHE);
+    }
+    return json({ ok: false, error: "Method not allowed" }, 405, ADMIN_AUTH_CACHE);
+  } catch (err) {
+    const reason = err instanceof Error ? err.message : "";
+    if (reason === "note-required") return json({ ok: false, error: "Write the note first." }, 422, ADMIN_AUTH_CACHE);
+    console.error("admin activity request failed", { operation: request.method, reason: reason || "unknown" });
+    return json({ ok: false, error: "Could not load this organization's activity right now." }, 503, ADMIN_AUTH_CACHE);
   }
 }
 
@@ -911,13 +1044,14 @@ async function handleAdminQueue(request, env, id) {
     if (id && request.method === "POST") {
       const data = await readBody(request);
       if (!data || data.action !== "accept") return json({ ok: false, error: "Unknown queue action." }, 422, ADMIN_AUTH_CACHE);
-      const accepted = await acceptAdminQueueItem(env.DB, id);
+      const accepted = await acceptAdminQueueItem(env.DB, id, session.email);
       return accepted ? json({ ok: true, item: accepted }, 200, ADMIN_AUTH_CACHE) : json({ ok: false, error: "Queue item not found or already handled." }, 404, ADMIN_AUTH_CACHE);
     }
     return json({ ok: false, error: "Method not allowed" }, 405, ADMIN_AUTH_CACHE);
   } catch (err) {
     const reason = err instanceof Error ? err.message : "";
-    if (["draft-missing", "start-invalid"].includes(reason)) return json({ ok: false, error: "This submission needs an edit before it can be accepted." }, 422, ADMIN_AUTH_CACHE);
+    if (["draft-missing", "start-invalid", "organization-missing"].includes(reason)) return json({ ok: false, error: "This submission needs an edit before it can be accepted." }, 422, ADMIN_AUTH_CACHE);
+    if (/no such (column|table)/i.test(reason)) return json({ ok: false, error: "Run database migration 0015 before applying programs and yearly events." }, 422, ADMIN_AUTH_CACHE);
     console.error("admin queue request failed", { operation: request.method, reason: reason || "unknown" });
     return json({ ok: false, error: "Could not update this queue item right now." }, 503, ADMIN_AUTH_CACHE);
   }

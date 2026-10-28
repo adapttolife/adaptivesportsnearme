@@ -131,7 +131,7 @@ fields — see `FIELD-CONTRACTS.md`.)
 |---|---|---|
 | The four doors | `node tools/four-doors-check.mjs` | exit 0 — all doors open |
 | Doors, everywhere | same, `--place <state>` across all 56 | programs door open per state |
-| The queue is alive | `/api/admin/digest-stats` | pending shrinking; approvals > 0 every week |
+| The queue is alive | `/admin` submission queue | pending shrinking; approvals > 0 every week |
 | Data speaks to people | `npm test` (191 tests incl. field contracts) | green, always |
 | A stranger can use it | ten-listings ritual, weekly | lead finds nothing a reader shouldn't see |
 | **The Karen test** | she names a place, live on a call | **she says yes** |

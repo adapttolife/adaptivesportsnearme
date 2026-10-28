@@ -204,7 +204,7 @@ test('concurrent misses each get their own Response, never one tied to the loadi
 test('private routes, writes, errors and cache failures remain uncached',async()=>{
   const env={DB:{}},store=cache(); let calls=0;
   const load=async()=>{calls++;return new Response('ok');};
-  for(const path of ['/api/profile','/api/admin/queue','/api/location','/api/subscribe']) {
+  for(const path of ['/api/profile','/api/admin-data/queue','/api/location','/api/subscribe']) {
     await cachedDirectoryResponse(req(path),env,load,store); await cachedDirectoryResponse(req(path),env,load,store);
   }
   assert.equal(calls,8);
@@ -351,6 +351,7 @@ test('/api/listings carries only what lists need, works out each sport, and leav
     assert.equal(by['Many Sports Club'].key, 'multi');
     assert.equal(by['Many Sports Club'].listed, '2026-10-14', 'no check date yet: the day it was listed');
     assert.equal(by['Many Sports Club'].verified, 1, 'the program confirmed its listing');
+    assert.ok(!('who' in by['Tampa Tennis']) && !('who' in by['Many Sports Club']), "no who when the listing doesn't say (\"all.\" says nothing)");
     const text = JSON.stringify(snap);
     for (const leak of ['tennis.example', 'Sports and activities', 'a@b.test', '555-0100', '33602', 'Free', 'verification_month']) assert.ok(!text.includes(leak), `no ${leak} in the slim directory`);
   } finally { sql.close(); }
@@ -377,6 +378,8 @@ test('/api/listings lists programs as places, says who runs them, and never name
     assert.equal(by['Veterans Coffee Connection'].org, 'Empath Health', 'a program says who runs it');
     assert.equal(by['Veterans Coffee Connection'].city, 'Brandon');
     assert.equal(by['Empath Health'].progs, 1, 'an organization with listed programs is shown through them');
+    assert.deepEqual(by['Veterans Coffee Connection'].who, ['veterans'], 'a veteran meetup serves veterans');
+    assert.ok(!('who' in by['Tampa Tennis']), 'who ships only when there is one');
     assert.equal(by['Tampa Tennis'].progs, undefined, 'an organization with no programs lists as itself');
     assert.equal(by['Bay Area Outreach & Recreation Program'].prog, 1);
     assert.ok(!('org' in by['Bay Area Outreach & Recreation Program']), 'the placeholder is never named');
@@ -395,5 +398,22 @@ test('/api/listings lists programs as places, says who runs them, and never name
     const res = await worker.fetch(new Request('https://example.test/api/programs/program-bay-area-outreach'), { DB: db }, {});
     assert.equal(res.status, 200, 'a readable program id loads');
     assert.equal((await res.json()).program.name, 'Bay Area Outreach & Recreation Program');
+  } finally { sql.close(); }
+});
+
+// Who it's for (public/app/who.js): codes from what a listing says it serves, never its name.
+test('/api/listings says who a listing serves, as codes, only from what it says', async () => {
+  const {sql,db} = database();
+  try {
+    const org = sql.prepare("INSERT INTO organizations (id,name,is_public,status,created_at,updated_at,city,state,sport,sport_key,description) VALUES (?,?,1,'active','2026-10-14','2026','Denver','CO',?,?,?)");
+    org.run('cccccccc-0000-4000-8000-000000000001','Rocky Mountain Riders','Horseback riding','equestrian','Sports and activities: therapeutic riding. Athletes served: Children and adults with physical, cognitive, visual and hearing disabilities, and veterans.');
+    org.run('cccccccc-0000-4000-8000-000000000002','Blind Hockey Denver','Blind hockey','hockey','Sports and activities: blind hockey.');
+    org.run('cccccccc-0000-4000-8000-000000000003','Front Range Coffee','Veteran meetups','veteran-meetup',"Coffee and talk. Who it's for: Veterans and first responders and their families.");
+    const { listingsSnapshot } = await import('../src/data.js');
+    const by = Object.fromEntries((await listingsSnapshot(db, { places: {} })).items.map(p => [p.name, p]));
+    assert.deepEqual(by['Rocky Mountain Riders'].who, ['veterans', 'kids', 'adults', 'blind', 'deaf', 'intellectual', 'physical'], 'visual disabilities is blind or low vision');
+    assert.ok(!('who' in by['Blind Hockey Denver']), 'a sport or a name is not who it serves');
+    assert.deepEqual(by['Front Range Coffee'].who, ['veterans']);
+    assert.ok(!JSON.stringify(by).includes('Athletes served'), 'codes only, never the text');
   } finally { sql.close(); }
 });

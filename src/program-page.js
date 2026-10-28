@@ -10,6 +10,8 @@
 
 import { listingVisual, isCoverVisual, stampAttr, symbolTile } from "./visuals.js";
 import { headerHtml, footerHtml, navScriptHtml } from "./site-chrome.js";
+import { sportsLabel } from "../public/app/listing-sport.js";
+import { SPORT_NAMES } from "./sport-names.js";
 
 const ListingArt = globalThis.ListingArt;
 
@@ -223,7 +225,11 @@ ${navScriptHtml()}
 // the app's own chrome.
 export function listingInnerHtml(org, { nearby = [] } = {}) {
   const name = org.name || "Adaptive sports program";
-  const sport = org.sportLabel || "Multi-Sport";
+  // The long label ("Baseball, basketball, track and field, and 4 more") is for the
+  // overlay and the description. The nearby strip's heading keeps the listing's own
+  // short label: the strip does not filter on the named sports, and "More baseball,
+  // ..., and 4 more" would read as a count of programs.
+  const sport = sportsLabel(org, (k) => SPORT_NAMES[k] || k) || org.sportLabel || "Multi-Sport";
   const loc = locLine(org);
   const v = listingVisual(org, "program");
   const overlay = `<div class="dov"><span class="dov-sport">${esc(sport)}</span><span class="dov-loc">${esc(loc)}</span></div>`;
@@ -246,12 +252,12 @@ ${desc}
 ${action}
 ${denseRows(org)}
 ${aboutListingHtml(org)}
-${nearbyStrip(nearby, sport)}`;
+${nearbyStrip(nearby, org.sportLabel || "Multi-Sport")}`;
 }
 
 export function programPageTemplate(org, { site = SITE, nearby = [] } = {}) {
   const name = org.name || "Adaptive sports program";
-  const sport = org.sportLabel || "Multi-Sport";
+  const sport = sportsLabel(org, (k) => SPORT_NAMES[k] || k) || org.sportLabel || "Multi-Sport";
   const loc = locLine(org);
   const canonical = `${site}/programs/${org.id}`;
   const photo = photoPath(org.sport, org);

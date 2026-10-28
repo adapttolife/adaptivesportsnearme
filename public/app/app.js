@@ -9,9 +9,11 @@
      "unverified". The listing page says when we last checked it.
    - Forms validate in place, then post to the site's API with a Turnstile token. */
 
-import { parseDesc as parseDescText } from "./listing-sport.js";
+import { parseDesc as parseDescText, sportsWords } from "./listing-sport.js";
+import { WHO_LABELS, WHO_ORDER, isWho, whoCode as whoCodeOf, whoSay as whoSayOf, whoLine as whoLineOf, whoChips as whoChipsOf } from "./who.js";
 import { ICONS } from "./icons.js";
 import { PRODUCT_LINE } from "./page-meta.js";
+import { ordinal, dayParts } from "./yearly.js";
 
 const L = window.ListingArt, P = window.Proto;
 const $ = (s, r = document) => r.querySelector(s);
@@ -243,7 +245,12 @@ function normalize(raw) {
   // The sport (and the trio for a multi-sport listing) comes worked out from the
   // server (public/app/listing-sport.js), so the lists need no descriptions.
   p.key = raw.key && NAMES[raw.key] && raw.key !== "grant" && raw.key !== "event" ? raw.key : "multi";
-  if (Array.isArray(raw.trio) && raw.trio.length >= 2) p.trio = raw.trio;
+  if (Array.isArray(raw.trio) && raw.trio.length >= 2) { p.trio = raw.trio; p.more = Number(raw.more) || 0; }
+  // The organization's own sports and seasons ([{ key, seasons }]), only when it told us.
+  const told = Array.isArray(raw.seasons) ? raw.seasons.filter((s) => s && NAMES[s.key] && s.key !== "multi" && s.key !== "grant" && s.key !== "event") : [];
+  p.seasons = told.length ? told.map((s) => ({ key: s.key, seasons: Array.isArray(s.seasons) ? s.seasons : [] })) : null;
+  // Who it says it serves (codes, public/app/who.js); empty when it doesn't say.
+  p.who = Array.isArray(raw.who) ? raw.who.filter(isWho) : [];
   p.family = familyOf(p.key);
   p.tone = toneOf(p.key);
   // Verified (the check) means the organization itself confirmed its listing with us
@@ -268,10 +275,11 @@ function fromApi(r) {
   const point = Array.isArray(r.point) ? r.point : null;
   const coords = point || c;
   return {
-    id: r.id, name: r.name, key: r.key, trio: r.trio || null, city: r.city || null, state: r.state || null,
+    id: r.id, name: r.name, key: r.key, trio: r.trio || null, more: r.more || 0, city: r.city || null, state: r.state || null,
     lastChecked: r.checked || null, listedAt: r.listed || null, confirmed: !!r.verified, teamChecked: !!r.team,
     lat: coords ? coords[0] : null, lng: coords ? coords[1] : null, geo: point ? "address" : (c ? "city" : (r.state ? "state" : null)),
-    prog: !!r.prog, orgName: r.org || null, progs: r.progs || 0,
+    prog: !!r.prog, orgName: r.org || null, progs: r.progs || 0, who: Array.isArray(r.who) ? r.who : [],
+    seasons: Array.isArray(r.seasons) ? r.seasons : null,
   };
 }
 /* The head starts the data a page needs before this code runs (public/index.html for the
@@ -309,9 +317,13 @@ export function loadDetail(id) {
       Object.assign(item, {
         website: goodUrl(o.website), desc: o.desc || null, cost: o.cost || null, ages: o.ages || null, equipment: o.equipment || null,
         address: o.address || null, addressPublicityConsent: !!o.addressPublicityConsent, zip: o.zip || null, country: o.country || null,
-        lat: o.lat ?? null, lng: o.lng ?? null, geo: o.geoPrecision || null,
+        // The exact point only when the organization made its address public; otherwise keep
+        // the center of its city from the list, so distances stay city to city, never from 0,0.
+        ...(Number.isFinite(o.lat) && Number.isFinite(o.lng) ? { lat: o.lat, lng: o.lng } : {}), geo: o.geoPrecision || null,
         checkedMonth: o.checkedMonth || null, type: o.type || null, detail: true,
       });
+      if (o.history && typeof o.history === "object") item.history = { listedSince: o.history.listedSince || null, updatedByOrganization: o.history.updatedByOrganization || null };
+      if (Array.isArray(o.seasons) && o.seasons.length && !item.seasons) item.seasons = o.seasons.filter((s) => s && NAMES[s.key] && s.key !== "multi");
     }
     return item || null;
   }, (e) => { const err = new Error(String(e && e.message || e)); err.loadFailed = true; throw err; });
@@ -320,7 +332,9 @@ function grantFromApi(g) {
   return { ...g, amount: g.amountDisplay || null, deadline: g.deadlineDisplay || null, url: g.applicationUrl || g.sourceUrl || null, open: g.isOpen ? 1 : 0 };
 }
 function eventFromApi(e) {
-  return { id: e.id, title: e.title, desc: e.description, sportKey: e.sport_key || null, venue: e.venue, city: e.city, state: e.state, url: e.url, start: e.starts_at, end: e.ends_at, allDay: e.all_day === 1 };
+  const s = e.series && e.series.slug ? { slug: String(e.series.slug), name: e.series.name || "", firstYear: Number(e.series.first_year) || null } : null;
+  return { id: e.id, title: e.title, desc: e.description, sportKey: e.sport_key || null, venue: e.venue, city: e.city, state: e.state, url: e.url, start: e.starts_at, end: e.ends_at, allDay: e.all_day === 1,
+    programId: e.program_id || null, recapUrl: goodUrl(e.recap_url), series: s };
 }
 
 /** Loads programs, grants, events, state shapes and sports once. */
@@ -351,7 +365,7 @@ export function loadData() {
     const every = prog.items.map(normalize);
     const items = every.filter((p) => !p.progs);
     const count = {};
-    for (const p of items) count[p.key] = (count[p.key] || 0) + 1;
+    for (const p of items) for (const k of sportsOf(p)) count[k] = (count[k] || 0) + 1;
     // Global popularity: sports.json order (its live counts), the six extras slotted in by their own counts.
     const jsonOrder = sp.sports.map((s) => s.key);
     for (const k of L.SPORTS) live[k] = count[k] || 0;   // order every sport by what is listed now (Karen's veteran data included)
@@ -451,7 +465,9 @@ export async function resolvePlace(q) {
   let s = String(q == null ? "" : q).trim().replace(/\s+/g, " ").replace(/,?\s*USA$/i, "").trim();
   if (!s) return NONE("");
   await loadData();
-  const zm = /^(\d{5})(-\d{4})?$/.exec(s);
+  // A ZIP alone, or as the site writes it back ("Lincoln, NH 03251"), or the older
+  // "03251, Lincoln, NH" a returning visitor may still have saved. The ZIP decides.
+  const zm = /^(\d{5})(?:-\d{4})?$/.exec(s) || /^[^\d]+?,?\s+(\d{5})(?:-\d{4})?$/.exec(s) || /^(\d{5})(?:-\d{4})?,\s*[^\d]+$/.exec(s);
   if (zm) {
     await loadGeo();
     const zip = zm[1], c = G.zcta[zip], st = zipState(zip);
@@ -460,7 +476,7 @@ export async function resolvePlace(q) {
     for (const e of G.list) if (e.st === st) { const d = haversine(c, e.c); if (d < bd) { bd = d; best = e; } }
     if (!best) return NONE(s);
     const city = displayCity(best.city);
-    return { kind: "zip", label: `${zip}, ${city}, ${st}`, short: city, city, state: st, coords: c, zip };
+    return { kind: "zip", label: `${city}, ${st} ${zip}`, short: city, city, state: st, coords: c, zip };
   }
   const whole = stateFrom(s);
   if (whole) return { kind: "state", label: stateName(whole), short: stateName(whole), city: null, state: whole, coords: null, zip: null };
@@ -572,13 +588,16 @@ export function locateMe() {
 /** A Where centered on a listing's own city (for "more near this listing"). */
 export function whereFromProgram(p) {
   const city = p.placed ? p.cityFirst.replace(/ and more$/, "") : null;
-  return { kind: city ? "city" : "state", label: placeText(p), short: city || stateName(p.state), city, state: p.state || null, coords: p.placed ? [p.lat, p.lng] : null, zip: null };
+  const coords = p.placed && Number.isFinite(p.lat) && Number.isFinite(p.lng) ? [p.lat, p.lng] : null;
+  return { kind: city ? "city" : "state", label: placeText(p), short: city || stateName(p.state), city, state: p.state || null, coords, zip: null };
 }
 
 /** The only source of distance. */
 export function relation(p, where) {
   if (!p || !where) return { inCity: false, miles: null };
-  const miles = where.coords && p.placed && p.lat != null ? haversine(where.coords, [p.lat, p.lng]) : null;
+  // Miles only between two real points: an empty point is not 0,0 (2026-10-26: "About 6620 mi" on every listing page).
+  const real = (c) => Array.isArray(c) && Number.isFinite(c[0]) && Number.isFinite(c[1]);
+  const miles = real(where.coords) && p.placed && real([p.lat, p.lng]) ? haversine(where.coords, [p.lat, p.lng]) : null;
   const inCity = !!(where.city && p.state === where.state && p.placed && (p.cityKey === normCity(where.city) || (miles != null && miles < 1)));
   return { inCity, miles };
 }
@@ -590,8 +609,22 @@ export function aboutMi(miles, { cap = false } = {}) {
 }
 const byTrust = (a, b) => (b.verified - a.verified) || a.name.localeCompare(b.name);
 
-/** In your city, then within about 25 miles, then elsewhere in your state, then statewide. */
-export function ladder(where, pool) {
+/** Every sport a listing offers: its own, plus the ones a multi-sport listing names (its trio).
+    A sport's lists and counts include both, so a multi-sport place that runs skiing shows under Skiing. */
+export function sportsOf(p) {
+  const out = p.trio ? [p.key, ...p.trio.filter((k) => k !== p.key)] : [p.key];
+  // An organization that told us its sports is found under every one of them, past the three drawn.
+  if (p.seasons) for (const s of p.seasons) if (!out.includes(s.key)) out.push(s.key);
+  return out;
+}
+export function offers(p, key) { return p.key === key || (!!p.trio && p.trio.includes(key)) || (!!p.seasons && p.seasons.some((s) => s.key === key)); }
+
+/** How far "near" reaches, in miles: the choices on the results page. 25 is the default. */
+export const RADII = [25, 50, 100, 250];
+export function radiusFrom(v) { const n = Number(v); return RADII.includes(n) ? n : RADII[0]; }
+
+/** In your city, then within about `radius` miles (any state), then elsewhere in your state, then statewide. */
+export function ladder(where, pool, { radius = RADII[0] } = {}) {
   const out = { inCity: [], near: [], elsewhere: [], statewide: [], dist: new Map() };
   if (!where) return out;
   for (const p of pool) {
@@ -599,7 +632,7 @@ export function ladder(where, pool) {
     const r = relation(p, where);
     if (r.miles != null) out.dist.set(p.id, r.miles);
     if (r.inCity) out.inCity.push(p);
-    else if (r.miles != null && r.miles < 25.5) out.near.push(p);
+    else if (r.miles != null && r.miles < radius + 0.5) out.near.push(p);
     else if (p.state === where.state && p.placed) out.elsewhere.push(p);
     else if (p.state === where.state) out.statewide.push(p);
   }
@@ -775,10 +808,11 @@ export function avatar(key, size = 56) {
   return `<span class="av av--${s}" style="${toneStyle(key)}${wide}" aria-hidden="true">${fig(key)}</span>`;
 }
 
-/** When the listing was last looked at: "Website checked Oct 8", else "Listed Oct 14", else "". */
+/** When the listing was last looked at, one word everywhere (audit finding 22): "Checked Oct 8" when its
+    website was checked; a listing never checked says only when it was listed ("Listed Oct 3"), never more. */
 export function freshText(p) {
   const checked = shortDate(p.lastChecked);
-  if (checked) return "Website checked\u00a0" + checked;
+  if (checked) return "Checked\u00a0" + checked;
   const listed = shortDate(p.listedAt);
   return listed ? "Listed\u00a0" + listed : "";
 }
@@ -790,7 +824,7 @@ export function vcheck(p) {
 export function trust(p, mode = "short") {
   const v = !!p.verified, rest = freshText(p);
   if (mode === "sticky") {
-    const short = rest.replace(/^Website checked/, "Checked");
+    const short = rest;
     return `<span class="trust trust--stk${v ? " is-v" : ""}">${v ? `<span class="ts-a">${icon("badge-check", 18)}<b>Verified</b></span>` : ""}${rest ? `<span class="ts-b num"><span class="ts-long">${esc(rest)}</span><span class="ts-short" aria-hidden="true">${esc(short)}</span></span>` : ""}</span>`;
   }
   return rest ? `<span class="trust num">${esc(rest)}</span>` : "";
@@ -819,7 +853,13 @@ const runBy = (p) => {
   const name = displayName(p.name).toLowerCase(), org = displayName(p.orgName).toLowerCase();
   return name === org || name.startsWith(org + " ") || name.startsWith(org + ":") ? "" : ` · ${p.orgName}`;
 };
-const metaText = (p, ctx) => ((ctx && ctx.single) ? placeFor(p, ctx) : `${sportName(p.key)} · ${placeFor(p, ctx)}`) + runBy(p);
+/** The sports a listing names, in words: "Skiing", or for a multi-sport listing that names
+    them, "Basketball, swimming, and softball" (and "and N more" past three), never just "Multi-sport". */
+export function sportsText(p) {
+  if (!(p.trio && p.trio.length >= 2)) return sportName(p.key);
+  return sportsWords(p.trio.map(sportName), p.more || 0);
+}
+const metaText = (p, ctx) => ((ctx && ctx.single) ? placeFor(p, ctx) : `${sportsText(p)} · ${placeFor(p, ctx)}`) + runBy(p);
 
 /** Card for lists that mix sports. ctx: { where, stamp, wide, sameCity } */
 export function programCard(p, ctx = {}) {
@@ -872,7 +912,56 @@ export function eventCard(e) {
   const when = d ? `${["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][d.getDay()]}, ${MON[d.getMonth()]} ${d.getDate()}${/T\d\d:\d\d/.test(e.start || "") ? " · " + d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }) : ""}` : "";
   const place = e.city && e.state ? `${e.city}, ${e.state}` : e.state ? stateName(e.state) : "";
   const url = goodUrl(e.url);
-  return `<article class="ecard"><div class="ec-date num" aria-hidden="true"><span>${d ? MON[d.getMonth()] : ""}</span><b>${d ? d.getDate() : ""}</b></div><div class="ec-body"><h3 class="ec-name">${esc(e.title || e.name || "")}</h3><p class="meta">${esc(sportName(key))}${place ? " · " + esc(place) : ""}</p>${when ? `<p class="ec-when num">${esc(when)}</p>` : ""}${url ? `<a class="tlink" href="${esc(url)}" target="_blank" rel="noopener">Event website${icon("external-link", 16)}</a>` : ""}</div></article>`;
+  // A year of a yearly event links to its page, and says which year it is when we can count it.
+  const series = e.series && e.series.slug ? e.series : null;
+  const startDay = dayParts(e.start || e.date);
+  const nth = series && series.firstYear && startDay ? startDay.y - series.firstYear + 1 : 0;
+  const name = esc(e.title || e.name || "");
+  const title = series ? `<a href="/events/${esc(encodeURIComponent(series.slug))}">${name}</a>` : name;
+  return `<article class="ecard${series ? " is-yearly" : ""}"><div class="ec-date num" aria-hidden="true"><span>${d ? MON[d.getMonth()] : ""}</span><b>${d ? d.getDate() : ""}</b></div><div class="ec-body"><h3 class="ec-name">${title}</h3>${nth > 0 ? `<p class="ec-nth">${esc(ordinal(nth))} annual</p>` : ""}<p class="meta">${esc(sportName(key))}${place ? " · " + esc(place) : ""}</p>${when ? `<p class="ec-when num">${esc(when)}</p>` : ""}${url ? `<a class="tlink" href="${esc(url)}" target="_blank" rel="noopener">Event website${icon("external-link", 16)}</a>` : ""}</div></article>`;
+}
+
+/** Dated events that haven't ended by `now` (a past date never shows as upcoming), soonest first. */
+export function upcomingEvents(events, now = new Date()) {
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  return (events || []).map((e) => [e, eventDay(e.start || e.date), eventDay(e.end || e.start || e.date)])
+    .filter(([, a, b]) => a && (b || a).getTime() >= today)
+    .sort((x, y) => x[1] - y[1]).map(([e]) => e);
+}
+
+/* ---------- Running this season (audit finding 3: events with no dates had no fallback) ---------- */
+/** The season `now` falls in: spring (Mar to May), summer, fall, winter. */
+export function seasonOf(now = new Date()) {
+  const m = now.getMonth();
+  return m >= 2 && m <= 4 ? "spring" : m >= 5 && m <= 7 ? "summer" : m >= 8 && m <= 10 ? "fall" : "winter";
+}
+/** Whether a listing says it runs in `season` (or all year), for sport `key` when given. */
+export function runsIn(p, season, key = "") {
+  if (!p || !Array.isArray(p.seasons)) return false;
+  const all = ["spring", "summer", "fall", "winter"];
+  return p.seasons.some((x) => (!key || x.key === key) && Array.isArray(x.seasons) && (x.seasons.includes(season) || x.seasons.includes("year-round") || all.every((s) => x.seasons.includes(s))));
+}
+/** Listings near `where` that run this season (closest first, then the rest of the state), max `limit`.
+    known: false when none say their seasons, and the list is simply the nearest ones. */
+export function runningNow({ where, pool, now = new Date(), limit = 8, key = "", radius = 50 } = {}) {
+  const season = seasonOf(now);
+  if (!where) return { season, list: [], known: true };
+  const g = ladder(where, pool || D.items, { radius });
+  const near = [...g.inCity, ...g.near, ...g.elsewhere, ...g.statewide];
+  const on = near.filter((p) => runsIn(p, season, key));
+  return on.length ? { season, list: on.slice(0, limit), known: true } : { season, list: near.slice(0, limit), known: false };
+}
+/** The section: "Running this season near you" (or, when no listing here says its seasons, the
+    nearest ones, honestly titled). title: what the fallback list is called ("Programs near you"). */
+export function runningBlock({ where, list, known, season, id = "run", title = "Programs near you", place = null } = {}) {
+  if (!where) {
+    return `<section class="sec run" aria-labelledby="${esc(id)}">${sectionHead({ title: "Running this season near you", id, sub: "Tell us where you are, and we'll show programs near you." })}<div class="run-form">${whereForm({ id: id + "-where", to: place || location.pathname })}</div></section>`;
+  }
+  if (!list.length) return "";
+  const head = known
+    ? sectionHead({ title: "Running this season near you", id, sub: `Programs near ${where.short} that run in the ${season} or all year. Check the next date with them before you go.` })
+    : sectionHead({ title: `${title} near ${where.short}`, id, sub: "They haven't told us their seasons yet. Check the next date with them before you go." });
+  return `<section class="sec run" aria-labelledby="${esc(id)}">${head}${rowList(list, { where }, { id: id + "-rows", first: 8 })}</section>`;
 }
 
 /** Section heading. seeAll: { label, href } */
@@ -891,9 +980,9 @@ export function emptyState({ title, body, actions = [], image } = {}) {
 /** The letter, inline only (id="letter"). */
 export function letterBlock({ source = "page", heading = true } = {}) {
   const i = uid("em");
-  // heading: false on /letter, where the page's own h1 already says "Get the letter".
-  return `<section class="letter" id="letter" ${heading ? `aria-labelledby="${i}-h"><h2 id="${i}-h" tabindex="-1">Get the letter</h2>` : 'aria-label="Get the letter">'}<p>New programs, grants and events by email, only when there's something worth sending. Unsubscribe any time.</p>
-<form class="letter-form" data-letter data-send="/api/subscribe" data-source="asnm-letter-${esc(source)}" data-done="You're on the list. We'll write when there is something worth sending." novalidate><div class="field"><label for="${i}">Email</label><div class="letter-row"><input id="${i}" name="em" type="email" autocomplete="email" placeholder="name@example.com" required data-error="Enter an email address, like name@example.com."><button class="btn btn--ink" type="submit">Subscribe</button></div></div><input name="company" tabindex="-1" autocomplete="off" class="hpot" aria-hidden="true"><label class="check"><input type="checkbox" name="beta"><span>I want the first look at new features</span></label><p class="letter-fine">We use your email only to send the letter. <a href="/privacy">Privacy policy</a></p></form></section>`;
+  // heading: false on /letter, where the page's own h1 already says "Get updates by email".
+  return `<section class="letter" id="letter" ${heading ? `aria-labelledby="${i}-h"><h2 id="${i}-h" tabindex="-1">Get updates by email</h2>` : 'aria-label="Email updates">'}<p>New programs, grants and events by email, only when there's something worth sending. Unsubscribe any time.</p>
+<form class="letter-form" data-letter data-send="/api/subscribe" data-source="asnm-letter-${esc(source)}" data-done="You're on the list. We'll write when there is something worth sending." novalidate><div class="field"><label for="${i}">Email</label><div class="letter-row"><input id="${i}" name="em" type="email" autocomplete="email" placeholder="name@example.com" required data-error="Enter an email address, like name@example.com."><button class="btn btn--ink" type="submit">Subscribe</button></div></div><input name="company" tabindex="-1" autocomplete="off" class="hpot" aria-hidden="true"><label class="check"><input type="checkbox" name="beta"><span>I want the first look at new features</span></label><p class="letter-fine">We use your email only to send these updates. <a href="/privacy">Privacy policy</a></p></form></section>`;
 }
 
 export function helpBand() {
@@ -927,7 +1016,9 @@ export function stateList({ hrefFor, mode = "open", title = "Choose a state" } =
 export function tileMap({ counts, hrefFor, selected, list = "open" } = {}) {
   const c = counts || Object.fromEntries(Object.entries(D.byState).map(([k, v]) => [k, v.length]));
   const href = hrefFor || ((st) => "/states/" + st);
-  const tiles = Object.entries(GRID).map(([st, [x, y]]) => {
+  // A to Z by name in the page (screen readers, and phones, where the tiles wrap at 44px);
+  // tablets and up place each tile on the map by its grid position.
+  const tiles = Object.entries(GRID).sort((a, b) => stateName(a[0]).localeCompare(stateName(b[0]))).map(([st, [x, y]]) => {
     const n = c[st] || 0;
     return `<a class="tile t${tier(n)}" style="grid-column:${x + 1};grid-row:${y + 1}" href="${esc(href(st))}" aria-label="${esc(stateName(st))}"${selected === st ? ' aria-current="page"' : ""}><span class="tile-code">${st}</span><span class="tile-n num" aria-hidden="true">${n}</span></a>`;
   }).join("");
@@ -940,17 +1031,61 @@ const nbh = (t) => String(t).replace(/-/g, "\u2011");
 /** Horizontal sport scroller. keys: sports present in this pool. hrefFor(""): the "All" link. sheet: adds "All sports".
     Siblings that share a picture (3.5) sit right after their tile as a text item ("Also: Surfing"),
     so they never make the whole bar taller. */
-export function sportBar({ keys, active = "", hrefFor, label = "Sports", sheet = false } = {}) {
-  const groups = pictureGroups(keys ? [...keys] : undefined);
+export function sportBar({ keys, active = "", hrefFor, label = "Sports", sheet = false, counts = null, phone = SB_PHONE, desk = SB_DESK } = {}) {
+  const groups = sportRow({ keys, active, counts });
   if (sheet) BAR_HREF = { hrefFor, present: keys ? [...keys] : null, active };
   const all = `<li class="sb-item"><a class="sb-link" href="${esc(hrefFor(""))}" data-bar-link${!active ? ' aria-current="true"' : ""}><span class="av av--bar av--all" aria-hidden="true">${icon("layout-grid", 26)}</span><span class="sb-label">All</span></a></li>`;
-  const items = groups.map((g) => {
+  // The row wraps (no sideways scroll, audit finding 11): phones show the first `phone` sports,
+  // wider screens the first `desk`; "More sports" opens every sport, the ones here first.
+  const cut = (i) => (i >= desk ? " is-more is-more-d" : i >= phone ? " is-more" : "");
+  const items = groups.map((g, i) => {
     const cur = active === g.key;
-    const also = g.also.length ? `<li class="sb-item sb-item--also"><span class="sb-also">Also: ${g.also.map((k) => `<a href="${esc(hrefFor(k))}" data-bar-link${active === k ? ' aria-current="true"' : ""}>${esc(sportName(k))}</a>`).join(", ")}</span></li>` : "";
-    return `<li class="sb-item"><a class="sb-link" href="${esc(hrefFor(g.key))}" data-bar-link${cur ? ' aria-current="true"' : ""}>${avatar(g.key, "bar")}<span class="sb-label">${esc(nbh(sportName(g.key)))}</span></a></li>${also}`;
-  }).join("");
-  const more = sheet ? `<li class="sb-item"><button type="button" class="sb-link" data-open="sports" data-sheet-bar><span class="av av--bar av--all" aria-hidden="true">${icon("ellipsis", 26)}</span><span class="sb-label">All sports</span></button></li>` : "";
-  return `<nav class="sbar" aria-label="${esc(label)}"><ul class="sb-list">${all}${items}${more}</ul></nav>`;
+    const also = g.also.length ? `<li class="sb-item sb-item--also${cut(i)}"><span class="sb-also">Also: ${g.also.map((k) => `<a href="${esc(hrefFor(k))}" data-bar-link${active === k ? ' aria-current="true"' : ""}>${esc(sportName(k))}</a>`).join(", ")}</span></li>` : "";
+    return `<li class="sb-item${cut(i)}"><a class="sb-link" href="${esc(hrefFor(g.key))}" data-bar-link${cur ? ' aria-current="true"' : ""}>${avatar(g.key, "bar")}<span class="sb-label">${esc(nbh(sportName(g.key)))}</span></a></li>${also}`;
+  });
+  // The chosen sport leads; "All" (to clear it) comes right after it.
+  const lead = active && items.length && groups[0].key === active ? items.shift() + all : all;
+  const more = sheet ? `<li class="sb-item sb-item--more"><button type="button" class="sb-link" data-open="sports" data-sheet-bar><span class="av av--bar av--all" aria-hidden="true">${icon("ellipsis", 26)}</span><span class="sb-label">More sports</span></button></li>` : "";
+  return `<nav class="sbar is-wrap" aria-label="${esc(label)}"><ul class="sb-list">${lead}${items.join("")}${more}</ul></nav>`;
+}
+/** How many sports the wrapped row shows before "More sports": phones (two rows of four with All
+    and More sports), wider screens. */
+export const SB_PHONE = 6, SB_DESK = 8;
+/** The sport row's order: the chosen sport first, then the sports listed here by how many
+    listings offer each (counts: key -> n), then by the site-wide order. */
+export function sportRow({ keys, active = "", counts = null } = {}) {
+  const groups = pictureGroups(keys ? [...keys] : undefined);
+  const n = (g) => (counts ? [g.key, ...g.also].reduce((t, k) => t + (counts[k] || 0), 0) : 0);
+  const pos = new Map(groups.map((g, i) => [g.key, i]));
+  const has = (g) => g.key === active || g.also.includes(active);
+  return groups.slice().sort((a, b) => (has(b) - has(a)) || (n(b) - n(a)) || (pos.get(a.key) - pos.get(b.key)));
+}
+/** Sport counts for a pool (every sport each listing offers): key -> n. */
+export function sportCounts(pool) {
+  const c = {};
+  for (const p of pool) for (const k of sportsOf(p)) c[k] = (c[k] || 0) + 1;
+  return c;
+}
+
+/** Multi-sport organizations that may run `key` but haven't said which sports they run
+    (key multi, no trio, no seasons): in `state`, or within `radius` miles of `where`. Max `limit`. */
+export function mayOffer(key, { state = "", where = null, radius = RADII[0], limit = 6, pool = null } = {}) {
+  if (!D || !key) return [];
+  const real = (c) => Array.isArray(c) && Number.isFinite(c[0]) && Number.isFinite(c[1]);
+  const quiet = (pool || D.items).filter((p) => p.key === "multi" && !p.trio && !p.seasons);
+  const out = [];
+  for (const p of quiet) {
+    const miles = where && real(where.coords) && p.placed && real([p.lat, p.lng]) ? haversine(where.coords, [p.lat, p.lng]) : null;
+    if ((state && p.state === state) || (miles != null && miles < radius + 0.5)) out.push([p, miles]);
+  }
+  out.sort((a, b) => ((a[1] ?? 1e9) - (b[1] ?? 1e9)) || (b[0].verified - a[0].verified) || a[0].name.localeCompare(b[0].name));
+  return out.slice(0, limit).map(([p]) => p);
+}
+/** The block under an honest "No skiing ... yet": multi-sport organizations nearby that may offer it. */
+export function mayOfferBlock(key, list, { id = "may", where = null, level = 2 } = {}) {
+  if (!list || !list.length) return "";
+  const low = sportName(key).toLowerCase();
+  return `<section class="sec may" aria-labelledby="${esc(id)}">${sectionHead({ title: `Multi-sport organizations nearby that may offer ${low}`, id, level, sub: "Their websites list what they run; check before you go." })}<div class="rows">${list.map((p) => programRow(p, { where, single: true })).join("")}</div></section>`;
 }
 
 /** Buttons that jump to result groups. groups: [{ id, label, count }] */
@@ -959,6 +1094,40 @@ export function jumpChips(groups) {
   if (!gs.length) return "";
   return `<div class="jumps">${gs.map((g) => `<button type="button" class="chip" data-jump="${esc(g.id)}">${esc(g.label)}${g.count != null ? ` · <span class="num">${g.count}</span>` : ""}</button>`).join("")}</div>`;
 }
+
+/* ---------- Who it's for (public/app/who.js) ----------
+   Only about a third of listings say who they serve, so a filter by who never hides
+   that: the line above the results counts the ones that don't say. */
+export const WHO = { order: WHO_ORDER, labels: WHO_LABELS };
+/** Listings that say they serve `code` (all of them when there is no code). */
+export function whoFilter(list, code) {
+  if (!code) return list;
+  return list.filter((p) => Array.isArray(p.who) && p.who.includes(code));
+}
+// Codes, the chip row and the line live in public/app/who.js (own-key checks, unit tested);
+// the page only adds its check icon.
+/** A ?w= value we know, or "". */
+export function whoCode(w) { return whoCodeOf(w); }
+/** Chip row (see whoChips in who.js). */
+export function whoChips(opts = {}) { return whoChipsOf({ always: AGES, ...opts, check: icon("check", 18) }); }
+/** The ages question is always offered (the data tags kids and teens, and adults). */
+export const AGES = ["kids", "adults"];
+/** How a line says a code, people first. */
+export function whoSay(code) { return whoSayOf(code); }
+/** The honest line above filtered results (see whoLine in who.js). */
+export function whoLine(code, shown, quiet, where = "") { return whoLineOf(code, shown, quiet, where); }
+
+/** "Filters" (audit finding 8): How far and Who it's for fold into one button with the number of
+    filters on, so the first result reaches the first phone screen. The panel opens in place and
+    stays open while a chip inside it changes the page. body: the controls' HTML; on: filters on. */
+export function filtersPanel({ id = "fx", body = "", on = 0, path = location.pathname } = {}) {
+  if (!body) return "";
+  const open = filtersOpen(path);
+  const n = on ? `<span class="fx-n num" aria-hidden="true">${on}</span><span class="sr">, ${on} on</span>` : "";
+  return `<div class="fx${open ? " is-open" : ""}"><button type="button" class="chip fx-btn" aria-expanded="${open}" aria-controls="${esc(id)}" data-filters="${esc(path)}"><span>Filters</span>${n}${icon("chevron-down", 18)}</button><div class="fx-panel" id="${esc(id)}"${open ? "" : " hidden"}>${body}</div></div>`;
+}
+/** Whether the reader left the Filters panel open on this page. */
+export function filtersOpen(path) { try { return sessionStorage.getItem("asnm.fx." + path) === "1"; } catch (_) { return false; } }
 
 /** Phone bottom bar. action: HTML string or { label, href, kind, external } */
 export function stickyBar({ left = "", action = "" } = {}) {
@@ -976,9 +1145,45 @@ export function btn(label, href, kind = "ink", { external = false, attrs = "", i
   return `<a class="${c}" href="${esc(href)}"${external ? ' target="_blank" rel="noopener"' : ""} ${attrs}>${lead}<span>${esc(label)}</span>${tail}</a>`;
 }
 
+export function saveButton(kind, id) {
+  return `<button type="button" class="btn btn--line save-btn" data-save-kind="${esc(kind)}" data-save-id="${esc(id)}" hidden><span class="save-btn-plus">${icon("plus", 18)}</span><span class="save-btn-check">${icon("check", 18)}</span><span class="save-btn-label">Save</span></button>`;
+}
+
+export async function mountSaveButtons(root) {
+  const buttons = $$('[data-save-kind][data-save-id]', root);
+  if (!buttons.length) return;
+  let profile;
+  try { const response = await fetch('/api/profile-auth/session'); const body = await response.json(); profile = response.ok && body?.profile ? body.profile : null; } catch (_) { return; }
+  if (!profile) {
+    for (const button of buttons) {
+      button.hidden = false;
+      button.querySelector('.save-btn-label').textContent = 'Sign in to save';
+      button.addEventListener('click', () => nav('/account'));
+    }
+    return;
+  }
+  const saved = new Set((profile.saved || []).map((item) => `${item.kind}:${item.id}`));
+  for (const button of buttons) {
+    const key = `${button.dataset.saveKind}:${button.dataset.saveId}`;
+    button.hidden = false;
+    const draw = (on) => {
+      button.dataset.saved = on ? 'true' : 'false';
+      button.classList.toggle('is-saved', on);
+      button.querySelector('.save-btn-label').textContent = on ? 'Saved' : 'Save';
+    };
+    draw(saved.has(key));
+    button.addEventListener('click', async () => {
+      const on = button.dataset.saved !== 'true'; button.disabled = true;
+      try { const response = await fetch('/api/profile/saved', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ kind: button.dataset.saveKind, item_id: button.dataset.saveId, on }) }); if (!response.ok) throw new Error(); draw(on); }
+      catch (_) { button.querySelector('.save-btn-label').textContent = 'Try again'; }
+      finally { button.disabled = false; }
+    });
+  }
+}
+
 /** Sport and state community header (4.10). The state banner carries the h1 on the Sand
     ground beside the outline, so the banner is the page's title, not an empty box.
-    "Get the letter" is a line button: the page's one ink button belongs to its task (4.14). */
+    "Email updates" is a line button: the page's one ink button belongs to its task (4.14). */
 export function communityHeader({ kind = "sport", key, st, title, line, count, actions, tabs, dots = [], mapHref, sport } = {}) {
   const h1 = `<h1 tabindex="-1">${esc(title)}</h1>`;
   let banner;
@@ -994,7 +1199,7 @@ export function communityHeader({ kind = "sport", key, st, title, line, count, a
   if (count) cnt = typeof count === "string" ? `<p class="ch-count num">${count}</p>` : `<p class="ch-count num">${count.href ? `<a href="${esc(count.href)}">${esc(count.text)}</a>` : esc(count.text)}</p>`;
   let acts = actions;
   if (acts == null) {
-    acts = [btn("Get the letter", "", "line", { attrs: 'data-jump="letter"', icon: "mail" }), btn("Share", "", "line", { attrs: "data-share", icon: "share" })];
+    acts = [btn("Email updates", "", "line", { attrs: 'data-jump="letter"', icon: "mail" }), btn("Share", "", "line", { attrs: "data-share", icon: "share" })];
     if (kind === "state") acts.push(btn("Map", mapHref || `/states/${st}?map=1`, "line", { icon: "map" }));
   }
   const actHtml = Array.isArray(acts) ? acts.join("") : acts;
@@ -1008,9 +1213,9 @@ export function aboutBox() {
 }
 
 /** Inline place search (home, "place not found"): input with type-ahead, Search, Use my location. */
-export function whereForm({ value = "", sport = "", id, after = "" } = {}) {
+export function whereForm({ value = "", sport = "", id, after = "", to = "" } = {}) {
   const i = id || uid("wf");
-  return `<form class="wf" data-where${sport ? ` data-sport="${esc(sport)}"` : ""} novalidate role="search"><label class="wf-label" for="${i}">City, state or ZIP</label><div class="wf-row"><input id="${i}" class="input" name="place" value="${esc(value)}" autocomplete="off" enterkeyhint="search" data-suggest="${i}-list" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="${i}-list" aria-describedby="${i}-err"><button class="btn btn--orange" type="submit">${icon("search", 20)}<span>Search</span></button></div><p class="ferr" id="${i}-err" hidden></p><div class="dym" hidden></div><div class="suggest" id="${i}-list" role="listbox" aria-label="Places" hidden></div><div class="wf-after"><button type="button" class="btn btn--text wf-loc" data-locate>${icon("locate", 20)}<span>Use my location</span></button>${after}</div><p class="wf-status" role="status"></p></form>`;
+  return `<form class="wf" data-where${sport ? ` data-sport="${esc(sport)}"` : ""}${to ? ` data-to="${esc(to)}"` : ""} novalidate role="search"><label class="wf-label" for="${i}">City, state or ZIP</label><div class="wf-row"><input id="${i}" class="input" name="place" value="${esc(value)}" autocomplete="off" enterkeyhint="search" data-suggest="${i}-list" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="${i}-list" aria-describedby="${i}-err"><button class="btn btn--orange" type="submit">${icon("search", 20)}<span>Search</span></button></div><p class="ferr" id="${i}-err" hidden></p><div class="dym" hidden></div><div class="suggest" id="${i}-list" role="listbox" aria-label="Places" hidden></div><div class="wf-after"><button type="button" class="btn btn--text wf-loc" data-locate>${icon("locate", 20)}<span>Use my location</span></button>${after}</div><p class="wf-status" role="status"></p></form>`;
 }
 
 /* ======================================================================
@@ -1057,7 +1262,8 @@ export function drawerList(active = "") {
       + `</ul></div>`,
     sec("Browse", item("states", "/states", "States") + item("organizations", "/organizations", "Organizations")),
     sec("Help build this", item("add-program", "/add/program", "Add a program") + item("add-organization", "/add/organization", "Add an organization") + item("manage", "/manage", "Manage your organization") + item("add-event", "/add/event", "Add an event") + item("help", "/help", "Claim your organization")),
-    sec("About this directory", item("about", "/about", "How we check listings") + item("letter", "/letter", "Get the letter") + item("build", "/build", "Build with us")),
+    sec("Your account", item("account", "/account", "Saved items")),
+    sec("About this directory", item("about", "/about", "How we check listings") + item("letter", "/letter", "Email updates") + item("build", "/build", "Build with us")),
     `<div class="dl-sec dl-set"><button type="button" class="dl-theme" data-theme-toggle aria-pressed="${dark}"><span>Dark mode</span><span class="dl-switch" aria-hidden="true"></span></button></div>`,
   ].join("");
 }
@@ -1081,7 +1287,7 @@ export function footer() {
 <div class="ft-cols"><div><h2 class="ft-h">Find</h2><ul>${near ? li("Programs near you", near) : `<li><button type="button" data-open="search">Programs near you</button></li>`}${li("Sports", "/sports")}${li("Grants", "/grants")}${li("Events", "/events")}${li("Guides", "/resources")}</ul></div>
 <div><h2 class="ft-h">Browse</h2><ul>${li("States", "/states")}${li("Organizations", "/organizations")}</ul></div>
 <div><h2 class="ft-h">Help build this</h2><ul>${li("Add a program", "/add/program")}${li("Add an event", "/add/event")}${li("Claim your organization", "/help")}</ul></div>
-<div><h2 class="ft-h">About this directory</h2><ul>${li("How we check listings", "/about")}${li("Get the letter", "/letter")}${li("Build with us", "/build")}${li("Accessibility", "/about#accessibility")}</ul></div></div>
+<div><h2 class="ft-h">About this directory</h2><ul>${li("How we check listings", "/about")}${li("Email updates", "/letter")}${li("Build with us", "/build")}${li("Accessibility", "/about#accessibility")}</ul></div></div>
 <div class="ft-fine"><p class="ft-fine">Made with <span role="img" aria-label="love">❤️</span> by <a href="https://adapttolife.org">Adapt To Life</a>. © 2026 · <a href="/privacy">Privacy</a> · <a href="/terms">Terms</a></p></div></div>`;
 }
 
@@ -1293,10 +1499,10 @@ export async function openSportsSheet(opts) {
 const ROUTES = [
   ["/", "home"], ["/near/:place", "near"], ["/sports", "sports"], ["/sports/:key", "sport"],
   ["/states", "states"], ["/states/:st", "state"], ["/organizations", "organizations"], ["/organizations/:id", "program"], ["/programs", "programs"], ["/programs/:id", "program-detail"],
-  ["/grants", "grants"], ["/grants/:id", "grant"], ["/events", "events"],
+  ["/grants", "grants"], ["/grants/:id", "grant"], ["/events", "events"], ["/events/:slug", "event-series"],
   ["/add/program", "forms"], ["/add/organization", "forms"], ["/add/event", "forms"], ["/update/:id", "forms"],
   ["/manage", "manage"], ["/manage/organizations", "manage"], ["/manage/organizations/:id/edit", "manage"], ["/manage/organizations/:id/programs/new", "manage"], ["/manage/organizations/:id/events/new", "manage"], ["/manage/organizations/:id/programs", "manage"], ["/manage/organizations/:id/events", "manage"], ["/manage/programs/:id", "manage"], ["/manage/events/:id", "manage"], ["/manage/organizations/:id", "manage"],
-  ["/admin", "admin"], ["/admin/:kind", "admin"], ["/admin/:kind/:id", "admin"],
+  ["/admin", "admin"], ["/admin/:kind", "admin"], ["/admin/:kind/:id", "admin"], ["/account", "account"],
   ["/help", "help"], ["/about", "help"], ["/resources/veteran-owned-businesses", "vob"], ["/resources", "help"], ["/letter", "help"], ["/build", "help"], ["/letter/confirmed", "letter-confirmed"], ["/privacy", "help"], ["/terms", "help"],
 ];
 const OVERLAY_KEYS = new Set(["map", "open"]);
@@ -1368,11 +1574,12 @@ function defaultActive(name, path, params) {
   if (name === "sport") return "sport:" + params.key;
   if (name === "states" || name === "state") return "states";
   if (name === "grants" || name === "grant") return "grants";
-  if (name === "events") return "events";
+  if (name === "events" || name === "event-series") return "events";
   if (path === "/add/program") return "add-program";
   if (path === "/add/organization") return "add-organization";
   if (path === "/add/event") return "add-event";
   if (path === "/manage" || path.startsWith("/manage/")) return "manage";
+  if (path === "/account") return "account";
   if (name === "help") return path.slice(1);
   return "";
 }
@@ -1563,7 +1770,7 @@ async function render({ force = false } = {}) {
   sportMotion([main, aside, sticky, $("#rail")], FIRST);
   if (FIRST) {
     const later = window.requestIdleCallback || ((f) => setTimeout(f, 1200));
-    later(() => loadScript(USERWAY_SRC, { "data-account": "sFogOSJsXe" }), { timeout: 4000 });
+    later(() => { keepSkipFirst(); loadScript(USERWAY_SRC, USERWAY_ATTRS); }, { timeout: 4000 });
   }
   FIRST = false;
   await handleOverlays(ctx);
@@ -1680,7 +1887,8 @@ async function doShare(el) {
   announce("Link copied");
 }
 
-function showFieldError(input, msg) {
+/** Field errors in the form's own words; views with their own steps use them too (views/forms.js). */
+export function showFieldError(input, msg) {
   const field = input.closest(".field") || input.parentElement;
   input.setAttribute("aria-invalid", "true");
   let id = input.getAttribute("data-err-id");
@@ -1699,7 +1907,7 @@ function showFieldError(input, msg) {
   p.hidden = false;
   p.innerHTML = icon("circle-alert", 18) + `<span>${esc(msg)}</span>`;
 }
-function clearFieldError(input) {
+export function clearFieldError(input) {
   input.removeAttribute("aria-invalid");
   const id = input.getAttribute("data-err-id"); const p = id && document.getElementById(id);
   if (p) { p.hidden = true; p.textContent = ""; }
@@ -1710,7 +1918,8 @@ function labelOf(input) {
 }
 function validate(form) {
   let first = null;
-  const fields = $$("input, select, textarea", form).filter((x) => !x.classList.contains("hp") && !x.classList.contains("hpot") && x.type !== "hidden" && x.type !== "submit");
+  // A field on a screen that isn't showing (the check-up's steps, views/forms.js), or switched off, is never the one in error.
+  const fields = $$("input, select, textarea", form).filter((x) => !x.classList.contains("hp") && !x.classList.contains("hpot") && x.type !== "hidden" && x.type !== "submit" && !x.disabled && !(x.closest && x.closest("[hidden]")));
   const seenRadio = new Set();
   for (const f of fields) {
     let msg = null;
@@ -1753,6 +1962,11 @@ const TS_KEY = "0x4AAAAAADr2WPepRgjp8g-R";
    spam check (Turnstile) when someone starts a form, or at the latest on send. */
 const TURNSTILE_SRC = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
 const USERWAY_SRC = "https://cdn.userway.org/widget.js";
+/* Audit finding 18: the button sat over text at the bottom left and was the first Tab stop.
+   It sits bottom right now, small, lifted above the phone's sticky bar (app.css .uwy), and it
+   loads after the page (appended last), so "Skip to content" is the first stop.
+   data-position 3 = bottom right; data-size "small". */
+export const USERWAY_ATTRS = { "data-account": "sFogOSJsXe", "data-position": "3", "data-size": "small" };
 function loadScript(src, attrs = {}) {
   if (document.querySelector(`script[src="${src}"]`)) return;
   const s = document.createElement("script");
@@ -1761,6 +1975,14 @@ function loadScript(src, attrs = {}) {
   document.head.appendChild(s);
 }
 const ensureTurnstile = () => loadScript(TURNSTILE_SRC);
+/* UserWay puts its button first in <body>, ahead of "Skip to content". Whenever something lands
+   before the skip link, the skip link moves back to the front, so it is always the first Tab stop. */
+function keepSkipFirst() {
+  const skip = $(".skip");
+  if (!skip || !window.MutationObserver) return;
+  const fix = () => { if (document.body.firstElementChild !== skip) document.body.insertBefore(skip, document.body.firstChild); };
+  new MutationObserver(fix).observe(document.body, { childList: true });
+}
 function turnstileApi() {
   ensureTurnstile();
   return new Promise((res) => {
@@ -1768,23 +1990,51 @@ function turnstileApi() {
     (function wait() { if (window.turnstile) return res(window.turnstile); if (Date.now() - t0 > 8000) return res(null); setTimeout(wait, 100); })();
   });
 }
+/* Audit finding 13 (2026-10-26): the challenge used to appear only after Send, below the button.
+   Now a form starts its check as it opens (warmTurnstile), above the Send button, so a challenge,
+   when Cloudflare asks for one, is there from the start and Send just uses the ready token. */
+function tsBox(form) {
+  let box = $(".ts-box", form);
+  if (!box) {
+    box = document.createElement("div"); box.className = "ts-box";
+    const sub = $(".fm-submit", form);
+    if (sub) sub.insertAdjacentElement("beforebegin", box); else form.appendChild(box);
+  }
+  return box;
+}
+function tsRender(ts, box) {
+  if (box._wid != null) return;
+  const settle = (t) => { const d = box._done; box._done = null; if (d) d(t || ""); else if (t) { box._token = t; box._at = Date.now(); } };
+  box._wid = ts.render(box, {
+    sitekey: TS_KEY, appearance: "interaction-only", execution: "execute", size: "flexible",
+    callback: (t) => settle(t), "error-callback": () => { box._token = null; settle(""); return true; },
+    "timeout-callback": () => { box._token = null; settle(""); }, "expired-callback": () => { box._token = null; },
+  });
+}
+/** Start the spam check as the form opens. Safe to call more than once. */
+export async function warmTurnstile(form) {
+  if (!form || form._tsWarm) return;
+  form._tsWarm = true;
+  const ts = await turnstileApi();
+  if (!ts || !form.isConnected) return;
+  const box = tsBox(form);
+  if (box._wid != null) return;
+  try { tsRender(ts, box); ts.execute(box._wid); } catch (_) { box._wid = null; }
+}
 /** The form's Turnstile token. It only shows a challenge when Cloudflare asks for one.
+    A token made as the form opened is used once (tokens last five minutes); otherwise a fresh one.
     "" when the check could not run; the server then decides (production refuses). */
 async function turnstileToken(form) {
   const ts = await turnstileApi();
   if (!ts) return "";
+  const box = tsBox(form);
+  if (box._token && Date.now() - (box._at || 0) < 240000) { const t = box._token; box._token = null; return t; }
   return new Promise((resolve) => {
-    let box = $(".ts-box", form);
-    if (!box) { box = document.createElement("div"); box.className = "ts-box"; form.appendChild(box); }
     let settled = false;
     const done = (t) => { if (!settled) { settled = true; resolve(t || ""); } };
     box._done = done;
-    if (box._wid == null) {
-      box._wid = ts.render(box, {
-        sitekey: TS_KEY, appearance: "interaction-only", execution: "execute", size: "flexible",
-        callback: (t) => box._done(t), "error-callback": () => { box._done(""); return true; }, "timeout-callback": () => box._done(""),
-      });
-    } else ts.reset(box._wid);
+    if (box._wid == null) tsRender(ts, box);
+    else ts.reset(box._wid);
     ts.execute(box._wid);
     setTimeout(() => done(""), 30000);
   });
@@ -1845,6 +2095,9 @@ async function submitWhere(form, input, sport) {
   }
   say(null);
   closeOverlay({ restore: false, mode: "nav" });
+  // A place picker on a page that uses the place (the events page) remembers it and stays put.
+  const to = form.getAttribute("data-to");
+  if (to && w.kind !== "state") { remember("place", w.label); nav(to, { replace: true }); return; }
   if (w.kind === "state") nav("/states/" + w.state + (sport ? "?s=" + encodeURIComponent(sport) : ""));
   else nav("/near/" + encodeURIComponent(w.label) + (sport ? "?s=" + encodeURIComponent(sport) : ""));
 }
@@ -1915,6 +2168,16 @@ function boot() {
       }
       return;
     }
+    const fx = t.closest("[data-filters]");
+    if (fx) {
+      const panel = document.getElementById(fx.getAttribute("aria-controls"));
+      const open = fx.getAttribute("aria-expanded") !== "true";
+      fx.setAttribute("aria-expanded", String(open));
+      if (panel) panel.hidden = !open;
+      fx.parentElement.classList.toggle("is-open", open);
+      try { if (open) sessionStorage.setItem("asnm.fx." + fx.getAttribute("data-filters"), "1"); else sessionStorage.removeItem("asnm.fx." + fx.getAttribute("data-filters")); } catch (_) {}
+      return;
+    }
     const tl = t.closest("[data-toggle-list]");
     if (tl) {
       const box = tl.closest(".slist"); const open = !box.classList.contains("is-open");
@@ -1925,7 +2188,13 @@ function boot() {
     const sg = t.closest("[data-sg]");
     if (sg) {
       const input = document.getElementById(sg.getAttribute("data-for"));
-      if (input) { input.value = sg.getAttribute("data-sg"); clearFieldError(input); const list = sg.parentElement; list.hidden = true; list.innerHTML = ""; input.setAttribute("aria-expanded", "false"); input.focus(); }
+      if (input) {
+        input.value = sg.getAttribute("data-sg"); clearFieldError(input); const list = sg.parentElement; list.hidden = true; list.innerHTML = ""; input.setAttribute("aria-expanded", "false");
+        // Choosing a place is the search (audit finding 10): no second tap on Search.
+        const form = input.form;
+        if (form && (form.matches("[data-sheet]") || form.matches("[data-where]"))) { e.preventDefault(); submitWhere(form, input, form._sheet ? form._sheet.sport : form.getAttribute("data-sport") || ""); }
+        else input.focus();
+      }
       return;
     }
     const loc = t.closest("[data-locate]");

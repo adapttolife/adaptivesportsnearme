@@ -65,9 +65,8 @@ The rule is enforced in code, not in this file.
     `internal_notes`. Across 484 contaminated values it keeps the facts in 482
     and empties 2.
   - `looksLikeNavigationLabel()` catches "Donate" and its relatives.
-- **`src/admin.js`** — both write paths return **422 with the reason** if a
-  proposal would publish a memo or admit a navigation label. The pipeline cannot
-  land one even if a human approves the proposal by mistake.
+- **`src/admin-access.js`** — the passwordless admin write path rejects an
+  operator memo and a navigation label before either can be published.
 - **`test/description-contract.test.js`** — pinned to the real August 2026
   strings, plus idempotency, plus a check that `internal_notes` never enters the
   public column list.
@@ -126,6 +125,9 @@ with two audiences is a bug that will surface on a stranger's screen.
   `adapttolife/adaptivesportsnearme-data`, converged with the RCOS team's
   `DataFields.md`.
 - The human review queue invariant: automation proposes, a person approves.
-  See `src/admin.js`. As of Sept 2026 that queue holds 824 proposals, the oldest
+  The approve screen for lane proposals (`src/admin.js`, `/api/admin/*`) was
+  removed in October 2026 and has no replacement yet, so `review_queue`
+  proposals cannot be approved and keep piling up. As of Sept 2026 that queue
+  holds 824 proposals, the oldest
   from June 10, and nothing had been approved in 24 hours. A check that no one
   answers is not a check.

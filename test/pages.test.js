@@ -19,6 +19,7 @@ const PROGRAM = "11111111-2222-4333-8444-555555555555";
 const HIDDEN = "22222222-3333-4444-8555-666666666666";
 const MENU_ROW = "33333333-4444-4555-8666-777777777777";
 const MISSING = "99999999-8888-4777-8666-555555555555";
+const MULTI = "44444444-5555-4666-8777-888888888888";
 const GRANT = "b0298125-6d6a-4114-b0a2-5275750c09ae";
 const DRAFT_GRANT = "c7168314-73f4-5559-8387-d04651e400a9";
 
@@ -48,6 +49,8 @@ function database() {
     (id,name,sport,sport_key,website_url,city,state,description,is_public,status,created_at,updated_at)
     VALUES (?,?,?,?,?,?,?,?,?,'active','2026','2026')`);
   org.run(PROGRAM, "Atlanta Wolfpack", "Wheelchair Basketball", "basketball", "https://adaptedsports.org/", "Atlanta", "GA", "Junior wheelchair basketball.", 1);
+  org.run(MULTI, "All Abilities Sports", "Multi-Sport", "multi", "https://allabilities.example/", "Burlington", "KY",
+    "Sports and activities: Baseball; basketball; track and field; soccer; swimming; tennis; golf. Athletes served: Children and adults with disabilities.", 1);
   org.run(HIDDEN, "Hidden Program", "Tennis", "tennis", "https://hidden.example/", "Boise", "ID", null, 0);
   // A grant maker's site menu scraped as a listing (public/app/listable.js):
   // public and actionable in the table, but not a program, so never a page.
@@ -203,6 +206,13 @@ test("old URLs redirect permanently to the page that replaced them", async () =>
   }
 });
 
+test("the retired home card address redirects to the current card, and can change again", async () => {
+  for (const response of [await serve("/og/home.png", { ASSETS: assets() }), await viaWorker("/og/home.png", { ASSETS: assets() })]) {
+    assert.equal(response.status, 302, "a temporary redirect, so a later home card is not cached forever");
+    assert.equal(response.headers.get("location"), `${ORIGIN}/og/home-lineup.png`);
+  }
+});
+
 // The blog header's search is a plain GET form to /near (it works without script).
 test("a search sent as /near?q= lands on that place's results page", async () => {
   for (const [path, to] of [["/near?q=Tampa%2C+FL", "/near/Tampa%2C%20FL"], ["/near/?q=60614", "/near/60614"], ["/near?q=", "/"], ["/near", "/"]]) {
@@ -237,12 +247,12 @@ test("the Worker answers page paths with the shell, old paths with a redirect, a
   assert.equal((await viaWorker("/programs/nuggets-youth", guarded)).status, 404);
   // Files and API paths are never pages: they go to the static assets as asked.
   env.ASSETS.requested.length = 0;
-  for (const path of ["/missing.png", "/app/missing.js", "/api/nope"]) {
+  for (const path of ["/missing.png", "/app/missing.js", "/api/nope", "/og/home-lineup.png"]) {
     const response = await viaWorker(path, env);
     assert.equal(response.status, 404, path);
     assert.equal(await response.text(), "missing", path);
   }
-  assert.deepEqual(env.ASSETS.requested, ["/missing.png", "/app/missing.js", "/api/nope"]);
+  assert.deepEqual(env.ASSETS.requested, ["/missing.png", "/app/missing.js", "/api/nope", "/og/home-lineup.png"]);
 });
 
 // In production the asset layer answers "/" with index.html before the Worker
@@ -373,4 +383,19 @@ test("the privacy policy and terms are pages, in the sitemap", async () => {
   assert.equal(titleOf(await terms.text()), "Terms of use · Adaptive Sports Near Me");
   const map = await sitemapXml({ ENV_NAME: "production" });
   assert.ok(map.includes(`<loc>${ORIGIN}/privacy</loc>`) && map.includes(`<loc>${ORIGIN}/terms</loc>`));
+});
+
+// #108 follow-up: the server-built title and description for a multi-sport row say what
+// the page says: the trio, the serial comma and the count of the rest (src/pages.js).
+test("servePage: a multi-sport organization's title and description name its sports and count the rest", async () => {
+  const { sql, DB } = database();
+  try {
+    const res = await serve(`/organizations/${MULTI}`, { ENV_NAME: "production", DB, ASSETS: assets() });
+    assert.equal(res.status, 200);
+    const html = await res.text();
+    const label = "Baseball, basketball, track and field, and 4 more";
+    assert.equal(titleOf(html), `All Abilities Sports: ${label} in Burlington, KY · ${SITE_NAME}`);
+    const description = (html.match(/<meta name="description" content="([^"]*)">/) || [])[1];
+    assert.equal(description, `All Abilities Sports in Burlington, KY. ${label}. See its website, when we last checked it, and suggest a fix.`);
+  } finally { sql.close(); }
 });

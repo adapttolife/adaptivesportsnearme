@@ -15,19 +15,20 @@ const lc = (s) => s.charAt(0).toLowerCase() + s.slice(1);
 const byName = (a, b) => a.name.localeCompare(b.name);
 const byCity = (a, b) => (b.placed - a.placed) || String(a.cityFirst || "").localeCompare(String(b.cityFirst || "")) || byName(a, b);
 
-function hrefFor(key, { st = "", t = "" } = {}) {
+function hrefFor(key, { st = "", t = "", w = "" } = {}) {
   const q = new URLSearchParams();
   if (t && t !== "programs") q.set("t", t);
   if (st) q.set("st", st);
+  if (w && (!t || t === "programs")) q.set("w", w);
   const s = q.toString();
   return "/sports/" + key + (s ? "?" + s : "");
 }
 
 /** One state group: h3 with a local count, the first rows, then a link to the state view. */
-function stateGroup(key, st, list, cap, hidden = false) {
+function stateGroup(key, st, list, cap, hidden = false, w = "") {
   const show = list.length <= cap + 1 ? list : list.slice(0, cap);
   const more = list.length > show.length
-    ? `<a class="grp-all" href="${A.esc(hrefFor(key, { st }))}" data-replace>See all ${list.length} in ${A.esc(A.stateName(st))}${A.icon("arrow-right", 18)}</a>` : "";
+    ? `<a class="grp-all" href="${A.esc(hrefFor(key, { st, w }))}" data-replace>See all ${list.length} in ${A.esc(A.stateName(st))}${A.icon("arrow-right", 18)}</a>` : "";
   return `<div class="grp"${hidden ? " hidden" : ""}><div class="grp-hd"><h3 class="grp-h">${A.esc(A.stateName(st))}</h3><span class="grp-n num">${list.length === 1 ? "1 program" : list.length + " programs"}</span></div><div class="rows">${show.map((p) => A.programRow(p, { single: true })).join("")}</div>${more}</div>`;
 }
 
@@ -48,7 +49,11 @@ function guideBlock(key, low) {
   return `<section class="sp-guide" aria-labelledby="sp-guide-h"><h2 id="sp-guide-h" class="sr">About ${A.esc(low)}</h2><p class="sp-guide-what">${A.esc(g.what)}</p><details class="sp-guide-more"><summary>${A.icon("chevron-right", 20)}<span>New to ${A.esc(low)}? Start here</span></summary><div class="sp-guide-in"><dl class="sp-guide-dl">${row("Who plays", g.who)}<div><dt>What you need</dt><dd>${A.esc(g.gear)}</dd><dd class="sp-guide-note">Every program is different. Check what yours provides and what it costs.</dd></div>${row("How to start", g.start)}</dl><p class="sp-guide-body"><span>National body</span>${body}</p></div></details></section>`;
 }
 
-function programsTab(key, st, pool) {
+function programsTab(key, st, all, w = "", path = "") {
+  // Who it's for: chips offer what listings in this view say (the state, when one is
+  // chosen); a filter keeps the ones that say it, and the line counts the ones that don't.
+  const scope = st ? all.filter((p) => p.state === st) : all;
+  const pool = A.whoFilter(all, w);
   const name = A.sportName(key), low = lc(name);
   const listedVerb = /\b(?:sports|meetups)$/i.test(name) ? "are" : "is";
   const counts = {};
@@ -57,7 +62,7 @@ function programsTab(key, st, pool) {
 
   // Place chips: All states, then each state with this sport by local count.
   const chip = (label, n, href, cur) => `<a class="chip${cur ? " is-cur" : ""}" href="${A.esc(href)}" data-replace${cur ? ' aria-current="page"' : ""}>${cur ? A.icon("check", 18) : ""}<span>${A.esc(label)}</span>${n != null ? ` <span class="num chip-n">${n}</span>` : ""}</a>`;
-  const chips = ranked.length || st ? `<nav class="pchips" aria-label="${A.esc(name)} by state"><div class="pchips-in">${chip("All states", null, hrefFor(key), !st)}${st && !counts[st] ? chip(A.stateName(st), null, hrefFor(key, { st }), true) : ""}${ranked.map((s) => chip(A.stateName(s), counts[s], hrefFor(key, { st: s }), st === s)).join("")}</div></nav>` : "";
+  const chips = ranked.length || st ? `<nav class="pchips" aria-label="${A.esc(name)} by state"><div class="pchips-in">${chip("All states", null, hrefFor(key, { w }), !st)}${st && !counts[st] ? chip(A.stateName(st), null, hrefFor(key, { st, w }), true) : ""}${ranked.map((s) => chip(A.stateName(s), counts[s], hrefFor(key, { st: s, w }), st === s)).join("")}</div></nav>` : "";
 
   // Where are you? (Alec, 2026-10-18): a place search that keeps this sport, then the
   // state chips for browsing. It replaced a second state picker (a select).
@@ -65,12 +70,23 @@ function programsTab(key, st, pool) {
 
   // Small tile map (tablet and desktop only). Tiles change the filter, so they replace.
   // Six states or more: fewer than that, the map is mostly zeros and the chips say it better.
-  const map = ranked.length >= 6 ? `<div class="sp-map"><h3 class="sp-map-h">Where ${A.esc(low)} ${listedVerb} listed</h3>${A.tileMap({ counts, hrefFor: (s) => hrefFor(key, { st: s }), selected: st, list: "none" }).replace(/<a class="tile /g, '<a data-replace class="tile ')}</div>` : "";
+  const map = ranked.length >= 6 ? `<div class="sp-map"><h3 class="sp-map-h">Where ${A.esc(low)} ${listedVerb} listed</h3>${A.tileMap({ counts, hrefFor: (s) => hrefFor(key, { st: s, w }), selected: st, list: "none" }).replace(/<a class="tile /g, '<a data-replace class="tile ')}</div>` : "";
 
-  const tools = `<section class="sp-where" aria-labelledby="sp-where-h">${near}${chips}${map}</section>`;
+  const who = A.whoChips({ pool: scope, active: w, hrefFor: (c) => hrefFor(key, { st, w: c }), label: `Who ${name.toLowerCase()} is for` });
+  const shownN = w ? (st ? pool.filter((p) => p.state === st) : pool).length : 0;
+  const quiet = scope.filter((p) => !p.who.length).length;
+  const whoLine = w && shownN ? `<div class="sp-wholine">${A.whoLine(w, shownN, quiet)}</div>` : "";
+  const filters = who ? `<div class="sp-who">${A.filtersPanel({ id: "sp-fx", path, on: w ? 1 : 0, body: who })}</div>` : "";
+  const tools = `<section class="sp-where" aria-labelledby="sp-where-h">${near}${chips}${filters}${map}</section>${whoLine}`;
 
   let body = "";
-  if (st) {
+  if (w && !shownN) {
+    body = `<section class="sec sec--first">${A.emptyState({
+      title: `None${st ? " in " + A.stateName(st) : ""} say they serve ${A.whoSay(w)} yet`,
+      body: quiet ? `${quiet} more ${quiet === 1 ? "doesn't" : "don't"} say who they serve yet. Their websites often do.` : "Know one? Tell us and we'll check it.",
+      actions: [{ label: `See all ${low}${st ? " in " + A.stateName(st) : ""}`, href: hrefFor(key, { st }), attrs: "data-replace" }, { label: "Tell us about one", href: "/add/program" }],
+    })}</section>`;
+  } else if (st) {
     const list = pool.filter((p) => p.state === st).sort((a, b) => (b.verified - a.verified) || byCity(a, b));
     if (list.length) {
       body = `<section class="sec sec--first" aria-labelledby="sp-in">${A.sectionHead({ title: `${name} in ${A.stateName(st)}`, id: "sp-in" })}${A.rowList(list, { single: true }, { id: "sp-in-rows" })}</section>`;
@@ -79,7 +95,7 @@ function programsTab(key, st, pool) {
         title: `No ${low} listed in ${A.stateName(st)} yet.`,
         body: "Know one? Tell us and we'll check it.",
         actions: [{ label: `See ${low} everywhere`, href: hrefFor(key), attrs: "data-replace" }, { label: "Tell us about one", href: "/add/program" }],
-      })}</section>${nearestBlock(key, st, pool)}`;
+      })}</section>${A.mayOfferBlock(key, A.mayOffer(key, { state: st }), { id: "sp-may" })}${nearestBlock(key, st, pool)}`;
     }
   } else if (!pool.length) {
     body = `<section class="sec sec--first">${A.emptyState({
@@ -99,7 +115,7 @@ function programsTab(key, st, pool) {
       // Twelve states first, then "Show all N states" opens the rest in place (the state chips
       // above jump straight to any one state).
       const FIRST = 12;
-      const groups = sts.map((s, i) => stateGroup(key, s, by[s].sort((a, b) => (b.verified - a.verified) || byCity(a, b)), sts.length > FIRST ? 2 : 3, i >= FIRST)).join("");
+      const groups = sts.map((s, i) => stateGroup(key, s, by[s].sort((a, b) => (b.verified - a.verified) || byCity(a, b)), sts.length > FIRST ? 2 : 3, i >= FIRST, w)).join("");
       const moreBtn = sts.length > FIRST ? `<button type="button" class="btn btn--line rows-more" data-more="sp-v-groups" data-count="${sts.length} states">Show all ${sts.length} states</button>` : "";
       body += `<section class="sec sec--first" aria-labelledby="sp-v">${A.sectionHead({ title: "By state", id: "sp-v" })}<div class="grps" id="sp-v-groups">${groups}</div>${moreBtn}</section>`;
     }
@@ -118,7 +134,8 @@ export async function render(ctx) {
   const t = TABS.includes(ctx.query.t) ? ctx.query.t : "programs";
   const stQ = String(ctx.query.st || "").toUpperCase();
   const st = D.shapes[stQ] && A.stateName(stQ) !== stQ ? stQ : "";
-  const pool = D.items.filter((p) => p.key === key);
+  const pool = D.items.filter((p) => A.offers(p, key));
+  const w = t === "programs" ? A.whoCode(ctx.query.w) : "";
   A.remember("recent", key);
 
   // Header count: local only. A link to the visitor's own results when there is a remembered place.
@@ -149,15 +166,22 @@ export async function render(ctx) {
   }
 
   const tabs = [
-    { label: "Programs", href: hrefFor(key, { st }), current: t === "programs" },
+    { label: "Programs", href: hrefFor(key, { st, w }), current: t === "programs" },
     { label: "Grants", href: hrefFor(key, { st, t: "grants" }), current: t === "grants" },
     { label: "Events", href: hrefFor(key, { st, t: "events" }), current: t === "events" },
   ];
-  const head = A.communityHeader({ kind: "sport", key, title: name, line: A.sportNote(key), count, tabs });
+  const head = A.communityHeader({
+    kind: "sport", key, title: name, line: A.sportNote(key), count, tabs,
+    actions: [
+      A.saveButton("sports", key),
+      A.btn("Email updates", "", "line", { attrs: 'data-jump="letter"', icon: "mail" }),
+      A.btn("Share", "", "line", { attrs: "data-share", icon: "share" }),
+    ],
+  });
 
   let body = "";
   if (t === "programs") {
-    body = programsTab(key, st, pool);
+    body = programsTab(key, st, pool, w, ctx.path);
     // Veterans: the meetups, plus Karen's state-by-state veteran-owned business directories.
     if (key === "veteran-meetup") body = `<a class="vet-res" href="/resources/veteran-owned-businesses"><b>Veteran-owned businesses</b><span>Directories for all 50 states</span>${A.icon("arrow-right", 22)}</a>` + body;
   } else if (t === "grants") {
@@ -168,12 +192,20 @@ export async function render(ctx) {
       ${open.length ? `<h3 class="grp-h grp-h--g">Open now</h3><div class="glist">${open.map(([g]) => A.grantRow(g)).join("")}</div>` : ""}
       ${shut.length ? `<h3 class="grp-h grp-h--g">Past deadlines and closed for now</h3><p class="grp-sub">Check their site for the next round.</p><div class="glist">${shut.map(([g]) => A.grantRow(g)).join("")}</div>` : ""}</section>`;
   } else {
-    body = `<section class="sec sec--first">${A.emptyState({
-      title: `No ${low} events posted yet`,
-      body: "Know one coming up? Tell us and we'll check it.",
-      actions: [{ label: "Add an event", href: "/add/event" }, { label: "Get the letter", href: "", kind: "line", attrs: 'data-jump="letter"' }],
-      image: "event",
-    })}</section>`;
+    const now = ctx.now || new Date();
+    const evs = A.upcomingEvents(D.events || [], now).filter((e) => (e.sportKey || e.key) === key);
+    if (evs.length) {
+      body = `<section class="sec sec--first" aria-labelledby="sp-ev">${A.sectionHead({ title: `Coming ${low} events`, id: "sp-ev" })}<div class="ev-list">${evs.map(A.eventCard).join("")}</div></section>`;
+    } else {
+      // No dates posted: the ones near you that run this season, so the tab is never a dead end (audit finding 3).
+      const { runningSection } = await import("./events.js");
+      body = `<section class="sec sec--first">${A.emptyState({
+        title: `No ${low} events posted yet`,
+        body: "Know one coming up? Tell us and we'll check it.",
+        actions: [{ label: "Add an event", href: "/add/event" }, { label: "Email updates", href: "", kind: "line", attrs: 'data-jump="letter"' }],
+        image: "event",
+      })}</section>${await runningSection({ pool, key, title: name, id: "sp-run", now, to: hrefFor(key, { t: "events" }) })}`;
+    }
   }
 
   const meta = sportMeta({ key, name, low, state: st ? A.stateName(st) : "" });
@@ -187,6 +219,7 @@ export async function render(ctx) {
 }
 
 export function mount(root, ctx) {
+  A.mountSaveButtons(root);
   // Keep the selected state chip in view.
   const cur = root.querySelector(".pchips .is-cur");
   const row = root.querySelector(".pchips");

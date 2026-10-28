@@ -28,13 +28,14 @@ export const PAGES = {
   addEvent: { title: "Add an event", description: "Tell us about a clinic, tryout, game or meetup. A person checks it before it goes up." },
   manage: { title: "Manage your organization", description: "Sign in to review and update your organization's details." },
   admin: { title: "Admin", description: "Administrative tools for Adaptive Sports Near Me." },
+  account: { title: "Saved items", description: "Save organizations, programs, events and grants for later." },
   update: { title: "Suggest a fix", description: "Tell us what to fix on a listing. A person reads every note." },
   help: { title: "Help build this", description: "Add a program or an event, suggest a fix, or confirm your organization's listing." },
   about: { title: "How we check listings", description: "What Verified, Checked by our team and Not verified yet mean, and how we keep every listing current." },
   guides: { title: "Guides", description: "Every adaptive sport explained, and help beyond sports, like veteran-owned business directories by state." },
   veteranBusinesses: { title: "Support Veteran-Owned Businesses", description: "Find veteran-owned businesses in your state, with directories for all 50 states and nationwide." },
   build: { title: "Build with us", description: "Adaptive Sports Near Me is open source. See where we're going, share an idea, and help build tools for the adaptive sports community." },
-  letter: { title: "Get the letter", description: "New programs, grants and events by email, only when there's something worth sending." },
+  letter: { title: "Get updates by email", description: "New programs, grants and events by email, only when there's something worth sending." },
   letterConfirmed: { title: "You're on the list", description: "New programs, grants and events by email, only when there's something worth sending." },
   privacy: { title: "Privacy policy", description: "What Adaptive Sports Near Me collects, why, and the choices you have." },
   terms: { title: "Terms of use", description: "The terms for using Adaptive Sports Near Me, a free directory run by Adapt To Life." },
@@ -42,13 +43,14 @@ export const PAGES = {
   notFound: { title: "Page not found", description: "That page isn't here. Search adaptive sports near you instead." },
   listingNotFound: { title: "Listing not found", description: "It may have been removed or merged with another listing." },
   grantNotFound: { title: "Grant not found", description: "It may have been removed or renamed." },
+  seriesNotFound: { title: "Event not found", description: "It may have been removed or renamed. See every event, dated and yearly." },
 };
 
 /** /near/<place>. sport: { name, low } or null. */
-export function nearMeta(place, sport) {
+export function nearMeta(place, sport, miles = 25) {
   return {
     title: `${sport ? sport.name : "Programs"} near ${place}`,
-    description: `Adaptive ${sport ? sport.low : "sports"} programs near ${place}: in town first, then within about 25 miles, then across the state.`,
+    description: `Adaptive ${sport ? sport.low : "sports"} programs near ${place}: in town first, then within about ${miles} miles, then across the state.`,
   };
 }
 
@@ -89,5 +91,15 @@ export function grantMeta({ name, source = "" }) {
   return {
     title: `${name}${source ? `, from ${source}` : ""}`,
     description: `${name}: an adaptive sports grant${source ? ` from ${source}` : ""}. See who can apply, the amount, the deadline and how to apply.`,
+  };
+}
+
+/** /events/<slug>, a yearly event. sport: its name ("Pickleball"); host: who runs it; place: "Cincinnati, OH";
+    usual: "late October" (public/app/yearly.js seriesState). */
+export function seriesMeta({ name, sport = "", host = "", place = "", usual = "" }) {
+  const what = `a yearly ${sport ? `adaptive ${sport.toLowerCase()} ` : "adaptive sports "}event`;
+  return {
+    title: `${name}${place ? `, ${place}` : ""}`,
+    description: `${name} is ${what}${host ? ` hosted by ${host}` : ""}${place ? ` in ${place}` : ""}${usual ? `, usually in ${usual}` : ""}. See the next dates, past years and where to register.`,
   };
 }

@@ -362,3 +362,28 @@ test("listingInnerHtml: the in-app sheet stays bare", () => {
   // It is still the listing.
   assert.ok(inner.includes("Denver Rolling Nuggets"));
 });
+
+// #108 follow-up: the long sports label is for the overlay and the description; the
+// nearby heading keeps the listing's short label (the strip does not filter on sports).
+test("listingInnerHtml: a multi-sport row's nearby heading keeps the short label", () => {
+  const multi = {
+    id: "ffffffff-ffff-4fff-8fff-ffffffffffff",
+    name: "All Abilities Sports",
+    sport: "multi",
+    sportLabel: "Multi-Sport",
+    type: "member",
+    city: "Burlington",
+    state: "KY",
+    desc: "Sports and activities: Baseball; basketball; track and field; soccer; swimming; tennis; golf. Athletes served: Children and adults with disabilities.",
+  };
+  const nearby = [
+    { id: "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb", name: "Cincy Adaptive", sport: "multi", sportLabel: "Multi-Sport", city: "Cincinnati", state: "OH", type: "member", dist: 14 },
+  ];
+  const html = listingInnerHtml(multi, { nearby });
+  assert.ok(html.includes('<span class="dov-sport">Baseball, basketball, track and field, and 4 more</span>'), "overlay keeps the long label");
+  assert.ok(html.includes("<h2>Nearby multi-sport</h2>"), "nearby heading uses the short label");
+  assert.ok(!/<h2>[^<]*and 4 more/.test(html), "no heading carries the long label");
+  const page = programPageTemplate(multi, { nearby });
+  assert.ok(page.includes('content="Baseball, basketball, track and field, and 4 more in Burlington, KY."'), "description keeps the long label");
+  assert.ok(page.includes("<h2>Nearby multi-sport</h2>"));
+});

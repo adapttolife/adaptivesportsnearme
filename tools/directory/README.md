@@ -1,8 +1,8 @@
 # Directory tools — tester only
 
-These scripts are how students work the Adaptive Sports Near Me directory **on the tester**. They never write the live database (`asnm-db`). Live public count must stay **1,544**.
+These scripts are how students work the Adaptive Sports Near Me directory **on the tester**. They never write the live database (`asnm-db`). Live public count must stay **2,593**.
 
-Tester: https://asnm-staging.adapt-to-life.workers.dev  
+Tester: https://staging-adaptivesportsnearme.adapt-to-life.workers.dev  
 Live (locked): https://adaptivesportsnearme.com
 
 Discover is this folder. There is no production cron that writes live. Do not add one.
@@ -39,9 +39,9 @@ Inbox cards live under `tools/directory/inbox/` on your machine. That folder is 
 
 ## Live lock
 
-Ship and discover refuse a non-SELECT against `asnm-db`. If the public live count is not 1,544, they abort. Do not pass `--allow-live-drift` unless Alec said the live number is allowed to move — it is not, right now.
+Ship and discover refuse a non-SELECT against `asnm-db`. If the public live count is not 2,593, they abort. Do not pass `--allow-live-drift` unless Alec said the live number is allowed to move — it is not, right now.
 
-Do not deploy the production worker (`asnm`) from this branch. Pushing `main` deploys production.
+Do not deploy the production worker (`adaptivesportsnearme`) from this branch. Pushing `main` deploys production.
 
 ## What is not here
 

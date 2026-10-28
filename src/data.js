@@ -7,7 +7,10 @@ import { cachedCount } from "./read-cache.js";
 import "../public/listing-art.js";
 import { listingSport } from "../public/app/listing-sport.js";
 import { isListable } from "../public/app/listable.js";
+import { whoTags, whoText } from "../public/app/who.js";
 import { publicText } from "./public-text.js";
+import { parseSportSeasons, cleanSeasons } from "../public/app/yearly.js";
+import { newerOrOlder } from "./schema-probe.js";
 
 const ListingArt = globalThis.ListingArt;
 
@@ -39,6 +42,43 @@ const PUBLIC = `is_public = 1 AND status = 'active' AND ${ACTIONABLE}`;
 // The same rule, for a table under an alias in a join ("p" for programs).
 const actionableOn = (t) => ACTIONABLE.replace(/\b(website_url|city|state|publicity_consent|email|phone)\b/g, `${t}.$1`);
 
+// An organization's sports come from its programs that ride on its card (program_sports,
+// see ORG_SPORTS); a program's from its own sport and seasons_json.
+const isSport = (k) => ListingArt.SPORTS.includes(k);
+function rowSeasons(r) {
+  if (r.program_sports) {
+    let list = [];
+    try { list = JSON.parse(r.program_sports); } catch { list = []; }
+    if (!Array.isArray(list) || !list.length) return null;
+    // A sport added on the organization's card joins the sports it was already listed under;
+    // it never replaces them (an organization that runs skiing and adds pickleball runs both).
+    const map = {};
+    const own = [r.sport_key];
+    try { const listed = JSON.parse(r.org_sports_json || "[]"); if (Array.isArray(listed)) own.push(...listed); } catch { /* labels or nothing */ }
+    // A sport with a program card of its own (its own place) is found there, not on this card.
+    let elsewhere = [];
+    try { elsewhere = JSON.parse(r.own_program_sports || "[]"); } catch { elsewhere = []; }
+    for (const k of own) if (typeof k === "string" && isSport(k) && k !== "multi" && !(k in map) && !elsewhere.includes(k)) map[k] = [];
+    for (const x of list) if (x && x.key) map[x.key] = x.seasons;
+    return parseSportSeasons(map, isSport);
+  }
+  if (r.seasons_json != null && r.sport_key && isSport(r.sport_key) && r.sport_key !== "multi") {
+    let seasons = [];
+    try { seasons = cleanSeasons(JSON.parse(r.seasons_json)); } catch { seasons = []; }
+    return [{ key: r.sport_key, seasons }];
+  }
+  return null;
+}
+// The sports an organization ticked, as JSON, read with the organization in one query.
+const ORG_SPORTS = `(SELECT json_group_array(json_object('key', ps.sport_key, 'seasons',
+    json(CASE WHEN json_valid(ps.seasons_json) THEN ps.seasons_json ELSE '[]' END)))
+  FROM programs ps WHERE ps.organization_id = organizations.id AND ps.kind = 'program' AND ps.listing = 'with_org'
+    AND ps.is_public = 1 AND ps.status = 'active' AND ps.sport_key IS NOT NULL) AS program_sports, sports_json AS org_sports_json,
+  (SELECT json_group_array(po.sport_key) FROM programs po WHERE po.organization_id = organizations.id AND po.kind = 'program'
+    AND po.listing = 'own' AND po.is_public = 1 AND po.status = 'active' AND po.sport_key IS NOT NULL) AS own_program_sports`;
+// The newer program columns (migration 0015).
+const PROGRAM_NEWER = "p.seasons_json, p.kind, p.listing, p.slug, p.usual_month, p.first_year";
+
 function rowToProgram(r, dist) {
   const publicityConsent = r.publicity_consent === 1;
   const addressPublicityConsent = r.address_publicity_consent === 1;
@@ -48,6 +88,8 @@ function rowToProgram(r, dist) {
     name: r.name,
     type: r.org_type,
     sport: r.sport_key,            // icon/photo key (may be null -> generic styling)
+    // Every sport it runs, with seasons (docs/specs/programs-that-come-back.md); null until it tells us.
+    seasons: rowSeasons(r),
     sportLabel: r.sport,
     website: r.website_url,
     city: r.city,
@@ -109,10 +151,16 @@ const PROGRAM_LIST_COLS = `p.id, p.name, NULL AS org_type, p.sport, p.sport_key,
   p.last_ok_at, p.created_at, o.id AS organization_id, o.name AS organization_name, o.org_type AS organization_type`;
 export async function programsSnapshot(db, { places = null } = {}) {
   let rows;
-  try {
-    rows = await db.prepare(`SELECT ${PROGRAM_LIST_COLS} FROM programs p JOIN organizations o ON o.id = p.organization_id
-      WHERE ${PROGRAM_PUBLIC} AND ${actionableOn("p")}
+  // A program with its own place is a card of its own. A sport the organization runs at its
+  // own place rides on the organization's card (listing 'with_org'), and a yearly event lives
+  // on the events page (kind 'event'); neither is a card here.
+  const read = (cols, only) => db.prepare(`SELECT ${cols} FROM programs p JOIN organizations o ON o.id = p.organization_id
+      WHERE ${PROGRAM_PUBLIC} AND ${actionableOn("p")}${only}
       ORDER BY (p.sport_key IS NULL), (p.state IS NULL), p.name`).all();
+  try {
+    rows = await newerOrOlder(db, "programs_come_back",
+      () => read(`${PROGRAM_LIST_COLS}, ${PROGRAM_NEWER}`, " AND p.kind = 'program' AND p.listing = 'own'"),
+      () => read(PROGRAM_LIST_COLS, ""));
   } catch (_) {
     return { total: 0, items: [] };
   }
@@ -128,9 +176,10 @@ export async function programsSnapshot(db, { places = null } = {}) {
 }
 
 export async function directorySnapshot(db, { places = null } = {}) {
-  const rows = await db.prepare(`SELECT ${LIST_COLS} FROM organizations
+  const read = (cols) => db.prepare(`SELECT ${cols} FROM organizations
     WHERE ${PUBLIC}
     ORDER BY (sport_key IS NULL), (state IS NULL), name`).all();
+  const rows = await newerOrOlder(db, "programs_come_back", () => read(`${LIST_COLS}, ${ORG_SPORTS}`), () => read(LIST_COLS));
   const items = rows.results.map(row => {
     const p = rowToProgram(row);
     if (places) p.cityCenter = cityCenter(row.city, row.state, places);
@@ -154,9 +203,16 @@ export async function listingsSnapshot(db, { places = null } = {}) {
   const out = [];
   for (const p of items) {
     if (!isListable(p)) continue;
-    const { key, trio } = listingSport(p);
+    const { key, trio, more } = listingSport(p);
     const o = { id: p.id, name: p.name, key };
     if (trio) o.trio = trio;
+    if (more) o.more = more;
+    // The organization's own sports and seasons, so every one of them finds it by sport.
+    if (p.seasons) o.seasons = p.seasons;
+    // Who it says it serves, as codes (public/app/who.js); only when it says.
+    // Who it serves: what its description says, and what the organization told us (ages, from the check-up).
+    const who = whoTags(`${whoText(p.desc) || ""} ${p.ages || ""}`, key);
+    if (who.length) o.who = who;
     if (p.city) o.city = p.city;
     if (p.state) o.state = p.state;
     if (p.cityCenter) o.center = p.cityCenter;
@@ -245,10 +301,11 @@ export async function listPrograms(db, params, opts = {}) {
 }
 
 export async function getOrg(db, id) {
-  const row = await db.prepare(
-    `SELECT ${LIST_COLS}, address, address_publicity_consent, email, phone, primary_data_source, verification_method, created_at, updated_at
+  const read = (cols) => db.prepare(
+    `SELECT ${cols}, address, address_publicity_consent, email, phone, primary_data_source, verification_method, created_at, updated_at
      FROM organizations WHERE id = ? AND ${PUBLIC}`
   ).bind(id).first();
+  const row = await newerOrOlder(db, "programs_come_back", () => read(`${LIST_COLS}, ${ORG_SPORTS}`), () => read(LIST_COLS));
   if (!row) return null;
   const sources = await db.prepare(
     `SELECT s.source_name AS name, s.source_organization AS organization, s.source_url AS url
@@ -266,7 +323,22 @@ export async function getOrg(db, id) {
     listedAt: row.created_at,
     verifiedMonth: verifiedMonth(row),
     updatedAt: row.updated_at,
+    history: await publicHistory(db, row),
   };
+}
+
+// What a visitor may see of an organization's history: when it joined the directory and
+// when the organization itself last confirmed or updated its listing. Only what can be
+// trusted counts: a confirmation a person on our team applied, or an edit by the signed-in
+// organization; a form anyone can send ("I'm with this organization") doesn't, until applied.
+// Its yearly events' past years come with the events (/api/event-series?org=). The team's
+// own notes never leave.
+async function publicHistory(db, row) {
+  const month = (s) => (s && /^\d{4}-\d{2}/.test(s) ? String(s).slice(0, 7) : null);
+  const updated = await newerOrOlder(db, "programs_come_back", () => db.prepare(
+    `SELECT MAX(created_at) AS at FROM organization_activity WHERE organization_id = ? AND kind IN ('applied', 'self_edit')`
+  ).bind(row.id).first(), async () => null);
+  return { listedSince: month(row.created_at), updatedByOrganization: month(updated?.at) };
 }
 
 const PROGRAM_COLS = `p.id, p.organization_id, p.name, NULL AS org_type, p.sport, p.sport_key,
@@ -291,17 +363,31 @@ export async function listActualPrograms(db, params = new URLSearchParams()) {
   if (q) { const like = `%${q.replace(/[\\%_]/g, "\\$&")}%`; where.push("(p.name LIKE ? ESCAPE '\\' OR o.name LIKE ? ESCAPE '\\' OR p.sport LIKE ? ESCAPE '\\')"); binds.push(like, like, like); }
   const limit = Math.min(Math.max(Number.parseInt(params.get("limit") || "60", 10) || 60, 1), 200);
   const offset = Math.max(Number.parseInt(params.get("offset") || "0", 10) || 0, 0);
-  const condition = where.join(" AND ");
-  const [count, rows] = await Promise.all([
-    db.prepare(`SELECT COUNT(*) AS n FROM programs p JOIN organizations o ON o.id = p.organization_id WHERE ${condition}`).bind(...binds).first(),
-    db.prepare(`SELECT ${PROGRAM_COLS}, o.name AS organization_name, o.org_type AS organization_type, o.city AS organization_city, o.state AS organization_state, o.state_name AS organization_state_name, o.website_url AS organization_website_url FROM programs p JOIN organizations o ON o.id = p.organization_id WHERE ${condition} ORDER BY p.name COLLATE NOCASE LIMIT ? OFFSET ?`).bind(...binds, limit, offset).all(),
-  ]);
-  return { total: count?.n ?? 0, limit, offset, items: (rows.results || []).map((row) => ({ ...rowToProgram(row), organization: programParent(row) })) };
+  const read = (cols, only) => {
+    const condition = where.join(" AND ") + only;
+    return Promise.all([
+      db.prepare(`SELECT COUNT(*) AS n FROM programs p JOIN organizations o ON o.id = p.organization_id WHERE ${condition}`).bind(...binds).first(),
+      db.prepare(`SELECT ${cols}, o.name AS organization_name, o.org_type AS organization_type, o.city AS organization_city, o.state AS organization_state, o.state_name AS organization_state_name, o.website_url AS organization_website_url FROM programs p JOIN organizations o ON o.id = p.organization_id WHERE ${condition} ORDER BY p.name COLLATE NOCASE LIMIT ? OFFSET ?`).bind(...binds, limit, offset).all(),
+    ]);
+  };
+  // Yearly events have their own list (/api/event-series); these are the programs.
+  const [count, rows] = await newerOrOlder(db, "programs_come_back",
+    // A sport that rides on its organization's card isn't a row of its own in the program list;
+    // the organization's own page (organization_id) still lists all its programs.
+    () => read(`${PROGRAM_COLS}, ${PROGRAM_NEWER}`, organizationId ? " AND p.kind = 'program'" : " AND p.kind = 'program' AND p.listing = 'own'"),
+    () => read(PROGRAM_COLS, ""));
+  return { total: count?.n ?? 0, limit, offset, items: (rows.results || []).map((row) => ({ ...rowToProgram(row), ...programExtras(row), organization: programParent(row) })) };
+}
+// When the program comes back, for its page and the editors.
+function programExtras(row) {
+  if (!("kind" in row)) return {};
+  return { kind: row.kind, listing: row.listing, slug: row.slug || null, usualMonth: row.usual_month ?? null, firstYear: row.first_year ?? null };
 }
 export async function getProgram(db, id) {
-  const row = await db.prepare(`SELECT ${PROGRAM_COLS}, p.email, p.phone, p.updated_at, o.name AS organization_name, o.org_type AS organization_type, o.city AS organization_city, o.state AS organization_state, o.state_name AS organization_state_name, o.website_url AS organization_website_url FROM programs p JOIN organizations o ON o.id = p.organization_id WHERE p.id = ? AND ${PROGRAM_PUBLIC}`).bind(id).first();
+  const read = (cols) => db.prepare(`SELECT ${cols}, p.email, p.phone, p.updated_at, o.name AS organization_name, o.org_type AS organization_type, o.city AS organization_city, o.state AS organization_state, o.state_name AS organization_state_name, o.website_url AS organization_website_url FROM programs p JOIN organizations o ON o.id = p.organization_id WHERE p.id = ? AND ${PROGRAM_PUBLIC}`).bind(id).first();
+  const row = await newerOrOlder(db, "programs_come_back", () => read(`${PROGRAM_COLS}, ${PROGRAM_NEWER}`), () => read(PROGRAM_COLS));
   if (!row) return null;
-  return { ...rowToProgram(row), ...(row.publicity_consent === 1 ? { email: row.email, phone: row.phone } : {}), organization: programParent(row), updatedAt: row.updated_at };
+  return { ...rowToProgram(row), ...programExtras(row), ...(row.publicity_consent === 1 ? { email: row.email, phone: row.phone } : {}), organization: programParent(row), updatedAt: row.updated_at };
 }
 
 // Sources as a visitor may see them, once each.

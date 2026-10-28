@@ -1312,6 +1312,24 @@ body.ov-open {
 	border-color: var(--ink);
 }
 
+.save-btn-check {
+	display: none;
+}
+
+.save-btn.is-saved {
+	background: var(--ink);
+	border-color: var(--ink);
+	color: var(--on-ink);
+}
+
+.save-btn.is-saved .save-btn-plus {
+	display: none;
+}
+
+.save-btn.is-saved .save-btn-check {
+	display: inline-flex;
+}
+
 .btn--text {
 	min-height: 44px;
 	padding: 0 4px;
@@ -2407,6 +2425,218 @@ textarea:focus {
 	color: var(--graphite);
 }
 
+/* A year of a yearly event: its name links to the event's own page. */
+.ec-name a {
+	color: inherit;
+	text-decoration: underline;
+	text-decoration-thickness: 1px;
+	text-underline-offset: 3px;
+}
+
+.ec-nth {
+	font-size: 15px;
+	font-weight: 700;
+	color: var(--graphite);
+}
+
+/* ================= Sport checklist (public/app/sport-checklist.js) =================
+   Your sports and seasons, on Confirm your listing and in the organization's editor:
+   sport chips with real checkboxes, then each ticked sport's season chips. */
+.sck-group + .sck-group {
+	margin-top: 16px;
+}
+
+.sck-gh {
+	margin-bottom: 8px;
+	font-size: var(--fs-label);
+	font-weight: 700;
+	color: var(--graphite);
+}
+
+.sck-list,
+.sck-chips {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+}
+
+.sck-sport,
+.sck-chip {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	min-height: 44px;
+	padding: 0 14px 0 12px;
+	background: var(--paper);
+	color: var(--ink);
+	border: 1px solid var(--line-strong);
+	border-radius: var(--r);
+	font-size: 16px;
+	font-weight: 500;
+	line-height: 1.2;
+	cursor: pointer;
+}
+
+.sck-chip {
+	border-radius: 999px;
+}
+
+.sck-sport input,
+.sck-chip input {
+	width: 20px;
+	height: 20px;
+	margin: 0;
+	accent-color: var(--orange);
+	flex: none;
+}
+
+.sck-sport input:focus,
+.sck-chip input:focus {
+	box-shadow: none;
+}
+
+.sck-sport:hover,
+.sck-chip:hover {
+	border-color: var(--ink);
+}
+
+.sck-sport.is-on,
+.sck-sport:has(input:checked) {
+	background: var(--orange-soft);
+	border: 1.5px solid var(--orange);
+}
+
+.sck-chip:has(input:checked) {
+	background: var(--teal-soft);
+	border: 1.5px solid var(--teal);
+}
+
+.sck-sport:has(input:focus-visible),
+.sck-chip:has(input:focus-visible) {
+	box-shadow: var(--focus);
+}
+
+.sck-when {
+	margin-top: 24px;
+}
+
+.sck-when[hidden],
+.sck-row[hidden],
+.yr-add[hidden] {
+	display: none;
+}
+
+.sck-wh {
+	font-size: var(--fs-h3);
+	font-weight: 700;
+	line-height: 1.3;
+}
+
+.sck-hint {
+	margin-top: 2px;
+	font-size: 15px;
+	color: var(--graphite);
+}
+
+.sck-row {
+	min-width: 0;
+	margin: 12px 0 0;
+	padding: 12px 0 0;
+	border: 0;
+	border-top: 1px solid var(--line-strong);
+}
+
+.sck-row > legend,
+.yr-row > legend {
+	float: left;
+	width: 100%;
+	padding: 0;
+	font-size: 16px;
+	font-weight: 700;
+}
+
+.sck-row > legend + *,
+.yr-row > legend + * {
+	clear: both;
+}
+
+.sck-row > .sck-chips {
+	padding-top: 8px;
+}
+
+/* A sport with its own program page: ticked and fixed, with a short note why. */
+.sck-sport.is-locked {
+	position: relative;
+	padding-block: 8px;
+	cursor: default;
+}
+
+.sck-sport.is-locked:hover {
+	border-color: var(--orange);
+}
+
+.sck-sport.is-locked input {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+	clip: rect(0 0 0 0);
+	white-space: nowrap;
+}
+
+.sck-lock-ic {
+	flex: none;
+	color: var(--orange-ink);
+}
+
+.sck-sport.is-locked > span {
+	display: flex;
+	flex-direction: column;
+}
+
+.sck-lock {
+	margin-top: 2px;
+	font-size: 13px;
+	font-weight: 500;
+	color: var(--graphite);
+}
+
+/* One program's seasons on its own (the program form) */
+.sck-row.sck-solo {
+	margin-top: 4px;
+	padding-top: 0;
+	border-top: 0;
+}
+
+.sck-solo > .sck-hint {
+	margin-bottom: 8px;
+}
+
+/* Yearly events rows (Confirm your listing) */
+.yr-row {
+	min-width: 0;
+	margin: 16px 0 0;
+	padding: 0;
+	border: 0;
+}
+
+.yr-row + .yr-row {
+	padding-top: 16px;
+	border-top: 1px solid var(--line-strong);
+}
+
+.yr-add {
+	margin-top: 16px;
+}
+
+@media (min-width: 600px) {
+	.yr-two {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr);
+		column-gap: 16px;
+	}
+}
+
 /* ================= Section head ================= */
 .sh {
 	display: flex;
@@ -2912,6 +3142,60 @@ textarea:focus {
 	gap: 8px;
 }
 
+/* Who it's for (A.whoChips, A.whoLine): one scrolling row of filter chips on phones,
+   wrapping from tablet up. Near results and sport pages place it. */
+.who-h {
+	margin: 0 0 8px;
+	font-size: var(--fs-label);
+	font-weight: 700;
+	line-height: 1.3;
+}
+
+.who-row {
+	margin-inline: calc(-1 * var(--gut));
+	overflow-x: auto;
+	scrollbar-width: none;
+	scroll-padding-inline: var(--gut);
+}
+
+.who-row::-webkit-scrollbar {
+	display: none;
+}
+
+.who-in {
+	display: flex;
+	gap: 8px;
+	width: max-content;
+	padding: 2px var(--gut) 6px;
+}
+
+.who-in .chip {
+	white-space: nowrap;
+}
+
+.who-line {
+	margin: 0;
+	color: var(--graphite);
+	font-size: var(--fs-label);
+	line-height: 1.45;
+}
+
+.who-line b {
+	color: var(--ink);
+}
+
+@media (min-width: 768px) {
+	.who-row {
+		margin-inline: 0;
+		overflow: visible;
+	}
+	.who-in {
+		flex-wrap: wrap;
+		width: auto;
+		padding-inline: 0;
+	}
+}
+
 /* ================= 4.13 Sticky action bar ================= */
 #sticky:empty {
 	display: none;
@@ -3245,9 +3529,6 @@ body.stk-away .stk {
 .abox .btns {
 	margin-top: 12px;
 }
-#aside .abox:first-child {
-	margin-top: var(--sec);
-}
 
 @media (max-width: 1279px) {
 	#aside .abox + .abox {
@@ -3255,9 +3536,10 @@ body.stk-away .stk {
 	}
 }
 
-@media (min-width: 1280px) {
-	body.has-aside #aside .abox:first-child {
-		margin-top: 0;
+@media (max-width: 1280px) {
+	#aside {
+		padding-bottom: calc(var(--sec) / 2);
+		margin-top: calc(-1 * (var(--sec) / 2));
 	}
 }
 
@@ -3925,4 +4207,162 @@ h3,
 	#rail .dl-theme {
 		min-height: 48px;
 	}
+}
+
+/* ================= Phase 2, finding (docs/specs/community-kept-directory.md) ================= */
+/* The sport row wraps: the chosen sport first, then the most listed here, then "More sports".
+   Phones show two rows of four; wider screens up to two rows. No sideways scroll (audit 11). */
+.sbar.is-wrap {
+	margin-inline: 0;
+	overflow: visible;
+	-webkit-mask-image: none;
+	mask-image: none;
+}
+
+.sbar.is-wrap .sb-list {
+	display: grid;
+	grid-template-columns: repeat(4, minmax(0, 1fr));
+	gap: 4px 0;
+	width: auto;
+	padding: 4px 0;
+	margin: 0;
+	list-style: none;
+}
+
+.sbar.is-wrap .sb-item {
+	width: auto;
+	min-width: 0;
+	max-width: none;
+}
+
+.sbar.is-wrap .sb-item--also {
+	height: auto;
+	align-self: center;
+	padding: 0 4px;
+}
+
+.sbar.is-wrap .is-more {
+	display: none;
+}
+
+.sbar.is-wrap .av--bar {
+	width: 48px;
+	height: 48px;
+}
+
+.sbar.is-wrap .sb-link {
+	gap: 6px;
+	padding-bottom: 8px;
+}
+
+.sbar.is-wrap .sb-label {
+	font-size: 14px;
+}
+
+@media (min-width: 768px) {
+	.sbar.is-wrap .sb-list {
+		grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+	}
+	.sbar.is-wrap .is-more {
+		display: flex;
+	}
+	.sbar.is-wrap .is-more-d {
+		display: none;
+	}
+	.sbar.is-wrap .av--bar {
+		width: 56px;
+		height: 56px;
+	}
+}
+
+/* Filters: one button (with how many are on) that opens How far and Who it's for in place. */
+.fx-btn {
+	gap: 8px;
+	padding: 0 12px 0 16px;
+	font-weight: 700;
+}
+
+.fx-btn .ic {
+	transition: rotate 0.15s;
+}
+
+.fx-btn[aria-expanded="true"] .ic {
+	rotate: 180deg;
+}
+
+.fx-n {
+	display: inline-grid;
+	place-items: center;
+	min-width: 24px;
+	height: 24px;
+	padding: 0 6px;
+	border-radius: 12px;
+	background: var(--ink);
+	color: var(--paper);
+	font-size: 14px;
+	font-weight: 700;
+}
+
+.fx-panel {
+	padding: 20px 16px 12px;
+	border: 1px solid var(--line);
+	border-radius: var(--r-l);
+	background: var(--mist);
+	margin-top: 16px;
+}
+
+.fx-panel > * + * {
+	margin-top: 12px;
+}
+
+.fx-panel .who-row {
+	margin-inline: 0;
+	overflow: visible;
+}
+
+.fx-panel .who-in {
+	flex-wrap: wrap;
+	width: auto;
+	padding-inline: 0;
+}
+
+.fx-panel .who-in .chip {
+	white-space: normal;
+}
+
+/* "Multi-sport organizations nearby that may offer skiing", under an empty sport. */
+.may .rows {
+	margin-top: 12px;
+}
+
+/* State tiles: at least 44 by 44 on phones, where they wrap A to Z (the map shape needs room). */
+@media (max-width: 767px) {
+	.tm-grid {
+		grid-template-columns: repeat(auto-fill, minmax(44px, 1fr));
+		gap: 4px;
+	}
+	.tile {
+		grid-column: auto !important;
+		grid-row: auto !important;
+		min-width: 44px;
+		min-height: 44px;
+	}
+}
+
+/* UserWay (loaded with data-position 3, bottom right, small): above the phone's sticky bar. */
+body.has-sticky .uwy.userway_p3 .userway_buttons_wrapper {
+	bottom: calc(var(--stk-h, 0px) + 12px) !important;
+}
+
+/* "Running this season near you" (events with no dates, a sport's Events tab). */
+.run .rows {
+	margin-top: 12px;
+}
+
+.run-form {
+	margin-top: 16px;
+	max-width: 560px;
+	padding: 20px;
+	background: var(--mist);
+	border-radius: var(--r-l);
 }

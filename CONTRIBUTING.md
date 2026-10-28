@@ -29,6 +29,7 @@ Thank you for being here. Adaptive Sports Near Me is built in public, and you do
 
 - **Accessibility comes first.** We aim for [WCAG 2.2 AA](https://www.w3.org/TR/WCAG22/). Everything works with a keyboard and a screen reader, and text is readable in light and dark mode.
 - **Plain words.** Write like a person: short sentences, no jargon, no dashes in what people read. An **organization** is who runs things; a **program** is what it offers, like wheelchair basketball.
+- **Mention people on purpose.** On GitHub, `@name` notifies whoever owns that username. Write roles and AI agents in plain words ("the CRO review"), never as `@cro`. Tag a maintainer only when you need them.
 - **Only true claims.** Never invent a listing's details. If we don't know, the site says so.
 - **Privacy.** Listings show a city and state. An organization's address, phone and email show only when the organization says yes. Never commit anyone's contact details, even in test data.
 - **No money asks.** This site never asks for donations. That lives on [adapttolife.org](https://adapttolife.org).

@@ -13,9 +13,6 @@ import {
 function database() {
   const sqlite = new DatabaseSync(":memory:");
   sqlite.exec(readFileSync(new URL("../db/schema.sql", import.meta.url), "utf8"));
-  sqlite.exec(`CREATE TABLE organization_login_tokens (id TEXT PRIMARY KEY, token_hash TEXT UNIQUE, email TEXT, expires_at TEXT, used_at TEXT, created_at TEXT);
-    CREATE TABLE organization_sessions (id TEXT PRIMARY KEY, email TEXT, expires_at TEXT, revoked_at TEXT, created_at TEXT);
-    CREATE TABLE events (id TEXT PRIMARY KEY, title TEXT NOT NULL, description TEXT NOT NULL DEFAULT '', org_id TEXT, sport_key TEXT, venue TEXT, city TEXT, state TEXT, url TEXT, starts_at TEXT NOT NULL, ends_at TEXT, all_day INTEGER NOT NULL DEFAULT 0, status TEXT NOT NULL DEFAULT 'scheduled', is_public INTEGER NOT NULL DEFAULT 1, source TEXT NOT NULL DEFAULT 'admin', created_at TEXT NOT NULL, updated_at TEXT NOT NULL);`);
   const db = { prepare(sql) {
     let values = []; const statement = sqlite.prepare(sql);
     return {
@@ -48,12 +45,15 @@ test("a manager can manage only programs and events linked to their organization
     const orgId = "9fd14fc2-5d5d-472d-a0ca-a0a1de7651f6";
     sqlite.prepare("INSERT INTO organizations (id,name,claim_email,created_at,updated_at) VALUES (?,?,?,?,?)")
       .run(orgId, "Example Organization", "manager@example.test", "2026", "2026");
-    const program = await createManagedProgram(db, orgId, "manager@example.test", { name: "Wheelchair Tennis", sport_key: "tennis", city: "Troy", state: "NY", is_public: 1 });
+    const program = await createManagedProgram(db, orgId, "manager@example.test", { name: "Wheelchair Tennis", sport: "Tennis", sport_key: "tennis", sports_json: '["tennis","basketball"]', city: "Troy", state: "NY", is_public: 1 });
     assert.equal(program.state_name, "New York");
+    assert.equal(program.sports_json, '["tennis","basketball"]');
     assert.equal(sqlite.prepare("SELECT verification_status FROM programs WHERE id = ?").get(program.id).verification_status, "verified");
     assert.equal((await managedOrganizationPrograms(db, orgId, "manager@example.test")).length, 1);
-    const changedProgram = await updateManagedProgram(db, orgId, program.id, "manager@example.test", { name: "Tennis clinic", is_public: 0 });
+    const changedProgram = await updateManagedProgram(db, orgId, program.id, "manager@example.test", { name: "Tennis clinic", sport: "Basketball", sport_key: "basketball", sports_json: '["basketball","tennis"]', is_public: 0 });
     assert.equal(changedProgram.name, "Tennis clinic");
+    assert.equal(changedProgram.sport_key, "basketball");
+    assert.equal(changedProgram.sports_json, '["basketball","tennis"]');
     assert.equal(changedProgram.is_public, 0);
     assert.equal(await updateManagedProgram(db, orgId, program.id, "other@example.test", { name: "Nope" }), null);
     assert.equal(await deleteManagedProgram(db, orgId, program.id, "manager@example.test"), true);

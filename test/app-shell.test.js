@@ -117,7 +117,8 @@ test("the shell has what the Worker and the app rely on", () => {
   assert.ok(!SHELL.includes("challenges.cloudflare.com") && !SHELL.includes("cdn.userway.org"));
   assert.match(APP, /const TURNSTILE_SRC = "https:\/\/challenges\.cloudflare\.com\/turnstile\/v0\/api\.js\?render=explicit";/);
   assert.match(between(APP, "function turnstileApi() {", "\n}\n"), /ensureTurnstile\(\);/);
-  assert.match(APP, /loadScript\(USERWAY_SRC, \{ "data-account": "sFogOSJsXe" \}\)/);
+  assert.match(APP, /loadScript\(USERWAY_SRC, USERWAY_ATTRS\)/);
+  assert.match(APP, /USERWAY_ATTRS = \{ "data-account": "sFogOSJsXe", "data-position": "3", "data-size": "small" \}/);
   assert.ok(head.includes('<script type="module" src="/app/app.js"></script>'));
 });
 

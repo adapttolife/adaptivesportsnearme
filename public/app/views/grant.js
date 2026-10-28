@@ -52,7 +52,7 @@ export async function render(ctx) {
   const hero = `<div class="gp-hero">${A.plate("grant", { kind: "hero", keepText: true, inner: heroInner })}</div>`;
 
   // 2. Amount, name, source.
-  const head = `<div class="gp-head">${gi.amount ? `<p class="gp-amt num">${A.esc(gi.amount)}</p>` : ""}<h1 tabindex="-1">${A.esc(g.name)}</h1><p class="gp-from">From ${A.esc(source)}</p>${gi.closed ? `<p class="tags"><span class="tag tag--muted">Closed for now</span></p>` : ""}</div>`;
+  const head = `<div class="gp-head">${gi.amount ? `<p class="gp-amt num">${A.esc(gi.amount)}</p>` : ""}<h1 tabindex="-1">${A.esc(g.name)}</h1><div class="btns">${A.saveButton("grants", g.id)}</div><p class="gp-from">From ${A.esc(source)}</p>${gi.closed ? `<p class="tags"><span class="tag tag--muted">Closed for now</span></p>` : ""}</div>`;
 
   // 3. Facts.
   const facts = `<dl class="facts">
@@ -109,6 +109,7 @@ export async function render(ctx) {
   };
 }
 
-export function mount() {
+export function mount(root) {
+  A.mountSaveButtons(root);
   return () => {};
 }

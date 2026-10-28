@@ -88,15 +88,6 @@ test("the repair is idempotent — repaired copy never needs repairing again", (
   }
 });
 
-test("a memo can never be published through the admin apply whitelist", async () => {
-  // Guards the contract at the boundary the pipeline actually writes through.
-  const src = await import("node:fs").then((fs) =>
-    fs.readFileSync(new URL("../src/admin.js", import.meta.url), "utf8")
-  );
-  assert.match(src, /rejectMemoDescription\(fields\)/, "new-org path is unguarded");
-  assert.match(src, /rejectMemoDescription\(applyFields\)/, "existing-org apply path is unguarded");
-});
-
 test("internal_notes is never exposed by the public API", async () => {
   const src = await import("node:fs").then((fs) =>
     fs.readFileSync(new URL("../src/data.js", import.meta.url), "utf8")
@@ -209,9 +200,10 @@ test("navigation labels are not organisations", () => {
   }
 });
 
-test("a navigation label cannot be approved into the directory", async () => {
+test("the retained admin backend rejects operator notes and navigation labels", async () => {
   const src = await import("node:fs").then((fs) =>
-    fs.readFileSync(new URL("../src/admin.js", import.meta.url), "utf8")
+    fs.readFileSync(new URL("../src/admin-access.js", import.meta.url), "utf8")
   );
-  assert.match(src, /looksLikeNavigationLabel\(fields\.name\)/, "new-org path is unguarded");
+  assert.match(src, /checkPublicDescription\(value\.description\)/, "description guard is missing");
+  assert.match(src, /looksLikeNavigationLabel\(value\[entity\.name\]\)/, "name guard is missing");
 });

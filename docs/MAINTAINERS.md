@@ -47,6 +47,48 @@ directory ordering, case-insensitive admin ordering, source linkage and pending
 review ordering. Building indexes consumes some reads/writes once; subsequent
 writes also maintain them.
 
+## Programs that come back
+
+`db/migrations/0015_programs_that_come_back.sql` adds when a program comes back
+(`programs.kind`, `seasons_json`, `usual_month`, `first_year`, `slug`, `listing`),
+links a year's dates to its program (`events.program_id`, `events.recap_url`), and
+the team-only `organization_activity` log
+([docs/specs/programs-that-come-back.md](specs/programs-that-come-back.md)).
+It only adds, and every existing program keeps today's behaviour. The site reads
+the same before and after it runs (`src/schema-probe.js`), so it can go before or
+after the deploy. Run it once per database (a second run stops at "duplicate
+column name", harmlessly):
+
+```sh
+npx wrangler d1 execute asnm-db-staging --config wrangler.preview.json --remote --file db/migrations/0015_programs_that_come_back.sql
+npx wrangler d1 execute asnm-db --config wrangler.json --remote --file db/migrations/0015_programs_that_come_back.sql
+```
+
+`db/maintenance/yearly_spooky_spokes.sql` then adds the first yearly event page
+(`/events/spooky-spokes`: The Pickle Lodge, Spooky Spokes and its three years,
+links only). It is safe to run twice.
+
+## Accounts and saved items
+
+`db/migrations/0016_profile_saved_items.sql` adds `profile_login_tokens` (one-time
+email sign-in links for profiles) and `profile_saved_items` (saved organizations,
+programs, events and grants), and copies every existing row from
+`profile_favorites` into `profile_saved_items`.
+`db/migrations/0017_profile_saved_sports.sql` adds `profile_saved_sports`.
+
+Both only add, and both are safe to run twice (`IF NOT EXISTS`, `INSERT OR IGNORE`).
+**Run both on a database before the code that serves `/account` reaches it.** There is
+no fallback: without these tables a signed-in `GET /api/profile` (and
+`/api/profile-auth/session`) returns 500, and sign-in links and saving fail. Run 0016
+before 0017, staging first, then production:
+
+```sh
+npx wrangler d1 execute asnm-db-staging --config wrangler.preview.json --remote --file db/migrations/0016_profile_saved_items.sql
+npx wrangler d1 execute asnm-db-staging --config wrangler.preview.json --remote --file db/migrations/0017_profile_saved_sports.sql
+npx wrangler d1 execute asnm-db --config wrangler.json --remote --file db/migrations/0016_profile_saved_items.sql
+npx wrangler d1 execute asnm-db --config wrangler.json --remote --file db/migrations/0017_profile_saved_sports.sql
+```
+
 ## Organization management access
 
 `db/migrations/0008_organization_access.sql` adds `organizations.claim_email`
@@ -66,9 +108,8 @@ request a one-time email link at `POST /api/org-auth/request-link`; authenticate
 sessions can read and update only organizations whose `claim_email` matches the
 verified address through `/api/organizations/:id/manage`.
 
-Staff assign or clear a verified claim address with the existing admin bearer key:
-`PATCH /api/admin/organizations/:id/claim-email` and a JSON body containing
-`claim_email`. This is intentionally separate from the public organization email.
+Staff assign or clear a verified claim address in the passwordless `/admin`
+dashboard. This is intentionally separate from the public organization email.
 
 Cloudflare's free allowance is **5 million rows read per day per account**,
 shared across databases, not five million for each staging/production database.
@@ -130,9 +171,9 @@ public/manifest.json   PWA manifest (installable, mobile + desktop)
 public/sw.js           service worker (offline shell, network-first API)
 src/index.js           Worker: routing, forms (beehiiv, shared intake), config, cron entry
 src/data.js            /api/programs /api/orgs/:id /api/stats (D1 reads + freshness decay)
-src/pipeline.js        cron lanes: validate (link liveness) + enrich (contact scrape)
-src/admin.js           /api/admin/* review queue (ADMIN_KEY bearer)
-db/schema.sql          D1 schema (ported from adaptivesportsnearme-data's Postgres design)
+src/pipeline.js        cron lanes: validate every 2h; dispatch hourly rotates enrich, classify, geocode, resolve (src/lanes/)
+src/admin-access.js    /api/admin-auth/* and /api/admin-data/* passwordless admin dashboard
+db/schema.sql          D1 schema, dumped from the live asnm-db (regenerate, don't hand-edit)
 scripts/pg-to-d1.py    one-time migration: local Postgres → cleaned SQL → D1
 wrangler.json          production deployment plus named staging environment
 ```
@@ -144,16 +185,20 @@ actions have real effects while directory, profile, and intake database writes
 stay in the staging database.
 
 **Core invariant (kept from the original Postgres design):** pipeline lanes *propose*
-changes into `review_queue`; a human approves via `/api/admin/queue/:id` before anything
-touches `organizations`. The one direct write is `last_ok_at` (liveness evidence, feeds
-the freshness score — half-life 45 days, computed in the Worker).
+changes into `review_queue`; a human approves them before anything touches `organizations`.
+The old approve screen (`src/admin.js`, `/api/admin/*`) was removed in October 2026, and
+nothing replaces it yet: `/admin` today reviews user submissions, not lane proposals. Until a
+replacement ships, nothing can approve `review_queue` proposals, so they pile up as `pending`.
+The direct writes are two evidence columns, both set by validate:
+`last_ok_at` (liveness evidence, feeds the freshness score — half-life 45 days, computed in
+the Worker) and `last_checked_at` (stale-first ordering). See the `src/pipeline.js` header.
 
 **Environments:**
 
 | | prod (`adaptivesportsnearme`) | staging version (`adaptivesportsnearme`) |
 |---|---|---|
 | URL | adaptivesportsnearme.com | staging-adaptivesportsnearme.adapt-to-life.workers.dev |
-| Gate | `PRELAUNCH=true` (teaser + modal) | `PRELAUNCH=false` (full directory) |
+| Gate | `PRELAUNCH=false` (full directory) | `PRELAUNCH=false` (full directory) |
 | D1 | asnm-db + atl-intake | asnm-db-staging (DB + INTAKE) |
 | Crons | validate every 2h / dispatch hourly | None (HTTP-only entrypoint) |
 | Deploys from | `main`, explicit, locked | `staging` |
@@ -273,9 +318,8 @@ settings, DNS, and certificate status must also be checked in Cloudflare.
 ## Secrets (per worker, via `wrangler secret put`)
 
 `BEEHIIV_API_KEY`, `TURNSTILE_SECRET_KEY`, `GMAIL_CLIENT_ID`, `GMAIL_CLIENT_SECRET`,
-`GMAIL_REFRESH_TOKEN`, `PROFILE_SIGNING_KEY`, `ORG_AUTH_SIGNING_KEY`, and `ADMIN_KEY`
-(enables `/api/admin/*`; unset = admin disabled, 401). `BEEHIIV_PUBLICATION_ID` is a
-variable in `wrangler.json`.
+`GMAIL_REFRESH_TOKEN`, `PROFILE_SIGNING_KEY`, `ORG_AUTH_SIGNING_KEY`.
+`BEEHIIV_PUBLICATION_ID` is a variable in `wrangler.json`.
 
 `adaptivesportsnearme` is one Worker for production and the staging previews: set its
 secrets the way [Deploy](#deploy) describes, never in the Cloudflare dashboard. `asnm-gate`
@@ -284,9 +328,11 @@ is a separate Worker with no previews: `npx wrangler secret put NAME --config wr
 ## Maintaining the data
 
 - Cron lanes run on their own; results land in `pipeline_runs`, evidence in `link_checks`,
-  proposals in `review_queue`.
-- Review: `GET /api/admin/queue`, decide with `POST /api/admin/queue/:id {"action":"approve"}`.
-- Manual lane run: `POST /api/admin/run/validate` (or `enrich`).
+  proposals in `review_queue`. There is no screen to approve those proposals since the old
+  `/api/admin/*` API was removed, so they accumulate until a replacement ships.
+- Review user submissions in `/admin`; admins sign in with an `@adaptivesportsnearme.com`
+  or `@faisaln.com` passwordless link.
+- Cron lanes run on schedule; the retired bearer-key API no longer exposes manual lane triggers.
 - Re-seed from Postgres: `scripts/pg-to-d1.py --out out/d1-seed.sql`, then
   `cfrun wrangler d1 execute asnm-db-staging --remote --file out/d1-seed.sql -y`.
 
@@ -300,7 +346,7 @@ Students: start with [docs/STUDENTS.md](STUDENTS.md). Short version:
 - Branch off `staging`.
 - Open a pull request **into `staging`**.
 - Feature/fix PRs never target `main`. Only the project lead opens a separately approved `staging` → `main` release PR after staging acceptance.
-- Never deploy production (`asnm`). Never write `asnm-db`. Live public count stays 1,544.
+- Never deploy production (`adaptivesportsnearme`). Never write `asnm-db`. Live public count stays 2,593.
 - Tester: https://staging-adaptivesportsnearme.adapt-to-life.workers.dev
 - Live (locked): https://adaptivesportsnearme.com
 

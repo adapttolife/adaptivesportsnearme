@@ -411,3 +411,403 @@
 		border: 1px solid CanvasText;
 	}
 }
+
+/* Confirm your listing, "I'm with this organization": your sports, then yearly events. */
+.v-forms .fm-run[hidden] {
+	display: none;
+}
+
+.v-forms .fm-run > .fm-set,
+.v-forms .fm-run + .fm-set {
+	margin-top: 16px;
+}
+
+.v-forms .fm-sports .sck,
+.v-forms .fm-yearly .yr {
+	margin-top: 16px;
+}
+
+.v-forms .fm-yearly .yr-row:first-child {
+	margin-top: 0;
+}
+
+/* ================= The one-minute check-up (/update/<id>) =================
+   One question per screen (docs/specs/community-kept-directory.md): each screen is a
+   section of one form, the answer buttons are 48px and up, and "Still right" is the big one. */
+.v-forms .ck-form .ck-step[hidden],
+.v-forms .ck-form .ck-edit[hidden],
+.v-forms .ck-form [data-yearly-box][hidden],
+.v-forms .ck-form .ck-none[hidden],
+.v-forms .fm-listing[hidden] {
+	display: none;
+}
+
+.v-forms .ck-back {
+	min-height: 48px;
+	margin: -8px 0 4px -4px;
+	gap: 6px;
+	text-decoration: none;
+	font-size: 16px;
+}
+
+.v-forms .ck-back:hover span {
+	text-decoration: underline;
+	text-underline-offset: 3px;
+}
+
+.v-forms .ck-h {
+	font-size: var(--fs-h3);
+	line-height: 1.25;
+	outline: none;
+}
+
+.v-forms .ck-h:focus-visible {
+	box-shadow: var(--focus);
+	border-radius: var(--r-s);
+}
+
+.v-forms .ck-count {
+	display: block;
+	margin-bottom: 2px;
+	font-size: 15px;
+	font-weight: 700;
+	color: var(--muted);
+}
+
+.v-forms .ck-count:empty {
+	display: none;
+}
+
+.v-forms .ck-p,
+.v-forms .ck-q {
+	margin-top: 8px;
+	font-size: 16px;
+	line-height: 1.45;
+	color: var(--graphite);
+}
+
+.v-forms .ck-q {
+	font-weight: 700;
+	color: var(--ink);
+}
+
+/* "Here's what families see": the card, then the three answers */
+.v-forms .ck-card {
+	margin-top: 10px;
+	padding: 12px 16px 4px;
+	border: 1px solid var(--line-strong);
+	border-radius: var(--r-l);
+	background: var(--paper);
+}
+
+.v-forms .ck-name {
+	font-size: 18px;
+	font-weight: 800;
+	line-height: 1.3;
+}
+
+.v-forms .ck-dl > div {
+	display: grid;
+	grid-template-columns: 112px minmax(0, 1fr);
+	gap: 10px;
+	padding: 5px 0;
+	border-top: 1px solid var(--line);
+	font-size: 16px;
+	line-height: 1.35;
+}
+
+.v-forms .ck-dl > div:first-child {
+	margin-top: 6px;
+}
+
+.v-forms .ck-dl dt {
+	font-weight: 700;
+	color: var(--graphite);
+}
+
+.v-forms .ck-dl dd {
+	min-width: 0;
+	overflow-wrap: anywhere;
+}
+
+.v-forms .ck-line {
+	display: block;
+}
+
+.v-forms .ck-empty {
+	color: var(--muted);
+	font-style: italic;
+}
+
+.v-forms .ck-answers,
+.v-forms .ck-two,
+.v-forms .ck-reasons,
+.v-forms .ck-rel {
+	display: grid;
+	gap: 8px;
+	margin-top: 14px;
+}
+
+.v-forms .ck-big {
+	width: 100%;
+	min-height: 56px;
+	font-size: 17px;
+}
+
+.v-forms .ck-stop {
+	justify-self: center;
+	min-height: 48px;
+	font-size: 16px;
+	color: var(--graphite);
+}
+
+@media (min-width: 600px) {
+	.v-forms .ck-two {
+		grid-template-columns: 1fr 1fr;
+	}
+	.v-forms .ck-answers {
+		grid-template-columns: 1fr 1fr;
+	}
+	.v-forms .ck-stop {
+		grid-column: 1 / -1;
+		justify-self: start;
+	}
+}
+
+/* A fact: what's on file, then Still right / Change it */
+.v-forms .ck-now {
+	margin-top: 12px;
+	padding: 12px 16px;
+	border-radius: var(--r-l);
+	background: var(--mist);
+}
+
+.v-forms .ck-lab {
+	font-size: 14px;
+	font-weight: 700;
+	color: var(--graphite);
+}
+
+.v-forms .ck-val {
+	margin-top: 2px;
+	font-size: 18px;
+	font-weight: 700;
+	line-height: 1.35;
+	overflow-wrap: anywhere;
+}
+
+.v-forms .ck-step.is-editing .ck-two [data-fact="right"] {
+	background: var(--paper);
+	color: var(--ink);
+	border-color: var(--line-strong);
+}
+
+.v-forms .ck-step.is-editing .ck-two [data-fact="change"] {
+	background: var(--orange-soft);
+	border: 1.5px solid var(--orange);
+}
+
+/* Sports on the listing: the editor shows them, so the line above it steps aside. */
+.v-forms .ck-step[data-step="sports"].is-editing .ck-now,
+.v-forms .ck-step[data-step="who"].is-editing .ck-now {
+	display: none;
+}
+
+.v-forms .ck-edit {
+	margin-top: 16px;
+	padding-top: 4px;
+}
+
+.v-forms .ck-edit > .field:first-child,
+.v-forms .ck-edit > .fm-two:first-child .field {
+	margin-top: 0;
+}
+
+.v-forms .ck-next {
+	margin-top: 20px;
+}
+
+.v-forms .ck-chips {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin-top: 10px;
+}
+
+.v-forms .ck-chip {
+	min-height: 48px;
+	font-size: 16px;
+	cursor: pointer;
+	font-family: inherit;
+}
+
+.v-forms .ck-chip .ic {
+	display: none;
+}
+
+.v-forms .ck-chip[aria-pressed="true"] .ic {
+	display: block;
+}
+
+.v-forms .ck-chip:focus-visible,
+.v-forms .ck-opt:focus-visible,
+.v-forms .ck-x:focus-visible {
+	box-shadow: var(--focus);
+	outline: none;
+}
+
+/* The sports on file, each with its seasons right under it */
+.v-forms .ck-pick {
+	position: relative;
+	margin-top: 10px;
+	padding-top: 10px;
+}
+
+.v-forms .ck-picked > .ck-pick:first-child {
+	margin-top: 4px;
+	border-top: 0;
+	padding-top: 0;
+}
+
+.v-forms .ck-pick > legend {
+	padding-right: 56px;
+	line-height: 48px;
+}
+
+.v-forms .ck-pick .sck-chips {
+	clear: both;
+	padding-top: 0;
+}
+
+.v-forms .ck-pick .sck-chip {
+	min-height: 48px;
+	padding: 0 12px 0 10px;
+}
+
+.v-forms .ck-x {
+	position: absolute;
+	top: 10px;
+	right: 0;
+	display: grid;
+	place-items: center;
+	width: 48px;
+	height: 48px;
+	border: 1px solid var(--line-strong);
+	border-radius: 50%;
+	background: var(--paper);
+	color: var(--ink);
+	cursor: pointer;
+}
+
+.v-forms .ck-picked > .ck-pick:first-child .ck-x {
+	top: 0;
+}
+
+.v-forms .ck-x:hover {
+	border-color: var(--ink);
+}
+
+.v-forms .ck-none {
+	margin-top: 8px;
+	color: var(--muted);
+}
+
+.v-forms .ck-add {
+	margin-top: 18px;
+}
+
+.v-forms .ck-add input {
+	min-height: 48px;
+}
+
+.v-forms .ck-found {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin-top: 8px;
+}
+
+.v-forms .ck-found:empty {
+	display: none;
+}
+
+.v-forms .ck-found-chip {
+	min-height: 48px;
+	font-size: 16px;
+	font-family: inherit;
+	cursor: pointer;
+}
+
+.v-forms .ck-found-chip:focus-visible {
+	box-shadow: var(--focus);
+	outline: none;
+}
+
+/* One-tap reasons and the "how do you know them" choice */
+.v-forms .ck-reason {
+	justify-content: space-between;
+	text-align: left;
+	white-space: normal;
+}
+
+.v-forms .ck-opt {
+	width: 100%;
+	justify-content: space-between;
+	text-align: left;
+	color: var(--ink);
+	font-family: inherit;
+}
+
+.v-forms .ck-yearly {
+	margin-top: 12px;
+}
+
+.v-forms .ck-yearly .yr {
+	margin-top: 4px;
+}
+
+.v-forms .ck-step .fm-submit {
+	margin-top: 20px;
+}
+
+.v-forms .ck-step .field textarea {
+	min-height: 96px;
+}
+
+.v-forms .ck-step > .field:first-of-type {
+	margin-top: 12px;
+}
+
+/* The spam check sits above Send, from the moment the form opens (audit finding 13). */
+.v-forms .ts-box:empty {
+	display: none;
+}
+
+.v-forms .ts-box {
+	margin-top: 16px;
+}
+
+@media (forced-colors: active) {
+	.v-forms .ck-chip[aria-pressed="true"] {
+		border: 2px solid Highlight;
+	}
+	.v-forms .ck-now,
+	.v-forms .ck-card {
+		border: 1px solid CanvasText;
+	}
+}
+
+/* While a fact is being changed, Still right / Change it share one row, so the editor gets the screen. */
+.v-forms .ck-step.is-editing .ck-two {
+	grid-template-columns: 1fr 1fr;
+}
+
+.v-forms .ck-step.is-editing .ck-two .ck-big {
+	min-height: 48px;
+	font-size: 16px;
+}
+
+/* Seven reasons fit one phone screen: a little shorter than the other answers, still 48px and up. */
+.v-forms .ck-reasons .ck-big {
+	min-height: 50px;
+}

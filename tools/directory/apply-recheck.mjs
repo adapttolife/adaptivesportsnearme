@@ -59,7 +59,7 @@ if (!apply) {
   console.log("dry-run. pass --apply to write tester. live stays locked.");
   process.exit(0);
 }
-// LIVE LOCK: this path writes asnm-db-staging only. Public live count must stay 1544.
+// LIVE LOCK: this path writes asnm-db-staging only. Public live count must stay 2593.
 if (LIVE_DB === "asnm-db-staging") {
   console.error("apply-recheck: live/staging names collided — refuse");
   process.exit(1);

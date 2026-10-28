@@ -40,10 +40,10 @@ function hero() {
 
 function sports(D) {
   const counts = {};
-  for (const p of D.items) counts[p.key] = (counts[p.key] || 0) + 1;
+  for (const p of D.items) for (const k of A.sportsOf(p)) counts[k] = (counts[k] || 0) + 1;
   const tiles = GRID.map((key, order) => ({ key, order, count: counts[key] || 0 }))
     .sort((a, b) => b.count - a.count || a.order - b.order)
-    .map(({ key, count }) => `<li><a class="st" href="/sports/${A.esc(key)}" data-hero-sport="${A.esc(key)}">${A.plate(key, { kind: "tile", cls: "st-plate" })}<span class="st-name">${A.esc(A.sportName(key))}</span><span class="st-n num">${count} programs</span></a></li>`).join("");
+    .map(({ key, count }) => `<li><a class="st" href="/sports/${A.esc(key)}" data-hero-sport="${A.esc(key)}">${A.plate(key, { kind: "tile", cls: "st-plate" })}<span class="st-name">${A.esc(A.sportName(key))}</span><span class="st-n num">${count === 1 ? "1 program" : count + " programs"}</span></a></li>`).join("");
   const all = `<li><a class="st st--all" href="/sports"><span class="st-allbox">${A.icon("layout-grid", 34)}<b>All sports</b></span><span class="st-name">See every sport</span><span class="st-n">From archery to water skiing</span></a></li>`;
   return `<section class="sec hs" aria-labelledby="hs-h">${A.sectionHead({ title: "Pick a sport", id: "hs-h" })}<ul class="st-grid">${tiles}${all}</ul></section>`;
 }
@@ -82,7 +82,7 @@ function grants(D) {
 
 /* Coming events when there are any (the API returns upcoming only); otherwise the ask. */
 function events(D) {
-  const list = (D.events || []).slice(0, 3);
+  const list = A.upcomingEvents(D.events || []).slice(0, 3);
   const line = list.length ? "Clinics, tryouts, games and meetups coming up." : "Know of a clinic, tryout or game day coming up? Tell us and we'll check it.";
   const body = list.length ? `<div class="ev-list">${list.map(A.eventCard).join("")}</div>` : "";
   const btn = list.length ? `<a class="btn band-all" href="/events">See all events</a>` : `<a class="btn band-all" href="/add/event">Add an event</a>`;
