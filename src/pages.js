@@ -123,7 +123,7 @@ const ROUTES = [
   [/^\/add\/organization\/?$/, () => ({ ...PAGES.addOrganization, noindex: true })],
   [/^\/add\/event\/?$/, () => ({ ...PAGES.addEvent, noindex: true })],
   [/^\/manage(?:\/(?:organizations\/[^/]+(?:\/(?:edit|programs(?:\/new)?|events(?:\/new)?)?)?|programs\/[^/]+|events\/[^/]+))?\/?$/, () => ({ ...PAGES.manage, noindex: true })],
-  [/^\/admin(?:\/queue(?:\/\d+)?|\/(?:organizations|programs|events|grants)(?:\/(?:[0-9a-f-]{36}|new))?)?\/?$/i, () => ({ ...PAGES.admin, noindex: true })],
+  [/^\/admin(?:\/beta-testers|\/queue(?:\/\d+)?|\/(?:organizations|programs|events|grants)(?:\/(?:[0-9a-f-]{36}|new))?)?\/?$/i, () => ({ ...PAGES.admin, noindex: true })],
   [/^\/account\/?$/, () => ({ ...PAGES.account, noindex: true })],
   [new RegExp(`^/update/(${UUID})/?$`, "i"), () => ({ ...PAGES.update, noindex: true })],
   [/^\/help\/?$/, () => ({ ...PAGES.help })],
@@ -173,7 +173,7 @@ const VIEWS = [
   [/^\/states$/, "states"], [/^\/states\/[^/]+$/, "state"], [/^\/organizations$/, "organizations"], [/^\/organizations\/[^/]+$/, "program"], [/^\/programs$/, "programs"], [/^\/programs\/[^/]+$/, "program-detail"],
   [/^\/grants$/, "grants"], [/^\/grants\/[^/]+$/, "grant"], [/^\/events$/, "events"], [/^\/events\/[^/]+$/, "event-series"],
   [/^\/(add\/program|add\/organization|add\/event|update\/[^/]+)$/, "forms"], [/^\/manage(?:\/organizations(?:\/[^/]+(?:\/(?:edit|programs(?:\/new)?|events(?:\/new)?)?)?)?|\/programs\/[^/]+|\/events\/[^/]+)?$/, "manage"], [/^\/resources\/veteran-owned-businesses$/, "vob"],
-  [/^\/admin(?:\/queue(?:\/\d+)?|\/(?:organizations|programs|events|grants)(?:\/(?:[0-9a-f-]{36}|new))?)?$/i, "admin"], [/^\/account$/, "account"],
+  [/^\/admin(?:\/beta-testers|\/queue(?:\/\d+)?|\/(?:organizations|programs|events|grants)(?:\/(?:[0-9a-f-]{36}|new))?)?$/i, "admin"], [/^\/account$/, "account"],
   [/^\/letter\/confirmed$/, "letter-confirmed"], [/^\/(help|about|resources|letter|build|privacy|terms)$/, "help"],
 ];
 export function preloadHints(pathname) {

@@ -1,6 +1,6 @@
 import { servePage, robotsTxt, sitemapXml } from "./pages.js";
 import { safeNewsletterSubscribe } from './newsletter.js';
-import { queueFormConfirmation, sendAdminLoginLink, sendOrganizationLoginLink, sendProfileLoginLink } from './email.js';
+import { queueFormConfirmation, sendAdminLoginLink, sendBetaLoginLink, sendOrganizationLoginLink, sendProfileLoginLink } from './email.js';
 import { notifyIntake } from './intake.js';
 // Adaptive Sports Near Me — Worker entry.
 // Serves the static site (env.ASSETS), the D1-backed directory API, the admin
@@ -60,6 +60,11 @@ import {
 import {
   listPosts, getPostBySlug, blogIndexTemplate, blogPostTemplate, blogFallbackTemplate, blogNotFoundTemplate,
 } from "./blog.js";
+import {
+  betaAuthReady, clearBetaCookie, consumeBetaLoginToken, createBetaSession,
+  isBetaTester, issueBetaLoginToken, listBetaTesters, readBetaSession,
+  serializeBetaCookie, setBetaTester,
+} from "./beta-access.js";
 
 const API_CACHE = "public, max-age=300, stale-while-revalidate=600";
 const FEED_CACHE = "public, max-age=300";
@@ -83,7 +88,27 @@ const application = {
       !['adaptivesportsnearme.com', 'www.adaptivesportsnearme.com'].includes(url.hostname)) {
       return json({ ok: false, error: 'This preview is read-only. Use the isolated review environment.' }, 403);
     }
+    const betaGate = await prelaunchGate(request, env, url);
+    if (betaGate) return betaGate;
 
+    if (url.pathname === "/api/beta-auth/request-link") {
+      if (request.method !== "POST") return json({ ok: false, error: "Method not allowed" }, 405);
+      const limited = await formLimited(request, env, "Beta sign-in is temporarily unavailable.");
+      if (limited) return limited;
+      return handleBetaLoginRequest(request, env, url);
+    }
+    if (url.pathname === "/api/beta-auth/verify") {
+      if (request.method !== "GET") return json({ ok: false, error: "Method not allowed" }, 405);
+      return handleBetaLoginVerify(url, env);
+    }
+    if (url.pathname === "/api/beta-auth/session") {
+      if (request.method !== "GET") return json({ ok: false, error: "Method not allowed" }, 405);
+      return handleBetaSession(request, env);
+    }
+    if (url.pathname === "/api/beta-auth/signout") {
+      if (request.method !== "POST") return json({ ok: false, error: "Method not allowed" }, 405);
+      return new Response(JSON.stringify({ ok: true }), { headers: { "Content-Type": "application/json", "Cache-Control": "no-store", "Set-Cookie": clearBetaCookie() } });
+    }
     if (url.pathname === "/api/subscribe") {
       if (request.method !== "POST") return json({ ok: false, error: "Method not allowed" }, 405);
       const limited = await formLimited(request, env, 'Sign-up is temporarily unavailable.');
@@ -166,6 +191,7 @@ const application = {
       if (request.method !== "POST") return json({ ok: false, error: "Method not allowed" }, 405);
       return new Response(JSON.stringify({ ok: true }), { headers: { "Content-Type": "application/json", "Cache-Control": "no-store", "Set-Cookie": clearAdminCookie() } });
     }
+    if (url.pathname === "/api/admin-data/beta-testers") return handleAdminBetaTesters(request, env);
     const adminItem = url.pathname.match(/^\/api\/admin-data\/(organizations|programs|events|grants)(?:\/([0-9a-f-]{36}))?$/i);
     if (adminItem) return handleAdminData(request, env, url, adminItem[1].toLowerCase(), adminItem[2]);
     const adminActivity = url.pathname.match(/^\/api\/admin-data\/organizations\/([0-9a-f-]{36})\/activity$/i);
@@ -911,6 +937,83 @@ async function handleManagedOrganizationItems(request, env, organizationId, kind
     }
     console.error("managed organization item failed", { kind, reason: reason || "unknown" });
     return json({ ok: false, error: "Could not save right now. Please try again." }, 503, ORGANIZATION_AUTH_CACHE);
+  }
+}
+
+const BETA_AUTH_CACHE = "private, no-store";
+
+function betaHtml() {
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Adaptive Sports Near Me beta</title><meta name="robots" content="noindex"><style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#f7f3ec;color:#1a1a1a;font-family:system-ui,sans-serif;padding:24px;box-sizing:border-box}.beta{max-width:540px;width:100%;background:#fff;border:1px solid #d8d1c5;border-radius:15px;padding:clamp(28px,6vw,52px);box-sizing:border-box}.beta p{line-height:1.55;color:#555}.beta label{display:block;font-weight:650;margin-top:24px}.beta input{box-sizing:border-box;width:100%;margin-top:8px;padding:13px 14px;border:1px solid #777;border-radius:8px;font:inherit}.beta button{margin-top:14px;background:#1a1a1a;color:#fff;border:0;border-radius:8px;padding:13px 18px;font:inherit;font-weight:700;cursor:pointer}.beta [role=status]{min-height:1.5em;margin:12px 0 0}</style></head><body><main class="beta"><p>Adaptive Sports Near Me</p><h1>We're in beta.</h1><p>Beta testers can sign in with their approved email address to explore the site.</p><form id="beta-login"><label for="email">Email address</label><input id="email" name="email" type="email" autocomplete="email" required><button type="submit">Email me a sign-in link</button><p role="status" id="status"></p></form></main><script>if(location.pathname!=='/')history.replaceState(null,'','/');document.getElementById('beta-login').addEventListener('submit',async(e)=>{e.preventDefault();const f=e.currentTarget,s=document.getElementById('status');if(!f.reportValidity())return;s.textContent='Sending your sign-in link...';try{const r=await fetch('/api/beta-auth/request-link',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({email:f.email.value})}),b=await r.json();s.textContent=r.ok&&b.ok?'Check your email for a one-time sign-in link.':(b.error||'We could not send a sign-in link.');}catch(_){s.textContent='We could not send a sign-in link.';}});</script></body></html>`;
+}
+
+async function prelaunchGate(request, env, url) {
+  if (env.PRELAUNCH !== "true") return null;
+  const path = url.pathname;
+  const admin = path === "/admin" || path.startsWith("/admin/") || path.startsWith("/api/admin-") || path.startsWith("/api/admin-data/");
+  const beta = path.startsWith("/api/beta-auth/");
+  const asset = /\.(?:css|js|svg|png|jpg|jpeg|webp|ico|woff2?|map)$/i.test(path) || path.startsWith("/app/") || path.startsWith("/assets/");
+  if (admin || beta || asset) return null;
+  const secret = env.BETA_AUTH_SIGNING_KEY || env.ADMIN_AUTH_SIGNING_KEY || env.PROFILE_SIGNING_KEY;
+  const session = betaAuthReady(env) ? await readBetaSession(request, env.DB, secret) : null;
+  if (session) return null;
+  if (path.startsWith("/api/")) return json({ ok: false, error: "Beta access is required." }, 401, BETA_AUTH_CACHE);
+  return new Response(betaHtml(), { headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store", "X-Robots-Tag": "noindex" } });
+}
+
+async function handleBetaLoginRequest(request, env, url) {
+  if (!betaAuthReady(env)) return json({ ok: false, error: "Beta sign-in is temporarily unavailable." }, 503, BETA_AUTH_CACHE);
+  const data = await readBody(request);
+  const email = validEmail(data?.email || data?.em);
+  if (!email) return json({ ok: false, error: "Enter a valid email address." }, 422, BETA_AUTH_CACHE);
+  if (!(await isBetaTester(env.DB, email))) return json({ ok: false, error: "This email does not have beta access." }, 403, BETA_AUTH_CACHE);
+  try {
+    const token = await issueBetaLoginToken(env.DB, email);
+    const link = new URL("/api/beta-auth/verify", url.origin);
+    link.searchParams.set("token", token);
+    await sendBetaLoginLink(env, email, link.toString());
+    return json({ ok: true }, 200, BETA_AUTH_CACHE);
+  } catch (err) {
+    console.error("beta login link failed", { reason: err instanceof Error ? err.message : "unknown" });
+    return json({ ok: false, error: "We could not send a sign-in link. Please try again." }, 503, BETA_AUTH_CACHE);
+  }
+}
+
+async function handleBetaLoginVerify(url, env) {
+  if (!betaAuthReady(env)) return json({ ok: false, error: "Beta sign-in is temporarily unavailable." }, 503, BETA_AUTH_CACHE);
+  try {
+    const email = await consumeBetaLoginToken(env.DB, url.searchParams.get("token") || "");
+    if (!email || !(await isBetaTester(env.DB, email))) return json({ ok: false, error: "This sign-in link has expired, was already used, or no longer has beta access." }, 401, BETA_AUTH_CACHE);
+    const secret = env.BETA_AUTH_SIGNING_KEY || env.ADMIN_AUTH_SIGNING_KEY || env.PROFILE_SIGNING_KEY;
+    const session = await createBetaSession(env.DB, email, secret);
+    return new Response(null, { status: 303, headers: { "Cache-Control": "no-store", Location: "/", "Set-Cookie": serializeBetaCookie(session.id, session.signature) } });
+  } catch (err) {
+    console.error("beta login verification failed", { reason: err instanceof Error ? err.message : "unknown" });
+    return json({ ok: false, error: "We could not sign you in. Please request a new link." }, 503, BETA_AUTH_CACHE);
+  }
+}
+
+async function handleBetaSession(request, env) {
+  if (!betaAuthReady(env)) return json({ ok: false }, 503, BETA_AUTH_CACHE);
+  const secret = env.BETA_AUTH_SIGNING_KEY || env.ADMIN_AUTH_SIGNING_KEY || env.PROFILE_SIGNING_KEY;
+  const session = await readBetaSession(request, env.DB, secret);
+  return session ? json({ ok: true, email: session.email }, 200, BETA_AUTH_CACHE) : json({ ok: false }, 401, BETA_AUTH_CACHE);
+}
+
+async function handleAdminBetaTesters(request, env) {
+  const session = await authorizedAdminSession(request, env);
+  if (!session) return json({ ok: false, error: "Sign in to access the admin dashboard." }, 401, ADMIN_AUTH_CACHE);
+  try {
+    if (request.method === "GET") return json({ ok: true, items: await listBetaTesters(env.DB) }, 200, ADMIN_AUTH_CACHE);
+    if (request.method === "POST") {
+      const data = await readBody(request);
+      const item = await setBetaTester(env.DB, data?.email, data?.enabled !== false && data?.enabled !== 0 && data?.enabled !== "0");
+      return json({ ok: true, item }, 200, ADMIN_AUTH_CACHE);
+    }
+    return json({ ok: false, error: "Method not allowed" }, 405, ADMIN_AUTH_CACHE);
+  } catch (err) {
+    if (err instanceof Error && err.message === "email-invalid") return json({ ok: false, error: "Enter a valid email address." }, 422, ADMIN_AUTH_CACHE);
+    console.error("admin beta tester update failed", { reason: err instanceof Error ? err.message : "unknown" });
+    return json({ ok: false, error: "Beta testers are temporarily unavailable." }, 503, ADMIN_AUTH_CACHE);
   }
 }
 

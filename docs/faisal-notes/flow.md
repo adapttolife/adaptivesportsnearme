@@ -7,21 +7,19 @@
    2. Options for running
       1. Every state
          1. Every month: all 50 states so ~5,000 state-sport combinations
-         2. Expected total: ~60,000 runs per year, ~5,000 runs per month
-         3. For web search, use Searlo
+         2. Expected total: ~60,000 runs per year, ~5,000 runs per month, ~8 runs per hour
       2. Every city
          1. Every month: major cities (~330) so ~33,000 city-sport combinations
          2. Every year: all other cities (~19,500) so ~1,950,000 city-sport combinations
-         3. Expected total: ~2,000,000 runs per year, ~200,000 runs per month
-         4. For web search, use Searlo
+         3. Expected total: ~2,000,000 runs per year, ~200,000 runs per month, ~230 runs per hour
       3. Every county (monthly)
          1. Every month: all ~3,144 counties so ~314,400 county-sport combinations
-         2. Expected total: ~3,150,000 runs per year, ~315,000 runs per month
-         3. For web search, use Searlo
+         2. Expected total: ~3,150,000 runs per year, ~315,000 runs per month, ~365 runs per hour
       4. Every county (yearly)
          1. Every year: all ~3,144 counties so ~314,400 county-sport combinations
-         2. Expected total: ~315,000 runs per year, ~30,000 runs per month
-         3. For web search, use Searlo
+         2. Expected total: ~315,000 runs per year, ~30,000 runs per month, ~40 runs per hour
+      5. Every county (quarterly), every city (biannually), every state (monthly)
+         1. Expected total: ~175,000 runs per month, ~90,000 runs per day, ~8,000 runs per hour
    3. All need Web search, URL crawling, and data processing
    4. Compare searching by state, county, city to see how results compare.
 2. Validation
