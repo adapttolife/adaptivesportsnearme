@@ -1288,7 +1288,7 @@ export function footer() {
 <div><h2 class="ft-h">Browse</h2><ul>${li("States", "/states")}${li("Organizations", "/organizations")}</ul></div>
 <div><h2 class="ft-h">Help build this</h2><ul>${li("Add a program", "/add/program")}${li("Add an event", "/add/event")}${li("Claim your organization", "/help")}</ul></div>
 <div><h2 class="ft-h">About this directory</h2><ul>${li("How we check listings", "/about")}${li("Email updates", "/letter")}${li("Build with us", "/build")}${li("Accessibility", "/about#accessibility")}</ul></div></div>
-<div class="ft-fine"><p class="ft-fine">Made with <span role="img" aria-label="love">❤️</span> by <a href="https://adapttolife.org">Adapt To Life</a>. © 2026 · <a href="/privacy">Privacy</a> · <a href="/terms">Terms</a></p></div></div>`;
+<div class="ft-fine"><p class="ft-fine">Made with <span role="img" aria-label="love">❤️</span> by <a href="https://adapttolife.org">Adapt To Life</a>. Follow along on <a href="https://www.instagram.com/adapt_to_life_org/" target="_blank" rel="noopener">Instagram</a>. © 2026 · <a href="/privacy">Privacy</a> · <a href="/terms">Terms</a></p></div></div>`;
 }
 
 /** Render output for any unknown route, id or key. */
