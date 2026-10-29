@@ -414,12 +414,20 @@
 	margin-top: 12px;
 }
 
-@media (max-width: 380px) {
+/* Phones: three buttons don't fit on one line, so Visit website takes its own full-width
+   line and Save and Something's wrong share the next. Without the wrap, Visit website
+   shrinks to a sliver from 381 px up (seen at 390 px after the Save button joined the row). */
+@media (max-width: 599px) {
 	.v-program-detail .pg-act-row {
 		flex-wrap: wrap;
 	}
-	.v-program-detail .pg-act-row .pg-wrong {
+	.v-program-detail .pg-act-row .pg-full {
 		flex: 1 1 100%;
+	}
+	.v-program-detail .pg-act-row .save-btn,
+	.v-program-detail .pg-act-row .pg-wrong {
+		flex: 1 1 0;
+		min-width: 0;
 	}
 }
 
