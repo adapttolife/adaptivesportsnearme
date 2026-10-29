@@ -61,7 +61,7 @@ export function footerHtml() {
     <div class="foot-brand">
       <a class="brand" href="/"><b>Adaptive Sports Near Me</b></a>
       <p class="tagline">${PRODUCT_LINE}</p>
-      <p class="tagline">Made with <span role="img" aria-label="love">❤️</span> by <a href="https://adapttolife.org" target="_blank" rel="noopener">Adapt To Life</a>.</p>
+      <p class="tagline">Made with <span role="img" aria-label="love">❤️</span> by <a href="https://adapttolife.org" target="_blank" rel="noopener">Adapt To Life</a>. Follow along on <a href="https://www.instagram.com/adapt_to_life_org/" target="_blank" rel="noopener">Instagram</a>.</p>
     </div>
     <div class="foot-cols">
       <div class="foot-col"><h2>Find</h2><a href="/">Programs near you</a><a href="/sports">Sports</a><a href="/grants">Grants</a><a href="/events">Events</a><a href="/resources">Guides</a></div>

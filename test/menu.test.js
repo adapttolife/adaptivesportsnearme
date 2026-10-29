@@ -87,5 +87,6 @@ test("both footers say what the site does and credit Adapt To Life the same way"
     assert.ok(/PRODUCT_LINE/.test(src), `the ${name} footer says the product line from page-meta.js`);
     assert.match(src, /Made with <span role="img" aria-label="love">❤️<\/span> by <a href="https:\/\/adapttolife\.org"[^>]*>Adapt To Life<\/a>\./, `the ${name} footer credits Adapt To Life`);
     assert.ok(!/we don't run them|a project of|open directory/i.test(src), `the ${name} footer drops the old lines`);
+    assert.ok(src.includes('Follow along on <a href="https://www.instagram.com/adapt_to_life_org/" target="_blank" rel="noopener">Instagram</a>.'), `the ${name} footer links Adapt To Life's Instagram`);
   }
 });
