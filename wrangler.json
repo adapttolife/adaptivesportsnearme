@@ -19,11 +19,11 @@
 		"binding": "ASSETS",
 		"not_found_handling": "404-page",
 		"html_handling": "auto-trailing-slash",
-		"run_worker_first": ["/admin", "/admin/*", "/account", "/account/*"]
+		"run_worker_first": ["/*"]
 	},
 	"vars": {
 		"ENV_NAME": "production",
-		"PRELAUNCH": "false",
+		"PRELAUNCH": "true",
 		"BEEHIIV_PUBLICATION_ID": "pub_fb930d38-568a-4d98-b9d2-5f403d117a00",
 		"MAIL_TRANSPORT": "gmail",
 		"GMAIL_FROM": "hello@adaptivesportsnearme.com",
@@ -65,7 +65,7 @@
 				"binding": "ASSETS",
 				"not_found_handling": "404-page",
 				"html_handling": "auto-trailing-slash",
-				"run_worker_first": ["/admin", "/admin/*", "/account", "/account/*"]
+				"run_worker_first": ["/*"]
 			},
 			"vars": {
 				"ENV_NAME": "staging",

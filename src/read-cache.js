@@ -10,6 +10,7 @@ const PUBLIC_PARAMS = {
 const inFlight = new WeakMap();
 
 export async function cachedDirectoryResponse(request, env, load, cache = globalThis.caches?.default) {
+  if (env.ENV_NAME === "production" && env.PRELAUNCH === "true") return load();
   const url = new URL(request.url);
   const params = PUBLIC_PARAMS[url.pathname];
   if (request.method !== 'GET' || !env.DB || !params || !cache) return load();

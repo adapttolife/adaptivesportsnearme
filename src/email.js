@@ -22,6 +22,13 @@ export async function sendAdminLoginLink(env, email, link) {
   return cfSend(env, { from: HOUSE_FROM, to: email, replyTo: HOUSE_REPLY, subject, text, html });
 }
 
+export async function sendBetaLoginLink(env, email, link) {
+  const subject = "Your Adaptive Sports Near Me beta sign-in link";
+  const text = `Use this link to access the Adaptive Sports Near Me beta:\n\n${link}\n\nThis link expires in 15 minutes and can be used once. If you did not request it, you can ignore this email.`;
+  const html = shell(`<p>Use this link to access the Adaptive Sports Near Me beta:</p><p><a href="${esc(link)}">Open the beta</a></p><p>This link expires in 15 minutes and can be used once. If you did not request it, you can ignore this email.</p>`);
+  return cfSend(env, { from: HOUSE_FROM, to: email, replyTo: HOUSE_REPLY, subject, text, html });
+}
+
 export async function sendProfileLoginLink(env, email, link) {
   const subject = "Your Adaptive Sports Near Me sign-in link";
   const text = `Use this link to open your saved items:\n\n${link}\n\nThis link expires in 15 minutes and can be used once. If you did not request it, you can ignore this email.`;

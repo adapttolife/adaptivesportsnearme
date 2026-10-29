@@ -89,6 +89,18 @@ npx wrangler d1 execute asnm-db --config wrangler.json --remote --file db/migrat
 npx wrangler d1 execute asnm-db --config wrangler.json --remote --file db/migrations/0017_profile_saved_sports.sql
 ```
 
+### Release gate for main
+
+1. **Migrations 0015, 0016 and 0017 must be applied on `asnm-db` before any
+   merge to `main`, or at the latest as part of the merge step, never after.**
+   Apply them on `asnm-db-staging` first. Run 0016 before 0017. 0015 has a
+   schema probe fallback and does not depend on them; if it has already run, a
+   second run stops harmlessly at "duplicate column name". 0016 and 0017 have no
+   fallback: without them a signed-in `GET /api/profile` returns 500.
+2. **After a `main` release that includes these migrations, do one signed-in
+   check on production:** sign in with an email link, open `/account`, confirm
+   `GET /api/profile` returns 200, and save one item.
+
 ## Organization management access
 
 `db/migrations/0008_organization_access.sql` adds `organizations.claim_email`
