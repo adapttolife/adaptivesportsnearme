@@ -57,9 +57,7 @@ import {
   getAdminQueueItem, isAdminEmail, issueAdminLoginToken, listAdminItems, listAdminQueue, readAdminSession, saveAdminItem, serializeAdminCookie,
   adminOrganizationActivity, addAdminNote,
 } from "./admin-access.js";
-import {
-  listPosts, getPostBySlug, blogIndexTemplate, blogPostTemplate, blogFallbackTemplate, blogNotFoundTemplate,
-} from "./blog.js";
+import { listPublicBlogPosts, getPublicBlogPost } from './blog.js';
 import {
   betaAuthReady, clearBetaCookie, consumeBetaLoginToken, createBetaSession,
   isBetaTester, issueBetaLoginToken, listBetaTesters, readBetaSession,
@@ -68,8 +66,6 @@ import {
 
 const API_CACHE = "public, max-age=300, stale-while-revalidate=600";
 const FEED_CACHE = "public, max-age=300";
-const BLOG_PAGE_CACHE = "public, max-age=300";
-const BLOG_FALLBACK_CACHE = "public, max-age=60"; // short — self-heals fast once beehiiv/secrets are back
 
 // Single source for cron -> lane routing; must list every schedule in
 // wrangler.json triggers. Unknown crons error loudly instead of misrouting.
@@ -192,7 +188,7 @@ const application = {
       return new Response(JSON.stringify({ ok: true }), { headers: { "Content-Type": "application/json", "Cache-Control": "no-store", "Set-Cookie": clearAdminCookie() } });
     }
     if (url.pathname === "/api/admin-data/beta-testers") return handleAdminBetaTesters(request, env);
-    const adminItem = url.pathname.match(/^\/api\/admin-data\/(organizations|programs|events|grants)(?:\/([0-9a-f-]{36}))?$/i);
+    const adminItem = url.pathname.match(/^\/api\/admin-data\/(organizations|programs|events|grants|blog)(?:\/([0-9a-f-]{36}))?$/i);
     if (adminItem) return handleAdminData(request, env, url, adminItem[1].toLowerCase(), adminItem[2]);
     const adminActivity = url.pathname.match(/^\/api\/admin-data\/organizations\/([0-9a-f-]{36})\/activity$/i);
     if (adminActivity) return handleAdminActivity(request, env, adminActivity[1].toLowerCase());
@@ -293,13 +289,16 @@ const application = {
         return json({ ok: false, error: "Data temporarily unavailable" }, 500);
       }
     }
-    // Blog — server-rendered (SEO), not a SPA branch. Beehiiv is the CMS.
-    if (url.pathname === "/blog" || url.pathname === "/blog/") {
-      return handleBlogIndex(url, env);
+    if (url.pathname === "/api/blog") {
+      try { return json({ ok: true, items: await listPublicBlogPosts(env.DB) }, 200, "no-store"); }
+      catch (err) { console.error("blog list failed:", err); return json({ ok: false, error: "Blog temporarily unavailable" }, 500); }
     }
-    const blogSlug = url.pathname.match(/^\/blog\/([^/]+)$/);
-    if (blogSlug) {
-      return handleBlogPost(url, env, decodeURIComponent(blogSlug[1]));
+    const publicBlog = url.pathname.match(/^\/api\/blog\/([a-z0-9-]{1,160})$/i);
+    if (publicBlog) {
+      try {
+        const post = await getPublicBlogPost(env.DB, publicBlog[1]);
+        return post ? json({ ok: true, post }, 200, "no-store") : json({ ok: false, error: "Not found" }, 404);
+      } catch (err) { console.error("blog post failed:", err); return json({ ok: false, error: "Blog temporarily unavailable" }, 500); }
     }
 
     // The site's pages (the 2026-10 design): one app shell, a real URL per page,
@@ -1325,32 +1324,6 @@ async function handleAdminQueue(request, env, id) {
     if (/no such (column|table)/i.test(reason)) return json({ ok: false, error: "Run database migration 0015 before applying programs and yearly events." }, 422, ADMIN_AUTH_CACHE);
     console.error("admin queue request failed", { operation: request.method, reason: reason || "unknown" });
     return json({ ok: false, error: "Could not update this queue item right now." }, 503, ADMIN_AUTH_CACHE);
-  }
-}
-
-// ---- Blog (Beehiiv is the CMS) -----------------------------------------------
-async function handleBlogIndex(url, env) {
-  const site = url.origin;
-  try {
-    const result = await listPosts(env);
-    if (!result.ok) return text(blogFallbackTemplate({ site }), 200, "text/html; charset=utf-8", BLOG_FALLBACK_CACHE);
-    return text(blogIndexTemplate(result.posts, { site }), 200, "text/html; charset=utf-8", BLOG_PAGE_CACHE);
-  } catch (err) {
-    console.error("blog index failed:", err);
-    return text(blogFallbackTemplate({ site }), 200, "text/html; charset=utf-8", BLOG_FALLBACK_CACHE);
-  }
-}
-
-async function handleBlogPost(url, env, slug) {
-  const site = url.origin;
-  try {
-    const result = await getPostBySlug(env, slug);
-    if (result.notFound) return text(blogNotFoundTemplate({ site }), 404, "text/html; charset=utf-8", BLOG_FALLBACK_CACHE);
-    if (!result.ok) return text(blogFallbackTemplate({ site }), 200, "text/html; charset=utf-8", BLOG_FALLBACK_CACHE);
-    return text(blogPostTemplate(result.post, { site }), 200, "text/html; charset=utf-8", BLOG_PAGE_CACHE);
-  } catch (err) {
-    console.error("blog post failed:", err);
-    return text(blogFallbackTemplate({ site }), 200, "text/html; charset=utf-8", BLOG_FALLBACK_CACHE);
   }
 }
 

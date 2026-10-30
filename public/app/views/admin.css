@@ -367,3 +367,63 @@
 .adm-beta-toggle {
 	margin-top: 16px;
 }
+
+.v-admin .adm-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 10px;
+}
+
+.v-admin .field-label {
+	display: block;
+	margin-bottom: 8px;
+	font-weight: 700;
+}
+
+.v-admin .adm-upload {
+	display: inline-flex;
+	position: relative;
+	cursor: pointer;
+}
+
+.v-admin .adm-thumbnail-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 10px;
+	align-items: center;
+}
+
+.v-admin .adm-upload-input {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+	clip: rect(0 0 0 0);
+	white-space: nowrap;
+}
+
+.v-admin .adm-upload-input:focus-visible + .adm-upload-button {
+	box-shadow: var(--focus);
+}
+
+.v-admin .adm-upload-note {
+	margin: 8px 0 0;
+	color: var(--graphite);
+	font-size: 14px;
+}
+
+.v-admin .adm-thumb {
+	display: block;
+	max-width: 18rem;
+	max-height: 12rem;
+	margin-top: 12px;
+	border-radius: var(--r);
+	object-fit: cover;
+}
+
+.v-admin .adm-markdown-tools {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+	margin: 8px 0;
+}

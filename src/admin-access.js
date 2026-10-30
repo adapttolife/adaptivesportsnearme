@@ -110,6 +110,11 @@ const ENTITY = {
     fields: ["name", "source", "type", "audience", "amount_min_cents", "amount_max_cents", "amount_display", "deadline_display", "deadline_next", "description", "eligibility_criteria", "how_to_apply", "application_url", "source_url", "email", "phone", "sports_json", "is_open", "is_renewable", "is_public", "status"],
     booleans: ["is_open", "is_renewable", "is_public"], numbers: ["amount_min_cents", "amount_max_cents"], states: false,
   },
+  blog: {
+    table: "blog_posts", title: "blog post", name: "title",
+    fields: ["title", "slug", "subtitle", "publish_at", "thumbnail_data_url", "content_markdown", "status", "is_public"],
+    booleans: ["is_public"], numbers: [], states: false,
+  },
 };
 
 export function adminEntity(kind) { return ENTITY[kind] || null; }
@@ -154,7 +159,7 @@ function values(entity, input, current = {}) {
     if (entity.booleans.includes(field)) value[field] = flag(source, Number(current[field]) || 0);
     else if (entity.numbers.includes(field)) value[field] = number(source, current[field] == null ? null : Number(current[field]));
     else if (INSTANTS.has(field)) value[field] = instantValue(source, current[field]);
-    else value[field] = nullable(source, 5000);
+    else value[field] = nullable(source, field === "thumbnail_data_url" ? 4_000_000 : 5000);
   }
   if (!current.id) {
     if (entity.table === "organizations" || entity.table === "programs") {
@@ -174,6 +179,10 @@ function values(entity, input, current = {}) {
       if (!Object.prototype.hasOwnProperty.call(input, "is_public")) value.is_public = 1;
       if (!Object.prototype.hasOwnProperty.call(input, "is_open")) value.is_open = 1;
     }
+    if (entity.table === "blog_posts") {
+      value.status ||= "draft";
+      if (!Object.prototype.hasOwnProperty.call(input, "is_public")) value.is_public = 0;
+    }
   }
   if (!value[entity.name]) throw new Error("name-required");
   if ((entity.table === "organizations" || entity.table === "programs") && looksLikeNavigationLabel(value[entity.name])) {
@@ -183,6 +192,16 @@ function values(entity, input, current = {}) {
     throw new Error("description-is-operator-note");
   }
   if (entity.table === "programs" && !value.organization_id) throw new Error("organization-required");
+  if (entity.table === "blog_posts") {
+    value.subtitle ??= "";
+    value.content_markdown ??= "";
+    value.slug = String(value.slug || "").toLowerCase();
+    if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(value.slug)) throw new Error("slug-invalid");
+    if (!['draft', 'published'].includes(value.status)) throw new Error("status-invalid");
+    if (value.publish_at && Number.isNaN(Date.parse(value.publish_at))) throw new Error("publish-invalid");
+    if (value.thumbnail_data_url && !/^data:image\/(?:avif|gif|jpe?g|png|webp);base64,[a-z0-9+/=\s]+$/i.test(value.thumbnail_data_url)) throw new Error("thumbnail-invalid");
+    if (value.thumbnail_data_url && value.thumbnail_data_url.length > 4_000_000) throw new Error("thumbnail-too-large");
+  }
   if (entity.states) {
     value.state = validState(value.state);
     if (!entity.noStateName) value.state_name = value.state ? STATE_NAMES[value.state] : null;

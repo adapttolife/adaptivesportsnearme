@@ -1,0 +1,145 @@
+.blog,
+.blog-post {
+	max-width: 1080px;
+}
+
+.blog-head {
+	max-width: 44rem;
+	margin-bottom: 2rem;
+}
+
+.blog h1 {
+	margin: 0.25rem 0;
+}
+
+.blog-post h1 {
+	font-size: clamp(2.5rem, 7vw, 5rem);
+}
+
+.blog-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+	gap: 1rem;
+}
+
+.blog-card {
+	overflow: hidden;
+	color: inherit;
+	text-decoration: none;
+	container-type: normal;
+	display: flex;
+	flex-wrap: wrap;
+	--t: var(--mist);
+}
+
+.blog-card img {
+	width: 100%;
+	aspect-ratio: 16/9;
+	object-fit: cover;
+	max-width: 200px;
+}
+
+.blog-card div {
+	padding: 1rem 2rem;
+}
+
+.blog-card h2 {
+	margin: 0.15rem 0;
+}
+
+.blog-date {
+	font-size: 0.82rem;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.08em;
+}
+
+.blog-post {
+	max-width: 760px;
+}
+
+.blog-back {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	min-height: 44px;
+	margin-bottom: 12px;
+	color: var(--ink);
+	font-weight: 700;
+	text-decoration: none;
+}
+
+.blog-subtitle {
+	font-size: 1.25rem;
+	margin-top: -0.25rem;
+}
+
+.blog-actions {
+	margin-top: 0.75rem;
+}
+
+.blog-cover {
+	width: 100%;
+	border-radius: 15px;
+	margin: 1.5rem 0;
+}
+
+.blog-markdown {
+	font-size: 1.08rem;
+	line-height: 1.75;
+	background: var(--mist);
+	padding: 1.25rem 1.5rem;
+	margin-top: 2rem;
+	border-radius: 0.5rem;
+}
+
+.blog-markdown h2 {
+	margin-top: 1rem;
+}
+
+.blog-markdown h3,
+.blog-markdown h4 {
+	margin-top: 1rem;
+}
+
+.blog-markdown ul,
+.blog-markdown ol {
+	margin: 1rem 0;
+	padding-left: 1.5rem;
+	list-style: inherit;
+}
+
+.blog-markdown li + li {
+	margin-top: 0.35rem;
+}
+
+.blog-markdown blockquote {
+	margin: 1.25rem 0;
+	padding: 0.75rem 1rem;
+	border-left: 4px solid var(--ink);
+	border-radius: var(--r);
+	background: var(--paper);
+}
+
+.blog-markdown blockquote p {
+	margin: 0;
+}
+
+.blog-markdown code {
+	padding: 0.1em 0.3em;
+	border-radius: 4px;
+	background: var(--mist);
+	font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+	font-size: 0.9em;
+}
+
+.blog-markdown a {
+	text-decoration: underline;
+}
+
+.blog-markdown:has(h2:last-child),
+.blog-markdown:has(ul:last-child),
+.blog-markdown:has(ol:last-child),
+.blog-markdown:has(blockquote:last-child) {
+	padding-bottom: 0.5rem;
+}

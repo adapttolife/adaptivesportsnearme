@@ -21,6 +21,7 @@ export const PAGES = {
   states: { title: "States", description: "Pick a state to see its adaptive sports programs, city by city." },
   organizations: { title: "Organizations", description: "Every organization in the directory, and the programs it runs." },
   programs: { title: "Programs", description: "Every program in the directory, with the organization that runs it." },
+  blog: { title: "Blog", description: "Stories, updates and guides from the adaptive sports community." },
   grants: { title: "Grants", description: "Money for adaptive sports gear, travel and fees, for athletes and organizations. You apply on the grant maker's site." },
   events: { title: "Events", description: "Adaptive sports clinics, tryouts, games and meetups. A person checks every event before it goes up." },
   addProgram: { title: "Add a program", description: "Tell us about an adaptive sports program we're missing. A person checks it before it goes up." },

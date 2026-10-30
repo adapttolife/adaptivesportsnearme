@@ -1260,7 +1260,7 @@ export function drawerList(active = "") {
       + door("events", "/events", "Events", "Clinics, tryouts, games and meetups")
       + door("resources", "/resources", "Guides", "Getting started, and life beyond sports")
       + `</ul></div>`,
-    sec("Browse", item("states", "/states", "States") + item("organizations", "/organizations", "Organizations")),
+    sec("Browse", item("states", "/states", "States") + item("organizations", "/organizations", "Organizations") + item("blog", "/blog", "Blog")),
     sec("Help build this", item("add-program", "/add/program", "Add a program") + item("add-organization", "/add/organization", "Add an organization") + item("manage", "/manage", "Manage your organization") + item("add-event", "/add/event", "Add an event") + item("help", "/help", "Claim your organization")),
     sec("Your account", item("account", "/account", "Saved items")),
     sec("About this directory", item("about", "/about", "How we check listings") + item("letter", "/letter", "Email updates") + item("build", "/build", "Build with us")),
@@ -1285,7 +1285,7 @@ export function footer() {
   const li = (label, href) => `<li><a href="${esc(href)}">${esc(label)}</a></li>`;
   return `<div class="ft"><div class="ft-brand"><img src="/app/logo.svg" alt="" width="40" height="40"><div class="ft-brand-text"><p class="ft-name">Adaptive Sports Near Me</p><p>${esc(PRODUCT_LINE)}</p></div></div>
 <div class="ft-cols"><div><h2 class="ft-h">Find</h2><ul>${near ? li("Programs near you", near) : `<li><button type="button" data-open="search">Programs near you</button></li>`}${li("Sports", "/sports")}${li("Grants", "/grants")}${li("Events", "/events")}${li("Guides", "/resources")}</ul></div>
-<div><h2 class="ft-h">Browse</h2><ul>${li("States", "/states")}${li("Organizations", "/organizations")}</ul></div>
+<div><h2 class="ft-h">Browse</h2><ul>${li("States", "/states")}${li("Organizations", "/organizations")}${li("Blog", "/blog")}</ul></div>
 <div><h2 class="ft-h">Help build this</h2><ul>${li("Add a program", "/add/program")}${li("Add an event", "/add/event")}${li("Claim your organization", "/help")}</ul></div>
 <div><h2 class="ft-h">About this directory</h2><ul>${li("How we check listings", "/about")}${li("Email updates", "/letter")}${li("Build with us", "/build")}${li("Accessibility", "/about#accessibility")}</ul></div></div>
 <div class="ft-fine"><p class="ft-fine">Made with <span role="img" aria-label="love">❤️</span> by <a href="https://adapttolife.org">Adapt To Life</a>. © 2026 · <a href="/privacy">Privacy</a> · <a href="/terms">Terms</a></p></div></div>`;
@@ -1499,7 +1499,7 @@ export async function openSportsSheet(opts) {
 const ROUTES = [
   ["/", "home"], ["/near/:place", "near"], ["/sports", "sports"], ["/sports/:key", "sport"],
   ["/states", "states"], ["/states/:st", "state"], ["/organizations", "organizations"], ["/organizations/:id", "program"], ["/programs", "programs"], ["/programs/:id", "program-detail"],
-  ["/grants", "grants"], ["/grants/:id", "grant"], ["/events", "events"], ["/events/:slug", "event-series"],
+  ["/blog", "blog"], ["/blog/:slug", "blog"], ["/grants", "grants"], ["/grants/:id", "grant"], ["/events", "events"], ["/events/:slug", "event-series"],
   ["/add/program", "forms"], ["/add/organization", "forms"], ["/add/event", "forms"], ["/update/:id", "forms"],
   ["/manage", "manage"], ["/manage/organizations", "manage"], ["/manage/organizations/:id/edit", "manage"], ["/manage/organizations/:id/programs/new", "manage"], ["/manage/organizations/:id/events/new", "manage"], ["/manage/organizations/:id/programs", "manage"], ["/manage/organizations/:id/events", "manage"], ["/manage/programs/:id", "manage"], ["/manage/events/:id", "manage"], ["/manage/organizations/:id", "manage"],
   ["/admin", "admin"], ["/admin/:kind", "admin"], ["/admin/:kind/:id", "admin"], ["/account", "account"],
@@ -1575,6 +1575,7 @@ function defaultActive(name, path, params) {
   if (name === "states" || name === "state") return "states";
   if (name === "grants" || name === "grant") return "grants";
   if (name === "events" || name === "event-series") return "events";
+  if (name === "blog") return "blog";
   if (path === "/add/program") return "add-program";
   if (path === "/add/organization") return "add-organization";
   if (path === "/add/event") return "add-event";

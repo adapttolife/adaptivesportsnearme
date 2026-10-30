@@ -29,7 +29,7 @@ test("the menu leads with five doors, then Browse, Help build this, About, and d
     '"Programs near you"', '"Sports", "Find programs by sport"',
     '"Grants", "Money for gear, travel and fees"', '"Events", "Clinics, tryouts, games and meetups"',
     '"Guides", "Getting started, and life beyond sports"',
-    'sec("Browse"', '"States"', '"Organizations"',
+    'sec("Browse"', '"States"', '"Organizations"', '"Blog"',
     'sec("Help build this"', '"Add a program"', '"Add an event"', '"Claim your organization"',
     'sec("About this directory"', '"How we check listings"', '"Email updates"',
     "data-theme-toggle",
@@ -49,7 +49,7 @@ test("sports is how people find programs: no separate Programs door in the menu 
 
 test("the footer has the same four groups in the same order", () => {
   inOrder(footer, ['"ft-h">Find<', '"Programs near you"', '"Sports"', '"Grants"', '"Events"', '"Guides"',
-    '"ft-h">Browse<', '"States"', '"Organizations"',
+    '"ft-h">Browse<', '"States"', '"Organizations"', '"Blog"',
     '"ft-h">Help build this<', '"ft-h">About this directory<', '"How we check listings"', '"Email updates"', '"Accessibility"'], "footer");
 });
 

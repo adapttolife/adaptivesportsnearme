@@ -9,7 +9,6 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { programPageTemplate } from "../src/program-page.js";
-import { blogIndexTemplate } from "../src/blog.js";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const tokens = readFileSync(join(root, "public/styles.css"), "utf8");
@@ -80,6 +79,4 @@ test("The word Unverified stays out of site-wide UI copy", () => {
     const text = readFileSync(join(root, rel), "utf8");
     assert.ok(!text.includes("Unverified"), `${rel} contains Unverified`);
   }
-  const blogHtml = blogIndexTemplate([], { site: "https://example.test" });
-  assert.ok(!blogHtml.includes("Unverified"));
 });
