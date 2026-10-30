@@ -374,7 +374,7 @@ test("the claim finder and the fix form use the listing's own address", () => {
 // The letter's thank-you says what happens next: a new signup confirms its email first.
 test("the letter's thank-you asks a new subscriber to confirm, and the confirmation lands on its own page", () => {
   const send = between(APP, "async function sendForm(", "\n}\n");
-  assert.match(send, /out\.confirm \? "Almost done\. Check your inbox for an email from Adaptive Sports Near Me and tap Confirm\."/);
+  assert.match(send, /out\.confirm \? "You\'re now subscribed to our newsletter."/);
   assert.match(send, /out\.existing \? "You're already on the list/);
   // beehiiv's Opt-in Redirect URL is /?confirmed=1: before the first draw it becomes /letter/confirmed.
   assert.match(APP, /location\.pathname === "\/" && new URLSearchParams\(location\.search\)\.get\("confirmed"\) === "1"/);
