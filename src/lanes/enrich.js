@@ -7,7 +7,13 @@
 // fact backing it.
 
 import { pendingOrgIds, proposeStmt, fetchText } from "../lane-utils.js";
-import { extractJsonLd, extractEmails, extractPhones, extractAddress, extractContactLinks } from "../extract.js";
+import {
+  extractJsonLd,
+  extractEmails,
+  extractPhones,
+  extractAddress,
+  extractContactLinks,
+} from "../extract.js";
 
 // Subrequest budget: 15 orgs x up to 2 fetches (homepage + optional contact page) + 3 D1
 // calls (select, pendingOrgIds, batch) = 33 < 50 (Workers' per-invocation subrequest cap).
@@ -18,7 +24,9 @@ const TIER_RANK = { jsonld: 3, links: 2, regex: 1 };
 
 function decodeEntities(raw) {
   return raw
-    .replace(/&#x([0-9a-f]+);/gi, (_, hex) => String.fromCharCode(parseInt(hex, 16)))
+    .replace(/&#x([0-9a-f]+);/gi, (_, hex) =>
+      String.fromCharCode(parseInt(hex, 16)),
+    )
     .replace(/&#(\d+);/g, (_, dec) => String.fromCharCode(Number(dec)))
     .replace(/&amp;/gi, "&");
 }
@@ -59,22 +67,31 @@ function hrefPhoneSet(html) {
 
 function jsonldEmail(nodes) {
   for (const n of nodes) {
-    if (n && typeof n.email === "string" && n.email.includes("@")) return n.email.trim().toLowerCase();
+    if (n && typeof n.email === "string" && n.email.includes("@"))
+      return n.email.trim().toLowerCase();
   }
   return null;
 }
 
 function jsonldPhone(nodes) {
   for (const n of nodes) {
-    if (n && typeof n.telephone === "string" && n.telephone.trim()) return n.telephone.trim();
+    if (n && typeof n.telephone === "string" && n.telephone.trim())
+      return n.telephone.trim();
   }
   return null;
 }
 
 function hasJsonLdAddress(nodes) {
   for (const obj of nodes) {
-    const candidates = [obj, obj && obj.address].filter((c) => c && typeof c === "object");
-    if (candidates.some((c) => c.addressLocality || c.addressRegion || c.postalCode)) return true;
+    const candidates = [obj, obj && obj.address].filter(
+      (c) => c && typeof c === "object",
+    );
+    if (
+      candidates.some(
+        (c) => c.addressLocality || c.addressRegion || c.postalCode,
+      )
+    )
+      return true;
   }
   return false;
 }
@@ -91,32 +108,58 @@ function extractTiered(html, baseUrl) {
   const email = jEmail
     ? { value: jEmail, source: "jsonld" }
     : emails.length
-      ? { value: emails[0], source: hrefEmailSet(html).has(emails[0]) ? "links" : "regex" }
+      ? {
+          value: emails[0],
+          source: hrefEmailSet(html).has(emails[0]) ? "links" : "regex",
+        }
       : null;
 
   const jPhone = jsonldPhone(jsonld);
   const phone = jPhone
     ? { value: jPhone, source: "jsonld" }
     : phones.length
-      ? { value: phones[0], source: hrefPhoneSet(html).has(phones[0]) ? "links" : "regex" }
+      ? {
+          value: phones[0],
+          source: hrefPhoneSet(html).has(phones[0]) ? "links" : "regex",
+        }
       : null;
 
-  const address_ = address ? { value: address, source: hasJsonLdAddress(jsonld) ? "jsonld" : "regex" } : null;
+  const address_ = address
+    ? { value: address, source: hasJsonLdAddress(jsonld) ? "jsonld" : "regex" }
+    : null;
 
-  return { email, phone, address: address_, contactLinks: extractContactLinks(html, baseUrl) };
+  return {
+    email,
+    phone,
+    address: address_,
+    contactLinks: extractContactLinks(html, baseUrl),
+  };
 }
 
 export async function enrichLane({ db, cursor }) {
-  const { results: orgs } = await db.prepare(
-    `SELECT id, name, website_url, email, phone, city, state, zip FROM organizations
+  const { results: orgs } = await db
+    .prepare(
+      `SELECT id, name, website_url, email, phone, city, state, zip FROM organizations
      WHERE website_url IS NOT NULL AND status = 'active'
        AND (email IS NULL OR phone IS NULL OR state IS NULL OR city IS NULL)
        AND id > ?
-     ORDER BY id LIMIT ?`
-  ).bind(cursor, BATCH).all();
-  if (!orgs.length) return { cursor: "", processed: 0, flagged: 0, detail: "cycle complete, cursor reset" };
+     ORDER BY id LIMIT ?`,
+    )
+    .bind(cursor, BATCH)
+    .all();
+  if (!orgs.length)
+    return {
+      cursor: "",
+      processed: 0,
+      flagged: 0,
+      detail: "cycle complete, cursor reset",
+    };
 
-  const pending = await pendingOrgIds(db, "enrich", orgs.map((o) => o.id));
+  const pending = await pendingOrgIds(
+    db,
+    "enrich",
+    orgs.map((o) => o.id),
+  );
   const now = new Date().toISOString();
   const stmts = [];
   let flagged = 0;
@@ -160,18 +203,42 @@ export async function enrichLane({ db, cursor }) {
     }
     if ((!org.city || !org.state || !org.zip) && picked.address) {
       const { city, state, zip } = picked.address.value;
-      if (!org.city && city) { change.city = { from: null, to: city }; sources.push(picked.address.source); }
-      if (!org.state && state) { change.state = { from: null, to: state }; sources.push(picked.address.source); }
-      if (!org.zip && zip) { change.zip = { from: null, to: zip }; sources.push(picked.address.source); }
+      if (!org.city && city) {
+        change.city = { from: null, to: city };
+        sources.push(picked.address.source);
+      }
+      if (!org.state && state) {
+        change.state = { from: null, to: state };
+        sources.push(picked.address.source);
+      }
+      if (!org.zip && zip) {
+        change.zip = { from: null, to: zip };
+        sources.push(picked.address.source);
+      }
     }
     if (!Object.keys(change).length) continue;
 
-    const weakest = sources.reduce((a, b) => (TIER_RANK[b] < TIER_RANK[a] ? b : a));
+    const weakest = sources.reduce((a, b) =>
+      TIER_RANK[b] < TIER_RANK[a] ? b : a,
+    );
 
     flagged++;
-    stmts.push(proposeStmt(db, org.id, "enrich", change,
-      { url: org.website_url, scanned_at: now, method: weakest, contact_page: contactPageUrl },
-      CONFIDENCE[weakest], now));
+    stmts.push(
+      proposeStmt(
+        db,
+        org.id,
+        "enrich",
+        change,
+        {
+          url: org.website_url,
+          scanned_at: now,
+          method: weakest,
+          contact_page: contactPageUrl,
+        },
+        CONFIDENCE[weakest],
+        now,
+      ),
+    );
   }
   if (stmts.length) await db.batch(stmts);
   return { cursor: orgs[orgs.length - 1].id, processed: orgs.length, flagged };

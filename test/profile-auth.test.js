@@ -2,8 +2,14 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
-  signProfileId, verifyProfileCookie, serializeProfileCookie, clearProfileCookie,
-  parseCookieHeader, validState, parseSports, COOKIE_NAME,
+  signProfileId,
+  verifyProfileCookie,
+  serializeProfileCookie,
+  clearProfileCookie,
+  parseCookieHeader,
+  validState,
+  parseSports,
+  COOKIE_NAME,
 } from "../src/profile.js";
 
 const SECRET = "test-signing-key-do-not-use-in-prod";
@@ -59,7 +65,10 @@ test("verifyProfileCookie: rejects garbage input — empty, null, no dot, non-ba
   assert.equal(await verifyProfileCookie("no-dot-here", SECRET), null);
   assert.equal(await verifyProfileCookie(`${ID}.`, SECRET), null);
   assert.equal(await verifyProfileCookie(`.sigonly`, SECRET), null);
-  assert.equal(await verifyProfileCookie(`${ID}.not base64url!!`, SECRET), null);
+  assert.equal(
+    await verifyProfileCookie(`${ID}.not base64url!!`, SECRET),
+    null,
+  );
 });
 
 // ---- cookie serialization ------------------------------------------------------
@@ -116,27 +125,45 @@ test("validState: clamps unknown/garbage values to empty string, never throws", 
 const VALID_KEYS = new Set(["basketball", "tennis", "sledhockey"]);
 
 test("parseSports: accepts a CSV string, lowercases, trims", () => {
-  assert.deepEqual(parseSports(" Basketball, TENNIS ,sledhockey", VALID_KEYS), ["basketball", "tennis", "sledhockey"]);
+  assert.deepEqual(parseSports(" Basketball, TENNIS ,sledhockey", VALID_KEYS), [
+    "basketball",
+    "tennis",
+    "sledhockey",
+  ]);
 });
 
 test("parseSports: accepts an array input the same way", () => {
-  assert.deepEqual(parseSports(["basketball", "TENNIS"], VALID_KEYS), ["basketball", "tennis"]);
+  assert.deepEqual(parseSports(["basketball", "TENNIS"], VALID_KEYS), [
+    "basketball",
+    "tennis",
+  ]);
 });
 
 test("parseSports: dedupes repeated keys", () => {
-  assert.deepEqual(parseSports("basketball,basketball,tennis", VALID_KEYS), ["basketball", "tennis"]);
+  assert.deepEqual(parseSports("basketball,basketball,tennis", VALID_KEYS), [
+    "basketball",
+    "tennis",
+  ]);
 });
 
 test("parseSports: drops anything not matching [a-z]+ (numbers, symbols, spaces-only)", () => {
-  assert.deepEqual(parseSports("basketball,sport2,sled hockey,,  ", VALID_KEYS), ["basketball"]);
+  assert.deepEqual(
+    parseSports("basketball,sport2,sled hockey,,  ", VALID_KEYS),
+    ["basketball"],
+  );
 });
 
 test("parseSports: with a validKeys set, drops keys outside the known taxonomy", () => {
-  assert.deepEqual(parseSports("basketball,curling", VALID_KEYS), ["basketball"]);
+  assert.deepEqual(parseSports("basketball,curling", VALID_KEYS), [
+    "basketball",
+  ]);
 });
 
 test("parseSports: without a validKeys set, keeps any well-shaped key (clamp-only mode)", () => {
-  assert.deepEqual(parseSports("basketball,curling"), ["basketball", "curling"]);
+  assert.deepEqual(parseSports("basketball,curling"), [
+    "basketball",
+    "curling",
+  ]);
 });
 
 test("parseSports: empty/null input returns an empty array, never throws", () => {

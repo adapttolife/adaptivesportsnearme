@@ -1,4 +1,4 @@
-import { compactCss } from './helpers/css.js';
+import { compactCss } from "./helpers/css.js";
 // Rhythm lock: listing HTML and shared tokens. Fail if someone tightens
 // 24/64 or brings back the cold "Unverified" badge. "Last checked" came back on
 // purpose as a dated row (opening-day bar 5; Alec 2026-10-13: say whether a
@@ -37,7 +37,7 @@ test("styles.css locks --space-page at 24px and --space-header at 64px", () => {
   assert.equal(declared(tokens, "space-page"), "24px");
   assert.equal(declared(tokens, "space-header"), "64px");
   assert.equal(declared(tokens, "tap"), "44px");
-  assert.ok(tokens.includes('Alec locked 24/32/40/48/64 on 2026-08-21'));
+  assert.ok(tokens.includes("Alec locked 24/32/40/48/64 on 2026-08-21"));
 });
 
 test("homepage and program-page :root keep the same 24px / 64px lock", () => {
@@ -46,9 +46,15 @@ test("homepage and program-page :root keep the same 24px / 64px lock", () => {
   assert.equal(declared(tokens, "space-page"), "24px");
   assert.equal(declared(tokens, "space-header"), "64px");
   assert.match(compactCss(tokens), /\.hdr-in\{height:var\(--space-header\)/);
-  assert.match(compactCss(tokens), /\.sheet \.bar\{min-height:var\(--space-header\)/);
+  assert.match(
+    compactCss(tokens),
+    /\.sheet \.bar\{min-height:var\(--space-header\)/,
+  );
   assert.match(compactCss(tokens), /\.bar\{min-height:var\(--space-header\)/);
-  assert.match(compactCss(tokens), /\.wrap\{[^}]*padding:0 var\(--space-page\)/);
+  assert.match(
+    compactCss(tokens),
+    /\.wrap\{[^}]*padding:0 var\(--space-page\)/,
+  );
   assert.ok(!index.includes("clamp(24px"));
   assert.ok(!blog.includes("clamp(20px"));
 });
@@ -60,7 +66,10 @@ test("listing HTML never says Unverified; its date row sits in About this listin
   assert.ok(!programPage.includes("Unverified"));
   const about = html.indexOf('class="about-listing"');
   const checked = html.indexOf(">Last checked</span>");
-  assert.ok(about > html.indexOf('class="cta"'), "About this listing follows the primary action");
+  assert.ok(
+    about > html.indexOf('class="cta"'),
+    "About this listing follows the primary action",
+  );
   assert.ok(checked > about, "the date row lives inside About this listing");
 });
 

@@ -22,7 +22,14 @@ export const GAZETTEER = [
     sport_key: "skiing",
     name: "Adaptive Skiing",
     icon_key: "skiing",
-    terms: ["adaptive skiing", "sit ski", "sit-ski", "monoski", "mono-ski", "adaptive ski"],
+    terms: [
+      "adaptive skiing",
+      "sit ski",
+      "sit-ski",
+      "monoski",
+      "mono-ski",
+      "adaptive ski",
+    ],
   },
   {
     sport_key: "rowing",
@@ -172,7 +179,12 @@ export const GAZETTEER = [
     sport_key: "football",
     name: "Adaptive Football",
     icon_key: "football",
-    terms: ["adaptive football", "wheelchair football", "powerchair football", "beep football"],
+    terms: [
+      "adaptive football",
+      "wheelchair football",
+      "powerchair football",
+      "beep football",
+    ],
   },
   {
     sport_key: "goalball",
@@ -226,7 +238,12 @@ export const GAZETTEER = [
     sport_key: "nordicskiing",
     name: "Para Nordic Skiing",
     icon_key: null,
-    terms: ["para nordic", "nordic skiing", "cross-country skiing", "cross country skiing"],
+    terms: [
+      "para nordic",
+      "nordic skiing",
+      "cross-country skiing",
+      "cross country skiing",
+    ],
   },
   {
     sport_key: "equestrianvaulting",
@@ -244,7 +261,13 @@ export const GAZETTEER = [
     sport_key: "amputeesports",
     name: "Amputee Sports",
     icon_key: null,
-    terms: ["amputee sports", "amputee soccer", "amputee softball", "standing amputee", "sitting amputee"],
+    terms: [
+      "amputee sports",
+      "amputee soccer",
+      "amputee softball",
+      "standing amputee",
+      "sitting amputee",
+    ],
   },
   {
     sport_key: "handball",

@@ -8,18 +8,35 @@ import { site, PAGES } from "../page-meta.js";
 
 let DATA = null;
 async function data() {
-  DATA = DATA || await fetch("/data/veteran-businesses.json").then((r) => r.json());
+  DATA =
+    DATA ||
+    (await fetch("/data/veteran-businesses.json").then((r) => r.json()));
   return DATA;
 }
 
 export async function render() {
-  const d = await data(), c = d.copy;
-  const ext = (href, label) => `<a class="vb-link" href="${A.esc(href)}" target="_blank" rel="noopener">${A.esc(label)}${A.icon("external-link", 18)}</a>`;
-  const nation = d.nationwide.map((n) => `<li class="vb-card"><h3>${A.esc(n.name)}</h3><p>${A.esc(n.note)}</p>${ext(n.url, "Open the directory")}</li>`).join("");
-  const states = d.states.map((s) => `<li class="vb-st" id="vb-${A.esc(s.code)}"><h3>${A.esc(s.name)}</h3>
+  const d = await data(),
+    c = d.copy;
+  const ext = (href, label) =>
+    `<a class="vb-link" href="${A.esc(href)}" target="_blank" rel="noopener">${A.esc(label)}${A.icon("external-link", 18)}</a>`;
+  const nation = d.nationwide
+    .map(
+      (n) =>
+        `<li class="vb-card"><h3>${A.esc(n.name)}</h3><p>${A.esc(n.note)}</p>${ext(n.url, "Open the directory")}</li>`,
+    )
+    .join("");
+  const states = d.states
+    .map(
+      (
+        s,
+      ) => `<li class="vb-st" id="vb-${A.esc(s.code)}"><h3>${A.esc(s.name)}</h3>
 ${s.official ? ext(s.official.url, s.official.name) : `<p class="vb-nv">${A.esc(c.notVerified)}</p>`}
-${ext(s.national.url, s.national.name)}</li>`).join("");
-  const opts = d.states.map((s) => `<option value="vb-${A.esc(s.code)}">${A.esc(s.name)}</option>`).join("");
+${ext(s.national.url, s.national.name)}</li>`,
+    )
+    .join("");
+  const opts = d.states
+    .map((s) => `<option value="vb-${A.esc(s.code)}">${A.esc(s.name)}</option>`)
+    .join("");
   return {
     title: site(PAGES.veteranBusinesses.title),
     description: PAGES.veteranBusinesses.description,
@@ -38,7 +55,14 @@ ${ext(s.national.url, s.national.name)}</li>`).join("");
 
 export function mount(root) {
   const f = root.querySelector("[data-vb-pick]");
-  const go = (e) => { e.preventDefault(); const el = root.querySelector("#" + root.querySelector("#vb-sel").value); if (el) { el.scrollIntoView({ block: "start" }); el.querySelector("a")?.focus({ preventScroll: true }); } };
+  const go = (e) => {
+    e.preventDefault();
+    const el = root.querySelector("#" + root.querySelector("#vb-sel").value);
+    if (el) {
+      el.scrollIntoView({ block: "start" });
+      el.querySelector("a")?.focus({ preventScroll: true });
+    }
+  };
   if (f) f.addEventListener("submit", go);
   return () => f && f.removeEventListener("submit", go);
 }

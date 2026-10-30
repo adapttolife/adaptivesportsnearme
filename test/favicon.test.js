@@ -9,5 +9,9 @@ test("the legacy favicon URL serves a valid ICO container", () => {
   assert.equal(icon.readUInt16LE(4), 1);
   assert.equal(icon.readUInt8(6), 32);
   assert.equal(icon.readUInt8(7), 32);
-  assert.ok(icon.subarray(22, 30).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10])));
+  assert.ok(
+    icon
+      .subarray(22, 30)
+      .equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10])),
+  );
 });

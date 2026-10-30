@@ -9,22 +9,46 @@ import { execFileSync } from "node:child_process";
 import { WORKER_DIR, ROOT } from "./lib.mjs";
 
 function d1(sql) {
-  const raw = execFileSync("wrangler", [
-    "d1", "execute", "asnm-db-staging", "--env", "staging", "--remote",
-    "--command", sql, "--json",
-  ], { cwd: WORKER_DIR, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
+  const raw = execFileSync(
+    "wrangler",
+    [
+      "d1",
+      "execute",
+      "asnm-db-staging",
+      "--env",
+      "staging",
+      "--remote",
+      "--command",
+      sql,
+      "--json",
+    ],
+    { cwd: WORKER_DIR, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] },
+  );
   const parsed = JSON.parse(raw);
-  return parsed?.[0]?.results || parsed?.result?.[0]?.results || parsed?.results || [];
+  return (
+    parsed?.[0]?.results ||
+    parsed?.result?.[0]?.results ||
+    parsed?.results ||
+    []
+  );
 }
 
 function parse(j) {
   if (!j) return {};
   if (typeof j === "object") return j;
-  try { return JSON.parse(j); } catch { return {}; }
+  try {
+    return JSON.parse(j);
+  } catch {
+    return {};
+  }
 }
 
-const counts = d1("SELECT lane, COUNT(*) AS n FROM review_queue WHERE status='pending' GROUP BY lane ORDER BY n DESC");
-const rows = d1("SELECT item_id, organization_id, lane, proposed_change, evidence, confidence, created_at FROM review_queue WHERE status='pending'");
+const counts = d1(
+  "SELECT lane, COUNT(*) AS n FROM review_queue WHERE status='pending' GROUP BY lane ORDER BY n DESC",
+);
+const rows = d1(
+  "SELECT item_id, organization_id, lane, proposed_change, evidence, confidence, created_at FROM review_queue WHERE status='pending'",
+);
 
 const validate = { timeout: 0, http404: 0, other: 0 };
 const resolve = { domain: 0, name: 0, fuzzy: 0, other: 0 };
@@ -63,7 +87,10 @@ const snapshot = {
   enrich_confidence: enrichConf,
   note: "Read-only. Live stays locked. Timeouts are not dead sites.",
 };
-writeFileSync(`${ROOT}/queue-snapshot.json`, JSON.stringify(snapshot, null, 2) + "\n");
+writeFileSync(
+  `${ROOT}/queue-snapshot.json`,
+  JSON.stringify(snapshot, null, 2) + "\n",
+);
 
 console.log(`review pile: ${rows.length} waiting`);
 for (const c of counts) console.log(`  ${c.lane}: ${c.n}`);

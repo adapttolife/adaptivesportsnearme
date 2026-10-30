@@ -23,7 +23,9 @@ export const PAGE_CARDS = {
 };
 
 /** A sport page's card; a key with no page of its own wears the multi-sport card. */
-export const sportCard = (key) => `/og/sports/${SPORT_NAMES[key] ? key : "multi"}.png`;
+export const sportCard = (key) =>
+  `/og/sports/${SPORT_NAMES[key] ? key : "multi"}.png`;
 export const stateCard = (st) => `/og/states/${st}.png`;
 /** A listing wears the card of the sport its art shows (public/listing-art.js symbolKey). */
-export const listingCard = (item) => sportCard(ListingArt.symbolKey(item) || "multi");
+export const listingCard = (item) =>
+  sportCard(ListingArt.symbolKey(item) || "multi");

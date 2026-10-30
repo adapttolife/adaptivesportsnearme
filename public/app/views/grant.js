@@ -7,18 +7,24 @@ import { site, PAGES, grantMeta } from "../page-meta.js";
 
 /** Open now order (same as the grants list): real amount, then any deadline text, then A to Z. */
 function openOrder(a, b) {
-  const ia = A.grantInfo(a), ib = A.grantInfo(b);
-  return (!!ib.amount - !!ia.amount) || (!!b.deadline - !!a.deadline) || a.name.localeCompare(b.name);
+  const ia = A.grantInfo(a),
+    ib = A.grantInfo(b);
+  return (
+    !!ib.amount - !!ia.amount ||
+    !!b.deadline - !!a.deadline ||
+    a.name.localeCompare(b.name)
+  );
 }
 
 /** Our strings never carry en or em dashes; ranges read "8 to 18". */
 function clean(s) {
-  return String(s || "").trim()
+  return String(s || "")
+    .trim()
     .replace(/(\d)\s*[–—]\s*(\d)/g, "$1 to $2")
     .replace(/\s+[–—]\s+/g, ", ")
     .replace(/[–—]/g, " to ");
 }
-const cap = (s) => s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
+const cap = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
 
 function notFoundGrant() {
   return {
@@ -36,9 +42,12 @@ export async function render(ctx) {
 
   const gi = A.grantInfo(g);
   const source = g.source || "the grant maker";
-  const isVaries = !gi.amount && /^varies$/i.test(String(g.amount || "").trim());
-  const amountText = gi.amount || (isVaries ? "Amount varies" : "Amount: see their site");
-  const amountFact = gi.amount || (isVaries ? "Amount varies" : "Not listed. See their site.");
+  const isVaries =
+    !gi.amount && /^varies$/i.test(String(g.amount || "").trim());
+  const amountText =
+    gi.amount || (isVaries ? "Amount varies" : "Amount: see their site");
+  const amountFact =
+    gi.amount || (isVaries ? "Amount varies" : "Not listed. See their site.");
   const deadlineFact = cap(gi.deadlineText.replace(/^Deadline:\s*/, ""));
   const who = g.audience === "program" ? "Organizations" : "Athletes";
   const aud = g.audience === "program" ? "program" : "athlete";
@@ -47,8 +56,9 @@ export async function render(ctx) {
   const actionLabel = gi.open ? "Apply on their site" : "Visit their site";
 
   // 1. Hero: grant soft tint with the deep figure, never inverted.
-  const heroInner = `<button type="button" class="hb-back" data-back="${listHref}" aria-label="Back">${A.icon("arrow-left", 22)}</button>`
-    + `<span class="vpill vpill--plain hb-aud">${A.esc(gi.audienceLabel)}</span>`;
+  const heroInner =
+    `<button type="button" class="hb-back" data-back="${listHref}" aria-label="Back">${A.icon("arrow-left", 22)}</button>` +
+    `<span class="vpill vpill--plain hb-aud">${A.esc(gi.audienceLabel)}</span>`;
   const hero = `<div class="gp-hero">${A.plate("grant", { kind: "hero", keepText: true, inner: heroInner })}</div>`;
 
   // 2. Amount, name, source.
@@ -64,13 +74,19 @@ export async function render(ctx) {
 
   // 4. Note box.
   let note = `Details come from ${A.esc(source)}. We haven't recorded a check date for this grant yet, so check their site for current dates and rules.`;
-  if (gi.past) note += ` The last deadline was <span class="num">${A.esc(String(g.deadline).trim())}</span>.`;
+  if (gi.past)
+    note += ` The last deadline was <span class="num">${A.esc(String(g.deadline).trim())}</span>.`;
   if (gi.closed) note += " They list this grant as closed for now.";
   if (!url) note += " We don't have a link to their site yet.";
   const noteBox = `<div class="gp-note">${A.icon("info", 20)}<p>${note}</p></div>`;
 
   // 6. Other grants, same audience, open.
-  const others = D.grants.filter((x) => x.id !== g.id && x.audience === g.audience && A.grantInfo(x).open).sort(openOrder).slice(0, 4);
+  const others = D.grants
+    .filter(
+      (x) => x.id !== g.id && x.audience === g.audience && A.grantInfo(x).open,
+    )
+    .sort(openOrder)
+    .slice(0, 4);
   const othersHtml = others.length
     ? `<section class="sec gp-others" aria-labelledby="g-others">${A.sectionHead({ title: aud === "athlete" ? "Other grants for athletes" : "Other grants for organizations", id: "g-others", seeAll: { label: "See all grants", href: listHref } })}<div class="glist">${others.map(A.grantRow).join("")}</div></section>`
     : "";
@@ -102,7 +118,8 @@ export async function render(ctx) {
 
   return {
     title: site(grantMeta({ name: g.name, source: g.source || "" }).title),
-    description: grantMeta({ name: g.name, source: g.source || "" }).description,
+    description: grantMeta({ name: g.name, source: g.source || "" })
+      .description,
     html,
     sticky,
     railActive: "grants",

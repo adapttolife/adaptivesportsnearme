@@ -5,7 +5,10 @@ import { DatabaseSync } from "node:sqlite";
 import { createAdminItem, isAdminEmail } from "../src/admin-access.js";
 
 test("admin sign-in accepts only the two allowed mail domains", () => {
-  assert.equal(isAdminEmail("Person@adaptivesportsnearme.com"), "person@adaptivesportsnearme.com");
+  assert.equal(
+    isAdminEmail("Person@adaptivesportsnearme.com"),
+    "person@adaptivesportsnearme.com",
+  );
   assert.equal(isAdminEmail("person@faisaln.com"), "person@faisaln.com");
   assert.equal(isAdminEmail("person@sub.adaptivesportsnearme.com"), "");
   assert.equal(isAdminEmail("person@example.com"), "");
@@ -13,7 +16,9 @@ test("admin sign-in accepts only the two allowed mail domains", () => {
 
 function database() {
   const sqlite = new DatabaseSync(":memory:");
-  sqlite.exec(readFileSync(new URL("../db/schema.sql", import.meta.url), "utf8"));
+  sqlite.exec(
+    readFileSync(new URL("../db/schema.sql", import.meta.url), "utf8"),
+  );
   return {
     sqlite,
     db: {
@@ -21,9 +26,18 @@ function database() {
         const statement = sqlite.prepare(sql);
         let values = [];
         return {
-          bind(...args) { values = args; return this; },
-          async first() { return statement.get(...values) || null; },
-          async run() { return { meta: { changes: Number(statement.run(...values).changes) } }; },
+          bind(...args) {
+            values = args;
+            return this;
+          },
+          async first() {
+            return statement.get(...values) || null;
+          },
+          async run() {
+            return {
+              meta: { changes: Number(statement.run(...values).changes) },
+            };
+          },
         };
       },
     },

@@ -21,11 +21,20 @@ export async function render(ctx) {
 }
 
 export function mount(root, ctx) {
-  const input = root.querySelector("#program-search"), results = root.querySelector("#program-results");
+  const input = root.querySelector("#program-search"),
+    results = root.querySelector("#program-results");
   const items = ITEMS;
   const update = () => {
     const query = input.value.trim().toLowerCase();
-    results.innerHTML = rows(query ? items.filter((program) => `${program.name} ${program.organization?.name || ""}`.toLowerCase().includes(query)) : items);
+    results.innerHTML = rows(
+      query
+        ? items.filter((program) =>
+            `${program.name} ${program.organization?.name || ""}`
+              .toLowerCase()
+              .includes(query),
+          )
+        : items,
+    );
   };
   input.addEventListener("input", update);
   return () => input.removeEventListener("input", update);

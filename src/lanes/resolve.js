@@ -13,15 +13,30 @@ const RESOLVE_CAP = 20; // proposals per run — keeps the review queue reviewab
 // Platforms an org's "website" is often just a hosted page on, shared across many
 // unrelated orgs. A shared domain is NOT an identity signal — matching two orgs on
 // facebook.com (or instagram.com / sites.google.com) would false-merge them.
-const SHARED_PLATFORM_SUFFIXES = ["facebook.com", "instagram.com", "sites.google.com"];
+const SHARED_PLATFORM_SUFFIXES = [
+  "facebook.com",
+  "instagram.com",
+  "sites.google.com",
+];
 
-const LEGAL_SUFFIXES = new Set(["inc", "incorporated", "llc", "corp", "corporation", "co", "ltd", "nfp"]);
+const LEGAL_SUFFIXES = new Set([
+  "inc",
+  "incorporated",
+  "llc",
+  "corp",
+  "corporation",
+  "co",
+  "ltd",
+  "nfp",
+]);
 
 export function normalizeDomain(url) {
   if (!url || typeof url !== "string") return null;
   let parsed;
   try {
-    parsed = new URL(/^[a-z][a-z0-9+.-]*:\/\//i.test(url) ? url : `https://${url}`);
+    parsed = new URL(
+      /^[a-z][a-z0-9+.-]*:\/\//i.test(url) ? url : `https://${url}`,
+    );
   } catch {
     return null;
   }
@@ -29,13 +44,20 @@ export function normalizeDomain(url) {
   host = host.replace(/^www\./, "");
   host = host.replace(/\.+$/, ""); // strip trailing dot(s) / junk
   if (!host || !host.includes(".")) return null;
-  if (SHARED_PLATFORM_SUFFIXES.some((s) => host === s || host.endsWith(`.${s}`))) return null;
+  if (
+    SHARED_PLATFORM_SUFFIXES.some((s) => host === s || host.endsWith(`.${s}`))
+  )
+    return null;
   return host;
 }
 
 export function normalizeName(name) {
   if (!name || typeof name !== "string") return null;
-  let s = name.toLowerCase().replace(/[^\w\s]/g, " ").replace(/\s+/g, " ").trim();
+  let s = name
+    .toLowerCase()
+    .replace(/[^\w\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
   if (!s) return null;
   let tokens = s.split(" ");
   if (tokens[0] === "the") tokens = tokens.slice(1);
@@ -48,7 +70,11 @@ export function normalizeName(name) {
 
 function tokenSet(s) {
   return new Set(
-    String(s || "").toLowerCase().replace(/[^\w\s]/g, " ").split(/\s+/).filter(Boolean)
+    String(s || "")
+      .toLowerCase()
+      .replace(/[^\w\s]/g, " ")
+      .split(/\s+/)
+      .filter(Boolean),
   );
 }
 
@@ -109,7 +135,12 @@ function resolveGroup(members, tier, scoreFn, claimed, results) {
   claimed.add(canonical.id);
   for (const o of remaining) {
     if (o.id === canonical.id) continue;
-    results.push({ dupId: o.id, canonicalId: canonical.id, tier, score: scoreFn(o, canonical) });
+    results.push({
+      dupId: o.id,
+      canonicalId: canonical.id,
+      tier,
+      score: scoreFn(o, canonical),
+    });
     claimed.add(o.id);
   }
 }
@@ -129,7 +160,8 @@ export function findDuplicates(orgs) {
     if (!byDomain.has(d)) byDomain.set(d, []);
     byDomain.get(d).push(o);
   }
-  for (const group of byDomain.values()) resolveGroup(group, "domain", () => 1, claimed, results);
+  for (const group of byDomain.values())
+    resolveGroup(group, "domain", () => 1, claimed, results);
 
   // Tier b: same normalized name + state.
   const byNameState = new Map();
@@ -141,7 +173,8 @@ export function findDuplicates(orgs) {
     if (!byNameState.has(key)) byNameState.set(key, []);
     byNameState.get(key).push(o);
   }
-  for (const group of byNameState.values()) resolveGroup(group, "name-state", () => 1, claimed, results);
+  for (const group of byNameState.values())
+    resolveGroup(group, "name-state", () => 1, claimed, results);
 
   // Tier c: fuzzy name match (token-set ratio >= 0.9) within the same city+state.
   // Bucket by city+state first (cheap, exact) then do pairwise fuzzy compare + union-find
@@ -159,7 +192,8 @@ export function findDuplicates(orgs) {
     const uf = unionFind(bucket.length);
     for (let i = 0; i < bucket.length; i++) {
       for (let j = i + 1; j < bucket.length; j++) {
-        if (tokenSetRatio(bucket[i].name, bucket[j].name) >= 0.9) uf.union(i, j);
+        if (tokenSetRatio(bucket[i].name, bucket[j].name) >= 0.9)
+          uf.union(i, j);
       }
     }
     const groups = new Map();
@@ -169,7 +203,13 @@ export function findDuplicates(orgs) {
       groups.get(r).push(bucket[i]);
     }
     for (const members of groups.values()) {
-      resolveGroup(members, "fuzzy", (o, canonical) => tokenSetRatio(o.name, canonical.name), claimed, results);
+      resolveGroup(
+        members,
+        "fuzzy",
+        (o, canonical) => tokenSetRatio(o.name, canonical.name),
+        claimed,
+        results,
+      );
     }
   }
 
@@ -179,20 +219,27 @@ export function findDuplicates(orgs) {
 const CONFIDENCE_BY_TIER = { domain: 0.95, "name-state": 0.9, fuzzy: 0.75 };
 
 export async function resolveLane({ db, cursor }) {
-  const { results: orgs } = await db.prepare(
-    `SELECT id, name, state, city, website_url, verification_status, created_at
-     FROM organizations WHERE status='active'`
-  ).all();
-  if (!orgs.length) return { cursor: "", processed: 0, flagged: 0, detail: "no candidates" };
+  const { results: orgs } = await db
+    .prepare(
+      `SELECT id, name, state, city, website_url, verification_status, created_at
+     FROM organizations WHERE status='active'`,
+    )
+    .all();
+  if (!orgs.length)
+    return { cursor: "", processed: 0, flagged: 0, detail: "no candidates" };
 
   // Any-status (not just pending) makes re-runs idempotent: a rejected pair is not
   // re-proposed every cycle just because it's no longer 'pending'.
-  const { results: proposedRows } = await db.prepare(
-    `SELECT DISTINCT organization_id FROM review_queue WHERE lane='resolve'`
-  ).all();
+  const { results: proposedRows } = await db
+    .prepare(
+      `SELECT DISTINCT organization_id FROM review_queue WHERE lane='resolve'`,
+    )
+    .all();
   const alreadyProposed = new Set(proposedRows.map((r) => r.organization_id));
 
-  const candidates = findDuplicates(orgs).filter((d) => !alreadyProposed.has(d.dupId));
+  const candidates = findDuplicates(orgs).filter(
+    (d) => !alreadyProposed.has(d.dupId),
+  );
   const toPropose = candidates.slice(0, RESOLVE_CAP);
   const remaining = candidates.length - toPropose.length;
 
@@ -203,10 +250,15 @@ export async function resolveLane({ db, cursor }) {
       d.dupId,
       "resolve",
       { status: { from: "active", to: "duplicate" } },
-      { duplicate_of: d.canonicalId, tier: d.tier, score: d.score, method: "deterministic-dedup v1" },
+      {
+        duplicate_of: d.canonicalId,
+        tier: d.tier,
+        score: d.score,
+        method: "deterministic-dedup v1",
+      },
       CONFIDENCE_BY_TIER[d.tier],
-      now
-    )
+      now,
+    ),
   );
   if (stmts.length) await db.batch(stmts);
 
@@ -214,6 +266,9 @@ export async function resolveLane({ db, cursor }) {
     cursor: "",
     processed: orgs.length,
     flagged: toPropose.length,
-    detail: remaining > 0 ? `${remaining} more candidates queued for later runs` : null,
+    detail:
+      remaining > 0
+        ? `${remaining} more candidates queued for later runs`
+        : null,
   };
 }

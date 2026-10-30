@@ -130,10 +130,18 @@ test("extractPhones: tel: hrefs normalized (plus-prefixed, punctuated, extension
 test("extractPhones: visible-text US formats when no tel: links present", () => {
   const html = load("synth-phone-formats.html");
   const phones = extractPhones(html);
-  assert.ok(phones.some((p) => p.includes("720") && p.includes("555") && p.includes("0123")));
+  assert.ok(
+    phones.some(
+      (p) => p.includes("720") && p.includes("555") && p.includes("0123"),
+    ),
+  );
   assert.ok(phones.some((p) => p.includes("800")));
   // short non-phone numbers must not be captured
-  assert.ok(!phones.some((p) => /^\d{5}$/.test(p.replace(/\D/g, "")) === false && p === "12345"));
+  assert.ok(
+    !phones.some(
+      (p) => /^\d{5}$/.test(p.replace(/\D/g, "")) === false && p === "12345",
+    ),
+  );
 });
 
 test("extractPhones: zero-contact page returns empty array", () => {
@@ -150,7 +158,9 @@ test("extractPhones: real site (challengedathletes.org) finds tel: link", () => 
 test("extractPhones: real site (highfivesfoundation.org) finds tel: link", () => {
   const html = load("real-highfivesfoundation-org.html");
   const phones = extractPhones(html);
-  assert.ok(phones.some((p) => p.includes("5305874453") || p === "+15305874453"));
+  assert.ok(
+    phones.some((p) => p.includes("5305874453") || p === "+15305874453"),
+  );
 });
 
 // ---------------------------------------------------------------------------
@@ -207,7 +217,10 @@ test("extractContactLinks: relative resolution, mailto/tel/# skipped, max 3, ded
 
 test("extractContactLinks: same-host filtering excludes a different-host subdomain; base-path relative resolution", () => {
   const html = load("synth-contact-links-subdomain-and-path.html");
-  const links = extractContactLinks(html, "https://pathhost.example.org/en/home/index.html");
+  const links = extractContactLinks(
+    html,
+    "https://pathhost.example.org/en/home/index.html",
+  );
   assert.deepEqual(links, [
     "https://pathhost.example.org/en/home/contact-us",
     "https://pathhost.example.org/about",
@@ -222,7 +235,8 @@ test("extractContactLinks: same-host filtering excludes a different-host subdoma
 // src/extract.js, which needs a literal "</a>", stopped seeing those links.
 // The fixture is restored above; this pins the extractor gap itself.
 test("extractContactLinks: an end tag with whitespace before > still closes the link", () => {
-  const html = '<nav><a href="/contact">Contact</a\n\t\t>\n<a href="https://pathhost.example.org/get-involved-today">Get Involved</a ></nav>';
+  const html =
+    '<nav><a href="/contact">Contact</a\n\t\t>\n<a href="https://pathhost.example.org/get-involved-today">Get Involved</a ></nav>';
   assert.deepEqual(extractContactLinks(html, "https://pathhost.example.org/"), [
     "https://pathhost.example.org/contact",
     "https://pathhost.example.org/get-involved-today",
@@ -245,7 +259,8 @@ test("extractContactLinks: real site (moveunitedsport.org) finds same-host conta
   const links = extractContactLinks(html, "https://moveunitedsport.org/");
   assert.ok(links.length > 0);
   assert.ok(links.length <= 3);
-  for (const l of links) assert.equal(new URL(l).hostname, "moveunitedsport.org");
+  for (const l of links)
+    assert.equal(new URL(l).hostname, "moveunitedsport.org");
 });
 
 // ---------------------------------------------------------------------------
@@ -257,7 +272,11 @@ test("extractContacts: aggregates all five fields from a contact-page-shaped fix
   const c = extractContacts(html, "https://linkhost.test/contact");
   assert.deepEqual(c.emails, ["contactpage@linkhost.test"]);
   assert.deepEqual(c.phones, ["+13035550188"]);
-  assert.deepEqual(c.address, { city: "Fort Collins", state: "CO", zip: "80521" });
+  assert.deepEqual(c.address, {
+    city: "Fort Collins",
+    state: "CO",
+    zip: "80521",
+  });
   assert.deepEqual(c.jsonld, []);
   assert.deepEqual(c.contactLinks, []);
 });
@@ -265,7 +284,13 @@ test("extractContacts: aggregates all five fields from a contact-page-shaped fix
 test("extractContacts: zero-contact page returns all-empty shape, no throw", () => {
   const html = load("synth-zero-contact-info.html");
   const c = extractContacts(html, "https://nothinghere.example.org/");
-  assert.deepEqual(c, { emails: [], phones: [], address: null, jsonld: [], contactLinks: [] });
+  assert.deepEqual(c, {
+    emails: [],
+    phones: [],
+    address: null,
+    jsonld: [],
+    contactLinks: [],
+  });
 });
 
 test("extractContacts: real site (adaptivesportsnewengland.org) full aggregate shape, no throw", () => {
@@ -283,18 +308,28 @@ test("extractContacts: real site (adaptivesportsnewengland.org) full aggregate s
 // ---------------------------------------------------------------------------
 
 test("extractContacts: every real fixture runs clean (no throw, correct shape)", () => {
-  const realFiles = fs.readdirSync(FIXTURES).filter((f) => f.startsWith("real-"));
+  const realFiles = fs
+    .readdirSync(FIXTURES)
+    .filter((f) => f.startsWith("real-"));
   assert.ok(realFiles.length >= 6, "expect at least 6 real-site fixtures");
   for (const f of realFiles) {
     const html = load(f);
-    const host = f.replace(/^real-/, "").replace(/-org\.html$/, ".org").replace(/\.html$/, "");
+    const host = f
+      .replace(/^real-/, "")
+      .replace(/-org\.html$/, ".org")
+      .replace(/\.html$/, "");
     const baseUrl = `https://${host}/`;
     let c;
-    assert.doesNotThrow(() => { c = extractContacts(html, baseUrl); }, `${f} threw`);
+    assert.doesNotThrow(() => {
+      c = extractContacts(html, baseUrl);
+    }, `${f} threw`);
     assert.ok(Array.isArray(c.emails), `${f} emails not array`);
     assert.ok(Array.isArray(c.phones), `${f} phones not array`);
     assert.ok(Array.isArray(c.jsonld), `${f} jsonld not array`);
     assert.ok(Array.isArray(c.contactLinks), `${f} contactLinks not array`);
-    assert.ok(c.address === null || typeof c.address === "object", `${f} address bad shape`);
+    assert.ok(
+      c.address === null || typeof c.address === "object",
+      `${f} address bad shape`,
+    );
   }
 });

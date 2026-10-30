@@ -32,8 +32,17 @@ export const SPORT_SCENES = {
 // The launch sports that have a real photoreal action photo on disk
 // (public/assets/sport-photos). These win over the scene composite.
 export const SPORT_PHOTOS = new Set([
-  "basketball", "tennis", "pickleball", "rugby", "football", "baseball",
-  "cycling", "sledhockey", "skiing", "waterskiing", "goalball",
+  "basketball",
+  "tennis",
+  "pickleball",
+  "rugby",
+  "football",
+  "baseball",
+  "cycling",
+  "sledhockey",
+  "skiing",
+  "waterskiing",
+  "goalball",
 ]);
 
 export const GRANT_TRACK_SCENE = "/scenes/grant-track.jpg";
@@ -49,7 +58,9 @@ export function scenePath(sport) {
 }
 
 export function sportPhotoPath(sport) {
-  return sport && SPORT_PHOTOS.has(sport) ? `/assets/sport-photos/${sport}.jpg` : null;
+  return sport && SPORT_PHOTOS.has(sport)
+    ? `/assets/sport-photos/${sport}.jpg`
+    : null;
 }
 
 // role: "program" | "grant" | "event"
@@ -91,7 +102,10 @@ export function stampAttr(item, role = "program") {
 // (pcard-media for cards, dhero for the listing hero).
 export function symbolTile(v, cls, inner = "") {
   const tone = v && v.tone ? ` tone-${v.tone}` : "";
-  const img = v && v.src ? `<img class="art-symbol" src="${v.src}" alt="" decoding="async">` : "";
+  const img =
+    v && v.src
+      ? `<img class="art-symbol" src="${v.src}" alt="" decoding="async">`
+      : "";
   return `<div class="${cls} has-symbol${tone}">${img}${inner}</div>`;
 }
 

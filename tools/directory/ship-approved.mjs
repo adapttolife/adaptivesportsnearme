@@ -25,25 +25,87 @@ const LIVE_PUBLIC_EXPECTED = 2593; // live public count read from asnm-db on 202
 const TESTER = "https://staging-adaptivesportsnearme.adapt-to-life.workers.dev";
 
 const STATE_NAMES = {
-  AL: "Alabama", AK: "Alaska", AZ: "Arizona", AR: "Arkansas", CA: "California",
-  CO: "Colorado", CT: "Connecticut", DE: "Delaware", FL: "Florida", GA: "Georgia",
-  HI: "Hawaii", ID: "Idaho", IL: "Illinois", IN: "Indiana", IA: "Iowa",
-  KS: "Kansas", KY: "Kentucky", LA: "Louisiana", ME: "Maine", MD: "Maryland",
-  MA: "Massachusetts", MI: "Michigan", MN: "Minnesota", MS: "Mississippi",
-  MO: "Missouri", MT: "Montana", NE: "Nebraska", NV: "Nevada", NH: "New Hampshire",
-  NJ: "New Jersey", NM: "New Mexico", NY: "New York", NC: "North Carolina",
-  ND: "North Dakota", OH: "Ohio", OK: "Oklahoma", OR: "Oregon", PA: "Pennsylvania",
-  RI: "Rhode Island", SC: "South Carolina", SD: "South Dakota", TN: "Tennessee",
-  TX: "Texas", UT: "Utah", VT: "Vermont", VA: "Virginia", WA: "Washington",
-  WV: "West Virginia", WI: "Wisconsin", WY: "Wyoming", DC: "District of Columbia",
+  AL: "Alabama",
+  AK: "Alaska",
+  AZ: "Arizona",
+  AR: "Arkansas",
+  CA: "California",
+  CO: "Colorado",
+  CT: "Connecticut",
+  DE: "Delaware",
+  FL: "Florida",
+  GA: "Georgia",
+  HI: "Hawaii",
+  ID: "Idaho",
+  IL: "Illinois",
+  IN: "Indiana",
+  IA: "Iowa",
+  KS: "Kansas",
+  KY: "Kentucky",
+  LA: "Louisiana",
+  ME: "Maine",
+  MD: "Maryland",
+  MA: "Massachusetts",
+  MI: "Michigan",
+  MN: "Minnesota",
+  MS: "Mississippi",
+  MO: "Missouri",
+  MT: "Montana",
+  NE: "Nebraska",
+  NV: "Nevada",
+  NH: "New Hampshire",
+  NJ: "New Jersey",
+  NM: "New Mexico",
+  NY: "New York",
+  NC: "North Carolina",
+  ND: "North Dakota",
+  OH: "Ohio",
+  OK: "Oklahoma",
+  OR: "Oregon",
+  PA: "Pennsylvania",
+  RI: "Rhode Island",
+  SC: "South Carolina",
+  SD: "South Dakota",
+  TN: "Tennessee",
+  TX: "Texas",
+  UT: "Utah",
+  VT: "Vermont",
+  VA: "Virginia",
+  WA: "Washington",
+  WV: "West Virginia",
+  WI: "Wisconsin",
+  WY: "Wyoming",
+  DC: "District of Columbia",
 };
 
 const FILL_FIELDS = new Set([
-  "name", "org_type", "sport", "sport_key", "sports_json", "website_url", "email",
-  "phone", "city", "state", "state_name", "zip", "country", "lat", "lng",
-  "geo_precision", "description", "cost_note", "equipment_provided", "ages",
-  "data_quality_rating", "primary_data_source", "verification_status",
-  "verification_method", "status", "is_public", "last_ok_at",
+  "name",
+  "org_type",
+  "sport",
+  "sport_key",
+  "sports_json",
+  "website_url",
+  "email",
+  "phone",
+  "city",
+  "state",
+  "state_name",
+  "zip",
+  "country",
+  "lat",
+  "lng",
+  "geo_precision",
+  "description",
+  "cost_note",
+  "equipment_provided",
+  "ages",
+  "data_quality_rating",
+  "primary_data_source",
+  "verification_status",
+  "verification_method",
+  "status",
+  "is_public",
+  "last_ok_at",
 ]);
 
 function die(msg) {
@@ -61,7 +123,10 @@ function parseArgs(argv) {
     else if (a.startsWith("--file=")) out.file = a.slice(7);
     else die(`unknown arg ${a}`);
   }
-  if (!out.file) die("usage: node ship-approved.mjs --file pile.json [--apply] [--allow-live-drift]");
+  if (!out.file)
+    die(
+      "usage: node ship-approved.mjs --file pile.json [--apply] [--allow-live-drift]",
+    );
   return out;
 }
 
@@ -88,11 +153,17 @@ function isNeverTouch(id, never, extra) {
   if (!id) return false;
   const s = String(id);
   if (never.ids.has(s) || extra.has(s)) return true;
-  return never.prefixes.some((p) => s === p || s.startsWith(`${p}-`) || s.startsWith(p));
+  return never.prefixes.some(
+    (p) => s === p || s.startsWith(`${p}-`) || s.startsWith(p),
+  );
 }
 
 function slugOf(card, file) {
-  const s = card.pile?.slug || basename(file, ".json").replace(/[^a-z0-9-]+/gi, "-").toLowerCase();
+  const s =
+    card.pile?.slug ||
+    basename(file, ".json")
+      .replace(/[^a-z0-9-]+/gi, "-")
+      .toLowerCase();
   if (!s) die("pile.slug missing");
   return s;
 }
@@ -105,28 +176,36 @@ function validateCard(card, never) {
 
   for (const fill of card.fills || []) {
     if (!fill.id) errors.push("fill missing id");
-    if (!isHttps(fill.source_url)) errors.push(`fill ${fill.id || "?"} needs https source_url`);
-    if (isNeverTouch(fill.id, never, extra)) errors.push(`fill ${fill.id} is never-touch (no parent rewrite)`);
+    if (!isHttps(fill.source_url))
+      errors.push(`fill ${fill.id || "?"} needs https source_url`);
+    if (isNeverTouch(fill.id, never, extra))
+      errors.push(`fill ${fill.id} is never-touch (no parent rewrite)`);
     for (const k of Object.keys(fill.fields || {})) {
-      if (!FILL_FIELDS.has(k)) errors.push(`fill ${fill.id} unknown field ${k}`);
+      if (!FILL_FIELDS.has(k))
+        errors.push(`fill ${fill.id} unknown field ${k}`);
     }
   }
 
   for (const fold of card.folds || []) {
     if (!fold.keep) errors.push("fold missing keep");
     for (const hid of fold.hide || []) {
-      if (isNeverTouch(hid, never, extra)) errors.push(`fold hides never-touch ${hid}`);
+      if (isNeverTouch(hid, never, extra))
+        errors.push(`fold hides never-touch ${hid}`);
       if (hid === fold.keep) errors.push(`fold hides its own keep ${hid}`);
     }
   }
 
   for (const add of card.adds || []) {
     if (!add.name) errors.push("add missing name");
-    if (!isHttps(add.source_url)) errors.push(`add ${add.name || "?"} needs https source_url`);
+    if (!isHttps(add.source_url))
+      errors.push(`add ${add.name || "?"} needs https source_url`);
     if (/^Adaptive Sports\s/i.test(add.name || "")) {
       errors.push(`refusing invented statewide name: ${add.name}`);
     }
-    if (/^CAF[- ]/i.test(add.name || "") || /^Challenged Athletes Foundation[- ]/i.test(add.name || "")) {
+    if (
+      /^CAF[- ]/i.test(add.name || "") ||
+      /^Challenged Athletes Foundation[- ]/i.test(add.name || "")
+    ) {
       if (!isHttps(add.official_caf_region_url)) {
         errors.push(`refusing guessed CAF-region parent: ${add.name}`);
       }
@@ -189,7 +268,10 @@ function buildSql(card, slug, now) {
     const sets = Object.entries(fields).map(([k, v]) => `${k}=${q(v)}`);
     sets.push(`updated_at=${q(now)}`);
     lines.push(`-- fill ${fill.id} from ${fill.source_url}`);
-    lines.push(`UPDATE organizations SET ${sets.join(", ")} WHERE id=${q(fill.id)};`, ``);
+    lines.push(
+      `UPDATE organizations SET ${sets.join(", ")} WHERE id=${q(fill.id)};`,
+      ``,
+    );
   }
 
   const folded = [];
@@ -197,7 +279,9 @@ function buildSql(card, slug, now) {
     const hide = fold.hide || [];
     if (!hide.length) continue;
     folded.push(...hide);
-    lines.push(`-- fold twins of ${fold.keep}: ${fold.reason || "same legal org"}`);
+    lines.push(
+      `-- fold twins of ${fold.keep}: ${fold.reason || "same legal org"}`,
+    );
     lines.push(
       `UPDATE organizations SET status='duplicate', is_public=0, updated_at=${q(now)}`,
       `WHERE id IN (${hide.map(q).join(", ")});`,
@@ -219,25 +303,60 @@ function buildSql(card, slug, now) {
     const stateName = add.state_name || STATE_NAMES[add.state] || null;
     lines.push(`-- add ${add.name} from ${add.source_url}`);
     lines.push(`INSERT INTO organizations (`);
-    lines.push(`  id, name, org_type, sport, sport_key, sports_json, website_url, email, phone, city, state, state_name, zip, country, lat, lng, geo_precision, description, cost_note, equipment_provided, ages, data_quality_rating, primary_data_source, verification_status, verification_method, status, is_public, last_ok_at, created_at, updated_at`);
+    lines.push(
+      `  id, name, org_type, sport, sport_key, sports_json, website_url, email, phone, city, state, state_name, zip, country, lat, lng, geo_precision, description, cost_note, equipment_provided, ages, data_quality_rating, primary_data_source, verification_status, verification_method, status, is_public, last_ok_at, created_at, updated_at`,
+    );
     lines.push(`) VALUES (`);
-    lines.push(`  ${[
-      q(id), q(add.name), q(add.org_type || "adaptive_club"), q(add.sport || null),
-      q(add.sport_key || null), q(JSON.stringify(sports)), q(add.website_url || null),
-      q(add.email ?? null), q(add.phone ?? null), q(add.city || null), q(add.state || null),
-      q(stateName), q(add.zip ?? null), q(add.country || "United States"),
-      q(add.lat ?? null), q(add.lng ?? null), q(add.geo_precision || (add.city ? "city" : null)),
-      q(description), q(add.cost_note ?? null), q(add.equipment_provided ?? null),
-      q(add.ages ?? null), q("high"), q(pile.name), q("unverified"), q("website_crawl"),
-      q("active"), 1, q(now), q(now), q(now),
-    ].join(", ")}`);
+    lines.push(
+      `  ${[
+        q(id),
+        q(add.name),
+        q(add.org_type || "adaptive_club"),
+        q(add.sport || null),
+        q(add.sport_key || null),
+        q(JSON.stringify(sports)),
+        q(add.website_url || null),
+        q(add.email ?? null),
+        q(add.phone ?? null),
+        q(add.city || null),
+        q(add.state || null),
+        q(stateName),
+        q(add.zip ?? null),
+        q(add.country || "United States"),
+        q(add.lat ?? null),
+        q(add.lng ?? null),
+        q(add.geo_precision || (add.city ? "city" : null)),
+        q(description),
+        q(add.cost_note ?? null),
+        q(add.equipment_provided ?? null),
+        q(add.ages ?? null),
+        q("high"),
+        q(pile.name),
+        q("unverified"),
+        q("website_crawl"),
+        q("active"),
+        1,
+        q(now),
+        q(now),
+        q(now),
+      ].join(", ")}`,
+    );
     lines.push(`);`, ``);
     sourceRows.push({ id, url: add.source_url });
   }
 
   if (sourceRows.length) {
-    lines.push(`INSERT OR IGNORE INTO organization_data_sources (organization_id, source_id, source_record_url, data_quality_rating, retrieved_at, verified) VALUES`);
-    lines.push(sourceRows.map((r) => `  (${q(r.id)}, ${q(sourceId)}, ${q(r.url)}, 'high', ${q(now)}, 0)`).join(",\n") + ";");
+    lines.push(
+      `INSERT OR IGNORE INTO organization_data_sources (organization_id, source_id, source_record_url, data_quality_rating, retrieved_at, verified) VALUES`,
+    );
+    lines.push(
+      sourceRows
+        .map(
+          (r) =>
+            `  (${q(r.id)}, ${q(sourceId)}, ${q(r.url)}, 'high', ${q(now)}, 0)`,
+        )
+        .join(",\n") + ";",
+    );
     lines.push(``);
   }
 
@@ -247,12 +366,16 @@ function buildSql(card, slug, now) {
 function wranglerJson(args) {
   // LIVE LOCK: refuse asnm-db writes. Public live count must stay 2593.
   const cmdIdx = args.indexOf("--command");
-  const command = cmdIdx >= 0 ? (args[cmdIdx + 1] || "") : "";
+  const command = cmdIdx >= 0 ? args[cmdIdx + 1] || "" : "";
   if (args.includes(LIVE_DB) && command && !/^\s*select/i.test(command)) {
-    die("refusing a non-SELECT against asnm-db (live stays locked; public count must stay 2593)");
+    die(
+      "refusing a non-SELECT against asnm-db (live stays locked; public count must stay 2593)",
+    );
   }
   if (args.includes(LIVE_DB) && args.includes("--file")) {
-    die("refusing --file against asnm-db (live stays locked; public count must stay 2593)");
+    die(
+      "refusing --file against asnm-db (live stays locked; public count must stay 2593)",
+    );
   }
   const out = execFileSync("wrangler", args, {
     cwd: WORKER_DIR,
@@ -265,14 +388,23 @@ function wranglerJson(args) {
 function livePublicCount() {
   // READ ONLY. Never pass a mutating statement to asnm-db.
   const raw = wranglerJson([
-    "d1", "execute", LIVE_DB, "--remote",
-    "--command", "SELECT COUNT(*) AS n FROM organizations WHERE is_public = 1 AND status = 'active'",
+    "d1",
+    "execute",
+    LIVE_DB,
+    "--remote",
+    "--command",
+    "SELECT COUNT(*) AS n FROM organizations WHERE is_public = 1 AND status = 'active'",
     "--json",
   ]);
   const parsed = JSON.parse(raw);
-  const rows = parsed?.[0]?.results || parsed?.result?.[0]?.results || parsed?.results || [];
+  const rows =
+    parsed?.[0]?.results ||
+    parsed?.result?.[0]?.results ||
+    parsed?.results ||
+    [];
   const n = Number(rows[0]?.n ?? rows[0]?.COUNT ?? rows[0]?.["COUNT(*)"]);
-  if (!Number.isFinite(n)) die(`could not parse live count from: ${raw.slice(0, 400)}`);
+  if (!Number.isFinite(n))
+    die(`could not parse live count from: ${raw.slice(0, 400)}`);
   return n;
 }
 
@@ -282,7 +414,9 @@ function tap(qstr) {
     const raw = execFileSync("curl", ["-fsS", url], { encoding: "utf8" });
     const json = JSON.parse(raw);
     const list = json.programs || json.results || json.items || [];
-    return Array.isArray(list) ? list.length : (json.total ?? json.count ?? "?");
+    return Array.isArray(list)
+      ? list.length
+      : (json.total ?? json.count ?? "?");
   } catch (e) {
     return `error: ${e.message}`;
   }
@@ -291,7 +425,8 @@ function tap(qstr) {
 function collectTaps(card) {
   const taps = [...(card.taps || [])];
   for (const add of card.adds || []) if (add.city) taps.push(add.city);
-  for (const fill of card.fills || []) if (fill.fields?.city) taps.push(fill.fields.city);
+  for (const fill of card.fills || [])
+    if (fill.fields?.city) taps.push(fill.fields.city);
   return [...new Set(taps.map((t) => String(t).trim()).filter(Boolean))];
 }
 
@@ -302,7 +437,10 @@ function main() {
   const never = loadNever();
   validateCard(card, never);
 
-  if (args.apply && !(card.pile?.approved === true || (card.pile?.approved_by || "").trim())) {
+  if (
+    args.apply &&
+    !(card.pile?.approved === true || (card.pile?.approved_by || "").trim())
+  ) {
     die("refusing --apply: pile.approved is not true (and no approved_by)");
   }
 
@@ -344,11 +482,22 @@ function main() {
   receipt.live_count = live;
   if (live !== LIVE_PUBLIC_EXPECTED && !args.allowLiveDrift) {
     writeFileSync(receiptPath, JSON.stringify(receipt, null, 2) + "\n");
-    die(`live public count is ${live}, expected ${LIVE_PUBLIC_EXPECTED}. abort (live stays locked). pass --allow-live-drift only if you mean it.`);
+    die(
+      `live public count is ${live}, expected ${LIVE_PUBLIC_EXPECTED}. abort (live stays locked). pass --allow-live-drift only if you mean it.`,
+    );
   }
 
   console.log(`live public still ${live} (locked)`);
-  wranglerJson(["d1", "execute", STAGING_DB, "--env", "staging", "--remote", "--file", sqlPath]);
+  wranglerJson([
+    "d1",
+    "execute",
+    STAGING_DB,
+    "--env",
+    "staging",
+    "--remote",
+    "--file",
+    sqlPath,
+  ]);
   receipt.applied = true;
   receipt.applied_at = new Date().toISOString();
 

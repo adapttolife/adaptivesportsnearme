@@ -28,7 +28,8 @@ function findHits(text, gazetteer) {
     for (const term of entry.terms) {
       const pattern = "\\b" + escapeRegex(term).replace(/\s+/g, "\\s+") + "\\b";
       const match = text.match(new RegExp(pattern, "i"));
-      if (match) hits.push({ sport_key: entry.sport_key, term, index: match.index });
+      if (match)
+        hits.push({ sport_key: entry.sport_key, term, index: match.index });
     }
   }
   hits.sort((a, b) => a.index - b.index);
@@ -36,10 +37,12 @@ function findHits(text, gazetteer) {
 }
 
 export function classifyOrg(org, gazetteer) {
-  const nameHits = findHits(org.name || "", gazetteer)
-    .map(({ sport_key, term }) => ({ sport_key, term, field: "name" }));
-  const descHits = findHits(org.description || "", gazetteer)
-    .map(({ sport_key, term }) => ({ sport_key, term, field: "description" }));
+  const nameHits = findHits(org.name || "", gazetteer).map(
+    ({ sport_key, term }) => ({ sport_key, term, field: "name" }),
+  );
+  const descHits = findHits(org.description || "", gazetteer).map(
+    ({ sport_key, term }) => ({ sport_key, term, field: "description" }),
+  );
   const hits = [...nameHits, ...descHits];
   if (!hits.length) return null;
 
@@ -51,7 +54,9 @@ export function classifyOrg(org, gazetteer) {
   return { sports, hits, confidence: nameHits.length ? 0.85 : 0.7 };
 }
 
-const GAZETTEER_BY_KEY = new Map(GAZETTEER.map((entry) => [entry.sport_key, entry]));
+const GAZETTEER_BY_KEY = new Map(
+  GAZETTEER.map((entry) => [entry.sport_key, entry]),
+);
 
 // Page text is the primary sport signal in the real data (measured 2026-07-11: 0 of the
 // 1,048 Multi-Sport orgs have a description, and names like "Ability360" carry no sport
@@ -66,8 +71,9 @@ function stripTags(html) {
 }
 
 export function classifyPage(html, gazetteer) {
-  const hits = findHits(stripTags(html), gazetteer)
-    .map(({ sport_key, term }) => ({ sport_key, term, field: "page" }));
+  const hits = findHits(stripTags(html), gazetteer).map(
+    ({ sport_key, term }) => ({ sport_key, term, field: "page" }),
+  );
   if (!hits.length) return null;
   const sports = [];
   for (const hit of hits) {
@@ -79,17 +85,32 @@ export function classifyPage(html, gazetteer) {
 // Subrequest budget: 15 orgs x at most 1 fetch + 3 D1 calls = 18 < 50. The page fetch
 // happens only when name/description found nothing — the common case in the real data.
 export async function classifyLane({ db, cursor }) {
-  const { results: orgs } = await db.prepare(
-    `SELECT id, name, description, website_url, sport, sport_key, sports_json FROM organizations
+  const { results: orgs } = await db
+    .prepare(
+      `SELECT id, name, description, website_url, sport, sport_key, sports_json FROM organizations
      WHERE status = 'active' AND (sport IS NULL OR sport = 'Multi-Sport') AND id > ?
-     ORDER BY id LIMIT ?`
-  ).bind(cursor, CLASSIFY_BATCH).all();
-  if (!orgs.length) return { cursor: "", processed: 0, flagged: 0, detail: "cycle complete, cursor reset" };
+     ORDER BY id LIMIT ?`,
+    )
+    .bind(cursor, CLASSIFY_BATCH)
+    .all();
+  if (!orgs.length)
+    return {
+      cursor: "",
+      processed: 0,
+      flagged: 0,
+      detail: "cycle complete, cursor reset",
+    };
 
-  const pending = await pendingOrgIds(db, "classify", orgs.map((o) => o.id));
+  const pending = await pendingOrgIds(
+    db,
+    "classify",
+    orgs.map((o) => o.id),
+  );
   const now = new Date().toISOString();
   const stmts = [];
-  let flagged = 0, noSignal = 0, fatal = false;
+  let flagged = 0,
+    noSignal = 0,
+    fatal = false;
   for (const org of orgs) {
     if (pending.has(org.id)) continue; // don't re-propose while one awaits review
 
@@ -97,28 +118,55 @@ export async function classifyLane({ db, cursor }) {
     // Fetch the homepage only when name/description alone found nothing AND a site exists.
     if (!result && org.website_url) {
       const page = await fetchText(org.website_url);
-      if (page?.fatal) { fatal = true; break; } // budget: stop, record nothing false
+      if (page?.fatal) {
+        fatal = true;
+        break;
+      } // budget: stop, record nothing false
       if (page) result = classifyPage(page.text, GAZETTEER);
     }
-    if (!result) { noSignal++; continue; }
+    if (!result) {
+      noSignal++;
+      continue;
+    }
 
     const entry = GAZETTEER_BY_KEY.get(result.sports[0]);
     if (!entry) continue; // defensive: every gazetteer sport_key is seeded, but never propose an unknown one
 
     flagged++;
-    stmts.push(proposeStmt(db, org.id, "classify", {
-      sport: { from: org.sport, to: entry.name },
-      sport_key: { from: org.sport_key, to: entry.icon_key },
-      sports_json: { from: org.sports_json ? JSON.parse(org.sports_json) : null, to: result.sports },
-    }, {
-      hits: result.hits,
-      url: result.hits.some((h) => h.field === "page") ? org.website_url : undefined,
-      method: "gazetteer v2",
-    }, result.confidence, now));
+    stmts.push(
+      proposeStmt(
+        db,
+        org.id,
+        "classify",
+        {
+          sport: { from: org.sport, to: entry.name },
+          sport_key: { from: org.sport_key, to: entry.icon_key },
+          sports_json: {
+            from: org.sports_json ? JSON.parse(org.sports_json) : null,
+            to: result.sports,
+          },
+        },
+        {
+          hits: result.hits,
+          url: result.hits.some((h) => h.field === "page")
+            ? org.website_url
+            : undefined,
+          method: "gazetteer v2",
+        },
+        result.confidence,
+        now,
+      ),
+    );
   }
   if (stmts.length) await db.batch(stmts);
   return {
-    cursor: orgs[orgs.length - 1].id, processed: orgs.length, flagged,
-    detail: fatal ? "stopped early: subrequest limit" : (noSignal ? `${noSignal} without classifiable signal` : null),
+    cursor: orgs[orgs.length - 1].id,
+    processed: orgs.length,
+    flagged,
+    detail: fatal
+      ? "stopped early: subrequest limit"
+      : noSignal
+        ? `${noSignal} without classifiable signal`
+        : null,
   };
 }

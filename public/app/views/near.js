@@ -9,15 +9,30 @@
 import * as A from "../app.js";
 import { site, PAGES, nearMeta } from "../page-meta.js";
 
-const GROUP_IDS = { inCity: "nr-in", near: "nr-near", elsewhere: "nr-else", statewide: "nr-sw" };
+const GROUP_IDS = {
+  inCity: "nr-in",
+  near: "nr-near",
+  elsewhere: "nr-else",
+  statewide: "nr-sw",
+};
 let LAST = null; // { path, qs } of the previous near render, to announce filter changes
 
 /* ---------- address helpers (the path stays exactly as typed, so map=1 stays an overlay-only change) ---------- */
 function hrefFor(ctx, changes = {}) {
-  const q = { s: ctx.query.s || "", mi: ctx.query.mi || "", w: A.whoCode(ctx.query.w), ...changes };
+  const q = {
+    s: ctx.query.s || "",
+    mi: ctx.query.mi || "",
+    w: A.whoCode(ctx.query.w),
+    ...changes,
+  };
   const qs = new URLSearchParams();
   if (q.s) qs.set("s", q.s);
-  if (q.mi && String(A.radiusFrom(q.mi)) === String(q.mi) && A.radiusFrom(q.mi) !== A.RADII[0]) qs.set("mi", String(q.mi));
+  if (
+    q.mi &&
+    String(A.radiusFrom(q.mi)) === String(q.mi) &&
+    A.radiusFrom(q.mi) !== A.RADII[0]
+  )
+    qs.set("mi", String(q.mi));
   if (q.w) qs.set("w", q.w);
   if (q.map === "1") qs.set("map", "1");
   const s = qs.toString();
@@ -37,17 +52,35 @@ function groupHead({ id, title, count, sub }) {
    grid (two columns beside the aside) gets an even number so no card sits alone. */
 function cardsThenRows(list, rctx, { deskCards, phoneCards = 2, id }) {
   let run = 0;
-  while (run < list.length && run < deskCards && (run === 0 || list[run].key !== list[run - 1].key || (list[run].trio && list[run - 1].trio))) run++;
+  while (
+    run < list.length &&
+    run < deskCards &&
+    (run === 0 ||
+      list[run].key !== list[run - 1].key ||
+      (list[run].trio && list[run - 1].trio))
+  )
+    run++;
   const phoneN = Math.min(phoneCards, run);
   const deskN = run >= 2 ? run - (run % 2) : 0;
   const n = Math.max(phoneN, deskN);
-  const cards = list.slice(0, n).map((p, i) =>
-    `<div class="nr-ci${i >= phoneN ? " nr-desk-only" : ""}${i >= deskN ? " nr-phone-only" : ""}">${A.programCard(p, { where: rctx.where })}</div>`).join("");
+  const cards = list
+    .slice(0, n)
+    .map(
+      (p, i) =>
+        `<div class="nr-ci${i >= phoneN ? " nr-desk-only" : ""}${i >= deskN ? " nr-phone-only" : ""}">${A.programCard(p, { where: rctx.where })}</div>`,
+    )
+    .join("");
   const phoneRest = list.slice(phoneN);
   const deskRest = list.slice(deskN);
-  return (n ? `<div class="cards nr-cards">${cards}</div>` : "") +
-    (phoneRest.length ? `<div class="nr-phone-only nr-after">${A.rowList(phoneRest, rctx, { id: id + "-pr" })}</div>` : "") +
-    (deskRest.length ? `<div class="nr-desk-only nr-after">${A.rowList(deskRest, rctx, { id: id + "-dr" })}</div>` : "");
+  return (
+    (n ? `<div class="cards nr-cards">${cards}</div>` : "") +
+    (phoneRest.length
+      ? `<div class="nr-phone-only nr-after">${A.rowList(phoneRest, rctx, { id: id + "-pr" })}</div>`
+      : "") +
+    (deskRest.length
+      ? `<div class="nr-desk-only nr-after">${A.rowList(deskRest, rctx, { id: id + "-dr" })}</div>`
+      : "")
+  );
 }
 
 /* ---------- views ---------- */
@@ -68,15 +101,20 @@ function notFoundPlace(ctx, text, dym = []) {
 }
 
 export async function render(ctx) {
-  const D = ctx.data || await A.loadData();
+  const D = ctx.data || (await A.loadData());
   const text = String(ctx.params.place || "").trim();
   const where = await A.resolvePlace(text);
 
   if (where.kind === "state") {
     // A state search shows the state page instead (sport kept).
     const s = ctx.query.s && D.sportByKey[ctx.query.s] ? ctx.query.s : "";
-    A.nav("/states/" + where.state + (s ? "?s=" + encodeURIComponent(s) : ""), { replace: true });
-    return { title: site(A.stateName(where.state)), html: `<section class="nr-none"><h1 tabindex="-1">${A.esc(A.stateName(where.state))}</h1></section>` };
+    A.nav("/states/" + where.state + (s ? "?s=" + encodeURIComponent(s) : ""), {
+      replace: true,
+    });
+    return {
+      title: site(A.stateName(where.state)),
+      html: `<section class="nr-none"><h1 tabindex="-1">${A.esc(A.stateName(where.state))}</h1></section>`,
+    };
   }
   if (where.kind === "none") {
     const sp = ctx.query.s && D.sportByKey[ctx.query.s] ? ctx.query.s : "";
@@ -98,15 +136,24 @@ export async function render(ctx) {
   const here = [...sg.inCity, ...sg.near, ...sg.elsewhere, ...sg.statewide];
   const pool = A.whoFilter(sportPool, w);
   const g = w ? A.ladder(where, pool, { radius: mi }) : sg;
-  const total = g.inCity.length + g.near.length + g.elsewhere.length + g.statewide.length;
+  const total =
+    g.inCity.length + g.near.length + g.elsewhere.length + g.statewide.length;
   const more = g.elsewhere.length + g.statewide.length;
 
   // Sport bar: sports present anywhere in this place's ladder, most listings first, plus the active one.
   const full = A.ladder(where, D.items, { radius: mi });
-  const fullList = [...full.inCity, ...full.near, ...full.elsewhere, ...full.statewide];
+  const fullList = [
+    ...full.inCity,
+    ...full.near,
+    ...full.elsewhere,
+    ...full.statewide,
+  ];
   // Order: the most listings close by (in the city and within the distance), then across the state.
-  const close = A.sportCounts([...full.inCity, ...full.near]), wide = A.sportCounts(fullList);
-  const counts = Object.fromEntries(Object.keys(wide).map((k) => [k, (close[k] || 0) * 10000 + wide[k]]));
+  const close = A.sportCounts([...full.inCity, ...full.near]),
+    wide = A.sportCounts(fullList);
+  const counts = Object.fromEntries(
+    Object.keys(wide).map((k) => [k, (close[k] || 0) * 10000 + wide[k]]),
+  );
   const keys = new Set(Object.keys(counts));
   if (s) keys.add(s);
 
@@ -116,8 +163,10 @@ export async function render(ctx) {
   const rctx = { where, single: !!s };
   /* 1. results header (no state outline or map legend: there is no map here; Map opens one) */
   const sum = [];
-  if (g.inCity.length) sum.push(`<b class="num">${g.inCity.length}</b> in ${A.esc(city)}`);
-  if (g.near.length) sum.push(`<b class="num">${g.near.length}</b> within about ${mi} miles`);
+  if (g.inCity.length)
+    sum.push(`<b class="num">${g.inCity.length}</b> in ${A.esc(city)}`);
+  if (g.near.length)
+    sum.push(`<b class="num">${g.near.length}</b> within about ${mi} miles`);
   if (more) sum.push(`<b class="num">${more}</b> more in ${A.esc(ST)}`);
   const header = `<div class="nr-hd">
   <div class="nr-text">
@@ -139,19 +188,44 @@ export async function render(ctx) {
 
   /* 3. sport bar, 3b. how far, 4. jump chips */
   const bar = `<div class="nr-bar">${A.sportBar({ keys: [...keys], counts, active: s, hrefFor: (k) => hrefFor(ctx, { s: k }), label: "Sports near " + where.label, sheet: true })}</div>`;
-  const dist = `<nav class="nr-dist" aria-label="How far from ${A.esc(where.short)}"><span class="nr-dist-t" aria-hidden="true">How far</span><ul>${A.RADII.map((r) =>
-    `<li><a class="chip" href="${A.esc(hrefFor(ctx, { mi: String(r) }))}" data-replace${r === mi ? ' aria-current="true"' : ""}><span><span class="num">${r}</span> mi</span></a></li>`).join("")}</ul></nav>`;
-  const jumps = total ? `<div class="nr-jumps">${A.jumpChips([
-    { id: GROUP_IDS.inCity, label: "In " + city, count: g.inCity.length },
-    { id: GROUP_IDS.near, label: `About ${mi} mi`, count: g.near.length },
-    { id: GROUP_IDS.elsewhere, label: "Elsewhere in " + ST, count: g.elsewhere.length },
-    { id: GROUP_IDS.statewide, label: "Across " + ST, count: g.statewide.length },
-  ])}</div>` : "";
-  const who = A.whoChips({ pool: here, active: w, hrefFor: (c) => hrefFor(ctx, { w: c }), label: "Who it's for near " + where.label });
+  const dist = `<nav class="nr-dist" aria-label="How far from ${A.esc(where.short)}"><span class="nr-dist-t" aria-hidden="true">How far</span><ul>${A.RADII.map(
+    (r) =>
+      `<li><a class="chip" href="${A.esc(hrefFor(ctx, { mi: String(r) }))}" data-replace${r === mi ? ' aria-current="true"' : ""}><span><span class="num">${r}</span> mi</span></a></li>`,
+  ).join("")}</ul></nav>`;
+  const jumps = total
+    ? `<div class="nr-jumps">${A.jumpChips([
+        { id: GROUP_IDS.inCity, label: "In " + city, count: g.inCity.length },
+        { id: GROUP_IDS.near, label: `About ${mi} mi`, count: g.near.length },
+        {
+          id: GROUP_IDS.elsewhere,
+          label: "Elsewhere in " + ST,
+          count: g.elsewhere.length,
+        },
+        {
+          id: GROUP_IDS.statewide,
+          label: "Across " + ST,
+          count: g.statewide.length,
+        },
+      ])}</div>`
+    : "";
+  const who = A.whoChips({
+    pool: here,
+    active: w,
+    hrefFor: (c) => hrefFor(ctx, { w: c }),
+    label: "Who it's for near " + where.label,
+  });
   // How far and Who it's for live behind one Filters button (audit finding 8).
-  const filters = A.filtersPanel({ id: "nr-fx", path: ctx.path, on: (mi !== A.RADII[0] ? 1 : 0) + (w ? 1 : 0), body: dist + (who ? `<div class="nr-who">${who}</div>` : "") });
+  const filters = A.filtersPanel({
+    id: "nr-fx",
+    path: ctx.path,
+    on: (mi !== A.RADII[0] ? 1 : 0) + (w ? 1 : 0),
+    body: dist + (who ? `<div class="nr-who">${who}</div>` : ""),
+  });
   const quiet = here.filter((p) => !p.who.length).length;
-  const whoLine = w && total ? `<div class="nr-wholine">${A.whoLine(w, total, quiet, " nearby")}</div>` : "";
+  const whoLine =
+    w && total
+      ? `<div class="nr-wholine">${A.whoLine(w, total, quiet, " nearby")}</div>`
+      : "";
 
   /* 5. groups */
   let groups = "";
@@ -159,7 +233,9 @@ export async function render(ctx) {
     groups += `<section class="nr-group" aria-labelledby="${GROUP_IDS.inCity}">${groupHead({ id: GROUP_IDS.inCity, title: "In " + city, count: g.inCity.length, sub: `Listed in ${city}. Check each website for the exact place.` })}${s ? A.rowList(g.inCity, rctx, { id: "nr-in-rows" }) : cardsThenRows(g.inCity, rctx, { deskCards: 6, id: "nr-in" })}</section>`;
   }
   if (g.near.length) {
-    const body = s ? A.rowList(g.near, rctx, { id: "nr-near-rows" }) : cardsThenRows(g.near, rctx, { deskCards: 6, id: "nr-near" });
+    const body = s
+      ? A.rowList(g.near, rctx, { id: "nr-near-rows" })
+      : cardsThenRows(g.near, rctx, { deskCards: 6, id: "nr-near" });
     groups += `<section class="nr-group" aria-labelledby="${GROUP_IDS.near}">${groupHead({ id: GROUP_IDS.near, title: `Within about ${mi} miles`, count: g.near.length, sub: "Closest first." })}${body}</section>`;
   }
   if (g.elsewhere.length) {
@@ -171,21 +247,49 @@ export async function render(ctx) {
 
   /* 6. empty or thin. An empty sport also offers multi-sport organizations nearby that haven't said
      which sports they run (audit finding 2): they may well run it. */
-  const maybe = s && !total && !w ? A.mayOfferBlock(s, A.mayOffer(s, { state: where.state, where, radius: mi }), { id: "nr-may", where }) : "";
+  const maybe =
+    s && !total && !w
+      ? A.mayOfferBlock(
+          s,
+          A.mayOffer(s, { state: where.state, where, radius: mi }),
+          { id: "nr-may", where },
+        )
+      : "";
   let empty = "";
   if (!total && w) {
     empty = `<div class="nr-empty">${A.emptyState({
       title: `None near ${city} say they serve ${A.whoSay(w)} yet`,
-      body: quiet ? `${quiet} more nearby ${quiet === 1 ? "doesn't" : "don't"} say who they serve yet. Their websites often do.` : "Know one? Tell us and we'll check it.",
-      actions: [{ label: "See everyone near " + city, href: hrefFor(ctx, { w: "" }), attrs: "data-replace" }, { label: "Tell us about one", href: "/add/program" }],
+      body: quiet
+        ? `${quiet} more nearby ${quiet === 1 ? "doesn't" : "don't"} say who they serve yet. Their websites often do.`
+        : "Know one? Tell us and we'll check it.",
+      actions: [
+        {
+          label: "See everyone near " + city,
+          href: hrefFor(ctx, { w: "" }),
+          attrs: "data-replace",
+        },
+        { label: "Tell us about one", href: "/add/program" },
+      ],
     })}</div>`;
   } else if (!total) {
     const what = s ? sportLow : "programs";
     const actions = [];
     // Offer the nearest distance that finds something; never a button to another empty page.
-    const wider = A.RADII.find((r) => r > mi && A.ladder(where, pool, { radius: r }).near.length);
-    if (wider) actions.push({ label: `Look within ${wider} miles`, href: hrefFor(ctx, { mi: String(wider) }), attrs: "data-replace" });
-    if (s) actions.push({ label: "See every sport near " + city, href: hrefFor(ctx, { s: "" }), attrs: "data-replace" });
+    const wider = A.RADII.find(
+      (r) => r > mi && A.ladder(where, pool, { radius: r }).near.length,
+    );
+    if (wider)
+      actions.push({
+        label: `Look within ${wider} miles`,
+        href: hrefFor(ctx, { mi: String(wider) }),
+        attrs: "data-replace",
+      });
+    if (s)
+      actions.push({
+        label: "See every sport near " + city,
+        href: hrefFor(ctx, { s: "" }),
+        attrs: "data-replace",
+      });
     else actions.push({ label: "Browse by state", href: "/states" });
     actions.push({ label: "Tell us about one", href: "/add/program" });
     empty = `<div class="nr-empty">${A.emptyState({
@@ -195,8 +299,12 @@ export async function render(ctx) {
     })}</div>${maybe}`;
     const out = A.nearestOutside(where, pool);
     if (out.length) {
-      empty += `<section class="nr-group nr-outside" aria-labelledby="nr-out">${groupHead({ id: "nr-out", title: `Nearest ${s ? sportLow : "programs"} outside ${ST}`, sub: "Nearest states first. An organization with no single city counts from the middle of its state, so it shows no miles." })}${out.map((grp) =>
-        `<h3 class="nr-sth">${A.esc(A.stateName(grp.state))}</h3><div class="rows">${grp.items.map((p) => A.programRow(p, { ...rctx, outside: true })).join("")}</div>`).join("")}</section>`;
+      empty += `<section class="nr-group nr-outside" aria-labelledby="nr-out">${groupHead({ id: "nr-out", title: `Nearest ${s ? sportLow : "programs"} outside ${ST}`, sub: "Nearest states first. An organization with no single city counts from the middle of its state, so it shows no miles." })}${out
+        .map(
+          (grp) =>
+            `<h3 class="nr-sth">${A.esc(A.stateName(grp.state))}</h3><div class="rows">${grp.items.map((p) => A.programRow(p, { ...rctx, outside: true })).join("")}</div>`,
+        )
+        .join("")}</section>`;
     }
   }
 
@@ -204,7 +312,11 @@ export async function render(ctx) {
   const html = `<div class="nr">${header}${toolbar}${bar}${tools}${whoLine}${empty}${groups}</div>${A.letterBlock({ source: "near" })}${A.helpBand()}`;
   return {
     title: site(h1),
-    description: nearMeta(where.label, s ? { name: A.sportName(s), low: sportLow } : null, mi).description,
+    description: nearMeta(
+      where.label,
+      s ? { name: A.sportName(s), low: sportLow } : null,
+      mi,
+    ).description,
     html,
     aside: A.aboutBox(),
     railActive: "near",
@@ -213,23 +325,47 @@ export async function render(ctx) {
 
 export function mount(root, ctx) {
   // The results toolbar sticks below the header: jumps land below both.
-  const tools = root.querySelector(".nr-tools"), rootStyle = document.documentElement.style;
-  const setStick = () => rootStyle.setProperty("--stick-h", (tools ? tools.offsetHeight : 0) + "px");
+  const tools = root.querySelector(".nr-tools"),
+    rootStyle = document.documentElement.style;
+  const setStick = () =>
+    rootStyle.setProperty("--stick-h", (tools ? tools.offsetHeight : 0) + "px");
   setStick();
-  const ro = window.ResizeObserver && tools ? new ResizeObserver(setStick) : null;
+  const ro =
+    window.ResizeObserver && tools ? new ResizeObserver(setStick) : null;
   if (ro) ro.observe(tools);
-  const unstick = () => { if (ro) ro.disconnect(); rootStyle.removeProperty("--stick-h"); };
-  const qs = (ctx.query.s || "") + "|" + A.whoCode(ctx.query.w), mi = A.radiusFrom(ctx.query.mi);
+  const unstick = () => {
+    if (ro) ro.disconnect();
+    rootStyle.removeProperty("--stick-h");
+  };
+  const qs = (ctx.query.s || "") + "|" + A.whoCode(ctx.query.w),
+    mi = A.radiusFrom(ctx.query.mi);
   // Announce the new count after a filter change on the same place (spec 6.2 side effects).
   if (LAST && LAST.path === ctx.path && (LAST.qs !== qs || LAST.mi !== mi)) {
     const label = (root.querySelector(".nr-place b") || {}).textContent || "";
-    const sport = ctx.query.s ? A.sportName(ctx.query.s).toLowerCase() + " " : "";
+    const sport = ctx.query.s
+      ? A.sportName(ctx.query.s).toLowerCase() + " "
+      : "";
     if (LAST.qs === qs) {
-      const n = Number((root.querySelector(`#${GROUP_IDS.near} + .nr-n`) || {}).textContent) || 0;
-      setTimeout(() => A.announce(`${n} ${sport}${plural(n, "program", "programs")} within about ${mi} miles of ${label}`), 80);
+      const n =
+        Number(
+          (root.querySelector(`#${GROUP_IDS.near} + .nr-n`) || {}).textContent,
+        ) || 0;
+      setTimeout(
+        () =>
+          A.announce(
+            `${n} ${sport}${plural(n, "program", "programs")} within about ${mi} miles of ${label}`,
+          ),
+        80,
+      );
     } else {
       const total = countTotal(root);
-      setTimeout(() => A.announce(`${total} ${sport}${plural(total, "program", "programs")} near ${label}`), 80);
+      setTimeout(
+        () =>
+          A.announce(
+            `${total} ${sport}${plural(total, "program", "programs")} near ${label}`,
+          ),
+        80,
+      );
     }
   }
   LAST = { path: ctx.path, qs, mi };
@@ -239,11 +375,15 @@ export function mount(root, ctx) {
     if (e.target.closest("[data-nr-map]")) window.__asnmMapFrom = A.here();
   };
   root.addEventListener("click", onClick);
-  return () => { root.removeEventListener("click", onClick); unstick(); };
+  return () => {
+    root.removeEventListener("click", onClick);
+    unstick();
+  };
 }
 
 function countTotal(root) {
   let t = 0;
-  for (const el of root.querySelectorAll(".nr-group:not(.nr-outside) .nr-n")) t += Number(el.textContent) || 0;
+  for (const el of root.querySelectorAll(".nr-group:not(.nr-outside) .nr-n"))
+    t += Number(el.textContent) || 0;
   return t;
 }

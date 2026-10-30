@@ -16,7 +16,10 @@
 
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";
-import { repairPublicText, checkPublicDescription } from "../src/description-contract.js";
+import {
+  repairPublicText,
+  checkPublicDescription,
+} from "../src/description-contract.js";
 
 const args = process.argv.slice(2);
 const envIdx = args.indexOf("--env");
@@ -34,20 +37,24 @@ function d1(sql) {
   const out = execFileSync(
     "cfrun",
     ["wrangler", "d1", "execute", DB, "--remote", "--command", sql, "--json"],
-    { encoding: "utf8", maxBuffer: 128 * 1024 * 1024 }
+    { encoding: "utf8", maxBuffer: 128 * 1024 * 1024 },
   );
   return JSON.parse(out.slice(out.indexOf("[")));
 }
 
-const q = (v) => (v === null ? "NULL" : "'" + String(v).replace(/'/g, "''") + "'");
+const q = (v) =>
+  v === null ? "NULL" : "'" + String(v).replace(/'/g, "''") + "'";
 
 console.log(`# reading ${DB} (${env})`);
 const rows =
-  d1(`SELECT id, name, ${FIELDS.join(", ")} FROM organizations`)[0]?.results ?? [];
+  d1(`SELECT id, name, ${FIELDS.join(", ")} FROM organizations`)[0]?.results ??
+  [];
 console.log(`# ${rows.length} organisations`);
 
 const updates = [];
-const report = Object.fromEntries(FIELDS.map((f) => [f, { clean: 0, kept: 0, emptied: 0 }]));
+const report = Object.fromEntries(
+  FIELDS.map((f) => [f, { clean: 0, kept: 0, emptied: 0 }]),
+);
 let movedChars = 0;
 
 for (const row of rows) {
@@ -73,16 +80,20 @@ for (const row of rows) {
   if (!sets.length) continue;
   if (notes.length) {
     sets.push(
-      `internal_notes = TRIM(COALESCE(internal_notes || ' ', '') || ${q(notes.join(" "))})`
+      `internal_notes = TRIM(COALESCE(internal_notes || ' ', '') || ${q(notes.join(" "))})`,
     );
   }
   sets.push(`notes_split_at = ${q(new Date().toISOString())}`);
-  updates.push(`UPDATE organizations SET ${sets.join(", ")} WHERE id = ${q(row.id)};`);
+  updates.push(
+    `UPDATE organizations SET ${sets.join(", ")} WHERE id = ${q(row.id)};`,
+  );
 }
 
 for (const f of FIELDS) {
   const r = report[f];
-  console.log(`# ${f.padEnd(12)} already clean ${r.clean}, repaired ${r.kept}, emptied ${r.emptied}`);
+  console.log(
+    `# ${f.padEnd(12)} already clean ${r.clean}, repaired ${r.kept}, emptied ${r.emptied}`,
+  );
 }
 console.log(`# characters moved to internal_notes: ${movedChars}`);
 console.log(`# statements: ${updates.length}`);
@@ -102,7 +113,11 @@ if (!apply) {
 }
 
 console.log(`# applying to ${DB} ...`);
-execFileSync("cfrun", ["wrangler", "d1", "execute", DB, "--remote", "--file", file], {
-  stdio: "inherit",
-});
+execFileSync(
+  "cfrun",
+  ["wrangler", "d1", "execute", DB, "--remote", "--file", file],
+  {
+    stdio: "inherit",
+  },
+);
 console.log("# done");

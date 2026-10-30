@@ -19,4 +19,6 @@ if (errors.length) {
   for (const e of errors) console.error(`  - ${e}`);
   process.exit(1);
 }
-console.log(`ok  fills ${(card.fills || []).length}  adds ${(card.adds || []).length}  folds ${(card.folds || []).length}`);
+console.log(
+  `ok  fills ${(card.fills || []).length}  adds ${(card.adds || []).length}  folds ${(card.folds || []).length}`,
+);

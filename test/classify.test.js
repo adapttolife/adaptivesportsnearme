@@ -6,10 +6,18 @@ import { fileURLToPath } from "node:url";
 import { classifyOrg, classifyPage } from "../src/lanes/classify.js";
 import { GAZETTEER } from "../data/gazetteer.js";
 
-const org = (fields) => ({ name: "", description: "", website_url: null, ...fields });
+const org = (fields) => ({
+  name: "",
+  description: "",
+  website_url: null,
+  ...fields,
+});
 
 test("classifyOrg: name hit on a known sport -> sledhockey, confidence 0.85", () => {
-  const result = classifyOrg(org({ name: "Greater Chicago Sled Hockey Association" }), GAZETTEER);
+  const result = classifyOrg(
+    org({ name: "Greater Chicago Sled Hockey Association" }),
+    GAZETTEER,
+  );
   assert.ok(result);
   assert.deepEqual(result.sports, ["sledhockey"]);
   assert.equal(result.confidence, 0.85);
@@ -22,7 +30,7 @@ test("classifyOrg: word-boundary traps (para/parade, rowing/growing) -> null", (
       name: "Paradise Parade Foundation of Growing Hope",
       description: "community programs",
     }),
-    GAZETTEER
+    GAZETTEER,
   );
   assert.equal(result, null);
 });
@@ -33,18 +41,21 @@ test("classifyOrg: description-only hit -> confidence 0.7", () => {
       name: "Lakeside Community Center",
       description: "We offer sled hockey clinics every winter for local youth.",
     }),
-    GAZETTEER
+    GAZETTEER,
   );
   assert.ok(result);
   assert.deepEqual(result.sports, ["sledhockey"]);
   assert.equal(result.confidence, 0.7);
-  assert.equal(result.hits.every((h) => h.field === "description"), true);
+  assert.equal(
+    result.hits.every((h) => h.field === "description"),
+    true,
+  );
 });
 
 test("classifyOrg: multi-sport name -> basketball and tennis, basketball primary", () => {
   const result = classifyOrg(
     org({ name: "Adaptive Basketball & Wheelchair Tennis Club" }),
-    GAZETTEER
+    GAZETTEER,
   );
   assert.ok(result);
   assert.ok(result.sports.includes("basketball"));
@@ -59,19 +70,21 @@ test("gazetteer hygiene: no entry has a bare ambiguous term", () => {
     for (const term of entry.terms) {
       assert.ok(
         !banned.has(term.trim().toLowerCase()),
-        `sport_key ${entry.sport_key} has bare ambiguous term "${term}"`
+        `sport_key ${entry.sport_key} has bare ambiguous term "${term}"`,
       );
     }
   }
 });
 
 test("gazetteer hygiene: every sport_key is seeded in data/sports-seed.sql", () => {
-  const seedPath = fileURLToPath(new URL("../data/sports-seed.sql", import.meta.url));
+  const seedPath = fileURLToPath(
+    new URL("../data/sports-seed.sql", import.meta.url),
+  );
   const seedText = readFileSync(seedPath, "utf8");
   for (const entry of GAZETTEER) {
     assert.ok(
       seedText.includes(`'${entry.sport_key}'`),
-      `sport_key ${entry.sport_key} missing from data/sports-seed.sql`
+      `sport_key ${entry.sport_key} missing from data/sports-seed.sql`,
     );
   }
 });
@@ -91,5 +104,8 @@ test("classifyPage: gazetteer over page text, 0.7, multi-label; script/style str
 });
 
 test("classifyPage: no signal -> null", () => {
-  assert.equal(classifyPage("<p>We help the community thrive.</p>", GAZETTEER), null);
+  assert.equal(
+    classifyPage("<p>We help the community thrive.</p>", GAZETTEER),
+    null,
+  );
 });

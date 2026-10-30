@@ -5,7 +5,10 @@ import { grantPageTemplate } from "../src/grant-page.js";
 import { programPageTemplate } from "../src/program-page.js";
 
 test("listingVisual: real photo wins", () => {
-  const v = listingVisual({ photo: "/photos/team.jpg", sport: "basketball" }, "program");
+  const v = listingVisual(
+    { photo: "/photos/team.jpg", sport: "basketball" },
+    "program",
+  );
   assert.deepEqual(v, { kind: "photo", src: "/photos/team.jpg" });
 });
 
@@ -13,34 +16,97 @@ test("listingVisual: real photo wins", () => {
 // listings wear their sport's image from Alec's flat set (2026-10-14); the stock
 // action photos and the silhouette scenes stay off listings.
 test("listingVisual: program sports wear their flat image, not a stock photo or scene", () => {
-  assert.deepEqual(listingVisual({ sport: "basketball" }, "program"), { kind: "symbol", src: "/emblems/sports/basketball.svg", key: "basketball", tone: "court" });
-  assert.deepEqual(listingVisual({ sport: "rowing" }, "program"), { kind: "symbol", src: "/emblems/sports/rowing.svg", key: "rowing", tone: "water" });
-  for (const sport of ["basketball", "tennis", "pickleball", "rugby", "football", "baseball", "sledhockey", "waterskiing", "goalball", "swimming", "climbing", "curling", "sailing"]) {
+  assert.deepEqual(listingVisual({ sport: "basketball" }, "program"), {
+    kind: "symbol",
+    src: "/emblems/sports/basketball.svg",
+    key: "basketball",
+    tone: "court",
+  });
+  assert.deepEqual(listingVisual({ sport: "rowing" }, "program"), {
+    kind: "symbol",
+    src: "/emblems/sports/rowing.svg",
+    key: "rowing",
+    tone: "water",
+  });
+  for (const sport of [
+    "basketball",
+    "tennis",
+    "pickleball",
+    "rugby",
+    "football",
+    "baseball",
+    "sledhockey",
+    "waterskiing",
+    "goalball",
+    "swimming",
+    "climbing",
+    "curling",
+    "sailing",
+  ]) {
     const v = listingVisual({ sport }, "program");
     assert.equal(v.kind, "symbol", sport);
     assert.equal(v.src, `/emblems/sports/${sport}.svg`, sport);
   }
-  for (const sport of ["soccer", "skiing", "cycling"]) assert.equal(listingVisual({ sport }, "program").src, `/emblems/sports/${sport}.svg`, sport);
-  assert.equal(listingVisual({ sport: "handcycling" }, "program").src, "/emblems/sports/handcycling.svg");
+  for (const sport of ["soccer", "skiing", "cycling"])
+    assert.equal(
+      listingVisual({ sport }, "program").src,
+      `/emblems/sports/${sport}.svg`,
+      sport,
+    );
+  assert.equal(
+    listingVisual({ sport: "handcycling" }, "program").src,
+    "/emblems/sports/handcycling.svg",
+  );
 });
 
 test("listingVisual: a listing with no sport we can name wears the multi-sport image", () => {
-  for (const item of [{}, { sport: null }, { sport: "frisbee" }, { sportLabel: "Multi-Sport" }]) {
-    assert.deepEqual(listingVisual(item, "program"), { kind: "symbol", src: "/emblems/sports/multi.svg", key: null, tone: "house" });
+  for (const item of [
+    {},
+    { sport: null },
+    { sport: "frisbee" },
+    { sportLabel: "Multi-Sport" },
+  ]) {
+    assert.deepEqual(listingVisual(item, "program"), {
+      kind: "symbol",
+      src: "/emblems/sports/multi.svg",
+      key: null,
+      tone: "house",
+    });
   }
-  assert.equal(listingVisual({ sport: "beepbaseball" }, "program").src, "/emblems/sports/beepbaseball.svg");
-  assert.equal(listingVisual({ sport: "softball" }, "program").src, "/emblems/sports/softball.svg");
+  assert.equal(
+    listingVisual({ sport: "beepbaseball" }, "program").src,
+    "/emblems/sports/beepbaseball.svg",
+  );
+  assert.equal(
+    listingVisual({ sport: "softball" }, "program").src,
+    "/emblems/sports/softball.svg",
+  );
 });
 
 test("listingVisual: athlete grants use grant-track; program grants use program-grant-gym", () => {
-  assert.deepEqual(listingVisual({ audience: "athlete" }, "grant"), { kind: "scene", src: "/scenes/grant-track.jpg" });
-  assert.deepEqual(listingVisual({ audience: "program" }, "grant"), { kind: "scene", src: "/scenes/program-grant-gym.jpg" });
+  assert.deepEqual(listingVisual({ audience: "athlete" }, "grant"), {
+    kind: "scene",
+    src: "/scenes/grant-track.jpg",
+  });
+  assert.deepEqual(listingVisual({ audience: "program" }, "grant"), {
+    kind: "scene",
+    src: "/scenes/program-grant-gym.jpg",
+  });
 });
 
 test("listingVisual: events use event-field unless the sport has art of its own", () => {
-  assert.deepEqual(listingVisual({ sport: null }, "event"), { kind: "scene", src: "/scenes/event-field.jpg" });
-  assert.deepEqual(listingVisual({ sport: "basketball" }, "event"), { kind: "photo", src: "/assets/sport-photos/basketball.jpg" });
-  assert.deepEqual(listingVisual({ sport: "rowing" }, "event"), { kind: "scene", src: "/scenes/rowing-lake.jpg" });
+  assert.deepEqual(listingVisual({ sport: null }, "event"), {
+    kind: "scene",
+    src: "/scenes/event-field.jpg",
+  });
+  assert.deepEqual(listingVisual({ sport: "basketball" }, "event"), {
+    kind: "photo",
+    src: "/assets/sport-photos/basketball.jpg",
+  });
+  assert.deepEqual(listingVisual({ sport: "rowing" }, "event"), {
+    kind: "scene",
+    src: "/scenes/rowing-lake.jpg",
+  });
 });
 
 test("program page keeps a real photo and does not fall back to a scene", () => {

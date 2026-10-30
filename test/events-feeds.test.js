@@ -23,7 +23,8 @@ const BASIC = {
 const SPECIAL = {
   id: "evt-2",
   title: "Rugby & Racquets <Open> \"Play\" 'Day', Round 1\nSecond line",
-  description: "Bring \\ your gear; RSVP by 5pm, seats < 20, \"limited\" & 'first come'.",
+  description:
+    "Bring \\ your gear; RSVP by 5pm, seats < 20, \"limited\" & 'first come'.",
   url: null,
   venue: null,
   city: null,
@@ -64,7 +65,10 @@ test("eventsToRss: item link uses the event's own url when set", () => {
 
 test("eventsToRss: item link falls back to {siteUrl}/events when no event url", () => {
   const xml = eventsToRss([SPECIAL], SITE);
-  assert.match(xml, /<link>https:\/\/adaptivesportsnearme\.com\/events<\/link>/);
+  assert.match(
+    xml,
+    /<link>https:\/\/adaptivesportsnearme\.com\/events<\/link>/,
+  );
 });
 
 test("eventsToRss: guid is the event id, not a permalink", () => {
@@ -81,11 +85,11 @@ test("eventsToRss: XML-escapes special characters in title and description", () 
   const xml = eventsToRss([SPECIAL], SITE);
   assert.match(
     xml,
-    /<title>Rugby &amp; Racquets &lt;Open&gt; &quot;Play&quot; &apos;Day&apos;, Round 1\nSecond line<\/title>/
+    /<title>Rugby &amp; Racquets &lt;Open&gt; &quot;Play&quot; &apos;Day&apos;, Round 1\nSecond line<\/title>/,
   );
   assert.match(
     xml,
-    /<description>Bring \\ your gear; RSVP by 5pm, seats &lt; 20, &quot;limited&quot; &amp; &apos;first come&apos;\.<\/description>/
+    /<description>Bring \\ your gear; RSVP by 5pm, seats &lt; 20, &quot;limited&quot; &amp; &apos;first come&apos;\.<\/description>/,
   );
 });
 
@@ -96,7 +100,7 @@ test("eventsToIcs: empty list still produces a valid, event-less calendar", () =
   assert.equal(
     ics,
     "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Adaptive Sports Near Me//Events//EN\r\n" +
-    "CALSCALE:GREGORIAN\r\nMETHOD:PUBLISH\r\nX-WR-CALNAME:Adaptive Sports Near Me\r\nEND:VCALENDAR\r\n"
+      "CALSCALE:GREGORIAN\r\nMETHOD:PUBLISH\r\nX-WR-CALNAME:Adaptive Sports Near Me\r\nEND:VCALENDAR\r\n",
   );
 });
 
@@ -142,9 +146,12 @@ test("eventsToIcs: blank description and null url are omitted, not emitted empty
 
 test("eventsToIcs: escapes backslash, semicolon, comma and newline in text fields", () => {
   const ics = eventsToIcs([SPECIAL]);
-  assert.match(ics, /SUMMARY:Rugby & Racquets <Open> "Play" 'Day'\\, Round 1\\nSecond line/);
   assert.match(
     ics,
-    /DESCRIPTION:Bring \\\\ your gear\\; RSVP by 5pm\\, seats < 20\\, "limited" & 'first come'\./
+    /SUMMARY:Rugby & Racquets <Open> "Play" 'Day'\\, Round 1\\nSecond line/,
+  );
+  assert.match(
+    ics,
+    /DESCRIPTION:Bring \\\\ your gear\\; RSVP by 5pm\\, seats < 20\\, "limited" & 'first come'\./,
   );
 });

@@ -15,7 +15,9 @@ if (!url || !/^https:\/\//i.test(url)) {
 
 const res = await fetch(url, {
   redirect: "follow",
-  headers: { "user-agent": "ASNM-ReadPage/1 (+https://adaptivesportsnearme.com)" },
+  headers: {
+    "user-agent": "ASNM-ReadPage/1 (+https://adaptivesportsnearme.com)",
+  },
   signal: AbortSignal.timeout(15000),
 });
 const html = await res.text();

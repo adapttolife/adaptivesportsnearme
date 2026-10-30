@@ -20,7 +20,10 @@
 
 // A sentence matching any of these was written to a machine, not to a person.
 const MEMO_PATTERNS = [
-  [/\bdo not (invent|write|add|store|smash|guess|make up|fabricate)\b/i, "operator instruction"],
+  [
+    /\bdo not (invent|write|add|store|smash|guess|make up|fabricate)\b/i,
+    "operator instruction",
+  ],
   [/\bdo not\b/i, "operator instruction"],
   [/\bnone invented\b|\(invented names?\)/i, "negative-space note"],
   [/\bsame legal org\b/i, "internal merge note"],
@@ -28,13 +31,19 @@ const MEMO_PATTERNS = [
   [/\bHOLD\b/, "internal triage marker"],
   [/\b(is|are|was|were)\s+past\b/i, "internal recency triage"],
   [/\bstays? on (this|the) parent\b/i, "internal record-shape note"],
-  [/\bstays? on (this|the)\b[^.]*\b(row|parent)\b/i, "internal record-shape note"],
+  [
+    /\bstays? on (this|the)\b[^.]*\b(row|parent)\b/i,
+    "internal record-shape note",
+  ],
   [/\b(this|the) row\b/i, "internal record-shape note"],
   [/\bthis\s+[\w-]+\s+row\b/i, "internal record-shape note"],
   [/\b(this|the) parent\b/i, "internal record-shape note"],
   [/\bwritten onto\b|\benriches this\b/i, "internal record-shape note"],
   [/\bnot written as\b/i, "internal record-shape note"],
-  [/\bnot marked (gone|inactive|dead|active)\b/i, "internal state-decision note"],
+  [
+    /\bnot marked (gone|inactive|dead|active)\b/i,
+    "internal state-decision note",
+  ],
   [/\bdoes not print\b/i, "extraction outcome"],
   [/\b(listing|row|org) kept\b|\bkept as stale\b/i, "internal triage note"],
   [/^no\b[^.]*\bstored\b/i, "extraction outcome"],
@@ -48,7 +57,10 @@ const MEMO_PATTERNS = [
   [/\bsplit as new parents?\b/i, "internal record-shape note"],
   [/\bnot invented\b/i, "negative-space note"],
   [/\bwithout a printed\b|\breprints?\b/i, "extraction commentary"],
-  [/\bare\s+\w+\s+hours\b|\bprinted\s+\w*\s*hours\b/i, "internal field-meaning note"],
+  [
+    /\bare\s+\w+\s+hours\b|\bprinted\s+\w*\s*hours\b/i,
+    "internal field-meaning note",
+  ],
   [/\bno official[^.]*\bprinted\b/i, "extraction outcome"],
   [/^(office card|sports desk|volunteer \/ [^:]*inbox)\s*:/i, "internal label"],
   [/(?<![\/\w-])(?=[a-f0-9]*\d)[0-9a-f]{8}(?![\/\w-])/, "bare record id"],
@@ -57,8 +69,8 @@ const MEMO_PATTERNS = [
   [/\bnot printed\b/i, "extraction outcome"],
   [/\bis still (that|the)\b/i, "verification voice"],
   [/\bis still [A-Z][\w'&.-]*,\s*not\b/, "verification voice"],
-  [/^\s*official\b/i, "verification voice (leading \"Official\")"],
-  [/[.;)]\s+not\s+(a\s+|an\s+|the\s+)?[A-Z0-9]/i, "dedupe note (\"Not X\")"],
+  [/^\s*official\b/i, 'verification voice (leading "Official")'],
+  [/[.;)]\s+not\s+(a\s+|an\s+|the\s+)?[A-Z0-9]/i, 'dedupe note ("Not X")'],
   [/\bnot\s+(a|an)\s+\w+\s+(parent|child|row|affiliate)\b/i, "dedupe note"],
   [/\bstays a\s+\w+\s+row\b/i, "internal record-shape note"],
   [/\bare not HQ\b|\bas HQ\b/i, "internal HQ disambiguation"],
@@ -73,7 +85,10 @@ const MEMO_PATTERNS = [
   [/\bNXDOMAIN\b/i, "raw DNS diagnostic"],
   [/\bHTTP \d{3}\b/, "raw HTTP status"],
   [/\b\d{3}s\b(?=[^.]*\b(redirect|Cloudflare|chrome)\b)/i, "raw status jargon"],
-  [/(?<!\/)\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/i, "raw record UUID"],
+  [
+    /(?<!\/)\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/i,
+    "raw record UUID",
+  ],
   [/\(\s*[0-9a-f]{8}\s*\)/i, "raw record id fragment"],
   [/\bremaining[^.]{0,40}\bclock\b/i, "pipeline scheduling jargon"],
   [/\bleftover\b/i, "pipeline triage jargon"],
@@ -85,9 +100,41 @@ const MEMO_PATTERNS = [
 // Split on sentence boundaries without breaking decimals, abbreviations that
 // matter here (St., Ste., Dr., Rd., Blvd., P.O.), or time ranges.
 const ABBREV = new Set([
-  "st", "ste", "dr", "rd", "blvd", "ave", "ct", "ln", "pkwy", "hwy", "mt", "jr", "sr", "no",
-  "inc", "co", "corp", "dept", "univ", "approx", "vs", "etc", "apt", "fl", "rm", "pl", "ter",
-  "p.o", "u.s", "a.m", "p.m", "est", "cst", "mst", "pst",
+  "st",
+  "ste",
+  "dr",
+  "rd",
+  "blvd",
+  "ave",
+  "ct",
+  "ln",
+  "pkwy",
+  "hwy",
+  "mt",
+  "jr",
+  "sr",
+  "no",
+  "inc",
+  "co",
+  "corp",
+  "dept",
+  "univ",
+  "approx",
+  "vs",
+  "etc",
+  "apt",
+  "fl",
+  "rm",
+  "pl",
+  "ter",
+  "p.o",
+  "u.s",
+  "a.m",
+  "p.m",
+  "est",
+  "cst",
+  "mst",
+  "pst",
 ]);
 
 // Split on sentence boundaries. Guards, in order of how they bit us in Aug 2026:
@@ -104,10 +151,13 @@ export function splitSentences(text) {
     const tok = tokens[i];
     buf += tok;
     if (!/[.!?]["')]?$/.test(tok)) continue;
-    const bare = tok.replace(/["')\]]+$/, "").replace(/[.!?]+$/, "").toLowerCase();
-    if (/^[a-z]$/i.test(bare)) continue;              // "E." in 5025 E. Washington
-    if (ABBREV.has(bare)) continue;                    // "Ste." "P.O." "St."
-    const next = tokens[i + 2];                        // i+1 is whitespace
+    const bare = tok
+      .replace(/["')\]]+$/, "")
+      .replace(/[.!?]+$/, "")
+      .toLowerCase();
+    if (/^[a-z]$/i.test(bare)) continue; // "E." in 5025 E. Washington
+    if (ABBREV.has(bare)) continue; // "Ste." "P.O." "St."
+    const next = tokens[i + 2]; // i+1 is whitespace
     if (next && !/^["'(]?[A-Z0-9]/.test(next)) continue; // next word is lowercase
     out.push(buf.trim());
     buf = "";
@@ -127,14 +177,16 @@ export function splitSentences(text) {
 const MEMO_PREDICATES = [
   [
     (sentence) =>
-      /^Not\s+[A-Z0-9]/.test(sentence) && sentence.trim().split(/\s+/).length <= 14,
+      /^Not\s+[A-Z0-9]/.test(sentence) &&
+      sentence.trim().split(/\s+/).length <= 14,
     'dedupe note (sentence opens "Not X")',
   ],
 ];
 
 function sentenceMemoReasons(sentence) {
   const reasons = [];
-  for (const [re, why] of MEMO_PATTERNS) if (re.test(sentence)) reasons.push(why);
+  for (const [re, why] of MEMO_PATTERNS)
+    if (re.test(sentence)) reasons.push(why);
   for (const [fn, why] of MEMO_PREDICATES) if (fn(sentence)) reasons.push(why);
   return reasons;
 }
@@ -145,7 +197,8 @@ export function checkPublicDescription(text) {
   const sentences = splitSentences(text);
   if (!sentences.length) return { ok: true, reasons: [] };
   const reasons = new Set();
-  for (const s of sentences) for (const r of sentenceMemoReasons(s)) reasons.add(r);
+  for (const s of sentences)
+    for (const r of sentenceMemoReasons(s)) reasons.add(r);
   return { ok: reasons.size === 0, reasons: [...reasons] };
 }
 
@@ -190,7 +243,8 @@ export function splitPublicDescription(text) {
 
 // Sentences (or semicolon clauses) that are purely a report on the extraction
 // itself, carrying no fact a reader could use.
-const EXTRACTION_OUTCOME = /^[^.;]*\b(not printed|not collapsed|not stored|this pass)\b[^.;]*$/i;
+const EXTRACTION_OUTCOME =
+  /^[^.;]*\b(not printed|not collapsed|not stored|this pass)\b[^.;]*$/i;
 
 // Asides the pipeline adds to mark provenance.
 const OPERATOR_ASIDE =
@@ -205,17 +259,28 @@ export function stripOperatorVocabulary(text) {
   // Drop pure extraction-outcome clauses, keeping the useful ones beside them.
   s = splitSentences(s)
     .map((sentence) => {
-      const clauses = sentence.split(/;\s*/).filter((c) => !EXTRACTION_OUTCOME.test(c.trim()));
+      const clauses = sentence
+        .split(/;\s*/)
+        .filter((c) => !EXTRACTION_OUTCOME.test(c.trim()));
       return clauses.join("; ").trim();
     })
-    .filter((sentence) => sentence && !EXTRACTION_OUTCOME.test(sentence.replace(/[.!?]+$/, "")))
+    .filter(
+      (sentence) =>
+        sentence && !EXTRACTION_OUTCOME.test(sentence.replace(/[.!?]+$/, "")),
+    )
     .join(" ");
 
   // "Official cycling $20" -> "Cycling $20"; also mid-sentence after a period.
   s = s.replace(/(^|[.!?]\s+)official\s*:?\s+/gi, (m, lead) => lead);
-  s = s.replace(/(^|[.!?]\s)(\p{Ll})/gu, (m, lead, ch) => lead + ch.toUpperCase());
+  s = s.replace(
+    /(^|[.!?]\s)(\p{Ll})/gu,
+    (m, lead, ch) => lead + ch.toUpperCase(),
+  );
 
-  return s.replace(/\s{2,}/g, " ").replace(/\s+([.,;])/g, "$1").trim();
+  return s
+    .replace(/\s{2,}/g, " ")
+    .replace(/\s+([.,;])/g, "$1")
+    .trim();
 }
 
 // The full repair for any public free-text field: strip the vocabulary first,
@@ -227,7 +292,8 @@ export function repairPublicText(text) {
   const removedTail = original.trim() && !stripped.trim();
   return {
     value: split.description,
-    internalNotes: split.internalNotes || (removedTail ? original.trim() : null),
+    internalNotes:
+      split.internalNotes || (removedTail ? original.trim() : null),
     changed: (split.description || "") !== original.trim(),
     reasons: split.reasons,
   };

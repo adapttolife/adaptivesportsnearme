@@ -4,14 +4,30 @@
    browser, so neither needs the description to know a listing's sport.
    Needs globalThis.ListingArt (public/listing-art.js). */
 // Group scenes go last in a trio: they read as the backdrop, not the lead.
-const GROUP_SCENE = new Set(["event", "veteran-meetup", "art-therapy", "grant", "multi", "soccer", "football", "lacrosse", "handball", "softball", "volleyball", "triathlon", "nordicskiing"]);
+const GROUP_SCENE = new Set([
+  "event",
+  "veteran-meetup",
+  "art-therapy",
+  "grant",
+  "multi",
+  "soccer",
+  "football",
+  "lacrosse",
+  "handball",
+  "softball",
+  "volleyball",
+  "triathlon",
+  "nordicskiing",
+]);
 
 /** { sports, served } from "Sports and activities: ...; Athletes served: ..." */
 export function parseDesc(desc) {
   const d = String(desc || "");
-  const m1 = /Sports and activities:\s*([\s\S]*?)(?:[.;]\s*Athletes served:|$)/i.exec(d);
+  const m1 =
+    /Sports and activities:\s*([\s\S]*?)(?:[.;]\s*Athletes served:|$)/i.exec(d);
   const m2 = /Athletes served:\s*([\s\S]*)$/i.exec(d);
-  const sports = m1 && m1[1].trim() ? m1[1].trim().replace(/[.;]\s*$/, "") : null;
+  const sports =
+    m1 && m1[1].trim() ? m1[1].trim().replace(/[.;]\s*$/, "") : null;
   const served = m2 && m2[1].trim() ? m2[1].trim() : null;
   return { sports, served };
 }
@@ -20,17 +36,23 @@ export function parseDesc(desc) {
     2+ sports; more = how many further sports the row names beyond the three in the trio). */
 export function listingSport(row) {
   const L = globalThis.ListingArt;
-  const isKey = (k) => k && L.SPORTS.includes(k) && k !== "multi" && k !== "grant" && k !== "event";
+  const isKey = (k) =>
+    k &&
+    L.SPORTS.includes(k) &&
+    k !== "multi" &&
+    k !== "grant" &&
+    k !== "event";
   // What the listing already says: its sport, or for a multi-sport row the sports its description names.
   const listed = [];
   const sk = L.symbolKey(row);
   if (isKey(sk)) listed.push(sk);
   else {
     const s = parseDesc(row.desc).sports;
-    if (s) for (const part of s.split(/[;,]/)) {
-      const k = L.symbolKey({ sportLabel: part.trim() });
-      if (isKey(k) && !listed.includes(k)) listed.push(k);
-    }
+    if (s)
+      for (const part of s.split(/[;,]/)) {
+        const k = L.symbolKey({ sportLabel: part.trim() });
+        if (isKey(k) && !listed.includes(k)) listed.push(k);
+      }
   }
   // The organization's own word (row.seasons, [{ key, seasons }]) adds every sport it says it runs;
   // a sport added this way joins the ones the listing already shows, it never replaces them.
@@ -43,8 +65,14 @@ export function listingSport(row) {
   // A listing whose own sport we don't know keeps the multi-sport picture until there are two to
   // draw: one added sport says "they also run pickleball", not "this is a pickleball club".
   // Search still finds it under that sport (row.seasons).
-  if (all.length === 1) return listed.length ? { key: all[0], trio: null, more: 0 } : { key: "multi", trio: null, more: 0 };
-  const trio = [...all.filter((k) => !GROUP_SCENE.has(k)), ...all.filter((k) => GROUP_SCENE.has(k))].slice(0, 3);
+  if (all.length === 1)
+    return listed.length
+      ? { key: all[0], trio: null, more: 0 }
+      : { key: "multi", trio: null, more: 0 };
+  const trio = [
+    ...all.filter((k) => !GROUP_SCENE.has(k)),
+    ...all.filter((k) => GROUP_SCENE.has(k)),
+  ].slice(0, 3);
   return { key: "multi", trio, more: all.length - trio.length };
 }
 

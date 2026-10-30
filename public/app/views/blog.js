@@ -2,20 +2,31 @@ import * as A from "../app.js";
 import { site } from "../page-meta.js";
 
 const esc = A.esc;
-const date = (value) => value
-  ? new Date(value).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric", timeZone: "UTC" })
-  : "";
+const date = (value) =>
+  value
+    ? new Date(value).toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+        timeZone: "UTC",
+      })
+    : "";
 
 function inline(value) {
   return esc(value)
     .replace(/`([^`]+)`/g, "<code>$1</code>")
     .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
     .replace(/\*(.+?)\*/g, "<em>$1</em>")
-    .replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" rel="noopener noreferrer">$1</a>');
+    .replace(
+      /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,
+      '<a href="$2" rel="noopener noreferrer">$1</a>',
+    );
 }
 
 export function renderMarkdown(value) {
-  const lines = String(value || "").replace(/\r\n?/g, "\n").split("\n");
+  const lines = String(value || "")
+    .replace(/\r\n?/g, "\n")
+    .split("\n");
   const blocks = [];
   let paragraph = [];
   let list = null;
@@ -28,12 +39,16 @@ export function renderMarkdown(value) {
   };
   const flushList = () => {
     if (!list) return;
-    blocks.push(`<${list.type}>${list.items.map((item) => `<li>${inline(item)}</li>`).join("")}</${list.type}>`);
+    blocks.push(
+      `<${list.type}>${list.items.map((item) => `<li>${inline(item)}</li>`).join("")}</${list.type}>`,
+    );
     list = null;
   };
   const flushQuote = () => {
     if (!quote.length) return;
-    blocks.push(`<blockquote><p>${quote.map(inline).join("<br>")}</p></blockquote>`);
+    blocks.push(
+      `<blockquote><p>${quote.map(inline).join("<br>")}</p></blockquote>`,
+    );
     quote = [];
   };
   const flush = () => {
@@ -77,7 +92,12 @@ export function renderMarkdown(value) {
 }
 
 function index(items) {
-  const cards = items.map((post) => `<a class="blog-card plate" href="/blog/${esc(post.slug)}">${post.thumbnailDataUrl ? `<img src="${esc(post.thumbnailDataUrl)}" alt="" loading="lazy">` : ""}<div><p class="blog-date">${esc(date(post.publishAt))}</p><h2>${esc(post.title)}</h2><p>${esc(post.subtitle)}</p></div></a>`).join("");
+  const cards = items
+    .map(
+      (post) =>
+        `<a class="blog-card plate" href="/blog/${esc(post.slug)}">${post.thumbnailDataUrl ? `<img src="${esc(post.thumbnailDataUrl)}" alt="" loading="lazy">` : ""}<div><p class="blog-date">${esc(date(post.publishAt))}</p><h2>${esc(post.title)}</h2><p>${esc(post.subtitle)}</p></div></a>`,
+    )
+    .join("");
   return {
     title: site("Blog"),
     railActive: "blog",
@@ -95,7 +115,9 @@ function post(item, canEdit) {
 
 async function canEditPosts() {
   try {
-    const response = await fetch("/api/admin-auth/session", { cache: "no-store" });
+    const response = await fetch("/api/admin-auth/session", {
+      cache: "no-store",
+    });
     const body = await response.json().catch(() => ({}));
     return response.ok && body.ok === true;
   } catch {
@@ -105,7 +127,10 @@ async function canEditPosts() {
 
 export async function render() {
   const slug = location.pathname.match(/^\/blog\/([^/]+)$/)?.[1];
-  const response = await fetch(slug ? `/api/blog/${encodeURIComponent(slug)}` : "/api/blog", { cache: "no-store" });
+  const response = await fetch(
+    slug ? `/api/blog/${encodeURIComponent(slug)}` : "/api/blog",
+    { cache: "no-store" },
+  );
   const body = await response.json().catch(() => ({}));
   if (!response.ok) {
     return {

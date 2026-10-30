@@ -16,10 +16,14 @@
 //   extractContacts(html, base)      -> {emails, phones, address, jsonld, contactLinks}
 //                                       one-call aggregate of everything above
 
-const STATE_ABBR = "AL|AK|AZ|AR|CA|CO|CT|DE|FL|GA|HI|ID|IL|IN|IA|KS|KY|LA|ME|MD|MA|MI|MN|MS|MO|MT|NE|NV|NH|NJ|NM|NY|NC|ND|OH|OK|OR|PA|RI|SC|SD|TN|TX|UT|VT|VA|WA|WV|WI|WY|DC|PR|GU|VI|AS|MP";
-const ADDR_RE = new RegExp(`([A-Z][A-Za-z .'-]{2,30}),\\s*(${STATE_ABBR})[\\s,]+(\\d{5})(?:-\\d{4})?`);
+const STATE_ABBR =
+  "AL|AK|AZ|AR|CA|CO|CT|DE|FL|GA|HI|ID|IL|IN|IA|KS|KY|LA|ME|MD|MA|MI|MN|MS|MO|MT|NE|NV|NH|NJ|NM|NY|NC|ND|OH|OK|OR|PA|RI|SC|SD|TN|TX|UT|VT|VA|WA|WV|WI|WY|DC|PR|GU|VI|AS|MP";
+const ADDR_RE = new RegExp(
+  `([A-Z][A-Za-z .'-]{2,30}),\\s*(${STATE_ABBR})[\\s,]+(\\d{5})(?:-\\d{4})?`,
+);
 
-const ASSET_EXT_RE = /\.(png|jpe?g|gif|svg|webp|ico|css|js|woff2?|ttf|eot|pdf|mp4|mp3)$/i;
+const ASSET_EXT_RE =
+  /\.(png|jpe?g|gif|svg|webp|ico|css|js|woff2?|ttf|eot|pdf|mp4|mp3)$/i;
 const EMAIL_JUNK_RE = /(example\.|sentry|wixpress|@2x)/i;
 const CONTACT_LINK_RE = /contact|about|get.?involved|connect/i;
 
@@ -36,7 +40,9 @@ function stripTags(html) {
 // mailto:/tel: href values, which sites encode inconsistently (entity OR percent OR both).
 function decodeHrefValue(raw) {
   let s = raw
-    .replace(/&#x([0-9a-f]+);/gi, (_, hex) => String.fromCharCode(parseInt(hex, 16)))
+    .replace(/&#x([0-9a-f]+);/gi, (_, hex) =>
+      String.fromCharCode(parseInt(hex, 16)),
+    )
     .replace(/&#(\d+);/g, (_, dec) => String.fromCharCode(Number(dec)))
     .replace(/&amp;/gi, "&");
   try {
@@ -104,7 +110,8 @@ export function extractEmails(html) {
   }
 
   const text = stripTags(html);
-  const textMatches = text.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g) || [];
+  const textMatches =
+    text.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g) || [];
   found.push(...textMatches);
 
   const seen = new Set();
@@ -129,8 +136,9 @@ export function extractPhones(html) {
   }
 
   const text = stripTags(html);
-  const textMatches = (text.match(/(?:\+?1[\s.-]?)?\(?\d{3}\)?[\s.-]\d{3}[\s.-]\d{4}/g) || [])
-    .map((p) => p.trim());
+  const textMatches = (
+    text.match(/(?:\+?1[\s.-]?)?\(?\d{3}\)?[\s.-]\d{3}[\s.-]\d{4}/g) || []
+  ).map((p) => p.trim());
   found.push(...textMatches);
 
   const seen = new Set();
@@ -146,7 +154,9 @@ export function extractPhones(html) {
 export function extractAddress(html) {
   const jsonld = extractJsonLd(html);
   for (const obj of jsonld) {
-    const candidates = [obj, obj && obj.address].filter((c) => c && typeof c === "object");
+    const candidates = [obj, obj && obj.address].filter(
+      (c) => c && typeof c === "object",
+    );
     for (const c of candidates) {
       if (c.addressLocality || c.addressRegion || c.postalCode) {
         return {
@@ -174,7 +184,8 @@ export function extractContactLinks(html, baseUrl) {
     return [];
   }
 
-  const anchorRe = /<a\b[^>]*href\s*=\s*(["'])(.*?)\1[^>]*>([\s\S]*?)<\/a\s*>/gi;
+  const anchorRe =
+    /<a\b[^>]*href\s*=\s*(["'])(.*?)\1[^>]*>([\s\S]*?)<\/a\s*>/gi;
   const out = [];
   const seen = new Set();
   let m;

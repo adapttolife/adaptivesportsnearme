@@ -13,13 +13,17 @@
 // so the whole note waits for a rewrite instead.
 const EMAIL = /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i;
 const PHONE = /(?:\+?1[ .-]?)?\(?\b\d{3}\)?[ .-]\d{3}[ .-]\d{4}\b/;
-const STREET = /\b\d{1,6}\s+(?:[NSEW]\.?\s+)?[A-Z0-9][\w'.-]*(?:\s+[A-Z0-9][\w'.-]*){0,4}\s+(?:St|Street|Rd|Road|Ave|Avenue|Blvd|Boulevard|Dr|Drive|Way|Ln|Lane|Ct|Court|Pl|Place|Pkwy|Parkway|Hwy|Highway|Cir|Circle|Ter|Terrace|Trl|Trail)\b/;
+const STREET =
+  /\b\d{1,6}\s+(?:[NSEW]\.?\s+)?[A-Z0-9][\w'.-]*(?:\s+[A-Z0-9][\w'.-]*){0,4}\s+(?:St|Street|Rd|Road|Ave|Avenue|Blvd|Boulevard|Dr|Drive|Way|Ln|Lane|Ct|Court|Pl|Place|Pkwy|Parkway|Hwy|Highway|Cir|Circle|Ter|Terrace|Trl|Trail)\b/;
 const PO_BOX = /\bP\.?\s?O\.?\s+Box\s+\d+/i;
 
 /** The contact detail found in s, or null. */
 export function contactIn(s) {
   const t = String(s ?? "");
-  for (const re of [EMAIL, PHONE, STREET, PO_BOX]) { const m = t.match(re); if (m) return m[0]; }
+  for (const re of [EMAIL, PHONE, STREET, PO_BOX]) {
+    const m = t.match(re);
+    if (m) return m[0];
+  }
   return null;
 }
 export const hasContact = (s) => contactIn(s) != null;

@@ -30,7 +30,11 @@ export function fromDateTimeLocal(value, original = "") {
     const shown = toDateTimeLocal(stored);
     // Browsers omit :00 seconds. A minute-only value is unchanged only then.
     // :45 shown as 11:30 must become :00, not the stored :45.
-    if (shown && (text === shown || (/:00$/.test(shown) && text === shown.slice(0, 16)))) return stored;
+    if (
+      shown &&
+      (text === shown || (/:00$/.test(shown) && text === shown.slice(0, 16)))
+    )
+      return stored;
   }
   const parsed = new Date(text);
   if (Number.isNaN(parsed.getTime())) return "";
@@ -45,7 +49,11 @@ export function fromDateTimeLocal(value, original = "") {
       const shiftMin = parsed.getTimezoneOffset() - ahead.getTimezoneOffset();
       if (shiftMin !== 0) {
         const later = new Date(parsed.getTime() - shiftMin * 60 * 1000);
-        if (toDateTimeLocal(later) === toDateTimeLocal(parsed) && Math.abs(later.getTime() - prior.getTime()) < Math.abs(parsed.getTime() - prior.getTime())) {
+        if (
+          toDateTimeLocal(later) === toDateTimeLocal(parsed) &&
+          Math.abs(later.getTime() - prior.getTime()) <
+            Math.abs(parsed.getTime() - prior.getTime())
+        ) {
           chosen = later;
         }
       }

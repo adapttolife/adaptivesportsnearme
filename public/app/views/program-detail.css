@@ -1,353 +1,352 @@
 .v-program-detail .pg-grid {
-	display: block;
+  display: block;
 }
 
 .v-program-detail .pg-main {
-	min-width: 0;
+  min-width: 0;
 }
 
 .v-program-detail .pg-book {
-	display: none;
+  display: none;
 }
 
 .v-program-detail .pg-hero {
-	position: relative;
-	margin-inline: calc(-1 * var(--gut));
+  position: relative;
+  margin-inline: calc(-1 * var(--gut));
 }
 
 .v-program-detail .pg-hb {
-	position: absolute;
-	top: 12px;
-	left: 12px;
-	z-index: 2;
-	display: grid;
-	place-items: center;
-	width: 44px;
-	height: 44px;
-	border: 0;
-	border-radius: 50%;
-	background: #f3f3f3;
-	color: var(--ink);
-	box-shadow:
-		0 1px 3px rgba(26, 26, 26, 0.18),
-		0 2px 8px rgba(26, 26, 26, 0.1);
-	transition: scale var(--ease);
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 50%;
+  background: #f3f3f3;
+  color: var(--ink);
+  box-shadow:
+    0 1px 3px rgba(26, 26, 26, 0.18),
+    0 2px 8px rgba(26, 26, 26, 0.1);
+  transition: scale var(--ease);
 }
 
 .v-program-detail .pg-hb:hover {
-	scale: 1.06;
+  scale: 1.06;
 }
 
 .v-program-detail .pg-edge {
-	position: absolute;
-	z-index: 2;
-	left: var(--gut);
-	right: var(--gut);
-	bottom: -24px;
-	display: flex;
-	pointer-events: none;
+  position: absolute;
+  z-index: 2;
+  left: var(--gut);
+  right: var(--gut);
+  bottom: -24px;
+  display: flex;
+  pointer-events: none;
 }
 
 .v-program-detail .pg-stamp {
-	display: flex;
-	align-items: center;
-	gap: 10px;
-	min-width: 0;
-	height: 56px;
-	padding: 8px 16px 8px 8px;
-	border-radius: var(--r-l);
-	background: #f3f3f3;
-	color: var(--ink);
-	box-shadow: var(--sh-2);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  height: 56px;
+  padding: 8px 16px 8px 8px;
+  border-radius: var(--r-l);
+  background: #f3f3f3;
+  color: var(--ink);
+  box-shadow: var(--sh-2);
 }
 
 .v-program-detail .pg-stamp-map {
-	display: grid;
-	place-items: center;
-	width: 40px;
-	height: 40px;
-	flex: none;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  flex: none;
 }
 
 .v-program-detail .pg-stamp-text {
-	min-width: 0;
-	overflow: hidden;
-	font-size: 17px;
-	font-weight: 700;
-	line-height: 1.25;
+  min-width: 0;
+  overflow: hidden;
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.25;
 }
 
 .v-program-detail .pg-stamp-text > span {
-	display: block;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .v-program-detail .pg-head {
-	margin-top: 24px;
+  margin-top: 24px;
 }
 
 .v-program-detail .pg-hero.has-stamp + .pg-head {
-	margin-top: 48px;
+  margin-top: 48px;
 }
 
 .v-program-detail .pg-head h1 {
-	overflow-wrap: anywhere;
+  overflow-wrap: anywhere;
 }
 
 .v-program-detail .pg-meta {
-	margin-top: 8px;
-	color: var(--graphite);
-	font-size: 17px;
-	font-weight: 500;
-	line-height: 1.45;
+  margin-top: 8px;
+  color: var(--graphite);
+  font-size: 17px;
+  font-weight: 500;
+  line-height: 1.45;
 }
 
 .v-program-detail .pg-acts {
-	margin-top: 16px;
+  margin-top: 16px;
 }
 
 .v-program-detail .pg-full {
-	width: 100%;
+  width: 100%;
 }
 
 .v-program-detail .pg-host {
-	margin-top: 8px;
-	color: var(--muted);
-	font-size: 15px;
-	line-height: 1.4;
-	overflow-wrap: anywhere;
-	text-align: center;
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+  text-align: center;
 }
 
 .v-program-detail .pg-sec {
-	margin-top: 40px;
+  margin-top: 40px;
 }
 
 .v-program-detail .pg-sec > h2 {
-	margin-bottom: 4px;
+  margin-bottom: 4px;
 }
 
 .v-program-detail .pg-sec p {
-	margin-top: 8px;
-	color: var(--graphite);
+  margin-top: 8px;
+  color: var(--graphite);
 }
 
 .v-program-detail .pg-sec .tlink {
-	margin-top: 4px;
+  margin-top: 4px;
 }
 
 .v-program-detail .pg-sec p a:not(.btn) {
-	padding-block: 11px;
+  padding-block: 11px;
 }
 
 .v-program-detail .pg-quiet {
-	color: var(--graphite);
+  color: var(--graphite);
 }
 
 .v-program-detail .pg-facts {
-	display: grid;
-	grid-template-columns: minmax(0, 1fr);
-	margin-top: 32px;
-	border-top: 1px solid var(--line);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  margin-top: 32px;
+  border-top: 1px solid var(--line);
 }
 
 .v-program-detail .pg-facts > div {
-	display: grid;
-	grid-template-columns: 120px minmax(0, 1fr);
-	gap: 12px;
-	padding: 14px 0;
-	border-bottom: 1px solid var(--line);
+  display: grid;
+  grid-template-columns: 120px minmax(0, 1fr);
+  gap: 12px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--line);
 }
 
 .v-program-detail .pg-facts dt {
-	font-weight: 700;
+  font-weight: 700;
 }
 
 .v-program-detail .pg-facts dd {
-	color: var(--graphite);
+  color: var(--graphite);
 }
 
 .v-program-detail .pg-book-in {
-	padding: 24px;
-	border: 1px solid var(--line);
-	border-radius: var(--r-xl);
-	background: var(--paper);
-	box-shadow: var(--sh-2);
+  padding: 24px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-xl);
+  background: var(--paper);
+  box-shadow: var(--sh-2);
 }
 
 .v-program-detail .pg-book-kind {
-	color: var(--graphite);
-	font-size: 16px;
-	font-weight: 600;
-	line-height: 1.4;
-	margin-bottom: 10px;
+  color: var(--graphite);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.4;
+  margin-bottom: 10px;
 }
 
 .v-program-detail .pg-book .pg-host {
-	margin-top: 10px;
+  margin-top: 10px;
 }
 
 .v-program-detail .pg-nf {
-	padding: 48px 0 16px;
+  padding: 48px 0 16px;
 }
 
 .v-program-detail .pg-nf p {
-	margin-top: 10px;
-	color: var(--graphite);
+  margin-top: 10px;
+  color: var(--graphite);
 }
 
 @media (min-width: 600px) and (max-width: 1099px) {
-	.v-program-detail .pg-acts {
-		display: flex;
-		align-items: center;
-		gap: 16px;
-	}
-	.v-program-detail .pg-acts .pg-full {
-		width: auto;
-	}
-	.v-program-detail .pg-acts .pg-host {
-		margin-top: 0;
-		text-align: left;
-	}
+  .v-program-detail .pg-acts {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .v-program-detail .pg-acts .pg-full {
+    width: auto;
+  }
+  .v-program-detail .pg-acts .pg-host {
+    margin-top: 0;
+    text-align: left;
+  }
 }
 
 @media (min-width: 768px) {
-	.v-program-detail .pg-hero {
-		margin: 24px 0 0;
-	}
-	.v-program-detail .pg-hb {
-		top: 16px;
-		left: 16px;
-	}
-	.v-program-detail .pg-edge {
-		left: 20px;
-		right: 20px;
-	}
-	.v-program-detail .pg-sec {
-		margin-top: 48px;
-	}
+  .v-program-detail .pg-hero {
+    margin: 24px 0 0;
+  }
+  .v-program-detail .pg-hb {
+    top: 16px;
+    left: 16px;
+  }
+  .v-program-detail .pg-edge {
+    left: 20px;
+    right: 20px;
+  }
+  .v-program-detail .pg-sec {
+    margin-top: 48px;
+  }
 }
 
 @media (min-width: 1100px) {
-	.v-program-detail .pg-grid {
-		display: grid;
-		grid-template-columns: minmax(0, 1fr) 300px;
-		gap: 40px;
-		align-items: start;
-	}
-	.v-program-detail .pg-book {
-		display: block;
-		position: sticky;
-		top: calc(var(--top-h, 0px) + 24px);
-		margin-top: 24px;
-	}
-	.v-program-detail .pg-acts {
-		display: none;
-	}
+  .v-program-detail .pg-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 300px;
+    gap: 40px;
+    align-items: start;
+  }
+  .v-program-detail .pg-book {
+    display: block;
+    position: sticky;
+    top: calc(var(--top-h, 0px) + 24px);
+    margin-top: 24px;
+  }
+  .v-program-detail .pg-acts {
+    display: none;
+  }
 }
 
 @media (min-width: 1280px) {
-	.v-program-detail .pg-grid {
-		grid-template-columns: 1fr 340px;
-	}
+  .v-program-detail .pg-grid {
+    grid-template-columns: 1fr 340px;
+  }
 }
-
 
 /* The trust line and the "Suggest a fix" row, the same as an organization's page (program.css). */
 /* ================= 8. Link rows ================= */
 .v-program-detail .pg-links {
-	margin-top: 32px;
-	border-top: 1px solid var(--line);
+  margin-top: 32px;
+  border-top: 1px solid var(--line);
 }
 
 .v-program-detail .pg-link {
-	display: flex;
-	align-items: center;
-	gap: 14px;
-	min-height: 56px;
-	padding: 10px 4px;
-	border-bottom: 1px solid var(--line);
-	text-decoration: none;
-	color: var(--ink);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 56px;
+  padding: 10px 4px;
+  border-bottom: 1px solid var(--line);
+  text-decoration: none;
+  color: var(--ink);
 }
 
 .v-program-detail .pg-link:hover .pg-link-label {
-	text-decoration: underline;
-	text-underline-offset: 3px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 .v-program-detail .pg-link:focus-visible {
-	box-shadow: var(--focus);
-	border-radius: var(--r);
+  box-shadow: var(--focus);
+  border-radius: var(--r);
 }
 
 .v-program-detail .pg-link-ic {
-	display: grid;
-	place-items: center;
-	width: 40px;
-	height: 40px;
-	border-radius: 50%;
-	background: var(--mist);
-	flex: none;
-	color: var(--graphite);
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--mist);
+  flex: none;
+  color: var(--graphite);
 }
 
 .v-program-detail .pg-link-text {
-	flex: 1;
-	min-width: 0;
-	display: flex;
-	flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .v-program-detail .pg-link-label {
-	font-size: 17px;
-	font-weight: 700;
-	line-height: 1.3;
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.3;
 }
 
 .v-program-detail .pg-link-sub {
-	font-size: 15px;
-	color: var(--muted);
-	line-height: 1.4;
-	margin-top: 2px;
+  font-size: 15px;
+  color: var(--muted);
+  line-height: 1.4;
+  margin-top: 2px;
 }
 
 .v-program-detail .pg-link > .ic:last-child {
-	color: var(--muted);
+  color: var(--muted);
 }
 
 .v-program-detail .pg-fresh {
-	margin-top: 6px;
-	font-size: 15px;
-	font-weight: 500;
-	line-height: 1.45;
-	color: var(--graphite);
+  margin-top: 6px;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.45;
+  color: var(--graphite);
 }
 
 .v-program-detail .pg-fresh span + span::before {
-	content: "\00b7";
-	margin: 0 7px;
+  content: "\00b7";
+  margin: 0 7px;
 }
 
 .v-program-detail .pg-map {
-	position: relative;
-	height: clamp(240px, 42vw, 360px);
-	margin-top: 20px;
-	overflow: hidden;
-	border: 1px solid var(--line);
-	border-radius: var(--r-l);
-	background: var(--mist);
+  position: relative;
+  height: clamp(240px, 42vw, 360px);
+  margin-top: 20px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--r-l);
+  background: var(--mist);
 }
 
 .v-program-detail .pg-map.is-map-unavailable::after {
-	content: "Map unavailable";
-	position: absolute;
-	inset: 0;
-	display: grid;
-	place-items: center;
-	color: var(--graphite);
+  content: "Map unavailable";
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: var(--graphite);
 }
 
 /* ================= The facts strip, the second action, a smaller hero on phones =================
@@ -355,85 +354,85 @@
    When · Cost · Ages · Who it's for · Equipment right under the name and the website button,
    "Something's wrong?" beside Visit website, and the facts on the first phone screen. */
 .v-program-detail .pg-strip {
-	display: flex;
-	flex-wrap: wrap;
-	gap: 6px;
-	margin-top: 14px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 14px;
 }
 
 .v-program-detail .pg-strip > div {
-	min-width: 0;
-	max-width: 100%;
-	padding: 5px 12px 6px;
-	border-radius: var(--r);
-	background: var(--sand);
-	border: 1px solid var(--line);
+  min-width: 0;
+  max-width: 100%;
+  padding: 5px 12px 6px;
+  border-radius: var(--r);
+  background: var(--sand);
+  border: 1px solid var(--line);
 }
 
 .v-program-detail .pg-strip dt {
-	font-size: 12px;
-	font-weight: 700;
-	line-height: 1.3;
-	color: var(--graphite);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--graphite);
 }
 
 .v-program-detail .pg-strip dd {
-	font-size: 15px;
-	font-weight: 700;
-	line-height: 1.3;
-	color: var(--ink);
-	overflow-wrap: anywhere;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--ink);
+  overflow-wrap: anywhere;
 }
 
 .v-program-detail .pg-strip > .is-off {
-	background: var(--sun-soft);
-	border-color: color-mix(in srgb, var(--sun) 45%, var(--line));
+  background: var(--sun-soft);
+  border-color: color-mix(in srgb, var(--sun) 45%, var(--line));
 }
 
 .v-program-detail .pg-act-row {
-	display: flex;
-	gap: 10px;
+  display: flex;
+  gap: 10px;
 }
 
 .v-program-detail .pg-act-row .pg-full {
-	flex: 1 1 auto;
-	width: auto;
-	min-width: 0;
+  flex: 1 1 auto;
+  width: auto;
+  min-width: 0;
 }
 
 .v-program-detail .pg-act-row .pg-wrong {
-	flex: none;
-	padding: 0 16px;
+  flex: none;
+  padding: 0 16px;
 }
 
 .v-program-detail .pg-act-row .pg-wrong.pg-full {
-	flex: 1 1 auto;
+  flex: 1 1 auto;
 }
 
 .v-program-detail .pg-book .pg-wrong {
-	margin-top: 12px;
+  margin-top: 12px;
 }
 
 /* Phones: three buttons don't fit on one line, so Visit website takes its own full-width
    line and Save and Something's wrong share the next. Without the wrap, Visit website
    shrinks to a sliver from 381 px up (seen at 390 px after the Save button joined the row). */
 @media (max-width: 599px) {
-	.v-program-detail .pg-act-row {
-		flex-wrap: wrap;
-	}
-	.v-program-detail .pg-act-row .pg-full {
-		flex: 1 1 100%;
-	}
-	.v-program-detail .pg-act-row .save-btn,
-	.v-program-detail .pg-act-row .pg-wrong {
-		flex: 1 1 0;
-		min-width: 0;
-	}
+  .v-program-detail .pg-act-row {
+    flex-wrap: wrap;
+  }
+  .v-program-detail .pg-act-row .pg-full {
+    flex: 1 1 100%;
+  }
+  .v-program-detail .pg-act-row .save-btn,
+  .v-program-detail .pg-act-row .pg-wrong {
+    flex: 1 1 0;
+    min-width: 0;
+  }
 }
 
 @media (max-width: 767px) {
-	.v-program-detail .pg-hero .plate--hero {
-		aspect-ratio: 16 / 9;
-		--Hx: calc(100cqh - var(--pb) - 52px);
-	}
+  .v-program-detail .pg-hero .plate--hero {
+    aspect-ratio: 16 / 9;
+    --Hx: calc(100cqh - var(--pb) - 52px);
+  }
 }

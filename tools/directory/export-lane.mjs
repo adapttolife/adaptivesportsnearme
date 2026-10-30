@@ -8,9 +8,17 @@ import { writeFileSync, mkdirSync } from "node:fs";
 import { staging, parseJson, isNeverTouch, ROOT } from "./lib.mjs";
 
 const lane = (process.argv[2] || "").toLowerCase();
-const allowed = new Set(["geocode", "classify", "enrich", "resolve", "validate"]);
+const allowed = new Set([
+  "geocode",
+  "classify",
+  "enrich",
+  "resolve",
+  "validate",
+]);
 if (!allowed.has(lane)) {
-  console.error("usage: node export-lane.mjs geocode|classify|enrich|resolve|validate");
+  console.error(
+    "usage: node export-lane.mjs geocode|classify|enrich|resolve|validate",
+  );
   process.exit(1);
 }
 
@@ -27,7 +35,11 @@ const folds = [];
 const skipped = [];
 for (const r of rows) {
   if (isNeverTouch(r.organization_id)) {
-    skipped.push({ id: r.organization_id, name: r.name, reason: "never-touch" });
+    skipped.push({
+      id: r.organization_id,
+      name: r.name,
+      reason: "never-touch",
+    });
     continue;
   }
   const ch = parseJson(r.proposed_change);
@@ -35,10 +47,18 @@ for (const r of rows) {
   if (lane === "resolve") {
     const keep = ev.duplicate_of;
     if (!keep || isNeverTouch(r.organization_id)) {
-      skipped.push({ id: r.organization_id, name: r.name, reason: "unsafe fold" });
+      skipped.push({
+        id: r.organization_id,
+        name: r.name,
+        reason: "unsafe fold",
+      });
       continue;
     }
-    folds.push({ keep, hide: [r.organization_id], reason: `same website (queue ${r.item_id})` });
+    folds.push({
+      keep,
+      hide: [r.organization_id],
+      reason: `same website (queue ${r.item_id})`,
+    });
     continue;
   }
   const fields = {};
@@ -83,6 +103,8 @@ const card = {
 mkdirSync(`${ROOT}/inbox`, { recursive: true });
 const out = `${ROOT}/inbox/queue-${lane}.json`;
 writeFileSync(out, JSON.stringify(card, null, 2) + "\n");
-console.log(`exported ${lane}: fills ${fills.length} folds ${folds.length} skipped ${skipped.length}`);
+console.log(
+  `exported ${lane}: fills ${fills.length} folds ${folds.length} skipped ${skipped.length}`,
+);
 console.log(out);
 console.log("not approved. live stays locked. lint then wait for a yes.");

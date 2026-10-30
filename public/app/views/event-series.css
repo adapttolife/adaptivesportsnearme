@@ -1,195 +1,195 @@
 /* A yearly event `/events/:slug`. Scoped under .v-event-series. */
 
 .v-event-series .es {
-	padding-top: 16px;
-	max-width: 720px;
+  padding-top: 16px;
+  max-width: 720px;
 }
 
 .v-event-series .es-back {
-	display: inline-flex;
-	align-items: center;
-	gap: 8px;
-	min-height: 44px;
-	padding-right: 8px;
-	margin-bottom: 8px;
-	font-size: 16px;
-	font-weight: 700;
-	text-decoration: none;
-	border-radius: var(--r);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding-right: 8px;
+  margin-bottom: 8px;
+  font-size: 16px;
+  font-weight: 700;
+  text-decoration: none;
+  border-radius: var(--r);
 }
 
 .v-event-series .es-back:hover span {
-	text-decoration: underline;
-	text-underline-offset: 3px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 /* Header: the sport tile, then the name and the meta line. */
 .v-event-series .es-head {
-	display: grid;
-	grid-template-columns: auto minmax(0, 1fr);
-	column-gap: 16px;
-	align-items: center;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: 16px;
+  align-items: center;
 }
 
 .v-event-series .es-tile {
-	width: 64px;
-	height: 64px;
-	border-radius: var(--r);
+  width: 64px;
+  height: 64px;
+  border-radius: var(--r);
 }
 
 .v-event-series .es-meta {
-	margin-top: 6px;
-	font-size: var(--fs-meta);
-	font-weight: 500;
-	line-height: 1.4;
-	color: var(--graphite);
+  margin-top: 6px;
+  font-size: var(--fs-meta);
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--graphite);
 }
 
 .v-event-series .es-meta a {
-	color: inherit;
-	font-weight: 700;
-	padding-block: 0;
+  color: inherit;
+  font-weight: 700;
+  padding-block: 0;
 }
 
 @media (min-width: 768px) {
-	.v-event-series .es {
-		padding-top: 32px;
-	}
-	.v-event-series .es-head {
-		column-gap: 20px;
-	}
-	.v-event-series .es-tile {
-		width: 84px;
-		height: 84px;
-	}
+  .v-event-series .es {
+    padding-top: 32px;
+  }
+  .v-event-series .es-head {
+    column-gap: 20px;
+  }
+  .v-event-series .es-tile {
+    width: 84px;
+    height: 84px;
+  }
 }
 
 /* Where it stands: the next dates, or when it usually happens. One Sand panel. */
 .v-event-series .es-state {
-	margin-top: 24px;
-	padding: 20px;
-	border-radius: var(--r-l);
-	background: var(--sand);
-	color: var(--ink);
+  margin-top: 24px;
+  padding: 20px;
+  border-radius: var(--r-l);
+  background: var(--sand);
+  color: var(--ink);
 }
 
 .v-event-series .es-lab {
-	display: inline-flex;
-	align-items: center;
-	gap: 6px;
-	font-size: var(--fs-label);
-	font-weight: 700;
-	color: var(--graphite);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--fs-label);
+  font-weight: 700;
+  color: var(--graphite);
 }
 
 .v-event-series .es-when {
-	margin-top: 6px;
-	font-size: var(--fs-h2);
-	font-weight: 700;
-	line-height: 1.2;
+  margin-top: 6px;
+  font-size: var(--fs-h2);
+  font-weight: 700;
+  line-height: 1.2;
 }
 
 .v-event-series .es-nth {
-	white-space: nowrap;
+  white-space: nowrap;
 }
 
 .v-event-series .es-at {
-	margin-top: 4px;
-	font-size: 17px;
-	color: var(--graphite);
+  margin-top: 4px;
+  font-size: 17px;
+  color: var(--graphite);
 }
 
 .v-event-series .es-say {
-	margin-top: 6px;
-	font-size: 18px;
-	line-height: 1.45;
+  margin-top: 6px;
+  font-size: 18px;
+  line-height: 1.45;
 }
 
 .v-event-series .es-say + .es-say {
-	margin-top: 2px;
+  margin-top: 2px;
 }
 
 .v-event-series .es-state .btns {
-	margin-top: 16px;
+  margin-top: 16px;
 }
 
 @media (min-width: 768px) {
-	.v-event-series .es-state {
-		padding: 24px 28px;
-	}
-	.v-event-series .es-say {
-		font-size: 19px;
-	}
+  .v-event-series .es-state {
+    padding: 24px 28px;
+  }
+  .v-event-series .es-say {
+    font-size: 19px;
+  }
 }
 
 /* About and Past years */
 .v-event-series .es-sec {
-	margin-top: 36px;
+  margin-top: 36px;
 }
 
 .v-event-series .es-sec h2 {
-	padding-bottom: 8px;
-	border-bottom: 1px solid var(--line);
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--line);
 }
 
 .v-event-series .es-sec > p {
-	margin-top: 12px;
-	font-size: 17px;
-	line-height: 1.5;
+  margin-top: 12px;
+  font-size: 17px;
+  line-height: 1.5;
 }
 
 .v-event-series .es-years {
-	list-style: none;
-	margin: 0;
-	padding: 0;
+  list-style: none;
+  margin: 0;
+  padding: 0;
 }
 
 .v-event-series .es-year {
-	display: grid;
-	grid-template-columns: 64px minmax(0, 1fr);
-	gap: 14px;
-	padding: 14px 0;
-	border-bottom: 1px solid var(--line);
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr);
+  gap: 14px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--line);
 }
 
 .v-event-series .es-year:last-child {
-	border-bottom: 0;
+  border-bottom: 0;
 }
 
 .v-event-series .es-y {
-	font-size: 20px;
-	line-height: 1.3;
+  font-size: 20px;
+  line-height: 1.3;
 }
 
 .v-event-series .es-yb p {
-	font-size: 17px;
-	font-weight: 700;
-	line-height: 1.3;
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.3;
 }
 
 .v-event-series .es-yb .es-yat {
-	margin-top: 2px;
-	font-weight: 500;
-	color: var(--graphite);
+  margin-top: 2px;
+  font-weight: 500;
+  color: var(--graphite);
 }
 
 .v-event-series .es-yb .tlink {
-	min-height: 40px;
-	padding-block: 6px;
-	font-size: 16px;
+  min-height: 40px;
+  padding-block: 6px;
+  font-size: 16px;
 }
 
 .v-event-series .es-tell {
-	margin-top: 24px;
-	font-size: 16px;
-	color: var(--graphite);
+  margin-top: 24px;
+  font-size: 16px;
+  color: var(--graphite);
 }
 
 .v-event-series .es-tell a {
-	color: var(--ink);
-	font-weight: 700;
+  color: var(--ink);
+  font-weight: 700;
 }
 
 .v-event-series .letter {
-	margin-top: 40px;
+  margin-top: 40px;
 }

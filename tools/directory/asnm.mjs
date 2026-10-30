@@ -15,7 +15,9 @@ import { ROOT } from "./lib.mjs";
 
 const [cmd, ...rest] = process.argv.slice(2);
 const run = (file, args = []) => {
-  const r = spawnSync(process.execPath, [`${ROOT}/${file}`, ...args], { stdio: "inherit" });
+  const r = spawnSync(process.execPath, [`${ROOT}/${file}`, ...args], {
+    stdio: "inherit",
+  });
   process.exit(r.status ?? 1);
 };
 
@@ -68,7 +70,10 @@ if (cmd === "status") {
 } else if (cmd === "ship") {
   const apply = rest.includes("--apply");
   const file = rest.find((a) => a !== "--apply");
-  run("ship-approved.mjs", apply ? ["--file", file, "--apply"] : ["--file", file]);
+  run(
+    "ship-approved.mjs",
+    apply ? ["--file", file, "--apply"] : ["--file", file],
+  );
 } else if (cmd === "describe") {
   run("describe.mjs", rest);
 } else if (cmd === "discover") {

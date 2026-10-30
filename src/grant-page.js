@@ -20,9 +20,14 @@ const TYPE_LABEL = {
 };
 
 function esc(s) {
-  return s == null ? "" : String(s)
-    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+  return s == null
+    ? ""
+    : String(s)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
 }
 
 export function grantTypeLabel(grant) {
@@ -45,7 +50,11 @@ function audienceBadge(grant) {
 }
 
 export function grantLocLine(grant) {
-  const parts = [grant.source, grant.amountDisplay, grant.deadlineDisplay].filter(Boolean);
+  const parts = [
+    grant.source,
+    grant.amountDisplay,
+    grant.deadlineDisplay,
+  ].filter(Boolean);
   if (parts.length) return parts.join(" · ");
   return "United States · national";
 }
@@ -55,14 +64,20 @@ export function grantOverlayLoc(grant) {
 }
 
 function hostFromUrl(u) {
-  try { return new URL(u).hostname.replace(/^www\./, ""); } catch { return u; }
+  try {
+    return new URL(u).hostname.replace(/^www\./, "");
+  } catch {
+    return u;
+  }
 }
 
 // Apply → Call → Email → View source. Never an empty-page stub.
 export function primaryCta(grant) {
-  if (grant.applicationUrl) return { href: grant.applicationUrl, label: "Apply" };
+  if (grant.applicationUrl)
+    return { href: grant.applicationUrl, label: "Apply" };
   const phone = grant.phone && String(grant.phone).trim();
-  if (phone) return { href: `tel:${phone.replace(/[^\d+]/g, "")}`, label: "Call" };
+  if (phone)
+    return { href: `tel:${phone.replace(/[^\d+]/g, "")}`, label: "Call" };
   if (grant.email) return { href: `mailto:${grant.email}`, label: "Email" };
   if (grant.sourceUrl) return { href: grant.sourceUrl, label: "View source" };
   return null;
@@ -83,16 +98,18 @@ function denseRows(grant) {
     ["How to apply", grant.howToApply],
   ].filter(([, v]) => v);
   if (!pairs.length) return "";
-  return `<div class="rows">${pairs.map(([k, v]) => {
-    let val = esc(v);
-    if (k === "Phone") {
-      const tel = String(v).replace(/[^\d+]/g, "");
-      val = `<a href="tel:${esc(tel)}">${esc(v)}</a>`;
-    } else if (k === "Email") {
-      val = `<a href="mailto:${esc(v)}">${esc(v)}</a>`;
-    }
-    return `<div class="row"><span class="k">${k}</span><span class="v">${val}</span></div>`;
-  }).join("")}</div>`;
+  return `<div class="rows">${pairs
+    .map(([k, v]) => {
+      let val = esc(v);
+      if (k === "Phone") {
+        const tel = String(v).replace(/[^\d+]/g, "");
+        val = `<a href="tel:${esc(tel)}">${esc(v)}</a>`;
+      } else if (k === "Email") {
+        val = `<a href="mailto:${esc(v)}">${esc(v)}</a>`;
+      }
+      return `<div class="row"><span class="k">${k}</span><span class="v">${val}</span></div>`;
+    })
+    .join("")}</div>`;
 }
 
 function otherCard(g) {
@@ -111,8 +128,6 @@ function otherStrip(items) {
   const list = items.slice(0, 6);
   return `<div class="nearby"><h2>Other grants</h2><div class="frow-scroll">${list.map(otherCard).join("")}</div></div>`;
 }
-
-
 
 function page({ title, description, canonical, image, body }) {
   const ogImage = image
@@ -179,7 +194,9 @@ export function grantPageTemplate(grant, { site = SITE, nearby = [] } = {}) {
   const name = grant.name || "Adaptive sports grant";
   const loc = grantLocLine(grant);
   const canonical = `${site}/grants/${grant.id}`;
-  const photo = isCoverVisual(listingVisual(grant, "grant")) ? listingVisual(grant, "grant").src : null;
+  const photo = isCoverVisual(listingVisual(grant, "grant"))
+    ? listingVisual(grant, "grant").src
+    : null;
   const body = `<div class="bar"><a class="back" href="/?db=grants">← Grants</a></div>
 ${listingInnerHtml(grant, { nearby })}`;
   return page({
