@@ -943,7 +943,179 @@ async function handleManagedOrganizationItems(request, env, organizationId, kind
 const BETA_AUTH_CACHE = "private, no-store";
 
 function betaHtml() {
-  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Adaptive Sports Near Me beta</title><meta name="robots" content="noindex"><style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#f7f3ec;color:#1a1a1a;font-family:system-ui,sans-serif;padding:24px;box-sizing:border-box}.beta{max-width:540px;width:100%;background:#fff;border:1px solid #d8d1c5;border-radius:15px;padding:clamp(28px,6vw,52px);box-sizing:border-box}.beta p{line-height:1.55;color:#555}.beta label{display:block;font-weight:650;margin-top:24px}.beta input{box-sizing:border-box;width:100%;margin-top:8px;padding:13px 14px;border:1px solid #777;border-radius:8px;font:inherit}.beta button{margin-top:14px;background:#1a1a1a;color:#fff;border:0;border-radius:8px;padding:13px 18px;font:inherit;font-weight:700;cursor:pointer}.beta [role=status]{min-height:1.5em;margin:12px 0 0}</style></head><body><main class="beta"><p>Adaptive Sports Near Me</p><h1>We're in beta.</h1><p>Beta testers can sign in with their approved email address to explore the site.</p><form id="beta-login"><label for="email">Email address</label><input id="email" name="email" type="email" autocomplete="email" required><button type="submit">Email me a sign-in link</button><p role="status" id="status"></p></form></main><script>if(location.pathname!=='/')history.replaceState(null,'','/');document.getElementById('beta-login').addEventListener('submit',async(e)=>{e.preventDefault();const f=e.currentTarget,s=document.getElementById('status');if(!f.reportValidity())return;s.textContent='Sending your sign-in link...';try{const r=await fetch('/api/beta-auth/request-link',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({email:f.email.value})}),b=await r.json();s.textContent=r.ok&&b.ok?'Check your email for a one-time sign-in link.':(b.error||'We could not send a sign-in link.');}catch(_){s.textContent='We could not send a sign-in link.';}});</script></body></html>`;
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Adaptive Sports Near Me beta</title><meta name="robots" content="noindex"><style>@import url("https://fonts.googleapis.com/css2?family=Sofia+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,500&display=swap");
+:root {
+	color-scheme: light;
+	--ink: #1a1a1a;
+	--paper: #f3f3f3;
+	--sand: #f0efec;
+	--line: #cfccc5;
+	--muted: #5f5d59;
+	--coral: #ff5c39;
+	--r: 15px;
+}
+* {
+	box-sizing: border-box;
+}
+body {
+	margin: 0;
+	min-height: 100vh;
+	background: var(--sand);
+	color: var(--ink);
+	font-family: "Sofia Sans", Arial, sans-serif;
+	padding: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.beta {
+	width: min(100%, 500px);
+	margin: auto;
+	display: flex;
+	flex-direction: column;
+	background: #fff;
+	border-radius: var(--r);
+	box-shadow: 0 8px 24px rgba(26,26,26,.1);
+	overflow: hidden;
+}
+.beta-intro {
+	background: var(--coral);
+	padding: min(50px, 5vw);
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+}
+.beta-brand {
+	display: block;
+	width: min(75px, 100%);
+	height: auto;
+  filter: brightness(0);
+  opacity: 0.9;
+}
+.beta-kicker {
+	margin: 12px 0;
+	padding: 5px 10px;
+	border: 2px solid var(--ink);
+	border-radius: 99px;
+	font-size: 15px;
+	font-weight: 800;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+}
+.beta h1 {
+	margin: 0;
+	font-size: clamp(32px, 6vw, 50px);
+	line-height: 0.85;
+  margin-top: 10px;
+	letter-spacing: -0.055em;
+	font-weight: 900;
+}
+.beta-intro p:last-child {
+  margin: 20px 0 0;
+  font-size: 19px;
+  line-height: 1.2;
+	font-weight: 600;
+}
+.beta-card {
+	align-self: center;
+	padding: min(50px, 5vw);
+}
+.beta-card h2 {
+	margin: 0;
+	font-size: 30px;
+	line-height: 1;
+	font-weight: 800;
+	letter-spacing: -0.03em;
+}
+.beta-card > p {
+	margin: 12px 0 26px;
+	color: var(--muted);
+	font-size: 18px;
+	line-height: 1.35;
+}
+.beta label {
+	display: block;
+	font-size: 16px;
+	font-weight: 700;
+}
+.beta input {
+	width: 100%;
+	height: 52px;
+	margin-top: 8px;
+	padding: 0 14px;
+	border: 1px solid #8a877f;
+	border-radius: 8px;
+	background: #fff;
+	color: var(--ink);
+	font: inherit;
+	font-size: 18px;
+}
+.beta input:focus {
+	outline: 3px solid var(--ink);
+	outline-offset: 2px;
+}
+.beta button {
+	width: 100%;
+	min-height: 52px;
+	margin-top: 14px;
+	border: 0;
+	border-radius: 8px;
+	background: var(--ink);
+	color: var(--paper);
+	font:
+		700 17px "Sofia Sans",
+		Arial,
+		sans-serif;
+	cursor: pointer;
+	transition:
+		background-color 0.18s ease,
+		transform 0.18s ease;
+}
+.beta button:hover {
+	background: #333331;
+}
+.beta button:active {
+	transform: translateY(1px);
+}
+.beta [role="status"] {
+	min-height: 1.5em;
+	margin: 14px 0 0;
+	color: var(--muted);
+	font-size: 16px;
+	line-height: 1.35;
+}
+.beta [role="status"]:empty {
+  display: none;
+}
+@media (max-width: 720px) {
+	body {
+		padding: 0;
+	}
+	.beta {
+		min-height: 100vh;
+		border-radius: 0;
+	}
+	.beta-intro {
+		min-height: 42vh;
+		padding: 28px 24px;
+	}
+	.beta-kicker {
+		margin-top: auto;
+	}
+	.beta h1 {
+		font-size: clamp(20px, 10vw, 58px);
+	}
+	.beta-intro p:last-child {
+		font-size: 18px;
+	}
+	.beta-card {
+		margin: auto 0;
+		border-width: 1px 0 0;
+		border-radius: 0;
+		padding: 32px 24px;
+	}
+}
+</style></head><body><main class="beta"><section class="beta-intro" aria-labelledby="beta-title"><img class="beta-brand" src="/app/logo.svg" alt="Adaptive Sports Near Me"><p class="beta-kicker">Early access</p><h1 id="beta-title">Find your place in adaptive sports.</h1><p>Adaptive Sports Near Me is in beta. Your feedback helps make the directory useful for everyone.</p></section><section class="beta-card" aria-labelledby="beta-login-title"><h2 id="beta-login-title">Welcome, beta tester</h2><p>Use your approved email address and we will send a one-time sign-in link.</p><form id="beta-login"><label for="email">Email address</label><input id="email" name="email" type="email" autocomplete="email" required><button type="submit">Email me a sign-in link</button><p role="status" id="status"></p></form></section></main><script>if(location.pathname!=='/')history.replaceState(null,'','/');document.getElementById('beta-login').addEventListener('submit',async(e)=>{e.preventDefault();const f=e.currentTarget,s=document.getElementById('status');if(!f.reportValidity())return;s.textContent='Sending your sign-in link...';try{const r=await fetch('/api/beta-auth/request-link',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({email:f.email.value})}),b=await r.json();s.textContent=r.ok&&b.ok?'Check your email for a one-time sign-in link.':(b.error||'We could not send a sign-in link.');}catch(_){s.textContent='We could not send a sign-in link.';}});</script></body></html>`;
 }
 
 async function prelaunchGate(request, env, url) {

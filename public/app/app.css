@@ -447,17 +447,16 @@ body.has-sticky #main {
 }
 
 .beta {
+	width: min(100%,1000px);
+	min-height: calc(100vh - 40px);
+	margin: auto;
 	display: flex;
-	align-items: center;
-	gap: 4px;
-	min-height: 44px;
-	max-width: var(--max);
-	margin: 0 auto;
-	color: var(--ink);
-	padding: 0 4px 0 16px;
-	font-size: 15px;
-	font-weight: 500;
-	line-height: 1.35;
+	flex-direction: column;
+	background: #fff;
+	overflow: hidden;
+	border: 1px solid var(--line);
+	border-radius: var(--r);
+	box-shadow: 0 8px 24px rgba(26,26,26,.1);
 }
 
 .beta p {
