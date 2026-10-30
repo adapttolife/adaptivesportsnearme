@@ -127,6 +127,10 @@
 	color: #f3f3f3;
 }
 
+:root[data-theme="dark"] #beta .beta {
+	background: #323232;
+}
+
 :root[data-theme="dark"] .letter > p,
 :root[data-theme="dark"] .trustbox .tb-body {
 	color: #e7e3da;
@@ -452,7 +456,8 @@ body.has-sticky #main {
 	margin: auto;
 	display: flex;
 	flex-direction: column;
-	background: #fff;
+	background: var(--paper);
+	color: var(--ink);
 	overflow: hidden;
 	border: 1px solid var(--line);
 	border-radius: var(--r);
