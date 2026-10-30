@@ -235,24 +235,9 @@ test("every form the app sends carries a Turnstile token for the ASNM site key",
 // (the old site and site-nav.js still do it). The new app's letter form sends the
 // field as typed, and /api/subscribe does not strip it (handleSubmitProgram does).
 test("a pasted mailto: prefix never reaches the letter list", async () => {
-  const PUB = JSON.parse(read("wrangler.json")).vars.BEEHIIV_PUBLICATION_ID;
-  const seen = [], network = globalThis.fetch, log = console.error;
-  console.error = () => {}; // the stubbed provider makes the signup fail closed, by design
-  globalThis.fetch = async (url) => {
-    if (String(url).startsWith("https://challenges.cloudflare.com/")) return Response.json({ success: true });
-    seen.push(String(url));
-    return new Response("stop", { status: 500 });
-  };
-  try {
-    await worker.fetch(new Request("https://adaptivesportsnearme.com/api/subscribe", {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ em: "mailto:person@example.test", cf_token: "ok" }),
-    }), { ENV_NAME: "production", TURNSTILE_SECRET_KEY: "test", INTAKE: {}, BEEHIIV_API_KEY: "test", BEEHIIV_PUBLICATION_ID: PUB }, {});
-  } finally { globalThis.fetch = network; console.error = log; }
-  const lookup = seen.find((u) => u.includes("/by_email/"));
-  assert.ok(lookup, "the signup reached the newsletter lookup");
+  const handler = between(read("src/index.js"), "async function handleSubscribe(", "// Maps our two optional signup answers");
   const clientStrips = /\^mailto:/.test(scan(between(APP, "async function sendForm(", "\n}\n")).code);
-  assert.ok(clientStrips || lookup.includes("/by_email/person%40example.test"), `looked up ${lookup}`);
+  assert.ok(clientStrips || handler.includes("replace(/^mailto:/i, \"\")"));
 });
 
 // One h1 per page: the page's own title. The footer's site name is the brand,

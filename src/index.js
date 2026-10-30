@@ -5,7 +5,7 @@ import { notifyIntake } from './intake.js';
 // Adaptive Sports Near Me — Worker entry.
 // Serves the static site (env.ASSETS), the D1-backed directory API, the admin
 // review surface, and the cron maintenance pipeline (validate + enrich lanes).
-//   POST /api/subscribe        -> beehiiv (email capture, tagged asnm-prelaunch)
+//   POST /api/subscribe        -> Resend segment contact
 //   POST /api/submit-program   -> shared intake (hello@ notice) + D1 submissions (new program or a fix to a listing)
 //   POST /api/submit-event     -> the same path for a suggested event
 //   GET  /api/config           -> env name + prelaunch flag (front-end gate)
@@ -346,7 +346,7 @@ export default {
   },
 };
 
-// ---- Email capture -> beehiiv ------------------------------------------------
+// ---- Newsletter capture -> Resend ----------------------------------------------
 async function handleSubscribe(request, env, ctx) {
   const data = await readBody(request);
   if (data === null) return json({ ok: false, error: "Could not read your submission." }, 400);
@@ -398,13 +398,9 @@ export function parseBetaFlag(v) {
   return ["1", "true", "on", "yes"].includes(str(v).toLowerCase());
 }
 
-export { beehiivCustomFields } from './newsletter.js';
-
-// Shared beehiiv POST, factored out of handleSubscribe so /api/profile's newsletter
-// opt-in reuses the exact same call instead of duplicating it. Returns a plain
-// {ok, status, error} shape rather than a Response — callers decide the envelope.
-async function subscribeToBeehiiv(env, email, campaign, extra = {}) {
-  return safeNewsletterSubscribe(env, email, campaign, { ...extra, noWelcome: true });
+// Shared Resend contact creation for the profile newsletter opt-in.
+async function subscribeToNewsletter(env, email, campaign, extra = {}) {
+  return safeNewsletterSubscribe(env, email, campaign, extra);
 }
 
 // ---- Program submission -> shared intake + D1 submissions -------------------
@@ -684,7 +680,7 @@ async function handleProfileUpsert(request, env, ctx) {
   }
 
   if (newsletter) {
-    const result = await subscribeToBeehiiv(env, email, "asnm-profile");
+    const result = await subscribeToNewsletter(env, email, "asnm-profile");
     if (result.welcomeJob) {
       if (ctx?.waitUntil) ctx.waitUntil(result.welcomeJob);
       else await result.welcomeJob;

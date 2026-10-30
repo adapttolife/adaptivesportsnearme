@@ -2066,7 +2066,7 @@ async function sendForm(form) {
     if (!r.ok || !out.ok) { const err = new Error(out.error || ""); err.fromServer = true; throw err; }
     // The letter: a new signup confirms its email first (beehiiv sends the confirmation).
     const letter = form.matches("[data-letter]");
-    formDone(form, letter && out.confirm ? "Almost done. Check your inbox for an email from Adaptive Sports Near Me and tap Confirm."
+    formDone(form, letter && out.confirm ? "You're now subscribed to our newsletter."
       : letter && out.existing ? "You're already on the list. Thanks for being here." : null);
   } catch (err) {
     status.classList.add("is-err");
