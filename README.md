@@ -52,6 +52,7 @@ No framework and no build step: plain JavaScript, HTML and CSS.
 | `db/` | The [D1](https://developers.cloudflare.com/d1/) (SQLite) database: `schema.sql`, `migrations/` and the `sample/` data. |
 | `test/` | Tests, run with Node's built-in runner (`npm test`). |
 | `tools/directory/` | Scripts for finding and checking listings. |
+| `public/emblems/sports/` | The sport icons. Every icon and logo, current and retired, is mapped in [docs/ICONS-AND-LOGOS.md](docs/ICONS-AND-LOGOS.md). |
 
 Deploying, environments and secrets are for maintainers: see [docs/MAINTAINERS.md](docs/MAINTAINERS.md).
 
