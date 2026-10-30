@@ -44,18 +44,6 @@ export const EVENT_SCENE = "/scenes/event-field.jpg";
 // card a picture instead of an empty tile. 840 of 1,478 live orgs carry no sport.
 export const GENERIC_STAMP = "/emblems/adaptive.svg";
 
-export const EMBLEM_KEYS = new Set([
-  "athlete-grant", "program-grant", "event",
-  "basketball", "tennis", "pickleball", "rugby", "football",
-  "baseball", "cycling", "sledhockey", "skiing", "waterskiing",
-  "goalball", "rowing", "swimming", "golf", "boccia", "volleyball",
-  "climbing",
-]);
-
-export function emblemPath(key) {
-  return key && EMBLEM_KEYS.has(key) ? `/emblems/${key}.png` : null;
-}
-
 export function scenePath(sport) {
   return (sport && SPORT_SCENES[sport]) || null;
 }

@@ -4,7 +4,7 @@
 
 Eleven 3D renders, one per sport: a sport wheelchair carrying that sport's equipment, on a transparent background, about 160 px. They came in on 2026-06-27 ("Rebuild around the 11 sports we have icons for") and drew the cards, category bar, map and list until Alec's flat sport drawings in `public/emblems/sports/` replaced them. They were resized on 2026-08-25 and moved into `public/assets/sport-icons/3d/` on 2026-10-14. After that, nothing referenced them.
 
-They moved here out of `public/`, so they no longer ship with every deploy. Their old URLs (`/assets/sport-icons/3d/<sport>.png`) stop resolving after the next deploy.
+They moved out of `public/` on 2026-10-29 (to `design/retired/3d-sport-icons/`, then here the same night, so there is one archive), so they no longer ship with every deploy. Their old URLs (`/assets/sport-icons/3d/<sport>.png`) stop resolving after the next deploy.
 
 | File | Sport |
 |---|---|
@@ -22,4 +22,4 @@ They moved here out of `public/`, so they no longer ship with every deploy. Thei
 
 ## Bringing them back
 
-Copy the files back under `public/` and point `public/listing-art.js` at them. That file is the one place the site picks a sport image.
+Copy the files back under `public/` and point `public/listing-art.js` at them. The map of every icon and logo is [docs/ICONS-AND-LOGOS.md](../../../docs/ICONS-AND-LOGOS.md). That file is the one place the site picks a sport image.
