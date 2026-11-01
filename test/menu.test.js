@@ -14,7 +14,9 @@ const css = compactCss(read("public/app/app.css"));
 const menu = app.slice(
   app.indexOf("export function drawerList("),
   app.indexOf("function activeItem("),
-);
+)
+  .replace(/\s+/g, " ")
+  .replace(/\(\s+/g, "(");
 const footer = app.slice(
   app.indexOf("export function footer()"),
   app.indexOf("export function notFound()"),
@@ -107,7 +109,7 @@ test("the footer has the same four groups in the same order", () => {
 test("Guides is what /resources is called wherever a person reads it", () => {
   const help = read("public/app/views/help.js");
   assert.match(help, /<h1 tabindex="-1">Guides<\/h1>/);
-  assert.match(read("public/app/page-meta.js"), /guides: \{ title: "Guides"/);
+  assert.match(read("public/app/page-meta.js"), /guides:\s*\{\s*title: "Guides"/);
   assert.match(
     read("src/pages.js"),
     /\/\^\\\/resources\\\/\?\$\/, \(\) => \(\{ \.\.\.PAGES\.guides \}\)/,

@@ -72,7 +72,7 @@ test("the sport page shows the guide on the programs tab and the organization pa
   );
   assert.match(
     sport,
-    /ranked\.length >= 6 \? `<div class="sp-map">/,
+    /ranked\.length\s*>=\s*6\s*\? `<div class="sp-map">/,
     "the tile map needs six states before it draws",
   );
   const program = read("public/app/views/program.js");

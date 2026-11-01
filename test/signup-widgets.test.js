@@ -94,6 +94,6 @@ test("a person shown the check box gets time to tap it and is told to", () => {
 test('a pasted "mailto:" prefix is removed before the email is checked', () => {
   assert.match(
     NAV,
-    /\.trim\(\)\.replace\(\/\^mailto:\/i, ""\);\s*if \(form\.em\) form\.em\.value = em;/,
+    /\.trim\(\)\s*\.replace\(\/\^mailto:\/i, ""\);\s*if \(form\.em\) form\.em\.value = em;/,
   );
 });

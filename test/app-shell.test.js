@@ -253,7 +253,7 @@ test("the shell has what the Worker and the app rely on", () => {
   );
   assert.match(
     APP,
-    /const TURNSTILE_SRC = "https:\/\/challenges\.cloudflare\.com\/turnstile\/v0\/api\.js\?render=explicit";/,
+    /const TURNSTILE_SRC\s*=\s*"https:\/\/challenges\.cloudflare\.com\/turnstile\/v0\/api\.js\?render=explicit";/,
   );
   assert.match(
     between(APP, "function turnstileApi() {", "\n}\n"),
@@ -262,7 +262,7 @@ test("the shell has what the Worker and the app rely on", () => {
   assert.match(APP, /loadScript\(USERWAY_SRC, USERWAY_ATTRS\)/);
   assert.match(
     APP,
-    /USERWAY_ATTRS = \{ "data-account": "sFogOSJsXe", "data-position": "3", "data-size": "small" \}/,
+    /USERWAY_ATTRS\s*=\s*\{\s*"data-account":\s*"sFogOSJsXe",\s*"data-position":\s*"3",\s*"data-size":\s*"small",?\s*\}/,
   );
   assert.ok(head.includes('<script type="module" src="/app/app.js"></script>'));
 });
@@ -394,22 +394,22 @@ test("the head starts each data download once, and the app takes each answer onc
   // Every page's data goes through them, and a failure never blames a visitor who is online.
   assert.match(
     between(APP, "export function loadData() {", "\n}\n"),
-    /const get = \(u\) => retryOnce\(\(\) => early\(u\)/,
+    /const get\s*=\s*\(u\)\s*=>\s*retryOnce\(\(\)\s*=>\s*early\(u\)/,
   );
   assert.match(
     between(APP, "export function loadDetail(id) {", "\n}\n"),
-    /retryOnce\(\(\) => early\("\/api\/organizations\/"/,
+    /retryOnce\(\(\)\s*=>\s*early\("\/api\/organizations\/"/,
   );
   const detail = read("public/app/views/program-detail.js");
   assert.match(
     detail,
-    /A\.retryOnce\(async \(\) => \{\s*const r = await A\.early\(`\/api\/programs\//,
+    /A\.retryOnce\(async \(\) => \{\s*const r = await A\.early\(\s*`\/api\/programs\//,
   );
   assert.match(detail, /loadFailed: true/);
   const failed = between(APP, "function loadError() {", "\n}\n");
   assert.match(
     failed,
-    /navigator\.onLine === false \? "You're offline\. Check your connection and try again\." : "Something went wrong on our side\. Try again in a moment\."/,
+    /navigator\.onLine === false\s*\? "You're offline\. Check your connection and try again\."\s*:\s*"Something went wrong on our side\. Try again in a moment\."/,
   );
 });
 
@@ -559,7 +559,7 @@ test("the privacy policy's promises hold in the code", () => {
     /href="\/privacy"/,
   );
   assert.match(read("public/app/views/forms.js"), /href="\/privacy"/);
-  assert.match(APP, /\["\/privacy", "help"\], \["\/terms", "help"\]/);
+  assert.match(APP, /\["\/privacy",\s*"help"\],\s*\["\/terms",\s*"help"\]/);
 });
 
 test("organization management is a help-linked app route", () => {
@@ -710,7 +710,7 @@ test("the claim finder and the fix form use the listing's own address", () => {
     forms = read("public/app/views/forms.js");
   assert.match(
     help,
-    /A\.programRow\(x\.p, \{\}\)\.replace\(\/href="\[\^"\]\*"\/, `href="\/update\/\$\{A\.esc\(x\.p\.id\)\}\?rel=run"`\)/,
+    /A\.programRow\(x\.p, \{\}\)\.replace\(\s*\/href="\[\^"\]\*"\/,\s*`href="\/update\/\$\{A\.esc\(x\.p\.id\)\}\?rel=run"`,\s*\)/,
   );
   assert.match(
     forms,
@@ -726,11 +726,11 @@ test("the claim finder and the fix form use the listing's own address", () => {
   // table) has a /programs/<id> page, so an old /programs/<organization id> link never comes back.
   assert.match(
     APP,
-    /p\.href = \(p\.prog \? "\/programs\/" : "\/organizations\/"\) \+ encodeURIComponent\(p\.id\);/,
+    /p\.href\s*=\s*\(p\.prog \? "\/programs\/" : "\/organizations\/"\)\s*\+\s*encodeURIComponent\(p\.id\);/,
   );
   assert.match(
     APP,
-    /prog: !!r\.prog, orgName: r\.org \|\| null, progs: r\.progs \|\| 0,/,
+    /prog:\s*!!r\.prog,\s*orgName:\s*r\.org \|\| null,\s*progs:\s*r\.progs \|\| 0,/,
     "prog comes only from the server's program rows",
   );
   for (const [file, text] of [
@@ -749,17 +749,17 @@ test("the letter's thank-you asks a new subscriber to confirm, and the confirmat
   const send = between(APP, "async function sendForm(", "\n}\n");
   assert.match(
     send,
-    /out\.confirm \? "You\'re now subscribed to our newsletter."/,
+    /letter && out\.confirm\s*\? "You\'re now subscribed to our newsletter."/,
   );
-  assert.match(send, /out\.existing \? "You're already on the list/);
+  assert.match(send, /letter && out\.existing\s*\? "You're already on the list/);
   // beehiiv's Opt-in Redirect URL is /?confirmed=1: before the first draw it becomes /letter/confirmed.
   assert.match(
     APP,
-    /location\.pathname === "\/" && new URLSearchParams\(location\.search\)\.get\("confirmed"\) === "1"/,
+    /location\.pathname === "\/"\s*&&\s*new URLSearchParams\(location\.search\)\.get\("confirmed"\) === "1"/,
   );
   assert.match(
     APP,
-    /history\.replaceState\(history\.state, "", "\/letter\/confirmed"/,
+    /history\.replaceState\(\s*history\.state,\s*"",\s*"\/letter\/confirmed"/,
   );
   assert.match(APP, /\["\/letter\/confirmed", "letter-confirmed"\]/);
   assert.doesNotMatch(
