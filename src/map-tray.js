@@ -20,9 +20,14 @@ export function trayChrome(viewportW) {
 }
 
 function esc(s) {
-  return s == null ? "" : String(s)
-    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+  return s == null
+    ? ""
+    : String(s)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
 }
 
 export function createTrayState() {
@@ -32,22 +37,43 @@ export function createTrayState() {
 // Tap a pin. First tap opens at peek. A different pin updates in place
 // and keeps the current height (stay expanded if already expanded).
 export function selectPin(tray, programId) {
-  if (!programId) return { open: false, programId: null, height: "peek", swapped: false };
-  const swapped = !!(tray && tray.open && tray.programId && tray.programId !== programId);
-  const height = tray && tray.open && tray.height === "expanded" ? "expanded" : "peek";
+  if (!programId)
+    return { open: false, programId: null, height: "peek", swapped: false };
+  const swapped = !!(
+    tray &&
+    tray.open &&
+    tray.programId &&
+    tray.programId !== programId
+  );
+  const height =
+    tray && tray.open && tray.height === "expanded" ? "expanded" : "peek";
   return { open: true, programId, height, swapped };
 }
 
 export function setTrayHeight(tray, height) {
-  if (!tray || !tray.open) return { open: false, programId: null, height: "peek" };
+  if (!tray || !tray.open)
+    return { open: false, programId: null, height: "peek" };
   const next = height === "expanded" ? "expanded" : "peek";
   return { open: true, programId: tray.programId, height: next };
 }
 
 // Empty-map tap (or swipe-from-peek / Escape) dismisses.
 export function dismissTray(tray, reason) {
-  if (!tray || !tray.open) return { open: false, programId: null, height: "peek", dismissed: false, reason };
-  return { open: false, programId: null, height: "peek", dismissed: true, reason };
+  if (!tray || !tray.open)
+    return {
+      open: false,
+      programId: null,
+      height: "peek",
+      dismissed: false,
+      reason,
+    };
+  return {
+    open: false,
+    programId: null,
+    height: "peek",
+    dismissed: true,
+    reason,
+  };
 }
 
 export function mapClickAction(hitKind) {
@@ -60,10 +86,19 @@ export function mapClickAction(hitKind) {
 export function classifyHit(classNames) {
   const list = Array.isArray(classNames)
     ? classNames
-    : String(classNames || "").split(/\s+/).filter(Boolean);
+    : String(classNames || "")
+        .split(/\s+/)
+        .filter(Boolean);
   const s = new Set(list);
-  if ([...s].some((c) => c === "map-tray" || c.startsWith("tray-"))) return "tray";
-  if (s.has("mdot") || s.has("mpin") || s.has("mdot-mark") || s.has("mpin-mark")) return "pin";
+  if ([...s].some((c) => c === "map-tray" || c.startsWith("tray-")))
+    return "tray";
+  if (
+    s.has("mdot") ||
+    s.has("mpin") ||
+    s.has("mdot-mark") ||
+    s.has("mpin-mark")
+  )
+    return "pin";
   if (s.has("mpill") || s.has("mc")) return "cluster";
   if (
     s.has("maplibregl-ctrl") ||
@@ -71,7 +106,8 @@ export function classifyHit(classNames) {
     s.has("mapx-open") ||
     s.has("mapx-drawer") ||
     s.has("mapchip")
-  ) return "control";
+  )
+    return "control";
   return "empty";
 }
 
@@ -109,27 +145,45 @@ export function trayAction(org) {
     return { href: org.website, label: "Visit", external: true };
   }
   const id = org && org.id ? org.id : "";
-  return { href: id ? `/programs/${id}` : "#", label: "Open listing", external: false };
+  return {
+    href: id ? `/programs/${id}` : "#",
+    label: "Open listing",
+    external: false,
+  };
 }
 
 // 1–3 action pills: Visit (or Open listing) + Call + Email when we have them.
 export function trayPills(org) {
   const pills = [trayAction(org)];
-  const phone = org && org.publicityConsent && org.phone && String(org.phone).trim();
+  const phone =
+    org && org.publicityConsent && org.phone && String(org.phone).trim();
   if (phone) {
-    pills.push({ href: `tel:${phone.replace(/[^\d+]/g, "")}`, label: "Call", external: false });
+    pills.push({
+      href: `tel:${phone.replace(/[^\d+]/g, "")}`,
+      label: "Call",
+      external: false,
+    });
   }
   if (org && org.publicityConsent && org.email) {
-    pills.push({ href: `mailto:${org.email}`, label: "Email", external: false });
+    pills.push({
+      href: `mailto:${org.email}`,
+      label: "Email",
+      external: false,
+    });
   }
   return pills;
 }
 
 function pillHtml(action, org, primary) {
   const target = action.external ? ' target="_blank" rel="noopener"' : "";
-  const dataProg = action.external || !org || !org.id || action.label === "Call" || action.label === "Email"
-    ? ""
-    : ` data-prog="${esc(org.id)}"`;
+  const dataProg =
+    action.external ||
+    !org ||
+    !org.id ||
+    action.label === "Call" ||
+    action.label === "Email"
+      ? ""
+      : ` data-prog="${esc(org.id)}"`;
   const cls = primary ? "tray-pill primary" : "tray-pill";
   return `<a class="${cls}" href="${esc(action.href)}"${target}${dataProg}>${action.label}</a>`;
 }
@@ -137,13 +191,15 @@ function pillHtml(action, org, primary) {
 export function trayPeekHtml(org) {
   const pills = trayPills(org);
   const pillRow = pills.map((a, i) => pillHtml(a, org, i === 0)).join("");
-  return `<div class="tray-handle-hit"><div class="tray-handle" aria-hidden="true"></div>`
-    + `<button class="tray-x" type="button" aria-label="Close"><i width="14" height="14" stroke-width="2.4" data-lucide="x" aria-hidden="true" focusable="false"></i></button></div>`
-    + `<div class="tray-peek">`
-    + `<div class="tray-name">${esc(org && org.name ? org.name : "")}</div>`
-    + `<div class="tray-meta">${esc(trayMetaLine(org))}</div>`
-    + `<div class="tray-pills">${pillRow}</div>`
-    + `</div>`;
+  return (
+    `<div class="tray-handle-hit"><div class="tray-handle" aria-hidden="true"></div>` +
+    `<button class="tray-x" type="button" aria-label="Close"><i width="14" height="14" stroke-width="2.4" data-lucide="x" aria-hidden="true" focusable="false"></i></button></div>` +
+    `<div class="tray-peek">` +
+    `<div class="tray-name">${esc(org && org.name ? org.name : "")}</div>` +
+    `<div class="tray-meta">${esc(trayMetaLine(org))}</div>` +
+    `<div class="tray-pills">${pillRow}</div>` +
+    `</div>`
+  );
 }
 
 export function trayExpandedHtml(org, nearby = []) {
@@ -151,6 +207,8 @@ export function trayExpandedHtml(org, nearby = []) {
 }
 
 export function trayHtml(org, nearby = []) {
-  return trayPeekHtml(org)
-    + `<div class="tray-full sheet">${trayExpandedHtml(org, nearby)}</div>`;
+  return (
+    trayPeekHtml(org) +
+    `<div class="tray-full sheet">${trayExpandedHtml(org, nearby)}</div>`
+  );
 }

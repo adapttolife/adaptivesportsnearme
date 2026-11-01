@@ -30,30 +30,48 @@ export async function listEvents(db, params) {
     where.push("state = ?");
     binds.push(state);
   }
-  const limit = Math.min(Math.max(parseInt(params.get("limit") || "100", 10) || 100, 1), 100);
+  const limit = Math.min(
+    Math.max(parseInt(params.get("limit") || "100", 10) || 100, 1),
+    100,
+  );
 
-  const results = await newerOrOlder(db, "programs_come_back",
+  const results = await newerOrOlder(
+    db,
+    "programs_come_back",
     async () => {
-      const { results: rows } = await db.prepare(
-        `SELECT ${YEARLY_EVENT_COLS} FROM events e
+      const { results: rows } = await db
+        .prepare(
+          `SELECT ${YEARLY_EVENT_COLS} FROM events e
          LEFT JOIN programs p ON p.id = e.program_id
          LEFT JOIN organizations o ON o.id = p.organization_id
-         WHERE ${where.map((w) => "e." + w).join(" AND ")} ORDER BY e.starts_at ASC LIMIT ?`
-      ).bind(...binds, limit).all();
+         WHERE ${where.map((w) => "e." + w).join(" AND ")} ORDER BY e.starts_at ASC LIMIT ?`,
+        )
+        .bind(...binds, limit)
+        .all();
       // The series is named only when the yearly event is public (checked here, not in the join, to keep the join simple).
       const visible = new Set();
       const ids = [...new Set(rows.map((r) => r.program_id).filter(Boolean))];
       if (ids.length) {
-        const { results: ok } = await db.prepare(
-          `SELECT p.id FROM programs p JOIN organizations o ON o.id = p.organization_id WHERE ${YEARLY_PUBLIC} AND p.id IN (${ids.map(() => "?").join(",")})`
-        ).bind(...ids).all();
+        const { results: ok } = await db
+          .prepare(
+            `SELECT p.id FROM programs p JOIN organizations o ON o.id = p.organization_id WHERE ${YEARLY_PUBLIC} AND p.id IN (${ids.map(() => "?").join(",")})`,
+          )
+          .bind(...ids)
+          .all();
         for (const r of ok) visible.add(r.id);
       }
       return rows.map((row) => withSeries(row, visible));
     },
-    async () => (await db.prepare(
-      `SELECT ${EVENT_COLS} FROM events WHERE ${where.join(" AND ")} ORDER BY starts_at ASC LIMIT ?`
-    ).bind(...binds, limit).all()).results);
+    async () =>
+      (
+        await db
+          .prepare(
+            `SELECT ${EVENT_COLS} FROM events WHERE ${where.join(" AND ")} ORDER BY starts_at ASC LIMIT ?`,
+          )
+          .bind(...binds, limit)
+          .all()
+      ).results,
+  );
   return { total: results.length, limit, items: results };
 }
 
@@ -61,8 +79,14 @@ export async function listEvents(db, params) {
 function withSeries(row, visible) {
   const { series_slug, series_name, series_first_year, ...event } = row;
   const shown = event.program_id && visible.has(event.program_id);
-  event.series = shown ? { slug: series_slug || event.program_id, name: series_name, first_year: series_first_year ?? null } : null;
-  if (!shown) event.program_id = null;   // a hidden yearly event isn't named
+  event.series = shown
+    ? {
+        slug: series_slug || event.program_id,
+        name: series_name,
+        first_year: series_first_year ?? null,
+      }
+    : null;
+  if (!shown) event.program_id = null; // a hidden yearly event isn't named
   return event;
 }
 
@@ -82,7 +106,10 @@ function seriesFromRow(row, editions) {
   // "Organization not yet assigned" is never named or linked.
   const placeholder = organization_type === "placeholder";
   s.organization = placeholder ? null : { id: s.org_id, name: s.host_name };
-  if (placeholder) { s.host_name = null; s.org_id = null; }
+  if (placeholder) {
+    s.host_name = null;
+    s.org_id = null;
+  }
   s.editions = editions.map(({ program_id, ...e }) => e);
   return s;
 }
@@ -93,10 +120,13 @@ async function editionsFor(db, ids) {
   // Every public year, past and upcoming: a past year is the event's history, not stale data.
   for (let i = 0; i < ids.length; i += 50) {
     const chunk = ids.slice(i, i + 50);
-    const { results } = await db.prepare(
-      `SELECT id, program_id, title, starts_at, ends_at, all_day, venue, city, state, url, recap_url, status
-       FROM events WHERE is_public = 1 AND program_id IN (${chunk.map(() => "?").join(",")}) ORDER BY starts_at ASC`
-    ).bind(...chunk).all();
+    const { results } = await db
+      .prepare(
+        `SELECT id, program_id, title, starts_at, ends_at, all_day, venue, city, state, url, recap_url, status
+       FROM events WHERE is_public = 1 AND program_id IN (${chunk.map(() => "?").join(",")}) ORDER BY starts_at ASC`,
+      )
+      .bind(...chunk)
+      .all();
     for (const e of results) out.get(e.program_id)?.push(e);
   }
   return out;
@@ -104,55 +134,93 @@ async function editionsFor(db, ids) {
 
 /** Every public yearly event with its years. params: org=<organization id>. */
 export async function listSeries(db, params = new URLSearchParams()) {
-  return newerOrOlder(db, "programs_come_back", async () => {
-    const where = [YEARLY_PUBLIC], binds = [];
-    const org = (params.get("org") || "").trim();
-    if (org) { where.push("p.organization_id = ?"); binds.push(org); }
-    const { results } = await db.prepare(
-      `SELECT ${SERIES_COLS} FROM programs p JOIN organizations o ON o.id = p.organization_id
-       WHERE ${where.join(" AND ")} ORDER BY p.name COLLATE NOCASE LIMIT 500`
-    ).bind(...binds).all();
-    const editions = await editionsFor(db, results.map((r) => r.id));
-    const items = results.map((r) => seriesFromRow(r, editions.get(r.id) || []));
-    return { total: items.length, items };
-  }, async () => ({ total: 0, items: [] }));
+  return newerOrOlder(
+    db,
+    "programs_come_back",
+    async () => {
+      const where = [YEARLY_PUBLIC],
+        binds = [];
+      const org = (params.get("org") || "").trim();
+      if (org) {
+        where.push("p.organization_id = ?");
+        binds.push(org);
+      }
+      const { results } = await db
+        .prepare(
+          `SELECT ${SERIES_COLS} FROM programs p JOIN organizations o ON o.id = p.organization_id
+       WHERE ${where.join(" AND ")} ORDER BY p.name COLLATE NOCASE LIMIT 500`,
+        )
+        .bind(...binds)
+        .all();
+      const editions = await editionsFor(
+        db,
+        results.map((r) => r.id),
+      );
+      const items = results.map((r) =>
+        seriesFromRow(r, editions.get(r.id) || []),
+      );
+      return { total: items.length, items };
+    },
+    async () => ({ total: 0, items: [] }),
+  );
 }
 
 /** One public yearly event by its slug (or its program id); null when there isn't one. */
 export async function getSeries(db, slugOrId) {
   const key = String(slugOrId || "").toLowerCase();
   if (!SLUG_RE.test(key)) return null;
-  return newerOrOlder(db, "programs_come_back", async () => {
-    const row = await db.prepare(
-      `SELECT ${SERIES_COLS} FROM programs p JOIN organizations o ON o.id = p.organization_id
-       WHERE (p.slug = ? OR p.id = ?) AND ${YEARLY_PUBLIC}`
-    ).bind(key, key).first();
-    if (!row) return null;
-    const editions = await editionsFor(db, [row.id]);
-    return seriesFromRow(row, editions.get(row.id) || []);
-  }, async () => null);
+  return newerOrOlder(
+    db,
+    "programs_come_back",
+    async () => {
+      const row = await db
+        .prepare(
+          `SELECT ${SERIES_COLS} FROM programs p JOIN organizations o ON o.id = p.organization_id
+       WHERE (p.slug = ? OR p.id = ?) AND ${YEARLY_PUBLIC}`,
+        )
+        .bind(key, key)
+        .first();
+      if (!row) return null;
+      const editions = await editionsFor(db, [row.id]);
+      return seriesFromRow(row, editions.get(row.id) || []);
+    },
+    async () => null,
+  );
 }
 
 // ---- XML/text escaping -------------------------------------------------------
 function xmlEscape(s) {
-  return s == null ? "" : String(s)
-    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;").replace(/'/g, "&apos;");
+  return s == null
+    ? ""
+    : String(s)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&apos;");
 }
 
 // RFC 5545 text escaping: backslash first, then the chars it introduces.
 function icsEscape(s) {
-  return s == null ? "" : String(s)
-    .replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,")
-    .replace(/\r?\n/g, "\\n");
+  return s == null
+    ? ""
+    : String(s)
+        .replace(/\\/g, "\\\\")
+        .replace(/;/g, "\\;")
+        .replace(/,/g, "\\,")
+        .replace(/\r?\n/g, "\\n");
 }
 
-function pad2(n) { return String(n).padStart(2, "0"); }
+function pad2(n) {
+  return String(n).padStart(2, "0");
+}
 // UTC basic format, e.g. 20260712T093000Z — the RFC 5545 DATE-TIME form.
 function icsDateTime(iso) {
   const d = new Date(iso);
-  return `${d.getUTCFullYear()}${pad2(d.getUTCMonth() + 1)}${pad2(d.getUTCDate())}` +
-    `T${pad2(d.getUTCHours())}${pad2(d.getUTCMinutes())}${pad2(d.getUTCSeconds())}Z`;
+  return (
+    `${d.getUTCFullYear()}${pad2(d.getUTCMonth() + 1)}${pad2(d.getUTCDate())}` +
+    `T${pad2(d.getUTCHours())}${pad2(d.getUTCMinutes())}${pad2(d.getUTCSeconds())}Z`
+  );
 }
 // UTC basic DATE form (no time), for all-day VALUE=DATE fields.
 function icsDate(iso) {
@@ -170,28 +238,38 @@ function icsDatePlusOne(iso) {
 // ---- RSS 2.0 ------------------------------------------------------------------
 export function eventsToRss(events, siteUrl) {
   const site = String(siteUrl || "").replace(/\/$/, "");
-  const items = events.map((e) => {
-    const link = e.url || `${site}/events`;
-    return "  <item>\n" +
-      `    <title>${xmlEscape(e.title)}</title>\n` +
-      `    <link>${xmlEscape(link)}</link>\n` +
-      `    <guid isPermaLink="false">${xmlEscape(e.id)}</guid>\n` +
-      `    <pubDate>${new Date(e.created_at).toUTCString()}</pubDate>\n` +
-      `    <description>${xmlEscape(e.description || "")}</description>\n` +
-      "  </item>";
-  }).join("\n");
-  return `<?xml version="1.0" encoding="UTF-8"?>\n` +
+  const items = events
+    .map((e) => {
+      const link = e.url || `${site}/events`;
+      return (
+        "  <item>\n" +
+        `    <title>${xmlEscape(e.title)}</title>\n` +
+        `    <link>${xmlEscape(link)}</link>\n` +
+        `    <guid isPermaLink="false">${xmlEscape(e.id)}</guid>\n` +
+        `    <pubDate>${new Date(e.created_at).toUTCString()}</pubDate>\n` +
+        `    <description>${xmlEscape(e.description || "")}</description>\n` +
+        "  </item>"
+      );
+    })
+    .join("\n");
+  return (
+    `<?xml version="1.0" encoding="UTF-8"?>\n` +
     `<rss version="2.0">\n<channel>\n` +
     `  <title>Adaptive Sports Near Me · Events</title>\n` +
     `  <link>${xmlEscape(site)}/events</link>\n` +
     `  <description>Upcoming adaptive sports events, meets and clinics.</description>\n` +
     (items ? `${items}\n` : "") +
-    `</channel>\n</rss>\n`;
+    `</channel>\n</rss>\n`
+  );
 }
 
 // ---- iCalendar (RFC 5545) -------------------------------------------------------
 function icsEventLines(e) {
-  const lines = ["BEGIN:VEVENT", `UID:${e.id}@adaptivesportsnearme.com`, `DTSTAMP:${icsDateTime(e.created_at)}`];
+  const lines = [
+    "BEGIN:VEVENT",
+    `UID:${e.id}@adaptivesportsnearme.com`,
+    `DTSTAMP:${icsDateTime(e.created_at)}`,
+  ];
   if (e.all_day) {
     lines.push(`DTSTART;VALUE=DATE:${icsDate(e.starts_at)}`);
     lines.push(`DTEND;VALUE=DATE:${icsDatePlusOne(e.ends_at || e.starts_at)}`);
@@ -210,8 +288,12 @@ function icsEventLines(e) {
 
 export function eventsToIcs(events) {
   const lines = [
-    "BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Adaptive Sports Near Me//Events//EN",
-    "CALSCALE:GREGORIAN", "METHOD:PUBLISH", "X-WR-CALNAME:Adaptive Sports Near Me",
+    "BEGIN:VCALENDAR",
+    "VERSION:2.0",
+    "PRODID:-//Adaptive Sports Near Me//Events//EN",
+    "CALSCALE:GREGORIAN",
+    "METHOD:PUBLISH",
+    "X-WR-CALNAME:Adaptive Sports Near Me",
   ];
   for (const e of events) lines.push(...icsEventLines(e));
   lines.push("END:VCALENDAR");

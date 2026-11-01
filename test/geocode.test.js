@@ -7,7 +7,14 @@ import { fileURLToPath } from "node:url";
 import { normalizeZip, buildChange } from "../src/lanes/geocode.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const ZCTA_PATH = path.join(__dirname, "..", "public", "assets", "data", "zcta.json");
+const ZCTA_PATH = path.join(
+  __dirname,
+  "..",
+  "public",
+  "assets",
+  "data",
+  "zcta.json",
+);
 
 test("normalizeZip: plain 5-digit zip passes through", () => {
   assert.equal(normalizeZip("55414"), "55414");
@@ -56,11 +63,17 @@ test("buildChange: preserves prior (wrong) coords in 'from'", () => {
 });
 
 test("zcta.json: exists, parses, has >30000 keys", () => {
-  assert.ok(fs.existsSync(ZCTA_PATH), `expected ${ZCTA_PATH} to exist — run scripts/build-zcta.py`);
+  assert.ok(
+    fs.existsSync(ZCTA_PATH),
+    `expected ${ZCTA_PATH} to exist — run scripts/build-zcta.py`,
+  );
   const raw = fs.readFileSync(ZCTA_PATH, "utf8");
   const table = JSON.parse(raw);
   const keys = Object.keys(table);
-  assert.ok(keys.length > 30000, `expected >30000 ZCTA entries, got ${keys.length}`);
+  assert.ok(
+    keys.length > 30000,
+    `expected >30000 ZCTA entries, got ${keys.length}`,
+  );
 });
 
 test("zcta.json: spot-check a known zip resolves to plausible coords", () => {
@@ -69,6 +82,12 @@ test("zcta.json: spot-check a known zip resolves to plausible coords", () => {
   assert.ok(coords, "expected zip 55414 to be present");
   const [lat, lng] = coords;
   // Continental US + territories (AK/HI/PR/GU/VI/AS) bounding box.
-  assert.ok(lat >= -15 && lat <= 72, `lat ${lat} out of plausible US/territory range`);
-  assert.ok(lng >= -180 && lng <= -65, `lng ${lng} out of plausible US/territory range`);
+  assert.ok(
+    lat >= -15 && lat <= 72,
+    `lat ${lat} out of plausible US/territory range`,
+  );
+  assert.ok(
+    lng >= -180 && lng <= -65,
+    `lng ${lng} out of plausible US/territory range`,
+  );
 });

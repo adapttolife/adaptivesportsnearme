@@ -14,9 +14,54 @@
 // U.S. Census Bureau regions. Every state plus DC appears exactly once.
 export const CENSUS_REGIONS = {
   Northeast: ["CT", "ME", "MA", "NH", "RI", "VT", "NJ", "NY", "PA"],
-  Midwest: ["IL", "IN", "MI", "OH", "WI", "IA", "KS", "MN", "MO", "NE", "ND", "SD"],
-  South: ["DE", "DC", "FL", "GA", "MD", "NC", "SC", "VA", "WV", "AL", "KY", "MS", "TN", "AR", "LA", "OK", "TX"],
-  West: ["AZ", "CO", "ID", "MT", "NV", "NM", "UT", "WY", "AK", "CA", "HI", "OR", "WA"],
+  Midwest: [
+    "IL",
+    "IN",
+    "MI",
+    "OH",
+    "WI",
+    "IA",
+    "KS",
+    "MN",
+    "MO",
+    "NE",
+    "ND",
+    "SD",
+  ],
+  South: [
+    "DE",
+    "DC",
+    "FL",
+    "GA",
+    "MD",
+    "NC",
+    "SC",
+    "VA",
+    "WV",
+    "AL",
+    "KY",
+    "MS",
+    "TN",
+    "AR",
+    "LA",
+    "OK",
+    "TX",
+  ],
+  West: [
+    "AZ",
+    "CO",
+    "ID",
+    "MT",
+    "NV",
+    "NM",
+    "UT",
+    "WY",
+    "AK",
+    "CA",
+    "HI",
+    "OR",
+    "WA",
+  ],
 };
 
 // Alaska and Hawaii are Census West. They are not drawn as West: their pill sits
@@ -73,7 +118,11 @@ export function shouldCluster(zoom, maxZoom = CLUSTER_MAX_ZOOM) {
 // pills always appear even for a region too wide to fit, ceilinged so a region
 // that happens to hold one state does not slam into the street.
 export const REGION_MAX_ZOOM = 6.5;
-export function regionZoom(fitZoom, maxZoom = CLUSTER_MAX_ZOOM, margin = REGION_ZOOM_MARGIN) {
+export function regionZoom(
+  fitZoom,
+  maxZoom = CLUSTER_MAX_ZOOM,
+  margin = REGION_ZOOM_MARGIN,
+) {
   const z = Number(fitZoom);
   const floor = maxZoom + margin;
   if (!Number.isFinite(z)) return floor;
@@ -87,7 +136,13 @@ export function groupStatesByRegion(counts) {
     const key = clusterKeyFor(state);
     if (!key) continue;
     if (!out.has(key)) {
-      out.set(key, { key, label: key, count: 0, states: [], anchor: REGION_ANCHOR[key] || null });
+      out.set(key, {
+        key,
+        label: key,
+        count: 0,
+        states: [],
+        anchor: REGION_ANCHOR[key] || null,
+      });
     }
     const e = out.get(key);
     e.count += Number(n) || 0;

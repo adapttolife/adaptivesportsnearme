@@ -27,7 +27,8 @@
 		"BEEHIIV_PUBLICATION_ID": "pub_fb930d38-568a-4d98-b9d2-5f403d117a00",
 		"MAIL_TRANSPORT": "gmail",
 		"GMAIL_FROM": "hello@adaptivesportsnearme.com",
-		"REQUIRE_FORM_LIMITER": "true"
+		"REQUIRE_FORM_LIMITER": "true",
+		"RESEND_SEGMENT_ID": "abae0ac1-1ed2-4d3b-9fb7-41f272a92f4a"
 	},
 	"d1_databases": [
 		{
@@ -73,7 +74,8 @@
 				"BEEHIIV_PUBLICATION_ID": "pub_fb930d38-568a-4d98-b9d2-5f403d117a00",
 				"MAIL_TRANSPORT": "gmail",
 				"GMAIL_FROM": "hello@adaptivesportsnearme.com",
-				"REQUIRE_FORM_LIMITER": "true"
+				"REQUIRE_FORM_LIMITER": "true",
+				"RESEND_SEGMENT_ID": "abae0ac1-1ed2-4d3b-9fb7-41f272a92f4a"
 			},
 			"d1_databases": [
 				{

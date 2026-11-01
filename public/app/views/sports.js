@@ -15,12 +15,15 @@ function tile(g) {
 }
 
 export async function render(ctx) {
-  const D = ctx.data || await A.loadData();
+  const D = ctx.data || (await A.loadData());
   const n = (k) => D.countByKey[k] || 0;
-  const listed = [], unlisted = [], unlistedSibs = [];
+  const listed = [],
+    unlisted = [],
+    unlistedSibs = [];
   for (const g of A.pictureGroups()) {
     const members = [g.key, ...g.also];
-    const have = members.filter((k) => n(k) > 0), none = members.filter((k) => n(k) === 0);
+    const have = members.filter((k) => n(k) > 0),
+      none = members.filter((k) => n(k) === 0);
     if (have.length) {
       listed.push({ key: have[0], also: have.slice(1) });
       unlistedSibs.push(...none);

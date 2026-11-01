@@ -28,15 +28,20 @@ for (const r of rows) {
   });
 }
 
-const buckets = { "200": [], "404": [], timeout: [], other: [] };
+const buckets = { 200: [], 404: [], timeout: [], other: [] };
 for (const i of items) {
   if (i.now === 200) buckets["200"].push(i);
   else if (i.now === 404 || i.now === 410) buckets["404"].push(i);
-  else if (i.now === "err" || /timeout/i.test(String(i.old_status))) buckets.timeout.push(i);
+  else if (i.now === "err" || /timeout/i.test(String(i.old_status)))
+    buckets.timeout.push(i);
   else buckets.other.push(i);
 }
 
-writeFileSync(`${ROOT}/recheck-validate.json`, JSON.stringify({ when: new Date().toISOString(), buckets, items }, null, 2) + "\n");
+writeFileSync(
+  `${ROOT}/recheck-validate.json`,
+  JSON.stringify({ when: new Date().toISOString(), buckets, items }, null, 2) +
+    "\n",
+);
 console.log(`rechecked ${items.length} pending link checks`);
 console.log(`  up now: ${buckets["200"].length}`);
 console.log(`  still 404: ${buckets["404"].length}`);

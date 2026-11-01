@@ -19,9 +19,39 @@ import { factsStrip, freshness } from "../listing-facts.js";
 
 const L = window.ListingArt;
 // Group scenes never draw under 56px (3.2), so they get no avatar in a chip.
-const GROUP_SCENE = new Set(["event", "veteran-meetup", "art-therapy", "grant", "multi", "soccer", "football", "lacrosse", "handball", "softball", "volleyball", "triathlon", "nordicskiing"]);
-const FLOOR_PROP = new Set(["soccer", "sledhockey", "golf", "boccia", "curling", "goalball", "blindsports"]);
-const INVERTS = new Set(["court", "racquet", "field", "snow", "water", "trail", "calm"]);
+const GROUP_SCENE = new Set([
+  "event",
+  "veteran-meetup",
+  "art-therapy",
+  "grant",
+  "multi",
+  "soccer",
+  "football",
+  "lacrosse",
+  "handball",
+  "softball",
+  "volleyball",
+  "triathlon",
+  "nordicskiing",
+]);
+const FLOOR_PROP = new Set([
+  "soccer",
+  "sledhockey",
+  "golf",
+  "boccia",
+  "curling",
+  "goalball",
+  "blindsports",
+]);
+const INVERTS = new Set([
+  "court",
+  "racquet",
+  "field",
+  "snow",
+  "water",
+  "trail",
+  "calm",
+]);
 
 // Set when the share sheet was opened from this page (a pushed history entry),
 // so closing it can step back instead of stacking another entry.
@@ -30,11 +60,12 @@ let SHARE_FROM = null;
 let RETURN_TO = null;
 
 const enc = encodeURIComponent;
-const lowerFirst = (s) => s ? s.charAt(0).toLowerCase() + s.slice(1) : s;
-const upperFirst = (s) => s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
+const lowerFirst = (s) => (s ? s.charAt(0).toLowerCase() + s.slice(1) : s);
+const upperFirst = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
 const isTrio = (p) => Array.isArray(p.trio) && p.trio.length >= 2;
-const sportLabel = (p) => A.sportsText(p);   // "Basketball, tennis and swimming", not "Multi-sport", when the listing names them
-const sportNoun = (p) => (p.key === "multi" ? "multi-sport programs" : lowerFirst(A.sportName(p.key)));
+const sportLabel = (p) => A.sportsText(p); // "Basketball, tennis and swimming", not "Multi-sport", when the listing names them
+const sportNoun = (p) =>
+  p.key === "multi" ? "multi-sport programs" : lowerFirst(A.sportName(p.key));
 const statewideText = (p) => /no single city listed$/.test(A.placeText(p));
 
 /** Short place for the stamp and the poster: "Tampa, FL", "Florida, statewide", "Escambia County, FL". */
@@ -56,13 +87,19 @@ function backHref(p) {
   return "/";
 }
 function host(u) {
-  try { return new URL(u).hostname.replace(/^www\./i, ""); } catch (_) { return null; }
+  try {
+    return new URL(u).hostname.replace(/^www\./i, "");
+  } catch (_) {
+    return null;
+  }
 }
 
 /* ---------- the hero (3.2, 3.3) ---------- */
 function hero(p) {
   const label = stampLabel(p);
-  const stamp = label ? `<div class="pg-stamp" aria-hidden="true"><span class="pg-stamp-map">${A.stateOutline(p.state, { size: 40, dots: p.placed ? [p] : [], fill: !p.placed })}</span><span class="pg-stamp-text"><span>${A.esc(label)}</span></span></div>` : "";
+  const stamp = label
+    ? `<div class="pg-stamp" aria-hidden="true"><span class="pg-stamp-map">${A.stateOutline(p.state, { size: 40, dots: p.placed ? [p] : [], fill: !p.placed })}</span><span class="pg-stamp-text"><span>${A.esc(label)}</span></span></div>`
+    : "";
   return `<div class="pg-hero has-vtag${label ? " has-stamp" : ""}">
 ${A.plate(p, { kind: "hero" })}
 <button type="button" class="pg-hb pg-back" data-back="${A.esc(backHref(p))}" aria-label="Back">${A.icon("arrow-left", 22)}</button>
@@ -80,7 +117,10 @@ function freshBits(p) {
   const out = [];
   const f = A.freshText(p);
   if (f) out.push(f);
-  const ml = p.teamChecked && p.checkedMonth && L && L.monthLabel ? L.monthLabel(p.checkedMonth) : null;
+  const ml =
+    p.teamChecked && p.checkedMonth && L && L.monthLabel
+      ? L.monthLabel(p.checkedMonth)
+      : null;
   if (ml) out.push("Checked by our team, " + ml);
   return out;
 }
@@ -93,10 +133,20 @@ function freshLine(p) {
 const fixHref = (p) => `/update/${p.id}?fix=1`;
 function verifyHtml(p, isManager = false) {
   const fix = A.btn("Something's wrong?", fixHref(p), "line");
-  const run = A.btn("I'm with this organization", `/update/${p.id}?rel=run`, "ink");
-  const manage = A.btn("Manage your organization", `/manage/organizations/${p.id}`, "ink");
+  const run = A.btn(
+    "I'm with this organization",
+    `/update/${p.id}?rel=run`,
+    "ink",
+  );
+  const manage = A.btn(
+    "Manage your organization",
+    `/manage/organizations/${p.id}`,
+    "ink",
+  );
   const bits = freshBits(p);
-  const facts = bits.length ? `<ul class="vx-facts">${bits.map((b) => `<li>${A.icon("check", 18)}<span class="num">${A.esc(b)}</span></li>`).join("")}</ul>` : "";
+  const facts = bits.length
+    ? `<ul class="vx-facts">${bits.map((b) => `<li>${A.icon("check", 18)}<span class="num">${A.esc(b)}</span></li>`).join("")}</ul>`
+    : "";
   const body = p.verified
     ? `<p>The organization itself confirmed this listing with us.</p>${facts}<p>Schedules change, so check the organization's website before you go.</p>`
     : `<p>We found this organization in public sources, like its own website, and we check that website regularly.</p>${facts}<p><b>Verified</b> means the organization itself confirmed its listing with us. We're asking every organization.</p><p>Not verified doesn't mean anything is wrong. Check the organization's website before you go.</p>`;
@@ -109,7 +159,10 @@ function verifyHtml(p, isManager = false) {
    runs things; a program is what it offers, like wheelchair tennis. */
 function sportChips(text) {
   const seen = new Set();
-  const parts = String(text).split(/[;,]/).map((s) => s.trim().replace(/\.$/, "")).filter((s) => s && !/^see\b/i.test(s));
+  const parts = String(text)
+    .split(/[;,]/)
+    .map((s) => s.trim().replace(/\.$/, ""))
+    .filter((s) => s && !/^see\b/i.test(s));
   const out = [];
   for (const part of parts) {
     const label = upperFirst(part);
@@ -118,7 +171,9 @@ function sportChips(text) {
     const k0 = L && L.symbolKey ? L.symbolKey({ sportLabel: part }) : null;
     const k = k0 ? A.picGroup(k0) : null;
     const withAv = k && k !== "multi" && !GROUP_SCENE.has(k);
-    out.push(`<li class="pg-chip${withAv ? " has-av" : ""}">${withAv ? A.avatar(k, 40) : ""}<span>${A.esc(label)}</span></li>`);
+    out.push(
+      `<li class="pg-chip${withAv ? " has-av" : ""}">${withAv ? A.avatar(k, 40) : ""}<span>${A.esc(label)}</span></li>`,
+    );
   }
   return out.length ? `<ul class="pg-chips">${out.join("")}</ul>` : "";
 }
@@ -135,30 +190,57 @@ function seasonChips(list) {
 function about(p, { listed = false } = {}) {
   const { sports, served } = A.parseDesc(p);
   let inner = "";
-  if (served) inner += `<h3 class="pg-h3">Who it's for</h3><p>${A.esc(upperFirst(served.replace(/\s+/g, " ")))}</p>`;
+  if (served)
+    inner += `<h3 class="pg-h3">Who it's for</h3><p>${A.esc(upperFirst(served.replace(/\s+/g, " ")))}</p>`;
   // When its programs are listed below (each with its seasons), the chips would say it twice.
-  const chips = listed ? "" : p.seasons && p.seasons.length ? seasonChips(p.seasons) : sports ? sportChips(sports) : "";
+  const chips = listed
+    ? ""
+    : p.seasons && p.seasons.length
+      ? seasonChips(p.seasons)
+      : sports
+        ? sportChips(sports)
+        : "";
   if (chips) inner += `<h3 class="pg-h3">Programs</h3>${chips}`;
-  if (!inner && p.desc && !/Sports and activities:|Athletes served:/i.test(p.desc)) inner = `<p>${A.esc(p.desc)}</p>`;
-  if (!inner) inner = `<p class="pg-quiet">We don't have a description for this organization yet.${p.website ? " Its website has the details." : ""}</p>`;
+  if (
+    !inner &&
+    p.desc &&
+    !/Sports and activities:|Athletes served:/i.test(p.desc)
+  )
+    inner = `<p>${A.esc(p.desc)}</p>`;
+  if (!inner)
+    inner = `<p class="pg-quiet">We don't have a description for this organization yet.${p.website ? " Its website has the details." : ""}</p>`;
   return `<section class="pg-sec" aria-labelledby="pg-about"><h2 id="pg-about">About this organization</h2>${inner}</section>`;
 }
 /* Karen's veteran research (meetups, equine therapy, art therapy) carries what
    happens, the approach, when, where (a venue name only), format, cost and who. */
-const KIND = { "veteran-meetup": "Veteran meetup", "equine-therapy": "Equine therapy", "art-therapy": "Art therapy" };
+const KIND = {
+  "veteran-meetup": "Veteran meetup",
+  "equine-therapy": "Equine therapy",
+  "art-therapy": "Art therapy",
+};
 // In the directory those facts ride in the description, in this order:
 // "[Programs: X.] What happens. [Approach: Y.] [When: Z.] [Who it's for: W.]", then
 // "Also equine therapy: ..." for a second program at the same place.
-const KIND_OF = { "veteran meetup": "veteran-meetup", "equine therapy": "equine-therapy", "art therapy": "art-therapy" };
+const KIND_OF = {
+  "veteran meetup": "veteran-meetup",
+  "equine therapy": "equine-therapy",
+  "art therapy": "art-therapy",
+};
 function readMeet(text) {
-  const parts = String(text).split(/\s*\b(Programs|Approach|When|Who it's for):\s*/);
+  const parts = String(text).split(
+    /\s*\b(Programs|Approach|When|Who it's for):\s*/,
+  );
   const m = { program: "", what: "", how: "", when: "", who: "" };
   let what = parts[0].trim();
   for (let i = 1; i < parts.length; i += 2) {
-    const k = parts[i], v = (parts[i + 1] || "").trim();
+    const k = parts[i],
+      v = (parts[i + 1] || "").trim();
     if (k === "Programs") {
       const j = v.indexOf(". ");
-      if (j > 0) { m.program = v.slice(0, j); what = (what + " " + v.slice(j + 2)).trim(); } else m.program = v.replace(/\.$/, "");
+      if (j > 0) {
+        m.program = v.slice(0, j);
+        what = (what + " " + v.slice(j + 2)).trim();
+      } else m.program = v.replace(/\.$/, "");
     } else if (k === "Approach") m.how = v.replace(/\.$/, "");
     else if (k === "When") m.when = v.replace(/\.$/, "");
     else m.who = v.replace(/\.$/, "");
@@ -167,25 +249,41 @@ function readMeet(text) {
   return m;
 }
 function meetFrom(p) {
-  if (!KIND[p.key] || !p.desc || !/\b(Programs|Approach|When|Who it's for):/.test(p.desc)) return null;
+  if (
+    !KIND[p.key] ||
+    !p.desc ||
+    !/\b(Programs|Approach|When|Who it's for):/.test(p.desc)
+  )
+    return null;
   const [main, ...rest] = String(p.desc).split(/\s(?=Also [A-Za-z ]+?:)/);
-  const also = rest.map((r) => {
-    const mm = /^Also ([A-Za-z ]+?):\s*([\s\S]*)$/.exec(r);
-    if (!mm) return null;
-    return { ...readMeet(mm[2]), kind: KIND_OF[mm[1].toLowerCase()] || "" };
-  }).filter(Boolean);
+  const also = rest
+    .map((r) => {
+      const mm = /^Also ([A-Za-z ]+?):\s*([\s\S]*)$/.exec(r);
+      if (!mm) return null;
+      return { ...readMeet(mm[2]), kind: KIND_OF[mm[1].toLowerCase()] || "" };
+    })
+    .filter(Boolean);
   return { meet: { ...readMeet(main), cost: p.cost || "" }, also };
 }
 function meetDl(m) {
-  const row = (k, v) => v ? `<div><dt>${k}</dt><dd>${A.esc(v)}</dd></div>` : "";
+  const row = (k, v) =>
+    v ? `<div><dt>${k}</dt><dd>${A.esc(v)}</dd></div>` : "";
   return `<dl class="pg-facts">${row("Approach", m.how)}${row("When", m.when)}${row("Where", m.where)}${row("Format", m.format)}${row("Cost", m.cost)}${row("Who it's for", m.who)}</dl>`;
 }
 function meetup(p) {
   const m = p.meet;
   if (!m) return "";
-  const prog = m.program && m.program.toLowerCase() !== String(p.name).toLowerCase() ? m.program : "";
+  const prog =
+    m.program && m.program.toLowerCase() !== String(p.name).toLowerCase()
+      ? m.program
+      : "";
   const title = p.key === "veteran-meetup" ? "The meetup" : "The program";
-  const also = (p.also || []).map((x) => `<h3 class="pg-h3">Also here: ${A.esc(KIND[x.kind] || "Another program")}</h3>${x.program ? `<p class="pg-meet-prog">${A.esc(x.program)}</p>` : ""}${x.what ? `<p>${A.esc(x.what)}</p>` : ""}${meetDl(x)}`).join("");
+  const also = (p.also || [])
+    .map(
+      (x) =>
+        `<h3 class="pg-h3">Also here: ${A.esc(KIND[x.kind] || "Another program")}</h3>${x.program ? `<p class="pg-meet-prog">${A.esc(x.program)}</p>` : ""}${x.what ? `<p>${A.esc(x.what)}</p>` : ""}${meetDl(x)}`,
+    )
+    .join("");
   return `<section class="pg-sec pg-meet" aria-labelledby="pg-meet"><h2 id="pg-meet">${title}</h2>${prog ? `<p class="pg-meet-prog">${A.esc(prog)}</p>` : ""}${m.what ? `<p>${A.esc(m.what)}</p>` : ""}
 ${meetDl(m)}${also}
 <p class="pg-quiet">Times change, so confirm the next date with them before you go.</p></section>`;
@@ -194,9 +292,16 @@ function wherePlay(p) {
   let body;
   if (p.address) {
     const state = p.stateName || A.stateName(p.state);
-    const location = [p.city, [state, p.zip].filter(Boolean).join(" ")].filter(Boolean).join(", ");
-    const fullAddress = [p.address, location, p.country].filter(Boolean).join(", ");
-    const near = p.city && p.state ? `<a class="tlink" href="/near/${enc([p.city, p.state].join(", "))}">Programs near ${A.esc(A.placeText(p))}${A.icon("arrow-right", 18)}</a>` : "";
+    const location = [p.city, [state, p.zip].filter(Boolean).join(" ")]
+      .filter(Boolean)
+      .join(", ");
+    const fullAddress = [p.address, location, p.country]
+      .filter(Boolean)
+      .join(", ");
+    const near =
+      p.city && p.state
+        ? `<a class="tlink" href="/near/${enc([p.city, p.state].join(", "))}">Programs near ${A.esc(A.placeText(p))}${A.icon("arrow-right", 18)}</a>`
+        : "";
     body = `<p>${A.esc(fullAddress)}.</p>${near}`;
   } else if (p.placed) {
     body = `<p>${A.esc(A.placeText(p))}. We show the city only, so check the website for the exact place.</p><a class="tlink" href="/near/${enc(A.placeText(p))}">Programs near ${A.esc(A.placeText(p))}${A.icon("arrow-right", 18)}</a>`;
@@ -205,9 +310,15 @@ function wherePlay(p) {
   } else {
     body = `<p>This listing doesn't say where it is yet. If you know, <a href="${A.esc(fixHref(p))}">tell us</a>.</p>`;
   }
-  const canMap = p.addressPublicityConsent && (p.address || (Number.isFinite(p.lat) && Number.isFinite(p.lng)));
-  const address = [p.address, p.city, p.state, p.zip, p.country].filter(Boolean).join(", ");
-  const map = canMap ? `<div class="pg-map" data-location-map data-lat="${A.esc(p.lat)}" data-lng="${A.esc(p.lng)}" data-address="${A.esc(address)}" aria-label="Map showing ${A.esc(p.name)}"></div>` : "";
+  const canMap =
+    p.addressPublicityConsent &&
+    (p.address || (Number.isFinite(p.lat) && Number.isFinite(p.lng)));
+  const address = [p.address, p.city, p.state, p.zip, p.country]
+    .filter(Boolean)
+    .join(", ");
+  const map = canMap
+    ? `<div class="pg-map" data-location-map data-lat="${A.esc(p.lat)}" data-lng="${A.esc(p.lng)}" data-address="${A.esc(address)}" aria-label="Map showing ${A.esc(p.name)}"></div>`
+    : "";
   return `<section class="pg-sec" aria-labelledby="pg-where"><h2 id="pg-where">${p.meet ? "Where it meets" : "Where you'll play"}</h2>${body}${map}</section>`;
 }
 /* ---------- the sport in plain words, for a reader who has never seen it ----------
@@ -219,14 +330,20 @@ function sportIntro(p) {
   const multi = key === "multi";
   const name = lowerFirst(A.sportName(key));
   const title = multi ? "New to adaptive sports?" : `New to ${name}?`;
-  const all = multi ? "All multi-sport programs" : `All ${name} programs, grants and events`;
+  const all = multi
+    ? "All multi-sport programs"
+    : `All ${name} programs, grants and events`;
   return `<section class="pg-sec pg-sport" aria-labelledby="pg-sport"><h2 id="pg-sport">${A.esc(title)}</h2><p>${A.esc(g.what)}</p><p>${A.esc(g.start)}</p><p class="pg-quiet">This is about the sport in general. Every organization runs things its own way, so check its website for what it provides and what it costs.</p><a class="tlink" href="/sports/${A.esc(key)}">${A.esc(all)}${A.icon("arrow-right", 18)}</a></section>`;
 }
 
 function links(p, isManager = false) {
-  const row = (href, ic, label, sub, attrs = "") => `<li><a class="pg-link" href="${A.esc(href)}" ${attrs}><span class="pg-link-ic">${A.icon(ic, 20)}</span><span class="pg-link-text"><span class="pg-link-label">${A.esc(label)}</span>${sub ? `<span class="pg-link-sub">${A.esc(sub)}</span>` : ""}</span>${A.icon("chevron-right", 20)}</a></li>`;
-  const runSub = p.verified ? "Update your listing." : "Confirm your listing to get the Verified check.";
-  if (isManager) return `<ul class="pg-links">${row(`/manage/organizations/${p.id}`, "building-2", "Manage your organization")}${row(`/organizations/${p.id}?share=1`, "share", "Share", "", 'data-poster="links"')}</ul>`;
+  const row = (href, ic, label, sub, attrs = "") =>
+    `<li><a class="pg-link" href="${A.esc(href)}" ${attrs}><span class="pg-link-ic">${A.icon(ic, 20)}</span><span class="pg-link-text"><span class="pg-link-label">${A.esc(label)}</span>${sub ? `<span class="pg-link-sub">${A.esc(sub)}</span>` : ""}</span>${A.icon("chevron-right", 20)}</a></li>`;
+  const runSub = p.verified
+    ? "Update your listing."
+    : "Confirm your listing to get the Verified check.";
+  if (isManager)
+    return `<ul class="pg-links">${row(`/manage/organizations/${p.id}`, "building-2", "Manage your organization")}${row(`/organizations/${p.id}?share=1`, "share", "Share", "", 'data-poster="links"')}</ul>`;
   // "Something's wrong?" sits beside Visit website now; this list keeps the organization's own door.
   return `<ul class="pg-links">${row(`/update/${p.id}?rel=run`, "badge-check", "I'm with this organization", runSub)}${row(`/organizations/${p.id}?share=1`, "share", "Share", "", 'data-poster="links"')}</ul>`;
 }
@@ -239,8 +356,10 @@ function more(p, D) {
   const st = p.state ? A.stateName(p.state) : null;
   const where = A.whereFromProgram(p);
   const ctx = { where: p.placed ? where : null, single: true, sameCity: true };
-  const sec = (title, inner, seeAll) => `<section class="pg-sec pg-more" aria-labelledby="pg-more">${A.sectionHead({ title, id: "pg-more", seeAll })}${inner}</section>`;
-  const rows = (list) => `<div class="rows">${list.map((x) => A.programRow(x, ctx)).join("")}</div>`;
+  const sec = (title, inner, seeAll) =>
+    `<section class="pg-sec pg-more" aria-labelledby="pg-more">${A.sectionHead({ title, id: "pg-more", seeAll })}${inner}</section>`;
+  const rows = (list) =>
+    `<div class="rows">${list.map((x) => A.programRow(x, ctx)).join("")}</div>`;
   if (p.state) {
     const lad = A.ladder(where, pool);
     const close = [...lad.inCity, ...lad.near];
@@ -248,16 +367,37 @@ function more(p, D) {
     if (p.placed && close.length) {
       const first = close.slice(0, 6);
       const extra = rest.slice(0, 6 - first.length);
-      const elsewhere = extra.length ? `<h3 class="pg-h3 pg-more-sub">Elsewhere in ${A.esc(st)}</h3>${rows(extra)}` : "";
-      return sec(`More ${noun} near ${where.short}`, rows(first) + elsewhere, { label: `See all near ${where.short}`, href: `/near/${enc(A.placeText(p))}?s=${enc(p.key)}` });
+      const elsewhere = extra.length
+        ? `<h3 class="pg-h3 pg-more-sub">Elsewhere in ${A.esc(st)}</h3>${rows(extra)}`
+        : "";
+      return sec(`More ${noun} near ${where.short}`, rows(first) + elsewhere, {
+        label: `See all near ${where.short}`,
+        href: `/near/${enc(A.placeText(p))}?s=${enc(p.key)}`,
+      });
     }
-    if (rest.length) return sec(`More ${noun} in ${st}`, rows(rest.slice(0, 6)), { label: `See all in ${st}`, href: `/states/${p.state}?s=${enc(p.key)}` });
+    if (rest.length)
+      return sec(`More ${noun} in ${st}`, rows(rest.slice(0, 6)), {
+        label: `See all in ${st}`,
+        href: `/states/${p.state}?s=${enc(p.key)}`,
+      });
     const out = A.nearestOutside(where, pool, 6).flatMap((g) => g.items);
-    if (out.length) return sec(`More ${noun === "multi-sport programs" ? noun : noun + " programs"}`, `<div class="rows">${out.map((x) => A.programRow(x, { ...ctx, outside: true })).join("")}</div>`, { label: "See all", href: `/sports/${enc(p.key)}` });
+    if (out.length)
+      return sec(
+        `More ${noun === "multi-sport programs" ? noun : noun + " programs"}`,
+        `<div class="rows">${out.map((x) => A.programRow(x, { ...ctx, outside: true })).join("")}</div>`,
+        { label: "See all", href: `/sports/${enc(p.key)}` },
+      );
     return "";
   }
-  const list = pool.slice().sort((a, b) => (b.verified - a.verified) || a.name.localeCompare(b.name)).slice(0, 6);
-  return sec(`More ${noun === "multi-sport programs" ? noun : noun + " programs"}`, rows(list), { label: "See all", href: `/sports/${enc(p.key)}` });
+  const list = pool
+    .slice()
+    .sort((a, b) => b.verified - a.verified || a.name.localeCompare(b.name))
+    .slice(0, 6);
+  return sec(
+    `More ${noun === "multi-sport programs" ? noun : noun + " programs"}`,
+    rows(list),
+    { label: "See all", href: `/sports/${enc(p.key)}` },
+  );
 }
 
 /* ---------- actions: phone row, desktop booking box, sticky bar ---------- */
@@ -269,22 +409,32 @@ function visitBtn(p, { full = false } = {}) {
 }
 /** The second action, beside Visit website: one tap to the reasons (docs/specs/community-kept-directory.md). */
 function wrongBtn(p, cls = "") {
-  return p.website ? A.btn("Something's wrong?", fixHref(p), "line", { cls: "pg-wrong" + (cls ? " " + cls : "") }) : "";
+  return p.website
+    ? A.btn("Something's wrong?", fixHref(p), "line", {
+        cls: "pg-wrong" + (cls ? " " + cls : ""),
+      })
+    : "";
 }
 function hostNote(p) {
   const h = p.website && host(p.website);
-  return h ? `<p class="pg-host">Opens ${A.esc(h)}</p>` : `<p class="pg-host">We don't have a website for this organization yet.</p>`;
+  return h
+    ? `<p class="pg-host">Opens ${A.esc(h)}</p>`
+    : `<p class="pg-host">We don't have a website for this organization yet.</p>`;
 }
 function actionRow(p) {
   // data-sticky-twin: the phone sticky bar steps aside while this row is on screen (one ink button at a time).
   return `<div class="pg-acts" data-sticky-twin><div class="pg-act-row">${visitBtn(p, { full: true })}${A.saveButton("organizations", p.id)}${wrongBtn(p)}</div>${hostNote(p)}</div>`;
 }
 function bookBox(p) {
-  let address = '';
+  let address = "";
   if (p.address) {
     const state = p.stateName || A.stateName(p.state);
-    const location = [p.city, [state, p.zip].filter(Boolean).join(" ")].filter(Boolean).join(", ");
-    const fullAddress = [p.address, location, p.country].filter(Boolean).join(", ");
+    const location = [p.city, [state, p.zip].filter(Boolean).join(" ")]
+      .filter(Boolean)
+      .join(", ");
+    const fullAddress = [p.address, location, p.country]
+      .filter(Boolean)
+      .join(", ");
     address = A.esc(fullAddress);
   } else if (p.placed) {
     address = A.esc(A.placeText(p));
@@ -298,7 +448,12 @@ function poster(p) {
   const key = trio ? "multi" : p.key;
   const tone = A.toneOf(key);
   const inv = !trio && INVERTS.has(A.familyOf(key));
-  const art = trio ? A.trioFigs(p.trio, "poster").replace('class="trio"', 'class="trio pp-trio"') : A.fig(key, { big: true });
+  const art = trio
+    ? A.trioFigs(p.trio, "poster").replace(
+        'class="trio"',
+        'class="trio pp-trio"',
+      )
+    : A.fig(key, { big: true });
   const place = stampLabel(p);
   const label = `${p.name}, ${lowerFirst(sportLabel(p))}${place ? ", " + place : ""}. Adaptive Sports Near Me`;
   return `<div class="pg-poster${inv ? " is-inv" : ""}${trio ? " is-trio" : ""}${FLOOR_PROP.has(key) ? " is-floor" : ""}" style="--t:${tone.t};--d:${tone.d}" role="img" aria-label="${A.esc(label)}"><span class="pp-in">
@@ -310,7 +465,8 @@ ${place ? `<span class="pp-place">${A.esc(place)}</span>` : ""}
 </span></div>`;
 }
 function shareHtml(p) {
-  const native = typeof navigator !== "undefined" && typeof navigator.share === "function";
+  const native =
+    typeof navigator !== "undefined" && typeof navigator.share === "function";
   return `<div class="ss-top"><button type="button" class="iconbtn" data-close aria-label="Close">${A.icon("x", 24)}</button><h2 id="pg-sh-h">Share this listing</h2></div>
 <div class="ss-body pg-sh-body">${poster(p)}
 <div class="btns pg-sh-btns"><button type="button" class="btn btn--ink" data-copy-link>${A.icon("link", 20)}<span>Copy link</span></button>${native ? `<button type="button" class="btn btn--line" data-native-share>${A.icon("share", 20)}<span>Share</span></button>` : ""}</div>
@@ -320,52 +476,97 @@ function shareHtml(p) {
 
 /* ---------- its yearly events: one row each, to the event's own page ---------- */
 function yearlyEvents(items, now) {
-  const rows = items.filter((s) => s && s.slug && s.name).map((s) => {
-    const st = seriesState(s, s.editions || [], now);
-    const when = st.now
-      ? `Happening now · ${dateRange(st.now.starts_at, st.now.ends_at)}`
-      : st.next
-      ? `${st.nth ? ordinal(st.nth) + " annual · " : ""}${dateRange(st.next.starts_at, st.next.ends_at)}`
-      : `${st.usual ? (/^(early|mid|late) /.test(st.usual) ? "Usually " : "Usually in ") + st.usual + ". " : ""}Dates not announced yet`;
-    return `<a class="prow prow--c" href="/events/${A.esc(encodeURIComponent(s.slug))}"><div class="pr-body"><h3 class="pr-name">${A.esc(s.name)}</h3><p class="meta num">${A.esc(when)}</p></div></a>`;
-  }).join("");
-  return rows ? `<section class="pg-sec" aria-labelledby="pg-yearly"><h2 id="pg-yearly">Yearly events</h2><div class="rows">${rows}</div></section>` : "";
+  const rows = items
+    .filter((s) => s && s.slug && s.name)
+    .map((s) => {
+      const st = seriesState(s, s.editions || [], now);
+      const when = st.now
+        ? `Happening now · ${dateRange(st.now.starts_at, st.now.ends_at)}`
+        : st.next
+          ? `${st.nth ? ordinal(st.nth) + " annual · " : ""}${dateRange(st.next.starts_at, st.next.ends_at)}`
+          : `${st.usual ? (/^(early|mid|late) /.test(st.usual) ? "Usually " : "Usually in ") + st.usual + ". " : ""}Dates not announced yet`;
+      return `<a class="prow prow--c" href="/events/${A.esc(encodeURIComponent(s.slug))}"><div class="pr-body"><h3 class="pr-name">${A.esc(s.name)}</h3><p class="meta num">${A.esc(when)}</p></div></a>`;
+    })
+    .join("");
+  return rows
+    ? `<section class="pg-sec" aria-labelledby="pg-yearly"><h2 id="pg-yearly">Yearly events</h2><div class="rows">${rows}</div></section>`
+    : "";
 }
 
 /* ---------- its programs, each with when it runs ("Skiing · Winter") ---------- */
 function programsList(items) {
   if (!items.length) return "";
-  const rows = items.map((item) => {
-    const own = Array.isArray(item.seasons) && item.seasons[0] ? seasonsText(item.seasons[0].seasons) : "";
-    const meta = [item.sportLabel || (item.sport ? A.sportName(item.sport) : "Adaptive sports"), own].filter(Boolean).join(" · ");
-    return `<a class="prow prow--c" href="/programs/${A.esc(item.id)}"><div class="pr-body"><h3 class="pr-name">${A.esc(item.name)}</h3><p class="meta">${A.esc(meta)}</p></div></a>`;
-  }).join("");
+  const rows = items
+    .map((item) => {
+      const own =
+        Array.isArray(item.seasons) && item.seasons[0]
+          ? seasonsText(item.seasons[0].seasons)
+          : "";
+      const meta = [
+        item.sportLabel ||
+          (item.sport ? A.sportName(item.sport) : "Adaptive sports"),
+        own,
+      ]
+        .filter(Boolean)
+        .join(" · ");
+      return `<a class="prow prow--c" href="/programs/${A.esc(item.id)}"><div class="pr-body"><h3 class="pr-name">${A.esc(item.name)}</h3><p class="meta">${A.esc(meta)}</p></div></a>`;
+    })
+    .join("");
   return `<section class="pg-sec" aria-labelledby="pg-programs"><h2 id="pg-programs">Programs</h2><div class="rows">${rows}</div></section>`;
 }
 
 /* ---------- History: when it joined, when it last updated, the years of its events ----------
    Nobody writes it: the dates are the record (docs/specs/programs-that-come-back.md). */
-const MONTH_NAMES = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+const MONTH_NAMES = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+];
 /** "2025-03" -> "March 2025". */
 export function monthYear(ym) {
   const m = /^(\d{4})-(\d{2})/.exec(String(ym || ""));
-  return m && +m[2] >= 1 && +m[2] <= 12 ? `${MONTH_NAMES[+m[2] - 1]} ${m[1]}` : "";
+  return m && +m[2] >= 1 && +m[2] <= 12
+    ? `${MONTH_NAMES[+m[2] - 1]} ${m[1]}`
+    : "";
 }
 function history(p, series, now) {
   const h = p.history || {};
   const lines = [];
   const since = monthYear(h.listedSince);
-  if (since) lines.push(`<li>On Adaptive Sports Near Me since <span class="num">${A.esc(since)}</span></li>`);
+  if (since)
+    lines.push(
+      `<li>On Adaptive Sports Near Me since <span class="num">${A.esc(since)}</span></li>`,
+    );
   const updated = monthYear(h.updatedByOrganization);
-  if (updated) lines.push(`<li>Last updated by the organization, <span class="num">${A.esc(updated)}</span></li>`);
+  if (updated)
+    lines.push(
+      `<li>Last updated by the organization, <span class="num">${A.esc(updated)}</span></li>`,
+    );
   for (const s of series) {
     const st = seriesState(s, s.editions || [], now);
-    const every = st.usualMonth ? `every ${MONTH_NAMES[st.usualMonth - 1]}` : "every year";
-    const years = [...st.past].reverse().map((e) => String(e.starts_at).slice(0, 4));
+    const every = st.usualMonth
+      ? `every ${MONTH_NAMES[st.usualMonth - 1]}`
+      : "every year";
+    const years = [...st.past]
+      .reverse()
+      .map((e) => String(e.starts_at).slice(0, 4));
     const tail = `${every}${st.since ? ` since ${st.since}` : ""}.${years.length ? ` Past years: ${[...new Set(years)].join(", ")}.` : ""}`;
-    lines.push(`<li><a href="/events/${A.esc(encodeURIComponent(s.slug))}">${A.esc(s.name)}</a>: <span class="num">${A.esc(tail)}</span></li>`);
+    lines.push(
+      `<li><a href="/events/${A.esc(encodeURIComponent(s.slug))}">${A.esc(s.name)}</a>: <span class="num">${A.esc(tail)}</span></li>`,
+    );
   }
-  return lines.length ? `<section class="pg-sec pg-hist" aria-labelledby="pg-hist"><h2 id="pg-hist">History</h2><ul class="pg-hist-list">${lines.join("")}</ul></section>` : "";
+  return lines.length
+    ? `<section class="pg-sec pg-hist" aria-labelledby="pg-hist"><h2 id="pg-hist">History</h2><ul class="pg-hist-list">${lines.join("")}</ul></section>`
+    : "";
 }
 
 /* ---------- render ---------- */
@@ -387,30 +588,47 @@ export async function render(ctx) {
   try {
     const response = await fetch("/api/org-auth/session");
     const body = response.ok ? await response.json() : null;
-    isManager = !!body?.organizations?.some((organization) => String(organization.id).toLowerCase() === String(p.id).toLowerCase());
+    isManager = !!body?.organizations?.some(
+      (organization) =>
+        String(organization.id).toLowerCase() === String(p.id).toLowerCase(),
+    );
   } catch (_) {}
   p.isManager = isManager;
   let linkedPrograms = "";
   try {
-    const response = await fetch(`/api/organizations/${encodeURIComponent(p.id)}/programs`);
+    const response = await fetch(
+      `/api/organizations/${encodeURIComponent(p.id)}/programs`,
+    );
     const body = response.ok ? await response.json() : null;
-    if (body?.items?.length) linkedPrograms = programsList(body.items.filter((item) => item.kind !== "event"));
+    if (body?.items?.length)
+      linkedPrograms = programsList(
+        body.items.filter((item) => item.kind !== "event"),
+      );
   } catch (_) {}
 
   // Its yearly events (docs/specs/programs-that-come-back.md); none, or a server without them yet, shows nothing.
-  let yearly = "", series = [];
+  let yearly = "",
+    series = [];
   const now = ctx.now || new Date();
   if (!p.prog) {
     try {
-      const response = await fetch(`/api/event-series?org=${encodeURIComponent(p.id)}`);
+      const response = await fetch(
+        `/api/event-series?org=${encodeURIComponent(p.id)}`,
+      );
       const body = response.ok ? await response.json() : null;
-      series = Array.isArray(body?.items) ? body.items.filter((s) => s && s.slug && s.name) : [];
+      series = Array.isArray(body?.items)
+        ? body.items.filter((s) => s && s.slug && s.name)
+        : [];
       if (series.length) yearly = yearlyEvents(series, now);
     } catch (_) {}
   }
   const past = history(p, series, now);
 
-  if (p.meet === undefined) { const m = meetFrom(p); p.meet = m ? m.meet : null; p.also = m ? m.also : []; }
+  if (p.meet === undefined) {
+    const m = meetFrom(p);
+    p.meet = m ? m.meet : null;
+    p.also = m ? m.also : [];
+  }
 
   // " · About 12 mi from Brandon" when the visitor's saved place resolves and this listing is elsewhere.
   let from = "";
@@ -421,10 +639,15 @@ export async function render(ctx) {
       if (w && (w.kind === "city" || w.kind === "zip")) {
         const r = A.relation(p, w);
         // Only when it helps: same state, or within about 100 miles (not "970 mi from Tampa").
-        const t = !r.inCity && (p.state === w.state || (r.miles != null && r.miles <= 100)) && A.aboutMi(r.miles, { cap: true });
+        const t =
+          !r.inCity &&
+          (p.state === w.state || (r.miles != null && r.miles <= 100)) &&
+          A.aboutMi(r.miles, { cap: true });
         if (t) from = ` · ${t} from ${w.short}`;
       }
-    } catch (_) { /* no distance is better than a wrong one */ }
+    } catch (_) {
+      /* no distance is better than a wrong one */
+    }
   }
 
   const sport = sportLabel(p);
@@ -447,28 +670,44 @@ ${more(p, D)}
 
   const sticky = A.stickyBar({
     left: A.trust(p, "sticky"),
-    action: p.website ? { label: "Visit website", href: p.website, kind: "ink", external: true } : A.btn("Suggest a website", fixHref(p), "line"),
+    action: p.website
+      ? { label: "Visit website", href: p.website, kind: "ink", external: true }
+      : A.btn("Suggest a website", fixHref(p), "line"),
   });
 
   return {
     title: site(organizationMeta({ name: p.name, sport, place: tp }).title),
-    description: organizationMeta({ name: p.name, sport, place: tp }).description,
+    description: organizationMeta({ name: p.name, sport, place: tp })
+      .description,
     html: main,
     sticky,
   };
 }
 
 /* ---------- mount: share sheet, copy link ---------- */
-function baseHash(id) { return "/organizations/" + id; }
-function hasShare() { return /[?&]share=1(?:&|$)/.test(A.here()); }
+function baseHash(id) {
+  return "/organizations/" + id;
+}
+function hasShare() {
+  return /[?&]share=1(?:&|$)/.test(A.here());
+}
 
 async function copyLink(url) {
-  try { await navigator.clipboard.writeText(url); return true; }
-  catch (_) {
+  try {
+    await navigator.clipboard.writeText(url);
+    return true;
+  } catch (_) {
     const ta = document.createElement("textarea");
-    ta.value = url; ta.setAttribute("readonly", ""); ta.style.position = "fixed"; ta.style.opacity = "0";
-    document.body.appendChild(ta); ta.select();
-    let ok = false; try { ok = document.execCommand("copy"); } catch (_) {}
+    ta.value = url;
+    ta.setAttribute("readonly", "");
+    ta.style.position = "fixed";
+    ta.style.opacity = "0";
+    document.body.appendChild(ta);
+    ta.select();
+    let ok = false;
+    try {
+      ok = document.execCommand("copy");
+    } catch (_) {}
     ta.remove();
     return ok;
   }
@@ -485,21 +724,39 @@ export function mount(root, ctx) {
   const onClick = (e) => {
     if (e.target.closest("[data-verify]")) {
       e.preventDefault();
-      const el = A.showOverlay({ name: "verify", cls: "ov--sheet v-program-verify", labelledby: "vx-h", html: verifyHtml(p, p.isManager) });
-      A.pushSheet();   // phone Back closes the story instead of leaving the listing
-      const h = el.querySelector("#vx-h"); if (h) h.focus();
+      const el = A.showOverlay({
+        name: "verify",
+        cls: "ov--sheet v-program-verify",
+        labelledby: "vx-h",
+        html: verifyHtml(p, p.isManager),
+      });
+      A.pushSheet(); // phone Back closes the story instead of leaving the listing
+      const h = el.querySelector("#vx-h");
+      if (h) h.focus();
       return;
     }
     const a = e.target.closest("a[data-poster]");
     if (a && !e.metaKey && !e.ctrlKey && !e.shiftKey) {
       SHARE_FROM = base;
       RETURN_TO = a.getAttribute("data-poster");
-      try { sessionStorage.setItem("asnm.scroll." + A.here(), String(Math.round(scrollY))); } catch (_) {}
+      try {
+        sessionStorage.setItem(
+          "asnm.scroll." + A.here(),
+          String(Math.round(scrollY)),
+        );
+      } catch (_) {}
     }
   };
   root.addEventListener("click", onClick);
   let removeMaps = () => {};
-  if (root.querySelector("[data-location-map]")) import("./map.js").then((maps) => maps.mountLocationMaps(root)).then((remove) => { if (disposed) remove(); else removeMaps = remove; }).catch(() => {});
+  if (root.querySelector("[data-location-map]"))
+    import("./map.js")
+      .then((maps) => maps.mountLocationMaps(root))
+      .then((remove) => {
+        if (disposed) remove();
+        else removeMaps = remove;
+      })
+      .catch(() => {});
 
   if (ctx.query.share === "1") {
     // Keep the page behind the sheet where it was.
@@ -508,11 +765,22 @@ export function mount(root, ctx) {
       requestAnimationFrame(() => scrollTo(0, y));
     }
     const el = A.showOverlay({
-      name: "share", cls: "ov--sheet v-program-share", labelledby: "pg-sh-h", html: shareHtml(p),
+      name: "share",
+      cls: "ov--sheet v-program-share",
+      labelledby: "pg-sh-h",
+      html: shareHtml(p),
       onClose: () => {
         if (disposed || !hasShare() || !A.here().startsWith(base + "?")) return;
-        if (SHARE_FROM === base && Number(sessionStorage.getItem("asnm.navs") || 0) > 0) { SHARE_FROM = null; history.back(); }
-        else { SHARE_FROM = null; A.nav(base, { replace: true }); }
+        if (
+          SHARE_FROM === base &&
+          Number(sessionStorage.getItem("asnm.navs") || 0) > 0
+        ) {
+          SHARE_FROM = null;
+          history.back();
+        } else {
+          SHARE_FROM = null;
+          A.nav(base, { replace: true });
+        }
       },
     });
     const status = el.querySelector(".pg-sh-status");
@@ -523,13 +791,23 @@ export function mount(root, ctx) {
         status.textContent = ok ? "Link copied" : url;
         if (ok) A.announce("Link copied");
       } else if (e.target.closest("[data-native-share]")) {
-        try { await navigator.share({ title: document.title.replace(/ · Adaptive Sports Near Me$/, ""), url }); }
-        catch (err) { if (!err || err.name !== "AbortError") { const ok = await copyLink(url); status.textContent = ok ? "Link copied" : url; } }
+        try {
+          await navigator.share({
+            title: document.title.replace(/ · Adaptive Sports Near Me$/, ""),
+            url,
+          });
+        } catch (err) {
+          if (!err || err.name !== "AbortError") {
+            const ok = await copyLink(url);
+            status.textContent = ok ? "Link copied" : url;
+          }
+        }
       }
     });
   } else if (RETURN_TO) {
     // Back from the sheet: put focus on the control that opened it (after the router's h1 focus).
-    const which = RETURN_TO; RETURN_TO = null;
+    const which = RETURN_TO;
+    RETURN_TO = null;
     setTimeout(() => {
       if (disposed) return;
       const t = root.querySelector(`a[data-poster="${which}"]`);
@@ -537,5 +815,9 @@ export function mount(root, ctx) {
     }, 120);
   }
 
-  return () => { disposed = true; removeMaps(); root.removeEventListener("click", onClick); };
+  return () => {
+    disposed = true;
+    removeMaps();
+    root.removeEventListener("click", onClick);
+  };
 }

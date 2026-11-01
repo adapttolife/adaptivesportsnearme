@@ -3,15 +3,24 @@
 // wear the same header, beta bar and footer as every listing page.
 
 import { headerHtml, footerHtml, navScriptHtml } from "./site-chrome.js";
-import { VETERAN_BUSINESS_COPY as COPY, NATIONWIDE, STATES } from "./resources/veteran-businesses.js";
+import {
+  VETERAN_BUSINESS_COPY as COPY,
+  NATIONWIDE,
+  STATES,
+} from "./resources/veteran-businesses.js";
 
 const SITE = "https://adaptivesportsnearme.com";
 export const VETERAN_BUSINESS_PATH = "/resources/veteran-owned-businesses";
 
 function esc(s) {
-  return s == null ? "" : String(s)
-    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+  return s == null
+    ? ""
+    : String(s)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
 }
 
 const ext = (url, text, cls = "") =>
@@ -59,10 +68,14 @@ function stateCard(s) {
 }
 
 export function veteranBusinessPageTemplate({ site = SITE } = {}) {
-  const chips = STATES.map((s) =>
-    `<a href="#state-${s.code.toLowerCase()}" aria-label="${esc(s.name)}">${s.code}</a>`).join("");
-  const nationwide = NATIONWIDE.map((d) =>
-    `<li class="res-card">${ext(d.url, d.name, "res-card-name")}<p>${esc(d.note)}</p></li>`).join("");
+  const chips = STATES.map(
+    (s) =>
+      `<a href="#state-${s.code.toLowerCase()}" aria-label="${esc(s.name)}">${s.code}</a>`,
+  ).join("");
+  const nationwide = NATIONWIDE.map(
+    (d) =>
+      `<li class="res-card">${ext(d.url, d.name, "res-card-name")}<p>${esc(d.note)}</p></li>`,
+  ).join("");
   const body = `<div class="bar"><a class="back" href="/resources">← Resources</a></div>
 <div class="res-hero">
 <p class="res-eyebrow">Resources</p>
@@ -107,7 +120,8 @@ export function resourcesIndexTemplate({ site = SITE } = {}) {
 </ul>`;
   return page({
     title: "Resources · Adaptive Sports Near Me",
-    description: "Lists of veteran-owned businesses and other resources, gathered in one place.",
+    description:
+      "Lists of veteran-owned businesses and other resources, gathered in one place.",
     canonical: `${site}/resources`,
     body,
   });

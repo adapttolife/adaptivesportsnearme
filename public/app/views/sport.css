@@ -2,310 +2,305 @@
 
 /* Community header: on tablet and up the name sits beside the avatar */
 @media (min-width: 768px) {
-	.v-sport .ch-body {
-		display: grid;
-		grid-template-columns: auto minmax(0, 1fr);
-		column-gap: 20px;
-	}
-	.v-sport .ch-av {
-		grid-column: 1;
-		grid-row: 1;
-	}
-	.v-sport .ch-body h1 {
-		grid-column: 2;
-		grid-row: 1;
-		align-self: end;
-		margin: 0 0 2px;
-	}
-	.v-sport .ch-line,
-	.v-sport .ch-count,
-	.v-sport .ch-acts {
-		grid-column: 1 / -1;
-	}
-	.v-sport .ch-line {
-		margin-top: 14px;
-	}
+  .v-sport .ch-body {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    column-gap: 20px;
+  }
+  .v-sport .ch-av {
+    grid-column: 1;
+    grid-row: 1;
+  }
+  .v-sport .ch-body h1 {
+    grid-column: 2;
+    grid-row: 1;
+    align-self: end;
+    margin: 0 0 2px;
+  }
+  .v-sport .ch-line,
+  .v-sport .ch-count,
+  .v-sport .ch-acts {
+    grid-column: 1 / -1;
+  }
+  .v-sport .ch-line {
+    margin-top: 14px;
+  }
 }
 
 .v-sport .sec--first {
-	margin-top: 32px;
+  margin-top: 32px;
 }
 
 /* Place tools: near-you search, chips, small tile map */
 .v-sport .sp-where {
-	margin-top: 24px;
+  margin-top: 24px;
 }
 
 .v-sport .pchips {
-	position: relative;
-	margin-inline: calc(-1 * var(--gut));
-	overflow-x: auto;
-	scrollbar-width: none;
-	scroll-snap-type: x proximity;
-	scroll-padding-inline: var(--gut);
-	-webkit-mask-image: linear-gradient(
-		90deg,
-		#000 calc(100% - 32px),
-		transparent
-	);
-	mask-image: linear-gradient(90deg, #000 calc(100% - 32px), transparent);
+  position: relative;
+  margin-inline: calc(-1 * var(--gut));
+  overflow-x: auto;
+  scrollbar-width: none;
+  scroll-snap-type: x proximity;
+  scroll-padding-inline: var(--gut);
+  -webkit-mask-image: linear-gradient(
+    90deg,
+    #000 calc(100% - 32px),
+    transparent
+  );
+  mask-image: linear-gradient(90deg, #000 calc(100% - 32px), transparent);
 }
 
 .v-sport .pchips::-webkit-scrollbar {
-	display: none;
+  display: none;
 }
 
 .v-sport .pchips-in {
-	display: flex;
-	gap: 8px;
-	width: max-content;
-	padding: 4px var(--gut) 6px;
+  display: flex;
+  gap: 8px;
+  width: max-content;
+  padding: 4px var(--gut) 6px;
 }
 
 .v-sport .pchips .chip {
-	scroll-snap-align: start;
+  scroll-snap-align: start;
 }
 
 .v-sport .pchips .chip-n {
-	color: var(--graphite);
-	font-weight: 500;
+  color: var(--graphite);
+  font-weight: 500;
 }
 
 .v-sport .pchips .chip.is-cur .chip-n {
-	color: var(--on-ink);
-	font-weight: 700;
+  color: var(--on-ink);
+  font-weight: 700;
 }
 
 @media (min-width: 768px) {
-	.v-sport .pchips {
-		margin-inline: 0;
-	}
-	.v-sport .pchips-in {
-		padding-inline: 2px 32px;
-	}
+  .v-sport .pchips {
+    margin-inline: 0;
+  }
+  .v-sport .pchips-in {
+    padding-inline: 2px 32px;
+  }
 }
-
-
-
-
-
 
 /* Who it's for chips and the line above filtered results (app.css .who) */
 .v-sport .sp-who {
-	margin-top: 16px;
+  margin-top: 16px;
 }
 
 .v-sport .sp-wholine {
-	margin-top: 20px;
+  margin-top: 20px;
 }
 
 .v-sport .sp-map {
-	display: none;
+  display: none;
 }
 
 @media (min-width: 600px) {
-	.v-sport .sp-map {
-		display: block;
-		margin-top: 24px;
-		max-width: 640px;
-	}
-	.v-sport .sp-map-h {
-		font-size: 18px;
-		margin-bottom: 14px;
-	}
+  .v-sport .sp-map {
+    display: block;
+    margin-top: 24px;
+    max-width: 640px;
+  }
+  .v-sport .sp-map-h {
+    font-size: 18px;
+    margin-bottom: 14px;
+  }
 }
 
 /* Groups: the shared .grp (app.css), then "See all N in X". */
 .v-sport .grp-all {
-	display: inline-flex;
-	align-items: center;
-	gap: 6px;
-	min-height: 48px;
-	margin-top: 4px;
-	font-size: 16px;
-	font-weight: 700;
-	text-decoration: underline;
-	text-underline-offset: 3px;
-	color: var(--ink);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 48px;
+  margin-top: 4px;
+  font-size: 16px;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  color: var(--ink);
 }
 
 .v-sport .grp-all .ic {
-	flex: none;
+  flex: none;
 }
 
 .v-sport .grp-all:hover {
-	text-decoration-thickness: 2px;
+  text-decoration-thickness: 2px;
 }
 
 @media (min-width: 768px) {
-	.v-sport .grp-all {
-		grid-column: 2;
-		margin: 0 0 12px;
-		justify-self: start;
-	}
+  .v-sport .grp-all {
+    grid-column: 2;
+    margin: 0 0 12px;
+    justify-self: start;
+  }
 }
 
 /* Grants tab */
 .v-sport .grp-h--g {
-	display: flex;
-	margin-top: 8px;
-	padding: 0 0 8px;
-	font-size: var(--fs-h4);
-	flex-direction: row;
-	border: 0;
+  display: flex;
+  margin-top: 8px;
+  padding: 0 0 8px;
+  font-size: var(--fs-h4);
+  flex-direction: row;
+  border: 0;
 }
 
 .v-sport .glist + .grp-h--g {
-	margin-top: 32px;
+  margin-top: 32px;
 }
 
 .v-sport .grp-sub {
-	font-size: 17px;
-	color: var(--graphite);
-	margin: -2px 0 12px;
+  font-size: 17px;
+  color: var(--graphite);
+  margin: -2px 0 12px;
 }
 
 /* Header count link (remembered place) */
 .v-sport .ch-count .sp-count {
-	display: inline-flex;
-	align-items: center;
-	gap: 6px;
-	min-height: 44px;
-	padding-block: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding-block: 0;
 }
 
 .v-sport .ch-count .sp-count .ic {
-	flex: none;
+  flex: none;
 }
 
 /* Veterans: a black link band to the veteran-owned business directories. */
 .v-sport .vet-res {
-	display: grid;
-	grid-template-columns: 1fr auto;
-	grid-template-rows: auto auto;
-	align-items: center;
-	gap: 2px 12px;
-	margin-top: 20px;
-	padding: 16px 18px;
-	background: #1a1a1a;
-	color: #f3f3f3;
-	text-decoration: none;
-	border-radius: var(--r-l);
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-rows: auto auto;
+  align-items: center;
+  gap: 2px 12px;
+  margin-top: 20px;
+  padding: 16px 18px;
+  background: #1a1a1a;
+  color: #f3f3f3;
+  text-decoration: none;
+  border-radius: var(--r-l);
 }
 
 .v-sport .vet-res b {
-	font-size: 19px;
-	font-weight: 900;
+  font-size: 19px;
+  font-weight: 900;
 }
 
 .v-sport .vet-res span {
-	grid-column: 1;
-	font-size: 15px;
-	color: #e7e3da;
+  grid-column: 1;
+  font-size: 15px;
+  color: #e7e3da;
 }
 
 .v-sport .vet-res .ic {
-	grid-column: 2;
-	grid-row: 1 / span 2;
-	color: #f3f3f3;
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  color: #f3f3f3;
 }
 
 /* The sport in plain words (sport-guides.js): one paragraph, then "Start here" opens the rest */
 .v-sport .sp-guide {
-	margin-top: 24px;
-	max-width: 68ch;
+  margin-top: 24px;
+  max-width: 68ch;
 }
 
 .v-sport .sp-guide-what {
-	margin: 0;
-	font-size: 18px;
-	line-height: 1.5;
+  margin: 0;
+  font-size: 18px;
+  line-height: 1.5;
 }
 
 .v-sport .sp-guide-more {
-	margin-top: 16px;
-	border-top: 1px solid var(--line);
-	border-bottom: 1px solid var(--line);
+  margin-top: 16px;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
 }
 
 .v-sport .sp-guide-more summary {
-	list-style: none;
-	display: flex;
-	align-items: center;
-	gap: 8px;
-	min-height: 48px;
-	cursor: pointer;
-	font-weight: 700;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 48px;
+  cursor: pointer;
+  font-weight: 700;
 }
 
 .v-sport .sp-guide-more summary::-webkit-details-marker {
-	display: none;
+  display: none;
 }
 
 .v-sport .sp-guide-more summary svg {
-	flex: none;
-	transition: transform 0.15s ease;
+  flex: none;
+  transition: transform 0.15s ease;
 }
 
 .v-sport .sp-guide-more[open] summary svg {
-	transform: rotate(90deg);
+  transform: rotate(90deg);
 }
 
 @media (prefers-reduced-motion: reduce) {
-	.v-sport .sp-guide-more summary svg {
-		transition: none;
-	}
+  .v-sport .sp-guide-more summary svg {
+    transition: none;
+  }
 }
 
 .v-sport .sp-guide-in {
-	padding: 4px 0 20px;
+  padding: 4px 0 20px;
 }
 
 .v-sport .sp-guide-dl {
-	margin: 0;
-	display: grid;
-	gap: 14px;
+  margin: 0;
+  display: grid;
+  gap: 14px;
 }
 
 .v-sport .sp-guide-dl dt {
-	font-size: 15px;
-	font-weight: 700;
+  font-size: 15px;
+  font-weight: 700;
 }
 
 .v-sport .sp-guide-dl dd {
-	margin: 2px 0 0;
-	color: var(--graphite);
-	line-height: 1.5;
+  margin: 2px 0 0;
+  color: var(--graphite);
+  line-height: 1.5;
 }
 
 .v-sport .sp-guide-body {
-	display: flex;
-	flex-wrap: wrap;
-	align-items: baseline;
-	gap: 4px 10px;
-	margin: 18px 0 0;
-	color: var(--graphite);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+  margin: 18px 0 0;
+  color: var(--graphite);
 }
 
 @media (min-width: 768px) {
-	.v-sport .sp-guide-dl {
-		grid-template-columns: repeat(3, minmax(0, 1fr));
-		gap: 20px;
-	}
+  .v-sport .sp-guide-dl {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 20px;
+  }
 }
 
 /* The honest caveat under "What you need": general to the sport, not one program */
 .v-sport .sp-guide-dl dd.sp-guide-note {
-	margin-top: 8px;
-	font-size: 15px;
-	font-style: italic;
+  margin-top: 8px;
+  font-size: 15px;
+  font-style: italic;
 }
 
 /* "Find tennis near you": the place search at the top of the Programs tab. */
 .v-sport .sp-near {
-	margin: 8px 0 20px;
+  margin: 8px 0 20px;
 }
 .v-sport .sp-near-h {
-	font-size: 20px;
-	margin: 0 0 8px;
+  font-size: 20px;
+  margin: 0 0 8px;
 }

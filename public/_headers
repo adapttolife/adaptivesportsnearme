@@ -50,6 +50,9 @@
   Cache-Control: public, max-age=2592000
 
 # Brand marks and the social card.
+/favicon.ico
+  Cache-Control: public, max-age=2592000
+
 /favicon.svg
   Cache-Control: public, max-age=2592000
 

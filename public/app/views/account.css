@@ -1,93 +1,93 @@
 .v-account .account {
-	max-width: 720px;
-	padding-top: 24px;
+  max-width: 720px;
+  padding-top: 24px;
 }
 
 .v-account .account-head {
-	max-width: 590px;
+  max-width: 590px;
 }
 
 .v-account .account-head p {
-	margin-top: 10px;
-	color: var(--graphite);
-	font-size: 17px;
+  margin-top: 10px;
+  color: var(--graphite);
+  font-size: 17px;
 }
 
 .v-account .account-card,
 .v-account .account-list {
-	margin: 28px 0;
+  margin: 28px 0;
 }
 
 .v-account .account-card {
-	padding: 20px;
-	border: 1px solid var(--line);
-	border-radius: var(--r-l);
-	background: var(--mist);
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-l);
+  background: var(--mist);
 }
 
 .v-account .account-card > .field:first-child {
-    margin-top: 0;
+  margin-top: 0;
 }
 
 .v-account .account-card .btn {
-    margin-top: 16px;
+  margin-top: 16px;
 }
 
 .v-account .account-status {
-	min-height: 1.5em;
-	color: var(--graphite);
-	margin-top: 14px;
+  min-height: 1.5em;
+  color: var(--graphite);
+  margin-top: 14px;
 }
 
 .v-account .account-status:empty {
-    display: none;
+  display: none;
 }
 
 .v-account .account-item {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	gap: 16px;
-	padding: 16px;
-	border: 1px solid var(--line);
-	border-radius: var(--r);
-	background: var(--mist);
-	color: inherit;
-	text-decoration: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  background: var(--mist);
+  color: inherit;
+  text-decoration: none;
 }
 
 .v-account .account-item + .account-item {
-	margin-top: 10px;
+  margin-top: 10px;
 }
 
 .v-account .account-item span {
-	display: grid;
-	gap: 2px;
+  display: grid;
+  gap: 2px;
 }
 
 .v-account .account-item small,
 .v-account .account-item em {
-	color: var(--graphite);
-	font-size: 14px;
-	font-style: normal;
+  color: var(--graphite);
+  font-size: 14px;
+  font-style: normal;
 }
 
 .v-account .account-item b {
-	font-size: 18px;
+  font-size: 18px;
 }
 
 .v-account .account-empty {
-	padding: 24px;
-	border: 1px solid var(--line);
-	border-radius: var(--r-l);
-	background: var(--mist);
+  padding: 24px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-l);
+  background: var(--mist);
 }
 
 .v-account .account-empty p {
-	margin: 8px 0 18px;
-	color: var(--graphite);
+  margin: 8px 0 18px;
+  color: var(--graphite);
 }
 
 .v-account .account-signout {
-	margin-top: 4px;
+  margin-top: 4px;
 }

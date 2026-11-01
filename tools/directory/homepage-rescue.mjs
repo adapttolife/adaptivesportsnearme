@@ -20,11 +20,14 @@ function loadKnown() {
       website_url: i.url || i.website_url,
     });
   };
-  for (const f of [`${ROOT}/recheck-validate.json`, `${ROOT}/validate-404s.json`]) {
+  for (const f of [
+    `${ROOT}/recheck-validate.json`,
+    `${ROOT}/validate-404s.json`,
+  ]) {
     if (!existsSync(f)) continue;
     const raw = JSON.parse(readFileSync(f, "utf8"));
     const items = raw.items || raw;
-    const list = Array.isArray(items) ? items : (raw.buckets?.["404"] || []);
+    const list = Array.isArray(items) ? items : raw.buckets?.["404"] || [];
     for (const i of list) {
       if (i.now === 200) continue;
       add(i);
@@ -39,8 +42,15 @@ const stillDead = [];
 for (const r of rows) {
   const home = originHome(r.website_url);
   if (!home) continue;
-  if (home.replace(/\/$/, "") === String(r.website_url || "").replace(/\/$/, "")) {
-    stillDead.push({ name: r.name, state: r.state, home, status: "already-home" });
+  if (
+    home.replace(/\/$/, "") === String(r.website_url || "").replace(/\/$/, "")
+  ) {
+    stillDead.push({
+      name: r.name,
+      state: r.state,
+      home,
+      status: "already-home",
+    });
     continue;
   }
   const hit = checkUrl(home);

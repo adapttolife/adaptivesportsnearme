@@ -2,8 +2,13 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
-  milesBetween, normalizeCity, cityCentroid, resolveOrigin, applyNearby,
-  parseRadius, DEFAULT_RADIUS_MI,
+  milesBetween,
+  normalizeCity,
+  cityCentroid,
+  resolveOrigin,
+  applyNearby,
+  parseRadius,
+  DEFAULT_RADIUS_MI,
 } from "../src/geo.js";
 import { listPrograms, freshness } from "../src/data.js";
 
@@ -11,7 +16,7 @@ const DENVER_ZIP = "80202";
 const DENVER = [39.7515, -104.9977];
 const CO_CENTROID = [39.059, -105.311]; // ~50 mi from downtown Denver
 const CA_CENTROID = [36.7783, -119.4179]; // California — far from Denver
-const ZCTA = { [DENVER_ZIP]: DENVER, "55414": [44.9784, -93.2224] };
+const ZCTA = { [DENVER_ZIP]: DENVER, 55414: [44.9784, -93.2224] };
 
 function params(obj) {
   return new URLSearchParams(obj);
@@ -52,8 +57,12 @@ function fakeDb(rows) {
       return {
         bind() {
           return {
-            async first() { return isCount ? { n: rows.length } : null; },
-            async all() { return { results: rows }; },
+            async first() {
+              return isCount ? { n: rows.length } : null;
+            },
+            async all() {
+              return { results: rows };
+            },
           };
         },
       };
@@ -103,7 +112,10 @@ test("resolveOrigin: city=Denver uses the city table", () => {
 });
 
 test("resolveOrigin: lat/lng wins over zip", () => {
-  const hit = resolveOrigin(params({ zip: "80202", lat: "40", lng: "-105" }), ZCTA);
+  const hit = resolveOrigin(
+    params({ zip: "80202", lat: "40", lng: "-105" }),
+    ZCTA,
+  );
   assert.equal(hit.source, "latlng");
   assert.equal(hit.lat, 40);
 });
@@ -117,22 +129,59 @@ test("parseRadius: clamps 1..500, defaults 100", () => {
 
 test("applyNearby: keeps CO, drops CA at 100 mi from Denver", () => {
   const rows = [
-    org({ id: "co", name: "CO Program", lat: CO_CENTROID[0], lng: CO_CENTROID[1] }),
-    org({ id: "ca", name: "CA Program", state: "CA", lat: CA_CENTROID[0], lng: CA_CENTROID[1] }),
+    org({
+      id: "co",
+      name: "CO Program",
+      lat: CO_CENTROID[0],
+      lng: CO_CENTROID[1],
+    }),
+    org({
+      id: "ca",
+      name: "CA Program",
+      state: "CA",
+      lat: CA_CENTROID[0],
+      lng: CA_CENTROID[1],
+    }),
     org({ id: "none", name: "No geo", lat: null, lng: null }),
   ];
-  const ranked = applyNearby(rows, { lat: DENVER[0], lng: DENVER[1], radius: 100 });
+  const ranked = applyNearby(rows, {
+    lat: DENVER[0],
+    lng: DENVER[1],
+    radius: 100,
+  });
   assert.equal(ranked.length, 1);
   assert.equal(ranked[0].row.id, "co");
 });
 
 test("listPrograms: zip=80202 keeps the full directory while preserving nearby context", async () => {
   const rows = [
-    org({ id: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1", name: "Near Denver", lat: CO_CENTROID[0], lng: CO_CENTROID[1], publicity_consent: 1 }),
-    org({ id: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa2", name: "Far California", state: "CA", lat: CA_CENTROID[0], lng: CA_CENTROID[1], publicity_consent: 1 }),
-    org({ id: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa3", name: "Also far", state: "NY", lat: 40.7, lng: -74.0, publicity_consent: 1 }),
+    org({
+      id: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1",
+      name: "Near Denver",
+      lat: CO_CENTROID[0],
+      lng: CO_CENTROID[1],
+      publicity_consent: 1,
+    }),
+    org({
+      id: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa2",
+      name: "Far California",
+      state: "CA",
+      lat: CA_CENTROID[0],
+      lng: CA_CENTROID[1],
+      publicity_consent: 1,
+    }),
+    org({
+      id: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa3",
+      name: "Also far",
+      state: "NY",
+      lat: 40.7,
+      lng: -74.0,
+      publicity_consent: 1,
+    }),
   ];
-  const out = await listPrograms(fakeDb(rows), params({ zip: "80202" }), { zcta: ZCTA });
+  const out = await listPrograms(fakeDb(rows), params({ zip: "80202" }), {
+    zcta: ZCTA,
+  });
   assert.equal(out.total, rows.length);
   assert.equal(out.items.length, rows.length);
   assert.ok(out.items.every((item) => item.dist == null));
@@ -141,10 +190,25 @@ test("listPrograms: zip=80202 keeps the full directory while preserving nearby c
 
 test("listPrograms: city=Denver keeps the full directory while preserving nearby context", async () => {
   const rows = [
-    org({ id: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1", name: "Front Range", lat: CO_CENTROID[0], lng: CO_CENTROID[1], publicity_consent: 1 }),
-    org({ id: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa2", name: "West Coast", state: "CA", lat: CA_CENTROID[0], lng: CA_CENTROID[1], publicity_consent: 1 }),
+    org({
+      id: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1",
+      name: "Front Range",
+      lat: CO_CENTROID[0],
+      lng: CO_CENTROID[1],
+      publicity_consent: 1,
+    }),
+    org({
+      id: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa2",
+      name: "West Coast",
+      state: "CA",
+      lat: CA_CENTROID[0],
+      lng: CA_CENTROID[1],
+      publicity_consent: 1,
+    }),
   ];
-  const out = await listPrograms(fakeDb(rows), params({ city: "Denver" }), { zcta: ZCTA });
+  const out = await listPrograms(fakeDb(rows), params({ city: "Denver" }), {
+    zcta: ZCTA,
+  });
   assert.equal(out.total, rows.length);
   assert.equal(out.items.length, rows.length);
   assert.equal(out.near.source, "city");
@@ -152,7 +216,9 @@ test("listPrograms: city=Denver keeps the full directory while preserving nearby
 
 test("listPrograms: unknown zip returns empty, not the full directory", async () => {
   const rows = [org({ lat: CO_CENTROID[0], lng: CO_CENTROID[1] })];
-  const out = await listPrograms(fakeDb(rows), params({ zip: "00000" }), { zcta: ZCTA });
+  const out = await listPrograms(fakeDb(rows), params({ zip: "00000" }), {
+    zcta: ZCTA,
+  });
   assert.equal(out.total, 0);
   assert.deepEqual(out.items, []);
 });

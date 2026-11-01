@@ -16,5 +16,9 @@ export function render() {
 <section class="lc-find" aria-labelledby="lc-find-h">${A.sectionHead({ title: "Find programs near you", id: "lc-find-h" })}${A.whereForm({ id: "lc-where" })}</section>
 <section class="lc-from" aria-labelledby="lc-from-h">${A.sectionHead({ title: "Add us to your contacts", id: "lc-from-h" })}<p>The letter comes from <strong>${FROM.replace(/([@.])/g, "$1<wbr>")}</strong>. Saving that address keeps it in your inbox, out of spam.</p></section>
 </div>`;
-  return { title: site(PAGES.letterConfirmed.title), description: PAGES.letterConfirmed.description, html };
+  return {
+    title: site(PAGES.letterConfirmed.title),
+    description: PAGES.letterConfirmed.description,
+    html,
+  };
 }

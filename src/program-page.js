@@ -8,7 +8,12 @@
 // whether a listing is verified, and invite people to suggest updates).
 // A listing, not a marketing page — no invented copy. Nearby is a shelf.
 
-import { listingVisual, isCoverVisual, stampAttr, symbolTile } from "./visuals.js";
+import {
+  listingVisual,
+  isCoverVisual,
+  stampAttr,
+  symbolTile,
+} from "./visuals.js";
 import { headerHtml, footerHtml, navScriptHtml } from "./site-chrome.js";
 import { sportsLabel } from "../public/app/listing-sport.js";
 import { SPORT_NAMES } from "./sport-names.js";
@@ -24,19 +29,29 @@ export { SPORT_PHOTOS } from "./visuals.js";
 // org_type -> the human label. Mirrors TYPE_LABEL in public/index.html so the
 // shared link and the in-app sheet name the same thing the same way.
 const TYPE_LABEL = {
-  member: "Community program", team: "Competitive team", chapter: "Chapter",
-  adaptive_club: "Adaptive club", inclusive_club: "Inclusive club",
-  affiliate: "Affiliate", event_partner: "Event partner",
+  member: "Community program",
+  team: "Competitive team",
+  chapter: "Chapter",
+  adaptive_club: "Adaptive club",
+  inclusive_club: "Inclusive club",
+  affiliate: "Affiliate",
+  event_partner: "Event partner",
 };
 
 function esc(s) {
-  return s == null ? "" : String(s)
-    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+  return s == null
+    ? ""
+    : String(s)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
 }
 
 export function locLine(org) {
-  const statewide = org.geoPrecision === "state" || org.geoPrecision === "state-level";
+  const statewide =
+    org.geoPrecision === "state" || org.geoPrecision === "state-level";
   if (statewide) {
     const st = org.stateName || org.state;
     return st ? `${st} · statewide` : "United States · statewide";
@@ -60,24 +75,35 @@ export function photoPath(sport, item) {
 }
 
 function hostFromUrl(u) {
-  try { return new URL(u).hostname.replace(/^www\./, ""); } catch { return u; }
+  try {
+    return new URL(u).hostname.replace(/^www\./, "");
+  } catch {
+    return u;
+  }
 }
 
 // A public source with a link, for the "View source" fallback. Our own research
 // files (Drive links, CSV names) are never a destination for a visitor.
 function sourceWithUrl(org) {
-  const list = (org.sources && org.sources.length)
-    ? org.sources
-    : (org.primarySource ? [{ name: org.primarySource, url: org.primarySourceUrl || null }] : []);
-  return list.find((s) => s && s.url && !ListingArt.isInternalSource(s)) || null;
+  const list =
+    org.sources && org.sources.length
+      ? org.sources
+      : org.primarySource
+        ? [{ name: org.primarySource, url: org.primarySourceUrl || null }]
+        : [];
+  return (
+    list.find((s) => s && s.url && !ListingArt.isInternalSource(s)) || null
+  );
 }
 
 // website → tel → mailto → primary source link. Never an empty-page stub.
 export function primaryCta(org) {
   if (org.website) return { href: org.website, label: "Visit website" };
   const phone = org.publicityConsent && org.phone && String(org.phone).trim();
-  if (phone) return { href: `tel:${phone.replace(/[^\d+]/g, "")}`, label: "Call" };
-  if (org.publicityConsent && org.email) return { href: `mailto:${org.email}`, label: "Email" };
+  if (phone)
+    return { href: `tel:${phone.replace(/[^\d+]/g, "")}`, label: "Call" };
+  if (org.publicityConsent && org.email)
+    return { href: `mailto:${org.email}`, label: "Email" };
   const src = sourceWithUrl(org);
   if (src) return { href: src.url, label: "View source" };
   return null;
@@ -94,16 +120,18 @@ function denseRows(org) {
     ["Type", type],
   ].filter(([, v]) => v);
   if (!pairs.length) return "";
-  return `<div class="rows">${pairs.map(([k, v]) => {
-    let val = esc(v);
-    if (k === "Phone") {
-      const tel = String(v).replace(/[^\d+]/g, "");
-      val = `<a href="tel:${esc(tel)}">${esc(v)}</a>`;
-    } else if (k === "Email") {
-      val = `<a href="mailto:${esc(v)}">${esc(v)}</a>`;
-    }
-    return `<div class="row"><span class="k">${k}</span><span class="v">${val}</span></div>`;
-  }).join("")}</div>`;
+  return `<div class="rows">${pairs
+    .map(([k, v]) => {
+      let val = esc(v);
+      if (k === "Phone") {
+        const tel = String(v).replace(/[^\d+]/g, "");
+        val = `<a href="tel:${esc(tel)}">${esc(v)}</a>`;
+      } else if (k === "Email") {
+        val = `<a href="mailto:${esc(v)}">${esc(v)}</a>`;
+      }
+      return `<div class="row"><span class="k">${k}</span><span class="v">${val}</span></div>`;
+    })
+    .join("")}</div>`;
 }
 
 // Long descriptions get a clamp plus a native toggle. 340 characters is roughly
@@ -112,9 +140,11 @@ function denseRows(org) {
 function descBlock(desc) {
   if (!desc) return "";
   if (String(desc).length <= 340) return `<p class="desc">${esc(desc)}</p>`;
-  return `<input class="desc-x" type="checkbox" id="descmore" aria-label="Show the full description">`
-    + `<p class="desc desc-long">${esc(desc)}</p>`
-    + `<label class="desc-btn" for="descmore"><span class="dm-more">More</span><span class="dm-less">Less</span></label>`;
+  return (
+    `<input class="desc-x" type="checkbox" id="descmore" aria-label="Show the full description">` +
+    `<p class="desc desc-long">${esc(desc)}</p>` +
+    `<label class="desc-btn" for="descmore"><span class="dm-more">More</span><span class="dm-less">Less</span></label>`
+  );
 }
 
 // The card's one trust line: Verified, or Not yet verified. Same words as the app.
@@ -139,7 +169,9 @@ export const NEARBY_MILES = 100;
 export function nearbyHeading(items, sportLabel) {
   const label = (sportLabel || "adaptive sports").toLowerCase();
   const first = items && items[0];
-  return first && first.dist != null && first.dist <= NEARBY_MILES ? `Nearby ${label}` : `More ${label}`;
+  return first && first.dist != null && first.dist <= NEARBY_MILES
+    ? `Nearby ${label}`
+    : `More ${label}`;
 }
 
 function nearbyStrip(items, sportLabel) {
@@ -154,14 +186,17 @@ function nearbyStrip(items, sportLabel) {
 export function aboutListingHtml(org) {
   const verified = ListingArt.isVerified(org);
   const month = ListingArt.monthLabel(org.verifiedMonth);
-  const sources = (org.sources && org.sources.length)
-    ? org.sources
-    : (org.primarySource ? [{ name: org.primarySource, url: null }] : []);
+  const sources =
+    org.sources && org.sources.length
+      ? org.sources
+      : org.primarySource
+        ? [{ name: org.primarySource, url: null }]
+        : [];
   const src = ListingArt.publicSource(sources.find((x) => x && x.name) || null);
   const srcHtml = src
-    ? (src.url
+    ? src.url
       ? `<a href="${esc(src.url)}" rel="noopener" target="_blank">${esc(src.name)}</a>`
-      : esc(src.name))
+      : esc(src.name)
     : null;
   const status = verified
     ? `<p class="about-status is-verified"><b>Verified.</b> ${esc(ListingArt.verifiedText(month))}</p>`
@@ -181,8 +216,6 @@ ${status}
 </div>
 </section>`;
 }
-
-
 
 function page({ title, description, canonical, image, body }) {
   const ogImage = image
@@ -229,7 +262,10 @@ export function listingInnerHtml(org, { nearby = [] } = {}) {
   // overlay and the description. The nearby strip's heading keeps the listing's own
   // short label: the strip does not filter on the named sports, and "More baseball,
   // ..., and 4 more" would read as a count of programs.
-  const sport = sportsLabel(org, (k) => SPORT_NAMES[k] || k) || org.sportLabel || "Multi-Sport";
+  const sport =
+    sportsLabel(org, (k) => SPORT_NAMES[k] || k) ||
+    org.sportLabel ||
+    "Multi-Sport";
   const loc = locLine(org);
   const v = listingVisual(org, "program");
   const overlay = `<div class="dov"><span class="dov-sport">${esc(sport)}</span><span class="dov-loc">${esc(loc)}</span></div>`;
@@ -257,7 +293,10 @@ ${nearbyStrip(nearby, org.sportLabel || "Multi-Sport")}`;
 
 export function programPageTemplate(org, { site = SITE, nearby = [] } = {}) {
   const name = org.name || "Adaptive sports program";
-  const sport = sportsLabel(org, (k) => SPORT_NAMES[k] || k) || org.sportLabel || "Multi-Sport";
+  const sport =
+    sportsLabel(org, (k) => SPORT_NAMES[k] || k) ||
+    org.sportLabel ||
+    "Multi-Sport";
   const loc = locLine(org);
   const canonical = `${site}/programs/${org.id}`;
   const photo = photoPath(org.sport, org);

@@ -1,2 +1,9 @@
-.v-programs label[for="program-search"] { display: block; margin-bottom: .5rem; }
-.v-programs #program-search { display: block; width: min(100%, 34rem); margin: 0 0 1.25rem; }
+.v-programs label[for="program-search"] {
+  display: block;
+  margin-bottom: 0.5rem;
+}
+.v-programs #program-search {
+  display: block;
+  width: min(100%, 34rem);
+  margin: 0 0 1.25rem;
+}

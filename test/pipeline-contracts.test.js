@@ -12,5 +12,5 @@ test("freshness: checked now -> 100, decays with half-life 45d, floor 5", () => 
   const now = Date.parse("2026-07-11T00:00:00Z");
   assert.equal(freshness("2026-07-11T00:00:00Z", now), 100);
   assert.equal(freshness("2026-05-27T00:00:00Z", now), 50); // 45 days
-  assert.equal(freshness("2020-01-01T00:00:00Z", now), 5);  // floor
+  assert.equal(freshness("2020-01-01T00:00:00Z", now), 5); // floor
 });

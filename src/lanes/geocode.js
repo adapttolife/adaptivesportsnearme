@@ -33,36 +33,79 @@ export function buildChange(org, coords) {
 export async function geocodeLane({ db, env, cursor }) {
   let zcta;
   try {
-    const res = await env.ASSETS.fetch("https://assets.local/assets/data/zcta.json");
-    if (!res.ok) return { cursor: "", processed: 0, flagged: 0, detail: "zcta.json unavailable" };
+    const res = await env.ASSETS.fetch(
+      "https://assets.local/assets/data/zcta.json",
+    );
+    if (!res.ok)
+      return {
+        cursor: "",
+        processed: 0,
+        flagged: 0,
+        detail: "zcta.json unavailable",
+      };
     zcta = await res.json();
   } catch {
-    return { cursor: "", processed: 0, flagged: 0, detail: "zcta.json unavailable" };
+    return {
+      cursor: "",
+      processed: 0,
+      flagged: 0,
+      detail: "zcta.json unavailable",
+    };
   }
 
-  const { results: orgs } = await db.prepare(
-    `SELECT id, zip, lat, lng, geo_precision FROM organizations
+  const { results: orgs } = await db
+    .prepare(
+      `SELECT id, zip, lat, lng, geo_precision FROM organizations
      WHERE status = 'active' AND zip IS NOT NULL
        AND (geo_precision IS NULL OR geo_precision = 'state')
        AND id > ?
-     ORDER BY id LIMIT ?`
-  ).bind(cursor || "", GEOCODE_BATCH).all();
-  if (!orgs.length) return { cursor: "", processed: 0, flagged: 0, detail: "cycle complete, cursor reset" };
+     ORDER BY id LIMIT ?`,
+    )
+    .bind(cursor || "", GEOCODE_BATCH)
+    .all();
+  if (!orgs.length)
+    return {
+      cursor: "",
+      processed: 0,
+      flagged: 0,
+      detail: "cycle complete, cursor reset",
+    };
 
-  const pending = await pendingOrgIds(db, "geocode", orgs.map((o) => o.id));
+  const pending = await pendingOrgIds(
+    db,
+    "geocode",
+    orgs.map((o) => o.id),
+  );
   const now = new Date().toISOString();
   const stmts = [];
-  let flagged = 0, unknown = 0;
+  let flagged = 0,
+    unknown = 0;
   for (const org of orgs) {
     if (pending.has(org.id)) continue; // don't re-propose while a proposal awaits review
 
     const z = normalizeZip(org.zip);
     const coords = z ? zcta[z] : null;
-    if (!coords) { unknown++; continue; }
+    if (!coords) {
+      unknown++;
+      continue;
+    }
 
     flagged++;
-    stmts.push(proposeStmt(db, org.id, "geocode", buildChange(org, coords),
-      { zip: z, source: "Census ZCTA gazetteer (vendored)", method: "zcta-centroid v1" }, 0.9, now));
+    stmts.push(
+      proposeStmt(
+        db,
+        org.id,
+        "geocode",
+        buildChange(org, coords),
+        {
+          zip: z,
+          source: "Census ZCTA gazetteer (vendored)",
+          method: "zcta-centroid v1",
+        },
+        0.9,
+        now,
+      ),
+    );
   }
   if (stmts.length) await db.batch(stmts);
   return {

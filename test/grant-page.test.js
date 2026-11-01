@@ -1,11 +1,19 @@
-import { cssIncludes } from './helpers/css.js';
-const styles = readFileSync(new URL("../public/styles.css", import.meta.url), "utf8");
+import { cssIncludes } from "./helpers/css.js";
+const styles = readFileSync(
+  new URL("../public/styles.css", import.meta.url),
+  "utf8",
+);
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import {
-  grantPageTemplate, grantNotFoundTemplate, GRANT_ID_RE,
-  grantLocLine, grantAudienceLabel, primaryCta, listingInnerHtml,
+  grantPageTemplate,
+  grantNotFoundTemplate,
+  GRANT_ID_RE,
+  grantLocLine,
+  grantAudienceLabel,
+  primaryCta,
+  listingInnerHtml,
 } from "../src/grant-page.js";
 
 const HUSTLE = {
@@ -42,7 +50,10 @@ test("GRANT_ID_RE matches a UUID grant path", () => {
   assert.ok(m);
   assert.equal(m[1], "b0298125-6d6a-4114-b0a2-5275750c09ae");
   assert.equal("/grants/not-a-uuid".match(GRANT_ID_RE), null);
-  assert.equal("/programs/b0298125-6d6a-4114-b0a2-5275750c09ae".match(GRANT_ID_RE), null);
+  assert.equal(
+    "/programs/b0298125-6d6a-4114-b0a2-5275750c09ae".match(GRANT_ID_RE),
+    null,
+  );
 });
 
 test("grantLocLine: funder · amount · deadline, else national", () => {
@@ -58,18 +69,36 @@ test("grantAudienceLabel: athlete vs program, null when missing", () => {
 });
 
 test("primaryCta: Apply → Call → Email → View source. Never an empty stub", () => {
-  assert.deepEqual(primaryCta(HUSTLE), { href: HUSTLE.applicationUrl, label: "Apply" });
-  assert.deepEqual(primaryCta({ phone: "301-217-0960" }), { href: "tel:3012170960", label: "Call" });
-  assert.deepEqual(primaryCta({ email: "hawkeye@gohawkeye.com" }), { href: "mailto:hawkeye@gohawkeye.com", label: "Email" });
-  assert.deepEqual(primaryCta({ sourceUrl: "https://example.org/src" }), { href: "https://example.org/src", label: "View source" });
+  assert.deepEqual(primaryCta(HUSTLE), {
+    href: HUSTLE.applicationUrl,
+    label: "Apply",
+  });
+  assert.deepEqual(primaryCta({ phone: "301-217-0960" }), {
+    href: "tel:3012170960",
+    label: "Call",
+  });
+  assert.deepEqual(primaryCta({ email: "hawkeye@gohawkeye.com" }), {
+    href: "mailto:hawkeye@gohawkeye.com",
+    label: "Email",
+  });
+  assert.deepEqual(primaryCta({ sourceUrl: "https://example.org/src" }), {
+    href: "https://example.org/src",
+    label: "View source",
+  });
   assert.equal(primaryCta({}), null);
 });
 
 test("grantPageTemplate: listing sheet tokens, Apply CTA, audience tag", () => {
-  const html = grantPageTemplate(HUSTLE, { site: "https://asnm-staging.adapt-to-life.workers.dev" });
+  const html = grantPageTemplate(HUSTLE, {
+    site: "https://asnm-staging.adapt-to-life.workers.dev",
+  });
   assert.ok(html.includes("Hustle &amp; Heart Fund (Adapt To Life)"));
   assert.ok(html.includes("<h1>Hustle &amp; Heart Fund (Adapt To Life)</h1>"));
-  assert.ok(html.includes("Adapt To Life") && html.includes("Varies") && html.includes("Rolling"));
+  assert.ok(
+    html.includes("Adapt To Life") &&
+      html.includes("Varies") &&
+      html.includes("Rolling"),
+  );
   assert.ok(html.includes("Apply"));
   assert.ok(html.includes("adapttolife.org"));
   assert.ok(html.includes("Athlete grant"));
@@ -93,7 +122,7 @@ test("grantPageTemplate: listing sheet tokens, Apply CTA, audience tag", () => {
   assert.ok(!html.includes("Unverified"));
   assert.ok(!html.includes("Last checked"));
   assert.ok(!html.includes("Visit website"));
-  assert.ok(!html.includes("class=\"card\""));
+  assert.ok(!html.includes('class="card"'));
   assert.ok(!html.includes("Funding that fits"));
 });
 
@@ -122,8 +151,20 @@ test("grantPageTemplate: facts only when present; grant-track scene; no empty CT
 
 test("grantPageTemplate: Other grants is one horizontal rail", () => {
   const nearby = [
-    { id: "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb", name: "Kelly Brush Active Fund", source: "Kelly Brush Foundation", audience: "athlete", amountDisplay: "Up to $5,000" },
-    { id: "cccccccc-cccc-cccc-cccc-cccccccccccc", name: "High Fives Empowerment Grant", source: "High Fives Foundation", audience: "athlete", sport: "skiing" },
+    {
+      id: "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+      name: "Kelly Brush Active Fund",
+      source: "Kelly Brush Foundation",
+      audience: "athlete",
+      amountDisplay: "Up to $5,000",
+    },
+    {
+      id: "cccccccc-cccc-cccc-cccc-cccccccccccc",
+      name: "High Fives Empowerment Grant",
+      source: "High Fives Foundation",
+      audience: "athlete",
+      sport: "skiing",
+    },
   ];
   const html = grantPageTemplate(HUSTLE, { nearby });
   assert.ok(html.includes("Other grants"));
@@ -140,7 +181,7 @@ test("grantPageTemplate: Other grants is one horizontal rail", () => {
 test("grantPageTemplate: escapes untrusted name", () => {
   const html = grantPageTemplate({
     ...HUSTLE,
-    name: '<script>alert(1)</script>',
+    name: "<script>alert(1)</script>",
     source: 'CAF & "Rebound"',
   });
   assert.ok(!html.includes("<script>alert(1)</script>"));
@@ -161,8 +202,12 @@ test("grantPageTemplate: the standalone grant page wears the app header and foot
   const html = grantPageTemplate(HUSTLE);
   assert.ok(html.includes('<header class="hdr">'));
   assert.ok(html.includes('<footer class="foot">'));
-  assert.ok(html.includes('/site-nav.js?v='));
-  assert.ok(html.includes('<form class="search" role="search" action="/near" method="get">'));
+  assert.ok(html.includes("/site-nav.js?v="));
+  assert.ok(
+    html.includes(
+      '<form class="search" role="search" action="/near" method="get">',
+    ),
+  );
 });
 
 test("grant listingInnerHtml: the in-app sheet stays bare", () => {

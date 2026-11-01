@@ -3,132 +3,132 @@
 /* Header: h1 and sub on white, so the empty state below is the one panel on the page
    (a Sand band, a Mist panel and the Sand letter in a row read as three grey boxes). */
 .v-events .ehead {
-	padding-top: 32px;
+  padding-top: 32px;
 }
 
 .v-events .ehead p {
-	margin-top: 8px;
-	font-size: 17px;
-	color: var(--graphite);
+  margin-top: 8px;
+  font-size: 17px;
+  color: var(--graphite);
 }
 
 @media (min-width: 768px) {
-	.v-events .ehead {
-		padding-top: 48px;
-	}
-	.v-events .ehead p {
-		font-size: 18px;
-	}
+  .v-events .ehead {
+    padding-top: 48px;
+  }
+  .v-events .ehead p {
+    font-size: 18px;
+  }
 }
 
 /* Empty state: the event tile on the left from 600px, buttons in a row. */
 .v-events .ev-empty {
-	margin-top: 24px;
+  margin-top: 24px;
 }
 
 .v-events .empty {
-	padding: 24px;
-	gap: 20px;
+  padding: 24px;
+  gap: 20px;
 }
 
 .v-events .empty .plate--row {
-	border-radius: var(--r);
+  border-radius: var(--r);
 }
 
 .v-events .empty .btns {
-	margin-top: 20px;
+  margin-top: 20px;
 }
 
 @media (min-width: 768px) {
-	.v-events .empty {
-		padding: 32px;
-	}
-	.v-events .empty .plate--row {
-		width: 84px;
-		height: 84px;
-	}
+  .v-events .empty {
+    padding: 32px;
+  }
+  .v-events .empty .plate--row {
+    width: 84px;
+    height: 84px;
+  }
 }
 
 @media (max-width: 599px) {
-	.v-events .empty .btns {
-		flex-direction: column;
-	}
+  .v-events .empty .btns {
+    flex-direction: column;
+  }
 }
 
 /* Month groups (when events exist) */
 .v-events .ev-month {
-	margin-top: 32px;
+  margin-top: 32px;
 }
 
 .v-events .ev-month h2 {
-	padding-bottom: 8px;
-	border-bottom: 1px solid var(--line);
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--line);
 }
 
 .v-events .ecard .meta {
-	margin-top: 2px;
+  margin-top: 2px;
 }
 
 .v-events .ev-list .ecard:last-child {
-	border-bottom: 0;
+  border-bottom: 0;
 }
 
 .v-events .ecard .tlink {
-	font-size: 16px;
+  font-size: 16px;
 }
 
 .v-events .ev-add {
-	margin-top: 24px;
+  margin-top: 24px;
 }
 
 /* No dated events, but yearly ones below: one quiet line, not the big empty panel. */
 .v-events .ev-none {
-	margin-top: 24px;
-	padding-bottom: 24px;
-	border-bottom: 1px solid var(--line);
+  margin-top: 24px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--line);
 }
 
 .v-events .ev-none p {
-	font-size: 17px;
-	color: var(--graphite);
+  font-size: 17px;
+  color: var(--graphite);
 }
 
 .v-events .ev-none .btns {
-	margin-top: 16px;
+  margin-top: 16px;
 }
 
 /* Yearly events: the same cards, the month tile Sand while the dates aren't out. */
 .v-events .ev-yearly {
-	margin-top: 40px;
+  margin-top: 40px;
 }
 
 .v-events .ev-yearly h2 {
-	padding-bottom: 8px;
-	border-bottom: 1px solid var(--line);
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--line);
 }
 
 .v-events .ev-ysub {
-	margin-top: 8px;
-	font-size: 16px;
-	color: var(--graphite);
+  margin-top: 8px;
+  font-size: 16px;
+  color: var(--graphite);
 }
 
 .v-events .ycard .ec-date.is-usual {
-	background: var(--sand);
-	color: var(--ink);
+  background: var(--sand);
+  color: var(--ink);
 }
 
 .v-events .ycard .ye-ic {
-	display: grid;
-	place-items: center;
-	margin-top: 4px;
+  display: grid;
+  place-items: center;
+  margin-top: 4px;
 }
 
 .v-events .ycard .ec-name a {
-	font-size: 18px;
+  font-size: 18px;
 }
 
 .v-events .ye-wait {
-	font-size: 15px;
-	color: var(--muted);
+  font-size: 15px;
+  color: var(--muted);
 }

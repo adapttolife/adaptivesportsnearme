@@ -12,11 +12,15 @@ function href(item) {
 }
 
 function label(kind) {
-  return kind === "organizations" ? "Organization"
-    : kind === "programs" ? "Program"
-    : kind === "grants" ? "Grant"
-    : kind === "sports" ? "Sport"
-    : "Event";
+  return kind === "organizations"
+    ? "Organization"
+    : kind === "programs"
+      ? "Program"
+      : kind === "grants"
+        ? "Grant"
+        : kind === "sports"
+          ? "Sport"
+          : "Event";
 }
 
 async function api(path, options) {
@@ -90,23 +94,26 @@ export async function render() {
 
 export function mount(root) {
   const form = root.querySelector(".account-login");
-  if (form) form.addEventListener("submit", async (event) => {
-    event.preventDefault();
-    const status = root.querySelector(".account-status");
-    const email = new FormData(form).get("email");
-    status.textContent = "Sending your link...";
-    const { response, body } = await api("/api/profile-auth/request-link", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ email }),
+  if (form)
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const status = root.querySelector(".account-status");
+      const email = new FormData(form).get("email");
+      status.textContent = "Sending your link...";
+      const { response, body } = await api("/api/profile-auth/request-link", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      status.textContent = response.ok
+        ? "Check your inbox for your sign-in link."
+        : body.error || "We could not send a sign-in link.";
     });
-    status.textContent = response.ok
-      ? "Check your inbox for your sign-in link."
-      : body.error || "We could not send a sign-in link.";
-  });
-  root.querySelector(".account-signout")?.addEventListener("click", async () => {
-    await fetch("/api/profile/signout", { method: "POST" });
-    A.nav("/account", { replace: true });
-  });
+  root
+    .querySelector(".account-signout")
+    ?.addEventListener("click", async () => {
+      await fetch("/api/profile/signout", { method: "POST" });
+      A.nav("/account", { replace: true });
+    });
   return () => {};
 }

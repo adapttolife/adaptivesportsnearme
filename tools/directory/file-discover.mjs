@@ -20,11 +20,26 @@ export { WORKER_DIR };
 export const INBOX = `${ROOT}/inbox`;
 export const STAGING_DB = "asnm-db-staging";
 export const GENERIC = new Set([
-  "facebook.com", "instagram.com", "youtube.com", "twitter.com", "x.com",
-  "linkedin.com", "wikipedia.org", "yelp.com", "eventbrite.com",
-  "moveunitedsport.org", "challengedathletes.org", "teamusa.org", "usopc.org",
-  "adaptivesportsnearme.com", "reddit.com", "tiktok.com", "google.com",
-  "nchpad.org", "disabledsportsusa.org", "specialolympics.org",
+  "facebook.com",
+  "instagram.com",
+  "youtube.com",
+  "twitter.com",
+  "x.com",
+  "linkedin.com",
+  "wikipedia.org",
+  "yelp.com",
+  "eventbrite.com",
+  "moveunitedsport.org",
+  "challengedathletes.org",
+  "teamusa.org",
+  "usopc.org",
+  "adaptivesportsnearme.com",
+  "reddit.com",
+  "tiktok.com",
+  "google.com",
+  "nchpad.org",
+  "disabledsportsusa.org",
+  "specialolympics.org",
   "sites.google.com",
 ]);
 
@@ -44,7 +59,9 @@ function parseArgs(argv) {
     else die(`unknown arg ${a}`);
   }
   if (!out.gaps && !out.file) {
-    die("usage: node file-discover.mjs --gaps | --file candidates.tsv|json [--slug name]");
+    die(
+      "usage: node file-discover.mjs --gaps | --file candidates.tsv|json [--slug name]",
+    );
   }
   return out;
 }
@@ -59,15 +76,30 @@ function wranglerJson(args) {
 
 function d1Select(sql) {
   const raw = wranglerJson([
-    "d1", "execute", STAGING_DB, "--env", "staging", "--remote",
-    "--command", sql, "--json",
+    "d1",
+    "execute",
+    STAGING_DB,
+    "--env",
+    "staging",
+    "--remote",
+    "--command",
+    sql,
+    "--json",
   ]);
   const parsed = JSON.parse(raw);
-  return parsed?.[0]?.results || parsed?.result?.[0]?.results || parsed?.results || [];
+  return (
+    parsed?.[0]?.results ||
+    parsed?.result?.[0]?.results ||
+    parsed?.results ||
+    []
+  );
 }
 
 export function normName(name) {
-  let n = String(name || "").toLowerCase().replace(/&/g, " and ").replace(/[^a-z0-9 ]/g, " ");
+  let n = String(name || "")
+    .toLowerCase()
+    .replace(/&/g, " and ")
+    .replace(/[^a-z0-9 ]/g, " ");
   n = n.replace(/\b(inc|llc|the|incorporated|corp|corporation)\b/g, " ");
   return n.replace(/\s+/g, " ").trim();
 }
@@ -109,7 +141,9 @@ export function parseCandidates(file) {
   const text = readFileSync(file, "utf8");
   if (file.endsWith(".json")) {
     const data = JSON.parse(text);
-    const list = Array.isArray(data) ? data : (data.candidates || data.adds || []);
+    const list = Array.isArray(data)
+      ? data
+      : data.candidates || data.adds || [];
     return list.map((c) => ({
       name: c.name,
       url: c.website_url || c.url || c.source_url,
@@ -127,39 +161,50 @@ export function parseCandidates(file) {
       source_url: c.source_url || c.website_url || c.url,
     }));
   }
-  return text.split(/\r?\n/).map((line) => {
-    if (!line.trim() || line.startsWith("#")) return null;
-    const [name, url, state, evidence] = line.split("\t");
-    if (!name || !url) return null;
-    return {
-      name: name.trim(),
-      url: url.trim(),
-      state: (state || "").trim(),
-      city: "",
-      zip: "",
-      email: null,
-      phone: null,
-      org_type: null,
-      sport: null,
-      sport_key: null,
-      sports: [],
-      evidence: (evidence || "").trim(),
-      description: (evidence || "").trim() || null,
-      source_url: url.trim(),
-    };
-  }).filter(Boolean);
+  return text
+    .split(/\r?\n/)
+    .map((line) => {
+      if (!line.trim() || line.startsWith("#")) return null;
+      const [name, url, state, evidence] = line.split("\t");
+      if (!name || !url) return null;
+      return {
+        name: name.trim(),
+        url: url.trim(),
+        state: (state || "").trim(),
+        city: "",
+        zip: "",
+        email: null,
+        phone: null,
+        org_type: null,
+        sport: null,
+        sport_key: null,
+        sports: [],
+        evidence: (evidence || "").trim(),
+        description: (evidence || "").trim() || null,
+        source_url: url.trim(),
+      };
+    })
+    .filter(Boolean);
 }
 
 export function skipReason(c, known) {
   const d = baseDomain(host(c.url || c.source_url || ""));
   const n = normName(c.name);
-  if (!c.name || !/^https:\/\//i.test(c.source_url || c.url || "")) return "need name + https source";
+  if (!c.name || !/^https:\/\//i.test(c.source_url || c.url || ""))
+    return "need name + https source";
   if (/^Adaptive Sports\s/i.test(c.name)) return "invented statewide name";
-  if (/^CAF[- ]/i.test(c.name) || /^Challenged Athletes Foundation[- ]/i.test(c.name)) return "guessed CAF-region parent";
+  if (
+    /^CAF[- ]/i.test(c.name) ||
+    /^Challenged Athletes Foundation[- ]/i.test(c.name)
+  )
+    return "guessed CAF-region parent";
   if (GENERIC.has(d)) return `generic domain ${d}`;
   if (known.names.has(n)) return "name already on the list";
   if (d && known.domains.has(d)) {
-    return `same website as ${(known.byDomain.get(d) || []).map((r) => r.name).slice(0, 2).join("; ")}`;
+    return `same website as ${(known.byDomain.get(d) || [])
+      .map((r) => r.name)
+      .slice(0, 2)
+      .join("; ")}`;
   }
   return null;
 }
@@ -215,7 +260,9 @@ export function writeInboxCard(adds, skipped, slug) {
     folds: [],
     adds,
     holds: [],
-    outs: skipped.filter((s) => /invented|CAF/.test(s.reason)).map((s) => ({ name: s.name, reason: s.reason })),
+    outs: skipped
+      .filter((s) => /invented|CAF/.test(s.reason))
+      .map((s) => ({ name: s.name, reason: s.reason })),
   };
   writeFileSync(out, JSON.stringify(card, null, 2) + "\n");
   const receipt = `${INBOX}/${slug}-receipt.json`;
@@ -230,7 +277,9 @@ function main() {
     );
     console.log("thinnest states on tester (active, public):");
     for (const r of rows) console.log(`  ${(r.state || "?").padEnd(4)} ${r.n}`);
-    console.log("search hints: adaptive sports program {state}; wheelchair sports club {state}; {state} park district adaptive recreation");
+    console.log(
+      "search hints: adaptive sports program {state}; wheelchair sports club {state}; {state} park district adaptive recreation",
+    );
     return;
   }
 
@@ -238,13 +287,29 @@ function main() {
   const cands = parseCandidates(resolve(args.file));
   const { adds, skipped } = filterAdds(cands, known);
 
-  const slug = args.slug || basename(args.file, basename(args.file).includes(".") ? `.${args.file.split(".").pop()}` : "").replace(/[^a-z0-9-]+/gi, "-").toLowerCase() || "discover";
+  const slug =
+    args.slug ||
+    basename(
+      args.file,
+      basename(args.file).includes(".") ? `.${args.file.split(".").pop()}` : "",
+    )
+      .replace(/[^a-z0-9-]+/gi, "-")
+      .toLowerCase() ||
+    "discover";
   const { out, receipt } = writeInboxCard(adds, skipped, slug);
-  writeFileSync(receipt, JSON.stringify({ known: known.count, filed: adds.length, skipped, out }, null, 2) + "\n");
+  writeFileSync(
+    receipt,
+    JSON.stringify(
+      { known: known.count, filed: adds.length, skipped, out },
+      null,
+      2,
+    ) + "\n",
+  );
   console.log(`known on tester: ${known.count}`);
   console.log(`filed ${adds.length} → ${out}`);
   console.log(`skipped ${skipped.length}`);
-  for (const s of skipped.slice(0, 20)) console.log(`  - ${s.name}: ${s.reason}`);
+  for (const s of skipped.slice(0, 20))
+    console.log(`  - ${s.name}: ${s.reason}`);
   if (skipped.length > 20) console.log(`  … ${skipped.length - 20} more`);
   console.log("live stays locked. Alec still has to say yes before ship.");
 }

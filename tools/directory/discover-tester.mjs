@@ -11,7 +11,15 @@ import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { resolve } from "node:path";
 import { execFileSync } from "node:child_process";
 import { randomUUID } from "node:crypto";
-import { sqlQuote, WORKER_DIR, STAGING_DB, LIVE_DB, ROOT, AUDIT_DIR, LIVE_PUBLIC_EXPECTED } from "./lib.mjs";
+import {
+  sqlQuote,
+  WORKER_DIR,
+  STAGING_DB,
+  LIVE_DB,
+  ROOT,
+  AUDIT_DIR,
+  LIVE_PUBLIC_EXPECTED,
+} from "./lib.mjs";
 import {
   parseCandidates,
   loadKnown,
@@ -21,17 +29,57 @@ import {
 } from "./file-discover.mjs";
 
 const STATE_NAMES = {
-  AL: "Alabama", AK: "Alaska", AZ: "Arizona", AR: "Arkansas", CA: "California",
-  CO: "Colorado", CT: "Connecticut", DE: "Delaware", FL: "Florida", GA: "Georgia",
-  HI: "Hawaii", ID: "Idaho", IL: "Illinois", IN: "Indiana", IA: "Iowa",
-  KS: "Kansas", KY: "Kentucky", LA: "Louisiana", ME: "Maine", MD: "Maryland",
-  MA: "Massachusetts", MI: "Michigan", MN: "Minnesota", MS: "Mississippi",
-  MO: "Missouri", MT: "Montana", NE: "Nebraska", NV: "Nevada", NH: "New Hampshire",
-  NJ: "New Jersey", NM: "New Mexico", NY: "New York", NC: "North Carolina",
-  ND: "North Dakota", OH: "Ohio", OK: "Oklahoma", OR: "Oregon", PA: "Pennsylvania",
-  RI: "Rhode Island", SC: "South Carolina", SD: "South Dakota", TN: "Tennessee",
-  TX: "Texas", UT: "Utah", VT: "Vermont", VA: "Virginia", WA: "Washington",
-  WV: "West Virginia", WI: "Wisconsin", WY: "Wyoming", DC: "District of Columbia",
+  AL: "Alabama",
+  AK: "Alaska",
+  AZ: "Arizona",
+  AR: "Arkansas",
+  CA: "California",
+  CO: "Colorado",
+  CT: "Connecticut",
+  DE: "Delaware",
+  FL: "Florida",
+  GA: "Georgia",
+  HI: "Hawaii",
+  ID: "Idaho",
+  IL: "Illinois",
+  IN: "Indiana",
+  IA: "Iowa",
+  KS: "Kansas",
+  KY: "Kentucky",
+  LA: "Louisiana",
+  ME: "Maine",
+  MD: "Maryland",
+  MA: "Massachusetts",
+  MI: "Michigan",
+  MN: "Minnesota",
+  MS: "Mississippi",
+  MO: "Missouri",
+  MT: "Montana",
+  NE: "Nebraska",
+  NV: "Nevada",
+  NH: "New Hampshire",
+  NJ: "New Jersey",
+  NM: "New Mexico",
+  NY: "New York",
+  NC: "North Carolina",
+  ND: "North Dakota",
+  OH: "Ohio",
+  OK: "Oklahoma",
+  OR: "Oregon",
+  PA: "Pennsylvania",
+  RI: "Rhode Island",
+  SC: "South Carolina",
+  SD: "South Dakota",
+  TN: "Tennessee",
+  TX: "Texas",
+  UT: "Utah",
+  VT: "Vermont",
+  VA: "Virginia",
+  WA: "Washington",
+  WV: "West Virginia",
+  WI: "Wisconsin",
+  WY: "Wyoming",
+  DC: "District of Columbia",
 };
 
 function die(msg) {
@@ -40,7 +88,11 @@ function die(msg) {
 }
 
 function parseArgs(argv) {
-  const out = { file: `${ROOT}/leftover-candidates.json`, apply: false, slug: "leftover" };
+  const out = {
+    file: `${ROOT}/leftover-candidates.json`,
+    apply: false,
+    slug: "leftover",
+  };
   for (let i = 2; i < argv.length; i++) {
     const a = argv[i];
     if (a === "--apply") out.apply = true;
@@ -53,7 +105,10 @@ function parseArgs(argv) {
 }
 
 function wranglerJson(args) {
-  if (args.includes(LIVE_DB) && !/^\s*select/i.test(args[args.indexOf("--command") + 1] || "")) {
+  if (
+    args.includes(LIVE_DB) &&
+    !/^\s*select/i.test(args[args.indexOf("--command") + 1] || "")
+  ) {
     die("refusing a non-SELECT against asnm-db (live stays locked)");
   }
   return execFileSync("wrangler", args, {
@@ -65,25 +120,42 @@ function wranglerJson(args) {
 
 function parseResults(raw) {
   const parsed = JSON.parse(raw);
-  return parsed?.[0]?.results || parsed?.result?.[0]?.results || parsed?.results || [];
+  return (
+    parsed?.[0]?.results ||
+    parsed?.result?.[0]?.results ||
+    parsed?.results ||
+    []
+  );
 }
 
 function livePublicCount() {
   const raw = wranglerJson([
-    "d1", "execute", LIVE_DB, "--remote",
-    "--command", "SELECT COUNT(*) AS n FROM organizations WHERE is_public = 1 AND status = 'active'",
+    "d1",
+    "execute",
+    LIVE_DB,
+    "--remote",
+    "--command",
+    "SELECT COUNT(*) AS n FROM organizations WHERE is_public = 1 AND status = 'active'",
     "--json",
   ]);
   const n = Number(parseResults(raw)[0]?.n);
-  if (!Number.isFinite(n)) die(`could not parse live count: ${String(raw).slice(0, 400)}`);
+  if (!Number.isFinite(n))
+    die(`could not parse live count: ${String(raw).slice(0, 400)}`);
   return n;
 }
 
 function stagingSelect(sql) {
   if (!/^\s*select/i.test(sql)) die("stagingSelect is read-only");
   const raw = wranglerJson([
-    "d1", "execute", STAGING_DB, "--env", "staging", "--remote",
-    "--command", sql, "--json",
+    "d1",
+    "execute",
+    STAGING_DB,
+    "--env",
+    "staging",
+    "--remote",
+    "--command",
+    sql,
+    "--json",
   ]);
   return parseResults(raw);
 }
@@ -99,10 +171,15 @@ function loadPendingDiscover() {
     ids.push(r.item_id);
     let change = r.proposed_change;
     if (typeof change === "string") {
-      try { change = JSON.parse(change); } catch { change = {}; }
+      try {
+        change = JSON.parse(change);
+      } catch {
+        change = {};
+      }
     }
     const name = change?.name?.to ?? change?.name;
-    const url = change?.website_url?.to ?? change?.website_url ?? change?.source_url?.to;
+    const url =
+      change?.website_url?.to ?? change?.website_url ?? change?.source_url?.to;
     if (name) names.add(normName(name));
     if (url) urls.add(String(url).toLowerCase());
   }
@@ -111,7 +188,10 @@ function loadPendingDiscover() {
 
 function assertProposeOnly(sql) {
   const upper = sql.toUpperCase();
-  if (upper.includes("INSERT INTO ORGANIZATIONS") || upper.includes("UPDATE ORGANIZATIONS")) {
+  if (
+    upper.includes("INSERT INTO ORGANIZATIONS") ||
+    upper.includes("UPDATE ORGANIZATIONS")
+  ) {
     die("refusing SQL that writes organizations (discover proposes only)");
   }
   if (/IS_PUBLIC\s*=\s*1/.test(upper)) {
@@ -136,8 +216,19 @@ function buildSql(adds, runId, now) {
     ``,
   ];
   const fields = [
-    "name", "org_type", "sport", "sport_key", "sports_json", "website_url",
-    "email", "phone", "city", "state", "state_name", "zip", "description",
+    "name",
+    "org_type",
+    "sport",
+    "sport_key",
+    "sports_json",
+    "website_url",
+    "email",
+    "phone",
+    "city",
+    "state",
+    "state_name",
+    "zip",
+    "description",
   ];
   for (const add of adds) {
     const change = {};
@@ -152,12 +243,13 @@ function buildSql(adds, runId, now) {
       phone: add.phone || null,
       city: add.city || null,
       state: add.state || null,
-      state_name: add.state ? (STATE_NAMES[add.state] || null) : null,
+      state_name: add.state ? STATE_NAMES[add.state] || null : null,
       zip: add.zip || null,
       description: add.description || null,
     };
     for (const k of fields) {
-      if (values[k] === null || values[k] === undefined || values[k] === "") continue;
+      if (values[k] === null || values[k] === undefined || values[k] === "")
+        continue;
       change[k] = { from: null, to: values[k] };
     }
     const evidence = {
@@ -187,7 +279,9 @@ function main() {
 
   const liveBefore = livePublicCount();
   if (liveBefore !== LIVE_PUBLIC_EXPECTED) {
-    die(`live public count is ${liveBefore}, expected ${LIVE_PUBLIC_EXPECTED}. abort (live stays locked).`);
+    die(
+      `live public count is ${liveBefore}, expected ${LIVE_PUBLIC_EXPECTED}. abort (live stays locked).`,
+    );
   }
 
   const known = loadKnown();
@@ -197,11 +291,17 @@ function main() {
   const adds = [];
   for (const a of rawAdds) {
     if (pending.names.has(normName(a.name))) {
-      skipped.push({ name: a.name, reason: "already pending on tester review_queue" });
+      skipped.push({
+        name: a.name,
+        reason: "already pending on tester review_queue",
+      });
       continue;
     }
     if (a.website_url && pending.urls.has(a.website_url.toLowerCase())) {
-      skipped.push({ name: a.name, reason: "same source already pending on tester review_queue" });
+      skipped.push({
+        name: a.name,
+        reason: "same source already pending on tester review_queue",
+      });
       continue;
     }
     adds.push(a);
@@ -228,7 +328,11 @@ function main() {
     filed: adds.length,
     skipped,
     item_ids: [],
-    adds: adds.map((a) => ({ name: a.name, source_url: a.source_url, state: a.state })),
+    adds: adds.map((a) => ({
+      name: a.name,
+      source_url: a.source_url,
+      state: a.state,
+    })),
     note: "PROPOSE only on asnm-db-staging. No organizations insert. No is_public. Live stays locked.",
   };
 
@@ -251,7 +355,16 @@ function main() {
     return;
   }
 
-  wranglerJson(["d1", "execute", STAGING_DB, "--env", "staging", "--remote", "--file", sqlPath]);
+  wranglerJson([
+    "d1",
+    "execute",
+    STAGING_DB,
+    "--env",
+    "staging",
+    "--remote",
+    "--file",
+    sqlPath,
+  ]);
   const rows = stagingSelect(
     `SELECT item_id, proposed_change FROM review_queue WHERE lane='discover' AND evidence LIKE '%${runId}%' ORDER BY item_id`,
   );
@@ -264,13 +377,16 @@ function main() {
   writeFileSync(receiptPath, JSON.stringify(receipt, null, 2) + "\n");
 
   if (liveAfter !== LIVE_PUBLIC_EXPECTED) {
-    die(`live public count drifted to ${liveAfter} after staging propose — STOP`);
+    die(
+      `live public count drifted to ${liveAfter} after staging propose — STOP`,
+    );
   }
 
   console.log(`applied ${sqlPath} -> ${STAGING_DB}`);
   console.log(`review_queue ids: ${itemIds.join(", ") || "(none)"}`);
   console.log(`proposed ${adds.length}; skipped ${skipped.length}`);
-  for (const a of adds) console.log(`  + ${a.name} (${a.state}) ${a.source_url}`);
+  for (const a of adds)
+    console.log(`  + ${a.name} (${a.state}) ${a.source_url}`);
   console.log(`live public still ${liveAfter} (locked)`);
   console.log("proposals pending. not applied. is_public unchanged.");
 }

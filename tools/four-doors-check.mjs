@@ -25,17 +25,24 @@ function opt(name, fallback) {
   const i = args.indexOf(`--${name}`);
   return i >= 0 ? args[i + 1] : fallback;
 }
-const BASE = (opt("base", "https://staging-adaptivesportsnearme.adapt-to-life.workers.dev")).replace(/\/$/, "");
+const BASE = opt(
+  "base",
+  "https://staging-adaptivesportsnearme.adapt-to-life.workers.dev",
+).replace(/\/$/, "");
 // --launch: Karen's v1.0 gate (2026-08-31): programs + grants + the letter.
 // Events stays on the full scoreboard as the first post-launch ship.
 const LAUNCH = args.includes("--launch");
 // Default place: Karen's home state. Override with --place.
-const PLACE = (opt("place", "WI")).toUpperCase();
+const PLACE = opt("place", "WI").toUpperCase();
 
 async function getJson(path) {
   const res = await fetch(BASE + path, { redirect: "follow" });
   if (!res.ok) return { __status: res.status };
-  try { return await res.json(); } catch { return { __status: res.status, __notJson: true }; }
+  try {
+    return await res.json();
+  } catch {
+    return { __status: res.status, __notJson: true };
+  }
 }
 async function getStatus(path) {
   const res = await fetch(BASE + path, { redirect: "follow" });
@@ -65,7 +72,9 @@ const doors = [];
 {
   const data = await getJson(`/api/events`);
   const items = data.items ?? [];
-  const upcoming = items.filter((e) => !e.starts_at || Date.parse(e.starts_at) >= Date.now() - 86400000);
+  const upcoming = items.filter(
+    (e) => !e.starts_at || Date.parse(e.starts_at) >= Date.now() - 86400000,
+  );
   doors.push({
     door: "Events",
     open: upcoming.length > 0,
@@ -79,7 +88,9 @@ const doors = [];
 {
   const data = await getJson(`/api/grants`);
   const items = data.items ?? [];
-  const usable = items.filter((g) => g.isOpen && (g.applicationUrl || g.email || g.phone));
+  const usable = items.filter(
+    (g) => g.isOpen && (g.applicationUrl || g.email || g.phone),
+  );
   doors.push({
     door: "Grants",
     open: usable.length > 0,
@@ -98,13 +109,18 @@ const doors = [];
   doors.push({
     door: "The letter",
     open: status === 200,
-    detail: status === 200 ? "/letter answers" : `/letter -> ${status} (the page does not exist yet)`,
+    detail:
+      status === 200
+        ? "/letter answers"
+        : `/letter -> ${status} (the page does not exist yet)`,
   });
 }
 
 // ---- report ----
 const scored = LAUNCH ? doors.filter((d) => d.door !== "Events") : doors;
-console.log(`\n${LAUNCH ? "Launch gate (v1.0: programs, grants, the letter)" : "Four-doors check"} — ${BASE}  (place: ${PLACE})\n`);
+console.log(
+  `\n${LAUNCH ? "Launch gate (v1.0: programs, grants, the letter)" : "Four-doors check"} — ${BASE}  (place: ${PLACE})\n`,
+);
 let openCount = 0;
 for (const d of scored) {
   const mark = d.open ? "OPEN  " : "CLOSED";
@@ -115,6 +131,6 @@ console.log(`\n  ${openCount} of ${scored.length} doors open.`);
 console.log(
   openCount === scored.length
     ? "  Every door opens. Now ask Karen — this script is the rehearsal, she is the test.\n"
-    : "  Not open yet. That is the honest state, and closing these is the semester.\n"
+    : "  Not open yet. That is the honest state, and closing these is the semester.\n",
 );
 process.exit(openCount === scored.length ? 0 : 1);

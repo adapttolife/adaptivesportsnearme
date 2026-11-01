@@ -2,11 +2,30 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
-  PIN_HIT_PX, TRAY_MS, SWIPE_DISMISS_PX, PEEK_VH, EXPANDED_VH,
-  DESKTOP_MIN_PX, DESKTOP_PANEL_WIDTH_PX, DESKTOP_PANEL_INSET_PX, DESKTOP_PANEL_CLASS,
-  createTrayState, selectPin, dismissTray, setTrayHeight, mapClickAction, classifyHit,
-  swipeDismisses, snapHeight, trayAction, trayPills, trayMetaLine, trayChrome,
-  trayPeekHtml, trayExpandedHtml, trayHtml,
+  PIN_HIT_PX,
+  TRAY_MS,
+  SWIPE_DISMISS_PX,
+  PEEK_VH,
+  EXPANDED_VH,
+  DESKTOP_MIN_PX,
+  DESKTOP_PANEL_WIDTH_PX,
+  DESKTOP_PANEL_INSET_PX,
+  DESKTOP_PANEL_CLASS,
+  createTrayState,
+  selectPin,
+  dismissTray,
+  setTrayHeight,
+  mapClickAction,
+  classifyHit,
+  swipeDismisses,
+  snapHeight,
+  trayAction,
+  trayPills,
+  trayMetaLine,
+  trayChrome,
+  trayPeekHtml,
+  trayExpandedHtml,
+  trayHtml,
 } from "../src/map-tray.js";
 
 const RENO = {
@@ -41,7 +60,15 @@ const KANSAS = {
 };
 
 const NEARBY = [
-  { id: "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb", name: "Sunflower Adaptive Cycling", sport: "cycling", sportLabel: "Adaptive Cycling", city: "Wichita", state: "KS", dist: 42 },
+  {
+    id: "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+    name: "Sunflower Adaptive Cycling",
+    sport: "cycling",
+    sportLabel: "Adaptive Cycling",
+    city: "Wichita",
+    state: "KS",
+    dist: 42,
+  },
 ];
 
 test("peek open", () => {
@@ -156,8 +183,14 @@ test("peek HTML: title, city · sport, Visit/Call/Email pills, handle — no pho
   assert.equal(trayMetaLine(RENO), "Reno, NV · Adaptive Pickleball");
   assert.equal(trayAction(RENO).label, "Visit");
   assert.equal(trayAction(KANSAS).label, "Open listing");
-  assert.deepEqual(trayPills(RENO).map((p) => p.label), ["Visit", "Call", "Email"]);
-  assert.deepEqual(trayPills(KANSAS).map((p) => p.label), ["Open listing"]);
+  assert.deepEqual(
+    trayPills(RENO).map((p) => p.label),
+    ["Visit", "Call", "Email"],
+  );
+  assert.deepEqual(
+    trayPills(KANSAS).map((p) => p.label),
+    ["Open listing"],
+  );
 });
 
 test("expanded HTML reuses the listing sheet: symbol, title, city, desc, facts, Visit, about, nearby rail", () => {
@@ -173,8 +206,8 @@ test("expanded HTML reuses the listing sheet: symbol, title, city, desc, facts, 
   assert.ok(html.includes("775-467-2025"));
   assert.ok(html.includes("reno@3rdshotpickleball.com"));
   assert.ok(html.includes("Visit website"));
-  assert.ok(html.includes("class=\"nearby\""));
-  assert.ok(html.includes("class=\"frow-scroll\""));
+  assert.ok(html.includes('class="nearby"'));
+  assert.ok(html.includes('class="frow-scroll"'));
   assert.ok(html.includes("Sunflower Adaptive Cycling"));
   assert.ok(!html.includes("Unverified"));
   assert.ok(!html.includes("Overview"));

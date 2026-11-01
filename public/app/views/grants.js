@@ -13,23 +13,34 @@ const AUD = [
 
 /** Open now order: a real amount first, then any deadline text, then A to Z. */
 function openOrder(a, b) {
-  const ia = A.grantInfo(a), ib = A.grantInfo(b);
-  return (!!ib.amount - !!ia.amount) || (!!b.deadline - !!a.deadline) || a.name.localeCompare(b.name);
+  const ia = A.grantInfo(a),
+    ib = A.grantInfo(b);
+  return (
+    !!ib.amount - !!ia.amount ||
+    !!b.deadline - !!a.deadline ||
+    a.name.localeCompare(b.name)
+  );
 }
 
 export async function render(ctx) {
   const D = ctx.data;
-  const a = ["athlete", "program", "all"].includes(ctx.query.a) ? ctx.query.a : "athlete";
+  const a = ["athlete", "program", "all"].includes(ctx.query.a)
+    ? ctx.query.a
+    : "athlete";
   const one = a !== "all" ? " is-one" : "";
   const pool = D.grants.filter((g) => a === "all" || g.audience === a);
   const open = pool.filter((g) => A.grantInfo(g).open).sort(openOrder);
-  const shut = pool.filter((g) => !A.grantInfo(g).open).sort((x, y) => x.name.localeCompare(y.name));
+  const shut = pool
+    .filter((g) => !A.grantInfo(g).open)
+    .sort((x, y) => x.name.localeCompare(y.name));
 
-  const seg = `<nav class="seg" aria-label="Who the grant is for">${AUD.map(([k, label]) => {
-    const href = k === "athlete" ? "/grants" : "/grants?a=" + k;
-    const cur = k === a;
-    return `<a href="${href}" data-replace${cur ? ' aria-current="page"' : ""}>${cur ? A.icon("check", 18) : ""}<span>${label}</span></a>`;
-  }).join("")}</nav>`;
+  const seg = `<nav class="seg" aria-label="Who the grant is for">${AUD.map(
+    ([k, label]) => {
+      const href = k === "athlete" ? "/grants" : "/grants?a=" + k;
+      const cur = k === a;
+      return `<a href="${href}" data-replace${cur ? ' aria-current="page"' : ""}>${cur ? A.icon("check", 18) : ""}<span>${label}</span></a>`;
+    },
+  ).join("")}</nav>`;
 
   const openHtml = open.length
     ? `<div class="glist${one}">${open.map(A.grantRow).join("")}</div>`
@@ -62,18 +73,37 @@ export function mount(root) {
   let timer = 0;
   const move = (event) => {
     const link = event.target.closest(".seg a");
-    if (!link || !seg.contains(link) || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return;
+    if (
+      !link ||
+      !seg.contains(link) ||
+      event.metaKey ||
+      event.ctrlKey ||
+      event.shiftKey ||
+      event.altKey ||
+      event.button !== 0
+    )
+      return;
     event.preventDefault();
     event.stopPropagation();
     const links = [...seg.querySelectorAll("a")];
     const next = links.indexOf(link);
-    if (link.getAttribute("aria-current") === "page") { A.nav(link.href, { replace: true }); return; }
+    if (link.getAttribute("aria-current") === "page") {
+      A.nav(link.href, { replace: true });
+      return;
+    }
     if (timer) clearTimeout(timer);
     seg.style.setProperty("--seg-pos", next);
-    links.forEach((item) => item.toggleAttribute("aria-current", item === link));
-    const delay = matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 240;
+    links.forEach((item) =>
+      item.toggleAttribute("aria-current", item === link),
+    );
+    const delay = matchMedia("(prefers-reduced-motion: reduce)").matches
+      ? 0
+      : 240;
     timer = window.setTimeout(() => A.nav(link.href, { replace: true }), delay);
   };
   if (seg) seg.addEventListener("click", move);
-  return () => { if (timer) clearTimeout(timer); if (seg) seg.removeEventListener("click", move); };
+  return () => {
+    if (timer) clearTimeout(timer);
+    if (seg) seg.removeEventListener("click", move);
+  };
 }

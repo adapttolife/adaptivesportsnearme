@@ -2,21 +2,82 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
-  CENSUS_REGIONS, REGION_ANCHOR, OFFSHORE_STATES, CLUSTER_MAX_ZOOM, REGION_ZOOM_MARGIN, REGION_MAX_ZOOM,
-  regionOf, clusterKeyFor, shouldCluster, regionZoom, groupStatesByRegion,
+  CENSUS_REGIONS,
+  REGION_ANCHOR,
+  OFFSHORE_STATES,
+  CLUSTER_MAX_ZOOM,
+  REGION_ZOOM_MARGIN,
+  REGION_MAX_ZOOM,
+  regionOf,
+  clusterKeyFor,
+  shouldCluster,
+  regionZoom,
+  groupStatesByRegion,
 } from "../src/map-regions.js";
 
-const ALL = ["AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA", "HI", "ID", "IL", "IN",
-  "IA", "KS", "KY", "LA", "ME", "MD", "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ",
-  "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC", "SD", "TN", "TX", "UT", "VT", "VA",
-  "WA", "WV", "WI", "WY", "DC"];
+const ALL = [
+  "AL",
+  "AK",
+  "AZ",
+  "AR",
+  "CA",
+  "CO",
+  "CT",
+  "DE",
+  "FL",
+  "GA",
+  "HI",
+  "ID",
+  "IL",
+  "IN",
+  "IA",
+  "KS",
+  "KY",
+  "LA",
+  "ME",
+  "MD",
+  "MA",
+  "MI",
+  "MN",
+  "MS",
+  "MO",
+  "MT",
+  "NE",
+  "NV",
+  "NH",
+  "NJ",
+  "NM",
+  "NY",
+  "NC",
+  "ND",
+  "OH",
+  "OK",
+  "OR",
+  "PA",
+  "RI",
+  "SC",
+  "SD",
+  "TN",
+  "TX",
+  "UT",
+  "VT",
+  "VA",
+  "WA",
+  "WV",
+  "WI",
+  "WY",
+  "DC",
+];
 
 test("every state plus DC lands in exactly one Census region", () => {
   assert.equal(ALL.length, 51);
   const seen = new Map();
   for (const [region, states] of Object.entries(CENSUS_REGIONS)) {
     for (const s of states) {
-      assert.ok(!seen.has(s), s + " is in two regions: " + seen.get(s) + " and " + region);
+      assert.ok(
+        !seen.has(s),
+        s + " is in two regions: " + seen.get(s) + " and " + region,
+      );
       seen.set(s, region);
     }
   }
@@ -28,7 +89,12 @@ test("every state plus DC lands in exactly one Census region", () => {
 });
 
 test("the four regions are the Census ones, with the Census membership", () => {
-  assert.deepEqual(Object.keys(CENSUS_REGIONS).sort(), ["Midwest", "Northeast", "South", "West"]);
+  assert.deepEqual(Object.keys(CENSUS_REGIONS).sort(), [
+    "Midwest",
+    "Northeast",
+    "South",
+    "West",
+  ]);
   assert.equal(CENSUS_REGIONS.Northeast.length, 9);
   assert.equal(CENSUS_REGIONS.Midwest.length, 12);
   assert.equal(CENSUS_REGIONS.South.length, 17);
@@ -44,7 +110,10 @@ test("the four regions are the Census ones, with the Census membership", () => {
   for (const k of Object.keys(CENSUS_REGIONS)) {
     assert.ok(Array.isArray(REGION_ANCHOR[k]), k + " needs a map anchor");
     const [lng, lat] = REGION_ANCHOR[k];
-    assert.ok(lng > -125 && lng < -66, k + " anchor longitude is off the mainland");
+    assert.ok(
+      lng > -125 && lng < -66,
+      k + " anchor longitude is off the mainland",
+    );
     assert.ok(lat > 24 && lat < 50, k + " anchor latitude is off the mainland");
   }
 });
@@ -62,16 +131,22 @@ test("offshore states and territories keep their own pill", () => {
 
 test("region totals equal the sum of their states", () => {
   const counts = {};
-  ALL.forEach((s, i) => { counts[s] = i + 1; });
+  ALL.forEach((s, i) => {
+    counts[s] = i + 1;
+  });
   counts.PR = 4;
   const groups = groupStatesByRegion(counts);
   const total = groups.reduce((n, g) => n + g.count, 0);
   assert.equal(total, ALL.reduce((n, s) => n + counts[s], 0) + 4);
 
-  const by = new Map(groups.map(g => [g.key, g]));
+  const by = new Map(groups.map((g) => [g.key, g]));
   for (const [region, states] of Object.entries(CENSUS_REGIONS)) {
-    const mainland = states.filter(s => !OFFSHORE_STATES.includes(s));
-    assert.equal(by.get(region).count, mainland.reduce((n, s) => n + counts[s], 0), region);
+    const mainland = states.filter((s) => !OFFSHORE_STATES.includes(s));
+    assert.equal(
+      by.get(region).count,
+      mainland.reduce((n, s) => n + counts[s], 0),
+      region,
+    );
     assert.deepEqual(by.get(region).states, mainland.slice().sort());
   }
   // AK, HI and PR stand alone rather than joining a mainland chip.

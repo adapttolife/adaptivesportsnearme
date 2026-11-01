@@ -27,8 +27,14 @@ class Stmt {
     if (this.sql.includes("FROM organizations")) {
       return { results: this.db.organizations };
     }
-    if (this.sql.includes("SELECT DISTINCT organization_id FROM review_queue")) {
-      return { results: this.db.reviewQueue.map((r) => ({ organization_id: r.organization_id })) };
+    if (
+      this.sql.includes("SELECT DISTINCT organization_id FROM review_queue")
+    ) {
+      return {
+        results: this.db.reviewQueue.map((r) => ({
+          organization_id: r.organization_id,
+        })),
+      };
     }
     return { results: [] };
   }
@@ -40,7 +46,14 @@ function makeDb({ organizations = [], reviewQueue = [] } = {}) {
   db.batch = async (stmts) => {
     for (const stmt of stmts) {
       if (stmt.sql.includes("INSERT INTO review_queue")) {
-        const [organization_id, lane, proposed_change, evidence, confidence, created_at] = stmt.args;
+        const [
+          organization_id,
+          lane,
+          proposed_change,
+          evidence,
+          confidence,
+          created_at,
+        ] = stmt.args;
         const row = {
           organization_id,
           lane,
@@ -105,15 +118,24 @@ test("normalizeDomain: instagram and google sites are not identity", () => {
 // ---------- normalizeName ----------
 
 test("normalizeName: strips leading 'the' and trailing 'Inc.', keeps 'Foundation'", () => {
-  assert.equal(normalizeName("The Denver Adaptive Sports Foundation, Inc."), "denver adaptive sports foundation");
+  assert.equal(
+    normalizeName("The Denver Adaptive Sports Foundation, Inc."),
+    "denver adaptive sports foundation",
+  );
 });
 
 test("normalizeName: strips trailing llc, keeps 'Association'", () => {
-  assert.equal(normalizeName("Wheelchair Association LLC"), "wheelchair association");
+  assert.equal(
+    normalizeName("Wheelchair Association LLC"),
+    "wheelchair association",
+  );
 });
 
 test("normalizeName: collapses whitespace and punctuation", () => {
-  assert.equal(normalizeName("  Mile   High -- Sports!!  "), "mile high sports");
+  assert.equal(
+    normalizeName("  Mile   High -- Sports!!  "),
+    "mile high sports",
+  );
 });
 
 test("normalizeName: null/missing -> null", () => {
@@ -124,7 +146,10 @@ test("normalizeName: null/missing -> null", () => {
 // ---------- tokenSetRatio ----------
 
 test("tokenSetRatio: identical strings -> 1", () => {
-  assert.equal(tokenSetRatio("Denver Adaptive Sports", "Denver Adaptive Sports"), 1);
+  assert.equal(
+    tokenSetRatio("Denver Adaptive Sports", "Denver Adaptive Sports"),
+    1,
+  );
 });
 
 test("tokenSetRatio: disjoint strings -> 0", () => {
@@ -132,7 +157,10 @@ test("tokenSetRatio: disjoint strings -> 0", () => {
 });
 
 test("tokenSetRatio: partial overlap is between 0 and 1", () => {
-  const r = tokenSetRatio("Denver Adaptive Sports Club", "Denver Adaptive Sports Foundation");
+  const r = tokenSetRatio(
+    "Denver Adaptive Sports Club",
+    "Denver Adaptive Sports Foundation",
+  );
   assert.ok(r > 0.7 && r < 1);
 });
 
@@ -170,8 +198,16 @@ test("pickCanonical: lower id wins as final tie-break", () => {
 
 test("findDuplicates: domain tier matches same normalized website", () => {
   const orgs = [
-    org({ id: "1", name: "Denver Wheelchair Sports", website_url: "https://www.denverwheelchair.org" }),
-    org({ id: "2", name: "Denver Wheelchair Sports Alt Listing", website_url: "https://denverwheelchair.org/home" }),
+    org({
+      id: "1",
+      name: "Denver Wheelchair Sports",
+      website_url: "https://www.denverwheelchair.org",
+    }),
+    org({
+      id: "2",
+      name: "Denver Wheelchair Sports Alt Listing",
+      website_url: "https://denverwheelchair.org/home",
+    }),
   ];
   const dups = findDuplicates(orgs);
   assert.equal(dups.length, 1);
@@ -182,8 +218,18 @@ test("findDuplicates: domain tier matches same normalized website", () => {
 
 test("findDuplicates: name-state tier matches same normalized name + state, no domain", () => {
   const orgs = [
-    org({ id: "1", name: "The Mile High Sports Club, Inc.", state: "CO", website_url: null }),
-    org({ id: "2", name: "Mile High Sports Club", state: "CO", website_url: null }),
+    org({
+      id: "1",
+      name: "The Mile High Sports Club, Inc.",
+      state: "CO",
+      website_url: null,
+    }),
+    org({
+      id: "2",
+      name: "Mile High Sports Club",
+      state: "CO",
+      website_url: null,
+    }),
   ];
   const dups = findDuplicates(orgs);
   assert.equal(dups.length, 1);
@@ -192,8 +238,18 @@ test("findDuplicates: name-state tier matches same normalized name + state, no d
 
 test("findDuplicates: fuzzy tier matches similar names in same city+state", () => {
   const orgs = [
-    org({ id: "1", name: "Rocky Mountain Adaptive Sports Wheelchair Basketball Youth League", city: "Denver", state: "CO" }),
-    org({ id: "2", name: "Rocky Mountain Adaptive Sports Wheelchair Basketball Youth League Foundation", city: "Denver", state: "CO" }),
+    org({
+      id: "1",
+      name: "Rocky Mountain Adaptive Sports Wheelchair Basketball Youth League",
+      city: "Denver",
+      state: "CO",
+    }),
+    org({
+      id: "2",
+      name: "Rocky Mountain Adaptive Sports Wheelchair Basketball Youth League Foundation",
+      city: "Denver",
+      state: "CO",
+    }),
   ];
   const dups = findDuplicates(orgs);
   assert.equal(dups.length, 1);
@@ -202,15 +258,30 @@ test("findDuplicates: fuzzy tier matches similar names in same city+state", () =
 });
 
 test("findDuplicates: never pairs a lone org with itself", () => {
-  const orgs = [org({ id: "1", name: "Solo Org", website_url: "https://solo-org.example" })];
+  const orgs = [
+    org({ id: "1", name: "Solo Org", website_url: "https://solo-org.example" }),
+  ];
   assert.deepEqual(findDuplicates(orgs), []);
 });
 
 test("findDuplicates: 3-org group collapses to one canonical, two dups", () => {
   const orgs = [
-    org({ id: "1", name: "Same Domain Org A", website_url: "https://shared-domain.example", created_at: "2020-01-01T00:00:00Z" }),
-    org({ id: "2", name: "Same Domain Org B", website_url: "https://shared-domain.example/page2" }),
-    org({ id: "3", name: "Same Domain Org C", website_url: "https://www.shared-domain.example/page3" }),
+    org({
+      id: "1",
+      name: "Same Domain Org A",
+      website_url: "https://shared-domain.example",
+      created_at: "2020-01-01T00:00:00Z",
+    }),
+    org({
+      id: "2",
+      name: "Same Domain Org B",
+      website_url: "https://shared-domain.example/page2",
+    }),
+    org({
+      id: "3",
+      name: "Same Domain Org C",
+      website_url: "https://www.shared-domain.example/page3",
+    }),
   ];
   const dups = findDuplicates(orgs);
   assert.equal(dups.length, 2);
@@ -223,8 +294,16 @@ test("findDuplicates: 3-org group collapses to one canonical, two dups", () => {
 
 test("findDuplicates: idempotency — filtering out already-proposed ids yields zero new", () => {
   const orgs = [
-    org({ id: "1", name: "Adaptive Rowing Team", website_url: "https://adaptiverowing.example" }),
-    org({ id: "2", name: "Adaptive Rowing Team Dup", website_url: "https://adaptiverowing.example/other" }),
+    org({
+      id: "1",
+      name: "Adaptive Rowing Team",
+      website_url: "https://adaptiverowing.example",
+    }),
+    org({
+      id: "2",
+      name: "Adaptive Rowing Team Dup",
+      website_url: "https://adaptiverowing.example/other",
+    }),
   ];
   const dups = findDuplicates(orgs);
   assert.equal(dups.length, 1);
@@ -237,10 +316,29 @@ test("findDuplicates: idempotency — filtering out already-proposed ids yields 
 
 test("resolveLane: proposes duplicates with tiered confidence and evidence", async () => {
   const orgs = [
-    org({ id: "1", name: "Adaptive Climbing Co", website_url: "https://adaptiveclimb.example", created_at: "2020-01-01T00:00:00Z" }),
-    org({ id: "2", name: "Adaptive Climbing Co Two", website_url: "https://adaptiveclimb.example/dup" }),
-    org({ id: "3", name: "The Mile High Sports Club, Inc.", state: "CO", website_url: null }),
-    org({ id: "4", name: "Mile High Sports Club", state: "CO", website_url: null }),
+    org({
+      id: "1",
+      name: "Adaptive Climbing Co",
+      website_url: "https://adaptiveclimb.example",
+      created_at: "2020-01-01T00:00:00Z",
+    }),
+    org({
+      id: "2",
+      name: "Adaptive Climbing Co Two",
+      website_url: "https://adaptiveclimb.example/dup",
+    }),
+    org({
+      id: "3",
+      name: "The Mile High Sports Club, Inc.",
+      state: "CO",
+      website_url: null,
+    }),
+    org({
+      id: "4",
+      name: "Mile High Sports Club",
+      state: "CO",
+      website_url: null,
+    }),
     org({ id: "5", name: "Unrelated Solo Org" }),
   ];
   const db = makeDb({ organizations: orgs });
@@ -256,21 +354,35 @@ test("resolveLane: proposes duplicates with tiered confidence and evidence", asy
   assert.equal(domainRow.confidence, 0.95);
   assert.equal(domainRow.evidence.duplicate_of, "1");
   assert.equal(domainRow.evidence.method, "deterministic-dedup v1");
-  assert.deepEqual(domainRow.proposed_change, { status: { from: "active", to: "duplicate" } });
+  assert.deepEqual(domainRow.proposed_change, {
+    status: { from: "active", to: "duplicate" },
+  });
 
-  const nameStateRow = db.inserted.find((r) => r.evidence.tier === "name-state");
+  const nameStateRow = db.inserted.find(
+    (r) => r.evidence.tier === "name-state",
+  );
   assert.equal(nameStateRow.organization_id, "4");
   assert.equal(nameStateRow.confidence, 0.9);
 });
 
 test("resolveLane: skips ids that already have a resolve proposal (any status)", async () => {
   const orgs = [
-    org({ id: "1", name: "Adaptive Climbing Co", website_url: "https://adaptiveclimb.example" }),
-    org({ id: "2", name: "Adaptive Climbing Co Two", website_url: "https://adaptiveclimb.example/dup" }),
+    org({
+      id: "1",
+      name: "Adaptive Climbing Co",
+      website_url: "https://adaptiveclimb.example",
+    }),
+    org({
+      id: "2",
+      name: "Adaptive Climbing Co Two",
+      website_url: "https://adaptiveclimb.example/dup",
+    }),
   ];
   const db = makeDb({
     organizations: orgs,
-    reviewQueue: [{ organization_id: "2", lane: "resolve", status: "rejected" }],
+    reviewQueue: [
+      { organization_id: "2", lane: "resolve", status: "rejected" },
+    ],
   });
   const result = await resolveLane({ db, cursor: "" });
   assert.equal(result.flagged, 0);
@@ -281,8 +393,20 @@ test("resolveLane: caps proposals per run and reports remaining in detail", asyn
   const orgs = [];
   for (let i = 0; i < 25; i++) {
     const n = String(i).padStart(2, "0");
-    orgs.push(org({ id: `a${n}`, name: `Group ${n} Org A`, website_url: `https://group${n}.example` }));
-    orgs.push(org({ id: `b${n}`, name: `Group ${n} Org B`, website_url: `https://group${n}.example/dup` }));
+    orgs.push(
+      org({
+        id: `a${n}`,
+        name: `Group ${n} Org A`,
+        website_url: `https://group${n}.example`,
+      }),
+    );
+    orgs.push(
+      org({
+        id: `b${n}`,
+        name: `Group ${n} Org B`,
+        website_url: `https://group${n}.example/dup`,
+      }),
+    );
   }
   const db = makeDb({ organizations: orgs });
   const result = await resolveLane({ db, cursor: "" });

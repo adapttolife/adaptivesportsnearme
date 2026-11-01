@@ -1,11 +1,20 @@
-import { cssIncludes } from './helpers/css.js';
+import { cssIncludes } from "./helpers/css.js";
 import { readFileSync } from "node:fs";
-const styles = readFileSync(new URL("../public/styles.css", import.meta.url), "utf8");
+const styles = readFileSync(
+  new URL("../public/styles.css", import.meta.url),
+  "utf8",
+);
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
-  programPageTemplate, programNotFoundTemplate, PROGRAM_ID_RE,
-  locLine, photoPath, typeLabel, primaryCta, listingInnerHtml,
+  programPageTemplate,
+  programNotFoundTemplate,
+  PROGRAM_ID_RE,
+  locLine,
+  photoPath,
+  typeLabel,
+  primaryCta,
+  listingInnerHtml,
 } from "../src/program-page.js";
 
 const ORG = {
@@ -18,7 +27,13 @@ const ORG = {
   state: "CO",
   website: "https://www.example.org/nuggets",
   primarySource: "US Paralympics Club Finder",
-  sources: [{ name: "US Paralympics Club Finder", organization: "U.S. Olympic & Paralympic Committee", url: "https://www.teamusa.org" }],
+  sources: [
+    {
+      name: "US Paralympics Club Finder",
+      organization: "U.S. Olympic & Paralympic Committee",
+      url: "https://www.teamusa.org",
+    },
+  ],
 };
 
 const RENO = {
@@ -41,7 +56,13 @@ const RENO = {
   verification: "unverified",
   lastChecked: "2026-08-21T19:55:06Z",
   primarySource: "Builder web search 2026-08-21",
-  sources: [{ name: "Builder web search 2026-08-21", organization: "Adaptive Sports Near Me", url: "https://usapickleball.org/adaptive/" }],
+  sources: [
+    {
+      name: "Builder web search 2026-08-21",
+      organization: "Adaptive Sports Near Me",
+      url: "https://usapickleball.org/adaptive/",
+    },
+  ],
 };
 
 const KANSAS = {
@@ -64,11 +85,18 @@ const KANSAS = {
   verification: "unverified",
   lastChecked: null,
   primarySource: "US Paralympics Club Finder",
-  sources: [{ name: "US Paralympics Club Finder", url: "https://www.usopc.org/paralympic-sport-development" }],
+  sources: [
+    {
+      name: "US Paralympics Club Finder",
+      url: "https://www.usopc.org/paralympic-sport-development",
+    },
+  ],
 };
 
 test("PROGRAM_ID_RE matches a UUID program path", () => {
-  const m = "/programs/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa".match(PROGRAM_ID_RE);
+  const m = "/programs/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa".match(
+    PROGRAM_ID_RE,
+  );
   assert.ok(m);
   assert.equal(m[1], "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
   assert.equal("/programs/not-a-uuid".match(PROGRAM_ID_RE), null);
@@ -77,7 +105,10 @@ test("PROGRAM_ID_RE matches a UUID program path", () => {
 
 test("locLine: city + state, then city, then state name — never a repeated field", () => {
   assert.equal(locLine(ORG), "Denver, CO");
-  assert.equal(locLine({ city: "Los Angeles", stateName: "California" }), "Los Angeles, California");
+  assert.equal(
+    locLine({ city: "Los Angeles", stateName: "California" }),
+    "Los Angeles, California",
+  );
   assert.equal(locLine({ city: "Denver" }), "Denver");
   assert.equal(locLine({ stateName: "California", state: "CA" }), "California");
   assert.equal(locLine({ state: "CA" }), "CA");
@@ -86,7 +117,15 @@ test("locLine: city + state, then city, then state name — never a repeated fie
 
 test("locLine: geoPrecision=state is statewide, never a fake city", () => {
   assert.equal(locLine(KANSAS), "Kansas · statewide");
-  assert.equal(locLine({ city: "Lawrence", state: "KS", stateName: "Kansas", geoPrecision: "state" }), "Kansas · statewide");
+  assert.equal(
+    locLine({
+      city: "Lawrence",
+      state: "KS",
+      stateName: "Kansas",
+      geoPrecision: "state",
+    }),
+    "Kansas · statewide",
+  );
 });
 
 test("typeLabel: the org type reads as a human fact, null when missing", () => {
@@ -99,16 +138,36 @@ test("typeLabel: the org type reads as a human fact, null when missing", () => {
 // Alec, 2026-10-13: launch on symbols and icons. A program's own photo is the
 // only cover; every sport, with or without a stock photo on disk, wears its symbol.
 test("photoPath: only the program's own photo is a cover; sports wear symbols", () => {
-  for (const sport of ["cycling", "basketball", "skiing", "pickleball", "tennis", "rowing", null]) {
+  for (const sport of [
+    "cycling",
+    "basketball",
+    "skiing",
+    "pickleball",
+    "tennis",
+    "rowing",
+    null,
+  ]) {
     assert.equal(photoPath(sport), null, String(sport));
   }
-  assert.equal(photoPath(null, { photo: "/photos/mine.jpg" }), "/photos/mine.jpg");
+  assert.equal(
+    photoPath(null, { photo: "/photos/mine.jpg" }),
+    "/photos/mine.jpg",
+  );
 });
 
 test("primaryCta: website → tel → mailto → source. Never an empty-page stub", () => {
-  assert.deepEqual(primaryCta(ORG), { href: ORG.website, label: "Visit website" });
-  assert.equal(primaryCta({ publicityConsent: true, phone: "775-467-2025" }).label, "Call");
-  assert.equal(primaryCta({ publicityConsent: true, email: "hi@example.org" }).label, "Email");
+  assert.deepEqual(primaryCta(ORG), {
+    href: ORG.website,
+    label: "Visit website",
+  });
+  assert.equal(
+    primaryCta({ publicityConsent: true, phone: "775-467-2025" }).label,
+    "Call",
+  );
+  assert.equal(
+    primaryCta({ publicityConsent: true, email: "hi@example.org" }).label,
+    "Email",
+  );
   assert.equal(primaryCta({ phone: "775-467-2025" }), null);
   assert.deepEqual(primaryCta(KANSAS), {
     href: "https://www.usopc.org/paralympic-sport-development",
@@ -118,7 +177,9 @@ test("primaryCta: website → tel → mailto → source. Never an empty-page stu
 });
 
 test("programPageTemplate: symbol hero, name, city+state, website button — not four labeled cards", () => {
-  const html = programPageTemplate(ORG, { site: "https://asnm-staging.adapt-to-life.workers.dev" });
+  const html = programPageTemplate(ORG, {
+    site: "https://asnm-staging.adapt-to-life.workers.dev",
+  });
   assert.ok(html.includes("Denver Rolling Nuggets"));
   assert.ok(html.includes("Wheelchair Basketball"));
   assert.ok(html.includes("Denver, CO"));
@@ -133,8 +194,10 @@ test("programPageTemplate: symbol hero, name, city+state, website button — not
   assert.ok(!html.includes("We are not live yet"));
   assert.ok(!html.includes(">Sport</p>"));
   assert.ok(!html.includes("City / state"));
-  assert.ok(!html.includes("class=\"card\""));
-  assert.ok(html.includes("dov-sport") && html.includes("Wheelchair Basketball"));
+  assert.ok(!html.includes('class="card"'));
+  assert.ok(
+    html.includes("dov-sport") && html.includes("Wheelchair Basketball"),
+  );
   assert.ok(cssIncludes(styles, "clamp(180px,24vw,260px)"));
   assert.ok(!html.includes("Unverified"));
 });
@@ -145,14 +208,16 @@ test("programPageTemplate: Reno pickleball reads like a listing", () => {
   assert.ok(html.includes("Reno, NV"));
   assert.ok(html.includes("$5"));
   assert.ok(html.includes("Sunday"));
-  assert.ok(html.includes("class=\"cta\""));
+  assert.ok(html.includes('class="cta"'));
   assert.ok(html.includes("Visit website"));
   assert.ok(html.includes("3rdshotpickleball.com/home-reno"));
   const locAt = html.indexOf('class="loc"');
   const descAt = html.indexOf('class="desc"');
   const ctaAt = html.indexOf('class="cta"');
   assert.ok(locAt > 0 && descAt > locAt && ctaAt > descAt);
-  assert.ok(html.includes(">Cost</span>") && html.includes("$5 adaptive session"));
+  assert.ok(
+    html.includes(">Cost</span>") && html.includes("$5 adaptive session"),
+  );
   assert.ok(html.includes(">Ages</span>") && html.includes("Adult"));
   assert.ok(html.includes("775-467-2025"));
   assert.ok(html.includes("reno@3rdshotpickleball.com"));
@@ -160,9 +225,18 @@ test("programPageTemplate: Reno pickleball reads like a listing", () => {
   // Say whether a person verified it, in plain words (Alec, 2026-10-13), and
   // put a date on the listing (opening-day bar 5) — never the cold "Unverified".
   assert.ok(!html.includes("Unverified"));
-  assert.ok(html.includes('<p class="listing-trust is-unverified">Not yet verified</p>'));
-  assert.ok(html.includes(">Last checked</span>") && html.includes("Aug 21, 2026"));
-  assert.ok(html.indexOf("Not yet verified") > locAt && html.indexOf("Not yet verified") < ctaAt);
+  assert.ok(
+    html.includes(
+      '<p class="listing-trust is-unverified">Not yet verified</p>',
+    ),
+  );
+  assert.ok(
+    html.includes(">Last checked</span>") && html.includes("Aug 21, 2026"),
+  );
+  assert.ok(
+    html.indexOf("Not yet verified") > locAt &&
+      html.indexOf("Not yet verified") < ctaAt,
+  );
   assert.ok(!html.includes('class="listed"'));
   assert.ok(!html.includes("No website on file."));
   assert.ok(!html.includes("Before you go"));
@@ -176,7 +250,12 @@ test("programPageTemplate: Airbnb listing rhythm, no verification chrome", () =>
   assert.ok(cssIncludes(styles, "--tap: 44px"));
   assert.ok(cssIncludes(styles, "min-height:var(--space-header)"));
   assert.ok(cssIncludes(styles, "min-height:var(--tap)"));
-  assert.ok(cssIncludes(styles, "padding:var(--space-page) var(--space-page) var(--space-header)"));
+  assert.ok(
+    cssIncludes(
+      styles,
+      "padding:var(--space-page) var(--space-page) var(--space-header)",
+    ),
+  );
   assert.ok(cssIncludes(styles, "margin:0 0 var(--space-after-photo)"));
   assert.ok(cssIncludes(styles, "margin:0 0 var(--space-title-gap)"));
   assert.ok(cssIncludes(styles, "margin:0 0 var(--space-section)"));
@@ -193,17 +272,55 @@ test("programPageTemplate: Airbnb listing rhythm, no verification chrome", () =>
 
 test("programPageTemplate: Kansas Omnium still has an action + nearby strip", () => {
   const nearby = [
-    { id: "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb", name: "Sunflower Adaptive Cycling", sport: "cycling", sportLabel: "Adaptive Cycling", city: "Wichita", state: "KS", type: "member", dist: 42 },
-    { id: "cccccccc-cccc-cccc-cccc-cccccccccccc", name: "Prairie Handcycle", sport: "cycling", sportLabel: "Adaptive Cycling", city: "Lawrence", state: "KS", type: "member", dist: 51 },
-    { id: "dddddddd-dddd-dddd-dddd-dddddddddddd", name: "KC Adaptive Bike", sport: "cycling", sportLabel: "Adaptive Cycling", city: "Kansas City", state: "MO", type: "member", dist: 88 },
-    { id: "eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee", name: "Ozark Adaptive Cycling", sport: "cycling", sportLabel: "Adaptive Cycling", state: "MO", type: "member", dist: 120 },
+    {
+      id: "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+      name: "Sunflower Adaptive Cycling",
+      sport: "cycling",
+      sportLabel: "Adaptive Cycling",
+      city: "Wichita",
+      state: "KS",
+      type: "member",
+      dist: 42,
+    },
+    {
+      id: "cccccccc-cccc-cccc-cccc-cccccccccccc",
+      name: "Prairie Handcycle",
+      sport: "cycling",
+      sportLabel: "Adaptive Cycling",
+      city: "Lawrence",
+      state: "KS",
+      type: "member",
+      dist: 51,
+    },
+    {
+      id: "dddddddd-dddd-dddd-dddd-dddddddddddd",
+      name: "KC Adaptive Bike",
+      sport: "cycling",
+      sportLabel: "Adaptive Cycling",
+      city: "Kansas City",
+      state: "MO",
+      type: "member",
+      dist: 88,
+    },
+    {
+      id: "eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee",
+      name: "Ozark Adaptive Cycling",
+      sport: "cycling",
+      sportLabel: "Adaptive Cycling",
+      state: "MO",
+      type: "member",
+      dist: 120,
+    },
   ];
   const html = programPageTemplate(KANSAS, { nearby });
   assert.ok(html.includes("Adaptive Cycling Omnium"));
   assert.ok(html.includes("Kansas · statewide"));
-  assert.ok(html.includes("Kansas · statewide")); assert.ok(!html.includes("Topeka, KS"));
+  assert.ok(html.includes("Kansas · statewide"));
+  assert.ok(!html.includes("Topeka, KS"));
   assert.ok(html.includes("View source"));
-  assert.ok(html.includes("https://www.usopc.org/paralympic-sport-development"));
+  assert.ok(
+    html.includes("https://www.usopc.org/paralympic-sport-development"),
+  );
   assert.ok(html.includes('class="cta"'));
   assert.ok(!html.includes("No website on file."));
   assert.ok(!html.includes("Visit website"));
@@ -224,7 +341,7 @@ test("programPageTemplate: Kansas Omnium still has an action + nearby strip", ()
   const listing = html.slice(html.indexOf("<main"), html.indexOf("</main>"));
   assert.equal((listing.match(/<h2[ >]/g) || []).length, 2);
   assert.ok(html.includes("Nearby adaptive cycling"));
-  assert.ok(!html.includes("class=\"desc\""));
+  assert.ok(!html.includes('class="desc"'));
   assert.ok(!html.includes("Unverified"));
   // Never checked: say so, never invent a date.
   assert.ok(html.includes("Not checked yet"));
@@ -232,8 +349,24 @@ test("programPageTemplate: Kansas Omnium still has an action + nearby strip", ()
 
 test("programPageTemplate: nearby is one horizontal rail, not a wrapping grid or second dump", () => {
   const nearby = [
-    { id: "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb", name: "Sunflower Adaptive Cycling", sport: "cycling", sportLabel: "Adaptive Cycling", city: "Wichita", state: "KS", dist: 42 },
-    { id: "cccccccc-cccc-cccc-cccc-cccccccccccc", name: "Prairie Handcycle", sport: "cycling", sportLabel: "Adaptive Cycling", city: "Lawrence", state: "KS", dist: 51 },
+    {
+      id: "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+      name: "Sunflower Adaptive Cycling",
+      sport: "cycling",
+      sportLabel: "Adaptive Cycling",
+      city: "Wichita",
+      state: "KS",
+      dist: 42,
+    },
+    {
+      id: "cccccccc-cccc-cccc-cccc-cccccccccccc",
+      name: "Prairie Handcycle",
+      sport: "cycling",
+      sportLabel: "Adaptive Cycling",
+      city: "Lawrence",
+      state: "KS",
+      dist: 51,
+    },
   ];
   const html = programPageTemplate(KANSAS, { nearby });
   const nearbyAt = html.indexOf('class="nearby"');
@@ -242,9 +375,17 @@ test("programPageTemplate: nearby is one horizontal rail, not a wrapping grid or
   assert.ok(nearbyHtml.includes('class="frow-scroll"'));
   assert.ok(!nearbyHtml.includes('class="grid"'));
   assert.ok(!nearbyHtml.includes("grid-template-columns"));
-  assert.ok(nearbyHtml.includes("pcard-sport") && nearbyHtml.includes("Adaptive Cycling"));
-  assert.ok(nearbyHtml.includes("pcard-name") && nearbyHtml.includes("Sunflower Adaptive Cycling"));
-  assert.ok(nearbyHtml.includes("pcard-loc") && nearbyHtml.includes("Wichita, KS"));
+  assert.ok(
+    nearbyHtml.includes("pcard-sport") &&
+      nearbyHtml.includes("Adaptive Cycling"),
+  );
+  assert.ok(
+    nearbyHtml.includes("pcard-name") &&
+      nearbyHtml.includes("Sunflower Adaptive Cycling"),
+  );
+  assert.ok(
+    nearbyHtml.includes("pcard-loc") && nearbyHtml.includes("Wichita, KS"),
+  );
   assert.ok(nearbyHtml.includes("42 mi away"));
   assert.ok(!html.includes("See all"));
   assert.ok(!html.includes("frow-sub"));
@@ -256,10 +397,19 @@ test("programPageTemplate: nearby is one horizontal rail, not a wrapping grid or
 test("programPageTemplate: dense rows only when present; desc only when present", () => {
   const bare = programPageTemplate(ORG);
   assert.ok(!bare.includes('class="desc"'));
-  assert.ok(bare.includes(">Type</span>") && bare.includes("Community program"));
+  assert.ok(
+    bare.includes(">Type</span>") && bare.includes("Community program"),
+  );
   assert.ok(!bare.includes(">Cost</span>"));
   assert.ok(!bare.includes(">Phone</span>"));
-  const full = programPageTemplate({ ...ORG, desc: "Two divisions, chairs provided.", email: "hi@example.org", phone: "(303) 555-0148", publicityConsent: true, cost: "Free" });
+  const full = programPageTemplate({
+    ...ORG,
+    desc: "Two divisions, chairs provided.",
+    email: "hi@example.org",
+    phone: "(303) 555-0148",
+    publicityConsent: true,
+    cost: "Free",
+  });
   assert.ok(full.includes("Two divisions, chairs provided."));
   assert.ok(full.includes('href="mailto:hi@example.org"'));
   assert.ok(full.includes("555-0148"));
@@ -267,14 +417,24 @@ test("programPageTemplate: dense rows only when present; desc only when present"
 });
 
 test("programPageTemplate: no website falls back — never 'No website on file.'", () => {
-  const html = programPageTemplate({ ...ORG, website: null, phone: "303-555-0100", publicityConsent: true });
+  const html = programPageTemplate({
+    ...ORG,
+    website: null,
+    phone: "303-555-0100",
+    publicityConsent: true,
+  });
   assert.ok(!html.includes("No website on file."));
   assert.ok(html.includes("Call"));
   assert.ok(html.includes("tel:3035550100"));
 });
 
 test("programPageTemplate: no sport we can name wears the multi-sport image, still has name + loc", () => {
-  const html = programPageTemplate({ ...ORG, sport: null, sportLabel: "Multi-Sport", name: "Denver Rolling Nuggets" });
+  const html = programPageTemplate({
+    ...ORG,
+    sport: null,
+    sportLabel: "Multi-Sport",
+    name: "Denver Rolling Nuggets",
+  });
   assert.ok(!html.includes("sport-photos/"));
   assert.ok(!html.includes("g-sand"));
   assert.ok(html.includes('class="dhero has-symbol tone-house"'));
@@ -305,7 +465,7 @@ test("programPageTemplate: state-only listing shows the state name, not a blank 
 test("programPageTemplate: escapes untrusted name/sport", () => {
   const html = programPageTemplate({
     ...ORG,
-    name: '<script>alert(1)</script>',
+    name: "<script>alert(1)</script>",
     sportLabel: 'Basketball & "Rugby"',
   });
   assert.ok(!html.includes("<script>alert(1)</script>"));
@@ -332,14 +492,18 @@ test("programPageTemplate: the standalone page wears the app header and footer",
   assert.ok(html.includes('class="menu-btn"'));
   assert.ok(html.includes('class="hdr-add"'));
   assert.ok(html.includes('<footer class="foot">'));
-  assert.ok(html.includes('Skip to content'));
-  assert.ok(html.includes('/site-nav.js?v='));
+  assert.ok(html.includes("Skip to content"));
+  assert.ok(html.includes("/site-nav.js?v="));
   // 64px header and 44px tap targets survive.
   assert.ok(cssIncludes(styles, ".hdr-in{height:var(--space-header)"));
   assert.ok(cssIncludes(styles, "--space-header: 64px"));
   assert.ok(cssIncludes(styles, "--tap: 44px"));
   // The search field goes somewhere real: GET /near?q=, which the Worker sends to /near/<q>.
-  assert.ok(html.includes('<form class="search" role="search" action="/near" method="get">'));
+  assert.ok(
+    html.includes(
+      '<form class="search" role="search" action="/near" method="get">',
+    ),
+  );
   assert.ok(html.includes('name="q"'));
 });
 
@@ -377,13 +541,38 @@ test("listingInnerHtml: a multi-sport row's nearby heading keeps the short label
     desc: "Sports and activities: Baseball; basketball; track and field; soccer; swimming; tennis; golf. Athletes served: Children and adults with disabilities.",
   };
   const nearby = [
-    { id: "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb", name: "Cincy Adaptive", sport: "multi", sportLabel: "Multi-Sport", city: "Cincinnati", state: "OH", type: "member", dist: 14 },
+    {
+      id: "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+      name: "Cincy Adaptive",
+      sport: "multi",
+      sportLabel: "Multi-Sport",
+      city: "Cincinnati",
+      state: "OH",
+      type: "member",
+      dist: 14,
+    },
   ];
   const html = listingInnerHtml(multi, { nearby });
-  assert.ok(html.includes('<span class="dov-sport">Baseball, basketball, track and field, and 4 more</span>'), "overlay keeps the long label");
-  assert.ok(html.includes("<h2>Nearby multi-sport</h2>"), "nearby heading uses the short label");
-  assert.ok(!/<h2>[^<]*and 4 more/.test(html), "no heading carries the long label");
+  assert.ok(
+    html.includes(
+      '<span class="dov-sport">Baseball, basketball, track and field, and 4 more</span>',
+    ),
+    "overlay keeps the long label",
+  );
+  assert.ok(
+    html.includes("<h2>Nearby multi-sport</h2>"),
+    "nearby heading uses the short label",
+  );
+  assert.ok(
+    !/<h2>[^<]*and 4 more/.test(html),
+    "no heading carries the long label",
+  );
   const page = programPageTemplate(multi, { nearby });
-  assert.ok(page.includes('content="Baseball, basketball, track and field, and 4 more in Burlington, KY."'), "description keeps the long label");
+  assert.ok(
+    page.includes(
+      'content="Baseball, basketball, track and field, and 4 more in Burlington, KY."',
+    ),
+    "description keeps the long label",
+  );
   assert.ok(page.includes("<h2>Nearby multi-sport</h2>"));
 });
