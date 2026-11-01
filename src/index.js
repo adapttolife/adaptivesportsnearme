@@ -157,6 +157,11 @@ const CRON_LANES = {
 const application = {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
+
+    if (url.pathname === "/admin" || url.pathname.startsWith("/admin/")) {
+      const target = new URL(`https://adapttolife.org/admin${url.pathname.slice("/admin".length)}${url.search}`);
+      return Response.redirect(target, 302);
+    }
     // Versions uploaded with production config must not accept preview mutations.
     // Staging uploads use ENV_NAME=staging and the staging database bindings.
     if (

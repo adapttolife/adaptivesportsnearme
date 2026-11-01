@@ -116,7 +116,7 @@ const number = (value, fallback = null) => {
 
 export function isAdminEmail(value) {
   const email = validEmail(value);
-  return /@(adaptivesportsnearme\.com|faisaln\.com)$/i.test(email) ? email : "";
+  return /@(adapttolife\.org|adaptivesportsnearme\.com|faisaln\.com)$/i.test(email) ? email : "";
 }
 
 export function serializeAdminCookie(id, signature, maxAge = SESSION_SECONDS) {
