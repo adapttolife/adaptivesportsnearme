@@ -329,9 +329,8 @@ settings, DNS, and certificate status must also be checked in Cloudflare.
 
 ## Secrets (per worker, via `wrangler secret put`)
 
-`BEEHIIV_API_KEY`, `TURNSTILE_SECRET_KEY`, `GMAIL_CLIENT_ID`, `GMAIL_CLIENT_SECRET`,
+`TURNSTILE_SECRET_KEY`, `GMAIL_CLIENT_ID`, `GMAIL_CLIENT_SECRET`,
 `GMAIL_REFRESH_TOKEN`, `PROFILE_SIGNING_KEY`, `ORG_AUTH_SIGNING_KEY`.
-`BEEHIIV_PUBLICATION_ID` is a variable in `wrangler.json`.
 
 `adaptivesportsnearme` is one Worker for production and the staging previews: set its
 secrets the way [Deploy](#deploy) describes, never in the Cloudflare dashboard. `asnm-gate`
