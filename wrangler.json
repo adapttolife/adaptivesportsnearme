@@ -2,7 +2,7 @@
 	"name": "adaptivesportsnearme",
 	"compatibility_date": "2026-06-26",
 	"main": "src/index.js",
-	"workers_dev": true,
+	"workers_dev": false,
 	"preview_urls": true,
 	"routes": [
 		{
