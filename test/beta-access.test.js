@@ -48,9 +48,20 @@ test("beta access requires an enabled approved email and consumes each magic lin
   const { sqlite, db } = database();
   try {
     assert.equal(await isBetaTester(db, "tester@example.test"), false);
-    await setBetaTester(db, "Tester@Example.test");
+    await setBetaTester(db, "Tester@Example.test", true, {
+      name: "Test Tester",
+      organization: "Test Organization",
+      phone: "555-0100",
+    });
     assert.equal(await isBetaTester(db, "tester@example.test"), true);
-    assert.equal((await listBetaTesters(db))[0].email, "tester@example.test");
+    const [tester] = await listBetaTesters(db);
+    assert.equal(tester.email, "tester@example.test");
+    assert.equal(tester.name, "Test Tester");
+    assert.equal(tester.organization, "Test Organization");
+    assert.equal(tester.phone, "555-0100");
+    assert.equal(tester.enabled, 1);
+    assert.ok(tester.created_at);
+    assert.ok(tester.updated_at);
 
     const token = await issueBetaLoginToken(db, "tester@example.test");
     assert.equal(await consumeBetaLoginToken(db, token), "tester@example.test");
@@ -71,6 +82,18 @@ test("beta access requires an enabled approved email and consumes each magic lin
 
     await setBetaTester(db, "tester@example.test", false);
     assert.equal(await readBetaSession(request, db, "beta-secret"), null);
+  } finally {
+    sqlite.close();
+  }
+});
+
+test("beta tester details require a name when they are provided", async () => {
+  const { sqlite, db } = database();
+  try {
+    await assert.rejects(
+      setBetaTester(db, "tester@example.test", true, { name: "" }),
+      /name-required/,
+    );
   } finally {
     sqlite.close();
   }

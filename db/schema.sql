@@ -335,6 +335,9 @@ CREATE INDEX IF NOT EXISTS review_queue_status_idx ON review_queue (status, crea
 
 CREATE TABLE IF NOT EXISTS beta_testers (
   email TEXT PRIMARY KEY COLLATE NOCASE,
+  name TEXT NOT NULL DEFAULT '',
+  organization TEXT,
+  phone TEXT,
   enabled INTEGER NOT NULL DEFAULT 1 CHECK (enabled IN (0, 1)),
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL

@@ -113,26 +113,67 @@ export async function readBetaSession(request, db, secret) {
 export async function listBetaTesters(db) {
   const { results } = await db
     .prepare(
-      `SELECT email, enabled, created_at, updated_at FROM beta_testers ORDER BY email COLLATE NOCASE`,
+      `SELECT email, name, organization, phone, enabled, created_at, updated_at
+       FROM beta_testers
+       ORDER BY email COLLATE NOCASE`,
     )
     .all();
   return results || [];
 }
 
-export async function setBetaTester(db, email, enabled = true) {
+function detailsForBetaTester(details) {
+  if (!details || typeof details !== "object") return null;
+  const name = String(details.name || "").trim();
+  if (!name) throw new Error("name-required");
+  if (name.length > 160) throw new Error("name-invalid");
+  const organization = String(details.organization || "").trim();
+  const phone = String(details.phone || "").trim();
+  if (organization.length > 240 || phone.length > 60)
+    throw new Error("details-invalid");
+  return { name, organization: organization || null, phone: phone || null };
+}
+
+export async function setBetaTester(db, email, enabled = true, details = null) {
   const valid = validEmail(email);
   if (!valid) throw new Error("email-invalid");
   const timestamp = now();
-  await db
-    .prepare(
-      `INSERT INTO beta_testers (email, enabled, created_at, updated_at) VALUES (?, ?, ?, ?)
-    ON CONFLICT(email) DO UPDATE SET enabled = excluded.enabled, updated_at = excluded.updated_at`,
-    )
-    .bind(valid, enabled ? 1 : 0, timestamp, timestamp)
-    .run();
+  const cleaned = detailsForBetaTester(details);
+  if (cleaned) {
+    await db
+      .prepare(
+        `INSERT INTO beta_testers (email, name, organization, phone, enabled, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?)
+         ON CONFLICT(email) DO UPDATE SET
+           name = excluded.name,
+           organization = excluded.organization,
+           phone = excluded.phone,
+           enabled = excluded.enabled,
+           updated_at = excluded.updated_at`,
+      )
+      .bind(
+        valid,
+        cleaned.name,
+        cleaned.organization,
+        cleaned.phone,
+        enabled ? 1 : 0,
+        timestamp,
+        timestamp,
+      )
+      .run();
+  } else {
+    await db
+      .prepare(
+        `INSERT INTO beta_testers (email, enabled, created_at, updated_at) VALUES (?, ?, ?, ?)
+         ON CONFLICT(email) DO UPDATE SET enabled = excluded.enabled, updated_at = excluded.updated_at`,
+      )
+      .bind(valid, enabled ? 1 : 0, timestamp, timestamp)
+      .run();
+  }
   return db
     .prepare(
-      `SELECT email, enabled, created_at, updated_at FROM beta_testers WHERE email = ? COLLATE NOCASE`,
+      `SELECT email, name, organization, phone, enabled, created_at, updated_at
+       FROM beta_testers
+       WHERE email = ? COLLATE NOCASE`,
     )
     .bind(valid)
     .first();

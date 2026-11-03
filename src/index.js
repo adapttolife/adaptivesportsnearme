@@ -3,6 +3,7 @@ import { safeNewsletterSubscribe } from "./newsletter.js";
 import {
   queueFormConfirmation,
   sendAdminLoginLink,
+  sendBetaTesterInvitation,
   sendBetaLoginLink,
   sendOrganizationLoginLink,
   sendProfileLoginLink,
@@ -352,7 +353,7 @@ const application = {
       });
     }
     if (url.pathname === "/api/admin-data/beta-testers")
-      return handleAdminBetaTesters(request, env);
+      return handleAdminBetaTesters(request, env, url);
     const adminItem = url.pathname.match(
       /^\/api\/admin-data\/(organizations|programs|events|grants|blog)(?:\/([0-9a-f-]{36}))?$/i,
     );
@@ -2223,7 +2224,7 @@ async function handleBetaSession(request, env) {
     : json({ ok: false }, 401, BETA_AUTH_CACHE);
 }
 
-async function handleAdminBetaTesters(request, env) {
+async function handleAdminBetaTesters(request, env, url) {
   const session = await authorizedAdminSession(request, env);
   if (!session)
     return json(
@@ -2240,11 +2241,22 @@ async function handleAdminBetaTesters(request, env) {
       );
     if (request.method === "POST") {
       const data = await readBody(request);
+      const addingTester = Object.hasOwn(data || {}, "name");
       const item = await setBetaTester(
         env.DB,
         data?.email,
         data?.enabled !== false && data?.enabled !== 0 && data?.enabled !== "0",
+        addingTester
+          ? {
+              name: data?.name,
+              organization: data?.organization,
+              phone: data?.phone,
+            }
+          : null,
       );
+      if (addingTester && item.enabled && data?.sendInvitation === true) {
+        await sendBetaTesterInvitation(env, item.email, item.name, url.origin);
+      }
       return json({ ok: true, item }, 200, ADMIN_AUTH_CACHE);
     }
     return json(
@@ -2256,6 +2268,12 @@ async function handleAdminBetaTesters(request, env) {
     if (err instanceof Error && err.message === "email-invalid")
       return json(
         { ok: false, error: "Enter a valid email address." },
+        422,
+        ADMIN_AUTH_CACHE,
+      );
+    if (err instanceof Error && err.message === "name-required")
+      return json(
+        { ok: false, error: "Enter the beta tester's name." },
         422,
         ADMIN_AUTH_CACHE,
       );
