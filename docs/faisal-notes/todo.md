@@ -11,10 +11,6 @@ org-scraper: there is a work tree stash that exists
 
 API for orgs to push new/updated data to our db
 
-for beta testers, along with email record name (required), organization, phone number
-
-adding a beta tester should send an email to the beta tester with a link to the org's page
-
 split beta testers into groups, link groups to resend segments so can send emails to specific groups of beta testers
 
 feature toggles in ATL admin dashboard
