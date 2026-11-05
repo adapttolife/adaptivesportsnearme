@@ -13,7 +13,7 @@
 	},
 	"vars": {
 		"ENV_NAME": "staging",
-		"PRELAUNCH": "false",
+		"PRELAUNCH": "true",
 		"MAIL_TRANSPORT": "gmail",
 		"GMAIL_FROM": "hello@adaptivesportsnearme.com",
 		"REQUIRE_FORM_LIMITER": "true",

@@ -1934,14 +1934,14 @@ body {
   justify-content: center;
 }
 .beta {
-	width: min(100%, 500px);
+  width: min(90%, 1000px);
 	margin: auto;
 	display: flex;
-	flex-direction: column;
 	background: #fff;
 	border-radius: var(--r);
 	box-shadow: 0 8px 24px rgba(26,26,26,.1);
 	overflow: hidden;
+  min-height: 70vh;
 }
 .beta-intro {
 	background: var(--coral);
@@ -2059,6 +2059,8 @@ body {
 	.beta {
 		min-height: 100vh;
 		border-radius: 0;
+    width: 100%;
+    flex-direction: column;
 	}
 	.beta-intro {
 		min-height: 42vh;
