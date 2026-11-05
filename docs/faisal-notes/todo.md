@@ -11,8 +11,6 @@ org-scraper: there is a work tree stash that exists
 
 API for orgs to push new/updated data to our db
 
-split beta testers into groups, link groups to resend segments so can send emails to specific groups of beta testers
-
 feature toggles in ATL admin dashboard
 
 different beta tester groups have different feature toggles enabled
