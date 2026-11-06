@@ -33,12 +33,12 @@ You need [Node.js](https://nodejs.org) 22 or later and Git. You don't need a Clo
 git clone https://github.com/adapttolife/adaptivesportsnearme.git
 cd adaptivesportsnearme
 npm run setup   # builds a local database with sample listings
-npm run dev     # then open http://localhost:8787
+npm run dev     # then open http://localhost:8888
 ```
 
 Run the tests with `npm test`. Run `npm run setup` again any time to start over with fresh sample data.
 
-The sample is about 120 real public listings in California, Colorado, Florida, New York and Texas, plus every sport and grant. Try http://localhost:8787/near/Denver%2C%20CO.
+The sample is about 120 real public listings in California, Colorado, Florida, New York and Texas, plus every sport and grant. Try http://localhost:8888/near/Denver%2C%20CO.
 
 ## How it's built
 
