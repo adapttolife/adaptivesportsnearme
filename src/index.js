@@ -144,6 +144,7 @@ import {
   serializeBetaCookie,
   setBetaTester,
 } from "./beta-access.js";
+import { featureAvailable } from "./feature-access.js";
 
 const API_CACHE = "public, max-age=300, stale-while-revalidate=600";
 const FEED_CACHE = "public, max-age=300";
@@ -184,6 +185,13 @@ const application = {
     }
     const betaGate = await prelaunchGate(request, env, url);
     if (betaGate) return betaGate;
+
+    const organizationFeatureGate = await organizationFeatureGateResponse(
+      request,
+      env,
+      url,
+    );
+    if (organizationFeatureGate) return organizationFeatureGate;
 
     if (url.pathname === "/api/beta-auth/request-link") {
       if (request.method !== "POST")
@@ -475,10 +483,10 @@ const application = {
           const record = await getOrg(env.DB, org[1]);
           return record
             ? json(
-                { ok: true, organization: record, org: record },
-                200,
-                API_CACHE,
-              )
+              { ok: true, organization: record, org: record },
+              200,
+              API_CACHE,
+            )
             : json({ ok: false, error: "Not found" }, 404);
         }
         const organizationPrograms = url.pathname.match(
@@ -927,52 +935,52 @@ async function handleSubmitProgram(request, env, ctx, opts = {}) {
 
   const answers = isEvent
     ? {
-        event: program,
-        date: eventDate,
-        end: eventEnd,
-        time: eventTime,
-        city,
-        state: stateRegion,
-        url: siteUrl,
-        org,
-        sport,
-        notes,
-      }
+      event: program,
+      date: eventDate,
+      end: eventEnd,
+      time: eventTime,
+      city,
+      state: stateRegion,
+      url: siteUrl,
+      org,
+      sport,
+      notes,
+    }
     : listingId
       ? {
-          program,
-          update_of: listingId,
-          relation,
-          notes,
-          ...(sportsAnswer.length
-            ? {
-                sports: Object.fromEntries(
-                  sportsAnswer.map((x) => [x.key, x.seasons]),
-                ),
-              }
-            : {}),
-          ...(yearlyAnswer.length ? { yearly: yearlyAnswer } : {}),
-          ...(checkup ? { checkup } : {}),
-          ...(fixReason ? { reason: fixReason } : {}),
-        }
+        program,
+        update_of: listingId,
+        relation,
+        notes,
+        ...(sportsAnswer.length
+          ? {
+            sports: Object.fromEntries(
+              sportsAnswer.map((x) => [x.key, x.seasons]),
+            ),
+          }
+          : {}),
+        ...(yearlyAnswer.length ? { yearly: yearlyAnswer } : {}),
+        ...(checkup ? { checkup } : {}),
+        ...(fixReason ? { reason: fixReason } : {}),
+      }
       : isOrganization
         ? {
-            organization: program,
-            sport,
-            city,
-            state: stateRegion,
-            website: siteUrl,
-            notes,
-          }
+          organization: program,
+          sport,
+          city,
+          state: stateRegion,
+          website: siteUrl,
+          notes,
+        }
         : {
-            program,
-            org,
-            sport,
-            city,
-            state: stateRegion,
-            website: siteUrl,
-            notes,
-          };
+          program,
+          org,
+          sport,
+          city,
+          state: stateRegion,
+          website: siteUrl,
+          notes,
+        };
   const intakeId = await programSubmissionId(str(data.sid), email, answers);
   const location = [city, stateRegion].filter(Boolean).join(", ");
   // The summary is the notice's subject line: one line, bounded.
@@ -1496,10 +1504,10 @@ async function handleProfileSaved(request, env) {
   return saved
     ? json({ ok: true, kind, item_id: itemId, on }, 200, PROFILE_CACHE)
     : json(
-        { ok: false, error: "That item was not found." },
-        404,
-        PROFILE_CACHE,
-      );
+      { ok: false, error: "That item was not found." },
+      404,
+      PROFILE_CACHE,
+    );
 }
 
 function handleProfileSignout() {
@@ -1620,14 +1628,69 @@ async function authorizedOrganizationSession(request, env) {
   return readOrganizationSession(request, env.DB, organizationAuthSecret(env));
 }
 
-async function handleOrganizationSession(request, env) {
+async function authorizedOrganizationDashboardSession(request, env) {
   const session = await authorizedOrganizationSession(request, env);
+  if (!session) return { session: null, available: false };
+  const available = await featureAvailable(
+    env.DB,
+    "organization-dashboard",
+    session.email,
+    fetch,
+    env.RESEND_API_KEY,
+  );
+  return { session, available };
+}
+
+function organizationDashboardUnavailable() {
+  return json(
+    {
+      ok: false,
+      error: "The organization dashboard is not available to your beta tester group.",
+    },
+    403,
+    ORGANIZATION_AUTH_CACHE,
+  );
+}
+
+function isOrganizationDashboardPath(pathname) {
+  return pathname === "/manage" || pathname.startsWith("/manage/");
+}
+
+async function organizationFeatureGateResponse(request, env, url) {
+  if (request.method !== "GET" || !isOrganizationDashboardPath(url.pathname))
+    return null;
+  const session = await authorizedOrganizationSession(request, env);
+  if (!session) return null;
+  const available = await featureAvailable(
+    env.DB,
+    "organization-dashboard",
+    session.email,
+    fetch,
+    env.RESEND_API_KEY,
+  );
+  if (available) return null;
+  return new Response(featureUnavailableHtml(), {
+    status: 403,
+    headers: {
+      "Content-Type": "text/html; charset=utf-8",
+      "Cache-Control": "no-store",
+      "X-Robots-Tag": "noindex",
+    },
+  });
+}
+
+async function handleOrganizationSession(request, env) {
+  const { session, available } = await authorizedOrganizationDashboardSession(
+    request,
+    env,
+  );
   if (!session)
     return json(
       { ok: false, error: "Sign in to manage a program." },
       401,
       ORGANIZATION_AUTH_CACHE,
     );
+  if (!available) return organizationDashboardUnavailable();
   try {
     return json(
       {
@@ -1650,13 +1713,17 @@ async function handleOrganizationSession(request, env) {
 }
 
 async function handleManagedOrganizationGet(request, env, id) {
-  const session = await authorizedOrganizationSession(request, env);
+  const { session, available } = await authorizedOrganizationDashboardSession(
+    request,
+    env,
+  );
   if (!session)
     return json(
       { ok: false, error: "Sign in to manage a program." },
       401,
       ORGANIZATION_AUTH_CACHE,
     );
+  if (!available) return organizationDashboardUnavailable();
   try {
     const organization = await organizationForClaimEmail(
       env.DB,
@@ -1666,10 +1733,10 @@ async function handleManagedOrganizationGet(request, env, id) {
     return organization
       ? json({ ok: true, organization }, 200, ORGANIZATION_AUTH_CACHE)
       : json(
-          { ok: false, error: "Program not found." },
-          404,
-          ORGANIZATION_AUTH_CACHE,
-        );
+        { ok: false, error: "Program not found." },
+        404,
+        ORGANIZATION_AUTH_CACHE,
+      );
   } catch (err) {
     console.error("managed organization fetch failed", {
       reason: err instanceof Error ? err.message : "unknown",
@@ -1683,13 +1750,17 @@ async function handleManagedOrganizationGet(request, env, id) {
 }
 
 async function handleManagedOrganizationUpdate(request, env, id) {
-  const session = await authorizedOrganizationSession(request, env);
+  const { session, available } = await authorizedOrganizationDashboardSession(
+    request,
+    env,
+  );
   if (!session)
     return json(
       { ok: false, error: "Sign in to manage a program." },
       401,
       ORGANIZATION_AUTH_CACHE,
     );
+  if (!available) return organizationDashboardUnavailable();
   const data = await readBody(request);
   if (data === null)
     return json(
@@ -1707,10 +1778,10 @@ async function handleManagedOrganizationUpdate(request, env, id) {
     return organization
       ? json({ ok: true, organization }, 200, ORGANIZATION_AUTH_CACHE)
       : json(
-          { ok: false, error: "Program not found." },
-          404,
-          ORGANIZATION_AUTH_CACHE,
-        );
+        { ok: false, error: "Program not found." },
+        404,
+        ORGANIZATION_AUTH_CACHE,
+      );
   } catch (err) {
     const reason = err instanceof Error ? err.message : "";
     if (reason === "address-not-found") {
@@ -1755,27 +1826,31 @@ async function handleManagedOrganizationItems(
   kind,
   itemId,
 ) {
-  const session = await authorizedOrganizationSession(request, env);
+  const { session, available } = await authorizedOrganizationDashboardSession(
+    request,
+    env,
+  );
   if (!session)
     return json(
       { ok: false, error: "Sign in to manage an organization." },
       401,
       ORGANIZATION_AUTH_CACHE,
     );
+  if (!available) return organizationDashboardUnavailable();
   const operations =
     kind === "programs"
       ? {
-          list: managedOrganizationPrograms,
-          create: createManagedProgram,
-          update: updateManagedProgram,
-          remove: deleteManagedProgram,
-        }
+        list: managedOrganizationPrograms,
+        create: createManagedProgram,
+        update: updateManagedProgram,
+        remove: deleteManagedProgram,
+      }
       : {
-          list: managedOrganizationEvents,
-          create: createManagedEvent,
-          update: updateManagedEvent,
-          remove: deleteManagedEvent,
-        };
+        list: managedOrganizationEvents,
+        create: createManagedEvent,
+        update: updateManagedEvent,
+        remove: deleteManagedEvent,
+      };
   try {
     if (!itemId && request.method === "GET") {
       const items = await operations.list(
@@ -1785,10 +1860,10 @@ async function handleManagedOrganizationItems(
       );
       return items === null
         ? json(
-            { ok: false, error: "Organization not found." },
-            404,
-            ORGANIZATION_AUTH_CACHE,
-          )
+          { ok: false, error: "Organization not found." },
+          404,
+          ORGANIZATION_AUTH_CACHE,
+        )
         : json({ ok: true, items }, 200, ORGANIZATION_AUTH_CACHE);
     }
     if (!itemId && request.method === "POST") {
@@ -1807,10 +1882,10 @@ async function handleManagedOrganizationItems(
       );
       return item === null
         ? json(
-            { ok: false, error: "Organization not found." },
-            404,
-            ORGANIZATION_AUTH_CACHE,
-          )
+          { ok: false, error: "Organization not found." },
+          404,
+          ORGANIZATION_AUTH_CACHE,
+        )
         : json({ ok: true, item }, 201, ORGANIZATION_AUTH_CACHE);
     }
     if (itemId && request.method === "PATCH") {
@@ -1830,19 +1905,19 @@ async function handleManagedOrganizationItems(
       );
       return item === null
         ? json(
-            { ok: false, error: "Organization not found." },
+          { ok: false, error: "Organization not found." },
+          404,
+          ORGANIZATION_AUTH_CACHE,
+        )
+        : item === false
+          ? json(
+            {
+              ok: false,
+              error: `${kind === "programs" ? "Program" : "Event"} not found.`,
+            },
             404,
             ORGANIZATION_AUTH_CACHE,
           )
-        : item === false
-          ? json(
-              {
-                ok: false,
-                error: `${kind === "programs" ? "Program" : "Event"} not found.`,
-              },
-              404,
-              ORGANIZATION_AUTH_CACHE,
-            )
           : json({ ok: true, item }, 200, ORGANIZATION_AUTH_CACHE);
     }
     if (itemId && request.method === "DELETE") {
@@ -1854,20 +1929,20 @@ async function handleManagedOrganizationItems(
       );
       return removed === null
         ? json(
-            { ok: false, error: "Organization not found." },
-            404,
-            ORGANIZATION_AUTH_CACHE,
-          )
+          { ok: false, error: "Organization not found." },
+          404,
+          ORGANIZATION_AUTH_CACHE,
+        )
         : removed
           ? json({ ok: true }, 200, ORGANIZATION_AUTH_CACHE)
           : json(
-              {
-                ok: false,
-                error: `${kind === "programs" ? "Program" : "Event"} not found.`,
-              },
-              404,
-              ORGANIZATION_AUTH_CACHE,
-            );
+            {
+              ok: false,
+              error: `${kind === "programs" ? "Program" : "Event"} not found.`,
+            },
+            404,
+            ORGANIZATION_AUTH_CACHE,
+          );
     }
     return json(
       { ok: false, error: "Method not allowed" },
@@ -1906,6 +1981,224 @@ async function handleManagedOrganizationItems(
 }
 
 const BETA_AUTH_CACHE = "private, no-store";
+
+function featureUnavailableHtml() {
+  return `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Feature access unavailable | Adaptive Sports Near Me</title>
+<meta name="robots" content="noindex">
+<style>
+@import url("https://fonts.googleapis.com/css2?family=Sofia+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900&display=swap");
+
+:root {
+  color-scheme: light;
+  --ink: #1a1a1a;
+  --paper: #f3f3f3;
+  --sand: #f0efec;
+  --muted: #5f5d59;
+  --coral: #ff5c39;
+  --r: 15px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark !important;
+    --ink: #f3f3f3 !important;
+    --muted: #b7b4ad !important;
+    --paper: #171716 !important;
+    --sand: #2c2a26 !important;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  margin: 0;
+  padding: 20px;
+  background: var(--sand);
+  color: var(--ink);
+  font-family: "Sofia Sans", Arial, sans-serif;
+}
+
+.feature {
+  display: flex;
+  overflow: hidden;
+  width: min(90%, 1000px);
+  min-height: 70vh;
+  border-radius: var(--r);
+  background: var(--paper);
+  box-shadow: 0 8px 24px rgba(26, 26, 26, 0.1);
+}
+
+.feature-intro {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: min(50px, 5vw);
+  background: var(--coral);
+}
+
+.feature-intro * {
+  color: #1a1a1a;
+}
+
+.feature-brand {
+  width: min(75px, 100%);
+  height: auto;
+  filter: brightness(0);
+  opacity: 0.9;
+}
+
+.feature-kicker {
+  margin: 12px 0;
+  padding: 5px 10px;
+  border: 2px solid #1a1a1a;
+  border-radius: 99px;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.feature h1 {
+  margin: 10px 0 0;
+  font-size: clamp(32px, 6vw, 50px);
+  font-weight: 900;
+  letter-spacing: -0.055em;
+  line-height: 0.85;
+}
+
+.feature-intro p:last-child {
+  margin: 20px 0 0;
+  font-size: 19px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.feature-card {
+  align-self: center;
+  padding: min(50px, 5vw);
+}
+
+.feature-card h2 {
+  margin: 0;
+  font-size: 30px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.feature-card p {
+  margin: 12px 0 26px;
+  color: var(--muted);
+  font-size: 18px;
+  line-height: 1.35;
+}
+
+.feature-card a {
+  display: inline-block;
+  padding: 12px 18px;
+  border-radius: 8px;
+  background: var(--ink);
+  color: var(--paper);
+  font-size: 17px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.feature-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.feature-card button {
+  padding: 12px 18px;
+  border: 1px solid var(--ink);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 17px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+@media (max-width: 720px) {
+  body {
+    padding: 0;
+  }
+
+  .feature {
+    flex-direction: column;
+    width: 100%;
+    min-height: 100vh;
+    border-radius: 0;
+  }
+
+  .feature-intro {
+    min-height: 42vh;
+    padding: 28px 24px;
+  }
+
+  .feature-kicker {
+    margin-top: auto;
+  }
+
+  .feature h1 {
+    font-size: clamp(20px, 10vw, 58px);
+  }
+
+  .feature-intro p:last-child {
+    font-size: 18px;
+  }
+
+  .feature-card {
+    margin: auto 0;
+    padding: 32px 24px;
+  }
+}
+</style>
+</head>
+<body>
+<main class="feature">
+<section class="feature-intro" aria-labelledby="feature-title">
+<img class="feature-brand" src="/app/logo.svg" alt="Adaptive Sports Near Me">
+<p class="feature-kicker">Early access</p>
+<h1 id="feature-title">Find your place in adaptive sports.</h1>
+<p>We are testing new tools with selected groups before they are available to everyone.</p>
+</section>
+<section class="feature-card" aria-labelledby="feature-access-title">
+<h2 id="feature-access-title">This feature is still in testing</h2>
+<p>Your account does not have access to the Organization Dashboard at this time. Please check back as we expand access.</p>
+<div class="feature-actions">
+<a href="/">Return home</a>
+<button id="switch-email" type="button">Switch email</button>
+</div>
+</section>
+</main>
+<script>
+document.getElementById("switch-email").addEventListener("click", async (event) => {
+  event.currentTarget.disabled = true;
+  await Promise.allSettled([
+    fetch("/api/org-auth/signout", { method: "POST" }),
+    fetch("/api/beta-auth/signout", { method: "POST" }),
+  ]);
+  location.assign("/");
+});
+</script>
+</body>
+</html>`;
+}
 
 function betaHtml() {
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Adaptive Sports Near Me beta</title><meta name="robots" content="noindex"><style>@import url("https://fonts.googleapis.com/css2?family=Sofia+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,500&display=swap");
@@ -2250,10 +2543,10 @@ async function handleAdminBetaTesters(request, env, url) {
         data?.enabled !== false && data?.enabled !== 0 && data?.enabled !== "0",
         addingTester
           ? {
-              name: data?.name,
-              organization: data?.organization,
-              phone: data?.phone,
-            }
+            name: data?.name,
+            organization: data?.organization,
+            phone: data?.phone,
+          }
           : null,
       );
       if (addingTester && item.enabled && data?.sendInvitation === true) {
@@ -2404,10 +2697,10 @@ async function handleAdminSession(request, env) {
   return session
     ? json({ ok: true, email: session.email }, 200, ADMIN_AUTH_CACHE)
     : json(
-        { ok: false, error: "Sign in to access the admin dashboard." },
-        401,
-        ADMIN_AUTH_CACHE,
-      );
+      { ok: false, error: "Sign in to access the admin dashboard." },
+      401,
+      ADMIN_AUTH_CACHE,
+    );
 }
 
 async function handleAdminData(request, env, url, kind, id) {
@@ -2592,10 +2885,10 @@ async function handleAdminQueue(request, env, id) {
       return item
         ? json({ ok: true, item }, 200, ADMIN_AUTH_CACHE)
         : json(
-            { ok: false, error: "Queue item not found." },
-            404,
-            ADMIN_AUTH_CACHE,
-          );
+          { ok: false, error: "Queue item not found." },
+          404,
+          ADMIN_AUTH_CACHE,
+        );
     }
     if (id && request.method === "POST") {
       const data = await readBody(request);
@@ -2609,10 +2902,10 @@ async function handleAdminQueue(request, env, id) {
       return accepted
         ? json({ ok: true, item: accepted }, 200, ADMIN_AUTH_CACHE)
         : json(
-            { ok: false, error: "Queue item not found or already handled." },
-            404,
-            ADMIN_AUTH_CACHE,
-          );
+          { ok: false, error: "Queue item not found or already handled." },
+          404,
+          ADMIN_AUTH_CACHE,
+        );
     }
     return json(
       { ok: false, error: "Method not allowed" },

@@ -366,6 +366,23 @@ CREATE TABLE IF NOT EXISTS beta_sessions (
 CREATE INDEX IF NOT EXISTS beta_sessions_email_idx
   ON beta_sessions (email COLLATE NOCASE, expires_at);
 
+CREATE TABLE IF NOT EXISTS feature_toggles (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL UNIQUE COLLATE NOCASE,
+  audience_json TEXT NOT NULL DEFAULT '["everyone"]' CHECK (json_valid(audience_json)),
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
+INSERT OR IGNORE INTO feature_toggles (id, name, audience_json, created_at, updated_at)
+VALUES (
+  'organization-dashboard',
+  'Organization Dashboard',
+  '["everyone"]',
+  strftime('%Y-%m-%dT%H:%M:%fZ', 'now'),
+  strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
+);
+
 CREATE TABLE IF NOT EXISTS blog_posts (
   id TEXT PRIMARY KEY,
   title TEXT NOT NULL,
