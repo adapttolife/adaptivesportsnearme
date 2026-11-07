@@ -145,6 +145,7 @@ import {
   setBetaTester,
 } from "./beta-access.js";
 import { featureAvailable } from "./feature-access.js";
+import { maintenanceModeEnabled } from "./maintenance-mode.js";
 
 const API_CACHE = "public, max-age=300, stale-while-revalidate=600";
 const FEED_CACHE = "public, max-age=300";
@@ -163,6 +164,15 @@ const application = {
     if (url.pathname === "/admin" || url.pathname.startsWith("/admin/")) {
       const target = new URL(`https://adapttolife.org/admin${url.pathname.slice("/admin".length)}${url.search}`);
       return Response.redirect(target, 302);
+    }
+    if (url.pathname === "/api/maintenance") {
+      if (request.method !== "GET")
+        return json({ ok: false, error: "Method not allowed" }, 405);
+      return json(
+        { ok: true, enabled: await maintenanceModeEnabled(env.DB) },
+        200,
+        BETA_AUTH_CACHE,
+      );
     }
     // Versions uploaded with production config must not accept preview mutations.
     // Staging uploads use ENV_NAME=staging and the staging database bindings.
@@ -183,6 +193,9 @@ const application = {
         403,
       );
     }
+    const maintenanceGate = await maintenanceGateResponse(request, env, url);
+    if (maintenanceGate) return maintenanceGate;
+
     const betaGate = await prelaunchGate(request, env, url);
     if (betaGate) return betaGate;
 
@@ -1982,6 +1995,199 @@ async function handleManagedOrganizationItems(
 
 const BETA_AUTH_CACHE = "private, no-store";
 
+function maintenanceAssetPath(pathname) {
+  return (
+    /\.(?:css|js|svg|png|jpg|jpeg|webp|ico|woff2?|map)$/i.test(pathname) ||
+    pathname.startsWith("/app/") ||
+    pathname.startsWith("/assets/")
+  );
+}
+
+async function maintenanceGateResponse(request, env, url) {
+  if (maintenanceAssetPath(url.pathname)) return null;
+  if (!(await maintenanceModeEnabled(env.DB))) return null;
+  if (url.pathname.startsWith("/api/")) {
+    return json(
+      { ok: false, error: "Adaptive Sports Near Me is under maintenance." },
+      503,
+      BETA_AUTH_CACHE,
+    );
+  }
+  return new Response(maintenanceHtml(), {
+    status: 503,
+    headers: {
+      "Content-Type": "text/html; charset=utf-8",
+      "Cache-Control": "no-store",
+      "Retry-After": "300",
+      "X-Robots-Tag": "noindex",
+    },
+  });
+}
+
+function maintenanceHtml() {
+  return `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Under maintenance | Adaptive Sports Near Me</title>
+<meta name="robots" content="noindex">
+<style>
+@import url("https://fonts.googleapis.com/css2?family=Sofia+Sans:ital,wght@0,500;0,600;0,700;0,800;0,900&display=swap");
+
+:root {
+  color-scheme: light;
+  --ink: #1a1a1a;
+  --paper: #f3f3f3;
+  --sand: #f0efec;
+  --muted: #5f5d59;
+  --coral: #ff5c39;
+  --r: 15px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark !important;
+    --ink: #f3f3f3 !important;
+    --muted: #b7b4ad !important;
+    --paper: #171716 !important;
+    --sand: #2c2a26 !important;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  margin: 0;
+  padding: 20px;
+  background: var(--sand);
+  color: var(--ink);
+  font-family: "Sofia Sans", Arial, sans-serif;
+}
+
+main {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 0.9fr);
+  overflow: hidden;
+  width: min(90%, 1000px);
+  min-height: 58vh;
+  border-radius: var(--r);
+  background: var(--paper);
+  box-shadow: 0 8px 24px rgba(26, 26, 26, 0.1);
+}
+
+.intro {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: min(50px, 5vw);
+  background: var(--coral);
+}
+
+.brand {
+  width: min(75px, 100%);
+  height: auto;
+  filter: brightness(0);
+  opacity: 0.9;
+}
+
+.kicker {
+  margin: auto 0 12px;
+  padding: 5px 10px;
+  border: 2px solid #1a1a1a;
+  border-radius: 99px;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+h1 {
+  margin: 0;
+  font-size: clamp(34px, 6vw, 58px);
+  font-weight: 900;
+  letter-spacing: -0.055em;
+  line-height: 0.85;
+}
+
+.intro p:last-child {
+  margin: 20px 0 0;
+  font-size: 19px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.intro * {
+  color: #1a1a1a;
+}
+
+.message {
+  align-self: center;
+  padding: min(50px, 5vw);
+}
+
+.message h2 {
+  margin: 0;
+  font-size: 30px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.message p {
+  margin: 12px 0 0;
+  color: var(--muted);
+  font-size: 18px;
+  line-height: 1.35;
+}
+
+@media (max-width: 720px) {
+  body {
+    padding: 0;
+  }
+
+  main {
+    grid-template-columns: 1fr;
+    width: 100%;
+    min-height: 100vh;
+    border-radius: 0;
+  }
+
+  .intro {
+    min-height: 42vh;
+    padding: 28px 24px;
+  }
+
+  .message {
+    margin: auto 0;
+    padding: 32px 24px;
+  }
+}
+</style>
+</head>
+<body>
+<main>
+<section class="intro" aria-labelledby="maintenance-title">
+<img class="brand" src="/app/logo.svg" alt="Adaptive Sports Near Me">
+<p class="kicker">Temporarily unavailable</p>
+<h1 id="maintenance-title">Find your place in adaptive sports.</h1>
+<p>We are making updates to improve the directory.</p>
+</section>
+<section class="message" aria-labelledby="maintenance-message-title">
+<h2 id="maintenance-message-title">We will be back shortly</h2>
+<p>Adaptive Sports Near Me is under maintenance right now. Please try again in a few minutes.</p>
+</section>
+</main>
+</body>
+</html>`;
+}
+
 function featureUnavailableHtml() {
   return `<!doctype html>
 <html lang="en">
@@ -2212,9 +2418,21 @@ function betaHtml() {
 	--coral: #ff5c39;
 	--r: 15px;
 }
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark !important;
+    --ink: #f3f3f3 !important;
+    --muted: #b7b4ad !important;
+    --paper: #171716 !important;
+    --sand: #2c2a26 !important;
+  }
+}
+
 * {
 	box-sizing: border-box;
 }
+
 body {
 	margin: 0;
 	min-height: 100vh;
@@ -2226,16 +2444,18 @@ body {
   align-items: center;
   justify-content: center;
 }
+
 .beta {
   width: min(90%, 1000px);
 	margin: auto;
 	display: flex;
-	background: #fff;
+	background: var(--paper);
 	border-radius: var(--r);
 	box-shadow: 0 8px 24px rgba(26,26,26,.1);
 	overflow: hidden;
   min-height: 70vh;
 }
+
 .beta-intro {
 	background: var(--coral);
 	padding: min(50px, 5vw);
@@ -2243,6 +2463,11 @@ body {
 	flex-direction: column;
 	align-items: flex-start;
 }
+
+.beta-intro * {
+  color: #1a1a1a;
+}
+
 .beta-brand {
 	display: block;
 	width: min(75px, 100%);
@@ -2250,16 +2475,18 @@ body {
   filter: brightness(0);
   opacity: 0.9;
 }
+
 .beta-kicker {
 	margin: 12px 0;
 	padding: 5px 10px;
-	border: 2px solid var(--ink);
+	border: 2px solid #1a1a1a;
 	border-radius: 99px;
 	font-size: 15px;
 	font-weight: 800;
 	letter-spacing: 0.04em;
 	text-transform: uppercase;
 }
+
 .beta h1 {
 	margin: 0;
 	font-size: clamp(32px, 6vw, 50px);
@@ -2268,16 +2495,19 @@ body {
 	letter-spacing: -0.055em;
 	font-weight: 900;
 }
+
 .beta-intro p:last-child {
   margin: 20px 0 0;
   font-size: 19px;
   line-height: 1.2;
 	font-weight: 600;
 }
+
 .beta-card {
 	align-self: center;
 	padding: min(50px, 5vw);
 }
+
 .beta-card h2 {
 	margin: 0;
 	font-size: 30px;
@@ -2285,41 +2515,46 @@ body {
 	font-weight: 800;
 	letter-spacing: -0.03em;
 }
+
 .beta-card > p {
 	margin: 12px 0 26px;
 	color: var(--muted);
 	font-size: 18px;
 	line-height: 1.35;
 }
+
 .beta label {
 	display: block;
 	font-size: 16px;
 	font-weight: 700;
 }
+
 .beta input {
 	width: 100%;
 	height: 52px;
 	margin-top: 8px;
 	padding: 0 14px;
-	border: 1px solid #8a877f;
+	border: 1px solid var(--ink);
 	border-radius: 8px;
-	background: #fff;
+	background: transparent;
 	color: var(--ink);
 	font: inherit;
 	font-size: 18px;
 }
+
 .beta input:focus {
 	outline: 3px solid var(--ink);
 	outline-offset: 2px;
 }
+
 .beta button {
 	width: 100%;
 	min-height: 52px;
 	margin-top: 14px;
 	border: 0;
 	border-radius: 8px;
-	background: var(--ink);
-	color: var(--paper);
+	background: transparent;
+	color: var(--ink);
 	font:
 		700 17px "Sofia Sans",
 		Arial,
@@ -2329,12 +2564,11 @@ body {
 		background-color 0.18s ease,
 		transform 0.18s ease;
 }
-.beta button:hover {
-	background: #333331;
-}
+
 .beta button:active {
 	transform: translateY(1px);
 }
+
 .beta [role="status"] {
 	min-height: 1.5em;
 	margin: 14px 0 0;
@@ -2342,32 +2576,40 @@ body {
 	font-size: 16px;
 	line-height: 1.35;
 }
+
 .beta [role="status"]:empty {
   display: none;
 }
+
 @media (max-width: 720px) {
 	body {
 		padding: 0;
 	}
+
 	.beta {
 		min-height: 100vh;
 		border-radius: 0;
     width: 100%;
     flex-direction: column;
 	}
+
 	.beta-intro {
 		min-height: 42vh;
 		padding: 28px 24px;
 	}
+
 	.beta-kicker {
 		margin-top: auto;
 	}
+
 	.beta h1 {
 		font-size: clamp(20px, 10vw, 58px);
 	}
+
 	.beta-intro p:last-child {
 		font-size: 18px;
 	}
+
 	.beta-card {
 		margin: auto 0;
 		border-width: 1px 0 0;

@@ -3004,7 +3004,20 @@ async function handleOverlays(ctx) {
   }
 }
 
+async function maintenanceRedirect() {
+  try {
+    const response = await fetch("/api/maintenance");
+    const body = await response.json();
+    if (response.ok && body?.enabled) {
+      location.replace("/");
+      return true;
+    }
+  } catch (_) {}
+  return false;
+}
+
 async function render({ force = false } = {}) {
+  if (await maintenanceRedirect()) return;
   const hash = here();
   const { path, query } = parseLoc();
   const fromApp = PENDING;
