@@ -1,6 +1,6 @@
 // Turnstile is required on /api/subscribe (Alec, 2026-10-02). Signup records
 // intake, notifies hello@ and sends a welcome email from our own mailbox, so an
-// unverified request must be refused before beehiiv, D1 or mail is touched.
+// unverified request must be refused before Resend, D1 or mail is touched.
 import test from "node:test";
 import assert from "node:assert/strict";
 import worker from "../src/index.js";
@@ -8,8 +8,8 @@ import worker from "../src/index.js";
 const PROD = {
   ENV_NAME: "production",
   TURNSTILE_SECRET_KEY: "secret",
-  BEEHIIV_API_KEY: "k",
-  BEEHIIV_PUBLICATION_ID: "pub",
+  RESEND_API_KEY: "k",
+  RESEND_SEGMENT_ID: "seg",
 };
 
 async function attempt(env, body, verdict) {
@@ -42,7 +42,7 @@ async function attempt(env, body, verdict) {
 test("a signup without a Turnstile token is refused before anything else runs", async () => {
   const r = await attempt(PROD, { em: "person@example.test" }, "pass");
   assert.equal(r.status, 403);
-  assert.equal(r.calls.other, 0, "no beehiiv, D1 or mail call");
+  assert.equal(r.calls.other, 0, "no Resend, D1 or mail call");
 });
 
 test("a signup whose token fails verification is refused", async () => {

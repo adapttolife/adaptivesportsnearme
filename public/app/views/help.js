@@ -293,7 +293,7 @@ function privacyPage() {
       ],
       [
         "Who helps us",
-        `<p>We use a few services to run the site, such as Cloudflare (hosting, security and visit counts), Google (email and fonts), beehiiv (our email updates and the blog), UserWay (an accessibility tool) and OpenFreeMap (maps). They handle information to do that work, and each has its own privacy policy. We may also share information when the law requires it, or to protect the site and the people who use it.</p>`,
+        `<p>We use a few services to run the site, such as Cloudflare (hosting, security and visit counts), Google (email, fonts and our contact records), Resend (our email updates), UserWay (an accessibility tool) and OpenFreeMap (maps). They handle information to do that work, and each has its own privacy policy. We may also share information when the law requires it, or to protect the site and the people who use it.</p>`,
       ],
       [
         "Organization information",

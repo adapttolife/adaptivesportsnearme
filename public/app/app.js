@@ -3752,7 +3752,9 @@ async function sendForm(form) {
       err.fromServer = true;
       throw err;
     }
-    // The letter: a new signup confirms its email first (beehiiv sends the confirmation).
+    // The letter: a new signup is added to the Resend list straight away (single
+    // opt-in since the 10/30 Resend switch; nothing is sent to confirm), so the
+    // reply says they are subscribed.
     const letter = form.matches("[data-letter]");
     formDone(
       form,
@@ -4246,7 +4248,8 @@ function boot() {
     }
   });
 
-  // Back from the letter's confirmation email (beehiiv's Opt-in Redirect URL, /?confirmed=1):
+  // Back from a letter confirmation link (/?confirmed=1, the old Beehiiv opt-in
+  // redirect; kept so links already in inboxes still land somewhere true):
   // that moment has its own page, before the first draw.
   if (
     location.pathname === "/" &&
