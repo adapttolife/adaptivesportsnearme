@@ -726,8 +726,7 @@ async function handleSubscribe(request, env, ctx) {
     else await result.welcomeJob;
   }
 
-  // Single opt-in (Resend): a new signup is on the list now and is told so;
-  // `confirm: true` is the field name the front end already reads for "new".
+  // A new signup has to confirm its email first; someone already subscribed is told so.
   return json({
     ok: true,
     ...(result.existing ? { existing: true } : { confirm: true }),
