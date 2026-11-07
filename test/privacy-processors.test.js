@@ -25,3 +25,13 @@ test("nothing the site ships still names beehiiv", () => {
     assert.doesNotMatch(visible, /beehiiv/i, file);
   }
 });
+
+test("a processor change re-dates the privacy page, and only the privacy page", async () => {
+  // The page promises to update the date at the top when it changes. This pins
+  // the date to the processor list: change one without the other and this fails.
+  assert.match(HELP, /export const PRIVACY_UPDATED = "November 7, 2026"/);
+  assert.match(HELP, /Resend \(our email updates\)/);
+  assert.match(HELP, /export const TERMS_UPDATED = "October 20, 2026"/);
+  assert.match(HELP, /meta: PAGES\.privacy,\s*updated: PRIVACY_UPDATED/);
+  assert.match(HELP, /meta: PAGES\.terms,\s*updated: TERMS_UPDATED/);
+});

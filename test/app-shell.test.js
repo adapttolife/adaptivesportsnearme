@@ -744,8 +744,8 @@ test("the claim finder and the fix form use the listing's own address", () => {
     );
 });
 
-// The letter's thank-you says what happens next: a new signup confirms its email first.
-test("the letter's thank-you asks a new subscriber to confirm, and the confirmation lands on its own page", () => {
+// The letter's thank-you says what happens next: a new signup is subscribed straight away (single opt-in).
+test("the letter's thank-you tells a new subscriber they are on the list, and the old confirmation link still lands on its own page", () => {
   const send = between(APP, "async function sendForm(", "\n}\n");
   assert.match(
     send,
