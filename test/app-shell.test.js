@@ -476,6 +476,10 @@ test("every form the app sends carries a Turnstile token for the ASNM site key",
     "the token is in the body before it is posted",
   );
   assert.match(send, /fetch\(form\.getAttribute\("data-send"\)/);
+  // An empty token is never posted: the form stops and asks for a reload.
+  const guard = send.indexOf("if (!body.cf_token)");
+  assert.ok(guard > send.indexOf("turnstileToken(form)"), "guard follows the token");
+  assert.ok(guard < send.indexOf("fetch("), "guard runs before the post");
 });
 
 // 2026-10-03: a pasted "mailto:" prefix was removed before the email was checked
