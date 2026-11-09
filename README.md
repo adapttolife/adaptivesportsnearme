@@ -1,6 +1,6 @@
 # Adaptive Sports Near Me
 
-Find adaptive sports programs, grants and events by place or sport. Free, no account needed. Every listing shows when we last checked it.
+Find adaptive sports programs, grants and events by place or sport. In beta. Approved testers sign in with their email. Every listing shows when we last checked it.
 
 **[adaptivesportsnearme.com](https://adaptivesportsnearme.com)** · Made with ❤️ by [Adapt To Life](https://adapttolife.org), a 501(c)(3) nonprofit.
 
