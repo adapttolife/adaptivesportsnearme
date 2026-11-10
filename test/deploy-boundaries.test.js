@@ -44,7 +44,9 @@ test("staging versions target the same Worker with isolated databases and no cro
   assert.equal(gateConfig.main, "src/signup-gate.js");
   assert.equal(preview.vars.MAIL_TRANSPORT, "gmail");
   assert.equal(gateConfig.vars.MAIL_TRANSPORT, "gmail");
-  assert.deepEqual(app.triggers.crons, ["0 */2 * * *", "0 * * * *"]);
+  // F-017: the maintenance lanes fetch website URLs from anonymous drafts.
+  // Their crons stay off until the lanes fetch only reviewed or claimed orgs.
+  assert.deepEqual(app.triggers.crons, []);
 });
 
 test("staging forwards requests and live bindings without disabling features", async (t) => {
