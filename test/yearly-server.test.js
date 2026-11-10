@@ -463,16 +463,24 @@ test("confirm-your-listing answers are cleaned: known sports and seasons, three 
     JSON.stringify([
       { name: "  Ski Day\n", month: 2, url: "example.org/ski" },
       { name: "", month: 3 },
-      { name: "Regatta", month: 13, url: "javascript:alert(1)" },
       { name: "Paddle Day", month: "7" },
       { name: "Golf Day", month: 8 },
     ]),
   );
   assert.deepEqual(yearly, [
     { name: "Ski Day", month: 2, url: "https://example.org/ski" },
-    { name: "Regatta", month: null, url: "" },
     { name: "Paddle Day", month: 7, url: "" },
+    { name: "Golf Day", month: 8, url: "" },
   ]);
+  assert.throws(
+    () =>
+      parseYearlyAnswer(
+        JSON.stringify([
+          { name: "Regatta", month: 13, url: "javascript:alert(1)" },
+        ]),
+      ),
+    /url-invalid/,
+  );
   assert.equal(webUrl("ftp://example.org"), "");
   assert.equal(webUrl("localhost"), "");
 });
@@ -986,7 +994,7 @@ test("an event the organization holds every year starts its yearly page once, an
         starts_at: "2027-01-01T00:00:00Z",
         recap_url: "javascript:x",
       }),
-      /website-invalid/,
+      /url-invalid/,
     );
     assert.equal(
       sqlite.prepare("SELECT count(*) n FROM events").get().n,

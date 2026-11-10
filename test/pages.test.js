@@ -727,11 +727,12 @@ test("/letter/confirmed is a page with its own title, kept out of search and the
 
 test("each page names its own code, and a listing page its details, for the browser to start early", async () => {
   const { preloadHints } = await import("../src/pages.js");
-  // A link names its file in href; a page's data starts with a script (src/pages.js earlyFetch).
+  // The page names its view code with links. The external bootstrap starts shared data.
   const hrefs = (path) =>
-    preloadHints(path).map(
-      (t) => (t.match(/href="([^"]+)"/) || t.match(/fetch\("([^"]+)"\)/))[1],
-    );
+    preloadHints(path)
+      .map((tag) => tag.match(/href="([^"]+)"/))
+      .filter(Boolean)
+      .map((match) => match[1]);
   assert.deepEqual(hrefs("/"), ["/app/views/home.js", "/app/views/home.css"]);
   assert.deepEqual(hrefs("/sports/tennis/"), [
     "/app/views/sport.js",
@@ -744,18 +745,16 @@ test("each page names its own code, and a listing page its details, for the brow
   assert.deepEqual(hrefs("/organizations/" + PROGRAM.toUpperCase()), [
     "/app/views/program.js",
     "/app/views/program.css",
-    "/api/organizations/" + PROGRAM,
   ]);
   assert.deepEqual(hrefs("/programs/" + PROGRAM), [
     "/app/views/program-detail.js",
     "/app/views/program-detail.css",
-    "/api/programs/" + PROGRAM,
   ]);
   assert.deepEqual(hrefs("/nope"), []);
-  // The shell starts the listings for every page, and a missing page names no code.
+  // The external bootstrap starts shared data for every page, and a missing page names no code.
   assert.match(
     SHELL,
-    /\["\/api\/listings", "\/data\/states\.json", "\/data\/sports\.json"\]\.forEach/,
+    /<script src="\/app\/bootstrap\.js"><\/script>/,
   );
   const env = { ASSETS: assets(), DB: undefined, ENV_NAME: "production" };
   const missing = await (await serve("/nope", env)).text();

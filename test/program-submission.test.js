@@ -235,7 +235,7 @@ test("an organization submission creates a private, unverified organization draf
     {
       name: "Troy Adaptive",
       sport_key: "hockey",
-      website_url: "https://troyadaptive.example",
+      website_url: "https://troyadaptive.example/",
       city: "Troy",
       state: "NY",
       verification_status: "unverified",
