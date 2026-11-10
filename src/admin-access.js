@@ -759,9 +759,7 @@ export async function getAdminQueueItem(db, id) {
     const org = ID_RE.test(id)
       ? await db
           .prepare(
-          `SELECT id, name, city, state, state_name, lat, lng, geo_precision,
-                  website_url, ages, cost_note, is_public
-           FROM organizations WHERE id = ?`,
+          `SELECT id, name, city, state, website_url, ages, cost_note FROM organizations WHERE id = ?`,
           )
           .bind(id)
           .first()
@@ -772,16 +770,9 @@ export async function getAdminQueueItem(db, id) {
         name: org.name,
         city: org.city,
         state: org.state,
-        state_name: org.state_name || null,
-        lat: org.lat,
-        lng: org.lng,
-        geo_precision: org.geo_precision || null,
         website: org.website_url || null,
-        website_url: org.website_url || null,
         ages: org.ages || null,
-        cost_note: org.cost_note || null,
         cost: org.cost_note || null,
-        is_public: Number(org.is_public || 0),
         // What it runs now, so the queue can say "Adds Skiing (winter)" rather than list everything.
         sports: (await organizationSports(db, org.id)).map(
           ({ key, seasons }) => ({ key, seasons }),
@@ -931,7 +922,16 @@ async function acceptClaimed(db, item, actor) {
   } else if (kind === "listing_update") {
     if (!item.organization) throw new Error("organization-missing");
     recordId = item.organization.id;
-    await applyConfirmation(db, item.organization, item.payload, {
+    const organization = await db
+      .prepare(
+        `SELECT id, name, city, state, state_name, lat, lng, geo_precision,
+                website_url, ages, cost_note, is_public
+         FROM organizations WHERE id = ?`,
+      )
+      .bind(recordId)
+      .first();
+    if (!organization) throw new Error("organization-missing");
+    await applyConfirmation(db, { ...item.organization, ...organization }, item.payload, {
       actor,
       ref: `submission ${item.id}`,
       timestamp,
