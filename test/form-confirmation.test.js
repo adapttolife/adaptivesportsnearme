@@ -244,27 +244,12 @@ test("missing Gmail credentials log the delivery gap without falling back or los
     1,
   );
 });
-test("profile create and edit each send their own confirmation without newsletter opt-in", async (t) => {
+test("profile changes require a verified profile session", async (t) => {
   const x = setup(t);
   const body = { em: "person@example.test", name: "Person", sports: "cycling" };
-  const created = await x.post("/api/profile", body);
-  assert.equal(created.status, 201);
-  await Promise.all(x.jobs);
-  assert.equal(x.sent.length, 1);
-  assert.match(x.sent[0].subject, /profile is ready/);
-  const cookie = created.headers.get("Set-Cookie").split(";")[0];
-  const updated = await x.post(
-    "/api/profile",
-    { ...body, name: "Updated" },
-    cookie,
-  );
-  assert.equal(updated.status, 200);
-  await Promise.all(x.jobs);
-  assert.equal(x.sent.length, 2);
-  assert.match(x.sent[1].subject, /profile was updated/);
-  const duplicate = await x.post("/api/profile", body);
-  assert.equal(duplicate.status, 409);
-  assert.equal(x.sent.length, 2);
+  const response = await x.post("/api/profile", body);
+  assert.equal(response.status, 401);
+  assert.equal(x.sent.length, 0);
   assert.equal(x.calls.length, 0);
 });
 test("program confirmations use Gmail when selected", async (t) => {

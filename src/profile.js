@@ -7,6 +7,7 @@
 
 export const COOKIE_NAME = "asnm_p";
 const LOGIN_MINUTES = 15;
+const SESSION_SECONDS = 60 * 60 * 24 * 30;
 const ID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const SAVE_KINDS = new Set([
   "organizations",
@@ -41,7 +42,7 @@ export function validEmail(value) {
     ? email
     : "";
 }
-const COOKIE_MAX_AGE = 31536000; // 1 year, seconds — matches the migration comment's intent
+const COOKIE_MAX_AGE = SESSION_SECONDS;
 
 // ---- HMAC cookie (WebCrypto) --------------------------------------------------
 async function hmacKey(secret) {
@@ -117,6 +118,52 @@ export async function readProfileCookie(request, secret) {
   const raw = parseCookieHeader(request.headers.get("Cookie"), COOKIE_NAME);
   if (!raw) return null;
   return verifyProfileCookie(raw, secret);
+}
+
+export async function createProfileSession(db, profileId, secret) {
+  const id = crypto.randomUUID();
+  await db
+    .prepare(
+      `INSERT INTO profile_sessions (id, profile_id, expires_at, created_at) VALUES (?, ?, ?, ?)`,
+    )
+    .bind(
+      id,
+      profileId,
+      new Date(Date.now() + SESSION_SECONDS * 1000).toISOString(),
+      now(),
+    )
+    .run();
+  return { id, signature: await signProfileId(id, secret) };
+}
+
+export async function readProfileSession(request, db, secret) {
+  const id = await readProfileCookie(request, secret);
+  if (!id || !ID_RE.test(id)) return null;
+  const row = await db
+    .prepare(
+      `SELECT profile_id FROM profile_sessions WHERE id = ? AND revoked_at IS NULL AND expires_at > ?`,
+    )
+    .bind(id, now())
+    .first();
+  return row?.profile_id ? { id, profileId: String(row.profile_id) } : null;
+}
+
+export async function revokeProfileSession(db, id) {
+  await db
+    .prepare(
+      `UPDATE profile_sessions SET revoked_at = ? WHERE id = ? AND revoked_at IS NULL`,
+    )
+    .bind(now(), id)
+    .run();
+}
+
+export async function revokeProfileSessions(db, profileId) {
+  await db
+    .prepare(
+      `UPDATE profile_sessions SET revoked_at = ? WHERE profile_id = ? AND revoked_at IS NULL`,
+    )
+    .bind(now(), profileId)
+    .run();
 }
 
 // ---- validation -----------------------------------------------------------------

@@ -209,6 +209,14 @@ CREATE TABLE IF NOT EXISTS profile_login_tokens (
   created_at TEXT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS profile_sessions (
+  id TEXT PRIMARY KEY,
+  profile_id TEXT NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  expires_at TEXT NOT NULL,
+  revoked_at TEXT,
+  created_at TEXT NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS profile_saved_items (
   profile_id TEXT NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
   item_kind TEXT NOT NULL CHECK (item_kind IN ('organizations', 'programs', 'events', 'grants')),
@@ -324,6 +332,7 @@ CREATE INDEX IF NOT EXISTS organizations_status_idx ON organizations (status, is
 CREATE INDEX IF NOT EXISTS idx_profile_favorites_org ON profile_favorites (org_id);
 CREATE INDEX IF NOT EXISTS profile_login_tokens_expires_idx ON profile_login_tokens(expires_at);
 CREATE INDEX IF NOT EXISTS profile_login_tokens_nonce_idx ON profile_login_tokens(nonce_hash);
+CREATE INDEX IF NOT EXISTS profile_sessions_profile_idx ON profile_sessions(profile_id, expires_at);
 CREATE INDEX IF NOT EXISTS profile_saved_items_profile_idx ON profile_saved_items(profile_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS profile_saved_sports_profile_idx ON profile_saved_sports(profile_id, created_at DESC);
 

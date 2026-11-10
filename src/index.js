@@ -74,14 +74,14 @@ import { json, text } from "./http.js";
 import { cachedDirectoryResponse } from "./read-cache.js";
 import { loadPlaces } from "./geo.js";
 import {
-  readProfileCookie,
-  signProfileId,
+  readProfileSession,
   serializeProfileCookie,
   clearProfileCookie,
+  createProfileSession,
+  revokeProfileSession,
+  revokeProfileSessions,
   getValidSportKeys,
   getProfileById,
-  getProfileByEmail,
-  createProfile,
   updateProfile,
   getProfileWithFavorites,
   orgExists,
@@ -321,7 +321,12 @@ const application = {
     if (url.pathname === "/api/profile/signout") {
       if (request.method !== "POST")
         return json({ ok: false, error: "Method not allowed" }, 405);
-      return handleProfileSignout();
+      return handleProfileSignout(request, env);
+    }
+    if (url.pathname === "/api/profile/signout-everywhere") {
+      if (request.method !== "POST")
+        return json({ ok: false, error: "Method not allowed" }, 405);
+      return handleProfileSignoutEverywhere(request, env);
     }
     if (url.pathname === "/api/org-auth/request-link") {
       if (request.method !== "POST")
@@ -1275,50 +1280,41 @@ async function handleProfileUpsert(request, env, ctx) {
   }
   const sports = parseSports(data.sports, validKeys);
 
-  const existingId = await readProfileCookie(request, env.PROFILE_SIGNING_KEY);
-  let id,
-    isNew = false;
+  const session = await readProfileSession(
+    request,
+    env.DB,
+    env.PROFILE_SIGNING_KEY,
+  );
+  if (!session)
+    return json(
+      { ok: false, error: "Sign in by email before creating or editing a profile." },
+      401,
+      PROFILE_CACHE,
+    );
 
   try {
-    if (existingId) {
-      const existing = await getProfileById(env.DB, existingId);
-      if (!existing)
-        return json(
-          {
-            ok: false,
-            error: "Your profile could not be found. Please start again.",
-          },
-          404,
-        );
-      await updateProfile(env.DB, existingId, {
-        email,
-        name,
-        state: stateCode,
-        sports,
-        newsletter,
-      });
-      id = existingId;
-    } else {
-      const dupe = await getProfileByEmail(env.DB, email);
-      if (dupe) {
-        return json(
-          {
-            ok: false,
-            error:
-              "That email already has a profile on another device. Recovery by email link is coming soon.",
-          },
-          409,
-        );
-      }
-      id = await createProfile(env.DB, {
-        email,
-        name,
-        state: stateCode,
-        sports,
-        newsletter,
-      });
-      isNew = true;
-    }
+    const existing = await getProfileById(env.DB, session.profileId);
+    if (!existing)
+      return json(
+        {
+          ok: false,
+          error: "Your profile could not be found. Please start again.",
+        },
+        404,
+      );
+    if (String(existing.email).toLowerCase() !== email)
+      return json(
+        { ok: false, error: "Your email address is set by your sign-in link." },
+        403,
+        PROFILE_CACHE,
+      );
+    await updateProfile(env.DB, session.profileId, {
+      email,
+      name,
+      state: stateCode,
+      sports,
+      newsletter,
+    });
   } catch (err) {
     // Covers the UNIQUE(email) race between the read above and the write, on both
     // create and update (an update can also collide if the new email belongs to
@@ -1344,19 +1340,11 @@ async function handleProfileUpsert(request, env, ctx) {
       console.error("profile newsletter opt-in failed:", result.error); // profile save already succeeded
   }
 
-  const sig = await signProfileId(id, env.PROFILE_SIGNING_KEY);
   await queueFormConfirmation(env, ctx, {
-    kind: isNew ? "profile-created" : "profile-updated",
+    kind: "profile-updated",
     email,
   });
-  return new Response(JSON.stringify({ ok: true, id, isNew }), {
-    status: isNew ? 201 : 200,
-    headers: {
-      "Content-Type": "application/json",
-      "Cache-Control": "no-store",
-      "Set-Cookie": serializeProfileCookie(id, sig),
-    },
-  });
+  return json({ ok: true, id: session.profileId, isNew: false }, 200, PROFILE_CACHE);
 }
 
 async function handleProfileLoginRequest(request, env, url) {
@@ -1429,13 +1417,17 @@ async function handleProfileLoginVerify(request, url, env) {
         PROFILE_CACHE,
       );
     const id = await findOrCreateProfile(env.DB, email);
-    const signature = await signProfileId(id, env.PROFILE_SIGNING_KEY);
+    const session = await createProfileSession(
+      env.DB,
+      id,
+      env.PROFILE_SIGNING_KEY,
+    );
     return new Response(null, {
       status: 303,
       headers: {
         "Cache-Control": "no-store",
         Location: "/account",
-        "Set-Cookie": serializeProfileCookie(id, signature),
+        "Set-Cookie": serializeProfileCookie(session.id, session.signature),
       },
     });
   } catch (err) {
@@ -1460,11 +1452,15 @@ async function handleProfileGet(request, env) {
     return json({ ok: false }, 503, PROFILE_CACHE);
   }
 
-  const id = await readProfileCookie(request, env.PROFILE_SIGNING_KEY);
-  if (!id) return json({ ok: false }, 401, PROFILE_CACHE);
+  const session = await readProfileSession(
+    request,
+    env.DB,
+    env.PROFILE_SIGNING_KEY,
+  );
+  if (!session) return json({ ok: false }, 401, PROFILE_CACHE);
 
   try {
-    const profile = await getProfileWithFavorites(env.DB, id);
+    const profile = await getProfileWithFavorites(env.DB, session.profileId);
     if (!profile) return json({ ok: false }, 401, PROFILE_CACHE);
     return json({ ok: true, profile }, 200, PROFILE_CACHE);
   } catch (err) {
@@ -1494,8 +1490,12 @@ async function handleProfileFavorite(request, env) {
     );
   }
 
-  const id = await readProfileCookie(request, env.PROFILE_SIGNING_KEY);
-  if (!id)
+  const session = await readProfileSession(
+    request,
+    env.DB,
+    env.PROFILE_SIGNING_KEY,
+  );
+  if (!session)
     return json(
       { ok: false, error: "Create a free profile to save programs." },
       401,
@@ -1512,7 +1512,7 @@ async function handleProfileFavorite(request, env) {
   try {
     if (!(await orgExists(env.DB, orgId)))
       return json({ ok: false, error: "That program was not found." }, 404);
-    await setFavorite(env.DB, id, orgId, on);
+    await setFavorite(env.DB, session.profileId, orgId, on);
     return json({ ok: true, org_id: orgId, on });
   } catch (err) {
     console.error("favorite toggle failed:", err);
@@ -1530,8 +1530,12 @@ async function handleProfileSaved(request, env) {
       503,
       PROFILE_CACHE,
     );
-  const profileId = await readProfileCookie(request, env.PROFILE_SIGNING_KEY);
-  if (!profileId)
+  const session = await readProfileSession(
+    request,
+    env.DB,
+    env.PROFILE_SIGNING_KEY,
+  );
+  if (!session)
     return json(
       { ok: false, error: "Sign in to save items." },
       401,
@@ -1541,7 +1545,7 @@ async function handleProfileSaved(request, env) {
   const kind = String(data?.kind || "").toLowerCase(),
     itemId = str(data?.item_id);
   const on = data?.on === true || data?.on === "true" || data?.on === "1";
-  const saved = await setSavedItem(env.DB, profileId, kind, itemId, on);
+  const saved = await setSavedItem(env.DB, session.profileId, kind, itemId, on);
   return saved
     ? json({ ok: true, kind, item_id: itemId, on }, 200, PROFILE_CACHE)
     : json(
@@ -1551,9 +1555,36 @@ async function handleProfileSaved(request, env) {
     );
 }
 
-function handleProfileSignout() {
+async function handleProfileSignout(request, env) {
+  if (env.DB && env.PROFILE_SIGNING_KEY) {
+    const session = await readProfileSession(
+      request,
+      env.DB,
+      env.PROFILE_SIGNING_KEY,
+    );
+    if (session) await revokeProfileSession(env.DB, session.id);
+  }
   return new Response(JSON.stringify({ ok: true }), {
     status: 200,
+    headers: {
+      "Content-Type": "application/json",
+      "Cache-Control": "no-store",
+      "Set-Cookie": clearProfileCookie(),
+    },
+  });
+}
+
+async function handleProfileSignoutEverywhere(request, env) {
+  if (!env.DB || !env.PROFILE_SIGNING_KEY)
+    return json({ ok: false, error: "Profiles are temporarily unavailable." }, 503);
+  const session = await readProfileSession(
+    request,
+    env.DB,
+    env.PROFILE_SIGNING_KEY,
+  );
+  if (!session) return json({ ok: false, error: "Sign in first." }, 401, PROFILE_CACHE);
+  await revokeProfileSessions(env.DB, session.profileId);
+  return new Response(JSON.stringify({ ok: true }), {
     headers: {
       "Content-Type": "application/json",
       "Cache-Control": "no-store",
