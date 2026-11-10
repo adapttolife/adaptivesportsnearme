@@ -35,8 +35,8 @@ import { notifyIntake } from "./intake.js";
 //   GET  /api/profile          -> the signed-in profile + saved programs
 //   POST /api/profile/favorites-> save/unsave a program
 //   POST /api/profile/signout  -> clear the profile cookie
-//   GET  /blog                 -> beehiiv-backed blog index (server-rendered HTML, SEO)
-//   GET  /blog/:slug           -> beehiiv-backed blog post (server-rendered HTML, SEO)
+//   GET  /blog                 -> blog index from D1 blog_posts (admin dashboard editor)
+//   GET  /blog/:slug           -> one published blog post from D1 blog_posts
 // All secrets stay server-side (Worker secrets). Bot defence: honeypot + required Turnstile.
 
 import {
@@ -702,7 +702,7 @@ async function handleSubscribe(request, env, ctx) {
   if (str(data.company)) return json({ ok: true });
 
   // Turnstile is REQUIRED here (Alec, 2026-10-02). This was honeypot-only while
-  // signup only touched beehiiv; it now records intake, notifies hello@ and sends a
+  // signup only touched the email provider; it now records intake, notifies hello@ and sends a
   // welcome email from our own mailbox, so an unchecked endpoint would let anyone
   // make us mail any address. Every form that posts here renders the widget.
   if (

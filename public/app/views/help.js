@@ -250,10 +250,13 @@ function letterPage() {
    We're constantly changing. I don't want to be too rigid"), so these pages state lasting
    promises, not mechanisms or numbers. Keep them true: when the site starts collecting
    something new, or a promise here stops holding, change the page in the same change. */
-const UPDATED = "October 20, 2026";
+// Each page carries its own date: the page promises "we'll update the date at the
+// top" when it changes, so a change to one page must not re-date the other.
+export const PRIVACY_UPDATED = "November 7, 2026"; // processors changed: Resend now sends our email updates
+export const TERMS_UPDATED = "October 20, 2026";
 const MAIL = `<a href="mailto:hello@adaptivesportsnearme.com">hello@adaptivesportsnearme.com</a>`;
 const ATL = `<a href="https://adapttolife.org">Adapt To Life NFP</a>`;
-function legalPage({ meta, h1, intro, sections }) {
+function legalPage({ meta, h1, intro, sections, updated }) {
   const secs = sections
     .map(
       ([h, body], i) =>
@@ -263,13 +266,14 @@ function legalPage({ meta, h1, intro, sections }) {
   return {
     title: site(meta.title),
     description: meta.description,
-    html: `<article class="lg"><div class="lg-head"><h1 tabindex="-1">${h1}</h1><p class="lg-date">Last updated ${UPDATED}</p><p class="lg-intro">${intro}</p></div>${secs}</article>`,
+    html: `<article class="lg"><div class="lg-head"><h1 tabindex="-1">${h1}</h1><p class="lg-date">Last updated ${updated}</p><p class="lg-intro">${intro}</p></div>${secs}</article>`,
   };
 }
 
 function privacyPage() {
   return legalPage({
     meta: PAGES.privacy,
+    updated: PRIVACY_UPDATED,
     h1: "Privacy policy",
     intro: `Adaptive Sports Near Me is a free directory of adaptive sports programs, grants and events, run by ${ATL}, a 501(c)(3) nonprofit. This page explains what we collect and how we use it.`,
     sections: [
@@ -293,7 +297,7 @@ function privacyPage() {
       ],
       [
         "Who helps us",
-        `<p>We use a few services to run the site, such as Cloudflare (hosting, security and visit counts), Google (email and fonts), beehiiv (our email updates and the blog), UserWay (an accessibility tool) and OpenFreeMap (maps). They handle information to do that work, and each has its own privacy policy. We may also share information when the law requires it, or to protect the site and the people who use it.</p>`,
+        `<p>We use a few services to run the site, such as Cloudflare (hosting, security and visit counts), Google (email, fonts and our contact records), Resend (our email updates), UserWay (an accessibility tool) and OpenFreeMap (maps). They handle information to do that work, and each has its own privacy policy. We may also share information when the law requires it, or to protect the site and the people who use it.</p>`,
       ],
       [
         "Organization information",
@@ -320,6 +324,7 @@ function privacyPage() {
 function termsPage() {
   return legalPage({
     meta: PAGES.terms,
+    updated: TERMS_UPDATED,
     h1: "Terms of use",
     intro: `These terms cover your use of Adaptive Sports Near Me, a free directory run by ${ATL}, a 501(c)(3) nonprofit. By using the site, you agree to them.`,
     sections: [

@@ -1,5 +1,7 @@
-/* /letter/confirmed: where the letter's confirmation email lands (beehiiv's
-   Opt-in Redirect URL; /?confirmed=1 is sent here too). It says the email is
+/* /letter/confirmed: where the old Beehiiv opt-in redirect (/?confirmed=1)
+   lands. Since the 10/30 Resend switch a signup is single opt-in and no
+   confirmation email is sent, so new signups never come here; the page stays
+   so links already in inboxes still land somewhere true. It says the email is
    confirmed, what the letter brings, how to keep it out of spam, and offers the
    directory. A colour block like home's hero, without the search inside it. */
 import * as A from "../app.js";

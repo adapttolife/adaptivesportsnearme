@@ -734,7 +734,7 @@ test("the letter's thank-you asks a new subscriber to confirm, and the confirmat
     /letter && out\.confirm\s*\? "You\'re now subscribed to our newsletter."/,
   );
   assert.match(send, /letter && out\.existing\s*\? "You're already on the list/);
-  // beehiiv's Opt-in Redirect URL is /?confirmed=1: before the first draw it becomes /letter/confirmed.
+  // The old Beehiiv opt-in redirect /?confirmed=1 still becomes /letter/confirmed before the first draw.
   assert.match(
     APP,
     /location\.pathname === "\/"\s*&&\s*new URLSearchParams\(location\.search\)\.get\("confirmed"\) === "1"/,
