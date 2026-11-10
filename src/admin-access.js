@@ -759,7 +759,9 @@ export async function getAdminQueueItem(db, id) {
     const org = ID_RE.test(id)
       ? await db
           .prepare(
-            `SELECT id, name, city, state, website_url, ages, cost_note FROM organizations WHERE id = ?`,
+          `SELECT id, name, city, state, state_name, lat, lng, geo_precision,
+                  website_url, ages, cost_note, is_public
+           FROM organizations WHERE id = ?`,
           )
           .bind(id)
           .first()
@@ -770,9 +772,16 @@ export async function getAdminQueueItem(db, id) {
         name: org.name,
         city: org.city,
         state: org.state,
+        state_name: org.state_name || null,
+        lat: org.lat,
+        lng: org.lng,
+        geo_precision: org.geo_precision || null,
         website: org.website_url || null,
+        website_url: org.website_url || null,
         ages: org.ages || null,
+        cost_note: org.cost_note || null,
         cost: org.cost_note || null,
+        is_public: Number(org.is_public || 0),
         // What it runs now, so the queue can say "Adds Skiing (winter)" rather than list everything.
         sports: (await organizationSports(db, org.id)).map(
           ({ key, seasons }) => ({ key, seasons }),
@@ -801,9 +810,50 @@ export async function getAdminQueueItem(db, id) {
   return item;
 }
 
-export async function acceptAdminQueueItem(db, id, actor = "system") {
+export function listingUpdateChangeFields(payload) {
+  const checkup =
+    payload?.checkup && typeof payload.checkup === "object"
+      ? payload.checkup
+      : null;
+  if (!checkup) return [];
+  if (checkup.verdict === "stopped") return ["visibility"];
+  const facts =
+    checkup.facts && typeof checkup.facts === "object" ? checkup.facts : {};
+  const fields = Object.entries(facts)
+    .filter(([, answer]) => answer?.status === "change")
+    .map(([key]) =>
+      ({ website: "website_url", place: "place", who: "ages", cost: "cost_note" })[
+        key
+      ] || key,
+    );
+  if (payload?.sports && typeof payload.sports === "object")
+    fields.push("sports");
+  if (Array.isArray(payload?.yearly) && payload.yearly.length)
+    fields.push("yearly events");
+  return [...new Set(fields)];
+}
+
+export function isBulkConfirmation(payload) {
+  return (
+    payload?.relation === "run" &&
+    payload?.checkup?.verdict === "all_right" &&
+    listingUpdateChangeFields(payload).length === 0
+  );
+}
+
+export async function acceptAdminQueueItem(
+  db,
+  id,
+  actor = "system",
+  { bulkConfirmation = false } = {},
+) {
   const item = await getAdminQueueItem(db, id);
   if (!item || item.status !== "new") return null;
+  if (
+    bulkConfirmation &&
+    (item.kind !== "listing_update" || !isBulkConfirmation(item.payload))
+  )
+    throw new Error("bulk-review-required");
   // Claim it first, so a double click (or two people) can't apply it twice; give it back on failure.
   const claimed = await db
     .prepare(

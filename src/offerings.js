@@ -418,7 +418,11 @@ export async function applyConfirmation(
       ? payload.checkup
       : null;
   if (checkup && checkup.verdict === "stopped") {
-    const did = await applyCheckup(db, organization, checkup, { timestamp });
+    const did = await applyCheckup(db, organization, checkup, {
+      actor,
+      ref,
+      timestamp,
+    });
     await logActivity(
       db,
       organization.id,
@@ -428,7 +432,11 @@ export async function applyConfirmation(
     );
     return { sports: null, yearly: 0, checkup: did };
   }
-  const checked = await applyCheckup(db, organization, checkup, { timestamp });
+  const checked = await applyCheckup(db, organization, checkup, {
+    actor,
+    ref,
+    timestamp,
+  });
   const sports = [];
   if (
     payload.sports &&
@@ -557,7 +565,7 @@ export async function applyCheckup(
   db,
   organization,
   c,
-  { timestamp = now() } = {},
+  { actor = "system", ref = null, timestamp = now() } = {},
 ) {
   if (!c) return [];
   const did = [];
@@ -569,6 +577,14 @@ export async function applyCheckup(
       )
       .bind(timestamp, organization.id)
       .run();
+    await logConfirmationChange(
+      db,
+      organization.id,
+      "visibility",
+      organization.is_public,
+      0,
+      { actor, ref, timestamp },
+    );
     did.push(`hidden: ${STOP_WORDS[c.stopped.reason]}`);
     return did;
   }
@@ -580,6 +596,14 @@ export async function applyCheckup(
       )
       .bind(f.website.value, timestamp, organization.id)
       .run();
+    await logConfirmationChange(
+      db,
+      organization.id,
+      "website_url",
+      organization.website_url,
+      f.website.value,
+      { actor, ref, timestamp },
+    );
     did.push(`website: ${f.website.value}`);
   }
   if (f.place?.status === "change" && STATE_NAMES[f.place.state]) {
@@ -596,6 +620,21 @@ export async function applyCheckup(
         organization.id,
       )
       .run();
+    await logConfirmationChange(
+      db,
+      organization.id,
+      "place",
+      {
+        city: organization.city,
+        state: organization.state,
+        state_name: organization.state_name,
+        lat: organization.lat,
+        lng: organization.lng,
+        geo_precision: organization.geo_precision,
+      },
+      { city: f.place.city || null, state: f.place.state },
+      { actor, ref, timestamp },
+    );
     did.push(
       `place: ${[f.place.city, f.place.state].filter(Boolean).join(", ")}`,
     );
@@ -605,6 +644,14 @@ export async function applyCheckup(
       .prepare(`UPDATE organizations SET ages = ?, updated_at = ? WHERE id = ?`)
       .bind(whoWords(f.who.value) || null, timestamp, organization.id)
       .run();
+    await logConfirmationChange(
+      db,
+      organization.id,
+      "ages",
+      organization.ages,
+      whoWords(f.who.value) || null,
+      { actor, ref, timestamp },
+    );
     did.push(`who it's for: ${whoWords(f.who.value) || "not said"}`);
   }
   if (f.cost?.status === "change") {
@@ -617,7 +664,97 @@ export async function applyCheckup(
       )
       .bind(text, timestamp, organization.id)
       .run();
+    await logConfirmationChange(
+      db,
+      organization.id,
+      "cost_note",
+      organization.cost_note,
+      text,
+      { actor, ref, timestamp },
+    );
     did.push(`cost: ${text}`);
   }
   return did;
+}
+
+async function logConfirmationChange(
+  db,
+  organizationId,
+  field,
+  previousValue,
+  appliedValue,
+  { actor, ref, timestamp },
+) {
+  await db
+    .prepare(
+      `INSERT INTO organization_change_log
+       (id, organization_id, source_submission, field, previous_value, applied_value, actor, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+    )
+    .bind(
+      crypto.randomUUID(),
+      organizationId,
+      ref,
+      field,
+      JSON.stringify(previousValue ?? null),
+      JSON.stringify(appliedValue ?? null),
+      actor,
+      timestamp,
+    )
+    .run();
+}
+
+export async function revertConfirmationChange(
+  db,
+  changeId,
+  actor,
+  { timestamp = now() } = {},
+) {
+  const entry = await db
+    .prepare(
+      `SELECT id, organization_id, field, previous_value
+       FROM organization_change_log
+       WHERE id = ? AND reverted_at IS NULL`,
+    )
+    .bind(changeId)
+    .first();
+  if (!entry) return null;
+  const previous = JSON.parse(entry.previous_value);
+  const fields = {
+    website_url: ["website_url = ?", previous],
+    ages: ["ages = ?", previous],
+    cost_note: ["cost_note = ?", previous],
+    visibility: ["is_public = ?", previous],
+    place: [
+      "city = ?, state = ?, state_name = ?, lat = ?, lng = ?, geo_precision = ?",
+      previous?.city || null,
+      previous?.state || null,
+      previous?.state_name || null,
+      previous?.lat || null,
+      previous?.lng || null,
+      previous?.geo_precision || null,
+    ],
+  };
+  const update = fields[entry.field];
+  if (!update) return null;
+  await db
+    .prepare(`UPDATE organizations SET ${update[0]}, updated_at = ? WHERE id = ?`)
+    .bind(...update.slice(1), timestamp, entry.organization_id)
+    .run();
+  await db
+    .prepare(
+      `UPDATE organization_change_log
+       SET reverted_at = ?, reverted_by = ?
+       WHERE id = ? AND reverted_at IS NULL`,
+    )
+    .bind(timestamp, actor, entry.id)
+    .run();
+  await logActivity(
+    db,
+    entry.organization_id,
+    "admin_edit",
+    `Reverted ${entry.field} from a listing confirmation`,
+    { actor, ref: `change ${entry.id}`, at: timestamp },
+  );
+  return entry;
 }

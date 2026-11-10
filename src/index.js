@@ -3221,13 +3221,15 @@ async function handleAdminQueue(request, env, id) {
     }
     if (id && request.method === "POST") {
       const data = await readBody(request);
-      if (!data || data.action !== "accept")
+      if (!data || !["accept", "bulk-confirmation"].includes(data.action))
         return json(
           { ok: false, error: "Unknown queue action." },
           422,
           ADMIN_AUTH_CACHE,
         );
-      const accepted = await acceptAdminQueueItem(env.DB, id, session.email);
+      const accepted = await acceptAdminQueueItem(env.DB, id, session.email, {
+        bulkConfirmation: data.action === "bulk-confirmation",
+      });
       return accepted
         ? json({ ok: true, item: accepted }, 200, ADMIN_AUTH_CACHE)
         : json(
@@ -3244,14 +3246,22 @@ async function handleAdminQueue(request, env, id) {
   } catch (err) {
     const reason = err instanceof Error ? err.message : "";
     if (
-      ["draft-missing", "start-invalid", "organization-missing"].includes(
+      [
+        "draft-missing",
+        "start-invalid",
+        "organization-missing",
+        "bulk-review-required",
+      ].includes(
         reason,
       )
     )
       return json(
         {
           ok: false,
-          error: "This submission needs an edit before it can be accepted.",
+          error:
+            reason === "bulk-review-required"
+              ? "This submission has field changes and must be reviewed individually."
+              : "This submission needs an edit before it can be accepted.",
         },
         422,
         ADMIN_AUTH_CACHE,
