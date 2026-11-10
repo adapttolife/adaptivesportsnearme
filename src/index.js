@@ -62,6 +62,7 @@ import {
   parseCheckup,
   parseFixReason,
 } from "./listing-answers.js";
+import { normalizePublicUrl } from "./public-url.js";
 import {
   logActivity,
   sportsSummary,
@@ -900,17 +901,36 @@ async function handleSubmitProgram(request, env, ctx, opts = {}) {
   const eventDate = str(data.ed);
   const eventEnd = /^\d{4}-\d{2}-\d{2}$/.test(str(data.ee)) ? str(data.ee) : "";
   const eventTime = str(data.et).slice(0, 40);
-  const siteUrl = str(data.url).slice(0, 300);
+  let siteUrl;
+  try {
+    siteUrl = normalizePublicUrl(str(data.url));
+  } catch {
+    return json(
+      { ok: false, error: "Please enter a valid public website URL." },
+      422,
+    );
+  }
 
   // An organization confirming its listing can also tell us every sport it runs,
   // with seasons, and the events it holds every year (docs/specs/programs-that-come-back.md).
   // A person applies them from the review queue; nothing here writes the listing.
   const confirming = !!listingId && relation === "run";
   const sportsAnswer = confirming ? parseSportsAnswer(data.sports) : [];
-  const yearlyAnswer = confirming ? parseYearlyAnswer(data.yearly) : [];
+  let yearlyAnswer;
+  let checkup;
+  try {
+    yearlyAnswer = confirming ? parseYearlyAnswer(data.yearly) : [];
+    checkup = confirming ? parseCheckup(data.checkup) : null;
+  } catch (error) {
+    if (error instanceof Error && error.message === "url-invalid")
+      return json(
+        { ok: false, error: "Please enter a valid public website URL." },
+        422,
+      );
+    throw error;
+  }
   // The one-minute check-up (docs/specs/community-kept-directory.md): the organization's answer to
   // "here's what families see", and for everyone else a one-tap reason for what's wrong.
-  const checkup = confirming ? parseCheckup(data.checkup) : null;
   const fixReason = listingId && !confirming ? parseFixReason(data.reason) : "";
 
   if (!program)
@@ -1886,6 +1906,7 @@ async function handleManagedOrganizationUpdate(request, env, id) {
       [
         "name-required",
         "website-invalid",
+        "url-invalid",
         "email-invalid",
         "sports-invalid",
       ].includes(reason)
@@ -2046,6 +2067,7 @@ async function handleManagedOrganizationItems(
         "start-invalid",
         "end-invalid",
         "website-invalid",
+        "url-invalid",
         "year-invalid",
         "sports-invalid",
       ].includes(reason)

@@ -26,26 +26,13 @@
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="manifest" href="/manifest.json">
 <meta name="theme-color" content="#121212">
-<script>
-try {
-  const saved = JSON.parse(localStorage.getItem("asnm.theme") || "null");
-  document.documentElement.dataset.theme = saved === "light" || saved === "dark" ? saved : matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-} catch (_) {
-  document.documentElement.dataset.theme = matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-}
-</script>
+<script src="/app/bootstrap.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sofia+Sans:wght@400..900&family=Sofia+Sans+Extra+Condensed:wght@700..900&display=swap" rel="stylesheet">
 <!-- Every page draws from the listings, so their download starts now, with the page's
      own code, instead of after the scripts run. A script, not a preload link: Safari, and so
      every iPhone browser, downloads a preloaded file again when fetch() asks for it. app.js
      takes each answer once (early). -->
-<script>
-window.ASNM_EARLY = window.ASNM_EARLY || {};
-["/api/listings", "/data/states.json", "/data/sports.json"].forEach(function (u) {
-  (window.ASNM_EARLY[u] = fetch(u)).catch(function () {});
-});
-</script>
 <link rel="modulepreload" href="/app/app.js">
 <link rel="modulepreload" href="/app/icons.js">
 <link rel="modulepreload" href="/app/listing-sport.js">
@@ -70,9 +57,5 @@ window.ASNM_EARLY = window.ASNM_EARLY || {};
 <div id="sticky"></div>
 <div id="overlay"></div>
 <div id="live" class="sr" aria-live="polite"></div>
-<script>
-/* The old site's offline cache retires itself (public/sw.js), so returning visitors get this site. */
-if ("serviceWorker" in navigator) navigator.serviceWorker.getRegistrations().then(function (rs) { rs.forEach(function (r) { r.update().catch(function () {}); }); }).catch(function () {});
-</script>
 </body>
 </html>

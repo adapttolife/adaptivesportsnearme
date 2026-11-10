@@ -80,6 +80,10 @@ test("the Worker serves the same title and description the page sets", async () 
   for (const [path, meta] of cases) {
     const url = new URL("https://example.com" + path);
     const res = await servePage(new Request(url), env, url);
+    assert.match(
+      res.headers.get("content-security-policy") || "",
+      /script-src 'self'/,
+    );
     const html = await res.text();
     const title = html
       .match(/<title>([^<]*)<\/title>/)[1]

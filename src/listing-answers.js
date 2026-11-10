@@ -6,6 +6,7 @@
 import "../public/listing-art.js";
 import { parseSportSeasons, seriesSlug } from "../public/app/yearly.js";
 import { WHO_ORDER } from "../public/app/who.js";
+import { normalizePublicUrl } from "./public-url.js";
 
 const ListingArt = globalThis.ListingArt;
 const NOT_SPORTS = new Set(["multi", "grant", "event"]);
@@ -27,12 +28,11 @@ export function parseSportsAnswer(raw) {
 
 /** A web address we'd link to, or "" */
 export function webUrl(v) {
-  const s = oneLine(v, 500);
+  const s = String(v ?? "").trim();
   if (!s) return "";
+  if (s.length > 500) return "";
   try {
-    const u = new URL(/^https?:\/\//i.test(s) ? s : `https://${s}`);
-    if (!/^https?:$/.test(u.protocol) || !u.hostname.includes(".")) return "";
-    return u.toString();
+    return normalizePublicUrl(s);
   } catch {
     return "";
   }
@@ -54,10 +54,12 @@ export function parseYearlyAnswer(raw) {
     const name = oneLine(item.name, 120);
     if (!name || !seriesSlug(name)) continue;
     const m = Number(item.month);
+    const url = String(item.url ?? "").trim();
+    if (url && !webUrl(url)) throw new Error("url-invalid");
     out.push({
       name,
       month: Number.isInteger(m) && m >= 1 && m <= 12 ? m : null,
-      url: webUrl(item.url),
+      url: webUrl(url),
     });
     if (out.length >= 3) break;
   }
@@ -106,7 +108,9 @@ export function parseCheckup(raw) {
   const f = v.facts && typeof v.facts === "object" ? v.facts : {};
   const st = (x) => (x && STATUS.has(x.status) ? x.status : null);
   if (st(f.website)) {
-    const value = f.website.status === "change" ? webUrl(f.website.value) : "";
+    const raw = f.website.status === "change" ? String(f.website.value ?? "").trim() : "";
+    const value = raw ? webUrl(raw) : "";
+    if (raw && !value) throw new Error("url-invalid");
     if (f.website.status === "right" || value)
       out.facts.website =
         f.website.status === "right"

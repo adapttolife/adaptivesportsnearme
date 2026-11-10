@@ -14,6 +14,7 @@
 
 import { newerOrOlder } from "./schema-probe.js";
 import { SPORT_NAMES } from "./sport-names.js";
+import { normalizePublicUrl } from "./public-url.js";
 import {
   cleanSeasons,
   seriesSlug,
@@ -465,10 +466,7 @@ export async function applyConfirmation(
   const started = [];
   const single = sports.length === 1 ? sports[0].key : null;
   for (const e of yearly) {
-    const url =
-      e && /^https?:\/\//i.test(String(e.url || ""))
-        ? String(e.url).slice(0, 500)
-        : null;
+    const url = e?.url ? normalizePublicUrl(e.url) : null;
     const id = await yearlyEvent(
       db,
       organization,

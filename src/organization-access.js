@@ -6,7 +6,8 @@ import {
   validState,
 } from "./profile.js";
 import { newerOrOlder } from "./schema-probe.js";
-import { parseSportsAnswer, webUrl, isSportKey } from "./listing-answers.js";
+import { parseSportsAnswer, isSportKey } from "./listing-answers.js";
+import { normalizePublicUrl } from "./public-url.js";
 import {
   applySports,
   organizationSports,
@@ -306,7 +307,9 @@ export async function updateClaimedOrganization(db, id, email, input) {
     sport: text("sport", 120),
     sport_key: text("sport_key", 80).toLowerCase(),
     sports_json: text("sports_json", 4000),
-    website_url: text("website_url", 500),
+    website_url: supplied("website_url")
+      ? normalizePublicUrl(input.website_url)
+      : clean(existing.website_url, 500),
     email: validEmail(supplied("email") ? input.email : existing.email),
     phone: text("phone", 80),
     city: text("city", 120),
@@ -335,14 +338,6 @@ export async function updateClaimedOrganization(db, id, email, input) {
     geo_precision: existing.geo_precision || null,
   };
   if (!value.name) throw new Error("name-required");
-  if (value.website_url) {
-    try {
-      const url = new URL(value.website_url);
-      if (!/^https?:$/.test(url.protocol)) throw new Error();
-    } catch {
-      throw new Error("website-invalid");
-    }
-  }
   if (supplied("email") && clean(input.email) && !value.email)
     throw new Error("email-invalid");
   if (value.sports_json) {
@@ -531,15 +526,9 @@ function programValues(input, existing = {}) {
       throw new Error("sports-invalid");
     }
   }
-  const website = text("website_url", 500);
-  if (website) {
-    try {
-      const url = new URL(website);
-      if (!/^https?:$/.test(url.protocol)) throw new Error();
-    } catch {
-      throw new Error("website-invalid");
-    }
-  }
+  const website = Object.prototype.hasOwnProperty.call(input, "website_url")
+    ? normalizePublicUrl(input.website_url)
+    : clean(existing.website_url, 500);
   const sports_json = text("sports_json", 4000);
   if (sports_json) {
     try {
@@ -760,15 +749,9 @@ function eventValues(input, existing = {}) {
     throw new Error("start-invalid");
   const end = text("ends_at", 80);
   if (end && Number.isNaN(Date.parse(end))) throw new Error("end-invalid");
-  const url = text("url", 500);
-  if (url) {
-    try {
-      const parsed = new URL(url);
-      if (!/^https?:$/.test(parsed.protocol)) throw new Error();
-    } catch {
-      throw new Error("website-invalid");
-    }
-  }
+  const url = Object.prototype.hasOwnProperty.call(input, "url")
+    ? normalizePublicUrl(input.url)
+    : clean(existing.url, 500);
   const state = validState(text("state", 2));
   return {
     title,
@@ -809,8 +792,10 @@ function checkYearlyInput(input) {
   const year = clean(input.first_year, 8);
   if (year && !(/^\d{4}$/.test(year) && +year >= 1900 && +year <= 2100))
     throw new Error("year-invalid");
-  const recap = clean(input.recap_url, 500);
-  if (recap && !webUrl(recap)) throw new Error("website-invalid");
+  const recap = Object.prototype.hasOwnProperty.call(input, "recap_url")
+    ? String(input.recap_url ?? "").trim()
+    : "";
+  if (recap) normalizePublicUrl(recap);
 }
 
 async function linkYearly(db, organization, eventId, input, value) {
@@ -866,7 +851,12 @@ async function linkYearly(db, organization, eventId, input, value) {
         .prepare(
           `UPDATE events SET program_id = ?, recap_url = ? WHERE id = ? AND org_id = ?`,
         )
-        .bind(programId, recap ? webUrl(recap) : null, eventId, organization.id)
+        .bind(
+          programId,
+          recap ? normalizePublicUrl(recap) : null,
+          eventId,
+          organization.id,
+        )
         .run();
     },
     async () => {},

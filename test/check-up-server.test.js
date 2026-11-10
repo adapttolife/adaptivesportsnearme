@@ -158,14 +158,12 @@ test("answers are cleaned: unknown verdicts, statuses, states, reasons and who c
   assert.equal(parseCheckup('{"verdict":"maybe"}'), null);
   assert.equal(parseCheckup("nope"), null);
   assert.equal(parseCheckup('{"verdict":"stopped"}'), null); // a reason is required
-  assert.deepEqual(
-    parseCheckup(
-      '{"verdict":"changed","facts":{"website":{"status":"change","value":"javascript:x"},"place":{"status":"change","city":"X","state":"ZZ"},"who":{"status":"change","value":["kids","bogus"]},"cost":{"status":"maybe"}}}',
-    ),
-    {
-      verdict: "changed",
-      facts: { who: { status: "change", value: ["kids"] } },
-    },
+  assert.throws(
+    () =>
+      parseCheckup(
+        '{"verdict":"changed","facts":{"website":{"status":"change","value":"javascript:x"}}}',
+      ),
+    /url-invalid/,
   );
   assert.equal(parseFixReason("website"), "website");
   assert.equal(parseFixReason("rm -rf"), "");

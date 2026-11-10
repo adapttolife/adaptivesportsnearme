@@ -8,6 +8,7 @@ import {
 import { newerOrOlder } from "./schema-probe.js";
 import { cleanSeasons } from "../public/app/yearly.js";
 import { SLUG_RE } from "./events.js";
+import { normalizePublicUrl } from "./public-url.js";
 import {
   applyConfirmation,
   logActivity,
@@ -580,14 +581,7 @@ function values(entity, input, current = {}) {
     "source_url",
     "recap_url",
   ])
-    if (field in value && value[field]) {
-      try {
-        const url = new URL(value[field]);
-        if (!/^https?:$/.test(url.protocol)) throw new Error();
-      } catch {
-        throw new Error("url-invalid");
-      }
-    }
+    if (field in value) value[field] = normalizePublicUrl(value[field]);
   for (const field of ["email", "claim_email"])
     if (field in value && value[field]) {
       const email = validEmail(value[field]);
