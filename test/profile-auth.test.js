@@ -80,7 +80,7 @@ test("serializeProfileCookie: carries the right name, value shape, and flags", (
   assert.match(out, /Secure/);
   assert.match(out, /SameSite=Lax/);
   assert.match(out, /Path=\//);
-  assert.match(out, /Max-Age=2592000/);
+  assert.match(out, /Max-Age=432000/);
 });
 
 test("clearProfileCookie: Max-Age=0, same flags, empty value", () => {

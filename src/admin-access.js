@@ -22,7 +22,7 @@ import {
 } from "./description-contract.js";
 
 export const ADMIN_COOKIE_NAME = "asnm_admin";
-const SESSION_SECONDS = 60 * 60 * 12;
+const SESSION_SECONDS = 60 * 60 * 24 * 5;
 const TOKEN_MINUTES = 15;
 const ID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const STATE_NAMES = {

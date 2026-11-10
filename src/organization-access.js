@@ -20,7 +20,7 @@ import {
 import { cleanSeasons } from "../public/app/yearly.js";
 
 export const ORG_COOKIE_NAME = "asnm_org";
-const SESSION_SECONDS = 60 * 60 * 24 * 30;
+const SESSION_SECONDS = 60 * 60 * 24 * 5;
 const TOKEN_MINUTES = 15;
 const ID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
@@ -185,7 +185,7 @@ export async function createOrganizationSession(db, email, secret) {
     .prepare(
       `INSERT INTO organization_sessions (id, email, expires_at, created_at) VALUES (?, ?, ?, ?)`,
     )
-    .bind(id, email, future(SESSION_SECONDS * 1000), now())
+    .bind(id, email, future(SESSION_SECONDS), now())
     .run();
   return { id, signature: await signProfileId(id, secret) };
 }

@@ -7,7 +7,7 @@ import {
 import { isAdminEmail } from "./admin-access.js";
 
 export const BETA_COOKIE_NAME = "asnm_beta";
-const SESSION_SECONDS = 60 * 60 * 24 * 30;
+const SESSION_SECONDS = 60 * 60 * 24 * 5;
 export const TOKEN_SECONDS = 60 * 30;
 const now = () => new Date().toISOString();
 const future = (seconds) => new Date(Date.now() + seconds * 1000).toISOString();

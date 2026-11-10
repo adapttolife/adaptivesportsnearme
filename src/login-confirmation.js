@@ -28,5 +28,65 @@ function escapeHtml(value) {
 }
 
 export function loginConfirmationHtml({ action, token, title }) {
-  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex"><title>${escapeHtml(title)}</title><style>body{margin:0;background:#efe8dc;color:#1a1a1a;font-family:system-ui,sans-serif;display:grid;min-height:100vh;place-items:center}.card{box-sizing:border-box;width:min(92vw,32rem);background:#f9f7f2;border:1px solid #d9d0c2;border-radius:15px;padding:2rem}h1{margin:0 0:.7rem}p{line-height:1.5}button{background:#1a1a1a;color:#f9f7f2;border:0;border-radius:8px;padding:.8rem 1rem;font:inherit;font-weight:700;cursor:pointer}</style></head><body><main class="card"><h1>${escapeHtml(title)}</h1><p>Confirm that you want to sign in on this browser.</p><form method="post" action="${escapeHtml(action)}"><input type="hidden" name="token" value="${escapeHtml(token)}"><button type="submit">Sign in</button></form></main></body></html>`;
+  return `<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<meta name="robots" content="noindex" />
+		<title>${escapeHtml(title)}</title>
+		<style>
+			body {
+				margin: 0;
+				background: #efe8dc;
+				color: #1a1a1a;
+				font-family: system-ui, sans-serif;
+				display: grid;
+				min-height: 100vh;
+				place-items: center;
+			}
+
+			.card {
+				box-sizing: border-box;
+				width: min(92vw, 32rem);
+				background: #f9f7f2;
+				border: 1px solid #d9d0c2;
+				border-radius: 15px;
+				padding: 2rem;
+			}
+
+			h1 {
+				margin: 0;
+			}
+
+			p {
+				line-height: 1.5;
+			}
+
+			button {
+				background: #1a1a1a;
+				color: #f9f7f2;
+				border: 0;
+				border-radius: 8px;
+				padding: 0.8rem 1rem;
+				font: inherit;
+				font-weight: 700;
+				cursor: pointer;
+			}
+		</style>
+	</head>
+	<body>
+		<main class="card">
+			<h1>${escapeHtml(title)}</h1>
+			<p>Confirm that you want to sign in on this browser.</p>
+			<form method="post" action="${escapeHtml(action)}">
+				<input
+					type="hidden"
+					name="token"
+					value="${escapeHtml(token)}"
+				/><button type="submit">Sign in</button>
+			</form>
+		</main>
+	</body>
+</html>`;
 }

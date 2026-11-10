@@ -1416,7 +1416,7 @@ async function handleProfileLoginRequest(request, env, url) {
 }
 
 function profileLoginConfirmation(url) {
-  return loginConfirmation("Profile sign in", "/api/profile-auth/verify", url);
+  return loginConfirmation("Confirm sign in", "/api/profile-auth/verify", url);
 }
 
 async function handleProfileLoginVerify(request, url, env) {
@@ -3438,13 +3438,12 @@ async function readBody(request) {
 
 function loginConfirmation(title, action, url) {
   const token = url.searchParams.get("token") || "";
-  if (!token || token.length > 500)
-    return text(
-      "This sign-in link is invalid. Please request a new link.",
-      400,
-      "text/plain; charset=utf-8",
-      "no-store",
-    );
+  if (!token || token.length > 500) return text(
+    "This sign-in link is invalid. Please request a new link.",
+    400,
+    "text/plain; charset=utf-8",
+    "no-store",
+  );
   return text(
     loginConfirmationHtml({ action, token, title }),
     200,

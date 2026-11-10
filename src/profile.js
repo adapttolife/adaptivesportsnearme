@@ -7,7 +7,7 @@
 
 export const COOKIE_NAME = "asnm_p";
 const LOGIN_MINUTES = 15;
-const SESSION_SECONDS = 60 * 60 * 24 * 30;
+const SESSION_SECONDS = 60 * 60 * 24 * 5;
 const ID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const SAVE_KINDS = new Set([
   "organizations",
