@@ -146,9 +146,18 @@ import {
 } from "./beta-access.js";
 import { featureAvailable } from "./feature-access.js";
 import { maintenanceModeEnabled } from "./maintenance-mode.js";
+import {
+  loginConfirmationHtml,
+  newLoginNonce,
+  readLoginNonce,
+  serializeLoginNonce,
+} from "./login-confirmation.js";
 
 const API_CACHE = "public, max-age=300, stale-while-revalidate=600";
 const FEED_CACHE = "public, max-age=300";
+const PROFILE_LOGIN_NONCE = "asnm_profile_login_nonce";
+const ORG_LOGIN_NONCE = "asnm_org_login_nonce";
+const ADMIN_LOGIN_NONCE = "asnm_admin_login_nonce";
 
 // Single source for cron -> lane routing; must list every schedule in
 // wrangler.json triggers. Unknown crons error loudly instead of misrouting.
@@ -179,7 +188,11 @@ const application = {
     if (
       env.ENV_NAME === "production" &&
       (!["GET", "HEAD"].includes(request.method) ||
-        url.pathname === "/api/org-auth/verify") &&
+        [
+          "/api/profile-auth/verify",
+          "/api/org-auth/verify",
+          "/api/admin-auth/verify",
+        ].includes(url.pathname)) &&
       !["adaptivesportsnearme.com", "www.adaptivesportsnearme.com"].includes(
         url.hostname,
       )
@@ -285,9 +298,10 @@ const application = {
       return handleProfileLoginRequest(request, env, url);
     }
     if (url.pathname === "/api/profile-auth/verify") {
-      if (request.method !== "GET")
-        return json({ ok: false, error: "Method not allowed" }, 405);
-      return handleProfileLoginVerify(url, env);
+      if (request.method === "GET") return profileLoginConfirmation(url);
+      if (request.method === "POST")
+        return handleProfileLoginVerify(request, url, env);
+      return json({ ok: false, error: "Method not allowed" }, 405);
     }
     if (url.pathname === "/api/profile-auth/session") {
       if (request.method !== "GET")
@@ -321,9 +335,10 @@ const application = {
       return handleOrganizationLoginRequest(request, env, url);
     }
     if (url.pathname === "/api/org-auth/verify") {
-      if (request.method !== "GET")
-        return json({ ok: false, error: "Method not allowed" }, 405);
-      return handleOrganizationLoginVerify(url, env);
+      if (request.method === "GET") return organizationLoginConfirmation(url);
+      if (request.method === "POST")
+        return handleOrganizationLoginVerify(request, url, env);
+      return json({ ok: false, error: "Method not allowed" }, 405);
     }
     if (url.pathname === "/api/org-auth/session") {
       if (request.method !== "GET")
@@ -353,9 +368,10 @@ const application = {
       return handleAdminLoginRequest(request, env, url);
     }
     if (url.pathname === "/api/admin-auth/verify") {
-      if (request.method !== "GET")
-        return json({ ok: false, error: "Method not allowed" }, 405);
-      return handleAdminLoginVerify(url, env);
+      if (request.method === "GET") return adminLoginConfirmation(url);
+      if (request.method === "POST")
+        return handleAdminLoginVerify(request, url, env);
+      return json({ ok: false, error: "Method not allowed" }, 405);
     }
     if (url.pathname === "/api/admin-auth/session") {
       if (request.method !== "GET")
@@ -1359,11 +1375,17 @@ async function handleProfileLoginRequest(request, env, url) {
       PROFILE_CACHE,
     );
   try {
-    const token = await issueProfileLoginToken(env.DB, email);
+    const nonce = newLoginNonce();
+    const token = await issueProfileLoginToken(env.DB, email, nonce);
     const link = new URL("/api/profile-auth/verify", url.origin);
     link.searchParams.set("token", token);
     await sendProfileLoginLink(env, email, link.toString());
-    return json({ ok: true }, 200, PROFILE_CACHE);
+    const response = json({ ok: true }, 200, PROFILE_CACHE);
+    response.headers.set(
+      "Set-Cookie",
+      serializeLoginNonce(PROFILE_LOGIN_NONCE, nonce),
+    );
+    return response;
   } catch (err) {
     console.error("profile login request failed", {
       reason: err instanceof Error ? err.message : "unknown",
@@ -1379,7 +1401,11 @@ async function handleProfileLoginRequest(request, env, url) {
   }
 }
 
-async function handleProfileLoginVerify(url, env) {
+function profileLoginConfirmation(url) {
+  return loginConfirmation("Profile sign in", "/api/profile-auth/verify", url);
+}
+
+async function handleProfileLoginVerify(request, url, env) {
   if (!env.DB || !env.PROFILE_SIGNING_KEY)
     return json(
       { ok: false, error: "Sign-in is temporarily unavailable." },
@@ -1387,9 +1413,11 @@ async function handleProfileLoginVerify(url, env) {
       PROFILE_CACHE,
     );
   try {
+    const data = await readBody(request);
     const email = await consumeProfileLoginToken(
       env.DB,
-      url.searchParams.get("token") || "",
+      str(data?.token),
+      readLoginNonce(request, PROFILE_LOGIN_NONCE),
     );
     if (!email)
       return json(
@@ -1573,11 +1601,17 @@ async function handleOrganizationLoginRequest(request, env, url) {
     const organizations = await organizationsForClaimEmail(env.DB, email);
     if (!organizations.length)
       return json({ ok: true }, 200, ORGANIZATION_AUTH_CACHE);
-    const token = await issueLoginToken(env.DB, email);
+    const nonce = newLoginNonce();
+    const token = await issueLoginToken(env.DB, email, nonce);
     const link = new URL("/api/org-auth/verify", url.origin);
     link.searchParams.set("token", token);
     await sendOrganizationLoginLink(env, email, link.toString());
-    return json({ ok: true }, 200, ORGANIZATION_AUTH_CACHE);
+    const response = json({ ok: true }, 200, ORGANIZATION_AUTH_CACHE);
+    response.headers.set(
+      "Set-Cookie",
+      serializeLoginNonce(ORG_LOGIN_NONCE, nonce),
+    );
+    return response;
   } catch (err) {
     console.error("organization login link failed", {
       reason: err instanceof Error ? err.message : "unknown",
@@ -1590,7 +1624,15 @@ async function handleOrganizationLoginRequest(request, env, url) {
   }
 }
 
-async function handleOrganizationLoginVerify(url, env) {
+function organizationLoginConfirmation(url) {
+  return loginConfirmation(
+    "Organization sign in",
+    "/api/org-auth/verify",
+    url,
+  );
+}
+
+async function handleOrganizationLoginVerify(request, url, env) {
   if (!organizationAuthReady(env))
     return json(
       { ok: false, error: "Organization sign-in is temporarily unavailable." },
@@ -1598,9 +1640,11 @@ async function handleOrganizationLoginVerify(url, env) {
       ORGANIZATION_AUTH_CACHE,
     );
   try {
+    const data = await readBody(request);
     const email = await consumeLoginToken(
       env.DB,
-      url.searchParams.get("token") || "",
+      str(data?.token),
+      readLoginNonce(request, ORG_LOGIN_NONCE),
     );
     if (!email)
       return json(
@@ -2871,11 +2915,17 @@ async function handleAdminLoginRequest(request, env, url) {
       ADMIN_AUTH_CACHE,
     );
   try {
-    const token = await issueAdminLoginToken(env.DB, email);
+    const nonce = newLoginNonce();
+    const token = await issueAdminLoginToken(env.DB, email, nonce);
     const link = new URL("/api/admin-auth/verify", url.origin);
     link.searchParams.set("token", token);
     await sendAdminLoginLink(env, email, link.toString());
-    return json({ ok: true }, 200, ADMIN_AUTH_CACHE);
+    const response = json({ ok: true }, 200, ADMIN_AUTH_CACHE);
+    response.headers.set(
+      "Set-Cookie",
+      serializeLoginNonce(ADMIN_LOGIN_NONCE, nonce),
+    );
+    return response;
   } catch (err) {
     console.error("admin login link failed", {
       reason: err instanceof Error ? err.message : "unknown",
@@ -2888,7 +2938,11 @@ async function handleAdminLoginRequest(request, env, url) {
   }
 }
 
-async function handleAdminLoginVerify(url, env) {
+function adminLoginConfirmation(url) {
+  return loginConfirmation("Admin sign in", "/api/admin-auth/verify", url);
+}
+
+async function handleAdminLoginVerify(request, url, env) {
   if (!adminAuthReady(env))
     return json(
       { ok: false, error: "Admin sign-in is temporarily unavailable." },
@@ -2896,9 +2950,11 @@ async function handleAdminLoginVerify(url, env) {
       ADMIN_AUTH_CACHE,
     );
   try {
+    const data = await readBody(request);
     const email = await consumeAdminLoginToken(
       env.DB,
-      url.searchParams.get("token") || "",
+      str(data?.token),
+      readLoginNonce(request, ADMIN_LOGIN_NONCE),
     );
     if (!email)
       return json(
@@ -3223,6 +3279,23 @@ async function readBody(request) {
   } catch {
     return null;
   }
+}
+
+function loginConfirmation(title, action, url) {
+  const token = url.searchParams.get("token") || "";
+  if (!token || token.length > 500)
+    return text(
+      "This sign-in link is invalid. Please request a new link.",
+      400,
+      "text/plain; charset=utf-8",
+      "no-store",
+    );
+  return text(
+    loginConfirmationHtml({ action, token, title }),
+    200,
+    "text/html; charset=utf-8",
+    "no-store",
+  );
 }
 
 async function verifyTurnstile(env, token, ip) {

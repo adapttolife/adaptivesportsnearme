@@ -222,25 +222,32 @@ export async function getProfileById(db, id) {
   return db.prepare(`SELECT * FROM profiles WHERE id = ?`).bind(id).first();
 }
 
-export async function issueProfileLoginToken(db, email) {
+export async function issueProfileLoginToken(db, email, nonce) {
   const raw = newToken(),
     expires = new Date(Date.now() + LOGIN_MINUTES * 60 * 1000).toISOString();
   await db
     .prepare(
-      `INSERT INTO profile_login_tokens (id, token_hash, email, expires_at, created_at) VALUES (?, ?, ?, ?, ?)`,
+      `INSERT INTO profile_login_tokens (id, token_hash, nonce_hash, email, expires_at, created_at) VALUES (?, ?, ?, ?, ?, ?)`,
     )
-    .bind(crypto.randomUUID(), await tokenHash(raw), email, expires, now())
+    .bind(
+      crypto.randomUUID(),
+      await tokenHash(raw),
+      await tokenHash(nonce),
+      email,
+      expires,
+      now(),
+    )
     .run();
   return raw;
 }
 
-export async function consumeProfileLoginToken(db, raw) {
-  if (!raw || raw.length > 500) return null;
+export async function consumeProfileLoginToken(db, raw, nonce) {
+  if (!raw || raw.length > 500 || !nonce || nonce.length > 500) return null;
   const row = await db
     .prepare(
-      `SELECT id, email FROM profile_login_tokens WHERE token_hash = ? AND used_at IS NULL AND expires_at > ?`,
+      `SELECT id, email FROM profile_login_tokens WHERE token_hash = ? AND nonce_hash = ? AND used_at IS NULL AND expires_at > ?`,
     )
-    .bind(await tokenHash(raw), now())
+    .bind(await tokenHash(raw), await tokenHash(nonce), now())
     .first();
   const email = validEmail(row?.email);
   if (!row || !email) return null;

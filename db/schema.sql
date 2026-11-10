@@ -5,6 +5,7 @@
 CREATE TABLE IF NOT EXISTS admin_login_tokens (
   id TEXT PRIMARY KEY,
   token_hash TEXT NOT NULL UNIQUE,
+  nonce_hash TEXT,
   email TEXT NOT NULL,
   expires_at TEXT NOT NULL,
   used_at TEXT,
@@ -121,6 +122,7 @@ CREATE TABLE IF NOT EXISTS organization_data_sources (
 CREATE TABLE IF NOT EXISTS organization_login_tokens (
   id TEXT PRIMARY KEY,
   token_hash TEXT NOT NULL UNIQUE,
+  nonce_hash TEXT,
   email TEXT NOT NULL,
   expires_at TEXT NOT NULL,
   used_at TEXT,
@@ -200,6 +202,7 @@ CREATE TABLE IF NOT EXISTS profiles (
 CREATE TABLE IF NOT EXISTS profile_login_tokens (
   id TEXT PRIMARY KEY,
   token_hash TEXT NOT NULL UNIQUE,
+  nonce_hash TEXT,
   email TEXT NOT NULL COLLATE NOCASE,
   expires_at TEXT NOT NULL,
   used_at TEXT,
@@ -287,6 +290,7 @@ CREATE TABLE IF NOT EXISTS submissions (
 
 CREATE INDEX IF NOT EXISTS admin_login_tokens_email_idx
   ON admin_login_tokens (email COLLATE NOCASE, expires_at);
+CREATE INDEX IF NOT EXISTS admin_login_tokens_nonce_idx ON admin_login_tokens(nonce_hash);
 
 CREATE INDEX IF NOT EXISTS admin_sessions_email_idx
   ON admin_sessions (email COLLATE NOCASE, expires_at);
@@ -301,6 +305,7 @@ CREATE INDEX IF NOT EXISTS link_checks_org_idx ON link_checks (organization_id, 
 
 CREATE INDEX IF NOT EXISTS organization_login_tokens_email_idx
   ON organization_login_tokens (email COLLATE NOCASE, expires_at);
+CREATE INDEX IF NOT EXISTS organization_login_tokens_nonce_idx ON organization_login_tokens(nonce_hash);
 
 CREATE INDEX IF NOT EXISTS organization_sessions_email_idx
   ON organization_sessions (email COLLATE NOCASE, expires_at);
@@ -318,6 +323,7 @@ CREATE INDEX IF NOT EXISTS organizations_status_idx ON organizations (status, is
 
 CREATE INDEX IF NOT EXISTS idx_profile_favorites_org ON profile_favorites (org_id);
 CREATE INDEX IF NOT EXISTS profile_login_tokens_expires_idx ON profile_login_tokens(expires_at);
+CREATE INDEX IF NOT EXISTS profile_login_tokens_nonce_idx ON profile_login_tokens(nonce_hash);
 CREATE INDEX IF NOT EXISTS profile_saved_items_profile_idx ON profile_saved_items(profile_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS profile_saved_sports_profile_idx ON profile_saved_sports(profile_id, created_at DESC);
 

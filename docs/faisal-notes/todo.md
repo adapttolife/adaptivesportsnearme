@@ -13,4 +13,6 @@ API for orgs to push new/updated data to our db
 
 scripted tester bots to test site features, run on pi? different personas, scenarios and tests for each feature, run on every merge to main branch
 
-use Cloudflare Workers Previews for testing new beta tester groups
+add account logout for asnm and atl
+
+change login session to 3 days

@@ -135,18 +135,19 @@ export async function readOrganizationSession(request, db, secret) {
     : null;
 }
 
-export async function issueLoginToken(db, email) {
+export async function issueLoginToken(db, email, nonce) {
   const token = newLoginToken();
   const id = crypto.randomUUID();
   const createdAt = now();
   await db
     .prepare(
-      `INSERT INTO organization_login_tokens (id, token_hash, email, expires_at, created_at)
-     VALUES (?, ?, ?, ?, ?)`,
+      `INSERT INTO organization_login_tokens (id, token_hash, nonce_hash, email, expires_at, created_at)
+     VALUES (?, ?, ?, ?, ?, ?)`,
     )
     .bind(
       id,
       await hashToken(token),
+      await hashToken(nonce),
       email,
       future(TOKEN_MINUTES * 60 * 1000),
       createdAt,
@@ -155,15 +156,15 @@ export async function issueLoginToken(db, email) {
   return token;
 }
 
-export async function consumeLoginToken(db, token) {
-  if (!token || token.length > 500) return null;
+export async function consumeLoginToken(db, token, nonce) {
+  if (!token || token.length > 500 || !nonce || nonce.length > 500) return null;
   const hash = await hashToken(token);
   const record = await db
     .prepare(
       `SELECT id, email FROM organization_login_tokens
-     WHERE token_hash = ? AND used_at IS NULL AND expires_at > ?`,
+     WHERE token_hash = ? AND nonce_hash = ? AND used_at IS NULL AND expires_at > ?`,
     )
-    .bind(hash, now())
+    .bind(hash, await hashToken(nonce), now())
     .first();
   if (!record) return null;
   const result = await db

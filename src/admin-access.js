@@ -127,15 +127,16 @@ export function clearAdminCookie() {
   return `${ADMIN_COOKIE_NAME}=; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=0`;
 }
 
-export async function issueAdminLoginToken(db, email) {
+export async function issueAdminLoginToken(db, email, nonce) {
   const token = newLoginToken();
   await db
     .prepare(
-      `INSERT INTO admin_login_tokens (id, token_hash, email, expires_at, created_at) VALUES (?, ?, ?, ?, ?)`,
+      `INSERT INTO admin_login_tokens (id, token_hash, nonce_hash, email, expires_at, created_at) VALUES (?, ?, ?, ?, ?, ?)`,
     )
     .bind(
       crypto.randomUUID(),
       await hashToken(token),
+      await hashToken(nonce),
       email,
       future(TOKEN_MINUTES * 60),
       now(),
@@ -144,13 +145,13 @@ export async function issueAdminLoginToken(db, email) {
   return token;
 }
 
-export async function consumeAdminLoginToken(db, token) {
-  if (!token || token.length > 500) return null;
+export async function consumeAdminLoginToken(db, token, nonce) {
+  if (!token || token.length > 500 || !nonce || nonce.length > 500) return null;
   const row = await db
     .prepare(
-      `SELECT id, email FROM admin_login_tokens WHERE token_hash = ? AND used_at IS NULL AND expires_at > ?`,
+      `SELECT id, email FROM admin_login_tokens WHERE token_hash = ? AND nonce_hash = ? AND used_at IS NULL AND expires_at > ?`,
     )
-    .bind(await hashToken(token), now())
+    .bind(await hashToken(token), await hashToken(nonce), now())
     .first();
   if (!row || !isAdminEmail(row.email)) return null;
   const result = await db
