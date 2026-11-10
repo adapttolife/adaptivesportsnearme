@@ -2727,10 +2727,13 @@ body {
 // already holds a live beta session and reloads the page if so, which rescues
 // testers whose earlier link did create a session (including older Strict
 // cookies). A 10 second guard stops a reload loop if the gate ever disagrees.
+// The reload stays on this origin: a path like //evil.example would otherwise
+// be read as a protocol relative URL, so anything not starting with a single
+// slash falls back to /, and the target is always prefixed with our origin.
 function betaHtml() {
   return betaPageHtml(
     `<section class="beta-card" aria-labelledby="beta-login-title"><h2 id="beta-login-title">Welcome, beta tester</h2><p>Use your approved email address and we will send a one-time sign-in link.</p><form id="beta-login"><label for="email">Email address</label><input id="email" name="email" type="email" autocomplete="email" required><button type="submit">Email me a sign-in link</button><p role="status" id="status"></p></form></section>`,
-    `<script>const back=location.pathname+location.search;if(location.pathname!=='/')history.replaceState(null,'','/');fetch('/api/beta-auth/session',{credentials:'same-origin',cache:'no-store'}).then(r=>r.ok?r.json():null).then(b=>{if(!b||!b.ok)return;const k='asnm-beta-heal',t=Date.now();try{if(t-Number(sessionStorage.getItem(k)||0)<10000)return;sessionStorage.setItem(k,String(t));}catch(_){return;}location.replace(back);}).catch(()=>{});document.getElementById('beta-login').addEventListener('submit',async(e)=>{e.preventDefault();const f=e.currentTarget,s=document.getElementById('status');if(!f.reportValidity())return;s.textContent='Sending your sign-in link...';try{const r=await fetch('/api/beta-auth/request-link',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({email:f.email.value})}),b=await r.json();s.textContent=r.ok&&b.ok?'Check your email for a one-time sign-in link.':(b.error||'We could not send a sign-in link.');}catch(_){s.textContent='We could not send a sign-in link.';}});</script>`,
+    `<script>const p=location.pathname,back=p.charAt(0)==='/'&&p.charAt(1)!=='/'&&p.charAt(1)!=='\\\\'?p+location.search:'/';if(location.pathname!=='/')history.replaceState(null,'','/');fetch('/api/beta-auth/session',{credentials:'same-origin',cache:'no-store'}).then(r=>r.ok?r.json():null).then(b=>{if(!b||!b.ok)return;const k='asnm-beta-heal',t=Date.now();try{if(t-Number(sessionStorage.getItem(k)||0)<10000)return;sessionStorage.setItem(k,String(t));}catch(_){return;}location.replace(location.origin+back);}).catch(()=>{});document.getElementById('beta-login').addEventListener('submit',async(e)=>{e.preventDefault();const f=e.currentTarget,s=document.getElementById('status');if(!f.reportValidity())return;s.textContent='Sending your sign-in link...';try{const r=await fetch('/api/beta-auth/request-link',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({email:f.email.value})}),b=await r.json();s.textContent=r.ok&&b.ok?'Check your email for a one-time sign-in link.':(b.error||'We could not send a sign-in link.');}catch(_){s.textContent='We could not send a sign-in link.';}});</script>`,
   );
 }
 
@@ -2817,13 +2820,14 @@ function betaEscape(value) {
   );
 }
 
-function betaAuthPage(status, card) {
-  return new Response(betaPageHtml(card), {
+function betaAuthPage(status, card, script = "", headers = {}) {
+  return new Response(betaPageHtml(card, script), {
     status,
     headers: {
       "Content-Type": "text/html; charset=utf-8",
       "Cache-Control": "no-store",
       "X-Robots-Tag": "noindex",
+      ...headers,
     },
   });
 }
@@ -2871,6 +2875,11 @@ async function betaLoginConfirmation(request, url, env) {
   return betaAuthPage(
     200,
     `<section class="beta-card" aria-labelledby="beta-confirm-title"><h2 id="beta-confirm-title">You are almost in</h2><p>Press the button to open the beta on this browser.</p><form method="post" action="/api/beta-auth/verify"><input type="hidden" name="token" value="${betaEscape(token)}"><button type="submit">Open the beta</button></form></section>`,
+    // Drop the token from the address bar and history; the form still holds it.
+    `<script>history.replaceState(null,'','/api/beta-auth/verify');</script>`,
+    // same-origin, not no-referrer: no-referrer would make the button's POST
+    // send Origin: null, which the POST handler refuses.
+    { "Referrer-Policy": "same-origin" },
   );
 }
 
@@ -2880,7 +2889,11 @@ async function betaLoginConfirmation(request, url, env) {
 async function handleBetaLoginVerify(request, url, env) {
   if (!betaAuthReady(env)) return betaLinkProblem(503, BETA_LINK_UNAVAILABLE);
   const origin = request.headers.get("Origin");
-  if (origin && origin !== url.origin)
+  const fetchSite = request.headers.get("Sec-Fetch-Site");
+  if (
+    (origin && origin !== url.origin) ||
+    (fetchSite && fetchSite !== "same-origin")
+  )
     return betaLinkProblem(
       403,
       "Please open the sign-in link from your email again, or request a new one.",

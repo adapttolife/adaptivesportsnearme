@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { DatabaseSync } from "node:sqlite";
 import { readFileSync } from "node:fs";
+import vm from "node:vm";
 
 import worker from "../src/index.js";
 import {
@@ -254,7 +255,7 @@ test("the gated sign in page checks for a live session on load", async () => {
     const html = await response.text();
     assert.match(html, /Welcome, beta tester/);
     assert.match(html, /fetch\('\/api\/beta-auth\/session'/);
-    assert.match(html, /location\.replace\(back\)/);
+    assert.match(html, /location\.replace\(location\.origin\+back\)/);
   } finally {
     sqlite.close();
   }
@@ -382,6 +383,143 @@ test("production config previews refuse beta verify, so a preview never consumes
     );
     assert.equal(response.status, 403);
     assert.equal(used(), null);
+
+    const posted = await worker.fetch(
+      new Request(
+        "https://preview.adaptivesportsnearme.workers.dev/api/beta-auth/verify",
+        {
+          method: "POST",
+          headers: { "content-type": "application/x-www-form-urlencoded" },
+          body: new URLSearchParams({ token }).toString(),
+        },
+      ),
+      preview,
+      {},
+    );
+    assert.equal(posted.status, 403);
+    assert.equal(posted.headers.get("Set-Cookie"), null);
+    assert.equal(used(), null);
+  } finally {
+    sqlite.close();
+  }
+});
+
+// Runs the sign in page script against a stub browser whose session check
+// succeeds, and returns the URL it navigates to (or null).
+async function selfHealTarget(rawPath) {
+  const { sqlite, env } = await setup();
+  try {
+    const response = await worker.fetch(
+      new Request(`${ORIGIN}${rawPath}`),
+      env,
+      {},
+    );
+    assert.equal(response.status, 200, rawPath);
+    const html = await response.text();
+    assert.match(html, /Welcome, beta tester/);
+    const script = html.match(/<script>([\s\S]*?)<\/script>/)[1];
+    const parsed = new URL(`${ORIGIN}${rawPath}`);
+    let target = null;
+    const location = {
+      origin: ORIGIN,
+      pathname: rawPath.split("?")[0],
+      search: parsed.search,
+      replace(value) {
+        target = value;
+      },
+      assign(value) {
+        target = value;
+      },
+      reload() {
+        target = location.origin + location.pathname;
+      },
+    };
+    const context = {
+      location,
+      history: { replaceState() {} },
+      sessionStorage: { getItem: () => null, setItem() {} },
+      document: { getElementById: () => ({ addEventListener() {} }) },
+      fetch: async () => ({ ok: true, json: async () => ({ ok: true }) }),
+      Date,
+      Number,
+      String,
+    };
+    vm.runInNewContext(script, context);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    return target;
+  } finally {
+    sqlite.close();
+  }
+}
+
+test("the self heal reload never leaves this origin", async () => {
+  for (const path of [
+    "//evil.example/x",
+    "/\\evil.example",
+    "/\\evil.example/x?y=1",
+    "///evil.example",
+  ]) {
+    const target = await selfHealTarget(path);
+    assert.ok(target, path);
+    assert.equal(new URL(target).origin, ORIGIN, path);
+    assert.equal(target, `${ORIGIN}/`, path);
+    assert.doesNotMatch(target.slice(ORIGIN.length), /^\/[\/\\]/, path);
+  }
+});
+
+test("the self heal reload keeps an ordinary same origin path", async () => {
+  const target = await selfHealTarget("/programs/sled-hockey?near=60601");
+  assert.equal(target, `${ORIGIN}/programs/sled-hockey?near=60601`);
+});
+
+test("the confirm page hides the token from the address bar and from other sites", async () => {
+  const { sqlite, env, token } = await setup();
+  try {
+    const response = await worker.fetch(confirmGet(token), env, {});
+    assert.equal(response.headers.get("Referrer-Policy"), "same-origin");
+    const html = await response.text();
+    assert.match(
+      html,
+      /history\.replaceState\(null,'','\/api\/beta-auth\/verify'\)/,
+    );
+  } finally {
+    sqlite.close();
+  }
+});
+
+test("POST verify is refused when Sec-Fetch-Site says the request is not same origin", async () => {
+  for (const site of ["cross-site", "same-site", "none"]) {
+    const { sqlite, env, token, used, sessions } = await setup();
+    try {
+      const response = await worker.fetch(
+        confirmPost(token, { "Sec-Fetch-Site": site }),
+        env,
+        {},
+      );
+      assert.equal(response.status, 403, site);
+      assert.equal(used(), null, site);
+      assert.equal(sessions(), 0, site);
+    } finally {
+      sqlite.close();
+    }
+  }
+});
+
+test("POST verify still works when the browser omits Sec-Fetch-Site and Origin", async () => {
+  const { sqlite, env, token, sessions } = await setup();
+  try {
+    const response = await worker.fetch(
+      new Request(`${ORIGIN}/api/beta-auth/verify`, {
+        method: "POST",
+        headers: { "content-type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({ token }).toString(),
+      }),
+      env,
+      {},
+    );
+    assert.equal(response.status, 303);
+    assert.match(response.headers.get("Set-Cookie"), /SameSite=Lax/);
+    assert.equal(sessions(), 1);
   } finally {
     sqlite.close();
   }
