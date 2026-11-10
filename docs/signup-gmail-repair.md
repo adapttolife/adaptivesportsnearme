@@ -10,7 +10,7 @@ This is an ASNM contribution based on `staging` at `b3cc1ab`, not a direct-to-ma
 - One newsletter implementation shared by the app, preview and the **existing** `asnm-gate` route Worker. Updating only the app would not fix public signup: `/api/subscribe*` is intercepted by that gate.
 - Correct ASNM publication; existing/legacy consent checked; no silent reactivation. Existing subscribers are not welcomed again. The profile opt-in deliberately requests no custom welcome.
 - Atomic durable intake + delivery claims before subscription creation. Concurrent requests cannot create multiple internal records or mail claims.
-- Beehiiv welcome suppressed; a custom welcome requires the same subscriber to be active, a one-way send claim, and a provider acceptance ID. Acceptance is NOT inbox delivery.
+- Provider welcome suppressed (this branch predates the 2026-10-30 Resend switch; `src/newsletter.js` now adds signups to the ASNM Resend segment); a custom welcome requires the same subscriber to be active, a one-way send claim, and a provider acceptance ID. Acceptance is NOT inbox delivery.
 - Uncertain send/create outcomes are retained for review, never blindly retried. Missing Gmail configuration leaves `waiting-for-mail`, not a false `sent` state. Pending validation can leave `not-active-no-welcome`; that is a visible operator-review outcome, not a delivery guarantee.
 - Existing notification claims are preserved. No fabricated claims for old records and no canary submissions or synthetic external mail.
 - Explicit Gmail transport, UTF-8 MIME, attachments, sender restriction, no provider fallback. Network calls and responses in automated tests are isolated fixtures, not evidence of real Gmail delivery.
@@ -25,7 +25,7 @@ Every candidate lane opts into Gmail with `MAIL_TRANSPORT=gmail` and `GMAIL_FROM
 - `GMAIL_CLIENT_ID`
 - `GMAIL_CLIENT_SECRET`
 - `GMAIL_REFRESH_TOKEN`
-- existing correct `BEEHIIV_API_KEY`
+- `RESEND_API_KEY`, the ASNM Resend key (the segment id, `RESEND_SEGMENT_ID`, is a plain variable in the Wrangler configs, not a secret)
 
 Use a dedicated refresh token authorized for `https://www.googleapis.com/auth/gmail.send`, owned by the actual hello@ mailbox or a mailbox whose hello@ send-as identity is already accepted. A generic Google API key does not authorize mail. Do not give the website a personal all-mail token. Do not paste credentials into issues, PRs or chat. Store them in the approved vault and provision server-side. Gmail API enablement and actual mailbox/alias ownership must be confirmed during authorization. No MX change is required.
 

@@ -2,7 +2,7 @@
 
 *Subtitle: A practical starting point: programs by sport and city, plus five funds that cover equipment and fees.*
 
-*Spec 90 pre-flip gate 3. Beehiiv's create-post API is Enterprise-only, so this is the paste-ready draft: app.beehiiv.com -> Posts -> New post -> paste, save as draft or publish. The /blog page renders it automatically once published (status=confirmed). Voice per house rules: no em-dashes, show-don't-tell, non-cornering.*
+*Spec 90 pre-flip gate 3. Paste-ready draft for the blog editor in the ASNM admin dashboard (Blog posts -> Add blog post): the title and subtitle go in their own fields, and everything below the line goes in Content (Markdown). The /blog page shows the post once Publication status is Published and Public listing is on. Voice per house rules: no em-dashes, show-don't-tell, non-cornering.*
 
 ---
 
