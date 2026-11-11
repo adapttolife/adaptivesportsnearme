@@ -295,6 +295,46 @@ test("only production asks to be indexed: staging, previews and noindex pages sa
   }
 });
 
+// Every page carries a Content-Security-Policy (F-018). The map (public/app/views/map.js)
+// needs two things from it: the vendored MapLibre starts its worker from a blob: URL, and the
+// map style's host also serves its tiles, labels and icons. Without either one no map loads:
+// the map overlay says "The map could not load" and a listing's map stays an empty box.
+test("the page policy lets the map load: MapLibre's blob: worker and the map style's host", async () => {
+  assert.match(
+    read("public/assets/vendor/maplibre-gl.js"),
+    /setWorkerUrl\(window\.URL\.createObjectURL\(new Blob\(/,
+  );
+  const style = new URL(
+    read("public/app/views/map.js").match(/const STYLE = "([^"]+)"/)[1],
+  );
+  for (const path of [
+    "/states/NY",
+    "/near/Tampa%2C%20FL",
+    `/programs/${PROGRAM}`,
+  ]) {
+    const response = await serve(path, { ASSETS: assets() });
+    const policy = Object.fromEntries(
+      (response.headers.get("content-security-policy") || "")
+        .split(";")
+        .map((directive) => directive.trim().split(/\s+/))
+        .map(([name, ...sources]) => [name, sources]),
+    );
+    assert.ok(
+      policy["worker-src"]?.includes("blob:"),
+      `${path}: MapLibre's worker`,
+    );
+    // 'self' as before: an old service worker can still update to public/sw.js, which retires it.
+    assert.ok(
+      policy["worker-src"].includes("'self'"),
+      `${path}: the site's own service worker`,
+    );
+    assert.ok(
+      policy["connect-src"]?.includes(style.origin),
+      `${path}: ${style.origin}`,
+    );
+  }
+});
+
 test("servePage: an organization or grant id with no listing is a 404; a listed one is a 200 titled with its name", async () => {
   const { sql, DB } = database();
   try {

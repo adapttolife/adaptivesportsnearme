@@ -185,7 +185,7 @@ export async function createOrganizationSession(db, email, secret) {
     .prepare(
       `INSERT INTO organization_sessions (id, email, expires_at, created_at) VALUES (?, ?, ?, ?)`,
     )
-    .bind(id, email, future(SESSION_SECONDS), now())
+    .bind(id, email, future(SESSION_SECONDS * 1000), now())
     .run();
   return { id, signature: await signProfileId(id, secret) };
 }
