@@ -517,7 +517,10 @@ export async function servePage(request, env, url) {
   const headers = {
     "content-type": "text/html; charset=utf-8",
     "cache-control": "public, max-age=60, stale-while-revalidate=300",
-    "content-security-policy": "default-src 'self'; script-src 'self' https://challenges.cloudflare.com https://cdn.userway.org; object-src 'none'; base-uri 'self'; frame-ancestors 'self'; form-action 'self'; img-src 'self' data: https:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://challenges.cloudflare.com https://cdn.userway.org; frame-src https://challenges.cloudflare.com",
+    // The map (public/app/views/map.js): MapLibre starts its worker from a blob: URL, and the
+    // style, tiles, labels and icons come from tiles.openfreemap.org. Its Census address lookup is
+    // not listed: that API sends no CORS header, so a browser cannot read its answer anyway.
+    "content-security-policy": "default-src 'self'; script-src 'self' https://challenges.cloudflare.com https://cdn.userway.org; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; frame-ancestors 'self'; form-action 'self'; img-src 'self' data: https:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://challenges.cloudflare.com https://cdn.userway.org https://tiles.openfreemap.org; frame-src https://challenges.cloudflare.com",
   };
   if (meta.noindex || env.ENV_NAME !== "production")
     headers["x-robots-tag"] = "noindex";
