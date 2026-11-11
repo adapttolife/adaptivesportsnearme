@@ -2,7 +2,7 @@
 	"name": "adaptivesportsnearme",
 	"compatibility_date": "2026-06-26",
 	"main": "src/index.js",
-	"workers_dev": true,
+	"workers_dev": false,
 	"preview_urls": true,
 	"routes": [
 		{
@@ -24,7 +24,6 @@
 	"vars": {
 		"ENV_NAME": "production",
 		"PRELAUNCH": "true",
-		"BEEHIIV_PUBLICATION_ID": "pub_fb930d38-568a-4d98-b9d2-5f403d117a00",
 		"MAIL_TRANSPORT": "gmail",
 		"GMAIL_FROM": "hello@adaptivesportsnearme.com",
 		"REQUIRE_FORM_LIMITER": "true",
@@ -48,7 +47,7 @@
 		}
 	],
 	"triggers": {
-		"crons": ["0 */2 * * *", "0 * * * *"]
+		"crons": []
 	},
 	"observability": {
     "issues": { "enabled": true },
@@ -71,7 +70,6 @@
 			"vars": {
 				"ENV_NAME": "staging",
 				"PRELAUNCH": "false",
-				"BEEHIIV_PUBLICATION_ID": "pub_fb930d38-568a-4d98-b9d2-5f403d117a00",
 				"MAIL_TRANSPORT": "gmail",
 				"GMAIL_FROM": "hello@adaptivesportsnearme.com",
 				"REQUIRE_FORM_LIMITER": "true",

@@ -10,7 +10,10 @@ import {
   listAdminQueue,
   acceptAdminQueueItem,
   adminOrganizationActivity,
+  isBulkConfirmation,
+  listingUpdateChangeFields,
 } from "../src/admin-access.js";
+import { revertConfirmationChange } from "../src/offerings.js";
 import { parseCheckup, parseFixReason } from "../src/listing-answers.js";
 
 const read = (path) =>
@@ -125,6 +128,25 @@ function site(t) {
   return { directory, db: env.DB, post, org };
 }
 const run = { rel: "run", em: "manager@example.test" };
+
+test("bulk confirmation accepts only unchanged all-right answers", () => {
+  const unchanged = { relation: "run", checkup: { verdict: "all_right" } };
+  assert.deepEqual(listingUpdateChangeFields(unchanged), []);
+  assert.equal(isBulkConfirmation(unchanged), true);
+  const changed = {
+    relation: "run",
+    checkup: {
+      verdict: "all_right",
+      facts: { website: { status: "change", value: "https://example.test" } },
+    },
+  };
+  assert.deepEqual(listingUpdateChangeFields(changed), ["website_url"]);
+  assert.equal(isBulkConfirmation(changed), false);
+  assert.equal(
+    isBulkConfirmation({ relation: "run", checkup: { verdict: "stopped" } }),
+    false,
+  );
+});
 const applyFirst = async (x) =>
   acceptAdminQueueItem(
     x.db,
@@ -136,14 +158,12 @@ test("answers are cleaned: unknown verdicts, statuses, states, reasons and who c
   assert.equal(parseCheckup('{"verdict":"maybe"}'), null);
   assert.equal(parseCheckup("nope"), null);
   assert.equal(parseCheckup('{"verdict":"stopped"}'), null); // a reason is required
-  assert.deepEqual(
-    parseCheckup(
-      '{"verdict":"changed","facts":{"website":{"status":"change","value":"javascript:x"},"place":{"status":"change","city":"X","state":"ZZ"},"who":{"status":"change","value":["kids","bogus"]},"cost":{"status":"maybe"}}}',
-    ),
-    {
-      verdict: "changed",
-      facts: { who: { status: "change", value: ["kids"] } },
-    },
+  assert.throws(
+    () =>
+      parseCheckup(
+        '{"verdict":"changed","facts":{"website":{"status":"change","value":"javascript:x"}}}',
+      ),
+    /url-invalid/,
   );
   assert.equal(parseFixReason("website"), "website");
   assert.equal(parseFixReason("rm -rf"), "");
@@ -207,6 +227,38 @@ test("'Something changed' writes the website, place, who it's for and cost, and 
   assert.match(
     applied.summary,
     /website: https:\/\/mountainadaptive\.org\/programs.*place: North Woodstock, NH.*sports: Skiing \(winter\)/,
+  );
+  const changes = x.directory
+    .prepare(
+      `SELECT id, field, previous_value, applied_value, actor, source_submission
+       FROM organization_change_log
+       WHERE organization_id = ?
+       ORDER BY field`,
+    )
+    .all(ORG);
+  assert.deepEqual(
+    changes.map((change) => change.field),
+    ["ages", "cost_note", "place", "website_url"],
+  );
+  const website = changes.find((change) => change.field === "website_url");
+  assert.equal(website.actor, "team@adaptivesportsnearme.com");
+  assert.match(website.source_submission, /^submission \d+$/);
+  assert.equal(JSON.parse(website.previous_value), "https://example.org");
+  assert.equal(
+    JSON.parse(website.applied_value),
+    "https://mountainadaptive.org/programs",
+  );
+  await revertConfirmationChange(
+    x.db,
+    website.id,
+    "another-admin@adaptivesportsnearme.com",
+  );
+  assert.equal(x.org().website_url, "https://example.org");
+  assert.equal(
+    x.directory
+      .prepare("SELECT reverted_by FROM organization_change_log WHERE id = ?")
+      .get(website.id).reverted_by,
+    "another-admin@adaptivesportsnearme.com",
   );
 });
 

@@ -73,10 +73,12 @@ test("organization access uses the separate claim email and consumes a magic lin
       (await organizationsForClaimEmail(db, "manager@example.test")).length,
       1,
     );
-    const token = await issueLoginToken(db, "manager@example.test");
+    const nonce = "browser-nonce";
+    const token = await issueLoginToken(db, "manager@example.test", nonce);
     assert.ok(await hashToken(token));
-    assert.equal(await consumeLoginToken(db, token), "manager@example.test");
-    assert.equal(await consumeLoginToken(db, token), null);
+    assert.equal(await consumeLoginToken(db, token, "wrong-nonce"), null);
+    assert.equal(await consumeLoginToken(db, token, nonce), "manager@example.test");
+    assert.equal(await consumeLoginToken(db, token, nonce), null);
   } finally {
     sqlite.close();
   }

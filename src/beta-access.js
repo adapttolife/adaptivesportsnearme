@@ -7,8 +7,8 @@ import {
 import { isAdminEmail } from "./admin-access.js";
 
 export const BETA_COOKIE_NAME = "asnm_beta";
-const SESSION_SECONDS = 60 * 60 * 24 * 30;
-const TOKEN_SECONDS = 60 * 15;
+const SESSION_SECONDS = 60 * 60 * 24 * 5;
+export const TOKEN_SECONDS = 60 * 30;
 const now = () => new Date().toISOString();
 const future = (seconds) => new Date(Date.now() + seconds * 1000).toISOString();
 
@@ -25,11 +25,11 @@ export function betaAuthReady(env) {
 }
 
 export function serializeBetaCookie(id, signature, maxAge = SESSION_SECONDS) {
-  return `${BETA_COOKIE_NAME}=${id}.${signature}; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=${maxAge}`;
+  return `${BETA_COOKIE_NAME}=${id}.${signature}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=${maxAge}`;
 }
 
 export function clearBetaCookie() {
-  return `${BETA_COOKIE_NAME}=; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=0`;
+  return `${BETA_COOKIE_NAME}=; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=0`;
 }
 
 export async function issueBetaLoginToken(db, email) {
@@ -47,6 +47,19 @@ export async function issueBetaLoginToken(db, email) {
     )
     .run();
   return token;
+}
+
+// Read only check used by the GET confirm page. It never marks the token used,
+// so a mail scanner that only follows links cannot burn a tester's link.
+export async function peekBetaLoginToken(db, token) {
+  if (!token || token.length > 500) return null;
+  const row = await db
+    .prepare(
+      `SELECT email FROM beta_login_tokens WHERE token_hash = ? AND used_at IS NULL AND expires_at > ?`,
+    )
+    .bind(await hashToken(token), now())
+    .first();
+  return validEmail(row?.email) || null;
 }
 
 export async function consumeBetaLoginToken(db, token) {
@@ -113,26 +126,67 @@ export async function readBetaSession(request, db, secret) {
 export async function listBetaTesters(db) {
   const { results } = await db
     .prepare(
-      `SELECT email, enabled, created_at, updated_at FROM beta_testers ORDER BY email COLLATE NOCASE`,
+      `SELECT email, name, organization, phone, enabled, created_at, updated_at
+       FROM beta_testers
+       ORDER BY email COLLATE NOCASE`,
     )
     .all();
   return results || [];
 }
 
-export async function setBetaTester(db, email, enabled = true) {
+function detailsForBetaTester(details) {
+  if (!details || typeof details !== "object") return null;
+  const name = String(details.name || "").trim();
+  if (!name) throw new Error("name-required");
+  if (name.length > 160) throw new Error("name-invalid");
+  const organization = String(details.organization || "").trim();
+  const phone = String(details.phone || "").trim();
+  if (organization.length > 240 || phone.length > 60)
+    throw new Error("details-invalid");
+  return { name, organization: organization || null, phone: phone || null };
+}
+
+export async function setBetaTester(db, email, enabled = true, details = null) {
   const valid = validEmail(email);
   if (!valid) throw new Error("email-invalid");
   const timestamp = now();
-  await db
-    .prepare(
-      `INSERT INTO beta_testers (email, enabled, created_at, updated_at) VALUES (?, ?, ?, ?)
-    ON CONFLICT(email) DO UPDATE SET enabled = excluded.enabled, updated_at = excluded.updated_at`,
-    )
-    .bind(valid, enabled ? 1 : 0, timestamp, timestamp)
-    .run();
+  const cleaned = detailsForBetaTester(details);
+  if (cleaned) {
+    await db
+      .prepare(
+        `INSERT INTO beta_testers (email, name, organization, phone, enabled, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?)
+         ON CONFLICT(email) DO UPDATE SET
+           name = excluded.name,
+           organization = excluded.organization,
+           phone = excluded.phone,
+           enabled = excluded.enabled,
+           updated_at = excluded.updated_at`,
+      )
+      .bind(
+        valid,
+        cleaned.name,
+        cleaned.organization,
+        cleaned.phone,
+        enabled ? 1 : 0,
+        timestamp,
+        timestamp,
+      )
+      .run();
+  } else {
+    await db
+      .prepare(
+        `INSERT INTO beta_testers (email, enabled, created_at, updated_at) VALUES (?, ?, ?, ?)
+         ON CONFLICT(email) DO UPDATE SET enabled = excluded.enabled, updated_at = excluded.updated_at`,
+      )
+      .bind(valid, enabled ? 1 : 0, timestamp, timestamp)
+      .run();
+  }
   return db
     .prepare(
-      `SELECT email, enabled, created_at, updated_at FROM beta_testers WHERE email = ? COLLATE NOCASE`,
+      `SELECT email, name, organization, phone, enabled, created_at, updated_at
+       FROM beta_testers
+       WHERE email = ? COLLATE NOCASE`,
     )
     .bind(valid)
     .first();

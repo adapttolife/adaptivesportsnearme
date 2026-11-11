@@ -3,6 +3,7 @@ import { safeNewsletterSubscribe } from "./newsletter.js";
 import {
   queueFormConfirmation,
   sendAdminLoginLink,
+  sendBetaTesterInvitation,
   sendBetaLoginLink,
   sendOrganizationLoginLink,
   sendProfileLoginLink,
@@ -61,6 +62,7 @@ import {
   parseCheckup,
   parseFixReason,
 } from "./listing-answers.js";
+import { normalizePublicUrl } from "./public-url.js";
 import {
   logActivity,
   sportsSummary,
@@ -73,14 +75,14 @@ import { json, text } from "./http.js";
 import { cachedDirectoryResponse } from "./read-cache.js";
 import { loadPlaces } from "./geo.js";
 import {
-  readProfileCookie,
-  signProfileId,
+  readProfileSession,
   serializeProfileCookie,
   clearProfileCookie,
+  createProfileSession,
+  revokeProfileSession,
+  revokeProfileSessions,
   getValidSportKeys,
   getProfileById,
-  getProfileByEmail,
-  createProfile,
   updateProfile,
   getProfileWithFavorites,
   orgExists,
@@ -91,6 +93,7 @@ import {
   consumeProfileLoginToken,
   findOrCreateProfile,
   setSavedItem,
+  signProfileId,
 } from "./profile.js";
 import {
   clearOrgCookie,
@@ -133,19 +136,32 @@ import {
 import { listPublicBlogPosts, getPublicBlogPost } from "./blog.js";
 import {
   betaAuthReady,
+  betaAuthSecret,
   clearBetaCookie,
   consumeBetaLoginToken,
   createBetaSession,
   isBetaTester,
   issueBetaLoginToken,
   listBetaTesters,
+  peekBetaLoginToken,
   readBetaSession,
   serializeBetaCookie,
   setBetaTester,
 } from "./beta-access.js";
+import { featureAvailable } from "./feature-access.js";
+import { maintenanceModeEnabled } from "./maintenance-mode.js";
+import {
+  loginConfirmationHtml,
+  newLoginNonce,
+  readLoginNonce,
+  serializeLoginNonce,
+} from "./login-confirmation.js";
 
 const API_CACHE = "public, max-age=300, stale-while-revalidate=600";
 const FEED_CACHE = "public, max-age=300";
+const PROFILE_LOGIN_NONCE = "asnm_profile_login_nonce";
+const ORG_LOGIN_NONCE = "asnm_org_login_nonce";
+const ADMIN_LOGIN_NONCE = "asnm_admin_login_nonce";
 
 // Single source for cron -> lane routing; must list every schedule in
 // wrangler.json triggers. Unknown crons error loudly instead of misrouting.
@@ -162,12 +178,26 @@ const application = {
       const target = new URL(`https://adapttolife.org/admin${url.pathname.slice("/admin".length)}${url.search}`);
       return Response.redirect(target, 302);
     }
+    if (url.pathname === "/api/maintenance") {
+      if (request.method !== "GET")
+        return json({ ok: false, error: "Method not allowed" }, 405);
+      return json(
+        { ok: true, enabled: await maintenanceModeEnabled(env.DB) },
+        200,
+        BETA_AUTH_CACHE,
+      );
+    }
     // Versions uploaded with production config must not accept preview mutations.
     // Staging uploads use ENV_NAME=staging and the staging database bindings.
     if (
       env.ENV_NAME === "production" &&
       (!["GET", "HEAD"].includes(request.method) ||
-        url.pathname === "/api/org-auth/verify") &&
+        [
+          "/api/profile-auth/verify",
+          "/api/org-auth/verify",
+          "/api/admin-auth/verify",
+          "/api/beta-auth/verify",
+        ].includes(url.pathname)) &&
       !["adaptivesportsnearme.com", "www.adaptivesportsnearme.com"].includes(
         url.hostname,
       )
@@ -181,8 +211,18 @@ const application = {
         403,
       );
     }
+    const maintenanceGate = await maintenanceGateResponse(request, env, url);
+    if (maintenanceGate) return maintenanceGate;
+
     const betaGate = await prelaunchGate(request, env, url);
     if (betaGate) return betaGate;
+
+    const organizationFeatureGate = await organizationFeatureGateResponse(
+      request,
+      env,
+      url,
+    );
+    if (organizationFeatureGate) return organizationFeatureGate;
 
     if (url.pathname === "/api/beta-auth/request-link") {
       if (request.method !== "POST")
@@ -196,9 +236,11 @@ const application = {
       return handleBetaLoginRequest(request, env, url);
     }
     if (url.pathname === "/api/beta-auth/verify") {
-      if (request.method !== "GET")
-        return json({ ok: false, error: "Method not allowed" }, 405);
-      return handleBetaLoginVerify(url, env);
+      if (request.method === "GET")
+        return betaLoginConfirmation(request, url, env);
+      if (request.method === "POST")
+        return handleBetaLoginVerify(request, url, env);
+      return json({ ok: false, error: "Method not allowed" }, 405);
     }
     if (url.pathname === "/api/beta-auth/session") {
       if (request.method !== "GET")
@@ -263,9 +305,10 @@ const application = {
       return handleProfileLoginRequest(request, env, url);
     }
     if (url.pathname === "/api/profile-auth/verify") {
-      if (request.method !== "GET")
-        return json({ ok: false, error: "Method not allowed" }, 405);
-      return handleProfileLoginVerify(url, env);
+      if (request.method === "GET") return profileLoginConfirmation(url);
+      if (request.method === "POST")
+        return handleProfileLoginVerify(request, url, env);
+      return json({ ok: false, error: "Method not allowed" }, 405);
     }
     if (url.pathname === "/api/profile-auth/session") {
       if (request.method !== "GET")
@@ -285,7 +328,12 @@ const application = {
     if (url.pathname === "/api/profile/signout") {
       if (request.method !== "POST")
         return json({ ok: false, error: "Method not allowed" }, 405);
-      return handleProfileSignout();
+      return handleProfileSignout(request, env);
+    }
+    if (url.pathname === "/api/profile/signout-everywhere") {
+      if (request.method !== "POST")
+        return json({ ok: false, error: "Method not allowed" }, 405);
+      return handleProfileSignoutEverywhere(request, env);
     }
     if (url.pathname === "/api/org-auth/request-link") {
       if (request.method !== "POST")
@@ -299,9 +347,10 @@ const application = {
       return handleOrganizationLoginRequest(request, env, url);
     }
     if (url.pathname === "/api/org-auth/verify") {
-      if (request.method !== "GET")
-        return json({ ok: false, error: "Method not allowed" }, 405);
-      return handleOrganizationLoginVerify(url, env);
+      if (request.method === "GET") return organizationLoginConfirmation(url);
+      if (request.method === "POST")
+        return handleOrganizationLoginVerify(request, url, env);
+      return json({ ok: false, error: "Method not allowed" }, 405);
     }
     if (url.pathname === "/api/org-auth/session") {
       if (request.method !== "GET")
@@ -331,9 +380,10 @@ const application = {
       return handleAdminLoginRequest(request, env, url);
     }
     if (url.pathname === "/api/admin-auth/verify") {
-      if (request.method !== "GET")
-        return json({ ok: false, error: "Method not allowed" }, 405);
-      return handleAdminLoginVerify(url, env);
+      if (request.method === "GET") return adminLoginConfirmation(url);
+      if (request.method === "POST")
+        return handleAdminLoginVerify(request, url, env);
+      return json({ ok: false, error: "Method not allowed" }, 405);
     }
     if (url.pathname === "/api/admin-auth/session") {
       if (request.method !== "GET")
@@ -352,7 +402,7 @@ const application = {
       });
     }
     if (url.pathname === "/api/admin-data/beta-testers")
-      return handleAdminBetaTesters(request, env);
+      return handleAdminBetaTesters(request, env, url);
     const adminItem = url.pathname.match(
       /^\/api\/admin-data\/(organizations|programs|events|grants|blog)(?:\/([0-9a-f-]{36}))?$/i,
     );
@@ -474,10 +524,10 @@ const application = {
           const record = await getOrg(env.DB, org[1]);
           return record
             ? json(
-                { ok: true, organization: record, org: record },
-                200,
-                API_CACHE,
-              )
+              { ok: true, organization: record, org: record },
+              200,
+              API_CACHE,
+            )
             : json({ ok: false, error: "Not found" }, 404);
         }
         const organizationPrograms = url.pathname.match(
@@ -857,17 +907,36 @@ async function handleSubmitProgram(request, env, ctx, opts = {}) {
   const eventDate = str(data.ed);
   const eventEnd = /^\d{4}-\d{2}-\d{2}$/.test(str(data.ee)) ? str(data.ee) : "";
   const eventTime = str(data.et).slice(0, 40);
-  const siteUrl = str(data.url).slice(0, 300);
+  let siteUrl;
+  try {
+    siteUrl = normalizePublicUrl(str(data.url));
+  } catch {
+    return json(
+      { ok: false, error: "Please enter a valid public website URL." },
+      422,
+    );
+  }
 
   // An organization confirming its listing can also tell us every sport it runs,
   // with seasons, and the events it holds every year (docs/specs/programs-that-come-back.md).
   // A person applies them from the review queue; nothing here writes the listing.
   const confirming = !!listingId && relation === "run";
   const sportsAnswer = confirming ? parseSportsAnswer(data.sports) : [];
-  const yearlyAnswer = confirming ? parseYearlyAnswer(data.yearly) : [];
+  let yearlyAnswer;
+  let checkup;
+  try {
+    yearlyAnswer = confirming ? parseYearlyAnswer(data.yearly) : [];
+    checkup = confirming ? parseCheckup(data.checkup) : null;
+  } catch (error) {
+    if (error instanceof Error && error.message === "url-invalid")
+      return json(
+        { ok: false, error: "Please enter a valid public website URL." },
+        422,
+      );
+    throw error;
+  }
   // The one-minute check-up (docs/specs/community-kept-directory.md): the organization's answer to
   // "here's what families see", and for everyone else a one-tap reason for what's wrong.
-  const checkup = confirming ? parseCheckup(data.checkup) : null;
   const fixReason = listingId && !confirming ? parseFixReason(data.reason) : "";
 
   if (!program)
@@ -926,52 +995,52 @@ async function handleSubmitProgram(request, env, ctx, opts = {}) {
 
   const answers = isEvent
     ? {
-        event: program,
-        date: eventDate,
-        end: eventEnd,
-        time: eventTime,
-        city,
-        state: stateRegion,
-        url: siteUrl,
-        org,
-        sport,
-        notes,
-      }
+      event: program,
+      date: eventDate,
+      end: eventEnd,
+      time: eventTime,
+      city,
+      state: stateRegion,
+      url: siteUrl,
+      org,
+      sport,
+      notes,
+    }
     : listingId
       ? {
-          program,
-          update_of: listingId,
-          relation,
-          notes,
-          ...(sportsAnswer.length
-            ? {
-                sports: Object.fromEntries(
-                  sportsAnswer.map((x) => [x.key, x.seasons]),
-                ),
-              }
-            : {}),
-          ...(yearlyAnswer.length ? { yearly: yearlyAnswer } : {}),
-          ...(checkup ? { checkup } : {}),
-          ...(fixReason ? { reason: fixReason } : {}),
-        }
+        program,
+        update_of: listingId,
+        relation,
+        notes,
+        ...(sportsAnswer.length
+          ? {
+            sports: Object.fromEntries(
+              sportsAnswer.map((x) => [x.key, x.seasons]),
+            ),
+          }
+          : {}),
+        ...(yearlyAnswer.length ? { yearly: yearlyAnswer } : {}),
+        ...(checkup ? { checkup } : {}),
+        ...(fixReason ? { reason: fixReason } : {}),
+      }
       : isOrganization
         ? {
-            organization: program,
-            sport,
-            city,
-            state: stateRegion,
-            website: siteUrl,
-            notes,
-          }
+          organization: program,
+          sport,
+          city,
+          state: stateRegion,
+          website: siteUrl,
+          notes,
+        }
         : {
-            program,
-            org,
-            sport,
-            city,
-            state: stateRegion,
-            website: siteUrl,
-            notes,
-          };
+          program,
+          org,
+          sport,
+          city,
+          state: stateRegion,
+          website: siteUrl,
+          notes,
+        };
   const intakeId = await programSubmissionId(str(data.sid), email, answers);
   const location = [city, stateRegion].filter(Boolean).join(", ");
   // The summary is the notice's subject line: one line, bounded.
@@ -1237,50 +1306,41 @@ async function handleProfileUpsert(request, env, ctx) {
   }
   const sports = parseSports(data.sports, validKeys);
 
-  const existingId = await readProfileCookie(request, env.PROFILE_SIGNING_KEY);
-  let id,
-    isNew = false;
+  const session = await readProfileSession(
+    request,
+    env.DB,
+    env.PROFILE_SIGNING_KEY,
+  );
+  if (!session)
+    return json(
+      { ok: false, error: "Sign in by email before creating or editing a profile." },
+      401,
+      PROFILE_CACHE,
+    );
 
   try {
-    if (existingId) {
-      const existing = await getProfileById(env.DB, existingId);
-      if (!existing)
-        return json(
-          {
-            ok: false,
-            error: "Your profile could not be found. Please start again.",
-          },
-          404,
-        );
-      await updateProfile(env.DB, existingId, {
-        email,
-        name,
-        state: stateCode,
-        sports,
-        newsletter,
-      });
-      id = existingId;
-    } else {
-      const dupe = await getProfileByEmail(env.DB, email);
-      if (dupe) {
-        return json(
-          {
-            ok: false,
-            error:
-              "That email already has a profile on another device. Recovery by email link is coming soon.",
-          },
-          409,
-        );
-      }
-      id = await createProfile(env.DB, {
-        email,
-        name,
-        state: stateCode,
-        sports,
-        newsletter,
-      });
-      isNew = true;
-    }
+    const existing = await getProfileById(env.DB, session.profileId);
+    if (!existing)
+      return json(
+        {
+          ok: false,
+          error: "Your profile could not be found. Please start again.",
+        },
+        404,
+      );
+    if (String(existing.email).toLowerCase() !== email)
+      return json(
+        { ok: false, error: "Your email address is set by your sign-in link." },
+        403,
+        PROFILE_CACHE,
+      );
+    await updateProfile(env.DB, session.profileId, {
+      email,
+      name,
+      state: stateCode,
+      sports,
+      newsletter,
+    });
   } catch (err) {
     // Covers the UNIQUE(email) race between the read above and the write, on both
     // create and update (an update can also collide if the new email belongs to
@@ -1306,19 +1366,11 @@ async function handleProfileUpsert(request, env, ctx) {
       console.error("profile newsletter opt-in failed:", result.error); // profile save already succeeded
   }
 
-  const sig = await signProfileId(id, env.PROFILE_SIGNING_KEY);
   await queueFormConfirmation(env, ctx, {
-    kind: isNew ? "profile-created" : "profile-updated",
+    kind: "profile-updated",
     email,
   });
-  return new Response(JSON.stringify({ ok: true, id, isNew }), {
-    status: isNew ? 201 : 200,
-    headers: {
-      "Content-Type": "application/json",
-      "Cache-Control": "no-store",
-      "Set-Cookie": serializeProfileCookie(id, sig),
-    },
-  });
+  return json({ ok: true, id: session.profileId, isNew: false }, 200, PROFILE_CACHE);
 }
 
 async function handleProfileLoginRequest(request, env, url) {
@@ -1337,11 +1389,17 @@ async function handleProfileLoginRequest(request, env, url) {
       PROFILE_CACHE,
     );
   try {
-    const token = await issueProfileLoginToken(env.DB, email);
+    const nonce = newLoginNonce();
+    const token = await issueProfileLoginToken(env.DB, email, nonce);
     const link = new URL("/api/profile-auth/verify", url.origin);
     link.searchParams.set("token", token);
     await sendProfileLoginLink(env, email, link.toString());
-    return json({ ok: true }, 200, PROFILE_CACHE);
+    const response = json({ ok: true }, 200, PROFILE_CACHE);
+    response.headers.set(
+      "Set-Cookie",
+      serializeLoginNonce(PROFILE_LOGIN_NONCE, nonce),
+    );
+    return response;
   } catch (err) {
     console.error("profile login request failed", {
       reason: err instanceof Error ? err.message : "unknown",
@@ -1357,7 +1415,11 @@ async function handleProfileLoginRequest(request, env, url) {
   }
 }
 
-async function handleProfileLoginVerify(url, env) {
+function profileLoginConfirmation(url) {
+  return loginConfirmation("Confirm sign in", "/api/profile-auth/verify", url);
+}
+
+async function handleProfileLoginVerify(request, url, env) {
   if (!env.DB || !env.PROFILE_SIGNING_KEY)
     return json(
       { ok: false, error: "Sign-in is temporarily unavailable." },
@@ -1365,9 +1427,11 @@ async function handleProfileLoginVerify(url, env) {
       PROFILE_CACHE,
     );
   try {
+    const data = await readBody(request);
     const email = await consumeProfileLoginToken(
       env.DB,
-      url.searchParams.get("token") || "",
+      str(data?.token),
+      readLoginNonce(request, PROFILE_LOGIN_NONCE),
     );
     if (!email)
       return json(
@@ -1379,13 +1443,17 @@ async function handleProfileLoginVerify(url, env) {
         PROFILE_CACHE,
       );
     const id = await findOrCreateProfile(env.DB, email);
-    const signature = await signProfileId(id, env.PROFILE_SIGNING_KEY);
+    const session = await createProfileSession(
+      env.DB,
+      id,
+      env.PROFILE_SIGNING_KEY,
+    );
     return new Response(null, {
       status: 303,
       headers: {
         "Cache-Control": "no-store",
         Location: "/account",
-        "Set-Cookie": serializeProfileCookie(id, signature),
+        "Set-Cookie": serializeProfileCookie(session.id, session.signature),
       },
     });
   } catch (err) {
@@ -1410,11 +1478,15 @@ async function handleProfileGet(request, env) {
     return json({ ok: false }, 503, PROFILE_CACHE);
   }
 
-  const id = await readProfileCookie(request, env.PROFILE_SIGNING_KEY);
-  if (!id) return json({ ok: false }, 401, PROFILE_CACHE);
+  const session = await readProfileSession(
+    request,
+    env.DB,
+    env.PROFILE_SIGNING_KEY,
+  );
+  if (!session) return json({ ok: false }, 401, PROFILE_CACHE);
 
   try {
-    const profile = await getProfileWithFavorites(env.DB, id);
+    const profile = await getProfileWithFavorites(env.DB, session.profileId);
     if (!profile) return json({ ok: false }, 401, PROFILE_CACHE);
     return json({ ok: true, profile }, 200, PROFILE_CACHE);
   } catch (err) {
@@ -1444,8 +1516,12 @@ async function handleProfileFavorite(request, env) {
     );
   }
 
-  const id = await readProfileCookie(request, env.PROFILE_SIGNING_KEY);
-  if (!id)
+  const session = await readProfileSession(
+    request,
+    env.DB,
+    env.PROFILE_SIGNING_KEY,
+  );
+  if (!session)
     return json(
       { ok: false, error: "Create a free profile to save programs." },
       401,
@@ -1462,7 +1538,7 @@ async function handleProfileFavorite(request, env) {
   try {
     if (!(await orgExists(env.DB, orgId)))
       return json({ ok: false, error: "That program was not found." }, 404);
-    await setFavorite(env.DB, id, orgId, on);
+    await setFavorite(env.DB, session.profileId, orgId, on);
     return json({ ok: true, org_id: orgId, on });
   } catch (err) {
     console.error("favorite toggle failed:", err);
@@ -1480,8 +1556,12 @@ async function handleProfileSaved(request, env) {
       503,
       PROFILE_CACHE,
     );
-  const profileId = await readProfileCookie(request, env.PROFILE_SIGNING_KEY);
-  if (!profileId)
+  const session = await readProfileSession(
+    request,
+    env.DB,
+    env.PROFILE_SIGNING_KEY,
+  );
+  if (!session)
     return json(
       { ok: false, error: "Sign in to save items." },
       401,
@@ -1491,19 +1571,46 @@ async function handleProfileSaved(request, env) {
   const kind = String(data?.kind || "").toLowerCase(),
     itemId = str(data?.item_id);
   const on = data?.on === true || data?.on === "true" || data?.on === "1";
-  const saved = await setSavedItem(env.DB, profileId, kind, itemId, on);
+  const saved = await setSavedItem(env.DB, session.profileId, kind, itemId, on);
   return saved
     ? json({ ok: true, kind, item_id: itemId, on }, 200, PROFILE_CACHE)
     : json(
-        { ok: false, error: "That item was not found." },
-        404,
-        PROFILE_CACHE,
-      );
+      { ok: false, error: "That item was not found." },
+      404,
+      PROFILE_CACHE,
+    );
 }
 
-function handleProfileSignout() {
+async function handleProfileSignout(request, env) {
+  if (env.DB && env.PROFILE_SIGNING_KEY) {
+    const session = await readProfileSession(
+      request,
+      env.DB,
+      env.PROFILE_SIGNING_KEY,
+    );
+    if (session) await revokeProfileSession(env.DB, session.id);
+  }
   return new Response(JSON.stringify({ ok: true }), {
     status: 200,
+    headers: {
+      "Content-Type": "application/json",
+      "Cache-Control": "no-store",
+      "Set-Cookie": clearProfileCookie(),
+    },
+  });
+}
+
+async function handleProfileSignoutEverywhere(request, env) {
+  if (!env.DB || !env.PROFILE_SIGNING_KEY)
+    return json({ ok: false, error: "Profiles are temporarily unavailable." }, 503);
+  const session = await readProfileSession(
+    request,
+    env.DB,
+    env.PROFILE_SIGNING_KEY,
+  );
+  if (!session) return json({ ok: false, error: "Sign in first." }, 401, PROFILE_CACHE);
+  await revokeProfileSessions(env.DB, session.profileId);
+  return new Response(JSON.stringify({ ok: true }), {
     headers: {
       "Content-Type": "application/json",
       "Cache-Control": "no-store",
@@ -1551,11 +1658,17 @@ async function handleOrganizationLoginRequest(request, env, url) {
     const organizations = await organizationsForClaimEmail(env.DB, email);
     if (!organizations.length)
       return json({ ok: true }, 200, ORGANIZATION_AUTH_CACHE);
-    const token = await issueLoginToken(env.DB, email);
+    const nonce = newLoginNonce();
+    const token = await issueLoginToken(env.DB, email, nonce);
     const link = new URL("/api/org-auth/verify", url.origin);
     link.searchParams.set("token", token);
     await sendOrganizationLoginLink(env, email, link.toString());
-    return json({ ok: true }, 200, ORGANIZATION_AUTH_CACHE);
+    const response = json({ ok: true }, 200, ORGANIZATION_AUTH_CACHE);
+    response.headers.set(
+      "Set-Cookie",
+      serializeLoginNonce(ORG_LOGIN_NONCE, nonce),
+    );
+    return response;
   } catch (err) {
     console.error("organization login link failed", {
       reason: err instanceof Error ? err.message : "unknown",
@@ -1568,7 +1681,15 @@ async function handleOrganizationLoginRequest(request, env, url) {
   }
 }
 
-async function handleOrganizationLoginVerify(url, env) {
+function organizationLoginConfirmation(url) {
+  return loginConfirmation(
+    "Organization sign in",
+    "/api/org-auth/verify",
+    url,
+  );
+}
+
+async function handleOrganizationLoginVerify(request, url, env) {
   if (!organizationAuthReady(env))
     return json(
       { ok: false, error: "Organization sign-in is temporarily unavailable." },
@@ -1576,9 +1697,11 @@ async function handleOrganizationLoginVerify(url, env) {
       ORGANIZATION_AUTH_CACHE,
     );
   try {
+    const data = await readBody(request);
     const email = await consumeLoginToken(
       env.DB,
-      url.searchParams.get("token") || "",
+      str(data?.token),
+      readLoginNonce(request, ORG_LOGIN_NONCE),
     );
     if (!email)
       return json(
@@ -1619,14 +1742,69 @@ async function authorizedOrganizationSession(request, env) {
   return readOrganizationSession(request, env.DB, organizationAuthSecret(env));
 }
 
-async function handleOrganizationSession(request, env) {
+async function authorizedOrganizationDashboardSession(request, env) {
   const session = await authorizedOrganizationSession(request, env);
+  if (!session) return { session: null, available: false };
+  const available = await featureAvailable(
+    env.DB,
+    "organization-dashboard",
+    session.email,
+    fetch,
+    env.RESEND_API_KEY,
+  );
+  return { session, available };
+}
+
+function organizationDashboardUnavailable() {
+  return json(
+    {
+      ok: false,
+      error: "The organization dashboard is not available to your beta tester group.",
+    },
+    403,
+    ORGANIZATION_AUTH_CACHE,
+  );
+}
+
+function isOrganizationDashboardPath(pathname) {
+  return pathname === "/manage" || pathname.startsWith("/manage/");
+}
+
+async function organizationFeatureGateResponse(request, env, url) {
+  if (request.method !== "GET" || !isOrganizationDashboardPath(url.pathname))
+    return null;
+  const session = await authorizedOrganizationSession(request, env);
+  if (!session) return null;
+  const available = await featureAvailable(
+    env.DB,
+    "organization-dashboard",
+    session.email,
+    fetch,
+    env.RESEND_API_KEY,
+  );
+  if (available) return null;
+  return new Response(featureUnavailableHtml(), {
+    status: 403,
+    headers: {
+      "Content-Type": "text/html; charset=utf-8",
+      "Cache-Control": "no-store",
+      "X-Robots-Tag": "noindex",
+    },
+  });
+}
+
+async function handleOrganizationSession(request, env) {
+  const { session, available } = await authorizedOrganizationDashboardSession(
+    request,
+    env,
+  );
   if (!session)
     return json(
       { ok: false, error: "Sign in to manage a program." },
       401,
       ORGANIZATION_AUTH_CACHE,
     );
+  if (!available) return organizationDashboardUnavailable();
   try {
     return json(
       {
@@ -1649,13 +1827,17 @@ async function handleOrganizationSession(request, env) {
 }
 
 async function handleManagedOrganizationGet(request, env, id) {
-  const session = await authorizedOrganizationSession(request, env);
+  const { session, available } = await authorizedOrganizationDashboardSession(
+    request,
+    env,
+  );
   if (!session)
     return json(
       { ok: false, error: "Sign in to manage a program." },
       401,
       ORGANIZATION_AUTH_CACHE,
     );
+  if (!available) return organizationDashboardUnavailable();
   try {
     const organization = await organizationForClaimEmail(
       env.DB,
@@ -1665,10 +1847,10 @@ async function handleManagedOrganizationGet(request, env, id) {
     return organization
       ? json({ ok: true, organization }, 200, ORGANIZATION_AUTH_CACHE)
       : json(
-          { ok: false, error: "Program not found." },
-          404,
-          ORGANIZATION_AUTH_CACHE,
-        );
+        { ok: false, error: "Program not found." },
+        404,
+        ORGANIZATION_AUTH_CACHE,
+      );
   } catch (err) {
     console.error("managed organization fetch failed", {
       reason: err instanceof Error ? err.message : "unknown",
@@ -1682,13 +1864,17 @@ async function handleManagedOrganizationGet(request, env, id) {
 }
 
 async function handleManagedOrganizationUpdate(request, env, id) {
-  const session = await authorizedOrganizationSession(request, env);
+  const { session, available } = await authorizedOrganizationDashboardSession(
+    request,
+    env,
+  );
   if (!session)
     return json(
       { ok: false, error: "Sign in to manage a program." },
       401,
       ORGANIZATION_AUTH_CACHE,
     );
+  if (!available) return organizationDashboardUnavailable();
   const data = await readBody(request);
   if (data === null)
     return json(
@@ -1706,10 +1892,10 @@ async function handleManagedOrganizationUpdate(request, env, id) {
     return organization
       ? json({ ok: true, organization }, 200, ORGANIZATION_AUTH_CACHE)
       : json(
-          { ok: false, error: "Program not found." },
-          404,
-          ORGANIZATION_AUTH_CACHE,
-        );
+        { ok: false, error: "Program not found." },
+        404,
+        ORGANIZATION_AUTH_CACHE,
+      );
   } catch (err) {
     const reason = err instanceof Error ? err.message : "";
     if (reason === "address-not-found") {
@@ -1726,6 +1912,7 @@ async function handleManagedOrganizationUpdate(request, env, id) {
       [
         "name-required",
         "website-invalid",
+        "url-invalid",
         "email-invalid",
         "sports-invalid",
       ].includes(reason)
@@ -1754,27 +1941,31 @@ async function handleManagedOrganizationItems(
   kind,
   itemId,
 ) {
-  const session = await authorizedOrganizationSession(request, env);
+  const { session, available } = await authorizedOrganizationDashboardSession(
+    request,
+    env,
+  );
   if (!session)
     return json(
       { ok: false, error: "Sign in to manage an organization." },
       401,
       ORGANIZATION_AUTH_CACHE,
     );
+  if (!available) return organizationDashboardUnavailable();
   const operations =
     kind === "programs"
       ? {
-          list: managedOrganizationPrograms,
-          create: createManagedProgram,
-          update: updateManagedProgram,
-          remove: deleteManagedProgram,
-        }
+        list: managedOrganizationPrograms,
+        create: createManagedProgram,
+        update: updateManagedProgram,
+        remove: deleteManagedProgram,
+      }
       : {
-          list: managedOrganizationEvents,
-          create: createManagedEvent,
-          update: updateManagedEvent,
-          remove: deleteManagedEvent,
-        };
+        list: managedOrganizationEvents,
+        create: createManagedEvent,
+        update: updateManagedEvent,
+        remove: deleteManagedEvent,
+      };
   try {
     if (!itemId && request.method === "GET") {
       const items = await operations.list(
@@ -1784,10 +1975,10 @@ async function handleManagedOrganizationItems(
       );
       return items === null
         ? json(
-            { ok: false, error: "Organization not found." },
-            404,
-            ORGANIZATION_AUTH_CACHE,
-          )
+          { ok: false, error: "Organization not found." },
+          404,
+          ORGANIZATION_AUTH_CACHE,
+        )
         : json({ ok: true, items }, 200, ORGANIZATION_AUTH_CACHE);
     }
     if (!itemId && request.method === "POST") {
@@ -1806,10 +1997,10 @@ async function handleManagedOrganizationItems(
       );
       return item === null
         ? json(
-            { ok: false, error: "Organization not found." },
-            404,
-            ORGANIZATION_AUTH_CACHE,
-          )
+          { ok: false, error: "Organization not found." },
+          404,
+          ORGANIZATION_AUTH_CACHE,
+        )
         : json({ ok: true, item }, 201, ORGANIZATION_AUTH_CACHE);
     }
     if (itemId && request.method === "PATCH") {
@@ -1829,19 +2020,19 @@ async function handleManagedOrganizationItems(
       );
       return item === null
         ? json(
-            { ok: false, error: "Organization not found." },
+          { ok: false, error: "Organization not found." },
+          404,
+          ORGANIZATION_AUTH_CACHE,
+        )
+        : item === false
+          ? json(
+            {
+              ok: false,
+              error: `${kind === "programs" ? "Program" : "Event"} not found.`,
+            },
             404,
             ORGANIZATION_AUTH_CACHE,
           )
-        : item === false
-          ? json(
-              {
-                ok: false,
-                error: `${kind === "programs" ? "Program" : "Event"} not found.`,
-              },
-              404,
-              ORGANIZATION_AUTH_CACHE,
-            )
           : json({ ok: true, item }, 200, ORGANIZATION_AUTH_CACHE);
     }
     if (itemId && request.method === "DELETE") {
@@ -1853,20 +2044,20 @@ async function handleManagedOrganizationItems(
       );
       return removed === null
         ? json(
-            { ok: false, error: "Organization not found." },
-            404,
-            ORGANIZATION_AUTH_CACHE,
-          )
+          { ok: false, error: "Organization not found." },
+          404,
+          ORGANIZATION_AUTH_CACHE,
+        )
         : removed
           ? json({ ok: true }, 200, ORGANIZATION_AUTH_CACHE)
           : json(
-              {
-                ok: false,
-                error: `${kind === "programs" ? "Program" : "Event"} not found.`,
-              },
-              404,
-              ORGANIZATION_AUTH_CACHE,
-            );
+            {
+              ok: false,
+              error: `${kind === "programs" ? "Program" : "Event"} not found.`,
+            },
+            404,
+            ORGANIZATION_AUTH_CACHE,
+          );
     }
     return json(
       { ok: false, error: "Method not allowed" },
@@ -1882,6 +2073,7 @@ async function handleManagedOrganizationItems(
         "start-invalid",
         "end-invalid",
         "website-invalid",
+        "url-invalid",
         "year-invalid",
         "sports-invalid",
       ].includes(reason)
@@ -1906,7 +2098,418 @@ async function handleManagedOrganizationItems(
 
 const BETA_AUTH_CACHE = "private, no-store";
 
-function betaHtml() {
+function maintenanceAssetPath(pathname) {
+  return (
+    /\.(?:css|js|svg|png|jpg|jpeg|webp|ico|woff2?|map)$/i.test(pathname) ||
+    pathname.startsWith("/app/") ||
+    pathname.startsWith("/assets/")
+  );
+}
+
+async function maintenanceGateResponse(request, env, url) {
+  if (maintenanceAssetPath(url.pathname)) return null;
+  if (!(await maintenanceModeEnabled(env.DB))) return null;
+  if (url.pathname.startsWith("/api/")) {
+    return json(
+      { ok: false, error: "Adaptive Sports Near Me is under maintenance." },
+      503,
+      BETA_AUTH_CACHE,
+    );
+  }
+  return new Response(maintenanceHtml(), {
+    status: 503,
+    headers: {
+      "Content-Type": "text/html; charset=utf-8",
+      "Cache-Control": "no-store",
+      "Retry-After": "300",
+      "X-Robots-Tag": "noindex",
+    },
+  });
+}
+
+function maintenanceHtml() {
+  return `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Under maintenance | Adaptive Sports Near Me</title>
+<meta name="robots" content="noindex">
+<style>
+@import url("https://fonts.googleapis.com/css2?family=Sofia+Sans:ital,wght@0,500;0,600;0,700;0,800;0,900&display=swap");
+
+:root {
+  color-scheme: light;
+  --ink: #1a1a1a;
+  --paper: #f3f3f3;
+  --sand: #f0efec;
+  --muted: #5f5d59;
+  --coral: #ff5c39;
+  --r: 15px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark !important;
+    --ink: #f3f3f3 !important;
+    --muted: #b7b4ad !important;
+    --paper: #171716 !important;
+    --sand: #2c2a26 !important;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  margin: 0;
+  padding: 20px;
+  background: var(--sand);
+  color: var(--ink);
+  font-family: "Sofia Sans", Arial, sans-serif;
+}
+
+main {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 0.9fr);
+  overflow: hidden;
+  width: min(90%, 1000px);
+  min-height: 58vh;
+  border-radius: var(--r);
+  background: var(--paper);
+  box-shadow: 0 8px 24px rgba(26, 26, 26, 0.1);
+}
+
+.intro {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: min(50px, 5vw);
+  background: var(--coral);
+}
+
+.brand {
+  width: min(75px, 100%);
+  height: auto;
+  filter: brightness(0);
+  opacity: 0.9;
+}
+
+.kicker {
+  margin: auto 0 12px;
+  padding: 5px 10px;
+  border: 2px solid #1a1a1a;
+  border-radius: 99px;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+h1 {
+  margin: 0;
+  font-size: clamp(34px, 6vw, 58px);
+  font-weight: 900;
+  letter-spacing: -0.055em;
+  line-height: 0.85;
+}
+
+.intro p:last-child {
+  margin: 20px 0 0;
+  font-size: 19px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.intro * {
+  color: #1a1a1a;
+}
+
+.message {
+  align-self: center;
+  padding: min(50px, 5vw);
+}
+
+.message h2 {
+  margin: 0;
+  font-size: 30px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.message p {
+  margin: 12px 0 0;
+  color: var(--muted);
+  font-size: 18px;
+  line-height: 1.35;
+}
+
+@media (max-width: 720px) {
+  body {
+    padding: 0;
+  }
+
+  main {
+    grid-template-columns: 1fr;
+    width: 100%;
+    min-height: 100vh;
+    border-radius: 0;
+  }
+
+  .intro {
+    min-height: 42vh;
+    padding: 28px 24px;
+  }
+
+  .message {
+    margin: auto 0;
+    padding: 32px 24px;
+  }
+}
+</style>
+</head>
+<body>
+<main>
+<section class="intro" aria-labelledby="maintenance-title">
+<img class="brand" src="/app/logo.svg" alt="Adaptive Sports Near Me">
+<p class="kicker">Temporarily unavailable</p>
+<h1 id="maintenance-title">Find your place in adaptive sports.</h1>
+<p>We are making updates to improve the directory.</p>
+</section>
+<section class="message" aria-labelledby="maintenance-message-title">
+<h2 id="maintenance-message-title">We will be back shortly</h2>
+<p>Adaptive Sports Near Me is under maintenance right now. Please try again in a few minutes.</p>
+</section>
+</main>
+</body>
+</html>`;
+}
+
+function featureUnavailableHtml() {
+  return `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Feature access unavailable | Adaptive Sports Near Me</title>
+<meta name="robots" content="noindex">
+<style>
+@import url("https://fonts.googleapis.com/css2?family=Sofia+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900&display=swap");
+
+:root {
+  color-scheme: light;
+  --ink: #1a1a1a;
+  --paper: #f3f3f3;
+  --sand: #f0efec;
+  --muted: #5f5d59;
+  --coral: #ff5c39;
+  --r: 15px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark !important;
+    --ink: #f3f3f3 !important;
+    --muted: #b7b4ad !important;
+    --paper: #171716 !important;
+    --sand: #2c2a26 !important;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  margin: 0;
+  padding: 20px;
+  background: var(--sand);
+  color: var(--ink);
+  font-family: "Sofia Sans", Arial, sans-serif;
+}
+
+.feature {
+  display: flex;
+  overflow: hidden;
+  width: min(90%, 1000px);
+  min-height: 70vh;
+  border-radius: var(--r);
+  background: var(--paper);
+  box-shadow: 0 8px 24px rgba(26, 26, 26, 0.1);
+}
+
+.feature-intro {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: min(50px, 5vw);
+  background: var(--coral);
+}
+
+.feature-intro * {
+  color: #1a1a1a;
+}
+
+.feature-brand {
+  width: min(75px, 100%);
+  height: auto;
+  filter: brightness(0);
+  opacity: 0.9;
+}
+
+.feature-kicker {
+  margin: 12px 0;
+  padding: 5px 10px;
+  border: 2px solid #1a1a1a;
+  border-radius: 99px;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.feature h1 {
+  margin: 10px 0 0;
+  font-size: clamp(32px, 6vw, 50px);
+  font-weight: 900;
+  letter-spacing: -0.055em;
+  line-height: 0.85;
+}
+
+.feature-intro p:last-child {
+  margin: 20px 0 0;
+  font-size: 19px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.feature-card {
+  align-self: center;
+  padding: min(50px, 5vw);
+}
+
+.feature-card h2 {
+  margin: 0;
+  font-size: 30px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.feature-card p {
+  margin: 12px 0 26px;
+  color: var(--muted);
+  font-size: 18px;
+  line-height: 1.35;
+}
+
+.feature-card a {
+  display: inline-block;
+  padding: 12px 18px;
+  border-radius: 8px;
+  background: var(--ink);
+  color: var(--paper);
+  font-size: 17px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.feature-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.feature-card button {
+  padding: 12px 18px;
+  border: 1px solid var(--ink);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 17px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+@media (max-width: 720px) {
+  body {
+    padding: 0;
+  }
+
+  .feature {
+    flex-direction: column;
+    width: 100%;
+    min-height: 100vh;
+    border-radius: 0;
+  }
+
+  .feature-intro {
+    min-height: 42vh;
+    padding: 28px 24px;
+  }
+
+  .feature-kicker {
+    margin-top: auto;
+  }
+
+  .feature h1 {
+    font-size: clamp(20px, 10vw, 58px);
+  }
+
+  .feature-intro p:last-child {
+    font-size: 18px;
+  }
+
+  .feature-card {
+    margin: auto 0;
+    padding: 32px 24px;
+  }
+}
+</style>
+</head>
+<body>
+<main class="feature">
+<section class="feature-intro" aria-labelledby="feature-title">
+<img class="feature-brand" src="/app/logo.svg" alt="Adaptive Sports Near Me">
+<p class="feature-kicker">Early access</p>
+<h1 id="feature-title">Find your place in adaptive sports.</h1>
+<p>We are testing new tools with selected groups before they are available to everyone.</p>
+</section>
+<section class="feature-card" aria-labelledby="feature-access-title">
+<h2 id="feature-access-title">This feature is still in testing</h2>
+<p>Your account does not have access to the Organization Dashboard at this time. Please check back as we expand access.</p>
+<div class="feature-actions">
+<a href="/">Return home</a>
+<button id="switch-email" type="button">Switch email</button>
+</div>
+</section>
+</main>
+<script>
+document.getElementById("switch-email").addEventListener("click", async (event) => {
+  event.currentTarget.disabled = true;
+  await Promise.allSettled([
+    fetch("/api/org-auth/signout", { method: "POST" }),
+    fetch("/api/beta-auth/signout", { method: "POST" }),
+  ]);
+  location.assign("/");
+});
+</script>
+</body>
+</html>`;
+}
+
+function betaPageHtml(card, script = "") {
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Adaptive Sports Near Me beta</title><meta name="robots" content="noindex"><style>@import url("https://fonts.googleapis.com/css2?family=Sofia+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,500&display=swap");
 :root {
 	color-scheme: light;
@@ -1918,9 +2521,21 @@ function betaHtml() {
 	--coral: #ff5c39;
 	--r: 15px;
 }
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark !important;
+    --ink: #f3f3f3 !important;
+    --muted: #b7b4ad !important;
+    --paper: #171716 !important;
+    --sand: #2c2a26 !important;
+  }
+}
+
 * {
 	box-sizing: border-box;
 }
+
 body {
 	margin: 0;
 	min-height: 100vh;
@@ -1932,16 +2547,18 @@ body {
   align-items: center;
   justify-content: center;
 }
+
 .beta {
-	width: min(100%, 500px);
+  width: min(90%, 1000px);
 	margin: auto;
 	display: flex;
-	flex-direction: column;
-	background: #fff;
+	background: var(--paper);
 	border-radius: var(--r);
 	box-shadow: 0 8px 24px rgba(26,26,26,.1);
 	overflow: hidden;
+  min-height: 70vh;
 }
+
 .beta-intro {
 	background: var(--coral);
 	padding: min(50px, 5vw);
@@ -1949,6 +2566,11 @@ body {
 	flex-direction: column;
 	align-items: flex-start;
 }
+
+.beta-intro * {
+  color: #1a1a1a;
+}
+
 .beta-brand {
 	display: block;
 	width: min(75px, 100%);
@@ -1956,16 +2578,18 @@ body {
   filter: brightness(0);
   opacity: 0.9;
 }
+
 .beta-kicker {
 	margin: 12px 0;
 	padding: 5px 10px;
-	border: 2px solid var(--ink);
+	border: 2px solid #1a1a1a;
 	border-radius: 99px;
 	font-size: 15px;
 	font-weight: 800;
 	letter-spacing: 0.04em;
 	text-transform: uppercase;
 }
+
 .beta h1 {
 	margin: 0;
 	font-size: clamp(32px, 6vw, 50px);
@@ -1974,16 +2598,19 @@ body {
 	letter-spacing: -0.055em;
 	font-weight: 900;
 }
+
 .beta-intro p:last-child {
   margin: 20px 0 0;
   font-size: 19px;
   line-height: 1.2;
 	font-weight: 600;
 }
+
 .beta-card {
 	align-self: center;
 	padding: min(50px, 5vw);
 }
+
 .beta-card h2 {
 	margin: 0;
 	font-size: 30px;
@@ -1991,41 +2618,46 @@ body {
 	font-weight: 800;
 	letter-spacing: -0.03em;
 }
+
 .beta-card > p {
 	margin: 12px 0 26px;
 	color: var(--muted);
 	font-size: 18px;
 	line-height: 1.35;
 }
+
 .beta label {
 	display: block;
 	font-size: 16px;
 	font-weight: 700;
 }
+
 .beta input {
 	width: 100%;
 	height: 52px;
 	margin-top: 8px;
 	padding: 0 14px;
-	border: 1px solid #8a877f;
+	border: 1px solid var(--ink);
 	border-radius: 8px;
-	background: #fff;
+	background: transparent;
 	color: var(--ink);
 	font: inherit;
 	font-size: 18px;
 }
+
 .beta input:focus {
 	outline: 3px solid var(--ink);
 	outline-offset: 2px;
 }
+
 .beta button {
 	width: 100%;
 	min-height: 52px;
 	margin-top: 14px;
 	border: 0;
 	border-radius: 8px;
-	background: var(--ink);
-	color: var(--paper);
+	background: transparent;
+	color: var(--ink);
 	font:
 		700 17px "Sofia Sans",
 		Arial,
@@ -2035,12 +2667,11 @@ body {
 		background-color 0.18s ease,
 		transform 0.18s ease;
 }
-.beta button:hover {
-	background: #333331;
-}
+
 .beta button:active {
 	transform: translateY(1px);
 }
+
 .beta [role="status"] {
 	min-height: 1.5em;
 	margin: 14px 0 0;
@@ -2048,30 +2679,40 @@ body {
 	font-size: 16px;
 	line-height: 1.35;
 }
+
 .beta [role="status"]:empty {
   display: none;
 }
+
 @media (max-width: 720px) {
 	body {
 		padding: 0;
 	}
+
 	.beta {
 		min-height: 100vh;
 		border-radius: 0;
+    width: 100%;
+    flex-direction: column;
 	}
+
 	.beta-intro {
 		min-height: 42vh;
 		padding: 28px 24px;
 	}
+
 	.beta-kicker {
 		margin-top: auto;
 	}
+
 	.beta h1 {
 		font-size: clamp(20px, 10vw, 58px);
 	}
+
 	.beta-intro p:last-child {
 		font-size: 18px;
 	}
+
 	.beta-card {
 		margin: auto 0;
 		border-width: 1px 0 0;
@@ -2079,7 +2720,21 @@ body {
 		padding: 32px 24px;
 	}
 }
-</style></head><body><main class="beta"><section class="beta-intro" aria-labelledby="beta-title"><img class="beta-brand" src="/app/logo.svg" alt="Adaptive Sports Near Me"><p class="beta-kicker">Early access</p><h1 id="beta-title">Find your place in adaptive sports.</h1><p>Adaptive Sports Near Me is in beta. Your feedback helps make the directory useful for everyone.</p></section><section class="beta-card" aria-labelledby="beta-login-title"><h2 id="beta-login-title">Welcome, beta tester</h2><p>Use your approved email address and we will send a one-time sign-in link.</p><form id="beta-login"><label for="email">Email address</label><input id="email" name="email" type="email" autocomplete="email" required><button type="submit">Email me a sign-in link</button><p role="status" id="status"></p></form></section></main><script>if(location.pathname!=='/')history.replaceState(null,'','/');document.getElementById('beta-login').addEventListener('submit',async(e)=>{e.preventDefault();const f=e.currentTarget,s=document.getElementById('status');if(!f.reportValidity())return;s.textContent='Sending your sign-in link...';try{const r=await fetch('/api/beta-auth/request-link',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({email:f.email.value})}),b=await r.json();s.textContent=r.ok&&b.ok?'Check your email for a one-time sign-in link.':(b.error||'We could not send a sign-in link.');}catch(_){s.textContent='We could not send a sign-in link.';}});</script></body></html>`;
+</style></head><body><main class="beta"><section class="beta-intro" aria-labelledby="beta-title"><img class="beta-brand" src="/app/logo.svg" alt="Adaptive Sports Near Me"><p class="beta-kicker">Early access</p><h1 id="beta-title">Find your place in adaptive sports.</h1><p>Adaptive Sports Near Me is in beta. Your feedback helps make the directory useful for everyone.</p></section>${card}</main>${script}</body></html>`;
+}
+
+// Sign in form. On load it asks /api/beta-auth/session whether this browser
+// already holds a live beta session and reloads the page if so, which rescues
+// testers whose earlier link did create a session (including older Strict
+// cookies). A 10 second guard stops a reload loop if the gate ever disagrees.
+// The reload stays on this origin: a path like //evil.example would otherwise
+// be read as a protocol relative URL, so anything not starting with a single
+// slash falls back to /, and the target is always prefixed with our origin.
+function betaHtml() {
+  return betaPageHtml(
+    `<section class="beta-card" aria-labelledby="beta-login-title"><h2 id="beta-login-title">Welcome, beta tester</h2><p>Use your approved email address and we will send a one-time sign-in link.</p><form id="beta-login"><label for="email">Email address</label><input id="email" name="email" type="email" autocomplete="email" required><button type="submit">Email me a sign-in link</button><p role="status" id="status"></p></form></section>`,
+    `<script>const p=location.pathname,back=p.charAt(0)==='/'&&p.charAt(1)!=='/'&&p.charAt(1)!=='\\\\'?p+location.search:'/';if(location.pathname!=='/')history.replaceState(null,'','/');fetch('/api/beta-auth/session',{credentials:'same-origin',cache:'no-store'}).then(r=>r.ok?r.json():null).then(b=>{if(!b||!b.ok)return;const k='asnm-beta-heal',t=Date.now();try{if(t-Number(sessionStorage.getItem(k)||0)<10000)return;sessionStorage.setItem(k,String(t));}catch(_){return;}location.replace(location.origin+back);}).catch(()=>{});document.getElementById('beta-login').addEventListener('submit',async(e)=>{e.preventDefault();const f=e.currentTarget,s=document.getElementById('status');if(!f.reportValidity())return;s.textContent='Sending your sign-in link...';try{const r=await fetch('/api/beta-auth/request-link',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({email:f.email.value})}),b=await r.json();s.textContent=r.ok&&b.ok?'Check your email for a one-time sign-in link.':(b.error||'We could not send a sign-in link.');}catch(_){s.textContent='We could not send a sign-in link.';}});</script>`,
+  );
 }
 
 async function prelaunchGate(request, env, url) {
@@ -2096,12 +2751,8 @@ async function prelaunchGate(request, env, url) {
     path.startsWith("/app/") ||
     path.startsWith("/assets/");
   if (admin || beta || asset) return null;
-  const secret =
-    env.BETA_AUTH_SIGNING_KEY ||
-    env.ADMIN_AUTH_SIGNING_KEY ||
-    env.PROFILE_SIGNING_KEY;
   const session = betaAuthReady(env)
-    ? await readBetaSession(request, env.DB, secret)
+    ? await readBetaSession(request, env.DB, betaAuthSecret(env))
     : null;
   if (session) return null;
   if (path.startsWith("/api/"))
@@ -2161,33 +2812,106 @@ async function handleBetaLoginRequest(request, env, url) {
   }
 }
 
-async function handleBetaLoginVerify(url, env) {
-  if (!betaAuthReady(env))
-    return json(
-      { ok: false, error: "Beta sign-in is temporarily unavailable." },
-      503,
-      BETA_AUTH_CACHE,
+function betaEscape(value) {
+  return String(value).replace(
+    /[&<>"']/g,
+    (c) =>
+      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c],
+  );
+}
+
+function betaAuthPage(status, card, script = "", headers = {}) {
+  return new Response(betaPageHtml(card, script), {
+    status,
+    headers: {
+      "Content-Type": "text/html; charset=utf-8",
+      "Cache-Control": "no-store",
+      "X-Robots-Tag": "noindex",
+      ...headers,
+    },
+  });
+}
+
+function betaLinkProblem(status, message) {
+  return betaAuthPage(
+    status,
+    `<section class="beta-card" aria-labelledby="beta-problem-title"><h2 id="beta-problem-title">This link did not work</h2><p>${message}</p><form method="get" action="/"><button type="submit">Send me a new link</button></form></section>`,
+  );
+}
+
+async function alreadySignedIn(request, env) {
+  return !!(await readBetaSession(request, env.DB, betaAuthSecret(env)));
+}
+
+function betaGoHome() {
+  return new Response(null, {
+    status: 303,
+    headers: { "Cache-Control": "no-store", Location: "/" },
+  });
+}
+
+const BETA_LINK_EXPIRED =
+  "This sign-in link has expired, was already used, or no longer has beta access. Sign-in links last 30 minutes and work once.";
+const BETA_LINK_UNAVAILABLE =
+  "Beta sign-in is temporarily unavailable. Please try again in a few minutes.";
+
+// GET only shows a confirm button. Email apps and mail scanners open links with
+// GET, so nothing here consumes the token or sets a cookie.
+async function betaLoginConfirmation(request, url, env) {
+  if (!betaAuthReady(env)) return betaLinkProblem(503, BETA_LINK_UNAVAILABLE);
+  const token = url.searchParams.get("token") || "";
+  try {
+    const email = await peekBetaLoginToken(env.DB, token);
+    if (!email || !(await isBetaTester(env.DB, email)))
+      return (await alreadySignedIn(request, env))
+        ? betaGoHome()
+        : betaLinkProblem(401, BETA_LINK_EXPIRED);
+  } catch (err) {
+    console.error("beta login confirmation failed", {
+      reason: err instanceof Error ? err.message : "unknown",
+    });
+    return betaLinkProblem(503, BETA_LINK_UNAVAILABLE);
+  }
+  return betaAuthPage(
+    200,
+    `<section class="beta-card" aria-labelledby="beta-confirm-title"><h2 id="beta-confirm-title">You are almost in</h2><p>Press the button to open the beta on this browser.</p><form method="post" action="/api/beta-auth/verify"><input type="hidden" name="token" value="${betaEscape(token)}"><button type="submit">Open the beta</button></form></section>`,
+    // Drop the token from the address bar and history; the form still holds it.
+    `<script>history.replaceState(null,'','/api/beta-auth/verify');</script>`,
+    // same-origin, not no-referrer: no-referrer would make the button's POST
+    // send Origin: null, which the POST handler refuses.
+    { "Referrer-Policy": "same-origin" },
+  );
+}
+
+// POST from the confirm page consumes the token once, creates the session and
+// sets the SameSite=Lax cookie. The redirect to / is then same site, so the
+// browser sends the cookie and the gate lets the tester in.
+async function handleBetaLoginVerify(request, url, env) {
+  if (!betaAuthReady(env)) return betaLinkProblem(503, BETA_LINK_UNAVAILABLE);
+  const origin = request.headers.get("Origin");
+  const fetchSite = request.headers.get("Sec-Fetch-Site");
+  if (
+    (origin && origin !== url.origin) ||
+    (fetchSite && fetchSite !== "same-origin")
+  )
+    return betaLinkProblem(
+      403,
+      "Please open the sign-in link from your email again, or request a new one.",
     );
   try {
-    const email = await consumeBetaLoginToken(
-      env.DB,
-      url.searchParams.get("token") || "",
-    );
+    const data = await readBody(request);
+    const email = await consumeBetaLoginToken(env.DB, str(data?.token));
     if (!email || !(await isBetaTester(env.DB, email)))
-      return json(
-        {
-          ok: false,
-          error:
-            "This sign-in link has expired, was already used, or no longer has beta access.",
-        },
-        401,
-        BETA_AUTH_CACHE,
-      );
-    const secret =
-      env.BETA_AUTH_SIGNING_KEY ||
-      env.ADMIN_AUTH_SIGNING_KEY ||
-      env.PROFILE_SIGNING_KEY;
-    const session = await createBetaSession(env.DB, email, secret);
+      // A double tap on the button lands here after the first POST already
+      // signed this browser in. Send it home instead of showing an error.
+      return (await alreadySignedIn(request, env))
+        ? betaGoHome()
+        : betaLinkProblem(401, BETA_LINK_EXPIRED);
+    const session = await createBetaSession(
+      env.DB,
+      email,
+      betaAuthSecret(env),
+    );
     return new Response(null, {
       status: 303,
       headers: {
@@ -2200,30 +2924,33 @@ async function handleBetaLoginVerify(url, env) {
     console.error("beta login verification failed", {
       reason: err instanceof Error ? err.message : "unknown",
     });
-    return json(
-      {
-        ok: false,
-        error: "We could not sign you in. Please request a new link.",
-      },
+    return betaLinkProblem(
       503,
-      BETA_AUTH_CACHE,
+      "We could not sign you in. Please request a new link.",
     );
   }
 }
 
 async function handleBetaSession(request, env) {
   if (!betaAuthReady(env)) return json({ ok: false }, 503, BETA_AUTH_CACHE);
-  const secret =
-    env.BETA_AUTH_SIGNING_KEY ||
-    env.ADMIN_AUTH_SIGNING_KEY ||
-    env.PROFILE_SIGNING_KEY;
+  const secret = betaAuthSecret(env);
   const session = await readBetaSession(request, env.DB, secret);
-  return session
-    ? json({ ok: true, email: session.email }, 200, BETA_AUTH_CACHE)
-    : json({ ok: false }, 401, BETA_AUTH_CACHE);
+  if (!session) return json({ ok: false }, 401, BETA_AUTH_CACHE);
+  // Re-issue the cookie so sessions created while it was SameSite=Strict are
+  // upgraded to Lax the first time the sign in page checks them.
+  const response = json(
+    { ok: true, email: session.email },
+    200,
+    BETA_AUTH_CACHE,
+  );
+  response.headers.append(
+    "Set-Cookie",
+    serializeBetaCookie(session.id, await signProfileId(session.id, secret)),
+  );
+  return response;
 }
 
-async function handleAdminBetaTesters(request, env) {
+async function handleAdminBetaTesters(request, env, url) {
   const session = await authorizedAdminSession(request, env);
   if (!session)
     return json(
@@ -2240,11 +2967,22 @@ async function handleAdminBetaTesters(request, env) {
       );
     if (request.method === "POST") {
       const data = await readBody(request);
+      const addingTester = Object.hasOwn(data || {}, "name");
       const item = await setBetaTester(
         env.DB,
         data?.email,
         data?.enabled !== false && data?.enabled !== 0 && data?.enabled !== "0",
+        addingTester
+          ? {
+            name: data?.name,
+            organization: data?.organization,
+            phone: data?.phone,
+          }
+          : null,
       );
+      if (addingTester && item.enabled && data?.sendInvitation === true) {
+        await sendBetaTesterInvitation(env, item.email, item.name, url.origin);
+      }
       return json({ ok: true, item }, 200, ADMIN_AUTH_CACHE);
     }
     return json(
@@ -2256,6 +2994,12 @@ async function handleAdminBetaTesters(request, env) {
     if (err instanceof Error && err.message === "email-invalid")
       return json(
         { ok: false, error: "Enter a valid email address." },
+        422,
+        ADMIN_AUTH_CACHE,
+      );
+    if (err instanceof Error && err.message === "name-required")
+      return json(
+        { ok: false, error: "Enter the beta tester's name." },
         422,
         ADMIN_AUTH_CACHE,
       );
@@ -2316,11 +3060,17 @@ async function handleAdminLoginRequest(request, env, url) {
       ADMIN_AUTH_CACHE,
     );
   try {
-    const token = await issueAdminLoginToken(env.DB, email);
+    const nonce = newLoginNonce();
+    const token = await issueAdminLoginToken(env.DB, email, nonce);
     const link = new URL("/api/admin-auth/verify", url.origin);
     link.searchParams.set("token", token);
     await sendAdminLoginLink(env, email, link.toString());
-    return json({ ok: true }, 200, ADMIN_AUTH_CACHE);
+    const response = json({ ok: true }, 200, ADMIN_AUTH_CACHE);
+    response.headers.set(
+      "Set-Cookie",
+      serializeLoginNonce(ADMIN_LOGIN_NONCE, nonce),
+    );
+    return response;
   } catch (err) {
     console.error("admin login link failed", {
       reason: err instanceof Error ? err.message : "unknown",
@@ -2333,7 +3083,11 @@ async function handleAdminLoginRequest(request, env, url) {
   }
 }
 
-async function handleAdminLoginVerify(url, env) {
+function adminLoginConfirmation(url) {
+  return loginConfirmation("Admin sign in", "/api/admin-auth/verify", url);
+}
+
+async function handleAdminLoginVerify(request, url, env) {
   if (!adminAuthReady(env))
     return json(
       { ok: false, error: "Admin sign-in is temporarily unavailable." },
@@ -2341,9 +3095,11 @@ async function handleAdminLoginVerify(url, env) {
       ADMIN_AUTH_CACHE,
     );
   try {
+    const data = await readBody(request);
     const email = await consumeAdminLoginToken(
       env.DB,
-      url.searchParams.get("token") || "",
+      str(data?.token),
+      readLoginNonce(request, ADMIN_LOGIN_NONCE),
     );
     if (!email)
       return json(
@@ -2384,10 +3140,10 @@ async function handleAdminSession(request, env) {
   return session
     ? json({ ok: true, email: session.email }, 200, ADMIN_AUTH_CACHE)
     : json(
-        { ok: false, error: "Sign in to access the admin dashboard." },
-        401,
-        ADMIN_AUTH_CACHE,
-      );
+      { ok: false, error: "Sign in to access the admin dashboard." },
+      401,
+      ADMIN_AUTH_CACHE,
+    );
 }
 
 async function handleAdminData(request, env, url, kind, id) {
@@ -2572,27 +3328,29 @@ async function handleAdminQueue(request, env, id) {
       return item
         ? json({ ok: true, item }, 200, ADMIN_AUTH_CACHE)
         : json(
-            { ok: false, error: "Queue item not found." },
-            404,
-            ADMIN_AUTH_CACHE,
-          );
+          { ok: false, error: "Queue item not found." },
+          404,
+          ADMIN_AUTH_CACHE,
+        );
     }
     if (id && request.method === "POST") {
       const data = await readBody(request);
-      if (!data || data.action !== "accept")
+      if (!data || !["accept", "bulk-confirmation"].includes(data.action))
         return json(
           { ok: false, error: "Unknown queue action." },
           422,
           ADMIN_AUTH_CACHE,
         );
-      const accepted = await acceptAdminQueueItem(env.DB, id, session.email);
+      const accepted = await acceptAdminQueueItem(env.DB, id, session.email, {
+        bulkConfirmation: data.action === "bulk-confirmation",
+      });
       return accepted
         ? json({ ok: true, item: accepted }, 200, ADMIN_AUTH_CACHE)
         : json(
-            { ok: false, error: "Queue item not found or already handled." },
-            404,
-            ADMIN_AUTH_CACHE,
-          );
+          { ok: false, error: "Queue item not found or already handled." },
+          404,
+          ADMIN_AUTH_CACHE,
+        );
     }
     return json(
       { ok: false, error: "Method not allowed" },
@@ -2602,14 +3360,22 @@ async function handleAdminQueue(request, env, id) {
   } catch (err) {
     const reason = err instanceof Error ? err.message : "";
     if (
-      ["draft-missing", "start-invalid", "organization-missing"].includes(
+      [
+        "draft-missing",
+        "start-invalid",
+        "organization-missing",
+        "bulk-review-required",
+      ].includes(
         reason,
       )
     )
       return json(
         {
           ok: false,
-          error: "This submission needs an edit before it can be accepted.",
+          error:
+            reason === "bulk-review-required"
+              ? "This submission has field changes and must be reviewed individually."
+              : "This submission needs an edit before it can be accepted.",
         },
         422,
         ADMIN_AUTH_CACHE,
@@ -2668,6 +3434,22 @@ async function readBody(request) {
   } catch {
     return null;
   }
+}
+
+function loginConfirmation(title, action, url) {
+  const token = url.searchParams.get("token") || "";
+  if (!token || token.length > 500) return text(
+    "This sign-in link is invalid. Please request a new link.",
+    400,
+    "text/plain; charset=utf-8",
+    "no-store",
+  );
+  return text(
+    loginConfirmationHtml({ action, token, title }),
+    200,
+    "text/html; charset=utf-8",
+    "no-store",
+  );
 }
 
 async function verifyTurnstile(env, token, ip) {

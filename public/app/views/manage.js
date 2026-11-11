@@ -179,7 +179,15 @@ function editor(organization, sports, programs = [], events = []) {
 export async function render(ctx) {
   const path = location.pathname.replace(/\/+$/, "");
   const session = await response("/api/org-auth/session");
-  if (!session.result.ok) return login();
+  if (session.result.status === 403) {
+    location.replace(location.href);
+    return {
+      title: site("Feature access unavailable"),
+      description: PAGES.manage.description,
+      html: "",
+    };
+  }
+  if (!session.result.ok) return login(session.body.error || "");
   const organizations = session.body.organizations || [];
   if (path === "/manage" || path === "/manage/organizations")
     return chooser(organizations);

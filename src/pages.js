@@ -406,8 +406,8 @@ export function preloadHints(pathname) {
 // (public/index.html). A script, not a preload link: Safari, and so every iPhone browser,
 // downloads a preloaded file again when fetch() asks for it. app.js takes it once (early).
 function earlyFetch(href) {
-  const u = JSON.stringify(href).replace(/</g, "\\u003c");
-  return `<script>(window.ASNM_EARLY=window.ASNM_EARLY||{})[${u}]=fetch(${u});window.ASNM_EARLY[${u}].catch(function(){});</script>`;
+  void href;
+  return "";
 }
 
 export function injectMeta(html, meta, { url, production, hints = [] }) {
@@ -517,6 +517,7 @@ export async function servePage(request, env, url) {
   const headers = {
     "content-type": "text/html; charset=utf-8",
     "cache-control": "public, max-age=60, stale-while-revalidate=300",
+    "content-security-policy": "default-src 'self'; script-src 'self' https://challenges.cloudflare.com https://cdn.userway.org; object-src 'none'; base-uri 'self'; frame-ancestors 'self'; form-action 'self'; img-src 'self' data: https:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://challenges.cloudflare.com https://cdn.userway.org; frame-src https://challenges.cloudflare.com",
   };
   if (meta.noindex || env.ENV_NAME !== "production")
     headers["x-robots-tag"] = "noindex";

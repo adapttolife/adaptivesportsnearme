@@ -47,4 +47,4 @@ for (const file of files) {
     throw new Error("setup stopped at " + file);
   }
 }
-console.log("\nDone. Run `npm run dev` and open http://localhost:8787");
+console.log("\nDone. Run `npm run dev` and open http://localhost:8888");

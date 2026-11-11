@@ -10,3 +10,5 @@ Redesign site so that orgs do not have images attached by default, use category 
 org-scraper: there is a work tree stash that exists
 
 API for orgs to push new/updated data to our db
+
+scripted tester bots to test site features, run on pi? different personas, scenarios and tests for each feature, run on every merge to main branch

@@ -267,16 +267,14 @@ test("the shell has what the Worker and the app rely on", () => {
   assert.ok(head.includes('<script type="module" src="/app/app.js"></script>'));
 });
 
-test("the shell's inline scripts and every app file are valid JavaScript", () => {
-  let inline = 0;
+test("the shell uses external scripts and every app file is valid JavaScript", () => {
   for (const [, attrs = "", body] of SHELL.matchAll(
     /<script(\s[^>]*)?>([\s\S]*?)<\/script>/g,
   )) {
     if (!body.trim() || /application\/ld\+json/.test(attrs)) continue;
-    new vm.Script(body);
-    inline++;
+    assert.fail("The content-security policy does not permit inline scripts.");
   }
-  assert.ok(inline >= 1);
+  assert.match(SHELL, /<script src="\/app\/bootstrap\.js"><\/script>/);
   // No build step stands between these files and the browser.
   for (const file of JS)
     execFileSync(
@@ -307,43 +305,27 @@ test("the head starts each data download once, and the app takes each answer onc
   for (const html of [SHELL, ...pages.flatMap((p) => preloadHints(p))])
     assert.doesNotMatch(html, /<link[^>]*\bas="fetch"/);
 
-  // The shell's script, run as a browser runs it: one request per file, kept for app.js.
+  // The external bootstrap starts each download once and keeps the responses for app.js.
   const asked = [];
   const shell = vm.createContext({
     window: {},
+    document: { documentElement: { dataset: {} } },
+    localStorage: { getItem: () => null },
+    matchMedia: () => ({ matches: false }),
+    navigator: {},
     fetch: (u) => {
       asked.push(u);
       return Promise.resolve({ ok: true });
     },
   });
-  for (const [, , body] of SHELL.matchAll(
-    /<script(\s[^>]*)?>([\s\S]*?)<\/script>/g,
-  ))
-    if (body.includes("ASNM_EARLY")) vm.runInContext(body, shell);
+  const bootstrap = readFileSync(new URL("../public/app/bootstrap.js", import.meta.url), "utf8");
+  vm.runInContext(bootstrap, shell);
   assert.deepEqual(asked, [
     "/api/listings",
     "/data/states.json",
     "/data/sports.json",
   ]);
   assert.deepEqual(Object.keys(shell.window.ASNM_EARLY), asked);
-  // A listing page's head starts its details the same way, ahead of the shell's script.
-  const page = vm.createContext({
-    window: {},
-    fetch: (u) => {
-      asked.push(u);
-      return Promise.resolve({ ok: true });
-    },
-  });
-  for (const tag of preloadHints(
-    "/organizations/0F8FAD5B-D9CB-469F-A165-70867728950E",
-  )) {
-    const body = tag.match(/^<script>([\s\S]*)<\/script>$/);
-    if (body) vm.runInContext(body[1], page);
-  }
-  assert.deepEqual(Object.keys(page.window.ASNM_EARLY), [
-    "/api/organizations/0f8fad5b-d9cb-469f-a165-70867728950e",
-  ]);
-
   // app.js's early() and retryOnce(), run as written.
   const net = [];
   const app = vm.createContext({

@@ -5,6 +5,7 @@
 CREATE TABLE IF NOT EXISTS admin_login_tokens (
   id TEXT PRIMARY KEY,
   token_hash TEXT NOT NULL UNIQUE,
+  nonce_hash TEXT,
   email TEXT NOT NULL,
   expires_at TEXT NOT NULL,
   used_at TEXT,
@@ -62,6 +63,20 @@ CREATE TABLE IF NOT EXISTS organization_activity (
   created_at      TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS organization_activity_org_idx ON organization_activity (organization_id, created_at);
+
+CREATE TABLE IF NOT EXISTS organization_change_log (
+  id TEXT PRIMARY KEY,
+  organization_id TEXT NOT NULL,
+  source_submission TEXT,
+  field TEXT NOT NULL,
+  previous_value TEXT NOT NULL,
+  applied_value TEXT NOT NULL,
+  actor TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  reverted_at TEXT,
+  reverted_by TEXT
+);
+CREATE INDEX IF NOT EXISTS organization_change_log_org_idx ON organization_change_log (organization_id, created_at);
 
 CREATE TABLE IF NOT EXISTS grants (
   id                   TEXT PRIMARY KEY,          -- uuid, same as organizations.id
@@ -121,6 +136,7 @@ CREATE TABLE IF NOT EXISTS organization_data_sources (
 CREATE TABLE IF NOT EXISTS organization_login_tokens (
   id TEXT PRIMARY KEY,
   token_hash TEXT NOT NULL UNIQUE,
+  nonce_hash TEXT,
   email TEXT NOT NULL,
   expires_at TEXT NOT NULL,
   used_at TEXT,
@@ -200,9 +216,18 @@ CREATE TABLE IF NOT EXISTS profiles (
 CREATE TABLE IF NOT EXISTS profile_login_tokens (
   id TEXT PRIMARY KEY,
   token_hash TEXT NOT NULL UNIQUE,
+  nonce_hash TEXT,
   email TEXT NOT NULL COLLATE NOCASE,
   expires_at TEXT NOT NULL,
   used_at TEXT,
+  created_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS profile_sessions (
+  id TEXT PRIMARY KEY,
+  profile_id TEXT NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  expires_at TEXT NOT NULL,
+  revoked_at TEXT,
   created_at TEXT NOT NULL
 );
 
@@ -287,6 +312,7 @@ CREATE TABLE IF NOT EXISTS submissions (
 
 CREATE INDEX IF NOT EXISTS admin_login_tokens_email_idx
   ON admin_login_tokens (email COLLATE NOCASE, expires_at);
+CREATE INDEX IF NOT EXISTS admin_login_tokens_nonce_idx ON admin_login_tokens(nonce_hash);
 
 CREATE INDEX IF NOT EXISTS admin_sessions_email_idx
   ON admin_sessions (email COLLATE NOCASE, expires_at);
@@ -301,6 +327,7 @@ CREATE INDEX IF NOT EXISTS link_checks_org_idx ON link_checks (organization_id, 
 
 CREATE INDEX IF NOT EXISTS organization_login_tokens_email_idx
   ON organization_login_tokens (email COLLATE NOCASE, expires_at);
+CREATE INDEX IF NOT EXISTS organization_login_tokens_nonce_idx ON organization_login_tokens(nonce_hash);
 
 CREATE INDEX IF NOT EXISTS organization_sessions_email_idx
   ON organization_sessions (email COLLATE NOCASE, expires_at);
@@ -318,6 +345,8 @@ CREATE INDEX IF NOT EXISTS organizations_status_idx ON organizations (status, is
 
 CREATE INDEX IF NOT EXISTS idx_profile_favorites_org ON profile_favorites (org_id);
 CREATE INDEX IF NOT EXISTS profile_login_tokens_expires_idx ON profile_login_tokens(expires_at);
+CREATE INDEX IF NOT EXISTS profile_login_tokens_nonce_idx ON profile_login_tokens(nonce_hash);
+CREATE INDEX IF NOT EXISTS profile_sessions_profile_idx ON profile_sessions(profile_id, expires_at);
 CREATE INDEX IF NOT EXISTS profile_saved_items_profile_idx ON profile_saved_items(profile_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS profile_saved_sports_profile_idx ON profile_saved_sports(profile_id, created_at DESC);
 
@@ -335,6 +364,9 @@ CREATE INDEX IF NOT EXISTS review_queue_status_idx ON review_queue (status, crea
 
 CREATE TABLE IF NOT EXISTS beta_testers (
   email TEXT PRIMARY KEY COLLATE NOCASE,
+  name TEXT NOT NULL DEFAULT '',
+  organization TEXT,
+  phone TEXT,
   enabled INTEGER NOT NULL DEFAULT 1 CHECK (enabled IN (0, 1)),
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL
@@ -362,6 +394,32 @@ CREATE TABLE IF NOT EXISTS beta_sessions (
 
 CREATE INDEX IF NOT EXISTS beta_sessions_email_idx
   ON beta_sessions (email COLLATE NOCASE, expires_at);
+
+CREATE TABLE IF NOT EXISTS feature_toggles (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL UNIQUE COLLATE NOCASE,
+  audience_json TEXT NOT NULL DEFAULT '["everyone"]' CHECK (json_valid(audience_json)),
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
+INSERT OR IGNORE INTO feature_toggles (id, name, audience_json, created_at, updated_at)
+VALUES (
+  'organization-dashboard',
+  'Organization Dashboard',
+  '["everyone"]',
+  strftime('%Y-%m-%dT%H:%M:%fZ', 'now'),
+  strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
+);
+
+CREATE TABLE IF NOT EXISTS site_settings (
+  key TEXT PRIMARY KEY,
+  value TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
+INSERT OR IGNORE INTO site_settings (key, value, updated_at)
+VALUES ('maintenance_mode', '0', strftime('%Y-%m-%dT%H:%M:%fZ', 'now'));
 
 CREATE TABLE IF NOT EXISTS blog_posts (
   id TEXT PRIMARY KEY,

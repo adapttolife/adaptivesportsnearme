@@ -18,7 +18,7 @@ Thank you for being here. Adaptive Sports Near Me is built in public, and you do
    cd adaptivesportsnearme
    git checkout staging
    npm run setup
-   npm run dev       # http://localhost:8787
+   npm run dev       # http://localhost:8888
    ```
 3. **Make a branch off `staging`.** `git checkout -b your-name/what-you-are-fixing`
 4. **Make the change, with a test.** Tests live in `test/`. Run `npm test` before you push.

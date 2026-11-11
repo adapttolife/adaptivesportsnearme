@@ -242,7 +242,15 @@ test("Worker serves the complete snapshot contract used by homepage hydration", 
     );
     assert.equal(response.status, 200);
     assert.deepEqual(await response.json(), { ok: true, total: 0, items: [] });
-    assert.equal(queries.length, 1);
+    assert.equal(queries.length, 2);
+    assert.equal(
+      queries.filter((query) => query.includes("site_settings")).length,
+      1,
+    );
+    assert.equal(
+      queries.filter((query) => query.includes("FROM organizations")).length,
+      1,
+    );
     // The app (public/app/app.js) loads the slim directory once (/api/listings) and a
     // listing's details only on its own page (/api/organizations/:id); never the paged API.
     const app = read("public/app/app.js");

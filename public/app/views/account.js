@@ -81,7 +81,10 @@ function dashboard(profile) {
         <p>${esc(profile.email)}</p>
       </div>
       <div class="account-list">${rows}</div>
-      <button class="btn btn--line account-signout" type="button">Sign out</button>
+      <div class="account-actions">
+        <button class="btn btn--line account-signout" type="button">Sign out</button>
+        <button class="btn btn--line account-signout-everywhere" type="button">Sign out everywhere</button>
+      </div>
     </section>`,
     railActive: "account",
   };
@@ -113,6 +116,12 @@ export function mount(root) {
     .querySelector(".account-signout")
     ?.addEventListener("click", async () => {
       await fetch("/api/profile/signout", { method: "POST" });
+      A.nav("/account", { replace: true });
+    });
+  root
+    .querySelector(".account-signout-everywhere")
+    ?.addEventListener("click", async () => {
+      await fetch("/api/profile/signout-everywhere", { method: "POST" });
       A.nav("/account", { replace: true });
     });
   return () => {};

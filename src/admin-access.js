@@ -8,6 +8,7 @@ import {
 import { newerOrOlder } from "./schema-probe.js";
 import { cleanSeasons } from "../public/app/yearly.js";
 import { SLUG_RE } from "./events.js";
+import { normalizePublicUrl } from "./public-url.js";
 import {
   applyConfirmation,
   logActivity,
@@ -21,7 +22,7 @@ import {
 } from "./description-contract.js";
 
 export const ADMIN_COOKIE_NAME = "asnm_admin";
-const SESSION_SECONDS = 60 * 60 * 12;
+const SESSION_SECONDS = 60 * 60 * 24 * 5;
 const TOKEN_MINUTES = 15;
 const ID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const STATE_NAMES = {
@@ -127,15 +128,16 @@ export function clearAdminCookie() {
   return `${ADMIN_COOKIE_NAME}=; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=0`;
 }
 
-export async function issueAdminLoginToken(db, email) {
+export async function issueAdminLoginToken(db, email, nonce) {
   const token = newLoginToken();
   await db
     .prepare(
-      `INSERT INTO admin_login_tokens (id, token_hash, email, expires_at, created_at) VALUES (?, ?, ?, ?, ?)`,
+      `INSERT INTO admin_login_tokens (id, token_hash, nonce_hash, email, expires_at, created_at) VALUES (?, ?, ?, ?, ?, ?)`,
     )
     .bind(
       crypto.randomUUID(),
       await hashToken(token),
+      await hashToken(nonce),
       email,
       future(TOKEN_MINUTES * 60),
       now(),
@@ -144,13 +146,13 @@ export async function issueAdminLoginToken(db, email) {
   return token;
 }
 
-export async function consumeAdminLoginToken(db, token) {
-  if (!token || token.length > 500) return null;
+export async function consumeAdminLoginToken(db, token, nonce) {
+  if (!token || token.length > 500 || !nonce || nonce.length > 500) return null;
   const row = await db
     .prepare(
-      `SELECT id, email FROM admin_login_tokens WHERE token_hash = ? AND used_at IS NULL AND expires_at > ?`,
+      `SELECT id, email FROM admin_login_tokens WHERE token_hash = ? AND nonce_hash = ? AND used_at IS NULL AND expires_at > ?`,
     )
-    .bind(await hashToken(token), now())
+    .bind(await hashToken(token), await hashToken(nonce), now())
     .first();
   if (!row || !isAdminEmail(row.email)) return null;
   const result = await db
@@ -579,14 +581,7 @@ function values(entity, input, current = {}) {
     "source_url",
     "recap_url",
   ])
-    if (field in value && value[field]) {
-      try {
-        const url = new URL(value[field]);
-        if (!/^https?:$/.test(url.protocol)) throw new Error();
-      } catch {
-        throw new Error("url-invalid");
-      }
-    }
+    if (field in value) value[field] = normalizePublicUrl(value[field]);
   for (const field of ["email", "claim_email"])
     if (field in value && value[field]) {
       const email = validEmail(value[field]);
@@ -758,7 +753,7 @@ export async function getAdminQueueItem(db, id) {
     const org = ID_RE.test(id)
       ? await db
           .prepare(
-            `SELECT id, name, city, state, website_url, ages, cost_note FROM organizations WHERE id = ?`,
+          `SELECT id, name, city, state, website_url, ages, cost_note FROM organizations WHERE id = ?`,
           )
           .bind(id)
           .first()
@@ -800,9 +795,50 @@ export async function getAdminQueueItem(db, id) {
   return item;
 }
 
-export async function acceptAdminQueueItem(db, id, actor = "system") {
+export function listingUpdateChangeFields(payload) {
+  const checkup =
+    payload?.checkup && typeof payload.checkup === "object"
+      ? payload.checkup
+      : null;
+  if (!checkup) return [];
+  if (checkup.verdict === "stopped") return ["visibility"];
+  const facts =
+    checkup.facts && typeof checkup.facts === "object" ? checkup.facts : {};
+  const fields = Object.entries(facts)
+    .filter(([, answer]) => answer?.status === "change")
+    .map(([key]) =>
+      ({ website: "website_url", place: "place", who: "ages", cost: "cost_note" })[
+        key
+      ] || key,
+    );
+  if (payload?.sports && typeof payload.sports === "object")
+    fields.push("sports");
+  if (Array.isArray(payload?.yearly) && payload.yearly.length)
+    fields.push("yearly events");
+  return [...new Set(fields)];
+}
+
+export function isBulkConfirmation(payload) {
+  return (
+    payload?.relation === "run" &&
+    payload?.checkup?.verdict === "all_right" &&
+    listingUpdateChangeFields(payload).length === 0
+  );
+}
+
+export async function acceptAdminQueueItem(
+  db,
+  id,
+  actor = "system",
+  { bulkConfirmation = false } = {},
+) {
   const item = await getAdminQueueItem(db, id);
   if (!item || item.status !== "new") return null;
+  if (
+    bulkConfirmation &&
+    (item.kind !== "listing_update" || !isBulkConfirmation(item.payload))
+  )
+    throw new Error("bulk-review-required");
   // Claim it first, so a double click (or two people) can't apply it twice; give it back on failure.
   const claimed = await db
     .prepare(
@@ -880,7 +916,16 @@ async function acceptClaimed(db, item, actor) {
   } else if (kind === "listing_update") {
     if (!item.organization) throw new Error("organization-missing");
     recordId = item.organization.id;
-    await applyConfirmation(db, item.organization, item.payload, {
+    const organization = await db
+      .prepare(
+        `SELECT id, name, city, state, state_name, lat, lng, geo_precision,
+                website_url, ages, cost_note, is_public
+         FROM organizations WHERE id = ?`,
+      )
+      .bind(recordId)
+      .first();
+    if (!organization) throw new Error("organization-missing");
+    await applyConfirmation(db, { ...item.organization, ...organization }, item.payload, {
       actor,
       ref: `submission ${item.id}`,
       timestamp,

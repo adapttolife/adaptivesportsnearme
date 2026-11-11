@@ -43,9 +43,26 @@ export async function sendAdminLoginLink(env, email, link) {
 
 export async function sendBetaLoginLink(env, email, link) {
   const subject = "Your Adaptive Sports Near Me beta sign-in link";
-  const text = `Use this link to access the Adaptive Sports Near Me beta:\n\n${link}\n\nThis link expires in 15 minutes and can be used once. If you did not request it, you can ignore this email.`;
+  const text = `Use this link to access the Adaptive Sports Near Me beta:\n\n${link}\n\nThis link expires in 30 minutes and can be used once. If you did not request it, you can ignore this email.`;
   const html = shell(
-    `<p>Use this link to access the Adaptive Sports Near Me beta:</p><p><a href="${esc(link)}">Open the beta</a></p><p>This link expires in 15 minutes and can be used once. If you did not request it, you can ignore this email.</p>`,
+    `<p>Use this link to access the Adaptive Sports Near Me beta:</p><p><a href="${esc(link)}">Open the beta</a></p><p>This link expires in 30 minutes and can be used once. If you did not request it, you can ignore this email.</p>`,
+  );
+  return cfSend(env, {
+    from: HOUSE_FROM,
+    to: email,
+    replyTo: HOUSE_REPLY,
+    subject,
+    text,
+    html,
+  });
+}
+
+export async function sendBetaTesterInvitation(env, email, name, siteUrl) {
+  const subject = "You are invited to the Adaptive Sports Near Me beta";
+  const greeting = `Hi ${name},`;
+  const text = `${greeting}\n\nYou have been added to the Adaptive Sports Near Me beta. Visit the website to get started:\n\n${siteUrl}\n\nWhen the beta sign-in form asks for your email address, use:\n${email}\n\nWe will send a one-time sign-in link to that address.`;
+  const html = shell(
+    `<p>${esc(greeting)}</p><p>You have been added to the Adaptive Sports Near Me beta.</p><p><a href="${esc(siteUrl)}">Visit Adaptive Sports Near Me</a></p><p>When the beta sign-in form asks for your email address, use:</p><p><strong>${esc(email)}</strong></p><p>We will send a one-time sign-in link to that address.</p>`,
   );
   return cfSend(env, {
     from: HOUSE_FROM,

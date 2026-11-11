@@ -88,6 +88,9 @@
   color: var(--graphite);
 }
 
-.v-account .account-signout {
+.v-account .account-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
   margin-top: 4px;
 }
