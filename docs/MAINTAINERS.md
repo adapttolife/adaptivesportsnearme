@@ -338,8 +338,8 @@ settings, DNS, and certificate status must also be checked in Cloudflare.
 
 The production list lives in `config/production-secrets.json`: `ADMIN_AUTH_SIGNING_KEY`,
 `ORG_AUTH_SIGNING_KEY`, `PROFILE_SIGNING_KEY`, `TURNSTILE_SECRET_KEY`, `RESEND_API_KEY`,
-`GMAIL_CLIENT_ID`, `GMAIL_CLIENT_SECRET`, `GMAIL_REFRESH_TOKEN`; `BETA_AUTH_SIGNING_KEY`
-is optional. `test/release-secrets.test.js` fails when the code starts reading a secret
+`GMAIL_CLIENT_ID`, `GMAIL_CLIENT_SECRET`, `GMAIL_REFRESH_TOKEN`. `BETA_AUTH_SIGNING_KEY`
+stays unset on purpose: beta sessions are signed with `ADMIN_AUTH_SIGNING_KEY`. `test/release-secrets.test.js` fails when the code starts reading a secret
 that isn't on the list.
 
 `adaptivesportsnearme` is one Worker for production and the staging previews: set its

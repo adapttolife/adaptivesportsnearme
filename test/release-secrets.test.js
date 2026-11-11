@@ -20,12 +20,12 @@ const source = readdirSync(srcDir, { recursive: true })
 const reads = (name) => new RegExp(`\\benv\\.${name}\\b`).test(source);
 
 test("every secret the code reads is listed in config/production-secrets.json", () => {
-  const listed = new Set([...Object.keys(spec.required), ...Object.keys(spec.optional)]);
+  const listed = new Set([...Object.keys(spec.required), ...Object.keys(spec.do_not_set)]);
   const unlisted = [...secretLikeEnvNames(source)].filter((name) => !listed.has(name));
   assert.deepEqual(
     unlisted,
     [],
-    `Add these to config/production-secrets.json (required or optional): ${unlisted.join(", ")}`,
+    `Add these to config/production-secrets.json (required or do_not_set): ${unlisted.join(", ")}`,
   );
 });
 
