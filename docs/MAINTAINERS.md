@@ -265,12 +265,19 @@ disallowed everything and every page said `noindex`), `asnm-db-staging` for `DB`
 `INTAKE`, and no cron handler (#87).
 
 - Variables: change them in `wrangler.json` and release from `main`.
-- Secrets: run `npx wrangler secret put NAME` right after a production deploy, while the
-  deployed version is still the newest. If Wrangler says "Secret edit failed ... the latest
-  version of your Worker isn't currently deployed", a branch has uploaded since. Don't use
-  either fix it suggests: both act on that branch's version. Redeploy `main` (re-run its
-  latest build in Cloudflare, or `npx wrangler deploy` from a clean checkout of `main`),
-  then run the command again.
+- Secrets: a new version copies its secrets from the Worker's **newest upload**, not from
+  the deployed version, and branch builds keep uploading here. So a release carries whatever
+  secrets the newest branch build has. Before every release, and again after it, run
+  `npm run check:release`: it reads the live version and the newest upload (read only, your
+  own Wrangler login) and says SAFE only when the newest upload holds every secret in
+  `config/production-secrets.json`.
+- To add or restore a secret, run `npx wrangler versions secret put NAME --name adaptivesportsnearme`.
+  It makes a new version from the newest upload and deploys nothing; the next release from
+  `main` picks the secret up. While a branch build is the newest upload, `npx wrangler secret put`
+  is refused ("Secret edit failed ... the latest version of your Worker isn't currently
+  deployed", error 10215), and a dashboard edit builds on that branch version, so deploying it
+  ships branch code (October 18). And don't redeploy `main` to "reset" first: that release
+  would copy the newest upload's secrets, even none.
 - After any change to the deployed Worker, open https://adaptivesportsnearme.com/robots.txt:
   production says `Allow: /`; staging settings say `Disallow: /`.
 
@@ -280,8 +287,8 @@ Production uses `ENV_NAME=production`, `PRELAUNCH=false`, `asnm-db` for `DB` and
 exports only `fetch`. Version uploads do not update the Worker's routes or cron
 triggers; those remain managed by the production deployment.
 
-Verify the uploaded version has the runtime secrets needed by Beehiiv, Gmail,
-profile signing, and admin authentication. Build variables and local
+Verify the uploaded version has the runtime secrets listed in
+`config/production-secrets.json` (`npm run check:release`). Build variables and local
 `.dev.vars` files are not runtime secrets. No database schema is applied by an
 upload; newsletter and program-submission capture require `db/intake-schema.sql` in the staging database.
 The existing `asnm-gate` config is a separate production signup route and is not
@@ -327,10 +334,13 @@ This is deployment configuration, not an application path-routing change.
 The repository configuration explains a likely cause of a 404; live account
 settings, DNS, and certificate status must also be checked in Cloudflare.
 
-## Secrets (per worker, via `wrangler secret put`)
+## Secrets (per worker)
 
-`TURNSTILE_SECRET_KEY`, `GMAIL_CLIENT_ID`, `GMAIL_CLIENT_SECRET`,
-`GMAIL_REFRESH_TOKEN`, `PROFILE_SIGNING_KEY`, `ORG_AUTH_SIGNING_KEY`.
+The production list lives in `config/production-secrets.json`: `ADMIN_AUTH_SIGNING_KEY`,
+`ORG_AUTH_SIGNING_KEY`, `PROFILE_SIGNING_KEY`, `TURNSTILE_SECRET_KEY`, `RESEND_API_KEY`,
+`GMAIL_CLIENT_ID`, `GMAIL_CLIENT_SECRET`, `GMAIL_REFRESH_TOKEN`. `BETA_AUTH_SIGNING_KEY`
+stays unset on purpose: beta sessions are signed with `ADMIN_AUTH_SIGNING_KEY`. `test/release-secrets.test.js` fails when the code starts reading a secret
+that isn't on the list.
 
 `adaptivesportsnearme` is one Worker for production and the staging previews: set its
 secrets the way [Deploy](#deploy) describes, never in the Cloudflare dashboard. `asnm-gate`
