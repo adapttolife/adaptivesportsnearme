@@ -366,7 +366,7 @@ Students: start with [docs/STUDENTS.md](STUDENTS.md). Short version:
 
 - Branch off `staging`.
 - Open a pull request **into `staging`**.
-- Feature/fix PRs never target `main`. Only the project lead opens a separately approved `staging` → `main` release PR after staging acceptance.
+- Feature/fix PRs never target `main`. Only Faisal opens and merges the `staging` → `main` release PR. AI agents never push to, open a PR into, or merge into `main`, release PRs included. An agent's work ends at a merged PR into `staging`.
 - Never deploy production (`adaptivesportsnearme`). Never write `asnm-db`. Live public count stays 2,593.
 - Tester: https://staging-adaptivesportsnearme.adapt-to-life.workers.dev
 - Live (locked): https://adaptivesportsnearme.com
