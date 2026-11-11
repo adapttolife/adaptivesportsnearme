@@ -63,7 +63,7 @@ console.log("The next release copies its secrets from the newest upload.");
 
 if (newest.id !== deployed.id) {
   console.log(
-    `\nThe newest upload is not the live version. Do not add or edit secrets or variables in the Cloudflare dashboard right now: a dashboard edit deploys #${newest.number} to production.`,
+    `\nThe newest upload is not the live version. Do not add or edit secrets or variables in the Cloudflare dashboard right now: a dashboard edit builds on #${newest.number}, and deploying that ships its branch code to production.`,
   );
 }
 

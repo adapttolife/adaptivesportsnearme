@@ -273,9 +273,11 @@ disallowed everything and every page said `noindex`), `asnm-db-staging` for `DB`
   `config/production-secrets.json`.
 - To add or restore a secret, run `npx wrangler versions secret put NAME --name adaptivesportsnearme`.
   It makes a new version from the newest upload and deploys nothing; the next release from
-  `main` picks the secret up. Don't use `npx wrangler secret put` or the dashboard while a
-  branch build is the newest upload: both deploy that branch's version. And don't redeploy
-  `main` to "reset" first: that release would copy the newest upload's secrets, even none.
+  `main` picks the secret up. While a branch build is the newest upload, `npx wrangler secret put`
+  is refused ("Secret edit failed ... the latest version of your Worker isn't currently
+  deployed", error 10215), and a dashboard edit builds on that branch version, so deploying it
+  ships branch code (October 18). And don't redeploy `main` to "reset" first: that release
+  would copy the newest upload's secrets, even none.
 - After any change to the deployed Worker, open https://adaptivesportsnearme.com/robots.txt:
   production says `Allow: /`; staging settings say `Disallow: /`.
 
