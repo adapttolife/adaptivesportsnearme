@@ -3683,7 +3683,7 @@ export async function warmTurnstile(form) {
 }
 /** The form's Turnstile token. It only shows a challenge when Cloudflare asks for one.
     A token made as the form opened is used once (tokens last five minutes); otherwise a fresh one.
-    "" when the check could not run; the server then decides (production refuses). */
+    "" when the check could not run; sendForm stops before posting (the server refuses one anyway). */
 async function turnstileToken(form) {
   const ts = await turnstileApi();
   if (!ts) return "";
@@ -3741,6 +3741,15 @@ async function sendForm(form) {
     body.sid = form._sid;
     body.source = form.getAttribute("data-source") || "asnm-site";
     body.cf_token = await turnstileToken(form);
+    // No token means the check never ran (blocked script, timeout). Posting would
+    // only earn a 403; say so here and keep the button usable for a retry.
+    if (!body.cf_token) {
+      const err = new Error(
+        "The spam check didn't finish. Reload the page and try again.",
+      );
+      err.fromServer = true; // show this message, not the connection fallback
+      throw err;
+    }
     const r = await fetch(form.getAttribute("data-send"), {
       method: "POST",
       headers: { "content-type": "application/json" },
