@@ -295,3 +295,32 @@ test("a claimed organization can control listing visibility and save resolved ad
     sqlite.close();
   }
 });
+
+test("an organization session row expires after five days, not minutes", async () => {
+  const { sqlite, db } = database();
+  try {
+    const fiveDaysMs = 60 * 60 * 24 * 5 * 1000;
+    const before = Date.now();
+    const session = await createOrganizationSession(
+      db,
+      "manager@example.test",
+      "test-secret",
+    );
+    const after = Date.now();
+    const expires = Date.parse(
+      sqlite
+        .prepare("SELECT expires_at FROM organization_sessions WHERE id = ?")
+        .get(session.id).expires_at,
+    );
+    assert.ok(
+      expires - before >= fiveDaysMs - 5_000,
+      `expected about five days, got ${expires - before}ms`,
+    );
+    assert.ok(
+      expires - after <= fiveDaysMs + 5_000,
+      `expected about five days, got ${expires - after}ms`,
+    );
+  } finally {
+    sqlite.close();
+  }
+});
