@@ -2656,7 +2656,7 @@ body {
 	margin-top: 14px;
 	border: 0;
 	border-radius: 8px;
-	background: transparent;
+	background: var(--sand);
 	color: var(--ink);
 	font:
 		700 17px "Sofia Sans",
@@ -2682,6 +2682,47 @@ body {
 
 .beta [role="status"]:empty {
   display: none;
+}
+
+.beta-access-dialog {
+	position: fixed;
+	inset: 0;
+	z-index: 1;
+	display: grid;
+	place-items: center;
+	padding: 20px;
+	background: rgba(26, 26, 26, 0.56);
+}
+
+.beta-access-dialog[hidden] {
+	display: none;
+}
+
+.beta-access-dialog__card {
+	width: min(100%, 460px);
+	padding: 32px;
+	border: 1px solid var(--line);
+	border-radius: var(--r);
+	background: var(--paper);
+	box-shadow: 0 16px 48px rgba(26, 26, 26, 0.24);
+}
+
+.beta-access-dialog__card h2 {
+	margin: 0;
+	font-size: 28px;
+	line-height: 1;
+	letter-spacing: -0.03em;
+}
+
+.beta-access-dialog__card p {
+	margin: 14px 0 0;
+	font-size: 18px;
+	line-height: 1.35;
+}
+
+.beta-access-dialog__card a {
+	color: inherit;
+	font-weight: 800;
 }
 
 @media (max-width: 720px) {
@@ -2732,8 +2773,69 @@ body {
 // slash falls back to /, and the target is always prefixed with our origin.
 function betaHtml() {
   return betaPageHtml(
-    `<section class="beta-card" aria-labelledby="beta-login-title"><h2 id="beta-login-title">Welcome, beta tester</h2><p>Use your approved email address and we will send a one-time sign-in link.</p><form id="beta-login"><label for="email">Email address</label><input id="email" name="email" type="email" autocomplete="email" required><button type="submit">Email me a sign-in link</button><p role="status" id="status"></p></form></section>`,
-    `<script>const p=location.pathname,back=p.charAt(0)==='/'&&p.charAt(1)!=='/'&&p.charAt(1)!=='\\\\'?p+location.search:'/';if(location.pathname!=='/')history.replaceState(null,'','/');fetch('/api/beta-auth/session',{credentials:'same-origin',cache:'no-store'}).then(r=>r.ok?r.json():null).then(b=>{if(!b||!b.ok)return;const k='asnm-beta-heal',t=Date.now();try{if(t-Number(sessionStorage.getItem(k)||0)<10000)return;sessionStorage.setItem(k,String(t));}catch(_){return;}location.replace(location.origin+back);}).catch(()=>{});document.getElementById('beta-login').addEventListener('submit',async(e)=>{e.preventDefault();const f=e.currentTarget,s=document.getElementById('status');if(!f.reportValidity())return;s.textContent='Sending your sign-in link...';try{const r=await fetch('/api/beta-auth/request-link',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({email:f.email.value})}),b=await r.json();s.textContent=r.ok&&b.ok?'Check your email for a one-time sign-in link.':(b.error||'We could not send a sign-in link.');}catch(_){s.textContent='We could not send a sign-in link.';}});</script>`,
+    `<section class="beta-card" aria-labelledby="beta-login-title"><h2 id="beta-login-title">Welcome, beta tester</h2><p>Use your approved email address and we will send a one-time sign-in link.</p><form id="beta-login"><label for="email">Email address</label><input id="email" name="email" type="email" autocomplete="email" required><button type="submit">Email me a sign-in link</button><p role="status" id="status"></p></form></section><div class="beta-access-dialog" id="beta-access-dialog" role="dialog" aria-modal="true" aria-labelledby="beta-access-title" hidden><section class="beta-access-dialog__card"><h2 id="beta-access-title">Beta access is by invitation</h2><p>To request access to beta testing, email Karen at <a href="mailto:VetsGetGoing@gmail.com">VetsGetGoing@gmail.com</a>.</p><button id="beta-access-close" type="button">Close</button></section></div>`,
+    `<script>
+const p = location.pathname;
+const back = p.charAt(0) === "/" && p.charAt(1) !== "/" && p.charAt(1) !== "\\\\" ? p + location.search : "/";
+const form = document.getElementById("beta-login");
+const status = document.getElementById("status");
+const accessDialog = document.getElementById("beta-access-dialog");
+const accessClose = document.getElementById("beta-access-close");
+
+function closeAccessDialog() {
+  accessDialog.hidden = true;
+}
+
+function showAccessDialog() {
+  accessDialog.hidden = false;
+  accessClose.focus();
+}
+
+if (location.pathname !== "/") history.replaceState(null, "", "/");
+
+fetch("/api/beta-auth/session", { credentials: "same-origin", cache: "no-store" })
+  .then((response) => response.ok ? response.json() : null)
+  .then((body) => {
+    if (!body || !body.ok) return;
+    const key = "asnm-beta-heal";
+    const timestamp = Date.now();
+    try {
+      if (timestamp - Number(sessionStorage.getItem(key) || 0) < 10000) return;
+      sessionStorage.setItem(key, String(timestamp));
+    } catch (_) {
+      return;
+    }
+    location.replace(location.origin + back);
+  })
+  .catch(() => {});
+
+accessClose.addEventListener("click", closeAccessDialog);
+accessDialog.addEventListener("click", (event) => {
+  if (event.target === accessDialog) closeAccessDialog();
+});
+
+form.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  if (!form.reportValidity()) return;
+  status.textContent = "Sending your sign-in link...";
+  try {
+    const response = await fetch("/api/beta-auth/request-link", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ email: form.email.value }),
+    });
+    const body = await response.json();
+    if (response.status === 403 && body.code === "beta-access-required") {
+      status.textContent = "";
+      showAccessDialog();
+      return;
+    }
+    status.textContent = response.ok && body.ok ? "Check your email for a one-time sign-in link." : (body.error || "We could not send a sign-in link.");
+  } catch (_) {
+    status.textContent = "We could not send a sign-in link.";
+  }
+});
+</script>`,
   );
 }
 
@@ -2787,7 +2889,11 @@ async function handleBetaLoginRequest(request, env, url) {
     );
   if (!(await isBetaTester(env.DB, email)))
     return json(
-      { ok: false, error: "This email does not have beta access." },
+      {
+        ok: false,
+        error: "This email does not have beta access.",
+        code: "beta-access-required",
+      },
       403,
       BETA_AUTH_CACHE,
     );

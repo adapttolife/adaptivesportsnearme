@@ -84,6 +84,14 @@ function confirmPost(token, headers = {}) {
   });
 }
 
+function requestBetaLoginLink(email) {
+  return new Request(`${ORIGIN}/api/beta-auth/request-link`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ email }),
+  });
+}
+
 function cookiePair(setCookie) {
   return setCookie.split(";")[0];
 }
@@ -254,8 +262,34 @@ test("the gated sign in page checks for a live session on load", async () => {
     assert.equal(response.status, 200);
     const html = await response.text();
     assert.match(html, /Welcome, beta tester/);
-    assert.match(html, /fetch\('\/api\/beta-auth\/session'/);
-    assert.match(html, /location\.replace\(location\.origin\+back\)/);
+    assert.match(html, /fetch\("\/api\/beta-auth\/session"/);
+    assert.match(html, /location\.replace\(location\.origin \+ back\)/);
+  } finally {
+    sqlite.close();
+  }
+});
+
+test("an unapproved email returns the beta access code and the sign-in page has the request-access dialog", async () => {
+  const { sqlite, env } = await setup();
+  try {
+    const response = await worker.fetch(
+      requestBetaLoginLink("not-approved@example.test"),
+      env,
+      {},
+    );
+    assert.equal(response.status, 403);
+    assert.deepEqual(await response.json(), {
+      ok: false,
+      error: "This email does not have beta access.",
+      code: "beta-access-required",
+    });
+
+    const page = await worker.fetch(new Request(`${ORIGIN}/`), env, {});
+    const html = await page.text();
+    assert.match(html, /id="beta-access-dialog"/);
+    assert.match(html, /Beta access is by invitation/);
+    assert.match(html, /mailto:VetsGetGoing@gmail\.com/);
+    assert.match(html, /body\.code === "beta-access-required"/);
   } finally {
     sqlite.close();
   }
