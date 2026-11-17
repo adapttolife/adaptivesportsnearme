@@ -475,7 +475,7 @@ const application = {
       return json({
         ok: true,
         env: env.ENV_NAME || "production",
-        prelaunch: env.PRELAUNCH !== "false",
+        prelaunch: isPrelaunchGateEnabled(env),
         dataApi: !!env.DB,
       });
     }
@@ -2839,8 +2839,24 @@ form.addEventListener("submit", async (event) => {
   );
 }
 
+const DECEMBER_1_2026_EASTERN_START = Date.parse("2026-12-01T05:00:00.000Z");
+const DECEMBER_2_2026_EASTERN_START = Date.parse("2026-12-02T05:00:00.000Z");
+
+export function isDecemberFirstPublicAccess(now = Date.now()) {
+  return (
+    now >= DECEMBER_1_2026_EASTERN_START &&
+    now < DECEMBER_2_2026_EASTERN_START
+  );
+}
+
+export function isPrelaunchGateEnabled(env, now = Date.now()) {
+  if (env.PRELAUNCH !== "true") return false;
+  if ((env.ENV_NAME || "production") !== "production") return true;
+  return !isDecemberFirstPublicAccess(now);
+}
+
 async function prelaunchGate(request, env, url) {
-  if (env.PRELAUNCH !== "true") return null;
+  if (!isPrelaunchGateEnabled(env)) return null;
   const path = url.pathname;
   const admin =
     path === "/admin" ||

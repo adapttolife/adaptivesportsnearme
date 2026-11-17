@@ -12,10 +12,57 @@ import {
   serializeBetaCookie,
   setBetaTester,
 } from "../src/beta-access.js";
+import {
+  isDecemberFirstPublicAccess,
+  isPrelaunchGateEnabled,
+} from "../src/index.js";
 import { hashToken } from "../src/organization-access.js";
 
 const ORIGIN = "https://adaptivesportsnearme.com";
 const TESTER = "tester@example.test";
+
+test("production is public throughout December 1, 2026 in Eastern time", () => {
+  const production = { ENV_NAME: "production", PRELAUNCH: "true" };
+  const staging = { ENV_NAME: "staging", PRELAUNCH: "true" };
+
+  assert.equal(
+    isDecemberFirstPublicAccess(Date.parse("2026-12-01T04:59:59.999Z")),
+    false,
+  );
+  assert.equal(
+    isDecemberFirstPublicAccess(Date.parse("2026-12-01T05:00:00.000Z")),
+    true,
+  );
+  assert.equal(
+    isDecemberFirstPublicAccess(Date.parse("2026-12-02T04:59:59.999Z")),
+    true,
+  );
+  assert.equal(
+    isDecemberFirstPublicAccess(Date.parse("2026-12-02T05:00:00.000Z")),
+    false,
+  );
+  assert.equal(
+    isPrelaunchGateEnabled(
+      production,
+      Date.parse("2026-12-01T05:00:00.000Z"),
+    ),
+    false,
+  );
+  assert.equal(
+    isPrelaunchGateEnabled(
+      production,
+      Date.parse("2026-12-02T05:00:00.000Z"),
+    ),
+    true,
+  );
+  assert.equal(
+    isPrelaunchGateEnabled(
+      staging,
+      Date.parse("2026-12-01T12:00:00.000Z"),
+    ),
+    true,
+  );
+});
 
 function database() {
   const sqlite = new DatabaseSync(":memory:");
