@@ -53,6 +53,10 @@ const REVIEWED = new Map([
     "tools/directory/eval-lanes.mjs",
     "a value expected from a saved copy of a public web page",
   ],
+  [
+    "src/index.js",
+    "beta tester signup email",
+  ],
 ]);
 const BINARY =
   /\.(svg|png|jpe?g|gif|webp|avif|ico|woff2?|ttf|otf|mp4|webm|mov|pdf|eps|zip|gz)$/i;
