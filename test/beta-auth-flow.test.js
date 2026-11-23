@@ -12,10 +12,57 @@ import {
   serializeBetaCookie,
   setBetaTester,
 } from "../src/beta-access.js";
+import {
+  isDecemberFirstPublicAccess,
+  isPrelaunchGateEnabled,
+} from "../src/index.js";
 import { hashToken } from "../src/organization-access.js";
 
 const ORIGIN = "https://adaptivesportsnearme.com";
 const TESTER = "tester@example.test";
+
+test("production is public throughout December 1, 2026 in Eastern time", () => {
+  const production = { ENV_NAME: "production", PRELAUNCH: "true" };
+  const staging = { ENV_NAME: "staging", PRELAUNCH: "true" };
+
+  assert.equal(
+    isDecemberFirstPublicAccess(Date.parse("2026-12-01T04:59:59.999Z")),
+    false,
+  );
+  assert.equal(
+    isDecemberFirstPublicAccess(Date.parse("2026-12-01T05:00:00.000Z")),
+    true,
+  );
+  assert.equal(
+    isDecemberFirstPublicAccess(Date.parse("2026-12-02T04:59:59.999Z")),
+    true,
+  );
+  assert.equal(
+    isDecemberFirstPublicAccess(Date.parse("2026-12-02T05:00:00.000Z")),
+    false,
+  );
+  assert.equal(
+    isPrelaunchGateEnabled(
+      production,
+      Date.parse("2026-12-01T05:00:00.000Z"),
+    ),
+    false,
+  );
+  assert.equal(
+    isPrelaunchGateEnabled(
+      production,
+      Date.parse("2026-12-02T05:00:00.000Z"),
+    ),
+    true,
+  );
+  assert.equal(
+    isPrelaunchGateEnabled(
+      staging,
+      Date.parse("2026-12-01T12:00:00.000Z"),
+    ),
+    true,
+  );
+});
 
 function database() {
   const sqlite = new DatabaseSync(":memory:");
@@ -81,6 +128,14 @@ function confirmPost(token, headers = {}) {
       ...headers,
     },
     body: new URLSearchParams({ token }).toString(),
+  });
+}
+
+function requestBetaLoginLink(email) {
+  return new Request(`${ORIGIN}/api/beta-auth/request-link`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ email }),
   });
 }
 
@@ -254,8 +309,34 @@ test("the gated sign in page checks for a live session on load", async () => {
     assert.equal(response.status, 200);
     const html = await response.text();
     assert.match(html, /Welcome, beta tester/);
-    assert.match(html, /fetch\('\/api\/beta-auth\/session'/);
-    assert.match(html, /location\.replace\(location\.origin\+back\)/);
+    assert.match(html, /fetch\("\/api\/beta-auth\/session"/);
+    assert.match(html, /location\.replace\(location\.origin \+ back\)/);
+  } finally {
+    sqlite.close();
+  }
+});
+
+test("an unapproved email returns the beta access code and the sign-in page has the request-access dialog", async () => {
+  const { sqlite, env } = await setup();
+  try {
+    const response = await worker.fetch(
+      requestBetaLoginLink("not-approved@example.test"),
+      env,
+      {},
+    );
+    assert.equal(response.status, 403);
+    assert.deepEqual(await response.json(), {
+      ok: false,
+      error: "This email does not have beta access.",
+      code: "beta-access-required",
+    });
+
+    const page = await worker.fetch(new Request(`${ORIGIN}/`), env, {});
+    const html = await page.text();
+    assert.match(html, /id="beta-access-dialog"/);
+    assert.match(html, /Beta access is by invitation/);
+    assert.match(html, /mailto:VetsGetGoing@gmail\.com/);
+    assert.match(html, /body\.code === "beta-access-required"/);
   } finally {
     sqlite.close();
   }
