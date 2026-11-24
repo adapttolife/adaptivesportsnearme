@@ -81,6 +81,8 @@ test("resend: posts to /emails with the key, the env tag and bytes as base64", a
 
 for (const [label, change, pattern] of [
   ["no idempotency key", { idempotencyKey: undefined }, /idempotencyKey/],
+  ["an empty idempotency key", { idempotencyKey: "" }, /idempotencyKey/],
+  ["a 257 character idempotency key", { idempotencyKey: "k".repeat(257) }, /idempotencyKey/],
   ["no kind tag", { tags: { brand: "asnm" } }, /brand and kind/],
   ["no brand tag", { tags: { kind: "x" } }, /brand and kind/],
   ["a tag with a space", { tags: { brand: "asnm", kind: "two words" } }, /Invalid mail tag/],
@@ -127,11 +129,19 @@ test("mailAllowed: full addresses and @domains, nothing when unset, everything i
   assert.equal(mailAllowed({ ENV_NAME: "production" }, "anyone@example.test"), true);
 });
 
-test("resend: 429, 5xx and timeouts are retryable; other refusals, 409 included, are not", async (t) => {
-  for (const [status, retryable] of [[429, true], [500, true], [503, true], [400, false], [409, false], [422, false]]) {
-    await withFetch(t, () => Response.json({ name: "x" }, { status }));
+test("resend: 429, 5xx, timeouts and a key still in flight are retryable; a reused key with a new body is not", async (t) => {
+  for (const [status, name, retryable] of [
+    [429, "rate_limit_exceeded", true],
+    [500, "internal_server_error", true],
+    [503, "x", true],
+    [409, "concurrent_idempotent_requests", true],
+    [409, "invalid_idempotent_request", false],
+    [400, "invalid_idempotency_key", false],
+    [422, "validation_error", false],
+  ]) {
+    await withFetch(t, () => Response.json({ name }, { status }));
     await assert.rejects(sendMail(BASE, MESSAGE), (error) => {
-      assert.equal(error.retryable, retryable, `status ${status}`);
+      assert.equal(error.retryable, retryable, `status ${status} ${name}`);
       assert.equal(error.status, status);
       return true;
     });
@@ -188,7 +198,7 @@ test("wrangler: every Worker sends through Resend from the mail. subdomain, and 
     assert.equal(vars.MAIL_TRANSPORT, "resend", name);
     assert.equal(vars.MAIL_FROM_DOMAINS, "mail.adaptivesportsnearme.com", name);
     assert.equal(vars.MAIL_FROM, "Adaptive Sports Near Me <hello@mail.adaptivesportsnearme.com>", name);
-    assert.ok("RESEND_TOPIC_ID" in vars, name);
+    assert.equal(vars.RESEND_TOPIC_ID, "9310c098-509b-49f6-b019-426e6ab5fd11", name);
     if (vars.ENV_NAME === "production") assert.equal(vars.MAIL_ALLOW, undefined, name);
     else
       assert.deepEqual(
@@ -325,6 +335,7 @@ test("unsubscribe links are signed with NEWSLETTER_LINK_SECRET and refuse tamper
   const e = link.searchParams.get("e");
   const tok = link.searchParams.get("t");
   assert.equal(await verifyUnsubscribe(env, e, tok), "person@example.test");
+  assert.equal(await verifyUnsubscribe(env, e, tok, "atl"), null);
   const other = new URL(await unsubscribeUrl(env, "https://adaptivesportsnearme.com", "other@example.test"));
   assert.equal(await verifyUnsubscribe(env, other.searchParams.get("e"), tok), null);
   assert.equal(await verifyUnsubscribe({ NEWSLETTER_LINK_SECRET: "rotated" }, e, tok), null);
@@ -363,15 +374,27 @@ test("GET /unsubscribe only shows a button; POST opts out of the ASNM Topic only
   assert.equal(x.sqlite.prepare("SELECT newsletter FROM profiles").get().newsletter, 0);
 });
 
-test("unsubscribe without a Topic id yet leaves the ASNM Segment, still never the team wide flag", async (t) => {
-  const x = app(t, { RESEND_TOPIC_ID: "REPLACE_WITH_THE_ASNM_NEWS_TOPIC_ID" });
-  const calls = await withFetch(t, () => Response.json({ deleted: true }));
+test("unsubscribe without a real Topic id fails loudly and touches nothing else", async (t) => {
+  const x = app(t, { RESEND_TOPIC_ID: "not-a-topic" });
+  quiet(t, "error");
+  const calls = await withFetch(t, () => Response.json({}));
   const link = new URL(await unsubscribeUrl(x.env, "https://a.test", "person@example.test"));
   const done = await x.call(link.pathname + link.search, { method: "POST" });
-  assert.equal(done.status, 200);
-  assert.equal(calls.length, 1);
-  assert.equal(calls[0].init.method, "DELETE");
-  assert.equal(calls[0].url, `https://api.resend.com/contacts/person%40example.test/segments/${SEGMENT}`);
+  assert.equal(done.status, 503);
+  assert.equal(calls.length, 0);
+  assert.equal(x.sqlite.prepare("SELECT route FROM send_failures").get().route, "asnm-unsubscribe");
+});
+
+test("the signed token carries the brand: a link for another brand does not work here", async (t) => {
+  const x = app(t);
+  const calls = await withFetch(t, () => Response.json({}));
+  const link = new URL(await unsubscribeUrl(x.env, "https://a.test", "person@example.test"));
+  assert.equal(link.searchParams.get("b"), "asnm");
+  link.searchParams.set("b", "atl");
+  assert.equal((await x.call(link.pathname + link.search, { method: "POST" })).status, 400);
+  link.searchParams.delete("b");
+  assert.equal((await x.call(link.pathname + link.search, { method: "POST" })).status, 400);
+  assert.equal(calls.length, 0);
 });
 
 test("a bad unsubscribe link changes nothing", async (t) => {
@@ -494,4 +517,32 @@ test("resend events: without the signing secret the hook answers 503 so Resend r
   const x = app(t, { RESEND_WEBHOOK_SECRET: undefined });
   const body = bounce();
   assert.equal((await x.call("/api/resend-events", { method: "POST", headers: signed(body), body })).status, 503);
+});
+
+test("resend events: a Broadcast event (no custom tags) is matched to ASNM by its From domain, in production only", async (t) => {
+  const broadcast = (from, id) =>
+    JSON.stringify({
+      type: "email.complained",
+      data: { broadcast_id: "bc-1", email_id: id, from, to: ["p@example.test"], tags: {} },
+    });
+  const prod = app(t, { ENV_NAME: "production" });
+  const ours = broadcast("Adaptive Sports Near Me <hello@mail.adaptivesportsnearme.com>", "re-b1");
+  // Production config only takes writes on the real hostname.
+  const post = (x, body, id) =>
+    worker.fetch(
+      new Request("https://adaptivesportsnearme.com/api/resend-events", { method: "POST", headers: signed(body, { id }), body }),
+      x.env,
+      { waitUntil() {} },
+    );
+  assert.deepEqual(await (await post(prod, ours, "msg_b1")).json(), { ok: true });
+  const theirs = broadcast("Adapt To Life <hello@mail.adapttolife.org>", "re-b2");
+  assert.deepEqual(await (await post(prod, theirs, "msg_b2")).json(), { ok: true, ignored: true });
+  assert.deepEqual(
+    prod.sqlite.prepare("SELECT route, error FROM send_failures").all().map((r) => ({ ...r })),
+    [{ route: "resend-complained", error: "broadcast re-b1: recipient marked it as spam" }],
+  );
+  const staging = app(t);
+  const body = broadcast("Adaptive Sports Near Me <hello@mail.adaptivesportsnearme.com>", "re-b3");
+  const response = await staging.call("/api/resend-events", { method: "POST", headers: signed(body, { id: "msg_b3" }), body });
+  assert.deepEqual(await response.json(), { ok: true, ignored: true });
 });

@@ -353,17 +353,22 @@ The rule: **sites send through Resend, people answer in Google Workspace.**
 - **Sign-in links** are limited to 3 per address per 15 minutes (`src/signin-limit.js`), on top of the
   per-IP form limiter. The profile notice goes out only when a save changed something.
 - **The newsletter.** `/api/subscribe` (the `asnm-gate` Worker in production) puts the contact in the
-  ASNM Segment (`RESEND_SEGMENT_ID`) and opts them in to the ASNM Topic (`RESEND_TOPIC_ID`,
-  "Adaptive Sports Near Me news"), then sends "You're on the list" with the unsubscribe link, the
+  ASNM Segment (`RESEND_SEGMENT_ID`) and opts them in to the ASNM Topic (`RESEND_TOPIC_ID`
+  `9310c098-509b-49f6-b019-426e6ab5fd11`, "Adaptive Sports Near Me news", opt_out, public), then sends "You're on the list" with the unsubscribe link, the
   one click `List-Unsubscribe` headers, why they get it and Adapt To Life NFP's postal address.
-- **`/unsubscribe`** (signed with `NEWSLETTER_LINK_SECRET`, never the Resend key) opts the contact out
-  of the ASNM Topic only. It never sets Resend's team wide `unsubscribed` flag: the team is shared with
-  adapttolife.org and alectranel.com. Until `RESEND_TOPIC_ID` holds the real Topic id it removes them
-  from the ASNM Segment instead. The profile newsletter switch writes the same Topic.
+- **`/unsubscribe`** (signed with `NEWSLETTER_LINK_SECRET`, never the Resend key; the signed token
+  carries the brand) opts the contact out of the ASNM Topic only. A GET only shows one button; the
+  change happens on POST (the button, or the RFC 8058 one click header), so link scanners never
+  unsubscribe anyone. It never sets Resend's team wide `unsubscribed` flag: the team is shared with
+  adapttolife.org and alectranel.com. The profile newsletter switch writes the same Topic.
+- **Joining when already in the team** (Resend answers 409): the contact still gets the ASNM Topic and
+  the welcome, and if they had unsubscribed from everything the team wide flag is cleared. Safe because
+  every brand Topic is `opt_out`.
 - **`/api/resend-events`** is Resend's webhook for this site: `email.delivered`, `email.bounced`,
   `email.complained`, `email.failed`, `email.delivery_delayed`, signed with `RESEND_WEBHOOK_SECRET`.
   Only events tagged `brand=asnm` and this Worker's `ENV_NAME` are stored (`resend_events`, once per
-  `svix-id`).
+  `svix-id`). Broadcast events carry no custom tags, so production matches them by From domain
+  (`MAIL_FROM_DOMAINS`).
 - **`send_failures`** (INTAKE database) is the ledger an alert reads: a confirmation, notice, invite or
   welcome that did not go out, an intake notice parked in `review`, and every bounce, complaint or
   failure Resend reports. Same columns as adapt-to-life's table. Intake notices that Resend refuses
@@ -388,7 +393,13 @@ The production list lives in `config/production-secrets.json`: `ADMIN_AUTH_SIGNI
 `ORG_AUTH_SIGNING_KEY`, `PROFILE_SIGNING_KEY`, `TURNSTILE_SECRET_KEY`, `RESEND_API_KEY`,
 `NEWSLETTER_LINK_SECRET`, `RESEND_WEBHOOK_SECRET`, and, while Gmail stays as a fallback
 transport, `GMAIL_CLIENT_ID`, `GMAIL_CLIENT_SECRET`, `GMAIL_REFRESH_TOKEN`. `asnm-gate` needs
-`RESEND_API_KEY` and `NEWSLETTER_LINK_SECRET` (it sends the welcome). `BETA_AUTH_SIGNING_KEY`
+`RESEND_API_KEY` and `NEWSLETTER_LINK_SECRET` (it sends the welcome). Each Worker has its own
+**full access** Resend key: both manage contacts and Topics, and Resend's sending-only keys cover
+one domain and no contacts.
+
+`send_failures` and `resend_events` in `atl-intake` are owned by this repo. adapt-to-life's schema
+check (`scripts/check-d1-schema.mjs`) fails on tables it doesn't know, so they must be on its
+`OWNED_ELSEWHERE` list before `0028_mail_ledger.sql` runs on `atl-intake`. `BETA_AUTH_SIGNING_KEY`
 stays unset on purpose: beta sessions are signed with `ADMIN_AUTH_SIGNING_KEY`. `test/release-secrets.test.js` fails when the code starts reading a secret
 that isn't on the list.
 

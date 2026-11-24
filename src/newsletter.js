@@ -3,6 +3,7 @@ import { mailAllowed } from "./mail-transport.js";
 import { recordSendFailure } from "./mail-ledger.js";
 import { sendSignupWelcome } from "./email.js";
 import {
+  clearTeamUnsubscribe,
   newsletterTopicId,
   setNewsletterTopic,
   unsubscribeUrl,
@@ -10,9 +11,26 @@ import {
 
 // Signup: record it, put the contact in the ASNM Segment and the ASNM Topic
 // (their permission for this brand's mail), then send the welcome with its
-// unsubscribe link. Never touches Resend's team wide `unsubscribed` flag beyond
-// creating a new contact as subscribed.
+// unsubscribe link. A contact who already exists in the team (Resend 409) gets
+// the same: the ASNM Topic, the welcome, and the team wide flag cleared if they
+// had once unsubscribed from everything (docs/EMAIL.md: safe, because every
+// brand Topic is opt_out).
 const SITE_ORIGIN = "https://adaptivesportsnearme.com";
+
+// An existing contact joining ASNM. Each step is ledgered on failure, never
+// fatal: the Segment add is the signup.
+async function joinExistingContact(env, email) {
+  for (const [route, step] of [
+    ["asnm-newsletter-team-flag", () => clearTeamUnsubscribe(env, email)],
+    ["asnm-newsletter-topic", () => setNewsletterTopic(env, email, "opt_in")],
+  ]) {
+    try {
+      await step();
+    } catch (error) {
+      await recordSendFailure(env, route, email, error);
+    }
+  }
+}
 
 const fail = {
   ok: false,
@@ -123,11 +141,7 @@ export async function safeNewsletterSubscribe(
         .first();
       if (existing?.state === "resend-subscribed") {
         // Signing up again after leaving is a fresh yes for this brand.
-        try {
-          await setNewsletterTopic(env, email, "opt_in");
-        } catch (error) {
-          await recordSendFailure(env, "asnm-newsletter-topic", email, error);
-        }
+        await joinExistingContact(env, email);
         return { ok: true, existing: true };
       }
       return {
@@ -166,12 +180,7 @@ export async function safeNewsletterSubscribe(
       providerStatus = membership.status;
       if (!membership.ok && membership.status !== 409)
         throw new Error("Contact segment membership rejected");
-      // The Segment add is the signup; a Topic hiccup is ledgered, not fatal.
-      try {
-        await setNewsletterTopic(env, email, "opt_in");
-      } catch (error) {
-        await recordSendFailure(env, "asnm-newsletter-topic", email, error);
-      }
+      await joinExistingContact(env, email);
     } else {
       throw new Error("Contact creation rejected");
     }

@@ -27,7 +27,7 @@
 		"MAIL_TRANSPORT": "resend",
 		"MAIL_FROM": "Adaptive Sports Near Me <hello@mail.adaptivesportsnearme.com>",
 		"MAIL_FROM_DOMAINS": "mail.adaptivesportsnearme.com",
-		"RESEND_TOPIC_ID": "REPLACE_WITH_ASNM_NEWS_TOPIC_ID",
+		"RESEND_TOPIC_ID": "9310c098-509b-49f6-b019-426e6ab5fd11",
 		"GMAIL_FROM": "hello@adaptivesportsnearme.com",
 		"REQUIRE_FORM_LIMITER": "true",
 		"RESEND_SEGMENT_ID": "abae0ac1-1ed2-4d3b-9fb7-41f272a92f4a"
@@ -76,7 +76,7 @@
 				"MAIL_TRANSPORT": "resend",
 				"MAIL_FROM": "Adaptive Sports Near Me <hello@mail.adaptivesportsnearme.com>",
 				"MAIL_FROM_DOMAINS": "mail.adaptivesportsnearme.com",
-				"RESEND_TOPIC_ID": "REPLACE_WITH_ASNM_NEWS_TOPIC_ID",
+				"RESEND_TOPIC_ID": "9310c098-509b-49f6-b019-426e6ab5fd11",
 				"MAIL_ALLOW": "hello@adapttolife.org,@adaptivesportsnearme.com,@adapttolife.org,@faisaln.com",
 				"GMAIL_FROM": "hello@adaptivesportsnearme.com",
 				"REQUIRE_FORM_LIMITER": "true",
