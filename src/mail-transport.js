@@ -114,15 +114,17 @@ export function buildMime(message, allowedFrom) {
   }
   return h.join("\r\n") + "\r\n" + body + "\r\n";
 }
-// A send error says whether trying again later is safe. 429, 5xx and a network
-// timeout are retryable; any other refusal is not (Resend's 409 means the same
-// Idempotency-Key came with a different body).
+// A send error says whether trying again later is safe. 429, 5xx, a network
+// timeout and 409 concurrent_idempotent_requests (the same key still in flight)
+// are retryable. 409 invalid_idempotent_request (the same key with a different
+// body) and every other 4xx are not. The two 409s differ only by the error name.
 export class MailError extends Error {
-  constructor(message, { retryable = false, status = null } = {}) {
+  constructor(message, { retryable = false, status = null, name = "" } = {}) {
     super(message);
     this.name = "MailError";
     this.retryable = retryable;
     this.status = status;
+    this.providerError = name;
   }
 }
 const commaList = (value) =>
@@ -273,8 +275,12 @@ async function sendResend(env, message) {
     throw new MailError(
       `Resend refused the send (${response.status}${name ? ` ${name}` : ""})`,
       {
-        retryable: response.status === 429 || response.status >= 500,
+        retryable:
+          response.status === 429 ||
+          response.status >= 500 ||
+          (response.status === 409 && name === "concurrent_idempotent_requests"),
         status: response.status,
+        name,
       },
     );
   }

@@ -153,17 +153,23 @@ test("adds an existing Resend contact to the configured segment without re-subsc
     assert.equal(context.requests[1].init.method, "POST");
   }));
 
-test("a repeat successful signup is reported as existing without another provider request", async () =>
-  run({}, async (context) => {
-    await safeNewsletterSubscribe(context.env, "person@example.test", "footer");
-    const repeat = await safeNewsletterSubscribe(
-      context.env,
-      "person@example.test",
-      "footer",
-    );
+test("a repeat signup is reported as existing, makes no new contact, and re-opens ASNM mail", async () =>
+  run({ env: RESEND_MAIL }, async (context) => {
+    const first = await safeNewsletterSubscribe(context.env, "person@example.test", "footer");
+    await first.welcomeJob;
+    const before = context.requests.length;
+    const repeat = await safeNewsletterSubscribe(context.env, "person@example.test", "footer");
     assert.equal(repeat.ok, true);
     assert.equal(repeat.existing, true);
-    assert.equal(context.requests.length, 1);
+    const after = context.requests.slice(before);
+    assert.deepEqual(
+      after.map((r) => [r.init.method, r.url]),
+      [
+        ["PATCH", "https://api.resend.com/contacts/person%40example.test"],
+        ["PATCH", "https://api.resend.com/contacts/person%40example.test/topics"],
+      ],
+    );
+    assert.equal(repeat.welcomeJob, undefined, "one welcome per signup");
   }));
 
 test("requires the Resend credentials and segment", async () => {
@@ -243,13 +249,24 @@ test("a welcome Resend refuses is written to send_failures, and the signup still
     ]);
   }));
 
-test("an existing contact is opted in to the ASNM Topic, never the team wide flag", async () =>
+test("an existing contact who joins ASNM gets the Topic, the welcome, and the team wide flag cleared", async () =>
   run({ conflict: true, env: RESEND_MAIL }, async (context) => {
     const result = await safeNewsletterSubscribe(context.env, "person@example.test", "footer");
     assert.equal(result.ok, true);
-    const patch = context.requests.find((r) => r.init.method === "PATCH");
-    assert.equal(patch.url, "https://api.resend.com/contacts/person%40example.test/topics");
-    assert.deepEqual(JSON.parse(patch.init.body), [{ id: TOPIC, subscription: "opt_in" }]);
+    const flag = context.requests.find(
+      (r) => r.init.method === "PATCH" && r.url === "https://api.resend.com/contacts/person%40example.test",
+    );
+    assert.deepEqual(JSON.parse(flag.init.body), { unsubscribed: false });
+    const topic = context.requests.find((r) => r.url.endsWith("/topics"));
+    assert.equal(topic.init.method, "PATCH");
+    assert.deepEqual(JSON.parse(topic.init.body), [{ id: TOPIC, subscription: "opt_in" }]);
+    await result.welcomeJob;
+    const welcome = context.requests
+      .filter((r) => r.url === "https://api.resend.com/emails")
+      .map((r) => JSON.parse(r.init.body))
+      .find((b) => b.to[0] === "person@example.test");
+    assert.equal(welcome?.subject, "You're on the list");
+    // Nothing ever sets the flag on.
     assert.ok(!context.requests.some((r) => /"unsubscribed":true/.test(r.init.body || "")));
   }));
 

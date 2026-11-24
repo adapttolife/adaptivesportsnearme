@@ -9,7 +9,8 @@
 //
 // The Resend team is shared with adapttolife.org and alectranel.com, so most
 // events a misconfigured webhook could send us are someone else's: those are
-// answered 200 and dropped without being stored.
+// answered 200 and dropped without being stored. Broadcast events have no
+// custom tags and are matched by From domain (MAIL_FROM_DOMAINS).
 export const BRAND = "asnm";
 const TOLERANCE_SECONDS = 5 * 60;
 const MAX_BODY = 256 * 1024;
@@ -69,6 +70,20 @@ function tagMap(tags) {
   return tags && typeof tags === "object" ? tags : {};
 }
 
+// Our own sends carry brand and env tags. A Broadcast event carries no custom
+// tags, so it is matched to this brand by its From domain instead; Broadcasts
+// go out only from production, so only production keeps them.
+function ours(env, data, tags) {
+  if (tags.brand || tags.env) return tags.brand === BRAND && tags.env === env.ENV_NAME;
+  if (env.ENV_NAME !== "production") return false;
+  const from = String(data.from || "").match(/@([^<>\s@]+?)>?\s*$/)?.[1]?.toLowerCase();
+  const domains = String(env.MAIL_FROM_DOMAINS || "")
+    .split(",")
+    .map((d) => d.trim().toLowerCase())
+    .filter(Boolean);
+  return !!from && domains.includes(from);
+}
+
 const reply = (body, status = 200) =>
   new Response(JSON.stringify(body), {
     status,
@@ -95,8 +110,7 @@ export async function handleResendEvents(request, env) {
   }
   const data = event?.data || {};
   const tags = tagMap(data.tags);
-  if (tags.brand !== BRAND || tags.env !== env.ENV_NAME)
-    return reply({ ok: true, ignored: true });
+  if (!ours(env, data, tags)) return reply({ ok: true, ignored: true });
 
   const svixId = request.headers.get("svix-id");
   const type = String(event.type || "").slice(0, 60);
@@ -109,7 +123,7 @@ export async function handleResendEvents(request, env) {
       new Date().toISOString(),
       type,
       String(data.email_id || "").slice(0, 100) || null,
-      String(tags.kind || "").slice(0, 60) || null,
+      String(tags.kind || (data.broadcast_id ? "broadcast" : "")).slice(0, 60) || null,
       String(env.ENV_NAME || ""),
     ),
   ];
@@ -130,7 +144,7 @@ export async function handleResendEvents(request, env) {
         Math.floor(Date.now() / 1000),
         `resend-${type.replace(/^email\./, "")}`,
         to.slice(0, 320),
-        `${tags.kind || "unknown"} ${data.email_id || ""}: ${detail.filter(Boolean).join(" ")}`
+        `${tags.kind || (data.broadcast_id ? "broadcast" : "unknown")} ${data.email_id || ""}: ${detail.filter(Boolean).join(" ")}`
           .trim()
           .slice(0, 2000),
       ),

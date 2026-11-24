@@ -5,22 +5,23 @@
 // alectranel.com, and Resend's `unsubscribed` flag is team wide: setting it would
 // silently take someone off every brand's list. So this code never writes that
 // flag. Leaving ASNM opts the contact out of the ASNM Topic (RESEND_TOPIC_ID,
-// "Adaptive Sports Near Me news") and nothing else. Until that var holds a real
-// Topic id, it takes them out of the ASNM Segment instead, which is just as
-// brand scoped. (docs/EMAIL.md in adapt-to-life, "Contacts, lists and unsubscribing".)
+// "Adaptive Sports Near Me news") and nothing else. (docs/EMAIL.md in
+// adapt-to-life, "Contacts, lists and unsubscribing".)
 //
 // Links are signed with NEWSLETTER_LINK_SECRET, never the Resend key, so
-// rotating the key never breaks a link already sent.
+// rotating the key never breaks a link already sent. The signed token carries
+// the brand, so an ASNM link can only ever leave the ASNM list.
 import { mailAllowed } from "./mail-transport.js";
 import { recordSendFailure } from "./mail-ledger.js";
 
 const RESEND_API = "https://api.resend.com";
 const ID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const encoder = new TextEncoder();
-const TOKEN_CONTEXT = "asnm-newsletter-unsubscribe:v1:";
+const TOKEN_CONTEXT = "newsletter-unsubscribe:v1:";
+export const LIST_BRAND = "asnm";
 
-// The Topic var ships as a placeholder until the Topic exists; anything that is
-// not a Resend id counts as unset.
+// Anything that is not a Resend id counts as unset (and leaving then fails
+// loudly rather than touching anything else).
 export function newsletterTopicId(env) {
   const id = String(env?.RESEND_TOPIC_ID || "").trim();
   return ID_RE.test(id) ? id : null;
@@ -50,23 +51,27 @@ async function hmacKey(secret) {
 
 const normal = (email) => String(email || "").trim().toLowerCase();
 
-export async function unsubscribeToken(env, email) {
+// What the token signs: the brand and the address.
+const signed = (brand, email) => encoder.encode(`${TOKEN_CONTEXT}${brand}:${normal(email)}`);
+
+export async function unsubscribeToken(env, email, brand = LIST_BRAND) {
   if (!env?.NEWSLETTER_LINK_SECRET) throw new Error("NEWSLETTER_LINK_SECRET is not set");
   const key = await hmacKey(env.NEWSLETTER_LINK_SECRET);
-  return b64url(
-    await crypto.subtle.sign("HMAC", key, encoder.encode(TOKEN_CONTEXT + normal(email))),
-  );
+  return b64url(await crypto.subtle.sign("HMAC", key, signed(brand, email)));
 }
 
 export async function unsubscribeUrl(env, origin, email) {
   const url = new URL("/unsubscribe", origin);
+  url.searchParams.set("b", LIST_BRAND);
   url.searchParams.set("e", b64url(encoder.encode(normal(email))));
   url.searchParams.set("t", await unsubscribeToken(env, email));
   return url.toString();
 }
 
-// Returns the address the link was made for, or null. Constant time (HMAC verify).
-export async function verifyUnsubscribe(env, e, t) {
+// Returns the address the link was made for, or null. Constant time (HMAC
+// verify). Only a link signed for this brand passes.
+export async function verifyUnsubscribe(env, e, t, brand = LIST_BRAND) {
+  if (brand !== LIST_BRAND) return null;
   if (!env?.NEWSLETTER_LINK_SECRET || !e || !t) return null;
   if (String(e).length > 600 || String(t).length > 100) return null;
   try {
@@ -77,7 +82,7 @@ export async function verifyUnsubscribe(env, e, t) {
       "HMAC",
       key,
       fromB64url(t),
-      encoder.encode(TOKEN_CONTEXT + normal(email)),
+      signed(brand, email),
     );
     return ok ? normal(email) : null;
   } catch {
@@ -100,12 +105,12 @@ function resendHeaders(env) {
   };
 }
 
-// opt_in or opt_out on the ASNM Topic only. Resolves to true when Resend took it
-// (or there was nothing to change), false when the Topic is not configured.
-// Throws on a refusal.
+// opt_in or opt_out on the ASNM Topic only. Throws when the Topic or key is not
+// configured, or Resend refuses.
 export async function setNewsletterTopic(env, email, subscription) {
   const topic = newsletterTopicId(env);
-  if (!topic || !env.RESEND_API_KEY) return false;
+  if (!topic) throw new Error("RESEND_TOPIC_ID is not a Resend Topic id");
+  if (!env.RESEND_API_KEY) throw new Error("Resend is not configured");
   const response = await fetch(
     `${RESEND_API}/contacts/${encodeURIComponent(normal(email))}/topics`,
     {
@@ -123,17 +128,22 @@ export async function setNewsletterTopic(env, email, subscription) {
 
 // Takes one address off the ASNM list, and nothing else. Never the team wide flag.
 export async function leaveNewsletter(env, email) {
+  await setNewsletterTopic(env, email, "opt_out");
+}
+
+// Joining a brand is a yes to that brand. Someone who once unsubscribed from
+// everything has the team wide flag set, which would block this brand too; it
+// is cleared on joining. Safe because every brand Topic is opt_out: clearing it
+// only re-opens mail from Topics they have each said yes to.
+export async function clearTeamUnsubscribe(env, email) {
   if (!env.RESEND_API_KEY) throw new Error("Resend is not configured");
-  if (await setNewsletterTopic(env, email, "opt_out")) return "topic";
-  const segment = String(env.RESEND_SEGMENT_ID || "").trim();
-  if (!ID_RE.test(segment)) throw new Error("No ASNM Topic or Segment is configured");
-  const response = await fetch(
-    `${RESEND_API}/contacts/${encodeURIComponent(normal(email))}/segments/${encodeURIComponent(segment)}`,
-    { method: "DELETE", headers: resendHeaders(env), signal: AbortSignal.timeout(10000) },
-  );
-  if (!response.ok && response.status !== 404)
-    throw new Error(`Resend segment removal refused (${response.status})`);
-  return "segment";
+  const response = await fetch(`${RESEND_API}/contacts/${encodeURIComponent(normal(email))}`, {
+    method: "PATCH",
+    headers: resendHeaders(env),
+    body: JSON.stringify({ unsubscribed: false }),
+    signal: AbortSignal.timeout(10000),
+  });
+  if (!response.ok) throw new Error(`Resend contact update refused (${response.status})`);
 }
 
 const esc = (s) =>
@@ -181,13 +191,14 @@ const BAD_LINK = () =>
 export async function handleUnsubscribe(request, env, url) {
   if (!["GET", "HEAD", "POST"].includes(request.method))
     return new Response("Method not allowed", { status: 405, headers: { Allow: "GET, POST" } });
+  const b = url.searchParams.get("b");
   const e = url.searchParams.get("e");
   const t = url.searchParams.get("t");
-  const email = await verifyUnsubscribe(env, e, t);
+  const email = await verifyUnsubscribe(env, e, t, b);
   if (!email) return BAD_LINK();
 
   if (request.method !== "POST") {
-    const action = `/unsubscribe?e=${encodeURIComponent(e)}&t=${encodeURIComponent(t)}`;
+    const action = `/unsubscribe?b=${encodeURIComponent(b)}&e=${encodeURIComponent(e)}&t=${encodeURIComponent(t)}`;
     return page(
       "Unsubscribe",
       `<h1>Stop the Adaptive Sports Near Me emails?</h1>` +
