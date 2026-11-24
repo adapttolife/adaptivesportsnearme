@@ -7,7 +7,7 @@ import { DatabaseSync } from "node:sqlite";
 import { readFileSync } from "node:fs";
 import { createHmac } from "node:crypto";
 import worker from "../src/index.js";
-import { sendMail, mailAllowed, buildMime } from "../src/mail-transport.js";
+import { sendMail, mailAllowed, buildMime, MailError, keyHash } from "../src/mail-transport.js";
 import { unsubscribeUrl, verifyUnsubscribe } from "../src/unsubscribe.js";
 import { verifySvix } from "../src/resend-events.js";
 import { createAdminSession, serializeAdminCookie } from "../src/admin-access.js";
@@ -545,4 +545,54 @@ test("resend events: a Broadcast event (no custom tags) is matched to ASNM by it
   const body = broadcast("Adaptive Sports Near Me <hello@mail.adaptivesportsnearme.com>", "re-b3");
   const response = await staging.call("/api/resend-events", { method: "POST", headers: signed(body, { id: "msg_b3" }), body });
   assert.deepEqual(await response.json(), { ok: true, ignored: true });
+});
+
+// ---- the ATL review changes (adapt-to-life #437), same file in both repos ----
+
+test("missing mail config throws a retryable MailError before anything is sent", async (t) => {
+  const calls = await withFetch(t, () => Response.json({ id: "never" }));
+  await assert.rejects(sendMail({ ...BASE, RESEND_API_KEY: undefined }, MESSAGE), (error) => {
+    assert.ok(error instanceof MailError);
+    assert.equal(error.retryable, true);
+    return true;
+  });
+  assert.equal(calls.length, 0);
+});
+
+test("an accepted send without an id is retryable, never recorded as sent", async (t) => {
+  await withFetch(t, () => Response.json({}));
+  await assert.rejects(sendMail(BASE, MESSAGE), (error) => error.retryable === true);
+});
+
+test("every refusal before the network is a non-retryable MailError", async (t) => {
+  await withFetch(t, () => Response.json({ id: "never" }));
+  await assert.rejects(sendMail(BASE, { ...MESSAGE, to: "not an address" }), (error) => {
+    assert.ok(error instanceof MailError);
+    assert.equal(error.retryable, false);
+    return true;
+  });
+});
+
+test("Resend's free-text error never reaches our error message", async (t) => {
+  await withFetch(t, () =>
+    Response.json({ name: "Rejected person@example.test", message: "person@example.test" }, { status: 422 }),
+  );
+  await assert.rejects(sendMail(BASE, MESSAGE), (error) => {
+    assert.doesNotMatch(error.message, /example\.test/);
+    return true;
+  });
+});
+
+test("keyHash is stable and ignores case and spaces", async () => {
+  assert.equal(await keyHash(" Person@Example.test "), await keyHash("person@example.test"));
+  assert.match(await keyHash("x"), /^[0-9a-f]{64}$/);
+});
+
+test("ASNM's mail-transport.js is the adapt-to-life file byte for byte (adapt-to-life #437)", async () => {
+  const { createHash } = await import("node:crypto");
+  assert.equal(
+    createHash("sha256").update(read("src/mail-transport.js")).digest("hex"),
+    "3a3be19121ae25a3c669cb5236e0439401d2cb58c28a78732d6b0f4aaaa504f2",
+    "Change src/mail-transport.js in both repos together, then update this hash",
+  );
 });
