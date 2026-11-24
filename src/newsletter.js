@@ -1,5 +1,5 @@
 import { notifyIntake } from "./intake.js";
-import { mailAllowed } from "./mail-transport.js";
+import { mailAllowed, mailConfigured } from "./mail-transport.js";
 import { recordSendFailure } from "./mail-ledger.js";
 import { sendSignupWelcome } from "./email.js";
 import {
@@ -231,6 +231,9 @@ export async function safeNewsletterSubscribe(
 // more under the same key.
 export async function sendWelcome(env, email, { name, beta, origin, key }) {
   try {
+    // Missing mail config is retryable in the transport, but waiting two
+    // seconds will not fix it: ledger it straight away.
+    if (!mailConfigured(env)) throw new Error("Mail transport is not configured");
     const unsubscribeLink = await unsubscribeUrl(env, origin || SITE_ORIGIN, email);
     const send = () =>
       sendSignupWelcome(env, email, { name, beta, unsubscribeLink, key });

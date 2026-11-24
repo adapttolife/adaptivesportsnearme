@@ -2,8 +2,9 @@
 // adaptivesportsnearme: docs/EMAIL.md in adapt-to-life, "The send contract".
 //
 // MAIL_TRANSPORT picks exactly one provider: "resend" (the target for every
-// Worker), "gmail" or "cloudflare" (kept until every Worker runs resend, then
-// deleted). A provider error NEVER falls through to another provider.
+// Worker), "cloudflare" (kept: agent mail and the staging receipt preview pick
+// it explicitly) or "gmail" (deleted once no Worker selects it). A provider
+// error NEVER falls through to another provider.
 const encoder = new TextEncoder();
 function base64(bytes) {
   let s = "";
@@ -76,8 +77,7 @@ export function buildMime(message, allowedFrom) {
   ])
     if (value) h.push(`${key}: ${addresses(value)}`);
   for (const [key, value] of Object.entries(message.headers || {})) {
-    if (!CUSTOM_HEADER.test(key))
-      throw new Error("Unsupported custom mail header");
+    if (!CUSTOM_HEADER.test(key)) throw new Error("Unsupported custom mail header");
     h.push(`${key}: ${header(value)}`);
   }
   const alt = "alt_" + crypto.randomUUID();
@@ -117,14 +117,14 @@ export function buildMime(message, allowedFrom) {
 // A send error says whether trying again later is safe. 429, 5xx, a network
 // timeout and 409 concurrent_idempotent_requests (the same key still in flight)
 // are retryable. 409 invalid_idempotent_request (the same key with a different
-// body) and every other 4xx are not. The two 409s differ only by the error name.
+// body) and every other refusal are not; so is every check that fails before
+// the network.
 export class MailError extends Error {
-  constructor(message, { retryable = false, status = null, name = "" } = {}) {
+  constructor(message, { retryable = false, status = null } = {}) {
     super(message);
     this.name = "MailError";
     this.retryable = retryable;
     this.status = status;
-    this.providerError = name;
   }
 }
 const commaList = (value) =>
@@ -177,14 +177,21 @@ function resendMailbox(value) {
     : `${name} <${address}>`;
 }
 // Everything checked here is checked before the network: a refused message is
-// never half sent.
+// never half sent, and every refusal is a MailError with retryable: false.
 export function resendRequest(env, message) {
+  try {
+    return buildResendRequest(env, message);
+  } catch (error) {
+    if (error instanceof MailError) throw error;
+    throw new MailError(error?.message || "Invalid mail");
+  }
+}
+function buildResendRequest(env, message) {
   const key = message.idempotencyKey;
   if (typeof key !== "string" || !key || key.length > 256 || /[\r\n\0]/.test(key))
     throw new MailError("Mail needs an idempotencyKey");
   const tags = message.tags || {};
-  if (!tags.brand || !tags.kind)
-    throw new MailError("Mail needs brand and kind tags");
+  if (!tags.brand || !tags.kind) throw new MailError("Mail needs brand and kind tags");
   const tagList = Object.entries({ ...tags, env: env.ENV_NAME || "unknown" }).map(
     ([name, value]) => {
       if (!TAG_VALUE.test(name) || !TAG_VALUE.test(String(value)))
@@ -233,7 +240,11 @@ export function resendRequest(env, message) {
       if (a.contentId) out.content_id = header(a.contentId).replace(/[<>]/g, "");
       return out;
     });
-  const everyone = [...recipients(message.to), ...recipients(message.cc), ...recipients(message.bcc)];
+  const everyone = [
+    ...recipients(message.to),
+    ...recipients(message.cc),
+    ...recipients(message.bcc),
+  ];
   return { key, body, allowed: everyone.every((r) => mailAllowed(env, r)) };
 }
 async function sendResend(env, message) {
@@ -246,7 +257,12 @@ async function sendResend(env, message) {
       kind: message.tags.kind,
       reason: "not-allowed",
     });
-    return { dropped: true, reason: "not-allowed", provider: "resend", accepted: false };
+    return {
+      dropped: true,
+      reason: "not-allowed",
+      provider: "resend",
+      accepted: false,
+    };
   }
   let response;
   try {
@@ -268,10 +284,13 @@ async function sendResend(env, message) {
     });
   }
   if (!response.ok) {
+    // Resend's error name ("validation_error", "rate_limit_exceeded") is safe to
+    // keep; its free-text message can echo the request, so it is never kept.
     let name = "";
     try {
-      name = String((await response.json())?.name || "").slice(0, 60);
+      name = String((await response.json())?.name || "");
     } catch {}
+    if (!/^[a-z_]{1,60}$/.test(name)) name = "";
     throw new MailError(
       `Resend refused the send (${response.status}${name ? ` ${name}` : ""})`,
       {
@@ -280,7 +299,6 @@ async function sendResend(env, message) {
           response.status >= 500 ||
           (response.status === 409 && name === "concurrent_idempotent_requests"),
         status: response.status,
-        name,
       },
     );
   }
@@ -288,17 +306,36 @@ async function sendResend(env, message) {
   try {
     receipt = await response.json();
   } catch {}
+  // Accepted without an id is never recorded as sent. Retrying is safe: the
+  // same key and body return the first result for 24 hours.
   if (typeof receipt?.id !== "string" || !receipt.id)
-    throw new MailError("Resend returned no message id; review before retry");
+    throw new MailError("Resend returned no message id", { retryable: true });
   return { id: receipt.id, messageId: receipt.id, provider: "resend", accepted: true };
 }
+// A stable hash for idempotency keys built from personal data, so an email
+// address never appears in a key or in Resend's log in the clear.
+export async function keyHash(value) {
+  const digest = await crypto.subtle.digest(
+    "SHA-256",
+    encoder.encode(
+      String(value ?? "")
+        .trim()
+        .toLowerCase(),
+    ),
+  );
+  return Array.from(new Uint8Array(digest), (b) =>
+    b.toString(16).padStart(2, "0"),
+  ).join("");
+}
 export async function sendMail(env, message) {
-  if (!mailConfigured(env)) throw new Error("Mail transport is not configured");
+  // Local configuration (a missing key or binding): nothing was sent, so a
+  // later try is safe once it is fixed.
+  if (!mailConfigured(env))
+    throw new MailError("Mail transport is not configured", { retryable: true });
   if (env.MAIL_TRANSPORT === "resend") return sendResend(env, message);
   // The older transports have no use for these two; never hand them on.
   const { idempotencyKey, tags, ...legacy } = message;
-  if (env.MAIL_TRANSPORT !== "gmail")
-    return (await env.SEND_EMAIL.send(legacy)) || {};
+  if (env.MAIL_TRANSPORT !== "gmail") return (await env.SEND_EMAIL.send(legacy)) || {};
   message = legacy;
   const raw = url64(buildMime(message, env.GMAIL_FROM));
   // No global token cache: credentials and sender identities must not cross envs.
