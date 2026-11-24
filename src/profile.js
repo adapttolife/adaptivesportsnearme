@@ -351,7 +351,9 @@ export async function updateProfile(
   { email, name, state, sports, newsletter },
 ) {
   const now = new Date().toISOString();
-  await db
+  // Resolves to true only when a row actually changed: the profile notice is
+  // sent only then.
+  const result = await db
     .prepare(
       `UPDATE profiles SET email = ?, name = ?, state = ?, sports_json = ?, newsletter = ?, updated_at = ? WHERE id = ?
      AND (email IS NOT ? OR name IS NOT ? OR state IS NOT ? OR sports_json IS NOT ? OR newsletter IS NOT ?)`,
@@ -371,6 +373,7 @@ export async function updateProfile(
       newsletter ? 1 : 0,
     )
     .run();
+  return Number(result?.meta?.changes ?? result?.changes ?? 0) > 0;
 }
 
 export async function orgExists(db, orgId) {

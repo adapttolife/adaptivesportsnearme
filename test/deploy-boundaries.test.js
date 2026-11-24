@@ -31,10 +31,14 @@ test("staging versions target the same Worker with isolated databases and no cro
     }
     assert.deepEqual(target.send_email, app.send_email);
     assert.deepEqual(target.ratelimits, app.ratelimits);
+    // Staging differs from production only by name, the directory gate and the
+    // mail allow list: staging mails only team addresses.
     assert.deepEqual(target.vars, {
       ...app.vars,
       ENV_NAME: "staging",
       PRELAUNCH: "false",
+      MAIL_ALLOW:
+        "hello@adapttolife.org,@adaptivesportsnearme.com,@adapttolife.org,@faisaln.com",
     });
     assert.equal(target.main, "src/staging.js");
   }
@@ -42,8 +46,10 @@ test("staging versions target the same Worker with isolated databases and no cro
   assert.equal(app.name, "adaptivesportsnearme");
   assert.equal(gateConfig.name, "asnm-gate");
   assert.equal(gateConfig.main, "src/signup-gate.js");
-  assert.equal(preview.vars.MAIL_TRANSPORT, "gmail");
-  assert.equal(gateConfig.vars.MAIL_TRANSPORT, "gmail");
+  assert.equal(preview.vars.MAIL_TRANSPORT, "resend");
+  assert.equal(gateConfig.vars.MAIL_TRANSPORT, "resend");
+  assert.equal(app.vars.MAIL_ALLOW, undefined);
+  assert.equal(gateConfig.vars.MAIL_ALLOW, undefined);
   // F-017: the maintenance lanes fetch website URLs from anonymous drafts.
   // Their crons stay off until the lanes fetch only reviewed or claimed orgs.
   assert.deepEqual(app.triggers.crons, []);
