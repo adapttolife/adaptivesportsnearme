@@ -1,4 +1,6 @@
 import { mailConfigured, sendMail } from "./mail-transport.js";
+import { BRAND, houseAddress } from "./email.js";
+import { recordSendFailure } from "./mail-ledger.js";
 import { SPORT_NAMES } from "./sport-names.js";
 import { seasonsText, MONTHS } from "../public/app/yearly.js";
 import { checkupSummary, FIX_WORDS } from "./offerings.js";
@@ -23,12 +25,17 @@ import { checkupSummary, FIX_WORDS } from "./offerings.js";
 // Where notifications land. hello@adapttolife.org is the answer for all three
 // properties (Alec, 2026-10-02, superseding the 2026-09-09 choice of
 // hello@adaptivesportsnearme.com; every live producer already sent there).
-// The sender stays this property's Gmail identity. Overridable per environment so a review lane can
+// The sender is this property's house address (src/email.js houseFrom: the
+// mail. subdomain on Resend) under the intake name. Overridable per environment so a review lane can
 // prove delivery into an inbox that is actually readable from the box, which is
 // the only way this path gets verified rather than assumed.
 export const INTAKE_INBOX_DEFAULT = "hello@adapttolife.org";
-export const INTAKE_FROM =
-  "Adapt To Life Intake <hello@adaptivesportsnearme.com>";
+export const INTAKE_NAME = "Adapt To Life Intake";
+export const intakeFrom = (env) => `${INTAKE_NAME} <${houseAddress(env)}>`;
+// Resend keeps an Idempotency-Key for 24 hours; retries stop an hour short.
+const RETRY_WINDOW_MS = 23 * 60 * 60 * 1000;
+const withinRetryWindow = (row) =>
+  Date.now() - Date.parse(row.received_at || 0) < RETRY_WINDOW_MS;
 export const intakeInbox = (env) =>
   (env && env.INTAKE_INBOX) || INTAKE_INBOX_DEFAULT;
 
@@ -157,13 +164,17 @@ export async function notifyIntakeRow(env, row) {
   if (!claim) return false;
   const { text, html } = notificationBody(row);
   try {
+    // The key is the intake id and the body is built only from the stored row,
+    // so a retry sends the same message and Resend dedupes it.
     await sendMail(env, {
-      from: INTAKE_FROM,
+      from: intakeFrom(env),
       to: intakeInbox(env),
       replyTo: row.email || intakeInbox(env),
       subject: row.summary,
       text,
       html,
+      idempotencyKey: `intake:${row.id}`,
+      tags: { brand: BRAND, kind: "intake-notice" },
     });
     const now = new Date().toISOString();
     await env.INTAKE.batch([
@@ -176,9 +187,23 @@ export async function notifyIntakeRow(env, row) {
     ]);
     return true;
   } catch (e) {
-    // A transport exception or failed post-send stamp is ambiguous. Keep it
-    // reviewable; automatically resending can duplicate the visitor's message.
     const error = String(e.message).slice(0, 300);
+    // A retryable Resend refusal (429, 5xx, timeout) goes back in the queue: the
+    // same Idempotency-Key makes the next try safe until the key expires.
+    if (e?.retryable && withinRetryWindow(row)) {
+      await env.INTAKE.batch([
+        env.INTAKE.prepare(
+          "UPDATE intake_delivery_claims SET state='pending',error=? WHERE intake_id=? AND state='sending'",
+        ).bind(error, row.id),
+        env.INTAKE.prepare(
+          "UPDATE intake SET notify_attempts=notify_attempts+1,notify_error=? WHERE id=? AND notified_at IS NULL",
+        ).bind("Will retry: " + error, row.id),
+      ]);
+      return false;
+    }
+    // Anything else, or a failed post-send stamp, is ambiguous. Keep it
+    // reviewable, and tell someone: the ledger is what the alert reads.
+    await recordSendFailure(env, "asnm-intake-notice", intakeInbox(env), `intake ${row.id}: ${error}`);
     await env.INTAKE.batch([
       env.INTAKE.prepare(
         "UPDATE intake_delivery_claims SET state='review',error=? WHERE intake_id=? AND state='sending'",
@@ -223,11 +248,26 @@ export async function notifyIntake(env, id) {
  */
 export async function sweepIntake(env, limit = 25) {
   const expired = new Date(Date.now() - 15 * 60_000).toISOString();
-  await env.INTAKE.prepare(
-    "UPDATE intake_delivery_claims SET state='review',error='Sender interrupted: verify provider acceptance before retry' WHERE state='sending' AND started_at<? AND intake_id IN (SELECT id FROM intake WHERE site='adaptivesportsnearme.com')",
+  // A send interrupted mid-flight. On Resend, the idempotency key makes a retry
+  // safe for a day, so it goes back in the queue; on Gmail it cannot be known.
+  if (env.MAIL_TRANSPORT === "resend")
+    await env.INTAKE.prepare(
+      "UPDATE intake_delivery_claims SET state='pending',error='Sender interrupted: retrying under the same idempotency key' WHERE state='sending' AND started_at<? AND intake_id IN (SELECT id FROM intake WHERE site='adaptivesportsnearme.com' AND received_at>?)",
+    )
+      .bind(expired, new Date(Date.now() - RETRY_WINDOW_MS).toISOString())
+      .run();
+  const { results: interrupted = [] } = await env.INTAKE.prepare(
+    "UPDATE intake_delivery_claims SET state='review',error='Sender interrupted: verify provider acceptance before retry' WHERE state='sending' AND started_at<? AND intake_id IN (SELECT id FROM intake WHERE site='adaptivesportsnearme.com') RETURNING intake_id",
   )
     .bind(expired)
-    .run();
+    .all();
+  for (const { intake_id } of interrupted)
+    await recordSendFailure(
+      env,
+      "asnm-intake-notice",
+      intakeInbox(env),
+      `intake ${intake_id}: sender interrupted, check Resend's log before resending`,
+    );
   const { results: rows } = await env.INTAKE.prepare(
     `SELECT intake.* FROM intake
     JOIN intake_delivery_claims c ON c.intake_id=intake.id
@@ -237,7 +277,22 @@ export async function sweepIntake(env, limit = 25) {
   )
     .bind(limit)
     .all();
+  // Past the retry window a pending notice is parked for a person, not resent.
+  const fresh = [];
+  for (const row of rows) {
+    if (env.MAIL_TRANSPORT !== "resend" || withinRetryWindow(row) || !row.notify_attempts) {
+      fresh.push(row);
+      continue;
+    }
+    const parked = await env.INTAKE.prepare(
+      "UPDATE intake_delivery_claims SET state='review',error='Retries ran out: check Resend before resending' WHERE intake_id=? AND state='pending' RETURNING intake_id",
+    )
+      .bind(row.id)
+      .first();
+    if (parked)
+      await recordSendFailure(env, "asnm-intake-notice", intakeInbox(env), `intake ${row.id}: retries ran out`);
+  }
   let sent = 0;
-  for (const row of rows) if (await notifyIntakeRow(env, row)) sent++;
+  for (const row of fresh) if (await notifyIntakeRow(env, row)) sent++;
   return { swept: rows.length, sent, failed: rows.length - sent };
 }

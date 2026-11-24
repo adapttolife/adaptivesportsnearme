@@ -57,6 +57,10 @@ const REVIEWED = new Map([
     "src/index.js",
     "beta tester signup email",
   ],
+  [
+    "src/email.js",
+    "Adapt To Life NFP's own postal address, which every list email footer must carry (CAN-SPAM)",
+  ],
 ]);
 const BINARY =
   /\.(svg|png|jpe?g|gif|webp|avif|ico|woff2?|ttf|otf|mp4|webm|mov|pdf|eps|zip|gz)$/i;

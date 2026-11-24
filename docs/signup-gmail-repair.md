@@ -1,5 +1,7 @@
 # Signup repair / Gmail cutover
 
+> Superseded in Nov 2026: site mail moved to Resend after the Workspace move cancelled the Gmail token. See [Email in MAINTAINERS](MAINTAINERS.md#email). Kept for history.
+
 Start with [the consolidated Faisal review](faisal-repair-review.md) for current credential status, executed evidence, superseded PR and outstanding release gates.
 
 ## What this branch does

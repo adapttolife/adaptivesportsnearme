@@ -1,4 +1,18 @@
 import { notifyIntake } from "./intake.js";
+import { mailAllowed } from "./mail-transport.js";
+import { recordSendFailure } from "./mail-ledger.js";
+import { sendSignupWelcome } from "./email.js";
+import {
+  newsletterTopicId,
+  setNewsletterTopic,
+  unsubscribeUrl,
+} from "./unsubscribe.js";
+
+// Signup: record it, put the contact in the ASNM Segment and the ASNM Topic
+// (their permission for this brand's mail), then send the welcome with its
+// unsubscribe link. Never touches Resend's team wide `unsubscribed` flag beyond
+// creating a new contact as subscribed.
+const SITE_ORIGIN = "https://adaptivesportsnearme.com";
 
 const fail = {
   ok: false,
@@ -40,6 +54,19 @@ export async function safeNewsletterSubscribe(
   const name =
     typeof extra.name === "string" ? extra.name.trim().slice(0, 60) : "";
   const beta = extra.beta === true;
+  let origin = SITE_ORIGIN;
+  try {
+    if (extra.origin) origin = new URL(extra.origin).origin;
+  } catch {}
+  // Staging, preview and dev never write the real list for anyone outside the
+  // team (MAIL_ALLOW), and never mail them.
+  if (!mailAllowed(env, email)) {
+    console.log("Newsletter signup skipped outside production", {
+      env: env.ENV_NAME,
+    });
+    return { ok: true, dropped: true };
+  }
+  const topicId = newsletterTopicId(env);
   const headers = {
     Authorization: `Bearer ${env.RESEND_API_KEY}`,
     "Content-Type": "application/json",
@@ -94,8 +121,15 @@ export async function safeNewsletterSubscribe(
         )
         .bind(key)
         .first();
-      if (existing?.state === "resend-subscribed")
+      if (existing?.state === "resend-subscribed") {
+        // Signing up again after leaving is a fresh yes for this brand.
+        try {
+          await setNewsletterTopic(env, email, "opt_in");
+        } catch (error) {
+          await recordSendFailure(env, "asnm-newsletter-topic", email, error);
+        }
         return { ok: true, existing: true };
+      }
       return {
         ...fail,
         status: 409,
@@ -106,6 +140,7 @@ export async function safeNewsletterSubscribe(
 
     stage = "contact-create";
     const body = { email, unsubscribed: false, segments: [{ id: segmentId }] };
+    if (topicId) body.topics = [{ id: topicId, subscription: "opt_in" }];
     if (name) body.first_name = name;
     const response = await fetch("https://api.resend.com/contacts", {
       method: "POST",
@@ -131,6 +166,12 @@ export async function safeNewsletterSubscribe(
       providerStatus = membership.status;
       if (!membership.ok && membership.status !== 409)
         throw new Error("Contact segment membership rejected");
+      // The Segment add is the signup; a Topic hiccup is ledgered, not fatal.
+      try {
+        await setNewsletterTopic(env, email, "opt_in");
+      } catch (error) {
+        await recordSendFailure(env, "asnm-newsletter-topic", email, error);
+      }
     } else {
       throw new Error("Contact creation rejected");
     }
@@ -143,7 +184,10 @@ export async function safeNewsletterSubscribe(
       )
       .bind(contact?.id || null, key)
       .run();
-    const background = notifyIntake(env, intakeId);
+    const background = Promise.all([
+      notifyIntake(env, intakeId),
+      sendWelcome(env, email, { name, beta, origin, key }),
+    ]);
     return {
       ok: true,
       ...(contact ? {} : { existing: true }),
@@ -169,5 +213,32 @@ export async function safeNewsletterSubscribe(
     return env.ENV_NAME === "staging"
       ? { ...fail, diagnostic: { stage, providerStatus, reason } }
       : fail;
+  }
+}
+
+// The welcome, once per signup (its key is the signup's claim key). Never
+// throws: the signup already succeeded, so a welcome that does not go out is
+// written to send_failures for the alert, and a retryable refusal is tried once
+// more under the same key.
+export async function sendWelcome(env, email, { name, beta, origin, key }) {
+  try {
+    const unsubscribeLink = await unsubscribeUrl(env, origin || SITE_ORIGIN, email);
+    const send = () =>
+      sendSignupWelcome(env, email, { name, beta, unsubscribeLink, key });
+    let receipt;
+    try {
+      receipt = await send();
+    } catch (error) {
+      if (!error?.retryable) throw error;
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+      receipt = await send();
+    }
+    return !!(receipt?.id || receipt?.dropped);
+  } catch (error) {
+    console.error("Newsletter welcome needs review", {
+      reason: String(error?.message || "").slice(0, 120),
+    });
+    await recordSendFailure(env, "asnm-welcome", email, error);
+    return false;
   }
 }

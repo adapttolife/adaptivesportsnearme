@@ -171,9 +171,9 @@ Stop either server with Ctrl+C. `npx` may ask to download Wrangler on first use.
 See [Cloudflare D1 local development](https://developers.cloudflare.com/d1/best-practices/local-development/).
 
 For form integration testing, put the necessary runtime secrets in the ignored
-`.dev.vars` file. External Beehiiv and Gmail requests still use real
-services when credentials are supplied; `--local` only keeps Cloudflare bindings
-local. See [Wrangler local development](https://developers.cloudflare.com/workers/local-development/).
+`.dev.vars` file. Resend requests still use the real service when a key is
+supplied, but dev, like staging, mails only the team addresses in `MAIL_ALLOW`
+(see [Email](#email)); `--local` only keeps Cloudflare bindings local. See [Wrangler local development](https://developers.cloudflare.com/workers/local-development/).
 
 ## Architecture
 
@@ -192,9 +192,9 @@ wrangler.json          production deployment plus named staging environment
 
 **Data plane:** staging and the dedicated preview retain `asnm-db-staging` for
 both `DB` and `INTAKE`. Production uses `asnm-db` and `atl-intake`. Staging and
-preview use live production email and newsletter services; external
-actions have real effects while directory, profile, and intake database writes
-stay in the staging database.
+preview use the live Resend team, but send mail and touch the newsletter list
+only for the team addresses in `MAIL_ALLOW` ([Email](#email)); directory,
+profile, and intake database writes stay in the staging database.
 
 **Core invariant (kept from the original Postgres design):** pipeline lanes *propose*
 changes into `review_queue`; a human approves them before anything touches `organizations`.
@@ -334,11 +334,61 @@ This is deployment configuration, not an application path-routing change.
 The repository configuration explains a likely cause of a 404; live account
 settings, DNS, and certificate status must also be checked in Cloudflare.
 
+## Email
+
+The design for all three Adapt To Life brands is `docs/EMAIL.md` in
+[adapt-to-life](https://github.com/adapttolife/adapt-to-life/blob/staging/docs/EMAIL.md).
+The rule: **sites send through Resend, people answer in Google Workspace.**
+`src/mail-transport.js` is the same file in both repos; change them together.
+
+- **From** `Adaptive Sports Near Me <hello@mail.adaptivesportsnearme.com>` (`MAIL_FROM`), Reply-To
+  `hello@adaptivesportsnearme.com`. `MAIL_TRANSPORT=resend`, `MAIL_FROM_DOMAINS=mail.adaptivesportsnearme.com`.
+  A From on any other domain is refused before the network.
+- **Every send** has a stable `idempotencyKey` (Resend sends a repeat of the same key and body once
+  for 24 hours) and `brand`/`kind` tags; the transport adds `env`. Keys: `signin-<kind>:<digest of the
+  link>`, `confirm-<kind>:<intake id>`, `confirm-profile-updated:<profile id>:<digest of the saved
+  values>`, `invite:<digest of the address>`, `welcome:<signup claim key>`, `intake:<intake id>`.
+- **Staging, preview and dev** (`ENV_NAME` not `production`) mail only addresses on `MAIL_ALLOW`, and
+  only those addresses can join or leave the real list there. Anything else is logged and dropped.
+- **Sign-in links** are limited to 3 per address per 15 minutes (`src/signin-limit.js`), on top of the
+  per-IP form limiter. The profile notice goes out only when a save changed something.
+- **The newsletter.** `/api/subscribe` (the `asnm-gate` Worker in production) puts the contact in the
+  ASNM Segment (`RESEND_SEGMENT_ID`) and opts them in to the ASNM Topic (`RESEND_TOPIC_ID`,
+  "Adaptive Sports Near Me news"), then sends "You're on the list" with the unsubscribe link, the
+  one click `List-Unsubscribe` headers, why they get it and Adapt To Life NFP's postal address.
+- **`/unsubscribe`** (signed with `NEWSLETTER_LINK_SECRET`, never the Resend key) opts the contact out
+  of the ASNM Topic only. It never sets Resend's team wide `unsubscribed` flag: the team is shared with
+  adapttolife.org and alectranel.com. Until `RESEND_TOPIC_ID` holds the real Topic id it removes them
+  from the ASNM Segment instead. The profile newsletter switch writes the same Topic.
+- **`/api/resend-events`** is Resend's webhook for this site: `email.delivered`, `email.bounced`,
+  `email.complained`, `email.failed`, `email.delivery_delayed`, signed with `RESEND_WEBHOOK_SECRET`.
+  Only events tagged `brand=asnm` and this Worker's `ENV_NAME` are stored (`resend_events`, once per
+  `svix-id`).
+- **`send_failures`** (INTAKE database) is the ledger an alert reads: a confirmation, notice, invite or
+  welcome that did not go out, an intake notice parked in `review`, and every bounce, complaint or
+  failure Resend reports. Same columns as adapt-to-life's table. Intake notices that Resend refuses
+  with a retryable error (429, 5xx, timeout) go back in the queue for the `asnm-gate` cron, under
+  the same key, for up to 23 hours.
+
+`db/migrations/0028_mail_ledger.sql` adds `send_failures` and `resend_events` to the **INTAKE**
+database. It only adds and is safe to run twice; run it before the Resend code ships (code without
+it still sends, but ledger rows are lost and the webhook answers 503 until it exists):
+
+```sh
+npx wrangler d1 execute asnm-db-staging --config wrangler.preview.json --remote --file db/migrations/0028_mail_ledger.sql
+npx wrangler d1 execute atl-intake --config wrangler.json --remote --file db/migrations/0028_mail_ledger.sql
+```
+
+Going back to Gmail is a config change only: `MAIL_TRANSPORT=gmail` and
+`MAIL_FROM=hello@adaptivesportsnearme.com` (Gmail sends only as `GMAIL_FROM`).
+
 ## Secrets (per worker)
 
 The production list lives in `config/production-secrets.json`: `ADMIN_AUTH_SIGNING_KEY`,
 `ORG_AUTH_SIGNING_KEY`, `PROFILE_SIGNING_KEY`, `TURNSTILE_SECRET_KEY`, `RESEND_API_KEY`,
-`GMAIL_CLIENT_ID`, `GMAIL_CLIENT_SECRET`, `GMAIL_REFRESH_TOKEN`. `BETA_AUTH_SIGNING_KEY`
+`NEWSLETTER_LINK_SECRET`, `RESEND_WEBHOOK_SECRET`, and, while Gmail stays as a fallback
+transport, `GMAIL_CLIENT_ID`, `GMAIL_CLIENT_SECRET`, `GMAIL_REFRESH_TOKEN`. `asnm-gate` needs
+`RESEND_API_KEY` and `NEWSLETTER_LINK_SECRET` (it sends the welcome). `BETA_AUTH_SIGNING_KEY`
 stays unset on purpose: beta sessions are signed with `ADMIN_AUTH_SIGNING_KEY`. `test/release-secrets.test.js` fails when the code starts reading a secret
 that isn't on the list.
 

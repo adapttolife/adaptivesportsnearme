@@ -9,10 +9,17 @@ import {
   sendProfileLoginLink,
 } from "./email.js";
 import { notifyIntake } from "./intake.js";
+import { handleUnsubscribe, setNewsletterTopic } from "./unsubscribe.js";
+import { handleResendEvents } from "./resend-events.js";
+import { mailAllowed } from "./mail-transport.js";
+import { recordSendFailure } from "./mail-ledger.js";
+import { signInLinkLimited, SIGN_IN_LIMITED_MESSAGE } from "./signin-limit.js";
 // Adaptive Sports Near Me — Worker entry.
 // Serves the static site (env.ASSETS), the D1-backed directory API, the admin
 // review surface, and the cron maintenance pipeline (validate + enrich lanes).
-//   POST /api/subscribe        -> Resend segment contact
+//   POST /api/subscribe        -> Resend segment contact + ASNM Topic + the welcome
+//   GET|POST /unsubscribe      -> signed one click unsubscribe (ASNM Topic only)
+//   POST /api/resend-events    -> Resend delivery webhook (Svix signed)
 //   POST /api/submit-program   -> shared intake (hello@ notice) + D1 submissions (new program or a fix to a listing)
 //   POST /api/submit-event     -> the same path for a suggested event
 //   GET  /api/config           -> env name + prelaunch flag (front-end gate)
@@ -211,6 +218,13 @@ const application = {
         403,
       );
     }
+    // Mail plumbing answers before the maintenance and beta gates: leaving the
+    // list, and Resend's delivery events, must work whatever the site is doing.
+    if (url.pathname === "/unsubscribe")
+      return handleUnsubscribe(request, env, url);
+    if (url.pathname === "/api/resend-events")
+      return handleResendEvents(request, env);
+
     const maintenanceGate = await maintenanceGateResponse(request, env, url);
     if (maintenanceGate) return maintenanceGate;
 
@@ -737,6 +751,7 @@ async function handleSubscribe(request, env, ctx) {
   const result = await safeNewsletterSubscribe(env, email, source, {
     name,
     beta,
+    origin: new URL(request.url).origin,
   });
   if (!result.ok)
     return json(
@@ -773,6 +788,18 @@ export function parseBetaFlag(v) {
 // Shared Resend contact creation for the profile newsletter opt-in.
 async function subscribeToNewsletter(env, email, campaign, extra = {}) {
   return safeNewsletterSubscribe(env, email, campaign, extra);
+}
+
+// What a profile save changed to, as a short digest: the profile notice's key,
+// so the same saved state is confirmed once.
+async function profileChangeKey(...values) {
+  const bytes = await crypto.subtle.digest(
+    "SHA-256",
+    new TextEncoder().encode(JSON.stringify(values)),
+  );
+  return Array.from(new Uint8Array(bytes).slice(0, 12), (b) =>
+    b.toString(16).padStart(2, "0"),
+  ).join("");
 }
 
 // ---- Program submission -> shared intake + D1 submissions -------------------
@@ -1231,6 +1258,7 @@ async function handleSubmitProgram(request, env, ctx, opts = {}) {
             : "program",
       email,
       program,
+      key: intakeId,
     });
 
   return json({ ok: true });
@@ -1318,6 +1346,8 @@ async function handleProfileUpsert(request, env, ctx) {
       PROFILE_CACHE,
     );
 
+  let changed = false;
+  let wasNewsletter = false;
   try {
     const existing = await getProfileById(env.DB, session.profileId);
     if (!existing)
@@ -1334,7 +1364,8 @@ async function handleProfileUpsert(request, env, ctx) {
         403,
         PROFILE_CACHE,
       );
-    await updateProfile(env.DB, session.profileId, {
+    wasNewsletter = Number(existing.newsletter) === 1;
+    changed = await updateProfile(env.DB, session.profileId, {
       email,
       name,
       state: stateCode,
@@ -1356,20 +1387,35 @@ async function handleProfileUpsert(request, env, ctx) {
     );
   }
 
-  if (newsletter) {
-    const result = await subscribeToNewsletter(env, email, "asnm-profile");
+  // The switch reaches Resend, not only D1: on joins the list (Segment, ASNM
+  // Topic, the welcome), off opts out of the ASNM Topic only. The profile save
+  // already succeeded, so a list failure is logged and written to the ledger.
+  if (newsletter && !wasNewsletter) {
+    const result = await subscribeToNewsletter(env, email, "asnm-profile", {
+      origin: new URL(request.url).origin,
+    });
     if (result.welcomeJob) {
       if (ctx?.waitUntil) ctx.waitUntil(result.welcomeJob);
       else await result.welcomeJob;
     }
     if (!result.ok)
       console.error("profile newsletter opt-in failed:", result.error); // profile save already succeeded
+  } else if (!newsletter && wasNewsletter && mailAllowed(env, email)) {
+    const leave = setNewsletterTopic(env, email, "opt_out").catch(async (err) => {
+      console.error("profile newsletter opt-out failed");
+      await recordSendFailure(env, "asnm-profile-opt-out", email, err);
+    });
+    if (ctx?.waitUntil) ctx.waitUntil(leave);
+    else await leave;
   }
 
-  await queueFormConfirmation(env, ctx, {
-    kind: "profile-updated",
-    email,
-  });
+  // Only when something was actually saved: a save with no change mails nobody.
+  if (changed)
+    await queueFormConfirmation(env, ctx, {
+      kind: "profile-updated",
+      email,
+      key: `${session.profileId}:${await profileChangeKey(email, name, stateCode, sports, newsletter)}`,
+    });
   return json({ ok: true, id: session.profileId, isNew: false }, 200, PROFILE_CACHE);
 }
 
@@ -1388,6 +1434,8 @@ async function handleProfileLoginRequest(request, env, url) {
       422,
       PROFILE_CACHE,
     );
+  if (await signInLinkLimited(env.DB, "profile", email))
+    return json({ ok: false, error: SIGN_IN_LIMITED_MESSAGE }, 429, PROFILE_CACHE);
   try {
     const nonce = newLoginNonce();
     const token = await issueProfileLoginToken(env.DB, email, nonce);
@@ -1657,6 +1705,10 @@ async function handleOrganizationLoginRequest(request, env, url) {
   try {
     const organizations = await organizationsForClaimEmail(env.DB, email);
     if (!organizations.length)
+      return json({ ok: true }, 200, ORGANIZATION_AUTH_CACHE);
+    // Answered like an unknown address, so the limit never tells a stranger
+    // which addresses manage a listing.
+    if (await signInLinkLimited(env.DB, "organization", email))
       return json({ ok: true }, 200, ORGANIZATION_AUTH_CACHE);
     const nonce = newLoginNonce();
     const token = await issueLoginToken(env.DB, email, nonce);
@@ -2913,6 +2965,8 @@ async function handleBetaLoginRequest(request, env, url) {
       403,
       BETA_AUTH_CACHE,
     );
+  if (await signInLinkLimited(env.DB, "beta", email))
+    return json({ ok: false, error: SIGN_IN_LIMITED_MESSAGE }, 429, BETA_AUTH_CACHE);
   try {
     const token = await issueBetaLoginToken(env.DB, email);
     const link = new URL("/api/beta-auth/verify", url.origin);
@@ -3102,10 +3156,38 @@ async function handleAdminBetaTesters(request, env, url) {
           }
           : null,
       );
+      // The tester is saved before the invitation goes out. A failed invitation
+      // must not read as a failed save, or the admin presses Add again and the
+      // tester gets two. The save stands; the answer says the invitation did not
+      // go, and the ledger keeps it for follow up.
+      let invitation = "not-requested";
       if (addingTester && item.enabled && data?.sendInvitation === true) {
-        await sendBetaTesterInvitation(env, item.email, item.name, url.origin);
+        try {
+          const sent = await sendBetaTesterInvitation(env, item.email, item.name, url.origin);
+          invitation = sent?.dropped ? "not-sent-outside-production" : "sent";
+        } catch (err) {
+          invitation = "failed";
+          console.error("beta invitation failed", {
+            reason: err instanceof Error ? err.message : "unknown",
+          });
+          await recordSendFailure(env, "asnm-beta-invite", item.email, err);
+        }
       }
-      return json({ ok: true, item }, 200, ADMIN_AUTH_CACHE);
+      return json(
+        {
+          ok: true,
+          item,
+          invitation,
+          ...(invitation === "failed"
+            ? {
+                warning:
+                  "The tester is saved, but the invitation email did not go out. Don't add them again; we'll follow up.",
+              }
+            : {}),
+        },
+        200,
+        ADMIN_AUTH_CACHE,
+      );
     }
     return json(
       { ok: false, error: "Method not allowed" },
@@ -3181,6 +3263,8 @@ async function handleAdminLoginRequest(request, env, url) {
       403,
       ADMIN_AUTH_CACHE,
     );
+  if (await signInLinkLimited(env.DB, "admin", email))
+    return json({ ok: false, error: SIGN_IN_LIMITED_MESSAGE }, 429, ADMIN_AUTH_CACHE);
   try {
     const nonce = newLoginNonce();
     const token = await issueAdminLoginToken(env.DB, email, nonce);
@@ -3517,7 +3601,7 @@ async function handleAdminQueue(request, env, id) {
       reason: reason || "unknown",
     });
     return json(
-      { ok: false, error: "Could not update this queue item right now." },
+      { ok: false, error: "We could not send a sign-in link. Please try again." },
       503,
       ADMIN_AUTH_CACHE,
     );
