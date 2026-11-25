@@ -92,3 +92,40 @@ test("the honeypot still accepts silently and verifies nothing", async () => {
   assert.equal(r.calls.siteverify, 0);
   assert.equal(r.calls.other, 0);
 });
+
+// 2026-11-09: the siteverify outcome is logged (success + error-codes) so a
+// refused real person can be told apart from a bot, and nothing private leaks.
+test("siteverify's outcome is logged without the token, secret or IP", async () => {
+  const lines = [],
+    oldLog = console.log,
+    oldFetch = globalThis.fetch;
+  console.log = (...a) => lines.push(a.map(String).join(" "));
+  globalThis.fetch = async (url) =>
+    String(url).includes("challenges.cloudflare.com")
+      ? Response.json({ success: false, "error-codes": ["timeout-or-duplicate"] })
+      : new Response("unexpected", { status: 500 });
+  try {
+    const res = await worker.fetch(
+      new Request("https://adaptivesportsnearme.com/api/subscribe", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "CF-Connecting-IP": "203.0.113.9",
+        },
+        body: JSON.stringify({ em: "person@example.test", cf_token: "tok-SECRET-123" }),
+      }),
+      PROD,
+      {},
+    );
+    assert.equal(res.status, 403);
+  } finally {
+    console.log = oldLog;
+    globalThis.fetch = oldFetch;
+  }
+  const line = lines.find((l) => l.startsWith("turnstile siteverify"));
+  assert.ok(line, "an outcome line is logged");
+  assert.match(line, /"success":false/);
+  assert.match(line, /timeout-or-duplicate/);
+  for (const secret of ["tok-SECRET-123", "203.0.113.9", PROD.TURNSTILE_SECRET_KEY, "person@example.test"])
+    assert.ok(!lines.join("\n").includes(secret), `log must not contain ${secret}`);
+});
