@@ -218,8 +218,17 @@ const application = {
         403,
       );
     }
-    // Mail plumbing answers before the maintenance and beta gates: leaving the
-    // list, and Resend's delivery events, must work whatever the site is doing.
+    // Mail plumbing and robots.txt answer before the maintenance and beta gates:
+    // leaving the list, Resend's delivery events, and crawler rules must work
+    // whatever the site is doing (including prelaunch).
+    if (url.pathname === "/robots.txt") {
+      return text(
+        robotsTxt(env),
+        200,
+        "text/plain; charset=utf-8",
+        "public, max-age=3600",
+      );
+    }
     if (url.pathname === "/unsubscribe")
       return handleUnsubscribe(request, env, url);
     if (url.pathname === "/api/resend-events")
@@ -648,14 +657,6 @@ const application = {
     // The site's pages (the 2026-10 design): one app shell, a real URL per page,
     // the page's own title, description and canonical, a 404 for a listing that
     // does not exist. See src/pages.js.
-    if (url.pathname === "/robots.txt") {
-      return text(
-        robotsTxt(env),
-        200,
-        "text/plain; charset=utf-8",
-        "public, max-age=3600",
-      );
-    }
     if (url.pathname === "/sitemap.xml") {
       try {
         return text(

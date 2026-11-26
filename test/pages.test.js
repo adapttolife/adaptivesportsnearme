@@ -622,6 +622,15 @@ test("robots.txt: production allows crawling and names the sitemap; anything els
   assert.equal(response.status, 200);
   assert.match(response.headers.get("content-type"), /text\/plain/);
   assert.equal(await response.text(), production);
+
+  // Prelaunch beta gate must not hijack /robots.txt into beta HTML.
+  const prelaunch = await viaWorker("/robots.txt", {
+    ENV_NAME: "production",
+    PRELAUNCH: "true",
+  });
+  assert.equal(prelaunch.status, 200);
+  assert.match(prelaunch.headers.get("content-type"), /text\/plain/);
+  assert.equal(await prelaunch.text(), production);
 });
 
 test("sitemap.xml lists every sport, every state, each listed program and each grant", async () => {
