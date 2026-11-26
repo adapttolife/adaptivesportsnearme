@@ -187,7 +187,7 @@ src/pipeline.js        cron lanes: validate every 2h; dispatch hourly rotates en
 src/admin-access.js    /api/admin-auth/* and /api/admin-data/* passwordless admin dashboard
 db/schema.sql          D1 schema, dumped from the live asnm-db (regenerate, don't hand-edit)
 scripts/pg-to-d1.py    one-time migration: local Postgres → cleaned SQL → D1
-wrangler.json          production deployment plus named staging environment
+wrangler.json          production deployment, `previews` block (Workers Previews), and local `env.staging`
 ```
 
 **Data plane:** staging and the dedicated preview retain `asnm-db-staging` for
@@ -234,27 +234,36 @@ account** while connected to RPI WiFi or the RPI VPN. Off campus, connect to
 the RPI VPN first. This viewing policy does not grant Cloudflare administration,
 deployment, or remote database access.
 
-One application Worker, `adaptivesportsnearme`, serves the deployed production version
-and an uploaded staging version. In its Cloudflare Settings > Builds configure:
+One application Worker, `adaptivesportsnearme`, serves production and the isolated
+`staging` [Worker Preview](https://developers.cloudflare.com/workers/previews/).
+In its Cloudflare Settings > Builds configure:
 
 - Production branch: `main`.
-- Production deploy command: `npx wrangler deploy --config wrangler.json`.
-- Preview branch: `staging` only (so other branches cannot move the staging alias). Check
-  it: on 2026-10-19 the live setting uploaded every branch except `main`, so each pull
-  request branch moved the alias and became the Worker's newest version.
-- Preview command: `npx wrangler versions upload --config wrangler.preview.json --preview-alias staging`.
+- Production deploy command: `npx wrangler@4 deploy --config wrangler.json`.
+- Preview branch: `staging` only (so other branches cannot overwrite the named `staging` Preview).
+- Preview command: `npx wrangler@4 preview src/staging.js --config wrangler.json --name staging`
+  (or `npm run deploy:staging`).
 
-The preview URL is https://staging-adaptivesportsnearme.adapt-to-life.workers.dev.
-An equivalent manual upload from the staging checkout is:
+The Worker Preview deploys from `wrangler.json`'s `previews` block (with top-level `assets`
+and the HTTP-only `src/staging.js` entrypoint) instead of uploading a production Worker Version
+with `wrangler versions upload`. Because Worker Previews are isolated from production Worker
+Versions:
+
+- Staging builds do not become the production Worker's newest uploaded version.
+- Preview secrets are configured separately from production secrets (`npx wrangler@4 preview secret put <NAME> --name staging`, or via the Worker's Preview base config in Cloudflare) — do not assume production secrets are inherited.
+- Preview URLs are served at `https://staging-adaptivesportsnearme.adapt-to-life.workers.dev`
+  and, once `wrangler.json`'s `previews_enabled: true` custom-domain setting is deployed from
+  `main`, at `https://staging.adaptivesportsnearme.com`.
+
+An equivalent manual deploy from the staging checkout is:
 
 ```
-npx wrangler versions upload --env staging --preview-alias staging
+npm run deploy:staging
 ```
 
-Both configurations explicitly target the same Worker name. Use `versions upload`
-for staging; `wrangler deploy --env staging` would replace the production deployment
+Never run `wrangler deploy --env staging`: that would replace the production deployment
 with staging code and bindings. Release production from `main` using production config,
-not by promoting a staging-configured version.
+not by promoting a staging-configured build.
 
 **Never change this Worker's variables or secrets in the Cloudflare dashboard.** A dashboard
 edit makes a new version from the Worker's newest upload and deploys it. Branch builds
@@ -296,43 +305,32 @@ part of the staging preview setup.
 
 ### Custom-domain staging previews
 
-The intended custom-domain tester is https://staging.adaptivesportsnearme.com.
-Enabling `adaptivesportsnearme.com` for Production and Preview configures its
-preview hostname support, but does not turn an uploaded Version URL alias into
-a Worker Preview. Our current `versions upload --preview-alias staging` command
-and `wrangler.preview.json` still use the former workflow. Re-running that
-command does not create the named Worker Preview required by the new hostname.
-See [Cloudflare's workflow comparison](https://developers.cloudflare.com/workers/previews/compare-workflows/).
+The custom-domain tester is https://staging.adaptivesportsnearme.com, backed by
+the named `staging` [Worker Preview](https://developers.cloudflare.com/workers/previews/custom-domains/).
+`wrangler.json` defines both:
 
-To migrate, a maintainer should:
+1. A top-level `previews` block (Wrangler **4.135.0 or later**) with explicit
+   staging variables (`ENV_NAME=staging`, `PRELAUNCH=false`, `MAIL_ALLOW`), the
+   `asnm-db-staging` bindings for `DB` and `INTAKE`, `SEND_EMAIL`, `FORM_LIMITER`,
+   and observability. Top-level `assets` are inherited automatically; `src/staging.js`
+   keeps Previews HTTP-only.
+2. `previews_enabled: true` on the `adaptivesportsnearme.com` custom-domain route
+   entry (without adding a production route for `staging.adaptivesportsnearme.com`).
 
-1. Use Wrangler **4.135.0 or later** and configure a `previews` block. Explicitly
-   include staging variables (`ENV_NAME=staging`, `PRELAUNCH=false`), the
-   `asnm-db-staging` bindings for `DB` and `INTAKE`, and required runtime
-   bindings. Configure Preview secrets as well; do not assume production
-   settings or secrets are inherited. Keep assets at the top level. Follow
-   [Preview configuration](https://developers.cloudflare.com/workers/previews/configuration/).
-2. Preserve the domain's Production and Preview setting in the configuration
-   that manages production routes: the existing `adaptivesportsnearme.com`
-   custom-domain entry should have `previews_enabled: true`. Do not add a
-   production route for `staging.adaptivesportsnearme.com` or deploy staging
-   configuration as production. See
-   [custom-domain Preview setup](https://developers.cloudflare.com/workers/previews/custom-domains/).
-3. After preparing that configuration, change the staging branch's build
-   command to `npx wrangler preview --config <prepared-config> --name staging`.
-   This creates a Preview under the same Worker; it does not require a second
-   application Worker. The current files have not yet been migrated.
-4. Confirm the named `staging` Preview exists, its custom-domain URL is listed,
-   wildcard DNS/certificate provisioning has completed, and no explicit DNS
-   record or route conflicts with `staging.adaptivesportsnearme.com`. Ensure
-   the RPI network viewing policy covers the custom hostname too.
-5. Check `/api/config` on the new hostname: expect `env: "staging"` and
-   `prelaunch: false`. Check directory and form bindings before adopting it as
-   the tester URL. Keep the current `workers.dev` link available during migration.
+When switching Cloudflare Workers Builds over from legacy `versions upload`:
 
-This is deployment configuration, not an application path-routing change.
-The repository configuration explains a likely cause of a 404; live account
-settings, DNS, and certificate status must also be checked in Cloudflare.
+1. Set the Preview build command to `npx wrangler@4 preview src/staging.js --config wrangler.json --name staging`
+   (restricted to the `staging` branch).
+2. Configure Preview runtime secrets on the `staging` Preview (for example via
+   `npx wrangler@4 preview secret put <NAME> --name staging` or Preview base config);
+   Previews do not inherit production secrets.
+3. Deploy `main` with the `previews_enabled: true` route change so Cloudflare
+   provisions the wildcard custom-domain certificate and routes `staging.adaptivesportsnearme.com`
+   to the `staging` Preview (confirm no conflicting DNS record or route exists and
+   that the RPI network viewing policy covers the custom hostname).
+4. Check `/api/config` on `https://staging.adaptivesportsnearme.com/api/config`:
+   expect `env: "staging"` and `prelaunch: false`. Keep the `workers.dev` preview URL
+   available during verification.
 
 ## Email
 

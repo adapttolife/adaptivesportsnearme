@@ -42,8 +42,9 @@ One application Worker, `adaptivesportsnearme`, serves both versions:
 - Production: `main`, deployed at adaptivesportsnearme.com with production databases.
 - Staging: `staging`, uploaded at the tester alias with `asnm-db-staging` for both `DB` and `INTAKE`.
 
-Cloudflare Builds should upload staging with
-`npx wrangler versions upload --config wrangler.preview.json --preview-alias staging`.
+Cloudflare Builds deploys staging as a named Worker Preview with
+`npx wrangler@4 preview src/staging.js --config wrangler.json --name staging`
+(using the `previews` block in `wrangler.json`).
 Restrict that preview build to the `staging` branch. See [README](MAINTAINERS.md#deploy).
 Never run `wrangler deploy --env staging`: both configs now name the same Worker,
 so that command would replace the production deployment. Students must not push to `main`.
