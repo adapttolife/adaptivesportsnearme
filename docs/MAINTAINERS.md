@@ -207,7 +207,7 @@ the Worker) and `last_checked_at` (stale-first ordering). See the `src/pipeline.
 
 **Environments:**
 
-| | prod (`adaptivesportsnearme`) | staging version (`adaptivesportsnearme`) |
+| | prod (`adaptivesportsnearme`) | staging preview (`adaptivesportsnearme`) |
 |---|---|---|
 | URL | adaptivesportsnearme.com | staging-adaptivesportsnearme.adapt-to-life.workers.dev |
 | Gate | `PRELAUNCH=false` (full directory) | `PRELAUNCH=false` (full directory) |
@@ -250,7 +250,7 @@ with `wrangler versions upload`. Because Worker Previews are isolated from produ
 Versions:
 
 - Staging builds do not become the production Worker's newest uploaded version.
-- Preview secrets are configured separately from production secrets (`npx wrangler@4 preview secret put <NAME> --name staging`, or via the Worker's Preview base config in Cloudflare) — do not assume production secrets are inherited.
+- Preview secrets are configured separately from production secrets — do not assume production secrets are inherited. A new `staging` Preview starts with no secrets and needs the required entries from `config/production-secrets.json` (such as `RESEND_API_KEY`, `NEWSLETTER_LINK_SECRET`, `RESEND_WEBHOOK_SECRET`, `TURNSTILE_SECRET_KEY`, and `ADMIN_AUTH_SIGNING_KEY` / `ORG_AUTH_SIGNING_KEY` / `PROFILE_SIGNING_KEY`). Set them via the Worker's Preview base config in Cloudflare, pass `--secrets-file` on deploy, or run `npx wrangler@4 preview secret put <NAME> --name staging` once the `staging` Preview exists.
 - Preview URLs are served at `https://staging-adaptivesportsnearme.adapt-to-life.workers.dev`
   and, once `wrangler.json`'s `previews_enabled: true` custom-domain setting is deployed from
   `main`, at `https://staging.adaptivesportsnearme.com`.
@@ -265,43 +265,43 @@ Never run `wrangler deploy --env staging`: that would replace the production dep
 with staging code and bindings. Release production from `main` using production config,
 not by promoting a staging-configured build.
 
-**Never change this Worker's variables or secrets in the Cloudflare dashboard.** A dashboard
-edit makes a new version from the Worker's newest upload and deploys it. Branch builds
-upload versions to this Worker, so the newest upload is usually a branch preview with
-staging settings. On 2026-10-18, adding `ORG_AUTH_SIGNING_KEY` in the dashboard deployed
-the staging preview to adaptivesportsnearme.com: `ENV_NAME=staging` (`robots.txt`
-disallowed everything and every page said `noindex`), `asnm-db-staging` for `DB` and
-`INTAKE`, and no cron handler (#87).
+**Do not change this Worker's variables or secrets in the Cloudflare dashboard while an older
+branch upload is still the newest version.** A dashboard edit makes a new version from the
+Worker's newest upload and deploys it. Historically, branch builds used `wrangler versions upload`,
+so the newest upload was usually a staging build. On 2026-10-18, adding `ORG_AUTH_SIGNING_KEY` in
+the dashboard deployed the staging preview to adaptivesportsnearme.com: `ENV_NAME=staging`
+(`robots.txt` disallowed everything and every page said `noindex`), `asnm-db-staging` for `DB` and
+`INTAKE`, and no cron handler (#87). Once staging builds run on Workers Previews and `main` has
+been deployed cleanly once, staging no longer creates production Worker Versions and
+`npx wrangler secret put` stops hitting error 10215; until that cutover finishes, keep following
+the safeguard below.
 
 - Variables: change them in `wrangler.json` and release from `main`.
-- Secrets: a new version copies its secrets from the Worker's **newest upload**, not from
-  the deployed version, and branch builds keep uploading here. So a release carries whatever
-  secrets the newest branch build has. Before every release, and again after it, run
-  `npm run check:release`: it reads the live version and the newest upload (read only, your
-  own Wrangler login) and says SAFE only when the newest upload holds every secret in
-  `config/production-secrets.json`.
-- To add or restore a secret, run `npx wrangler versions secret put NAME --name adaptivesportsnearme`.
-  It makes a new version from the newest upload and deploys nothing; the next release from
-  `main` picks the secret up. While a branch build is the newest upload, `npx wrangler secret put`
-  is refused ("Secret edit failed ... the latest version of your Worker isn't currently
-  deployed", error 10215), and a dashboard edit builds on that branch version, so deploying it
-  ships branch code (October 18). And don't redeploy `main` to "reset" first: that release
-  would copy the newest upload's secrets, even none.
+- Secrets: before every production release, and again after it, run `npm run check:release`. It
+  reads the live version and the newest upload (read only, your own Wrangler login) and says SAFE
+  only when the newest upload holds every secret in `config/production-secrets.json`.
+- While an older staging version upload is still the Worker's newest upload (before the next `main`
+  deploy after switching Builds to Workers Previews), `npx wrangler secret put` is refused
+  ("Secret edit failed ... the latest version of your Worker isn't currently deployed", error
+  10215); add or restore secrets with `npx wrangler versions secret put NAME --name adaptivesportsnearme`
+  (which makes a new version from the newest upload without deploying) and do not redeploy `main`
+  to "reset" first if the newest upload is missing secrets. Once `main` is the newest deployed
+  version again, standard `npx wrangler secret put NAME --name adaptivesportsnearme` works.
 - After any change to the deployed Worker, open https://adaptivesportsnearme.com/robots.txt:
   production says `Allow: /`; staging settings say `Disallow: /`.
 
 Production uses `ENV_NAME=production`, `PRELAUNCH=false`, `asnm-db` for `DB` and
 `atl-intake` for `INTAKE`. Staging uses `ENV_NAME=staging`,
 `PRELAUNCH=false`, and `asnm-db-staging` for both `DB` and `INTAKE`. Its entrypoint
-exports only `fetch`. Version uploads do not update the Worker's routes or cron
+exports only `fetch`. Worker Previews do not update the production Worker's routes or cron
 triggers; those remain managed by the production deployment.
 
-Verify the uploaded version has the runtime secrets listed in
-`config/production-secrets.json` (`npm run check:release`). Build variables and local
-`.dev.vars` files are not runtime secrets. No database schema is applied by an
-upload; newsletter and program-submission capture require `db/intake-schema.sql` in the staging database.
-The existing `asnm-gate` config is a separate production signup route and is not
-part of the staging preview setup.
+Verify production holds the runtime secrets listed in `config/production-secrets.json`
+(`npm run check:release`) and that the `staging` Preview has its own Preview secrets configured.
+Build variables and local `.dev.vars` files are not runtime secrets. No database schema is applied
+by a preview deploy; newsletter and program-submission capture require `db/intake-schema.sql` in
+the staging database. The existing `asnm-gate` config is a separate production signup route and is
+not part of the staging preview setup.
 
 ### Custom-domain staging previews
 
@@ -319,18 +319,25 @@ the named `staging` [Worker Preview](https://developers.cloudflare.com/workers/p
 
 When switching Cloudflare Workers Builds over from legacy `versions upload`:
 
-1. Set the Preview build command to `npx wrangler@4 preview src/staging.js --config wrangler.json --name staging`
-   (restricted to the `staging` branch).
-2. Configure Preview runtime secrets on the `staging` Preview (for example via
-   `npx wrangler@4 preview secret put <NAME> --name staging` or Preview base config);
-   Previews do not inherit production secrets.
+1. Set the Production deploy command to `npx wrangler@4 deploy --config wrangler.json`
+   (Wrangler 4.135.0+ is required for `previews` and `previews_enabled`) and set the
+   Preview build command (restricted to the `staging` branch) to
+   `npx wrangler@4 preview src/staging.js --config wrangler.json --name staging`.
+2. Configure Preview runtime secrets for `staging` (the required keys in
+   `config/production-secrets.json`, including `RESEND_API_KEY`, `NEWSLETTER_LINK_SECRET`,
+   `RESEND_WEBHOOK_SECRET`, `TURNSTILE_SECRET_KEY`, and `ADMIN_AUTH_SIGNING_KEY` /
+   `ORG_AUTH_SIGNING_KEY` / `PROFILE_SIGNING_KEY`). Previews do not inherit production
+   secrets, so the first staging Preview starts with none: set them via Preview base config
+   or `--secrets-file`, or run `npx wrangler@4 preview secret put <NAME> --name staging`
+   right after the first Preview exists.
 3. Deploy `main` with the `previews_enabled: true` route change so Cloudflare
    provisions the wildcard custom-domain certificate and routes `staging.adaptivesportsnearme.com`
    to the `staging` Preview (confirm no conflicting DNS record or route exists and
    that the RPI network viewing policy covers the custom hostname).
-4. Check `/api/config` on `https://staging.adaptivesportsnearme.com/api/config`:
-   expect `env: "staging"` and `prelaunch: false`. Keep the `workers.dev` preview URL
-   available during verification.
+4. Check `/api/config` on **both** `https://staging-adaptivesportsnearme.adapt-to-life.workers.dev/api/config`
+   (which shares the hostname of the legacy `--preview-alias staging` URL) and
+   `https://staging.adaptivesportsnearme.com/api/config`: expect `env: "staging"` and
+   `prelaunch: false`.
 
 ## Email
 

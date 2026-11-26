@@ -40,7 +40,7 @@ The default branch on GitHub stays `main`. That is on purpose. It does not mean 
 One application Worker, `adaptivesportsnearme`, serves both versions:
 
 - Production: `main`, deployed at adaptivesportsnearme.com with production databases.
-- Staging: `staging`, uploaded at the tester alias with `asnm-db-staging` for both `DB` and `INTAKE`.
+- Staging: `staging`, deployed as the named `staging` Worker Preview with `asnm-db-staging` for both `DB` and `INTAKE`.
 
 Cloudflare Builds deploys staging as a named Worker Preview with
 `npx wrangler@4 preview src/staging.js --config wrangler.json --name staging`

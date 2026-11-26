@@ -11,6 +11,11 @@ test("staging previews and configs target the same Worker with isolated database
     preview = load("wrangler.preview.json"),
     gateConfig = load("wrangler.gate.json");
   assert.ok(app.previews, "wrangler.json must define a previews block for wrangler preview");
+  assert.deepEqual(
+    Object.keys(app.previews).sort(),
+    ["d1_databases", "observability", "ratelimits", "send_email", "vars"],
+  );
+  assert.deepEqual(app.previews.observability, app.observability);
   for (const target of [app.previews, app.env.staging, preview]) {
     assert.deepEqual(
       target.d1_databases,
