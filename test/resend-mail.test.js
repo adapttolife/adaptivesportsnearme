@@ -189,6 +189,7 @@ test("every sender in src passes an idempotency key and tags", () => {
 test("wrangler: every Worker sends through Resend from the mail. subdomain, and staging has an allow list", () => {
   const configs = {
     production: JSON.parse(read("wrangler.json")).vars,
+    previews: JSON.parse(read("wrangler.json")).previews.vars,
     staging: JSON.parse(read("wrangler.json")).env.staging.vars,
     preview: JSON.parse(read("wrangler.preview.json")).vars,
     dev: JSON.parse(read("wrangler.dev.json")).vars,

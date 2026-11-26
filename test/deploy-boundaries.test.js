@@ -6,14 +6,17 @@ import app from "../src/index.js";
 import staging from "../src/staging.js";
 const load = (p) =>
   JSON.parse(readFileSync(new URL("../" + p, import.meta.url), "utf8"));
-test("staging versions target the same Worker with isolated databases and no cron handler", () => {
+test("staging previews and configs target the same Worker with isolated databases and no cron handler", () => {
   const app = load("wrangler.json"),
     preview = load("wrangler.preview.json"),
     gateConfig = load("wrangler.gate.json");
-  for (const target of [app.env.staging, preview]) {
-    assert.equal(target.name, app.name);
-    assert.deepEqual(target.routes, []);
-    assert.deepEqual(target.triggers.crons, []);
+  assert.ok(app.previews, "wrangler.json must define a previews block for wrangler preview");
+  assert.deepEqual(
+    Object.keys(app.previews).sort(),
+    ["d1_databases", "observability", "ratelimits", "send_email", "vars"],
+  );
+  assert.deepEqual(app.previews.observability, app.observability);
+  for (const target of [app.previews, app.env.staging, preview]) {
     assert.deepEqual(
       target.d1_databases,
       ["DB", "INTAKE"].map((binding) => ({
@@ -40,12 +43,31 @@ test("staging versions target the same Worker with isolated databases and no cro
       MAIL_ALLOW:
         "hello@adapttolife.org,@adaptivesportsnearme.com,@adapttolife.org,@faisaln.com",
     });
+  }
+  for (const target of [app.env.staging, preview]) {
+    assert.equal(target.name, app.name);
+    assert.deepEqual(target.routes, []);
+    assert.deepEqual(target.triggers.crons, []);
     assert.equal(target.main, "src/staging.js");
   }
+  // Custom-domain Preview routing stays on adaptivesportsnearme.com; never add
+  // a production route for staging.adaptivesportsnearme.com.
+  assert.deepEqual(app.routes, [
+    {
+      pattern: "adaptivesportsnearme.com",
+      custom_domain: true,
+      previews_enabled: true,
+    },
+    {
+      pattern: "www.adaptivesportsnearme.com",
+      custom_domain: true,
+    },
+  ]);
   assert.deepEqual(Object.keys(staging), ["fetch"]);
   assert.equal(app.name, "adaptivesportsnearme");
   assert.equal(gateConfig.name, "asnm-gate");
   assert.equal(gateConfig.main, "src/signup-gate.js");
+  assert.equal(app.previews.vars.MAIL_TRANSPORT, "resend");
   assert.equal(preview.vars.MAIL_TRANSPORT, "resend");
   assert.equal(gateConfig.vars.MAIL_TRANSPORT, "resend");
   assert.equal(app.vars.MAIL_ALLOW, undefined);
@@ -137,6 +159,7 @@ test("staging alias accepts staging-configured requests but blocks production-co
       { method: "POST", body: "em=person%40example.test" },
     );
   for (const config of [
+    load("wrangler.json").previews,
     load("wrangler.json").env.staging,
     load("wrangler.preview.json"),
   ]) {
@@ -181,6 +204,7 @@ test("remote development connects only to staging D1 and keeps production config
   assert.match(scripts["dev:local"], /--local/);
   assert.match(
     scripts["deploy:staging"],
-    /versions upload.*--preview-alias staging/,
+    /wrangler@4 preview src\/staging\.js --config wrangler\.json --name staging/,
   );
+  assert.doesNotMatch(scripts["deploy:staging"], /versions upload|\bdeploy\b/);
 });
